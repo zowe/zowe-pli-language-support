@@ -373,7 +373,7 @@ export class PliParser extends AbstractParser {
             element = this.replace({
               kind: ast.SyntaxKind.SimpleOptionsItem,
               container: null,
-              value: token.image as ast.SimpleOptionsItem["value"],
+              value: tokens.SimpleOptions.mapToEnumLiteral(token.tokenTypeIdx),
             });
             this.tokenPayload(
               token,
@@ -437,7 +437,7 @@ export class PliParser extends AbstractParser {
     });
     this.CONSUME_ASSIGN1(tokens.LinkageOption, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_Value);
-      element.value = token.image as ast.LinkageOptionsItem["value"];
+      element.value = tokens.LinkageOption.mapToEnumLiteral(token.tokenTypeIdx);
     });
     this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
       this.tokenPayload(
@@ -468,7 +468,7 @@ export class PliParser extends AbstractParser {
     });
     this.CONSUME_ASSIGN1(tokens.VX, (token) => {
       this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_Value);
-      element.value = token.image as "V1" | "V2" | "V3";
+      element.value = tokens.VX.mapToEnumLiteral(token.tokenTypeIdx);
     });
     this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
       this.tokenPayload(
@@ -494,7 +494,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.NoMapOption, (token) => {
       this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_Type);
-      element.type = token.image as "NOMAP" | "NOMAPIN" | "NOMAPOUT";
+      element.type = tokens.NoMapOption.mapToEnumLiteral(token.tokenTypeIdx);
     });
     this.OPTION2(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
@@ -626,14 +626,16 @@ export class PliParser extends AbstractParser {
         },
         {
           ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.ORDER, (token) => {
+            this.CONSUME_ASSIGN1(tokens.ProcedureOrder, (token) => {
               this.tokenPayload(
                 token,
                 element,
                 CstNodeKind.ProcedureStatement_Order,
               );
               const order = ast.createProcedureOrderOption();
-              order.order = token.image as "ORDER" | "REORDER";
+              order.order = tokens.ProcedureOrder.mapToEnumLiteral(
+                token.tokenTypeIdx,
+              );
               element.options.push(order);
             });
           },
@@ -656,7 +658,9 @@ export class PliParser extends AbstractParser {
                 CstNodeKind.ScopeAttribute_Scope,
               );
               const scope = ast.createProcedureScopeOption();
-              scope.scope = token.image as ast.ScopeAttribute;
+              scope.scope = tokens.ScopeAttribute.mapToEnumLiteral(
+                token.tokenTypeIdx,
+              );
               element.options.push(scope);
             });
           },
@@ -1163,7 +1167,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.AllocateAttributeType, (token) => {
       this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_Type);
-      element.type = token.image as ast.AllocateAttributeType;
+      element.type = tokens.AllocateAttributeType.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.Dimensions, {
@@ -1358,7 +1364,9 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.AssignmentStatement_Operator,
       );
-      element.operator = token.image as ast.AssignmentOperator;
+      element.operator = tokens.AssignmentOperator.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.SUBRULE_ASSIGN1(this.Expression, {
       assign: (result) => {
@@ -2064,7 +2072,9 @@ export class PliParser extends AbstractParser {
           CstNodeKind.DefaultAttributeExpression_Operators,
         );
         element.operators.push(
-          token.image as ast.DefaultAttributeExpression["operators"][0],
+          tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(
+            token.tokenTypeIdx,
+          ),
         );
       });
       this.SUBRULE_ASSIGN2(this.DefaultAttributeExpressionNot, {
@@ -2102,7 +2112,9 @@ export class PliParser extends AbstractParser {
       });
       this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
         this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
-        element.value = token.image as ast.DefaultAttribute;
+        element.value = tokens.DefaultAttribute.mapToEnumLiteral(
+          token.tokenTypeIdx,
+        );
       });
 
       return this.pop<ast.DefaultAttributeExpressionNot>();
@@ -2249,7 +2261,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_Signed0,
               );
-              element.attributes.push(token.image as "SIGNED");
+              element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
             });
           },
         },
@@ -2262,7 +2274,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_Unsigned0,
               );
-              element.attributes.push(token.image as "UNSIGNED");
+              element.attributes.push(ast.DefineOrdinalAttribute.UNSIGNED);
             });
           },
         },
@@ -2275,7 +2287,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.DefineOrdinalStatement_PRECISION,
               );
-              element.attributes.push(token.image as "PRECISION" | "PREC");
+              element.attributes.push(ast.DefineOrdinalAttribute.PRECISION);
             });
             this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
               this.tokenPayload(
@@ -4595,7 +4607,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.LocateType, (token) => {
       this.tokenPayload(token, element, CstNodeKind.LocateStatementOption_Type);
-      element.type = token.image as ast.LocateStatementOption["type"];
+      element.type = tokens.LocateType.mapToEnumLiteral(token.tokenTypeIdx);
     });
     this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
       this.tokenPayload(
@@ -4720,7 +4732,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.KeywordConditions, (token) => {
       this.tokenPayload(token, element, CstNodeKind.KeywordCondition_Keyword);
-      element.keyword = token.image as ast.KeywordCondition["keyword"];
+      element.keyword = tokens.KeywordConditions.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
 
     return this.pop<ast.KeywordCondition>();
@@ -4771,7 +4785,9 @@ export class PliParser extends AbstractParser {
         element,
         CstNodeKind.FileReferenceCondition_Keyword,
       );
-      element.keyword = token.image as ast.FileReferenceCondition["keyword"];
+      element.keyword = tokens.FileReferenceConditions.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
@@ -4871,7 +4887,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.OpenOptionType, (token) => {
       this.tokenPayload(token, element, CstNodeKind.OpenOption_Type);
-      element.option = token.image;
+      element.option = tokens.OpenOptionType.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.OPTION(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
@@ -5038,7 +5056,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN(tokens.PutAttribute, (token) => {
       this.tokenPayload(token, element, CstNodeKind.PutAttribute_FILE);
-      element.attribute = token.image as ast.PutAttribute;
+      element.attribute = tokens.PutAttribute.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.OPTION1(() => {
       this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
@@ -5352,7 +5372,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.ReadStatementType, (token) => {
       this.tokenPayload(token, element, CstNodeKind.ReadStatementFile_Type);
-      element.type = token.image as ast.ReadStatementOption["type"];
+      element.type = tokens.ReadStatementType.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
       this.tokenPayload(
@@ -5605,7 +5627,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.RewriteStatementType, (token) => {
       this.tokenPayload(token, element, CstNodeKind.RewriteStatementFile_FILE);
-      element.type = token.image as ast.RewriteStatementOption["type"];
+      element.type = tokens.RewriteStatementType.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
       this.tokenPayload(
@@ -5866,7 +5890,9 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.WriteStatementType, (token) => {
       this.tokenPayload(token, element, CstNodeKind.WriteStatementFile_FILE);
-      element.type = token.image as ast.WriteStatementOption["type"];
+      element.type = tokens.WriteStatementType.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
       this.tokenPayload(
@@ -6115,29 +6141,33 @@ export class PliParser extends AbstractParser {
               element,
               CstNodeKind.InitialToContent_VARYING0,
             );
-            element.varying = token.image as ast.Varying;
+            element.varying = tokens.Varying.mapToEnumLiteral(
+              token.tokenTypeIdx,
+            );
           });
           this.OPTION1(() => {
-            this.CONSUME_ASSIGN1(tokens.Char, (token) => {
+            this.CONSUME_ASSIGN1(tokens.CharType, (token) => {
               this.tokenPayload(
                 token,
                 element,
                 CstNodeKind.InitialToContent_CHAR0,
               );
-              element.type = token.image as ast.CharType;
+              element.type = tokens.CharType.mapToEnumLiteral(
+                token.tokenTypeIdx,
+              );
             });
           });
         },
       },
       {
         ALT: () => {
-          this.CONSUME_ASSIGN2(tokens.Char, (token) => {
+          this.CONSUME_ASSIGN2(tokens.CharType, (token) => {
             this.tokenPayload(
               token,
               element,
               CstNodeKind.InitialToContent_CHAR1,
             );
-            element.type = token.image as ast.CharType;
+            element.type = tokens.CharType.mapToEnumLiteral(token.tokenTypeIdx);
           });
           this.OPTION2(() => {
             this.CONSUME_ASSIGN2(tokens.Varying, (token) => {
@@ -6146,7 +6176,9 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.InitialToContent_VARYING1,
               );
-              element.varying = token.image as ast.Varying;
+              element.varying = tokens.Varying.mapToEnumLiteral(
+                token.tokenTypeIdx,
+              );
             });
           });
         },
@@ -6914,7 +6946,9 @@ export class PliParser extends AbstractParser {
     this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
       this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
       element.typeToken = token;
-      element.type = token.image as ast.DefaultAttribute;
+      element.type = tokens.DefaultAttribute.mapToEnumLiteral(
+        token.tokenTypeIdx,
+      );
     });
     this.OPTION1(() => {
       this.SUBRULE_ASSIGN1(this.Dimensions, {
@@ -7521,7 +7555,7 @@ export class PliParser extends AbstractParser {
     this.MANY1(() => {
       this.CONSUME_ASSIGN1(tokens.LIMITED, (token) => {
         this.tokenPayload(token, element, CstNodeKind.EntryAttribute_Limited0);
-        element.limited.push(token.image as "LIMITED");
+        element.limited.push(token);
       });
     });
     this.CONSUME_ASSIGN1(tokens.ENTRY, (token) => {
@@ -7582,7 +7616,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.EntryAttribute_Variable,
               );
-              element.variable.push(token.image as "VARIABLE");
+              element.variable.push(token);
             });
           },
         },
@@ -7594,7 +7628,7 @@ export class PliParser extends AbstractParser {
                 element,
                 CstNodeKind.EntryAttribute_Limited1,
               );
-              element.limited.push(token.image as "LIMITED");
+              element.limited.push(token);
             });
           },
         },
@@ -7853,6 +7887,7 @@ export class PliParser extends AbstractParser {
       infix: true,
       items: [],
       operators: [],
+      operatorTokens: [],
     });
 
     this.SUBRULE_ASSIGN1(this.PrimaryExpression, {
@@ -7867,10 +7902,10 @@ export class PliParser extends AbstractParser {
           element as any,
           CstNodeKind.BinaryExpression_Operator,
         );
-        // TODO: maybe use token.image as well?
-        // Depends on whether we need it
-        // For now, the name of the token is required to perform the transformation
-        element.operators.push(token);
+        element.operators.push(
+          tokens.BinaryOperator.mapToEnumLiteral(token.tokenTypeIdx),
+        );
+        element.operatorTokens.push(token);
       });
       this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
         assign: (result) => {
@@ -8197,7 +8232,7 @@ export class PliParser extends AbstractParser {
 
     this.CONSUME_ASSIGN1(tokens.UnaryOperator, (token) => {
       this.tokenPayload(token, element, CstNodeKind.UnaryExpression_Operator);
-      element.op = token.image as ast.UnaryExpression["op"];
+      element.op = tokens.UnaryOperator.mapToEnumLiteral(token.tokenTypeIdx);
     });
     this.SUBRULE_ASSIGN1(this.Expression, {
       assign: (result) => {

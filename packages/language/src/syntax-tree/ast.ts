@@ -223,6 +223,361 @@ export enum SyntaxKind {
   XFormatItem,
 }
 
+export enum KeywordConditions {
+  SUBSCRIPTRANGE,
+  FIXEDOVERFLOW,
+  ANYCONDITION,
+  CONFORMANCE,
+  STRINGRANGE,
+  STRINGSIZE,
+  ZERODIVIDE,
+  ASSERTION,
+  ATTENTION,
+  INVALIDOP,
+  UNDERFLOW,
+  STORAGE,
+  OVERFLOW,
+  ERROR,
+  AREA,
+  FINISH,
+  SIZE,
+  CONVERSION,
+}
+
+export enum SimpleOptions {
+  BYADDR,
+  DESCRIPTOR,
+  NOINLINE,
+  INLINE,
+  NORETURN,
+  NOCHARGRAPHIC,
+  NODESCRIPTOR,
+  CHARGRAPHIC,
+  IRREDUCIBLE,
+  DLLINTERNAL,
+  REDUCIBLE,
+  REENTRANT,
+  FETCHABLE,
+  FROMALIEN,
+  ASSEMBLER,
+  RECURSIVE,
+  FORTRAN,
+  BYVALUE,
+  AMODE31,
+  AMODE64,
+  RETCODE,
+  WINMAIN,
+  ORDER,
+  REORDER,
+  COBOL,
+  INTER,
+  MAIN,
+  RENT,
+  NOEXECOPS,
+}
+
+export enum DefaultAttribute {
+  INT,
+  NORESCAN,
+  BIT,
+  UNION,
+  BYADDR,
+  BYVALUE,
+  GENERIC,
+  INONLY,
+  NOINIT,
+  UCHAR,
+  CHARACTER,
+  STATIC,
+  IEEE,
+  JSONTRIMR,
+  BINARY,
+  DIRECT,
+  AREA,
+  FILE,
+  NONASSIGNABLE,
+  NONCONNECTED,
+  LITTLEENDIAN,
+  IRREDUCIBLE,
+  REDUCIBLE,
+  XMLCONTENT,
+  JSONIGNORE,
+  ASSIGNABLE,
+  CONTROLLED,
+  NONVARYING,
+  SEQUENTIAL,
+  CHARGRAPHIC,
+  DIMACROSS,
+  AUTOMATIC,
+  BACKWARDS,
+  CONDITION,
+  CONNECTED,
+  EXCLUSIVE,
+  NONNATIVE,
+  PARAMETER,
+  PRECISION,
+  STRUCTURE,
+  TRANSIENT,
+  UNALIGNED,
+  BIGENDIAN,
+  JSONNAME,
+  JSONNULL,
+  JSONOMIT,
+  EXTERNAL,
+  VARIABLE,
+  WIDECHAR,
+  ABNORMAL,
+  BUFFERED,
+  UNBUFFERED,
+  CONSTANT,
+  INTERNAL,
+  OPTIONAL,
+  POSITION,
+  RESERVED,
+  UNSIGNED,
+  VARYING4,
+  VARYINGZ,
+  NULLINIT,
+  XMLNAME,
+  XMLATTR,
+  XMLOMIT,
+  OPTIONS,
+  GRAPHIC,
+  ALIGNED,
+  BUILTIN,
+  COMPLEX,
+  DECIMAL,
+  HEXADEC,
+  OUTONLY,
+  POINTER,
+  VARYING,
+  NOSCAN,
+  RESCAN,
+  RANGE,
+  BASED,
+  EVENT,
+  FIXED,
+  FLOAT,
+  INOUT,
+  INPUT,
+  KEYED,
+  LABEL,
+  PRINT,
+  STREAM,
+  UPDATE,
+  MEMBER,
+  NATIVE,
+  NORMAL,
+  OFFSET,
+  OUTPUT,
+  RECORD,
+  SIGNED,
+  TASK,
+  LIST,
+  REAL,
+  SCAN,
+  XMLIGNORE,
+  FORMAT,
+}
+
+export enum FileReferenceConditions {
+  UNDEFINEDFILE,
+  TRANSMIT,
+  ENDFILE,
+  ENDPAGE,
+  NAME,
+  RECORD,
+  KEY,
+}
+
+export enum NoMapOption {
+  NOMAPOUT,
+  NOMAPIN,
+  NOMAP,
+}
+
+export enum Varying {
+  NONVARYING,
+  VARYING4,
+  VARYINGZ,
+  VARYING,
+}
+
+export enum OpenOptionType {
+  SEQUENTIAL,
+  BUFFERED,
+  UNBUFFERED,
+  OUTPUT,
+  RECORD,
+  STREAM,
+  UPDATE,
+  LINESIZE,
+  PAGESIZE,
+  PRINT,
+  DIRECT,
+  TITLE,
+  INPUT,
+  KEYED,
+  FILE,
+}
+
+export enum AllocateAttributeType {
+  AREA,
+  CHARACTER,
+  WIDECHAR,
+  GRAPHIC,
+  UCHAR,
+  BIT,
+}
+
+export enum CharType {
+  CHARACTER,
+  WIDECHAR,
+  UCHAR,
+}
+
+export enum CharOrBinary {
+  CHARACTER,
+  BINARY,
+}
+
+export enum PutAttribute {
+  FILE,
+  LINE,
+  PAGE,
+  SKIP,
+}
+
+export enum ReadStatementType {
+  IGNORE,
+  INTO,
+  FILE,
+  SET,
+  KEYTO,
+  KEY,
+}
+
+export enum WriteStatementType {
+  FROM,
+  FILE,
+  KEYTO,
+  KEYFROM,
+}
+
+export enum RewriteStatementType {
+  FROM,
+  FILE,
+  KEY,
+}
+
+export enum LocateType {
+  KEYFROM,
+  FILE,
+  SET,
+}
+
+export enum LOB {
+  BLOB,
+  CLOB,
+  DBCLOB,
+}
+
+export enum LOBLocator {
+  BLOB_LOCATOR,
+  CLOB_LOCATOR,
+  DBCLOB_LOCATOR,
+}
+
+export enum VX {
+  V1,
+  V2,
+  V3,
+}
+
+export enum TypeOrOrdinal {
+  ORDINAL,
+  TYPE,
+}
+
+export enum ScopeAttribute {
+  DYNAMIC,
+  STATIC,
+}
+
+export enum AssignmentOperator {
+  /** ||= */
+  PipePipeEquals,
+  /** **= */
+  StarStarEquals,
+  /** += */
+  PlusEquals,
+  /** -= */
+  MinusEquals,
+  /** *= */
+  StarEquals,
+  /** /= */
+  SlashEquals,
+  /** |= */
+  PipeEquals,
+  /** &= */
+  AmpersandEquals,
+  /** ¬= or ^= */
+  NotEquals,
+  /** <> */
+  LessThanGreaterThan,
+  /** = */
+  Equals,
+}
+
+export enum BinaryOperator {
+  NotEquals,
+  LessThanGreaterThan,
+  NotLessThan,
+  LessThanEquals,
+  GreaterThanEquals,
+  NotGreaterThan,
+  PipePipe,
+  StarStar,
+  Star,
+  Equals,
+  Pipe,
+  Not,
+  Ampersand,
+  LessThan,
+  GreaterThan,
+  Plus,
+  Minus,
+  Slash,
+}
+
+export enum UnaryOperator {
+  Plus,
+  Minus,
+  Not,
+}
+
+export enum Boolean {
+  FALSE,
+  TRUE,
+}
+
+export enum LinkageOption {
+  OPTLINK,
+  STDCALL,
+  SYSTEM,
+  CDECL,
+}
+
+export enum DefaultAttributeBinaryOperator {
+  AND,
+  OR,
+}
+
+export enum ProcedureOrder {
+  ORDER,
+  REORDER,
+}
+
 export interface AstNode {
   container: SyntaxNode | null;
   kind: SyntaxKind;
@@ -516,28 +871,6 @@ export type AllocateAttribute =
   | AllocateLocationReferenceSet
   | AllocateType
   | InitialAttribute;
-export type AllocateAttributeType =
-  | "AREA"
-  | "BIT"
-  | "CHAR"
-  | "CHARACTER"
-  | "GRAPHIC"
-  | "UCHAR"
-  | "WIDECHAR";
-export type AssignmentOperator =
-  | "&="
-  | "**="
-  | "*="
-  | "+="
-  | "-="
-  | "/="
-  | "<>"
-  | "="
-  | "^="
-  | "|="
-  | "||="
-  | "¬=";
-export type CharType = "CHAR" | "UCHAR" | "WCHAR";
 export type Condition =
   | FileReferenceCondition
   | KeywordCondition
@@ -565,7 +898,18 @@ export type CommonDeclarationAttribute =
  * Type extending attributes are attributes that extend the type of a variable.
  */
 export type TypeExtendingAttribute = LikeAttribute | TypeAttribute;
-export type ScanMode = "SCAN" | "RESCAN" | "NOSCAN";
+export enum ScanMode {
+  SCAN,
+  RESCAN,
+  NOSCAN,
+}
+
+export enum DefineOrdinalAttribute {
+  SIGNED,
+  UNSIGNED,
+  PRECISION,
+}
+
 /**
  * A list of all the possible attributes that can be used in a default expression.
  * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.
@@ -578,108 +922,6 @@ export type DefaultDeclarationAttribute =
  * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
  */
 export type DeclarationAttribute = CommonDeclarationAttribute | ValueAttribute;
-export type DefaultAttribute =
-  | ScanMode
-  | "ABNORMAL"
-  | "ALIGNED"
-  | "AREA"
-  | "ASSIGNABLE"
-  | "AUTOMATIC"
-  | "BACKWARDS"
-  | "BASED"
-  | "BIGENDIAN"
-  | "BIN"
-  | "BINARY"
-  | "BIT"
-  | "BUFFERED"
-  | "BUF"
-  | "BUILTIN"
-  | "BYADDR"
-  | "BYVALUE"
-  | "CHAR"
-  | "CHARACTER"
-  | "COMPLEX"
-  | "CONDITION"
-  | "CONNECTED"
-  | "CONSTANT"
-  | "CONTROLLED"
-  | "CTL"
-  | "DEC"
-  | "DECIMAL"
-  | "DIMACROSS"
-  | "DIRECT"
-  | "EVENT"
-  | "EXCLUSIVE"
-  | "EXT"
-  | "EXTERNAL"
-  | "FILE"
-  | "FIXED"
-  | "FLOAT"
-  | "FORMAT"
-  | "GENERIC"
-  | "GRAPHIC"
-  | "HEX"
-  | "HEXADEC"
-  | "IEEE"
-  | "INONLY"
-  | "INOUT"
-  | "INPUT"
-  | "INT"
-  | "INTERNAL"
-  | "IRREDUCIBLE"
-  | "KEYED"
-  | "LABEL"
-  | "LIST"
-  | "LITTLEENDIAN"
-  | "MEMBER"
-  | "NATIVE"
-  | "NONASGN"
-  | "NONASSIGNABLE"
-  | "NONCONNECTED"
-  | "NONNATIVE"
-  | "NONVARYING"
-  | "NORMAL"
-  | "NOINIT"
-  | "NULLINIT"
-  | "OFFSET"
-  | "OPTIONAL"
-  | "OPTIONS"
-  | "OUTONLY"
-  | "OUTPUT"
-  | "PARAMETER"
-  | "POINTER"
-  | "POSITION"
-  | "PREC"
-  | "PRECISION"
-  | "PRINT"
-  | "PTR"
-  | "RANGE"
-  | "REAL"
-  | "RECORD"
-  | "RESERVED"
-  | "SEQL"
-  | "SEQUENTIAL"
-  | "SIGNED"
-  | "STATIC"
-  | "STREAM"
-  | "STRUCTURE"
-  | "TASK"
-  | "TRANSIENT"
-  | "UCHAR"
-  | "UNAL"
-  | "UNALIGNED"
-  | "UNBUF"
-  | "UNBUFFERED"
-  | "UNION"
-  | "UNSIGNED"
-  | "UPDATE"
-  | "VAR"
-  | "VARIABLE"
-  | "VARYING"
-  | "VARYING4"
-  | "VARYINGZ"
-  | "VARZ"
-  | "WIDECHAR";
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
   | EntryParameterDescription
@@ -727,9 +969,7 @@ export type OptionsItem =
   | NoMapOptionsItem
   | SimpleOptionsItem;
 export type OrdinalType = DefineOrdinalStatement;
-export type PutAttribute = "FILE" | "LINE" | "PAGE" | "SKIP";
 export type PutStatement = PutFileStatement | PutStringStatement;
-export type ScopeAttribute = "DYNAMIC" | "STATIC";
 export type Unit =
   | AllocateStatement
   | AssertStatement
@@ -801,7 +1041,6 @@ export type Unit =
   | NoPrintDirective
   | SkipDirective
   | SqlAttributeStatement;
-export type Varying = "NONVARYING" | "VARYING" | "VARYING4" | "VARYINGZ";
 
 // Preprocessor AST
 
@@ -997,27 +1236,8 @@ export interface BinaryExpression extends AstNode {
   kind: SyntaxKind.BinaryExpression;
   left: Expression | null;
   right: Expression | null;
-  op:
-    | "^="
-    | "<>"
-    | "^<"
-    | "<="
-    | ">="
-    | "^>"
-    | "<="
-    | "||"
-    | "**"
-    | "*"
-    | "="
-    | "|"
-    | "^"
-    | "&"
-    | "<"
-    | ">"
-    | "+"
-    | "-"
-    | "/"
-    | null;
+  op: BinaryOperator | null;
+  opToken: Token | null;
 }
 export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;
@@ -1059,7 +1279,7 @@ export interface CloseStatement extends AstNode {
 }
 export interface CMPATOptionsItem extends AstNode {
   kind: SyntaxKind.CMPATOptionsItem;
-  value: "V1" | "V2" | "V3" | null;
+  value: VX | null;
 }
 export interface ColumnFormatItem extends AstNode {
   kind: SyntaxKind.ColumnFormatItem;
@@ -1192,7 +1412,7 @@ export function createDeclareStatement(): DeclareStatement {
 export interface DefaultAttributeExpression extends AstNode {
   kind: SyntaxKind.DefaultAttributeExpression;
   items: DefaultAttributeExpressionNot[];
-  operators: ("AND" | "OR")[];
+  operators: DefaultAttributeBinaryOperator[];
 }
 export interface DefaultAttributeExpressionNot extends AstNode {
   kind: SyntaxKind.DefaultAttributeExpressionNot;
@@ -1248,7 +1468,7 @@ export interface DefineOrdinalStatement extends AstNode {
   nameToken: Token | null;
   ordinalValues: OrdinalValueList | null;
   xDefine: boolean;
-  attributes: ("SIGNED" | "UNSIGNED" | "PRECISION" | "PREC")[];
+  attributes: DefineOrdinalAttribute[];
   precision: string | null;
 }
 export interface DefineStructureStatement extends AstNode {
@@ -1432,10 +1652,10 @@ export function createEndStatement(): EndStatement {
 }
 export interface EntryAttribute extends AstNode {
   kind: SyntaxKind.EntryAttribute;
-  limited: "LIMITED"[];
+  limited: Token[];
   attributes: EntryDescription[];
   options: Options[];
-  variable: "VARIABLE"[];
+  variable: Token[];
   returns: ReturnsOption[];
   environmentName: Expression[];
   entryToken: Token | null;
@@ -1516,16 +1736,7 @@ export interface FFormatItem extends AstNode {
 }
 export interface FileReferenceCondition extends AstNode {
   kind: SyntaxKind.FileReferenceCondition;
-  keyword:
-    | "ENDFILE"
-    | "ENDPAGE"
-    | "KEY"
-    | "NAME"
-    | "RECORD"
-    | "TRANSMIT"
-    | "UNDEFINEDFILE"
-    | "UNDF"
-    | null;
+  keyword: FileReferenceConditions | null;
   fileReference: ReferenceItem | null;
 }
 export interface FlushStatement extends AstNode {
@@ -1832,31 +2043,7 @@ export function createIterateStatement(): IterateStatement {
 }
 export interface KeywordCondition extends AstNode {
   kind: SyntaxKind.KeywordCondition;
-  keyword:
-    | "ANYCONDITION"
-    | "ANYCOND"
-    | "AREA"
-    | "ASSERTION"
-    | "ATTENTION"
-    | "CONFORMANCE"
-    | "CONVERSION"
-    | "ERROR"
-    | "FINISH"
-    | "FIXEDOVERFLOW"
-    | "FOFL"
-    | "INVALIDOP"
-    | "OVERFLOW"
-    | "OFL"
-    | "SIZE"
-    | "STORAGE"
-    | "STRINGRANGE"
-    | "STRINGSIZE"
-    | "SUBSCRIPTRANGE"
-    | "UNDERFLOW"
-    | "UFL"
-    | "ZERODIVIDE"
-    | "ZDIV"
-    | null;
+  keyword: KeywordConditions | null;
 }
 export interface LabelPrefix extends AstNode {
   kind: SyntaxKind.LabelPrefix;
@@ -1913,7 +2100,7 @@ export interface LineFormatItem extends AstNode {
 }
 export interface LinkageOptionsItem extends AstNode {
   kind: SyntaxKind.LinkageOptionsItem;
-  value: "CDECL" | "OPTLINK" | "STDCALL" | "SYSTEM" | null;
+  value: LinkageOption | null;
 }
 export interface Literal extends AstNode {
   kind: SyntaxKind.Literal;
@@ -1935,7 +2122,7 @@ export interface LocateStatement extends AstNode {
 }
 export interface LocateStatementOption extends AstNode {
   kind: SyntaxKind.LocateStatementOption;
-  type: "FILE" | "KEYFROM" | "SET" | null;
+  type: LocateType | null;
   element: Expression | null;
 }
 export interface LocatorCall extends AstNode {
@@ -1974,7 +2161,7 @@ export interface NamedCondition extends AstNode {
 }
 export interface NoMapOptionsItem extends AstNode {
   kind: SyntaxKind.NoMapOptionsItem;
-  type: "NOMAP" | "NOMAPIN" | "NOMAPOUT" | null;
+  type: NoMapOption | null;
   parameters: string[];
 }
 export interface NoPrintDirective extends AstNode {
@@ -2033,7 +2220,7 @@ export interface OpenOptionsGroup extends AstNode {
 }
 export interface OpenOption extends AstNode {
   kind: SyntaxKind.OpenOption;
-  option: string | null;
+  option: OpenOptionType | null;
   expression: Expression | null;
 }
 export interface OpenStatement extends AstNode {
@@ -2216,7 +2403,7 @@ export type ProcedureOption =
   | EnvironmentOption;
 export interface ProcedureOrderOption extends AstNode {
   kind: SyntaxKind.ProcedureOrderOption;
-  order: "ORDER" | "REORDER" | null;
+  order: ProcedureOrder | null;
 }
 export function createProcedureOrderOption(): ProcedureOrderOption {
   return {
@@ -2313,7 +2500,7 @@ export interface ReadStatement extends AstNode {
 }
 export interface ReadStatementOption extends AstNode {
   kind: SyntaxKind.ReadStatementOption;
-  type: "KEY" | "KEYTO" | "INTO" | "SET" | "IGNORE" | "FILE" | null;
+  type: ReadStatementType | null;
   value: Expression | null;
 }
 export interface ReferenceItem extends AstNode {
@@ -2389,7 +2576,7 @@ export interface RewriteStatement extends AstNode {
 }
 export interface RewriteStatementOption extends AstNode {
   kind: SyntaxKind.RewriteStatementOption;
-  type: "FILE" | "FROM" | "KEY" | null;
+  type: RewriteStatementType | null;
   value: Expression | null;
 }
 export interface RFormatItem extends AstNode {
@@ -2420,38 +2607,7 @@ export interface SignalStatement extends AstNode {
 }
 export interface SimpleOptionsItem extends AstNode {
   kind: SyntaxKind.SimpleOptionsItem;
-  value:
-    | "ORDER"
-    | "REORDER"
-    | "NOCHARGRAPHIC"
-    | "CHARGRAPHIC"
-    | "NOINLINE"
-    | "INLINE"
-    | "MAIN"
-    | "NOEXECOPS"
-    | "COBOL"
-    | "FORTRAN"
-    | "BYADDR"
-    | "BYVALUE"
-    | "DESCRIPTOR"
-    | "NODESCRIPTOR"
-    | "IRREDUCIBLE"
-    | "REDUCIBLE"
-    | "NORETURN"
-    | "REENTRANT"
-    | "FETCHABLE"
-    | "RENT"
-    | "AMODE31"
-    | "AMODE64"
-    | "DLLINTERNAL"
-    | "FROMALIEN"
-    | "RETCODE"
-    | "ASSEMBLER"
-    | "ASM"
-    | "WINMAIN"
-    | "INTER"
-    | "RECURSIVE"
-    | null;
+  value: SimpleOptions | null;
 }
 export interface SkipDirective extends AstNode {
   kind: SyntaxKind.SkipDirective;
@@ -2511,7 +2667,7 @@ export interface TypeAttribute extends AstNode {
 }
 export interface UnaryExpression extends AstNode {
   kind: SyntaxKind.UnaryExpression;
-  op: "+" | "-" | "^" | null;
+  op: UnaryOperator | null;
   expr: Expression | null;
 }
 export interface ValueAttribute extends AstNode {
@@ -2558,7 +2714,7 @@ export interface WriteStatement extends AstNode {
 }
 export interface WriteStatementOption extends AstNode {
   kind: SyntaxKind.WriteStatementOption;
-  type: "FILE" | "FROM" | "KEYFROM" | "KEYTO" | null;
+  type: WriteStatementType | null;
   value: Expression | null;
 }
 

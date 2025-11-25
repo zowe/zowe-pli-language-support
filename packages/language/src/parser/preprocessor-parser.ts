@@ -378,7 +378,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
       CstNodeKind.ReturnsOption_OpenParen,
       t.OpenParen,
     );
-    let returnType: string | undefined = undefined;
+    let returnType: number | undefined = undefined;
     const dataAttribute = ast.createComputationDataAttribute();
     if (
       state.tryConsume(
@@ -387,7 +387,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
         t.CHARACTER,
       )
     ) {
-      returnType = "CHARACTER";
+      returnType = t.CHARACTER.tokenTypeIdx;
     } else if (
       state.tryConsume(
         dataAttribute,
@@ -395,10 +395,10 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
         t.FIXED,
       )
     ) {
-      returnType = "FIXED";
+      returnType = t.FIXED.tokenTypeIdx;
     }
-    if (returnType) {
-      dataAttribute.type = returnType as ast.DefaultAttribute;
+    if (returnType !== undefined) {
+      dataAttribute.type = t.DefaultAttribute.mapToEnumLiteral(returnType);
       dataAttribute.typeToken = state.last ?? null;
       returnsOption.returnAttributes.push(dataAttribute);
     }
@@ -516,9 +516,9 @@ function answerStatement(state: ParserState): ast.AnswerStatement {
     }
   }
   const scans: [CstNodeKind, TokenType, ast.ScanMode][] = [
-    [CstNodeKind.AnswerStatement_NOSCAN, t.NOSCAN, "NOSCAN"],
-    [CstNodeKind.AnswerStatement_SCAN, t.SCAN, "SCAN"],
-    [CstNodeKind.AnswerStatement_RESCAN, t.RESCAN, "RESCAN"],
+    [CstNodeKind.AnswerStatement_NOSCAN, t.NOSCAN, ast.ScanMode.NOSCAN],
+    [CstNodeKind.AnswerStatement_SCAN, t.SCAN, ast.ScanMode.SCAN],
+    [CstNodeKind.AnswerStatement_RESCAN, t.RESCAN, ast.ScanMode.RESCAN],
   ];
   for (const [cstNodeKind, tokenType, scanType] of scans) {
     if (state.tryConsume(statement, cstNodeKind, tokenType)) {
@@ -1161,15 +1161,15 @@ function tryScanMode(state: ParserState): ast.ScanMode | null {
   switch (state.token?.tokenTypeIdx) {
     case t.SCAN.tokenTypeIdx:
     case t.NORESCAN.tokenTypeIdx:
-      scanMode = "SCAN";
+      scanMode = ast.ScanMode.SCAN;
       state.index++;
       break;
     case t.RESCAN.tokenTypeIdx:
-      scanMode = "RESCAN";
+      scanMode = ast.ScanMode.RESCAN;
       state.index++;
       break;
     case t.NOSCAN.tokenTypeIdx:
-      scanMode = "NOSCAN";
+      scanMode = ast.ScanMode.NOSCAN;
       state.index++;
       break;
   }
@@ -1251,7 +1251,7 @@ function assignmentStatement(state: ParserState): ast.AssignmentStatement {
   assignment.refs.push(locatorCall(state, true));
   // TODO: add support for more assignment operators (+=, -=, etc)
   state.consume(assignment, CstNodeKind.AssignmentStatement_Operator, t.Equals);
-  assignment.operator = "=";
+  assignment.operator = ast.AssignmentOperator.Equals;
   const right = expression(state);
   assignment.expression = right;
   state.consume(
@@ -1455,7 +1455,9 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
         t.DefaultAttribute,
       );
       if (attributeToken) {
-        dataAttribute.type = attributeToken.image as ast.DefaultAttribute;
+        dataAttribute.type = t.DefaultAttribute.mapToEnumLiteral(
+          attributeToken.tokenTypeIdx,
+        );
         dataAttribute.typeToken = attributeToken;
         attributes.push(dataAttribute);
       }
@@ -1490,21 +1492,25 @@ function parseBinary(state: ParserState): ast.Expression | null {
     infix: true,
     items: [],
     operators: [],
+    operatorTokens: [],
   };
   infixOperatorItem.items.push(primary(state));
   while (true) {
-    const operator = state.tryConsume(
+    const operatorToken = state.tryConsume(
       infixOperatorItem as any,
       CstNodeKind.BinaryExpression_Operator,
       t.BinaryOperator,
     );
-    if (!operator) {
+    if (!operatorToken) {
       break;
     }
 
     const item = primary(state);
     infixOperatorItem.items.push(item);
-    infixOperatorItem.operators.push(operator);
+    infixOperatorItem.operators.push(
+      t.BinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx),
+    );
+    infixOperatorItem.operatorTokens.push(operatorToken);
   }
   return constructBinaryExpression(infixOperatorItem);
 }
