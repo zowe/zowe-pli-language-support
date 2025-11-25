@@ -1194,4 +1194,22 @@ export const CompilerOptionsCodes = {
       } as ParametricPLICode,
     },
   },
+
+  PPSQL: {
+    Deprecate: {
+      InvalidSubOption: {
+        code: "COPPSQL01",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "STMT" suboption, but received '${value}'.`,
+      } as ParametricPLICode,
+
+      InvalidSubStatement: {
+        code: "COPPSQL02",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "EXPLAIN", "GRANT", "REVOKE", or "SET_CURRENT_SQLID" suboption, but received '${value}'.`,
+      } as ParametricPLICode,
+    },
+  },
 };

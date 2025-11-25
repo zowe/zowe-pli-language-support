@@ -2249,7 +2249,10 @@ translator.rule(
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "string");
-    options.ppSql = value.value;
+    options.ppSql = {
+      value: value.value,
+      token: value.token,
+    };
   },
   ["NOPPSQL"],
   (option, options) => {
