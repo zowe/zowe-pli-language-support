@@ -10,12 +10,7 @@
  */
 
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
-import {
-  DefaultAttributeEnum,
-  DefaultAttributeToEnum,
-} from "../parser/token-mappings";
 import { Token } from "../parser/tokens";
-import { ScanMode } from "../preprocessor/instructions";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
@@ -84,7 +79,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
-        if (attribute.type) {
+        if (attribute !== null) {
           this.handleDefaultAttribute(attribute);
         }
         break;
@@ -165,28 +160,28 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 
   handleDefaultAttribute(attribute: ast.ComputationDataAttribute) {
-    const token = attribute.typeToken;
-    if (!token) {
+    if (attribute.type === null || !attribute.typeToken) {
       return;
     }
-    const typeAsEnum = DefaultAttributeToEnum[token.tokenTypeIdx];
-    switch (typeAsEnum) {
+    const token = attribute.typeToken;
+    const type = attribute.type;
+    switch (type) {
       /**
        * Data type attributes
        */
-      case DefaultAttributeEnum.TASK:
-      case DefaultAttributeEnum.FILE:
-      case DefaultAttributeEnum.FORMAT:
-      case DefaultAttributeEnum.LABEL:
-      case DefaultAttributeEnum.AREA: {
+      case ast.DefaultAttribute.TASK:
+      case ast.DefaultAttribute.FILE:
+      case ast.DefaultAttribute.LABEL:
+      case ast.DefaultAttribute.FORMAT:
+      case ast.DefaultAttribute.AREA: {
         const mapTo = {
-          [DefaultAttributeEnum.AREA]: DataType.Area,
-          [DefaultAttributeEnum.FILE]: DataType.File,
-          [DefaultAttributeEnum.FORMAT]: DataType.Format,
-          [DefaultAttributeEnum.TASK]: DataType.Task,
-          [DefaultAttributeEnum.LABEL]: DataType.Label,
+          [ast.DefaultAttribute.AREA]: DataType.Area,
+          [ast.DefaultAttribute.FILE]: DataType.File,
+          [ast.DefaultAttribute.FORMAT]: DataType.Format,
+          [ast.DefaultAttribute.TASK]: DataType.Task,
+          [ast.DefaultAttribute.LABEL]: DataType.Label,
         };
-        const dataType = mapTo[typeAsEnum];
+        const dataType = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.DataType,
           dataType,
@@ -200,11 +195,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Access mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes
        */
-      case DefaultAttributeEnum.SEQUENTIAL:
-      case DefaultAttributeEnum.DIRECT: {
+      case ast.DefaultAttribute.SEQUENTIAL:
+      case ast.DefaultAttribute.DIRECT: {
         this.addAttributeWitness(
           AttributeKind.AccessMode,
-          typeAsEnum === DefaultAttributeEnum.DIRECT
+          type === ast.DefaultAttribute.DIRECT
             ? AccessMode.Direct
             : AccessMode.Sequential,
           attribute,
@@ -217,11 +212,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Alignment attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes
        */
-      case DefaultAttributeEnum.ALIGNED:
-      case DefaultAttributeEnum.UNALIGNED: {
+      case ast.DefaultAttribute.ALIGNED:
+      case ast.DefaultAttribute.UNALIGNED: {
         //TODO check alignment value
         const attributeValue: Alignment =
-          typeAsEnum === DefaultAttributeEnum.ALIGNED
+          type === ast.DefaultAttribute.ALIGNED
             ? { type: AlignmentType.Aligned, alignment: 1 }
             : { type: AlignmentType.Unaligned };
         this.addAttributeWitness(
@@ -237,10 +232,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Assignability attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes
        */
-      case DefaultAttributeEnum.ASSIGNABLE:
-      case DefaultAttributeEnum.NONASSIGNABLE: {
+      case ast.DefaultAttribute.ASSIGNABLE:
+      case ast.DefaultAttribute.NONASSIGNABLE: {
         const attributeValue =
-          typeAsEnum === DefaultAttributeEnum.ASSIGNABLE
+          type === ast.DefaultAttribute.ASSIGNABLE
             ? Assignability.Assignable
             : Assignability.Nonassignable;
         this.addAttributeWitness(
@@ -256,13 +251,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Base attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data
        */
-      case DefaultAttributeEnum.BINARY:
-      case DefaultAttributeEnum.DECIMAL: {
+      case ast.DefaultAttribute.BINARY:
+      case ast.DefaultAttribute.DECIMAL: {
         this.addPrecision(attribute, token);
         const base =
-          typeAsEnum === DefaultAttributeEnum.BINARY
-            ? Base.Binary
-            : Base.Decimal;
+          type === ast.DefaultAttribute.BINARY ? Base.Binary : Base.Decimal;
         this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
         break;
       }
@@ -271,10 +264,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Buffer mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes
        */
-      case DefaultAttributeEnum.BUFFERED:
-      case DefaultAttributeEnum.UNBUFFERED: {
+      case ast.DefaultAttribute.BUFFERED:
+      case ast.DefaultAttribute.UNBUFFERED: {
         const mode =
-          typeAsEnum === DefaultAttributeEnum.UNBUFFERED
+          type === ast.DefaultAttribute.UNBUFFERED
             ? BufferMode.Unbuffered
             : BufferMode.Buffered;
         this.addAttributeWitness(
@@ -290,10 +283,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Connection attributes (StorageConnection)
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes
        */
-      case DefaultAttributeEnum.CONNECTED:
-      case DefaultAttributeEnum.NONCONNECTED: {
+      case ast.DefaultAttribute.CONNECTED:
+      case ast.DefaultAttribute.NONCONNECTED: {
         const connection =
-          typeAsEnum === DefaultAttributeEnum.CONNECTED
+          type === ast.DefaultAttribute.CONNECTED
             ? StorageConnection.Connected
             : StorageConnection.Nonconnected;
         this.addAttributeWitness(
@@ -309,10 +302,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Endianess attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes
        */
-      case DefaultAttributeEnum.BIGENDIAN:
-      case DefaultAttributeEnum.LITTLEENDIAN: {
+      case ast.DefaultAttribute.BIGENDIAN:
+      case ast.DefaultAttribute.LITTLEENDIAN: {
         const endianess =
-          typeAsEnum === DefaultAttributeEnum.BIGENDIAN
+          type === ast.DefaultAttribute.BIGENDIAN
             ? Endianess.Big
             : Endianess.Little;
         this.addAttributeWitness(
@@ -328,10 +321,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * File usage attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes
        */
-      case DefaultAttributeEnum.STREAM:
-      case DefaultAttributeEnum.RECORD: {
+      case ast.DefaultAttribute.STREAM:
+      case ast.DefaultAttribute.RECORD: {
         const usage =
-          typeAsEnum === DefaultAttributeEnum.STREAM
+          type === ast.DefaultAttribute.STREAM
             ? FileUsage.Stream
             : FileUsage.Record;
         this.addAttributeWitness(
@@ -347,10 +340,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Float format attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes
        */
-      case DefaultAttributeEnum.IEEE:
-      case DefaultAttributeEnum.HEXADEC: {
+      case ast.DefaultAttribute.IEEE:
+      case ast.DefaultAttribute.HEXADEC: {
         const format =
-          typeAsEnum === DefaultAttributeEnum.IEEE
+          type === ast.DefaultAttribute.IEEE
             ? FloatFormat.IEEE
             : FloatFormat.HexaDec;
         this.addAttributeWitness(
@@ -366,10 +359,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Number mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-real-complex
        */
-      case DefaultAttributeEnum.COMPLEX:
-      case DefaultAttributeEnum.REAL: {
+      case ast.DefaultAttribute.COMPLEX:
+      case ast.DefaultAttribute.REAL: {
         const mode =
-          typeAsEnum === DefaultAttributeEnum.COMPLEX
+          type === ast.DefaultAttribute.COMPLEX
             ? NumberMode.Complex
             : NumberMode.Real;
         this.addAttributeWitness(
@@ -385,10 +378,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Scale mode attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-fixed-float
        */
-      case DefaultAttributeEnum.FLOAT:
-      case DefaultAttributeEnum.FIXED: {
+      case ast.DefaultAttribute.FLOAT:
+      case ast.DefaultAttribute.FIXED: {
         const scaleMode =
-          typeAsEnum === DefaultAttributeEnum.FIXED
+          type === ast.DefaultAttribute.FIXED
             ? ScaleMode.Fixed
             : ScaleMode.Float;
         this.addPrecision(attribute, token);
@@ -405,11 +398,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Scope attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=declarations-internal-external-attributes
        */
-      case DefaultAttributeEnum.INTERNAL:
-      case DefaultAttributeEnum.EXTERNAL: {
+      case ast.DefaultAttribute.INTERNAL:
+      case ast.DefaultAttribute.EXTERNAL: {
         //TODO check environment
         const scope: Scope =
-          typeAsEnum === DefaultAttributeEnum.INTERNAL
+          type === ast.DefaultAttribute.INTERNAL
             ? { type: ScopeType.Internal }
             : { type: ScopeType.External, environment: "TODO" };
         this.addAttributeWitness(AttributeKind.Scope, scope, attribute, token);
@@ -420,12 +413,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Sign attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned
        */
-      case DefaultAttributeEnum.UNSIGNED:
-      case DefaultAttributeEnum.SIGNED: {
+      case ast.DefaultAttribute.UNSIGNED:
+      case ast.DefaultAttribute.SIGNED: {
         const sign =
-          typeAsEnum === DefaultAttributeEnum.SIGNED
-            ? Sign.Signed
-            : Sign.Unsigned;
+          type === ast.DefaultAttribute.SIGNED ? Sign.Signed : Sign.Unsigned;
         this.addAttributeWitness(AttributeKind.Sign, sign, attribute, token);
         break;
       }
@@ -434,17 +425,17 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Storage class attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation
        */
-      case DefaultAttributeEnum.AUTOMATIC:
-      case DefaultAttributeEnum.STATIC:
-      case DefaultAttributeEnum.BASED:
-      case DefaultAttributeEnum.CONTROLLED: {
+      case ast.DefaultAttribute.AUTOMATIC:
+      case ast.DefaultAttribute.STATIC:
+      case ast.DefaultAttribute.BASED:
+      case ast.DefaultAttribute.CONTROLLED: {
         const mapTo = {
-          [DefaultAttributeEnum.AUTOMATIC]: StorageClass.Automatic,
-          [DefaultAttributeEnum.STATIC]: StorageClass.Static,
-          [DefaultAttributeEnum.BASED]: StorageClass.Based,
-          [DefaultAttributeEnum.CONTROLLED]: StorageClass.Controlled,
+          [ast.DefaultAttribute.AUTOMATIC]: StorageClass.Automatic,
+          [ast.DefaultAttribute.STATIC]: StorageClass.Static,
+          [ast.DefaultAttribute.BASED]: StorageClass.Based,
+          [ast.DefaultAttribute.CONTROLLED]: StorageClass.Controlled,
         };
-        const clss = mapTo[typeAsEnum];
+        const clss = mapTo[type];
         this.addAttributeWitness(AttributeKind.Storage, clss, attribute, token);
         break;
       }
@@ -453,17 +444,17 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * String format attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying
        */
-      case DefaultAttributeEnum.VARYING4:
-      case DefaultAttributeEnum.VARYING:
-      case DefaultAttributeEnum.VARYINGZ:
-      case DefaultAttributeEnum.NONVARYING: {
+      case ast.DefaultAttribute.VARYING4:
+      case ast.DefaultAttribute.VARYING:
+      case ast.DefaultAttribute.VARYINGZ:
+      case ast.DefaultAttribute.NONVARYING: {
         const mapTo = {
-          [DefaultAttributeEnum.VARYING4]: StringFormat.Varying4,
-          [DefaultAttributeEnum.VARYING]: StringFormat.Varying,
-          [DefaultAttributeEnum.VARYINGZ]: StringFormat.VaryingZ,
-          [DefaultAttributeEnum.NONVARYING]: StringFormat.NonVarying,
+          [ast.DefaultAttribute.VARYING4]: StringFormat.Varying4,
+          [ast.DefaultAttribute.VARYING]: StringFormat.Varying,
+          [ast.DefaultAttribute.VARYINGZ]: StringFormat.VaryingZ,
+          [ast.DefaultAttribute.NONVARYING]: StringFormat.NonVarying,
         };
-        const format = mapTo[typeAsEnum];
+        const format = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.StringFormat,
           format,
@@ -477,11 +468,11 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * String kind attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-bit-character-graphic-uchar-widechar
        */
-      case DefaultAttributeEnum.BIT:
-      case DefaultAttributeEnum.UCHAR:
-      case DefaultAttributeEnum.WIDECHAR:
-      case DefaultAttributeEnum.GRAPHIC:
-      case DefaultAttributeEnum.CHARACTER: {
+      case ast.DefaultAttribute.BIT:
+      case ast.DefaultAttribute.UCHAR:
+      case ast.DefaultAttribute.WIDECHAR:
+      case ast.DefaultAttribute.GRAPHIC:
+      case ast.DefaultAttribute.CHARACTER: {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
@@ -494,13 +485,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           );
         }
         const mapTo = {
-          [DefaultAttributeEnum.CHARACTER]: StringKind.Character,
-          [DefaultAttributeEnum.BIT]: StringKind.Bit,
-          [DefaultAttributeEnum.UCHAR]: StringKind.UChar,
-          [DefaultAttributeEnum.WIDECHAR]: StringKind.WideChar,
-          [DefaultAttributeEnum.GRAPHIC]: StringKind.Graphic,
+          [ast.DefaultAttribute.CHARACTER]: StringKind.Character,
+          [ast.DefaultAttribute.BIT]: StringKind.Bit,
+          [ast.DefaultAttribute.UCHAR]: StringKind.UChar,
+          [ast.DefaultAttribute.WIDECHAR]: StringKind.WideChar,
+          [ast.DefaultAttribute.GRAPHIC]: StringKind.Graphic,
         };
-        const kind = mapTo[typeAsEnum];
+        const kind = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.StringKind,
           kind,
@@ -514,10 +505,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Volatility attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-normal-abnormal-attributes
        */
-      case DefaultAttributeEnum.NORMAL:
-      case DefaultAttributeEnum.ABNORMAL: {
+      case ast.DefaultAttribute.NORMAL:
+      case ast.DefaultAttribute.ABNORMAL: {
         const volatility =
-          typeAsEnum === DefaultAttributeEnum.NORMAL
+          type === ast.DefaultAttribute.NORMAL
             ? Volatility.Normal
             : Volatility.Abnormal;
         this.addAttributeWitness(
@@ -533,12 +524,12 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Scale attributes with precision
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-precision-attribute
        */
-      case DefaultAttributeEnum.PRECISION: {
+      case ast.DefaultAttribute.PRECISION: {
         this.addPrecision(attribute, token);
         break;
       }
 
-      case DefaultAttributeEnum.POINTER: {
+      case ast.DefaultAttribute.POINTER: {
         this.addAttributeWitness(
           AttributeKind.DataType,
           DataType.Locator,
@@ -563,7 +554,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         }
         break;
       }
-      case DefaultAttributeEnum.OFFSET: {
+      case ast.DefaultAttribute.OFFSET: {
         //TODO set areaVariable if any
         this.addAttributeWitness(
           AttributeKind.LocatorKind,
@@ -574,7 +565,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       }
 
-      case DefaultAttributeEnum.BUILTIN: {
+      case ast.DefaultAttribute.BUILTIN: {
         //TODO temporary solution
         this.addAttributeWitness(
           AttributeKind.DataType,
@@ -589,15 +580,15 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * File transmission direction attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes
        */
-      case DefaultAttributeEnum.INPUT:
-      case DefaultAttributeEnum.UPDATE:
-      case DefaultAttributeEnum.OUTPUT: {
+      case ast.DefaultAttribute.INPUT:
+      case ast.DefaultAttribute.UPDATE:
+      case ast.DefaultAttribute.OUTPUT: {
         const mapTo = {
-          [DefaultAttributeEnum.INPUT]: TransmissionDirection.Input,
-          [DefaultAttributeEnum.OUTPUT]: TransmissionDirection.Output,
-          [DefaultAttributeEnum.UPDATE]: TransmissionDirection.Update,
+          [ast.DefaultAttribute.INPUT]: TransmissionDirection.Input,
+          [ast.DefaultAttribute.OUTPUT]: TransmissionDirection.Output,
+          [ast.DefaultAttribute.UPDATE]: TransmissionDirection.Update,
         };
-        const attributeValue = mapTo[typeAsEnum];
+        const attributeValue = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.TransmissionDirection,
           attributeValue,
@@ -611,13 +602,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Procedure parameter passing attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-byvalue-byaddr
        */
-      case DefaultAttributeEnum.BYADDR:
-      case DefaultAttributeEnum.BYVALUE: {
+      case ast.DefaultAttribute.BYADDR:
+      case ast.DefaultAttribute.BYVALUE: {
         const mapTo = {
-          [DefaultAttributeEnum.BYADDR]: ParameterPassMode.ByAddr,
-          [DefaultAttributeEnum.BYVALUE]: ParameterPassMode.ByValue,
+          [ast.DefaultAttribute.BYADDR]: ParameterPassMode.ByAddr,
+          [ast.DefaultAttribute.BYVALUE]: ParameterPassMode.ByValue,
         };
-        const attributeValue = mapTo[typeAsEnum];
+        const attributeValue = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.ParameterPassMode,
           attributeValue,
@@ -631,15 +622,15 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Preprocessor scan attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-preprocessor-scan
        */
-      case DefaultAttributeEnum.NOSCAN:
-      case DefaultAttributeEnum.SCAN:
-      case DefaultAttributeEnum.RESCAN: {
+      case ast.DefaultAttribute.NOSCAN:
+      case ast.DefaultAttribute.SCAN:
+      case ast.DefaultAttribute.RESCAN: {
         const mapTo = {
-          [DefaultAttributeEnum.NOSCAN]: ScanMode.NoScan,
-          [DefaultAttributeEnum.SCAN]: ScanMode.Scan,
-          [DefaultAttributeEnum.RESCAN]: ScanMode.ReScan,
+          [ast.DefaultAttribute.NOSCAN]: ast.ScanMode.NOSCAN,
+          [ast.DefaultAttribute.SCAN]: ast.ScanMode.SCAN,
+          [ast.DefaultAttribute.RESCAN]: ast.ScanMode.RESCAN,
         };
-        const attributeValue = mapTo[typeAsEnum];
+        const attributeValue = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.ScanMode,
           attributeValue,
@@ -653,15 +644,15 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Procedure parameter passing direction attributes
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-using-inonly-inout-outonly
        */
-      case DefaultAttributeEnum.INONLY:
-      case DefaultAttributeEnum.OUTONLY:
-      case DefaultAttributeEnum.INOUT: {
+      case ast.DefaultAttribute.INONLY:
+      case ast.DefaultAttribute.OUTONLY:
+      case ast.DefaultAttribute.INOUT: {
         const mapTo = {
-          [DefaultAttributeEnum.INONLY]: ParameterPassDirection.InOnly,
-          [DefaultAttributeEnum.OUTONLY]: ParameterPassDirection.OutOnly,
-          [DefaultAttributeEnum.INOUT]: ParameterPassDirection.InOut,
+          [ast.DefaultAttribute.INONLY]: ParameterPassDirection.InOnly,
+          [ast.DefaultAttribute.OUTONLY]: ParameterPassDirection.OutOnly,
+          [ast.DefaultAttribute.INOUT]: ParameterPassDirection.InOut,
         };
-        const attributeValue = mapTo[typeAsEnum];
+        const attributeValue = mapTo[type];
         this.addAttributeWitness(
           AttributeKind.ParameterPassDirection,
           attributeValue,
@@ -674,7 +665,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       /**
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=conditions-condition-condition
        */
-      case DefaultAttributeEnum.CONDITION: {
+      case ast.DefaultAttribute.CONDITION: {
         //TODO
         break;
       }
@@ -683,12 +674,12 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * List flag attribute
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-list-attribute
        */
-      case DefaultAttributeEnum.LIST: {
+      case ast.DefaultAttribute.LIST: {
         this.addAttributeWitness(AttributeKind.List, true, attribute, token);
         break;
       }
 
-      case DefaultAttributeEnum.OPTIONAL: {
+      case ast.DefaultAttribute.OPTIONAL: {
         this.addAttributeWitness(
           AttributeKind.Optional,
           true,
@@ -702,7 +693,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Options attribute
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=organization-options-option-attribute
        */
-      case DefaultAttributeEnum.OPTIONS: {
+      case ast.DefaultAttribute.OPTIONS: {
         //TODO
         break;
       }
@@ -710,13 +701,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       /**
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-generic-attribute
        */
-      case DefaultAttributeEnum.GENERIC: {
+      case ast.DefaultAttribute.GENERIC: {
         //TODO
         break;
       }
 
       /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-keyed-attribute */
-      case DefaultAttributeEnum.KEYED: {
+      case ast.DefaultAttribute.KEYED: {
         //TODO
         break;
       }
@@ -725,7 +716,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        * Parameter flag attribute
        * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=procedures-parameter-attribute
        */
-      case DefaultAttributeEnum.PARAMETER: {
+      case ast.DefaultAttribute.PARAMETER: {
         this.addAttributeWitness(
           AttributeKind.Parameter,
           true,
@@ -735,32 +726,80 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       }
 
-      case DefaultAttributeEnum.DIMACROSS: //for composite types only
-      case DefaultAttributeEnum.UNION: //for composite types only
+      case ast.DefaultAttribute.DIMACROSS: //for composite types only
+      case ast.DefaultAttribute.UNION: //for composite types only
         break;
-      case DefaultAttributeEnum.BACKWARDS: //no documentation found
-      case DefaultAttributeEnum.CONSTANT: //no documentation found
-      case DefaultAttributeEnum.EVENT: //no documentation found
-      case DefaultAttributeEnum.EXCLUSIVE: //no documentation found
-      case DefaultAttributeEnum.HEX: //a function not an attribute
-      case DefaultAttributeEnum.IRREDUCIBLE: //no documentation found, but @see https://www.ibm.com/support/pages/apar/PI26521
-      case DefaultAttributeEnum.MEMBER: //no documentation found
-      case DefaultAttributeEnum.NATIVE: //no documentation found
-      case DefaultAttributeEnum.NOINIT: //no documentation found
-      case DefaultAttributeEnum.NONNATIVE: //no documentation found
-      case DefaultAttributeEnum.NULLINIT: //no documentation found
-      case DefaultAttributeEnum.TRANSIENT: //no documentation found
-      case DefaultAttributeEnum.RANGE: //no documentation found
+      case ast.DefaultAttribute.BACKWARDS: //no documentation found
+      case ast.DefaultAttribute.CONSTANT: //no documentation found
+      case ast.DefaultAttribute.EVENT: //no documentation found
+      case ast.DefaultAttribute.EXCLUSIVE: //no documentation found
+      case ast.DefaultAttribute.IRREDUCIBLE: //no documentation found, but @see https://www.ibm.com/support/pages/apar/PI26521
+      case ast.DefaultAttribute.MEMBER: //no documentation found
+      case ast.DefaultAttribute.NATIVE: //no documentation found
+      case ast.DefaultAttribute.NOINIT: //no documentation found
+      case ast.DefaultAttribute.NONNATIVE: //no documentation found
+      case ast.DefaultAttribute.NULLINIT: //no documentation found
+      case ast.DefaultAttribute.TRANSIENT: //no documentation found
+      case ast.DefaultAttribute.RANGE: //no documentation found
         break;
 
-      case DefaultAttributeEnum.POSITION: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-defined-position-attributes
-      case DefaultAttributeEnum.PRINT: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=transmission-print-attribute
-      case DefaultAttributeEnum.RESERVED: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
-      case DefaultAttributeEnum.STRUCTURE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=definitions-defining-typed-structures-unions
-      case DefaultAttributeEnum.VARIABLE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
+      case ast.DefaultAttribute.POSITION: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-defined-position-attributes
+      case ast.DefaultAttribute.PRINT: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=transmission-print-attribute
+      case ast.DefaultAttribute.RESERVED: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
+      case ast.DefaultAttribute.STRUCTURE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=definitions-defining-typed-structures-unions
+      case ast.DefaultAttribute.VARIABLE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
+      case ast.DefaultAttribute.BACKWARDS:
+      case ast.DefaultAttribute.BYADDR:
+      case ast.DefaultAttribute.BYVALUE:
+      case ast.DefaultAttribute.CONDITION:
+      case ast.DefaultAttribute.CONSTANT:
+      case ast.DefaultAttribute.DIMACROSS:
+      case ast.DefaultAttribute.EVENT:
+      case ast.DefaultAttribute.EXCLUSIVE:
+      case ast.DefaultAttribute.GENERIC:
+      case ast.DefaultAttribute.INONLY:
+      case ast.DefaultAttribute.INOUT:
+      case ast.DefaultAttribute.IRREDUCIBLE:
+      case ast.DefaultAttribute.REDUCIBLE:
+      case ast.DefaultAttribute.KEYED:
+      case ast.DefaultAttribute.LABEL:
+      case ast.DefaultAttribute.LIST:
+      case ast.DefaultAttribute.MEMBER:
+      case ast.DefaultAttribute.NATIVE:
+      case ast.DefaultAttribute.NOINIT:
+      case ast.DefaultAttribute.NONNATIVE:
+      case ast.DefaultAttribute.NOSCAN:
+      case ast.DefaultAttribute.NULLINIT:
+      case ast.DefaultAttribute.OPTIONAL:
+      case ast.DefaultAttribute.OPTIONS:
+      case ast.DefaultAttribute.OUTONLY:
+      case ast.DefaultAttribute.PARAMETER:
+      case ast.DefaultAttribute.POSITION:
+      case ast.DefaultAttribute.PRINT:
+      case ast.DefaultAttribute.RANGE:
+      case ast.DefaultAttribute.RESCAN:
+      case ast.DefaultAttribute.RESERVED:
+      case ast.DefaultAttribute.SCAN:
+      case ast.DefaultAttribute.STRUCTURE:
+      case ast.DefaultAttribute.TRANSIENT:
+      case ast.DefaultAttribute.UNION:
+      case ast.DefaultAttribute.VARIABLE:
+      case ast.DefaultAttribute.CHARGRAPHIC:
+      case ast.DefaultAttribute.JSONIGNORE:
+      case ast.DefaultAttribute.JSONNAME:
+      case ast.DefaultAttribute.JSONNULL:
+      case ast.DefaultAttribute.JSONOMIT:
+      case ast.DefaultAttribute.JSONTRIMR:
+      case ast.DefaultAttribute.XMLATTR:
+      case ast.DefaultAttribute.XMLCONTENT:
+      case ast.DefaultAttribute.XMLIGNORE:
+      case ast.DefaultAttribute.XMLNAME:
+      case ast.DefaultAttribute.XMLOMIT:
+      case ast.DefaultAttribute.INT:
+      case ast.DefaultAttribute.NORESCAN:
         break;
       default:
-        assertUnreachable(typeAsEnum);
+        assertUnreachable(type);
     }
   }
   private addPrecision(attribute: ast.ComputationDataAttribute, token: Token) {
@@ -895,7 +934,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       const targetKind = parseInt(targetKindString) as keyof AttributeTypes;
       const targetWitness = this.attributeWitnesses[targetKind];
       const impliedValue = implication(value);
-      if (typeof impliedValue === "undefined") {
+      if (impliedValue === undefined) {
         continue;
       }
       if (targetWitness && targetWitness.value !== impliedValue) {

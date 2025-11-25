@@ -10,7 +10,6 @@
  */
 
 import { Token } from "../parser/tokens";
-import { ScanMode } from "../preprocessor/instructions";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 
@@ -210,7 +209,7 @@ export type AttributeTypes = {
   [AttributeKind.Position]: StoragePosition;
   [AttributeKind.Precision]: Precision;
   [AttributeKind.Scale]: ScaleMode;
-  [AttributeKind.ScanMode]: ScanMode;
+  [AttributeKind.ScanMode]: ast.ScanMode;
   [AttributeKind.Scope]: Scope;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
@@ -318,7 +317,7 @@ interface BaseTypeDescriptionProps {
   parameterPassDirection?: ParameterPassDirection;
   parameterPassMode?: ParameterPassMode;
   position?: StoragePosition;
-  scanMode?: ScanMode;
+  scanMode?: ast.ScanMode;
   scope: Scope;
   storage: StorageClass;
   variable?: boolean;
@@ -1193,7 +1192,7 @@ export namespace TypeDescriptions {
     [AttributeKind.Connection]: StorageConnection.Connected,
     [AttributeKind.Variable]: false,
     [AttributeKind.Scale]: ScaleMode.Fixed,
-    [AttributeKind.ScanMode]: ScanMode.NoScan,
+    [AttributeKind.ScanMode]: ast.ScanMode.NOSCAN,
     [AttributeKind.Precision]: {
       totalDigitsCount: 5,
       fractionalDigitsCount: 0,

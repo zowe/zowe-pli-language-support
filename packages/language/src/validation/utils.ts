@@ -13,6 +13,7 @@ import {
   CallStatement,
   LabelPrefix,
   ProcedureStatement,
+  SimpleOptions,
   SyntaxKind,
 } from "../syntax-tree/ast";
 
@@ -73,7 +74,7 @@ export function isMainProcedure(node: LabelPrefix): boolean {
     .filter((option) => option.kind === SyntaxKind.Options)
     .flatMap((option) => option.items)
     .filter((item) => item.kind === SyntaxKind.SimpleOptionsItem)
-    .some((item) => item.value?.toLowerCase() === "main");
+    .some((item) => item.value === SimpleOptions.MAIN);
 }
 
 /**

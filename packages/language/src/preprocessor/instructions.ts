@@ -11,6 +11,7 @@
 
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
+import { ScanMode } from "../syntax-tree/ast";
 
 export interface InstructionNode {
   labels: string[];
@@ -267,13 +268,13 @@ export function createReferenceItemInstruction(
 export interface AssignmentInstruction {
   kind: InstructionKind.Assignment;
   refs: ReferenceItemInstruction[];
-  operator: string;
+  operator: ast.AssignmentOperator;
   value: ExpressionInstruction;
 }
 
 export function createAssignmentInstruction(
   refs: ReferenceItemInstruction[],
-  operator: string,
+  operator: ast.AssignmentOperator,
   value: ExpressionInstruction,
 ): AssignmentInstruction {
   return {
@@ -320,18 +321,6 @@ export enum DeclaredType {
   Character,
   Fixed,
 }
-
-export enum ScanMode {
-  Scan, // NORESCAN is a synonym for SCAN
-  NoScan,
-  ReScan,
-}
-
-export const ScanModeAstToInstruction: Record<ast.ScanMode, ScanMode> = {
-  SCAN: ScanMode.Scan,
-  NOSCAN: ScanMode.NoScan,
-  RESCAN: ScanMode.ReScan,
-};
 
 export enum VariableVisibility {
   External,
