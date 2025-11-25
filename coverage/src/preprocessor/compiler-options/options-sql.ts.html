@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/language-server/cache/include-cache.ts</title>
+    <title>Code coverage report for src/preprocessor/compiler-options/options-sql.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../../prettify.css" />
     <link rel="stylesheet" href="../../../base.css" />
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/language-server/cache</a> include-cache.ts</h1>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/preprocessor/compiler-options</a> options-sql.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.9% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/22</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.9% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>20/22</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -101,7 +101,22 @@
 <a name='L36'></a><a href='#L36'>36</a>
 <a name='L37'></a><a href='#L37'>37</a>
 <a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -115,30 +130,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">2198x</span>
+<span class="cline-any cline-yes">2198x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -149,33 +153,35 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { CompilationUnit } from "../../workspace/compilation-unit";
 &nbsp;
-const DEFAULT_LINE_CUTOFF = 100;
+export interface CompilerOptions {
+  ccsid0?: boolean;
+  codepage?: boolean;
+  deprecate?: string[];
+  emptyDbrm?: boolean;
+  hostCopy?: boolean;
+  incOnly?: boolean;
+  line?: CompilerOptions.Line;
+  warnDecp?: boolean;
+}
 &nbsp;
-export function getFileContentPreview(
-  unit: CompilationUnit,
-  key: string,
-  document: TextDocument,
-  lineCutoff = DEFAULT_LINE_CUTOFF,
-) {
-  const partialContent = unit.services.includeCache.get(key);
-  if (partialContent) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >    return partialContent;</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
-  // load up the first (LINE_CUTOFF) lines of content from the file (semi-arbitrary cutoff)
-  const fileContent = document.getText({
-    start: { line: 0, character: 0 },
-    end: { line: lineCutoff, character: 0 },
-  });
-  const partialContentText =
-    document.getText().length &gt; fileContent.length
-      ? fileContent + "\n...\n"
-      : fileContent;
+export namespace CompilerOptions {
+  export type Line = "LINEONLY" | "LINEFILE";
+}
 &nbsp;
-  unit.services.includeCache.set(key, partialContentText);
-  return partialContentText;
+const defaultCompilerOptions: CompilerOptions = {
+  ccsid0: true,
+  codepage: false,
+  deprecate: [],
+  emptyDbrm: false,
+  hostCopy: true,
+  incOnly: false,
+  line: "LINEONLY",
+  warnDecp: false,
+};
+&nbsp;
+export function getDefaultCompilerOptions(): CompilerOptions {
+  return { ...defaultCompilerOptions };
 }
 &nbsp;</pre></td></tr></table></pre>
 
