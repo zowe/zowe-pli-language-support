@@ -449,7 +449,53 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             [this.firstAssertStatement, this.ruleAssertStatement],
             [this.firstAssignmentStatement, this.ruleAssignmentStatement],
             [this.firstAttachStatement, this.ruleAttachStatement],
-            //TODO
+            [this.firstBeginStatement, this.ruleBeginStatement],
+            [this.firstCallStatement, this.ruleCallStatement],
+            [this.firstCancelThreadStatement, this.ruleCancelThreadStatement],
+            [this.firstCloseStatement, this.ruleCloseStatement],
+            [this.firstDeclareStatement, this.ruleDeclareStatement],
+            [this.firstDefaultStatement, this.ruleDefaultStatement],
+            [this.firstDefineAliasStatement, this.ruleDefineAliasStatement],
+            [this.firstDefineOrdinalStatement, this.ruleDefineOrdinalStatement],
+            [this.firstDefineStructureStatement, this.ruleDefineStructureStatement],
+            [this.firstDelayStatement, this.ruleDelayStatement],
+            [this.firstDeleteStatement, this.ruleDeleteStatement],
+            [this.firstDetachStatement, this.ruleDetachStatement],
+            [this.firstDisplayStatement, this.ruleDisplayStatement],
+            [this.firstDoStatement, this.ruleDoStatement],
+            [this.firstEntryStatement, this.ruleEntryStatement],
+            [this.firstExecStatement, this.ruleExecStatement],
+            [this.firstExitStatement, this.ruleExitStatement],
+            [this.firstFetchStatement, this.ruleFetchStatement],
+            [this.firstFlushStatement, this.ruleFlushStatement],
+            [this.firstFormatStatement, this.ruleFormatStatement],
+            [this.firstFreeStatement, this.ruleFreeStatement],
+            [this.firstGetStatement, this.ruleGetStatement],
+            [this.firstGoToStatement, this.ruleGoToStatement],
+            [this.firstIfStatement, this.ruleIfStatement],
+            [this.firstIterateStatement, this.ruleIterateStatement],
+            [this.firstLeaveStatement, this.ruleLeaveStatement],
+            [this.firstLocateStatement, this.ruleLocateStatement],
+            [this.firstNullStatement, this.ruleNullStatement],
+            [this.firstOnStatement, this.ruleOnStatement],
+            [this.firstOpenStatement, this.ruleOpenStatement],
+            [this.firstProcincDirective, this.ruleProcincDirective], // TODO integrate into preprocessor
+            [this.firstPutStatement, this.rulePutStatement],
+            [this.firstQualifyStatement, this.ruleQualifyStatement],
+            [this.firstReadStatement, this.ruleReadStatement],
+            [this.firstReinitStatement, this.ruleReinitStatement],
+            [this.firstReleaseStatement, this.ruleReleaseStatement],
+            [this.firstResignalStatement, this.ruleResignalStatement],
+            [this.firstReturnStatement, this.ruleReturnStatement],
+            [this.firstRevertStatement, this.ruleRevertStatement],
+            [this.firstRewriteStatement, this.ruleRewriteStatement],
+            [this.firstSelectStatement, this.ruleSelectStatement],
+            [this.firstSignalStatement, this.ruleSignalStatement],
+            [this.firstStopStatement, this.ruleStopStatement],
+            [this.firstWaitStatement, this.ruleWaitStatement],
+            [this.firstWriteStatement, this.ruleWriteStatement],
+            [this.firstProcedureStatement, this.ruleProcedureStatement],
+            [this.firstPackage, this.rulePackage],
         ]);
     }
 
@@ -495,14 +541,13 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     ruleAllocateAttribute(state: ParserState): ast.AllocateAttribute {
         return state.consumeAlternatives<ast.AllocateAttribute>([
-            //TODO
             [this.firstAllocateDimension, this.ruleAllocateDimension],
             [this.firstAllocateType, this.ruleAllocateType],
             [this.firstAllocateLocationReferenceIn, this.ruleAllocateLocationReferenceIn],
-            [this.firstAllocateLocationReferenceSet, this.ruleAllocateLocationReferenceSet]
+            [this.firstAllocateLocationReferenceSet, this.ruleAllocateLocationReferenceSet],
+            [this.firstInitialAttribute, this.ruleInitialAttribute],
         ]);
     }
-
 
     firstAllocateLocationReferenceIn = [tokens.IN];
     ruleAllocateLocationReferenceIn(state: ParserState): ast.AllocateLocationReferenceIn {
@@ -702,47 +747,51 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
+    firstBeginStatement = [tokens.BEGIN];
+    ruleBeginStatement(state: ParserState): ast.BeginStatement {
+        const element: ast.BeginStatement = {
+            kind: ast.SyntaxKind.BeginStatement,
+            container: null,
+            options: null,
+            recursive: false,
+            statements: [],
+            end: null,
+            order: false,
+            reorder: false,
+        };
 
+        state.consume(element, CstNodeKind.BeginStatement_BEGIN, tokens.BEGIN);
 
+        if (state.canConsumeFirst(this.firstOptions)) {
+            element.options = this.ruleOptions(state);
+        }
 
+        if (state.tryConsume(element, CstNodeKind.BeginStatement_RECURSIVE, tokens.RECURSIVE)) {
+            element.recursive = true;
+        }
 
+        if (state.tryConsume(element, CstNodeKind.BeginStatement_ORDER, tokens.ORDER)) {
+            const orderToken = state.last;
+            if (orderToken!.image.toUpperCase() === "ORDER") {
+                element.order = true;
+            } else if (orderToken!.image.toUpperCase() === "REORDER") {
+                element.reorder = true;
+            }
+        }
 
+        state.consume(element, CstNodeKind.BeginStatement_Semicolon0, tokens.Semicolon);
 
+        while (!state.eof && !state.canConsume(tokens.END)) {
+            element.statements.push(this.ruleStatement(state));
+        }
 
+        element.end = this.ruleEndStatement(state);
+        state.consume(element, CstNodeKind.BeginStatement_Semicolon1, tokens.Semicolon);
 
-
-
-
-
-
-
-    //TODO
-    firstProcedureParameter = [tokens.ID]; //TODO check
-    ruleProcedureParameter(state: ParserState): ast.ProcedureParameter {
-        return undefined!;
+        return element;
     }
 
-    ruleExpression(state: ParserState): ast.Expression {
-        return undefined!;
-    }
-
-    ruleReturnsOption(state: ParserState): ast.ReturnsOption {
-        //TODO
-        return undefined!;
-    }
-
-    ruleCondition(state: ParserState): ast.Condition {
-        //TODO
-        return undefined!;
-    }
-
-
-
-
-
-
-
-
+    firstEndStatement = [tokens.ID, tokens.END]; // Can start with label prefixes or END directly
     ruleEndStatement(state: ParserState): ast.EndStatement {
         const element: ast.EndStatement = {
             kind: ast.SyntaxKind.EndStatement,
@@ -751,10 +800,41 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             label: null,
         };
 
-        //TODO
+        // Parse optional label prefixes
+        while (state.canConsumeFirst(this.firstLabelPrefix)) {
+            element.labels.push(this.ruleLabelPrefix(state));
+        }
+
+        state.consume(element, CstNodeKind.EndStatement_END, tokens.END);
+
+        // Optional label reference
+        if (state.canConsumeFirst(this.firstLabelReference)) {
+            element.label = this.ruleLabelReference(state);
+        }
 
         return element;
     }
+
+    firstCallStatement = [tokens.CALL];
+    ruleCallStatement(state: ParserState): ast.CallStatement {
+        const element: ast.CallStatement = {
+            kind: ast.SyntaxKind.CallStatement,
+            container: null,
+            call: null,
+        };
+        state.consume(element, CstNodeKind.CallStatement_CALL, tokens.CALL);
+        element.call = this.ruleProcedureCall(state);
+        state.consume(element, CstNodeKind.CallStatement_Semicolon, tokens.Semicolon);
+        return element;
+    }
+
+
+
+
+
+
+
+    
 }
 
 export const HandwrittenParserInstance = new HandwrittenParser();
