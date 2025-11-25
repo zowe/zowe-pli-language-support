@@ -443,9 +443,225 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
+    ruleUnit(state: ParserState): ast.Unit {
+        return state.consumeAlternatives<ast.Unit>([
+            [this.firstAllocateStatement, this.ruleAllocateStatement],
+            [this.firstAssertStatement, this.ruleAssertStatement],
+            [this.firstAssignmentStatement, this.ruleAssignmentStatement],
+            //TODO
+        ]);
+    }
+
+    firstAllocateStatement = [tokens.ALLOCATE];
+    ruleAllocateStatement(state: ParserState): ast.AllocateStatement {
+        const element: ast.AllocateStatement = {
+            kind: ast.SyntaxKind.AllocateStatement,
+            container: null,
+            variables: [],
+        };
+        state.consume(element, CstNodeKind.AllocateStatement_ALLOCATE, tokens.ALLOCATE);
+        element.variables.push(this.ruleAllocatedVariable(state));
+        while (state.tryConsume(element, CstNodeKind.AllocateStatement_Comma, tokens.Comma)) {
+            element.variables.push(this.ruleAllocatedVariable(state));
+        }
+        state.consume(element, CstNodeKind.AllocateStatement_Semicolon, tokens.Semicolon);
+        return element;
+    }
+
+    firstAllocatedVariable = [tokens.NUMBER, tokens.ID]; // NUMBER is optional, ID is required for ReferenceItem
+    ruleAllocatedVariable(state: ParserState): ast.AllocatedVariable {
+        const element: ast.AllocatedVariable = {
+            kind: ast.SyntaxKind.AllocatedVariable,
+            container: null,
+            level: null,
+            var: null,
+            attribute: null,
+        };
+
+        if (state.tryConsume(element, CstNodeKind.AllocatedVariable_LevelNumber, tokens.NUMBER)) {
+            const levelToken = state.last;
+            element.level = levelToken!.image;
+        }
+
+        element.var = this.ruleReferenceItem(state);
+
+        if (state.canConsumeFirst(this.firstAllocateAttribute)) {
+            element.attribute = this.ruleAllocateAttribute(state);
+        }
+
+        return element;
+    }
+
+    ruleAllocateAttribute(state: ParserState): ast.AllocateAttribute {
+        return state.consumeAlternatives<ast.AllocateAttribute>([
+            //TODO
+            [this.firstAllocateDimension, this.ruleAllocateDimension],
+            [this.firstAllocateType, this.ruleAllocateType],
+            [this.firstAllocateLocationReferenceIn, this.ruleAllocateLocationReferenceIn],
+            [this.firstAllocateLocationReferenceSet, this.ruleAllocateLocationReferenceSet]
+        ]);
+    }
 
 
+    firstAllocateLocationReferenceIn = [tokens.IN];
+    ruleAllocateLocationReferenceIn(state: ParserState): ast.AllocateLocationReferenceIn {
+        const element: ast.AllocateLocationReferenceIn = {
+            kind: ast.SyntaxKind.AllocateLocationReferenceIn,
+            container: null,
+            area: null,
+        };
 
+        state.consume(element, CstNodeKind.AllocateLocationReferenceIn_IN, tokens.IN);
+        state.consume(element, CstNodeKind.AllocateLocationReferenceIn_OpenParen, tokens.OpenParen);
+        element.area = this.ruleLocatorCall(state);
+        state.consume(element, CstNodeKind.AllocateLocationReferenceIn_CloseParen, tokens.CloseParen);
+
+        return element;
+    }
+
+    firstAllocateLocationReferenceSet = [tokens.SET];
+    ruleAllocateLocationReferenceSet(state: ParserState): ast.AllocateLocationReferenceSet {
+        const element: ast.AllocateLocationReferenceSet = {
+            kind: ast.SyntaxKind.AllocateLocationReferenceSet,
+            container: null,
+            locatorVariable: null,
+        };
+
+        state.consume(element, CstNodeKind.AllocateLocationReferenceSet_SET, tokens.SET);
+        state.consume(element, CstNodeKind.AllocateLocationReferenceSet_OpenParen, tokens.OpenParen);
+        element.locatorVariable = this.ruleLocatorCall(state);
+        state.consume(element, CstNodeKind.AllocateLocationReferenceSet_CloseParen, tokens.CloseParen);
+
+        return element;
+    }
+
+    firstAllocateDimension = [tokens.OpenParen];
+    ruleAllocateDimension(state: ParserState): ast.AllocateDimension {
+        const element: ast.AllocateDimension = {
+            kind: ast.SyntaxKind.AllocateDimension,
+            container: null,
+            dimensions: null,
+        };
+
+        element.dimensions = this.ruleDimensions(state);
+
+        return element;
+    }
+
+    firstAllocateType = [tokens.AllocateAttributeType];
+    ruleAllocateType(state: ParserState): ast.AllocateType {
+        const element: ast.AllocateType = {
+            kind: ast.SyntaxKind.AllocateType,
+            container: null,
+            type: null,
+            dimensions: null,
+        };
+
+        const typeToken = state.consume(element, CstNodeKind.AllocateAttributeType_Type, tokens.AllocateAttributeType)!;
+        element.type = tokens.AllocateAttributeType.mapToEnumLiteral(typeToken.tokenTypeIdx);
+
+        if (state.canConsumeFirst(this.firstDimensions)) {
+            element.dimensions = this.ruleDimensions(state);
+        }
+
+        return element;
+    }
+
+    firstAssertStatement = [tokens.ASSERT];
+    ruleAssertStatement(state: ParserState): ast.AssertStatement {
+        const element: ast.AssertStatement = {
+            kind: ast.SyntaxKind.AssertStatement,
+            container: null,
+            true: false,
+            actual: null,
+            false: false,
+            unreachable: false,
+            displayExpression: null,
+            compare: false,
+            expected: null,
+            operator: null,
+        };
+
+        state.consume(element, CstNodeKind.AssertStatement_ASSERT, tokens.ASSERT);
+
+        if (state.canConsume(tokens.Boolean)) {
+            const boolToken = state.consume(element, CstNodeKind.AssertStatement_Boolean, tokens.Boolean)!;
+            if (boolToken.image.toUpperCase() === "TRUE") {
+                element.true = true;
+            } else {
+                element.false = true;
+            }
+            state.consume(element, CstNodeKind.AssertStatement_OpenParen0, tokens.OpenParen);
+            element.actual = this.ruleExpression(state);
+            state.consume(element, CstNodeKind.AssertStatement_CloseParen0, tokens.CloseParen);
+        } else if (state.tryConsume(element, CstNodeKind.AssertStatement_COMPARE, tokens.COMPARE)) {
+            element.compare = true;
+            state.consume(element, CstNodeKind.AssertStatement_OpenParen1, tokens.OpenParen);
+            element.actual = this.ruleExpression(state);
+            state.consume(element, CstNodeKind.AssertStatement_Comma0, tokens.Comma);
+            element.expected = this.ruleExpression(state);
+            if (state.tryConsume(element, CstNodeKind.AssertStatement_Comma1, tokens.Comma)) {
+                const operatorToken = state.consume(element, CstNodeKind.AssertStatement_OperatorString, tokens.STRING_TERM)!;
+                element.operator = operatorToken.image;
+            }
+            state.consume(element, CstNodeKind.AssertStatement_CloseParen1, tokens.CloseParen);
+        } else if (state.tryConsume(element, CstNodeKind.AssertStatement_UNREACHABLE, tokens.UNREACHABLE)) {
+            element.unreachable = true;
+        } else {
+            // TODO better error message
+            throw new Error("Expected ASSERT statement variant");
+        }
+
+        if (state.tryConsume(element, CstNodeKind.AssertStatement_TEXT, tokens.TEXT)) {
+            element.displayExpression = this.ruleExpression(state);
+        }
+
+        return element;
+    }
+
+    firstAssignmentStatement = [tokens.ID]; // Assignment statements start with ID (variable reference)
+    ruleAssignmentStatement(state: ParserState): ast.AssignmentStatement {
+        const element: ast.AssignmentStatement = {
+            kind: ast.SyntaxKind.AssignmentStatement,
+            container: null,
+            refs: [],
+            operator: null,
+            expression: null,
+            dimacrossExpr: null,
+        };
+
+        // Parse left-hand side references (comma-separated)
+        element.refs.push(this.ruleLocatorCall(state));
+
+        while (state.tryConsume(element, CstNodeKind.AssignmentStatement_Comma0, tokens.Comma)) {
+            element.refs.push(this.ruleLocatorCall(state));
+        }
+
+        // Parse assignment operator
+        const operatorToken = state.consume(element, CstNodeKind.AssignmentStatement_Operator, tokens.AssignmentOperator)!;
+        element.operator = tokens.AssignmentOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx);
+
+        // Parse right-hand side expression
+        element.expression = this.ruleExpression(state);
+
+        // Optional BY clause
+        if (state.tryConsume(element, CstNodeKind.AssignmentStatement_Comma1, tokens.Comma)) {
+            state.consume(element, CstNodeKind.AssignmentStatement_BY, tokens.BY);
+
+            if (state.tryConsume(element, CstNodeKind.AssignmentStatement_NAME, tokens.NAME)) {
+                // BY NAME variant
+            } else if (state.tryConsume(element, CstNodeKind.AssignmentStatement_DIMACROSS, tokens.DIMACROSS)) {
+                // BY DIMACROSS variant
+                element.dimacrossExpr = this.ruleExpression(state);
+            } else {
+                throw new Error("Expected NAME or DIMACROSS after BY");
+            }
+        }
+
+        state.consume(element, CstNodeKind.AssignmentStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
 
 
 
@@ -478,11 +694,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
 
 
-    ruleUnit(state: ParserState): ast.Unit {
-        // TODO: Implement the actual parsing logic for Unit (OR_RULE)
-        // This should dispatch to the correct statement type based on the next token
-        return undefined!;
-    }
+
 
     ruleEndStatement(state: ParserState): ast.EndStatement {
         const element: ast.EndStatement = {
