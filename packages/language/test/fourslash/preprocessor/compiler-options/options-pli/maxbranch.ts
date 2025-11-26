@@ -28,10 +28,10 @@ verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedNumber.message("INVALID"),
+  message: code.CompilerOptions.ExpectedNumber.message(),
 });
 verify.expectDiagnosticsAt(7, {
-  message: code.CompilerOptions.ExpectedNumberRange.message(-5, 0),
+  message: code.CompilerOptions.ExpectedNumberRange.message(-5, 0, undefined),
 });
 verify.expectCompilerOptions({
   maxbranch: 2222,

@@ -24,7 +24,7 @@ verify.expectDiagnosticsAt([2, 4, 6], {
   message: code.CompilerOptions.DupeOptionIssue.message("CASE"),
 });
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Case.InvalidParameter.message("INVALID"),

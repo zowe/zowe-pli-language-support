@@ -346,7 +346,7 @@ export class TestBuilder {
       }
 
       for (const diagnostic of exactMatches) {
-        if (diagnostic.uri && diagnostic.uri.endsWith(labelFile)) {
+        if (!diagnostic.uri || diagnostic.uri.endsWith(labelFile)) {
           continue;
         }
 

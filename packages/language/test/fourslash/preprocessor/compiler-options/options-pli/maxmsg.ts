@@ -28,7 +28,7 @@ verify.expectDiagnosticsAt([2, 4, 6, 8, 10, 12, 14], {
   message: code.CompilerOptions.DupeOptionIssue.message("MAXMSG"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedNumber.message("INVALID"),
+  message: code.CompilerOptions.ExpectedNumber.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.ExpectedNumberRange.message(-5, 0, 32767),
