@@ -281,6 +281,8 @@ export const CharOrBinary =
   registerCombination<ast.CharOrBinary>("CharOrBinary");
 export const TypeOrOrdinal =
   registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
+export const BinaryType =
+  registerCombination<ast.SqlAttributeBinaryType>("BinaryType");
 export const LOB = registerCombination<ast.LOB>("LOB");
 export const LOBLocator = registerCombination<ast.LOBLocator>("LOBLocator");
 export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
@@ -985,10 +987,12 @@ export const BINARY = registerKeyword({
   categories: [
     [DefaultAttribute, ast.DefaultAttribute.BINARY],
     [CharOrBinary, ast.CharOrBinary.BINARY],
+    [BinaryType, ast.SqlAttributeBinaryType.BINARY],
   ],
 });
 export const VARBINARY = registerKeyword({
   name: "VARBINARY",
+  categories: [[BinaryType, ast.SqlAttributeBinaryType.VARBINARY]],
 });
 export const BIN = registerKeyword({
   name: "BIN",
