@@ -59,7 +59,7 @@ export interface ParametricPLICode {
   message: (...args: any[]) => string;
 }
 
-export function isPLICode(code: any): code is PLICode {
+export function isPLICode(code: unknown): code is PLICode {
   return (
     typeof code === "object" &&
     code !== null &&
@@ -67,6 +67,14 @@ export function isPLICode(code: any): code is PLICode {
     "severity" in code &&
     "message" in code
   );
+}
+
+export function isParametricPLICode(code: unknown): code is ParametricPLICode {
+  return isPLICode(code) && typeof code.message === "function";
+}
+
+export function isSimplePLICode(code: unknown): code is SimplePLICode {
+  return isPLICode(code) && typeof code.message === "string";
 }
 
 export const Info = {
