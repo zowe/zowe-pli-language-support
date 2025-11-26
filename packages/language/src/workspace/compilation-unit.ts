@@ -42,7 +42,7 @@ import {
 } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { Mutex } from "./mutex.js";
-import { isOperationCancelled } from "../utils/promises.js";
+import { Deferred, isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "./file-store.js";
@@ -189,6 +189,7 @@ export async function createCompilationUnit(
 export class CompilationUnitHandler {
   private compilationUnits: Map<string, CompilationUnit> = new Map();
   private connection!: Connection;
+  private ready = new Deferred();
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {
     return this.compilationUnits.get(uri.toString());
@@ -239,7 +240,20 @@ export class CompilationUnitHandler {
     return Array.from(new Set(this.compilationUnits.values()));
   }
 
+  /**
+   * Marks the compilation unit handler as ready to process updates.
+   * **Must** be called if `listen` has been called previously.
+   */
+  finalize(): void {
+    this.ready.resolve();
+  }
+
   listen(connection: Connection): void {
+    // Before we start listening, we need to set up the mutex
+    // to prevent compilation unit updates before we're ready.
+    Mutex.run(async () => {
+      await this.ready.promise;
+    });
     this.connection = connection;
     const textDocuments = EditorDocuments;
     textDocuments.listen(connection);
