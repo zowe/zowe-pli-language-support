@@ -1313,11 +1313,372 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
+    defineStructureStatement = rule(
+        sequence(tokens.DEFINE, tokens.STRUCTURE),
+        (state: ParserState): ast.DefineStructureStatement => {
+            const element: ast.DefineStructureStatement = {
+                kind: ast.SyntaxKind.DefineStructureStatement,
+                container: null,
+                xDefine: false,
+                items: [],
+            };
+
+            const defineToken = state.consume(element, CstNodeKind.DefineStructureStatement_DEFINE, tokens.DEFINE);
+            if (defineToken?.image.charAt(0).toUpperCase() === "X") {
+                element.xDefine = true;
+            }
+
+            state.consume(element, CstNodeKind.DefineStructureStatement_STRUCTURE, tokens.STRUCTURE);
+
+            element.items.push(this.declaredItem.rule(state));
+
+            while (state.tryConsume(element, CstNodeKind.DefineStructureStatement_Comma, tokens.Comma)) {
+                element.items.push(this.declaredItem.rule(state));
+            }
+
+            state.consume(element, CstNodeKind.DefineStructureStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    delayStatement = rule(
+        sequence(tokens.DELAY),
+        (state: ParserState): ast.DelayStatement => {
+            const element: ast.DelayStatement = {
+                kind: ast.SyntaxKind.DelayStatement,
+                container: null,
+                delay: null,
+            };
+
+            state.consume(element, CstNodeKind.DelayStatement_DELAY, tokens.DELAY);
+            state.consume(element, CstNodeKind.DelayStatement_OpenParen, tokens.OpenParen);
+            element.delay = this.expression.rule(state);
+            state.consume(element, CstNodeKind.DelayStatement_CloseParen, tokens.CloseParen);
+            state.consume(element, CstNodeKind.DelayStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    deleteStatement = rule(
+        sequence(tokens.DELETE),
+        (state: ParserState): ast.DeleteStatement => {
+            const element: ast.DeleteStatement = {
+                kind: ast.SyntaxKind.DeleteStatement,
+                container: null,
+                file: null,
+                key: null,
+            };
+
+            state.consume(element, CstNodeKind.DeleteStatement_DELETE, tokens.DELETE);
+            state.consume(element, CstNodeKind.DeleteStatement_FILE, tokens.FILE);
+            state.consume(element, CstNodeKind.DeleteStatement_OpenParenFile, tokens.OpenParen);
+            element.file = this.locatorCall.rule(state);
+            state.consume(element, CstNodeKind.DeleteStatement_CloseParenFile, tokens.CloseParen);
+
+            // Optional KEY clause
+            if (state.tryConsume(element, CstNodeKind.DeleteStatement_KEY, tokens.KEY)) {
+                state.consume(element, CstNodeKind.DeleteStatement_OpenParenKey, tokens.OpenParen);
+                element.key = this.expression.rule(state);
+                state.consume(element, CstNodeKind.DeleteStatement_CloseParenKey, tokens.CloseParen);
+            }
+
+            state.consume(element, CstNodeKind.DeleteStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    detachStatement = rule(
+        sequence(tokens.DETACH),
+        (state: ParserState): ast.DetachStatement => {
+            const element: ast.DetachStatement = {
+                kind: ast.SyntaxKind.DetachStatement,
+                container: null,
+                reference: null,
+            };
+
+            state.consume(element, CstNodeKind.DetachStatement_DETACH, tokens.DETACH);
+            state.consume(element, CstNodeKind.DetachStatement_THREAD, tokens.THREAD);
+            state.consume(element, CstNodeKind.DetachStatement_OpenParen, tokens.OpenParen);
+            element.reference = this.locatorCall.rule(state);
+            state.consume(element, CstNodeKind.DetachStatement_CloseParen, tokens.CloseParen);
+            state.consume(element, CstNodeKind.DetachStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    displayStatement = rule(
+        sequence(tokens.DISPLAY),
+        (state: ParserState): ast.DisplayStatement => {
+            const element: ast.DisplayStatement = {
+                kind: ast.SyntaxKind.DisplayStatement,
+                container: null,
+                expression: null,
+                reply: null,
+                rout: [],
+                desc: [],
+            };
+
+            state.consume(element, CstNodeKind.DisplayStatement_DISPLAY, tokens.DISPLAY);
+            state.consume(element, CstNodeKind.DisplayStatement_OpenParenExpression, tokens.OpenParen);
+            element.expression = this.expression.rule(state);
+            state.consume(element, CstNodeKind.DisplayStatement_CloseParenExpression, tokens.CloseParen);
+
+            // Optional REPLY clause
+            if (state.tryConsume(element, CstNodeKind.DisplayStatement_REPLY, tokens.REPLY)) {
+                state.consume(element, CstNodeKind.DisplayStatement_OpenParenReply, tokens.OpenParen);
+                element.reply = this.locatorCall.rule(state);
+                state.consume(element, CstNodeKind.DisplayStatement_CloseParenReply, tokens.CloseParen);
+            }
+
+            // Optional ROUTCDE clause
+            if (state.tryConsume(element, CstNodeKind.DisplayStatement_ROUTCDE, tokens.ROUTCDE)) {
+                state.consume(element, CstNodeKind.DisplayStatement_OpenParenRout, tokens.OpenParen);
+
+                const routToken = state.consume(element, CstNodeKind.DisplayStatement_RoutNumber0, tokens.NUMBER);
+                if (routToken) {
+                    element.rout.push(routToken.image);
+                }
+
+                while (state.tryConsume(element, CstNodeKind.DisplayStatement_CommaRout, tokens.Comma)) {
+                    const nextRoutToken = state.consume(element, CstNodeKind.DisplayStatement_RoutNumber1, tokens.NUMBER);
+                    if (nextRoutToken) {
+                        element.rout.push(nextRoutToken.image);
+                    }
+                }
+
+                state.consume(element, CstNodeKind.DisplayStatement_CloseParenRout, tokens.CloseParen);
+
+                // Optional DESC clause (only if ROUTCDE is present)
+                if (state.tryConsume(element, CstNodeKind.DisplayStatement_DESC, tokens.DESC)) {
+                    state.consume(element, CstNodeKind.DisplayStatement_OpenParenDesc, tokens.OpenParen);
+
+                    const descToken = state.consume(element, CstNodeKind.DisplayStatement_DescNumber0, tokens.NUMBER);
+                    if (descToken) {
+                        element.desc.push(descToken.image);
+                    }
+
+                    while (state.tryConsume(element, CstNodeKind.DisplayStatement_CommaDesc, tokens.Comma)) {
+                        const nextDescToken = state.consume(element, CstNodeKind.DisplayStatement_DescNumber1, tokens.NUMBER);
+                        if (nextDescToken) {
+                            element.desc.push(nextDescToken.image);
+                        }
+                    }
+
+                    state.consume(element, CstNodeKind.DisplayStatement_CloseParenDesc, tokens.CloseParen);
+                }
+            }
+
+            state.consume(element, CstNodeKind.DisplayStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+doStatement = rule(
+    sequence(tokens.DO),
+    (state: ParserState): ast.DoStatement => {
+        const element: ast.DoStatement = {
+            kind: ast.SyntaxKind.DoStatement,
+            container: null,
+            doToken: null,
+            doType2: null,
+            doType3: null,
+            doType4: false,
+            statements: [],
+            end: null,
+            skip: false,
+        };
+
+        const doToken = state.consume(element, CstNodeKind.DoStatement_DO, tokens.DO);
+        element.doToken = doToken;
+
+        // Optional DO type specification
+        if (state.canConsumeFirst(this.doType2.first) || state.canConsumeFirst(this.doType3.first) || state.canConsume(tokens.LOOP)) {
+            if (state.canConsumeFirst(this.doType2.first)) {
+                element.doType2 = this.doType2.rule(state);
+            } else if (state.canConsumeFirst(this.doType3.first)) {
+                element.doType3 = this.doType3.rule(state);
+            } else if (state.tryConsume(element, CstNodeKind.DoStatement_LOOP, tokens.LOOP)) {
+                element.doType4 = true;
+            }
+        }
+
+        state.consume(element, CstNodeKind.DoStatement_Semicolon0, tokens.Semicolon);
+
+        // Parse statements until END
+        while (!state.eof && !state.canConsume(tokens.END)) {
+            const statement = this.statement.rule(state);
+            element.statements.push(statement);
+        }
+
+        element.end = this.endStatement.rule(state);
+        state.consume(element, CstNodeKind.DoStatement_Semicolon1, tokens.Semicolon);
+
+        return element;
+    }
+);
+
+doType2 = orRule<ast.DoType2>(
+    () => this.doWhile,
+    () => this.doUntil,
+);
+
+doWhile = rule(
+    sequence(tokens.WHILE),
+    (state: ParserState): ast.DoWhile => {
+        const element: ast.DoWhile = {
+            kind: ast.SyntaxKind.DoWhile,
+            container: null,
+            while: null,
+            until: null,
+        };
+
+        state.consume(element, CstNodeKind.DoWhile_WHILE, tokens.WHILE);
+        state.consume(element, CstNodeKind.DoWhile_OpenParenWhile, tokens.OpenParen);
+        element.while = this.expression.rule(state);
+        state.consume(element, CstNodeKind.DoWhile_CloseParenWhile, tokens.CloseParen);
+
+        // Optional UNTIL clause
+        if (state.tryConsume(element, CstNodeKind.DoWhile_UNTIL, tokens.UNTIL)) {
+            state.consume(element, CstNodeKind.DoWhile_OpenParenUntil, tokens.OpenParen);
+            element.until = this.expression.rule(state);
+            state.consume(element, CstNodeKind.DoWhile_CloseParenUntil, tokens.CloseParen);
+        }
+
+        return element;
+    }
+);
+
+doUntil = rule(
+    sequence(tokens.UNTIL),
+    (state: ParserState): ast.DoUntil => {
+        const element: ast.DoUntil = {
+            kind: ast.SyntaxKind.DoUntil,
+            container: null,
+            until: null,
+            while: null,
+        };
+
+        state.consume(element, CstNodeKind.DoUntil_UNTIL, tokens.UNTIL);
+        state.consume(element, CstNodeKind.DoUntil_OpenParenUntil, tokens.OpenParen);
+        element.until = this.expression.rule(state);
+        state.consume(element, CstNodeKind.DoUntil_CloseParenUntil, tokens.CloseParen);
+
+        // Optional WHILE clause
+        if (state.tryConsume(element, CstNodeKind.DoUntil_WHILE, tokens.WHILE)) {
+            state.consume(element, CstNodeKind.DoUntil_OpenParenWhile, tokens.OpenParen);
+            element.while = this.expression.rule(state);
+            state.consume(element, CstNodeKind.DoUntil_CloseParenWhile, tokens.CloseParen);
+        }
+
+        return element;
+    }
+);
+
+doType3 = rule(
+    () => this.memberCall.first,
+    (state: ParserState): ast.DoType3 => {
+        const element: ast.DoType3 = {
+            kind: ast.SyntaxKind.DoType3,
+            container: null,
+            variable: null,
+            specifications: [],
+        };
+
+        element.variable = this.memberCall.rule(state);
+        state.consume(element, CstNodeKind.DoType3_Equals, tokens.Equals);
+
+        element.specifications.push(this.doSpecification.rule(state));
+
+        while (state.tryConsume(element, CstNodeKind.DoType3_Comma, tokens.Comma)) {
+            element.specifications.push(this.doSpecification.rule(state));
+        }
+
+        return element;
+    }
+);
+
+doSpecification = rule(
+    () => this.expression.first,
+    (state: ParserState): ast.DoSpecification => {
+        const element: ast.DoSpecification = {
+            kind: ast.SyntaxKind.DoSpecification,
+            container: null,
+            expression: null,
+            upthru: null,
+            downthru: null,
+            repeat: null,
+            whileOrUntil: null,
+            to: null,
+            by: null,
+        };
+
+        element.expression = this.expression.rule(state);
+
+        // Optional TO/BY/UPTHRU/DOWNTHRU/REPEAT clause
+        if (state.canConsume(tokens.TO) || state.canConsume(tokens.BY) || 
+            state.canConsume(tokens.UPTHRU) || state.canConsume(tokens.DOWNTHRU) || 
+            state.canConsume(tokens.REPEAT)) {
+            
+            if (state.canConsume(tokens.TO)) {
+                state.consume(element, CstNodeKind.DoSpecification_TO0, tokens.TO);
+                element.to = this.expression.rule(state);
+                
+                if (state.tryConsume(element, CstNodeKind.DoSpecification_BY0, tokens.BY)) {
+                    element.by = this.expression.rule(state);
+                }
+            } else if (state.canConsume(tokens.BY)) {
+                state.consume(element, CstNodeKind.DoSpecification_BY1, tokens.BY);
+                element.by = this.expression.rule(state);
+                
+                if (state.tryConsume(element, CstNodeKind.DoSpecification_TO1, tokens.TO)) {
+                    element.to = this.expression.rule(state);
+                }
+            } else if (state.tryConsume(element, CstNodeKind.DoSpecification_UPTHRU, tokens.UPTHRU)) {
+                element.upthru = this.expression.rule(state);
+            } else if (state.tryConsume(element, CstNodeKind.DoSpecification_DOWNTHRU, tokens.DOWNTHRU)) {
+                element.downthru = this.expression.rule(state);
+            } else if (state.tryConsume(element, CstNodeKind.DoSpecification_REPEAT, tokens.REPEAT)) {
+                element.repeat = this.expression.rule(state);
+            }
+        }
+
+        // Optional WHILE or UNTIL clause
+        if (state.canConsumeFirst(this.doWhile.first) || state.canConsumeFirst(this.doUntil.first)) {
+            if (state.canConsumeFirst(this.doWhile.first)) {
+                element.whileOrUntil = this.doWhile.rule(state);
+            } else {
+                element.whileOrUntil = this.doUntil.rule(state);
+            }
+        }
+
+        return element;
+    }
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+);
 
 
 
