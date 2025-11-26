@@ -22,6 +22,7 @@ import { typeCheckDeclareStatement } from "./type-check-validator";
 import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
 import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
+import { IBM1352IE_declared_item_pli_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -32,21 +33,22 @@ import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3
  */
 export function registerPliValidationChecks(): ValidationChecks {
   return {
+    CallStatement: [IBM3323I_IBM3324I_check_argument_count],
+    DeclaredItem: [IBM1352IE_declared_item_pli_scan_repetition],
+    DeclareStatement: [
+      IBM1376IE_attributes_in_declaration_lists,
+      typeCheckDeclareStatement,
+    ],
+    DoStatement: [IBM2615I_do_loops_execute_once],
     Exports: [IBM1324IE_name_occurs_more_than_once_within_exports_clause],
+    LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     // TODO @montymxb Mar. 27th, 2025: Needs to have a way to readily access the containing 'document' (SourceFile) to compare the offsets (see def)
     // MemberCall: [IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned],
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
     ],
-    CallStatement: [IBM3323I_IBM3324I_check_argument_count],
-    DeclareStatement: [
-      IBM1376IE_attributes_in_declaration_lists,
-      typeCheckDeclareStatement,
-    ],
     ReferenceItem: [checkImplicitBuiltins],
-    DoStatement: [IBM2615I_do_loops_execute_once],
-    LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     SelectStatement: [IBM1059I_select_without_otherwise],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
   };
