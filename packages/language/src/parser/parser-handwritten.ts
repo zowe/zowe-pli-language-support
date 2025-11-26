@@ -19,8 +19,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return this.rulePliProgram(state);
     }
 
-
-
     rulePliProgram(state: ParserState): ast.Program {
         const program: ast.Program = {
             kind: ast.SyntaxKind.Program,
@@ -108,12 +106,14 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             container: null,
             reference: null,
         };
-        const token = state.consume(element, CstNodeKind.Exports_Procedure, tokens.ID)!;
-        element.reference = ast.createReference(
-            element,
-            token,
-            ast.ReferenceType.Variable,
-        );
+        const token = state.consume(element, CstNodeKind.Exports_Procedure, tokens.ID);
+        if(token) {
+            element.reference = ast.createReference(
+                element,
+                token,
+                ast.ReferenceType.Variable,
+            );
+        }
         return element;
     }
 
@@ -157,11 +157,15 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         if (state.tryConsume(element, CstNodeKind.Reserves_AllStar, tokens.Star)) {
             element.all = true;
         } else {
-            const varToken = state.consume(element, CstNodeKind.Reserves_Variables0, tokens.ID)!;
-            element.variables.push(varToken.image);
+            const varToken = state.consume(element, CstNodeKind.Reserves_Variables0, tokens.ID);
+            if (varToken) {
+                element.variables.push(varToken.image);
+            }
             while (state.tryConsume(element, CstNodeKind.Reserves_Comma, tokens.Comma)) {
-                const nextVarToken = state.consume(element, CstNodeKind.Reserves_Variables1, tokens.ID)!;
-                element.variables.push(nextVarToken.image);
+                const nextVarToken = state.consume(element, CstNodeKind.Reserves_Variables1, tokens.ID);
+                if (nextVarToken) {
+                    element.variables.push(nextVarToken.image);
+                }
             }
         }
 
@@ -603,8 +607,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             dimensions: null,
         };
 
-        const typeToken = state.consume(element, CstNodeKind.AllocateAttributeType_Type, tokens.AllocateAttributeType)!;
-        element.type = tokens.AllocateAttributeType.mapToEnumLiteral(typeToken.tokenTypeIdx);
+        const typeToken = state.consume(element, CstNodeKind.AllocateAttributeType_Type, tokens.AllocateAttributeType);
+        if (typeToken) {
+            element.type = tokens.AllocateAttributeType.mapToEnumLiteral(typeToken.tokenTypeIdx);
+        }
 
         if (state.canConsumeFirst(this.firstDimensions)) {
             element.dimensions = this.ruleDimensions(state);
@@ -631,11 +637,13 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         state.consume(element, CstNodeKind.AssertStatement_ASSERT, tokens.ASSERT);
 
         if (state.canConsume(tokens.Boolean)) {
-            const boolToken = state.consume(element, CstNodeKind.AssertStatement_Boolean, tokens.Boolean)!;
-            if (boolToken.image.toUpperCase() === "TRUE") {
-                element.true = true;
-            } else {
-                element.false = true;
+            const boolToken = state.consume(element, CstNodeKind.AssertStatement_Boolean, tokens.Boolean);
+            if (boolToken) {
+                if (boolToken.image.toUpperCase() === "TRUE") {
+                    element.true = true;
+                } else {
+                    element.false = true;
+                }
             }
             state.consume(element, CstNodeKind.AssertStatement_OpenParen0, tokens.OpenParen);
             element.actual = this.ruleExpression(state);
@@ -647,8 +655,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.AssertStatement_Comma0, tokens.Comma);
             element.expected = this.ruleExpression(state);
             if (state.tryConsume(element, CstNodeKind.AssertStatement_Comma1, tokens.Comma)) {
-                const operatorToken = state.consume(element, CstNodeKind.AssertStatement_OperatorString, tokens.STRING_TERM)!;
-                element.operator = operatorToken.image;
+                const operatorToken = state.consume(element, CstNodeKind.AssertStatement_OperatorString, tokens.STRING_TERM);
+                if(operatorToken) {
+                    element.operator = operatorToken.image;
+                }
             }
             state.consume(element, CstNodeKind.AssertStatement_CloseParen1, tokens.CloseParen);
         } else if (state.tryConsume(element, CstNodeKind.AssertStatement_UNREACHABLE, tokens.UNREACHABLE)) {
@@ -684,8 +694,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
 
         // Parse assignment operator
-        const operatorToken = state.consume(element, CstNodeKind.AssignmentStatement_Operator, tokens.AssignmentOperator)!;
-        element.operator = tokens.AssignmentOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx);
+        const operatorToken = state.consume(element, CstNodeKind.AssignmentStatement_Operator, tokens.AssignmentOperator);
+        if (operatorToken) {
+            element.operator = tokens.AssignmentOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx);
+        }
 
         // Parse right-hand side expression
         element.expression = this.ruleExpression(state);
@@ -978,8 +990,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
         // Parse first identifier (Star or DefaultRangeIdentifierItem)
         if (state.canConsume(tokens.Star)) {
-            const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star0, tokens.Star)!;
-            element.identifiers.push(starToken.image as "*");
+            const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star0, tokens.Star);
+            if (starToken) {
+                element.identifiers.push(starToken.image as "*");
+            }
         } else {
             element.identifiers.push(this.ruleDefaultRangeIdentifierItem(state));
         }
@@ -987,8 +1001,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         // Parse additional comma-separated identifiers
         while (state.tryConsume(element, CstNodeKind.DefaultRangeIdentifiers_Comma, tokens.Comma)) {
             if (state.canConsume(tokens.Star)) {
-                const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star1, tokens.Star)!;
-                element.identifiers.push(starToken.image as "*");
+                const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star1, tokens.Star);
+                if (starToken) {
+                    element.identifiers.push(starToken.image as "*");
+                }
             } else {
                 element.identifiers.push(this.ruleDefaultRangeIdentifierItem(state));
             }
@@ -1006,12 +1022,16 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             to: null,
         };
 
-        const fromToken = state.consume(element, CstNodeKind.DefaultRangeIdentifierItem_FromID, tokens.ID)!;
-        element.from = fromToken.image;
+        const fromToken = state.consume(element, CstNodeKind.DefaultRangeIdentifierItem_FromID, tokens.ID);
+        if(fromToken) {
+            element.from = fromToken.image;
+        }
 
         if (state.tryConsume(element, CstNodeKind.DefaultRangeIdentifierItem_Colon, tokens.Colon)) {
-            const toToken = state.consume(element, CstNodeKind.DefaultRangeIdentifierItem_ToID, tokens.ID)!;
-            element.to = toToken.image;
+            const toToken = state.consume(element, CstNodeKind.DefaultRangeIdentifierItem_ToID, tokens.ID);
+            if(toToken) {
+                element.to = toToken.image;
+            }
         }
 
         return element;
@@ -1031,8 +1051,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
         // Parse optional binary operator and second operand
         if (state.canConsume(tokens.DefaultAttributeBinaryOperator)) {
-            const operatorToken = state.consume(element, CstNodeKind.DefaultAttributeExpression_Operators, tokens.DefaultAttributeBinaryOperator)!;
-            element.operators.push(tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx));
+            const operatorToken = state.consume(element, CstNodeKind.DefaultAttributeExpression_Operators, tokens.DefaultAttributeBinaryOperator);
+            if (operatorToken) {
+                element.operators.push(tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx));
+            }
             element.items.push(this.ruleDefaultAttributeExpressionNot(state));
         }
 
@@ -1052,8 +1074,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.not = true;
         }
 
-        const attributeToken = state.consume(element, CstNodeKind.DefaultAttribute_Value, tokens.DefaultAttribute)!;
-        element.value = tokens.DefaultAttribute.mapToEnumLiteral(attributeToken.tokenTypeIdx);
+        const attributeToken = state.consume(element, CstNodeKind.DefaultAttribute_Value, tokens.DefaultAttribute);
+        if (attributeToken) {
+            element.value = tokens.DefaultAttribute.mapToEnumLiteral(attributeToken.tokenTypeIdx);
+        }
 
         return element;
     }
