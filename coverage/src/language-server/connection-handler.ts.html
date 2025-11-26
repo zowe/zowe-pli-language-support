@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.54% </span>
+                <span class="strong">7.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>24/318</span>
+                <span class='fraction'>24/327</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.54% </span>
+                <span class="strong">7.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>24/318</span>
+                <span class='fraction'>24/327</span>
             </div>
         
             
@@ -430,7 +430,16 @@
 <a name='L365'></a><a href='#L365'>365</a>
 <a name='L366'></a><a href='#L366'>366</a>
 <a name='L367'></a><a href='#L367'>367</a>
-<a name='L368'></a><a href='#L368'>368</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -453,6 +462,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -487,10 +497,12 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -503,7 +515,13 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -824,6 +842,7 @@ import {
   Diagnostic,
   Location,
   TextEdit,
+  WorkspaceFolder,
 } from "vscode-languageserver-types";
 import {
   completionItemToLSP,
@@ -854,22 +873,11 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export <span class="fstat-no" title="function not covered" >function startLanguageServer(connection: Connection): void {</span>
 <span class="cstat-no" title="statement not covered" >  const compilationUnitHandler = new CompilationUnitHandler();</span>
 <span class="cstat-no" title="statement not covered" >  compilationUnitHandler.listen(connection);</span>
+<span class="cstat-no" title="statement not covered" >  let folders: WorkspaceFolder[] = [];</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  connection.onInitialize(async (params) =&gt; {</span>
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
-    // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
-<span class="cstat-no" title="statement not covered" >    for (const folder of params.workspaceFolders?.reverse() ?? []) {</span>
-<span class="cstat-no" title="statement not covered" >      PluginConfigurationProviderInstance.init(folder.uri).then(</span>
-<span class="cstat-no" title="statement not covered" >        (diagnostics) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >          const ws = PluginConfigurationProviderInstance.getWorkspacePath();</span>
-<span class="cstat-no" title="statement not covered" >          const wsPrefix = ws.endsWith("/") ? ws : ws + "/";</span>
-<span class="cstat-no" title="statement not covered" >          connection.sendDiagnostics({</span>
-<span class="cstat-no" title="statement not covered" >            uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,</span>
-<span class="cstat-no" title="statement not covered" >            diagnostics,</span>
-<span class="cstat-no" title="statement not covered" >          });</span>
-<span class="cstat-no" title="statement not covered" >        },</span>
-<span class="cstat-no" title="statement not covered" >      );</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    folders = params.workspaceFolders?.reverse() ?? [];</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>
 <span class="cstat-no" title="statement not covered" >      capabilities: {</span>
@@ -912,6 +920,25 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >        },</span>
 <span class="cstat-no" title="statement not covered" >      },</span>
 <span class="cstat-no" title="statement not covered" >    };</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >  connection.onInitialized(async () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    const promises: Promise&lt;void&gt;[] = [];</span>
+<span class="cstat-no" title="statement not covered" >    for (const folder of folders) {</span>
+<span class="cstat-no" title="statement not covered" >      promises.push(</span>
+<span class="cstat-no" title="statement not covered" >        PluginConfigurationProviderInstance.init(folder.uri).then(</span>
+<span class="cstat-no" title="statement not covered" >          (diagnostics) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >            const ws = PluginConfigurationProviderInstance.getWorkspacePath();</span>
+<span class="cstat-no" title="statement not covered" >            const wsPrefix = ws.endsWith("/") ? ws : ws + "/";</span>
+<span class="cstat-no" title="statement not covered" >            connection.sendDiagnostics({</span>
+<span class="cstat-no" title="statement not covered" >              uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,</span>
+<span class="cstat-no" title="statement not covered" >              diagnostics,</span>
+<span class="cstat-no" title="statement not covered" >            });</span>
+<span class="cstat-no" title="statement not covered" >          },</span>
+<span class="cstat-no" title="statement not covered" >        ),</span>
+<span class="cstat-no" title="statement not covered" >      );</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    await Promise.all(promises);</span>
+<span class="cstat-no" title="statement not covered" >    compilationUnitHandler.finalize();</span>
 <span class="cstat-no" title="statement not covered" >  });</span>
 <span class="cstat-no" title="statement not covered" >  connection.onHover(async (params) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    return Mutex.read(async () =&gt; {</span>
@@ -1171,7 +1198,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-26T08:16:36.815Z
+                at 2025-11-26T12:10:26.527Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
