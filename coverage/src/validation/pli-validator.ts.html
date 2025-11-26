@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">34.25% </span>
+                <span class="strong">35.45% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>37/108</span>
+                <span class='fraction'>39/110</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">34.25% </span>
+                <span class="strong">35.45% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>37/108</span>
+                <span class='fraction'>39/110</span>
             </div>
         
             
@@ -320,7 +320,9 @@
 <a name='L255'></a><a href='#L255'>255</a>
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
-<a name='L258'></a><a href='#L258'>258</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -339,6 +341,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -355,15 +358,16 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-yes">13x</span>
@@ -601,6 +605,7 @@ import { typeCheckDeclareStatement } from "./type-check-validator";
 import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
 import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
+import { IBM1352IE_declared_item_pli_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
 &nbsp;
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -611,21 +616,22 @@ import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3
  */
 export function registerPliValidationChecks(): ValidationChecks {
   return {
+    CallStatement: [IBM3323I_IBM3324I_check_argument_count],
+    DeclaredItem: [IBM1352IE_declared_item_pli_scan_repetition],
+    DeclareStatement: [
+      IBM1376IE_attributes_in_declaration_lists,
+      typeCheckDeclareStatement,
+    ],
+    DoStatement: [IBM2615I_do_loops_execute_once],
     Exports: [IBM1324IE_name_occurs_more_than_once_within_exports_clause],
+    LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     // TODO @montymxb Mar. 27th, 2025: Needs to have a way to readily access the containing 'document' (SourceFile) to compare the offsets (see def)
     // MemberCall: [IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned],
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
     ],
-    CallStatement: [IBM3323I_IBM3324I_check_argument_count],
-    DeclareStatement: [
-      IBM1376IE_attributes_in_declaration_lists,
-      typeCheckDeclareStatement,
-    ],
     ReferenceItem: [checkImplicitBuiltins],
-    DoStatement: [IBM2615I_do_loops_execute_once],
-    LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     SelectStatement: [IBM1059I_select_without_otherwise],
     // TODO @wagner-laranjeiras -&gt; When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
   };
@@ -841,7 +847,7 @@ export class PliValidator {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-25T16:38:53.496Z
+                at 2025-11-26T08:14:23.119Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
