@@ -1143,6 +1143,21 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
+    firstOrdinalValueList = () => this.firstOrdinalValue;
+    ruleOrdinalValueList(state: ParserState): ast.OrdinalValueList {
+        const element: ast.OrdinalValueList = {
+            kind: ast.SyntaxKind.OrdinalValueList,
+            container: null,
+            members: [],
+        };
+
+        element.members.push(this.ruleOrdinalValue(state));
+        while (state.tryConsume(element, CstNodeKind.OrdinalValueList_Comma, tokens.Comma)) {
+            element.members.push(this.ruleOrdinalValue(state));
+        }
+
+        return element;
+    }
 }
 
 export const HandwrittenParserInstance = new HandwrittenParser();
