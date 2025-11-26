@@ -828,13 +828,321 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         return element;
     }
 
+    firstCancelThreadStatement = [tokens.CANCEL];
+    ruleCancelThreadStatement(state: ParserState): ast.CancelThreadStatement {
+        const element: ast.CancelThreadStatement = {
+            kind: ast.SyntaxKind.CancelThreadStatement,
+            container: null,
+            thread: null,
+        };
 
+        state.consume(element, CstNodeKind.CancelThreadStatement_CANCEL, tokens.CANCEL);
+        state.consume(element, CstNodeKind.CancelThreadStatement_THREAD, tokens.THREAD);
+        state.consume(element, CstNodeKind.CancelThreadStatement_OpenParen, tokens.OpenParen);
+        element.thread = this.ruleLocatorCall(state);
+        state.consume(element, CstNodeKind.CancelThreadStatement_CloseParen, tokens.CloseParen);
+        state.consume(element, CstNodeKind.CancelThreadStatement_Semicolon, tokens.Semicolon);
 
+        return element;
+    }
 
+    firstCloseStatement = [tokens.CLOSE];
+    ruleCloseStatement(state: ParserState): ast.CloseStatement {
+        const element: ast.CloseStatement = {
+            kind: ast.SyntaxKind.CloseStatement,
+            container: null,
+            files: [],
+        };
 
+        state.consume(element, CstNodeKind.CloseStatement_CLOSE, tokens.CLOSE);
+        state.consume(element, CstNodeKind.CloseStatement_FILE0, tokens.FILE);
+        state.consume(element, CstNodeKind.CloseStatement_OpenParen0, tokens.OpenParen);
+        
+        // First file - either MemberCall or Star
+        if (state.canConsumeFirst(this.firstMemberCall)) {
+            element.files.push(this.ruleMemberCall(state));
+        } else if (state.tryConsume(element, CstNodeKind.CloseStatement_FilesStar0, tokens.Star)) {
+            const starToken = state.last;
+            element.files.push(starToken!.image as "*");
+        } else {
+            //TODO better error message
+            throw new Error("Expected file reference or '*' in CLOSE statement");
+        }
+        
+        state.consume(element, CstNodeKind.CloseStatement_CloseParen0, tokens.CloseParen);
 
+        // Additional files (can have optional commas)
+        while (state.canConsume(tokens.FILE) || state.canConsume(tokens.Comma)) {
+            // Optional comma before additional file
+            state.tryConsume(element, CstNodeKind.CloseStatement_Comma, tokens.Comma);
+            
+            state.consume(element, CstNodeKind.CloseStatement_FILE1, tokens.FILE);
+            state.consume(element, CstNodeKind.CloseStatement_OpenParen, tokens.OpenParen);
+            
+            // File reference - either MemberCall or Star
+            if (state.canConsumeFirst(this.firstMemberCall)) {
+                element.files.push(this.ruleMemberCall(state));
+            } else if (state.tryConsume(element, CstNodeKind.CloseStatement_FilesStar1, tokens.Star)) {
+                const starToken = state.last;
+                element.files.push(starToken!.image as "*");
+            } else {
+                throw new Error("Expected file reference or '*' in CLOSE statement");
+            }
+            
+            state.consume(element, CstNodeKind.CloseStatement_CloseParen1, tokens.CloseParen);
+        }
 
-    
+        state.consume(element, CstNodeKind.CloseStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
+
+    firstDefaultStatement = [tokens.DEFAULT];
+    ruleDefaultStatement(state: ParserState): ast.DefaultStatement {
+        const element: ast.DefaultStatement = {
+            kind: ast.SyntaxKind.DefaultStatement,
+            container: null,
+            expressions: [],
+        };
+
+        state.consume(element, CstNodeKind.DefaultStatement_DEFAULT, tokens.DEFAULT);
+        
+        element.expressions.push(this.ruleDefaultExpression(state));
+        
+        while (state.tryConsume(element, CstNodeKind.DefaultStatement_Comma, tokens.Comma)) {
+            element.expressions.push(this.ruleDefaultExpression(state));
+        }
+        
+        state.consume(element, CstNodeKind.DefaultStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
+
+    firstDefaultExpression = () => this.firstDefaultExpressionPart;
+    ruleDefaultExpression(state: ParserState): ast.DefaultExpression {
+        const element: ast.DefaultExpression = {
+            kind: ast.SyntaxKind.DefaultExpression,
+            container: null,
+            expression: null,
+            attributes: [],
+        };
+
+        element.expression = this.ruleDefaultExpressionPart(state);
+        
+        while (state.canConsumeFirst(this.firstDefaultDeclarationAttribute)) {
+            element.attributes.push(this.ruleDefaultDeclarationAttribute(state));
+        }
+
+        return element;
+    }
+
+    firstDefaultExpressionPart = [tokens.DESCRIPTORS, tokens.RANGE, tokens.OpenParen];
+    ruleDefaultExpressionPart(state: ParserState): ast.DefaultExpressionPart {
+        const element: ast.DefaultExpressionPart = {
+            kind: ast.SyntaxKind.DefaultExpressionPart,
+            container: null,
+            expression: null,
+            identifiers: null,
+        };
+
+        if (state.canConsume(tokens.DESCRIPTORS)) {
+            // DESCRIPTORS variant
+            state.consume(element, CstNodeKind.DefaultExpressionPart_DESCRIPTORS, tokens.DESCRIPTORS);
+            element.expression = this.ruleDefaultAttributeExpression(state);
+        } else if (state.canConsume(tokens.RANGE)) {
+            // RANGE variant
+            state.consume(element, CstNodeKind.DefaultExpressionPart_RANGE, tokens.RANGE);
+            state.consume(element, CstNodeKind.DefaultExpressionPart_OpenParenRange, tokens.OpenParen);
+            element.identifiers = this.ruleDefaultRangeIdentifiers(state);
+            state.consume(element, CstNodeKind.DefaultExpressionPart_CloseParenRange, tokens.CloseParen);
+        } else if (state.canConsume(tokens.OpenParen)) {
+            // Parenthesized attribute expression variant
+            state.consume(element, CstNodeKind.DefaultExpressionPart_OpenParenAttribute, tokens.OpenParen);
+            element.expression = this.ruleDefaultAttributeExpression(state);
+            state.consume(element, CstNodeKind.DefaultExpressionPart_CloseParenAttribute, tokens.CloseParen);
+        } else {
+            //TODO better error message
+            throw new Error("Expected DESCRIPTORS, RANGE, or parenthesized expression in DefaultExpressionPart");
+        }
+
+        return element;
+    }
+
+    firstDefaultRangeIdentifiers = [tokens.Star, tokens.ID];
+    ruleDefaultRangeIdentifiers(state: ParserState): ast.DefaultRangeIdentifiers {
+        const element: ast.DefaultRangeIdentifiers = {
+            kind: ast.SyntaxKind.DefaultRangeIdentifiers,
+            container: null,
+            identifiers: [],
+        };
+
+        // Parse first identifier (Star or DefaultRangeIdentifierItem)
+        if (state.canConsume(tokens.Star)) {
+            const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star0, tokens.Star)!;
+            element.identifiers.push(starToken.image as "*");
+        } else {
+            element.identifiers.push(this.ruleDefaultRangeIdentifierItem(state));
+        }
+
+        // Parse additional comma-separated identifiers
+        while (state.tryConsume(element, CstNodeKind.DefaultRangeIdentifiers_Comma, tokens.Comma)) {
+            if (state.canConsume(tokens.Star)) {
+                const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star1, tokens.Star)!;
+                element.identifiers.push(starToken.image as "*");
+            } else {
+                element.identifiers.push(this.ruleDefaultRangeIdentifierItem(state));
+            }
+        }
+
+        return element;
+    }
+
+    firstDefaultRangeIdentifierItem = [tokens.ID];
+    ruleDefaultRangeIdentifierItem(state: ParserState): ast.DefaultRangeIdentifierItem {
+        const element: ast.DefaultRangeIdentifierItem = {
+            kind: ast.SyntaxKind.DefaultRangeIdentifierItem,
+            container: null,
+            from: null,
+            to: null,
+        };
+
+        const fromToken = state.consume(element, CstNodeKind.DefaultRangeIdentifierItem_FromID, tokens.ID)!;
+        element.from = fromToken.image;
+
+        if (state.tryConsume(element, CstNodeKind.DefaultRangeIdentifierItem_Colon, tokens.Colon)) {
+            const toToken = state.consume(element, CstNodeKind.DefaultRangeIdentifierItem_ToID, tokens.ID)!;
+            element.to = toToken.image;
+        }
+
+        return element;
+    }
+
+    firstDefaultAttributeExpression = () => this.firstDefaultAttributeExpressionNot;
+    ruleDefaultAttributeExpression(state: ParserState): ast.DefaultAttributeExpression {
+        const element: ast.DefaultAttributeExpression = {
+            kind: ast.SyntaxKind.DefaultAttributeExpression,
+            container: null,
+            items: [],
+            operators: [],
+        };
+
+        // Parse first DefaultAttributeExpressionNot
+        element.items.push(this.ruleDefaultAttributeExpressionNot(state));
+
+        // Parse optional binary operator and second operand
+        if (state.canConsume(tokens.DefaultAttributeBinaryOperator)) {
+            const operatorToken = state.consume(element, CstNodeKind.DefaultAttributeExpression_Operators, tokens.DefaultAttributeBinaryOperator)!;
+            element.operators.push(tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx));
+            element.items.push(this.ruleDefaultAttributeExpressionNot(state));
+        }
+
+        return element;
+    }
+
+    firstDefaultAttributeExpressionNot = [tokens.NOT, tokens.DefaultAttribute];
+    ruleDefaultAttributeExpressionNot(state: ParserState): ast.DefaultAttributeExpressionNot {
+        const element: ast.DefaultAttributeExpressionNot = {
+            kind: ast.SyntaxKind.DefaultAttributeExpressionNot,
+            container: null,
+            not: false,
+            value: null,
+        };
+
+        if (state.tryConsume(element, CstNodeKind.DefaultAttributeExpressionNot_NOT, tokens.NOT)) {
+            element.not = true;
+        }
+
+        const attributeToken = state.consume(element, CstNodeKind.DefaultAttribute_Value, tokens.DefaultAttribute)!;
+        element.value = tokens.DefaultAttribute.mapToEnumLiteral(attributeToken.tokenTypeIdx);
+
+        return element;
+    }
+
+    firstDefineAliasStatement = [tokens.DEFINE];
+    ruleDefineAliasStatement(state: ParserState): ast.DefineAliasStatement {
+        const element: ast.DefineAliasStatement = {
+            kind: ast.SyntaxKind.DefineAliasStatement,
+            container: null,
+            name: null,
+            nameToken: null,
+            attributes: [],
+            xDefine: false,
+        };
+
+        const defineToken = state.consume(element, CstNodeKind.DefineAliasStatement_DEFINE, tokens.DEFINE);
+        if (defineToken?.image.charAt(0).toUpperCase() === "X") {
+            element.xDefine = true;
+        }
+        state.consume(element, CstNodeKind.DefineAliasStatement_ALIAS, tokens.ALIAS);
+        
+        const nameToken = state.consume(element, CstNodeKind.DefineAliasStatement_Name, tokens.ID);
+        if(nameToken) {
+            element.name = nameToken.image;
+            element.nameToken = nameToken;
+        }
+        
+        if(state.canConsumeFirst(this.firstDeclarationAttribute)) {
+            element.attributes.push(this.ruleDeclarationAttribute(state));
+        }
+        
+        state.consume(element, CstNodeKind.DefineAliasStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
+
+    firstDefineOrdinalStatement = [tokens.DEFINE];
+    ruleDefineOrdinalStatement(state: ParserState): ast.DefineOrdinalStatement {
+        const element: ast.DefineOrdinalStatement = {
+            kind: ast.SyntaxKind.DefineOrdinalStatement,
+            container: null,
+            name: null,
+            nameToken: null,
+            attributes: [],
+            ordinalValues: null,
+            precision: null,
+            xDefine: false,
+        };
+
+        const defineToken = state.consume(element, CstNodeKind.DefineOrdinalStatement_DEFINE, tokens.DEFINE);
+        if (defineToken?.image.charAt(0).toUpperCase() === "X") {
+            element.xDefine = true;
+        }
+        state.consume(element, CstNodeKind.DefineOrdinalStatement_ORDINAL, tokens.ORDINAL);
+        
+        const nameToken = state.consume(element, CstNodeKind.DefineOrdinalStatement_Name, tokens.ID);
+        if(nameToken) {
+            element.name = nameToken.image;
+            element.nameToken = nameToken;
+        }
+        
+        state.consume(element, CstNodeKind.DefineOrdinalStatement_OpenParenValues, tokens.OpenParen);
+        element.ordinalValues = this.ruleOrdinalValues(state);
+        state.consume(element, CstNodeKind.DefineOrdinalStatement_CloseParenValues, tokens.CloseParen);
+
+        while (!state.canConsume(tokens.Semicolon)) {
+            if(state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_Signed0, tokens.SIGNED)) {
+                element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
+            } else if(state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_Unsigned0, tokens.UNSIGNED)) {
+                element.attributes.push(ast.DefineOrdinalAttribute.UNSIGNED);
+            } else if(state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_PRECISION, tokens.PRECISION)) {
+                element.attributes.push(ast.DefineOrdinalAttribute.PRECISION);
+                state.consume(element, CstNodeKind.DefineOrdinalStatement_OpenParenPrecision, tokens.OpenParen);
+                const precisionNumberToken = state.consume(element, CstNodeKind.DefineOrdinalStatement_PrecisionNumber, tokens.NUMBER);
+                if(precisionNumberToken) {
+                    element.precision = precisionNumberToken.image;
+                }
+                state.consume(element, CstNodeKind.DefineOrdinalStatement_CloseParenPrecision, tokens.CloseParen);
+            } else {
+                //TODO better error message
+                throw new Error("Unexpected token in DEFINE ORDINAL statement");
+            }
+        }
+       
+        state.consume(element, CstNodeKind.DefineOrdinalStatement_Semicolon, tokens.Semicolon);
+
+        return element;
+    }
+
 }
 
 export const HandwrittenParserInstance = new HandwrittenParser();
