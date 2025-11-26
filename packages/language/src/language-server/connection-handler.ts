@@ -25,6 +25,7 @@ import {
   Diagnostic,
   Location,
   TextEdit,
+  WorkspaceFolder,
 } from "vscode-languageserver-types";
 import {
   completionItemToLSP,
@@ -55,22 +56,11 @@ export const WorkspaceDidChangePlipluginConfigNotification =
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
+  let folders: WorkspaceFolder[] = [];
 
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
-    // TODO @montymxb Apr 23rd, 2025: Consider addressing multiple workspaces w/ multiple plugin configs
-    for (const folder of params.workspaceFolders?.reverse() ?? []) {
-      PluginConfigurationProviderInstance.init(folder.uri).then(
-        (diagnostics) => {
-          const ws = PluginConfigurationProviderInstance.getWorkspacePath();
-          const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
-          connection.sendDiagnostics({
-            uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-            diagnostics,
-          });
-        },
-      );
-    }
+    folders = params.workspaceFolders?.reverse() ?? [];
 
     return {
       capabilities: {
@@ -113,6 +103,25 @@ export function startLanguageServer(connection: Connection): void {
         },
       },
     };
+  });
+  connection.onInitialized(async () => {
+    const promises: Promise<void>[] = [];
+    for (const folder of folders) {
+      promises.push(
+        PluginConfigurationProviderInstance.init(folder.uri).then(
+          (diagnostics) => {
+            const ws = PluginConfigurationProviderInstance.getWorkspacePath();
+            const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
+            connection.sendDiagnostics({
+              uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
+              diagnostics,
+            });
+          },
+        ),
+      );
+    }
+    await Promise.all(promises);
+    compilationUnitHandler.finalize();
   });
   connection.onHover(async (params) => {
     return Mutex.read(async () => {
