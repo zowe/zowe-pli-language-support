@@ -1,7 +1,109 @@
-import { IRecognitionException , IToken} from "chevrotain";
+import { IRecognitionException , IToken, TokenType} from "chevrotain";
+import { ParserState } from "./parser-state";
+import { expandTokenTypeIndices } from "./tokens";
 
 export interface Parser<TAst, TToken extends IToken = IToken> {
     set input(value: TToken[]);
     get errors(): IRecognitionException[];
     parse(): TAst;
+}
+
+export type Rule<T> = (state: ParserState) => T;
+
+export type TokenTypeSequence = {
+    type: "sequence";
+    tokenTypes: TokenType[];
+};
+
+export type TokenTypeChoice = {
+    type: "choice";
+    sequences: TokenTypeSequence[];
+};
+
+export type FirstSet = TokenTypeChoice | TokenTypeSequence;
+
+export function sequence(...tokenTypes: TokenType[]): TokenTypeSequence {
+    return {
+        type: "sequence",
+        tokenTypes,
+    };
+}
+
+export function choice(...sequences: TokenTypeSequence[]): TokenTypeChoice {
+    return {
+        type: "choice",
+        sequences,
+    };
+}
+
+export type RuleMap<T=any> = Map<number, RuleMap<T>|Rule<T>>;
+
+function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
+    if (firstSet.type === "sequence") {
+        for (const tokenTypeIdx of expandTokenTypeIndices(firstSet.tokenTypes[0])) {
+            if(firstSet.tokenTypes.length > 1) {
+                const map: RuleMap<T> = new Map();
+                compileToMap(map, sequence(...firstSet.tokenTypes.slice(1)), action);
+                map.set(tokenTypeIdx, map);
+            } else {
+                if(map.has(tokenTypeIdx)) {
+                    throw new Error(`Ambiguous grammar detected. Multiple rules lead to the same token type: ${firstSet.tokenTypes[0].name}`);
+                }
+                map.set(tokenTypeIdx, action);
+            }
+        }
+    } else {
+        for (const sequence of firstSet.sequences) {
+            compileToMap(map, sequence, action);
+        }
+    }
+}
+
+export type RuleFirstPair<T> = {
+    first: RuleMap<any>;
+    rule: Rule<T>;
+};
+
+function mergeMaps<T>(target: RuleMap<T>, source: RuleMap<T>) {
+    for (const [key, value] of source) {
+        if (target.has(key)) {
+            const existing = target.get(key);
+            if (existing instanceof Function || value instanceof Function) {
+                throw new Error(`Ambiguous grammar detected. Multiple rules lead to the same token type index: ${key}`);
+            } else {
+                mergeMaps(existing as RuleMap<T>, value as RuleMap<T>);
+            }
+        } else {
+            target.set(key, value);
+        }
+    }
+}
+
+export function orRule<T>(...rules: (() => RuleFirstPair<T>)[]): RuleFirstPair<T> {
+    const map: RuleMap<T> = new Map();
+    for (const rule of rules) {
+        mergeMaps(map, rule().first);
+    }
+    return {
+        first: map,
+        rule: (state: ParserState) => {
+            return state.consumeAlternatives<T>(map)!;
+        }
+    };
+}
+
+export function rule<T>(set: FirstSet|(() => RuleMap<any>), action: Rule<T>): RuleFirstPair<T> {
+    const map: RuleMap<T> = new Map();
+    if (typeof set === "function") {
+        return {
+            first: set(),
+            rule: action,
+        };
+    } else {
+        compileToMap(map, set, action);
+        return {
+            first: map,
+            rule: action,
+        };
+    }
 }

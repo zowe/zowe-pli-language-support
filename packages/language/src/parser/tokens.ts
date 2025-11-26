@@ -136,7 +136,6 @@ const mappings = new Map<
     mapFrom: Map<number, string>;
   }
 >();
-
 interface KeywordConfig {
   /**
    * The keyword name or names (aliases). The first name is the canonical name.
@@ -200,6 +199,14 @@ export type MappableTokenType<TEnum extends number = number> = TokenType & {
   mapToEnumLiteral(tokenIndex: number): TEnum;
   mapFromEnumLiteral(value: TEnum): string;
 };
+
+export function expandTokenTypeIndices(tokenType: TokenType) {
+  const mapping = mappings.get(tokenType.name);
+  if (mapping === undefined) {
+    return [tokenType.tokenTypeIdx!];
+  }
+  return Array.from(mapping.mapFrom.keys());
+}
 
 function createMappableToken<TEnum extends number = number>(
   config: ITokenConfig,

@@ -10,7 +10,7 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
-import { CMPATOptionsItem, NoMapOption, NoMapOptionsItem, SimpleOptions, SimpleOptionsItem, SyntaxNode } from "../syntax-tree/ast";
+import { SyntaxNode } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import {
@@ -19,6 +19,7 @@ import {
   diagnosticFromCode,
   Severity,
 } from "../language-server/types";
+import { RuleMap } from "./parser-types";
 import {
   isParametricPLICode,
   isSimplePLICode,
@@ -310,18 +311,38 @@ export class ParserState {
     return this.consume(element, kind, tokenType);
   }
 
-  canConsumeFirst(firstSet: TokenType[]): boolean {
-    return firstSet.some(t => this.canConsume(t));
+  private canConsumeFirstItem(map: RuleMap, index: number): boolean {
+    const token = this.tokens[this.index+index];
+    if(!map.has(token.tokenTypeIdx)) {
+      return false;
+    }
+    const next = map.get(token.tokenTypeIdx)!;
+    if(next instanceof Function) {
+      return true;
+    } else {
+      return this.canConsumeFirstItem(next, index+1);
+    }
   }
 
-  consumeAlternatives<T>(alternatives: [TokenType[], (state: ParserState) => T][]): T {
-    for (const [tokenTypes, parseFunc] of alternatives) {
-      if (tokenTypes.some(t => this.canConsume(t))) {
-        return parseFunc(this);
-      }
+  canConsumeFirst(firstSet: RuleMap): boolean {
+    return this.canConsumeFirstItem(firstSet, 0);
+  }
+
+  private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T|null {
+    const lookahead = this.tokens[this.index + index].tokenTypeIdx;
+    if(!map.has(lookahead)) {
+      return null;
     }
-    //TODO: better error message
-    throw new Error("No matching alternative found");
+    const next = map.get(lookahead)!;
+    if(next instanceof Function) {
+      return next(this);
+    } else {
+      return this.consumeAlternativesItem(next, index+1);
+    }
+  }
+
+  consumeAlternatives<T>(map: RuleMap<T>): T|null {
+    return this.consumeAlternativesItem(map, 0);
   }
 }
 
