@@ -972,6 +972,7 @@ export function forEachNode(
         action(node.body);
       }
       break;
+    case SyntaxKind.SqlAttributeBinary:
     case SyntaxKind.SqlAttributeLob:
     case SyntaxKind.SqlAttributeLobFile:
     case SyntaxKind.SqlAttributeLobLocator:
