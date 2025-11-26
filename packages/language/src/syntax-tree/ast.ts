@@ -205,6 +205,7 @@ export enum SyntaxKind {
   StopStatement,
   StringLiteral,
   SqlAttributeStatement,
+  SqlAttributeBinary,
   SqlAttributeLob,
   SqlAttributeLobLocator,
   SqlAttributeLobFile,
@@ -844,6 +845,7 @@ export type SyntaxNode =
   | StopStatement
   | StringLiteral
   | SqlAttributeStatement
+  | SqlAttributeBinary
   | SqlAttributeLob
   | SqlAttributeLobLocator
   | SqlAttributeLobFile
@@ -2723,6 +2725,28 @@ export interface XFormatItem extends AstNode {
   width: Expression | null;
 }
 
+export enum SqlAttributeBinaryType {
+  BINARY,
+  VARBINARY,
+}
+
+export interface SqlAttributeBinary extends AstNode {
+  kind: SyntaxKind.SqlAttributeBinary;
+  type: SqlAttributeBinaryType | null;
+  length: number | null;
+  size: SQLAttributeLobSize | null;
+}
+
+export function createSQLAttributeBinary(): SqlAttributeBinary {
+  return {
+    kind: SyntaxKind.SqlAttributeBinary,
+    container: null,
+    type: null,
+    length: null,
+    size: null,
+  };
+}
+
 export enum SQLAttributeLobType {
   BLOB,
   CLOB,
@@ -2790,6 +2814,7 @@ export function createSQLAttributeRowId(): SqlAttributeRowId {
 }
 
 export type SqlAttributeType =
+  | SqlAttributeBinary
   | SqlAttributeLob
   | SqlAttributeLobLocator
   | SqlAttributeLobFile

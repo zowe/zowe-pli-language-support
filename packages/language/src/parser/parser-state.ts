@@ -19,7 +19,13 @@ import {
   diagnosticFromCode,
   Severity,
 } from "../language-server/types";
-import { PLICodes, SimplePLICode } from "../validation/pli-codes";
+import {
+  isParametricPLICode,
+  isSimplePLICode,
+  ParametricPLICode,
+  PLICodes,
+  SimplePLICode,
+} from "../validation/pli-codes";
 
 export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
@@ -107,24 +113,49 @@ export class ParserState {
    * The parser will try to continue parsing, but no further errors will be reported
    * until a successful consume() happens or the recover() method is called.
    */
+  error(message?: string, token?: t.Token, severity?: Severity): void;
+  error(message: SimplePLICode, token?: t.Token): void;
+  error<T extends ParametricPLICode>(
+    message: T,
+    args: Parameters<T["message"]>,
+    token?: t.Token,
+  ): void;
   error(
-    message?: string | SimplePLICode,
-    token = this.token || this.last,
-    severity = Severity.S,
+    message?: string | SimplePLICode | ParametricPLICode,
+    tokenOrArgs?: t.Token | Parameters<ParametricPLICode["message"]>,
+    tokenOrSeverity?: t.Token | Severity,
   ) {
-    if (!this.inError) {
-      if (!message || typeof message === "string") {
-        const msg =
-          message ??
-          (this.eof
-            ? "Unexpected end of file."
-            : `Unexpected token '${generateTokenErrorName(token)}'.`);
-        this.diagnostics.push(diagnostic(severity, msg, token));
-      } else {
-        this.diagnostics.push(diagnosticFromCode(message, token));
-      }
-      this.inError = true;
+    if (this.inError) {
+      return;
     }
+    if (!message || typeof message === "string") {
+      // We have a simple string message (or none at all)
+      const token = (tokenOrArgs || this.token || this.last) as
+        | t.Token
+        | undefined;
+      const severity = (tokenOrSeverity || Severity.S) as Severity;
+      const msg =
+        message ??
+        // Generate our own simple message
+        (this.eof
+          ? "Unexpected end of file."
+          : `Unexpected token '${generateTokenErrorName(token)}'.`);
+      this.diagnostics.push(diagnostic(severity, msg, token));
+    } else if (isParametricPLICode(message)) {
+      // Cast the args and token parameters to fit with the parametric code signature
+      const args = tokenOrArgs as Parameters<ParametricPLICode["message"]>;
+      const token = (tokenOrSeverity || this.token || this.last) as
+        | t.Token
+        | undefined;
+      this.diagnostics.push(diagnosticFromCode(message, token, ...args));
+    } else if (isSimplePLICode(message)) {
+      // Cast the token parameter to fit with the simple code signature
+      const token = (tokenOrArgs || this.token || this.last) as
+        | t.Token
+        | undefined;
+      this.diagnostics.push(diagnosticFromCode(message, token));
+    }
+    this.inError = true;
   }
 
   recover(): void {
@@ -181,17 +212,41 @@ export class ParserState {
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
-    code?: SimplePLICode,
+  ): t.Token | null;
+  consume<T extends ParametricPLICode>(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+    code: T,
+    ...args: Parameters<T["message"]>
+  ): t.Token | null;
+  consume(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+    code: SimplePLICode,
+  ): t.Token | null;
+  consume(
+    element: SyntaxNode | undefined,
+    kind: CstNodeKind | undefined,
+    tokenType: TokenType,
+    code?: SimplePLICode | ParametricPLICode,
+    ...args: any[]
   ): t.Token | null {
     const token = this.token;
     if (!token || !this.canConsume(tokenType)) {
-      if (!this.inError) {
-        if (code) {
-          this.error(code);
+      if (this.inError) {
+        return null;
+      }
+      if (code) {
+        if (isParametricPLICode(code)) {
+          this.error(code, args || [], token);
         } else {
-          const message = `Expected token "${tokenType.name}", but received ${generateTokenErrorName(token)} instead.`;
-          this.error(message);
+          this.error(code, token);
         }
+      } else {
+        const message = `Expected token "${tokenType.name}", but received ${generateTokenErrorName(token)} instead.`;
+        this.error(message);
       }
       return null;
     } else {
