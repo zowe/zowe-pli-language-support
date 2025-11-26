@@ -85,9 +85,11 @@ async function createTestingHarnessImplementation(
     preprocessor: {
       not: {
         expectTokens: listen("preprocessor.not.expectTokens"),
+        containsTokens: listen("preprocessor.not.containsTokens"),
         expectSkippedCodeAt: listen("preprocessor.not.expectSkippedCodeAt"),
       },
       expectTokens: listen("preprocessor.expectTokens"),
+      containsTokens: listen("preprocessor.containsTokens"),
       expectSkippedCodeAt: listen("preprocessor.expectSkippedCodeAt"),
     },
     code: HarnessCodes,

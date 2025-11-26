@@ -44,7 +44,7 @@ async function init(libPath: string): Promise<Diagnostic[]> {
     libs: [libPath],
     $computedLibs: [],
     $computedLibsSet: new Set<string>(),
-    lspOptions: { checkMargins: false },
+    lspOptions: { checkMargins: false, instructionCounterLimit: 5000 },
     pliOptions: {},
   };
 

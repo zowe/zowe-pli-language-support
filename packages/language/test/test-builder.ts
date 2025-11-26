@@ -314,7 +314,7 @@ export class TestBuilder {
           includeExtensions: [".pli"],
           compilerOptions: [],
           implicitBuiltins: new Set(),
-          lspOptions: { checkMargins: false },
+          lspOptions: { checkMargins: false, instructionCounterLimit: 5000 },
           pliOptions: {},
         },
       ]);
@@ -484,6 +484,25 @@ export class TestBuilder {
       exp = exp.not;
     }
     exp.toEqual(expectedTokens);
+  }
+
+  containsPreprocessorTokens(textOrTokens: string | string[]): void {
+    const actualTokens = this.unit.tokens.map((e) => e.image);
+    let expectedTokens: string[] = [];
+    if (Array.isArray(textOrTokens)) {
+      expectedTokens = textOrTokens;
+    } else {
+      expectedTokens = tokenize(textOrTokens, undefined).tokens.map(
+        (e) => e.image,
+      );
+    }
+    let exp = expect(actualTokens);
+    if (this.options.not) {
+      exp = exp.not;
+    }
+    for (const token of expectedTokens) {
+      exp.toContain(token);
+    }
   }
 
   /**

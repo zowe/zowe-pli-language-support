@@ -265,6 +265,7 @@ interface InterpreterContext {
    * It is invalid to invoke MACNAME outside of a preprocessor procedure.
    */
   macname: string;
+  instructionCounterLimit: number;
 }
 
 interface SqlAttributeCache {
@@ -296,6 +297,8 @@ export interface InterpreterOptions {
   compilerOptions: CompilerOptionResult | undefined;
   marginsProcessor: MarginsProcessor;
 }
+
+export const MAX_INSTRUCTION_COUNTER = 5000;
 
 export async function runInstructions(
   unit: CompilationUnit,
@@ -334,6 +337,9 @@ export async function runInstructions(
       entries: new Map(),
     },
     macname: "",
+    instructionCounterLimit:
+      unit.processGroup?.lspOptions.instructionCounterLimit ??
+      MAX_INSTRUCTION_COUNTER,
   };
   for (const [key, value] of instruction.procedures.entries()) {
     context.procedures.set(key, value);
@@ -349,8 +355,6 @@ export async function runInstructions(
   };
 }
 
-const MAX_INSTRUCTION_COUNTER = 5000;
-
 async function doRunInstructions(
   context: InterpreterContext,
   start: inst.InstructionNode,
@@ -359,7 +363,7 @@ async function doRunInstructions(
   while (currentNode) {
     const value = context.counter.get(currentNode) || 0;
     // Prevent infinite loops by limiting the number of iterations
-    if (value > MAX_INSTRUCTION_COUNTER) {
+    if (value > context.instructionCounterLimit) {
       console.log("Long running preprocessor code detected. Stopping.");
       return;
     }
