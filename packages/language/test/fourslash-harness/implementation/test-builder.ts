@@ -91,10 +91,13 @@ export function createTestBuilderHarnessImplementation(
     preprocessor: {
       not: {
         expectTokens: (text) => testBuilder.not.expectPreprocessorTokens(text),
+        containsTokens: (text) =>
+          testBuilder.not.containsPreprocessorTokens(text),
         expectSkippedCodeAt: (label) =>
           testBuilder.not.expectSkippedCode(label.toString()),
       },
       expectTokens: (text) => testBuilder.expectPreprocessorTokens(text),
+      containsTokens: (text) => testBuilder.containsPreprocessorTokens(text),
       expectSkippedCodeAt: (label) =>
         testBuilder.expectSkippedCode(label.toString()),
     },

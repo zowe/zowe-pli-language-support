@@ -36,7 +36,12 @@
             "description": "List of file extensions to treat as include files.",
             "items": {
               "type": "string",
-              "enum": [".pli", ".pl1", ".cpy", ".inc"]
+              "enum": [
+                ".pli",
+                ".pl1",
+                ".cpy",
+                ".inc"
+              ]
             }
           },
           "implicit-builtins": {
@@ -53,16 +58,23 @@
               "check-margins": {
                 "type": "boolean",
                 "description": "Whether to check for margins in the PL/I code."
+              },
+              "instruction-counter-limit": {
+                "type": "number",
+                "description": "Maximum number of times to run an instructions during preprocessing. The default is 5000."
               }
             }
           }
         },
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["pgroups"],
+  "required": [
+    "pgroups"
+  ],
   "additionalProperties": false
 }
-  
