@@ -23,6 +23,7 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
   Information: PLICodes.Info,
   Error: PLICodes.Error,
   Internal: InternalCodes,
+  LspCodes: LspCodes,
   Lexer: {
     Margins: {
       ErrorLeft: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT,
@@ -30,6 +31,5 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
     },
   },
   CompilerOptions: CompilerOptionsCodes,
-  LspCodes: LspCodes,
   TypeSystem: TypeSystemCodes,
 };
