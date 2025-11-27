@@ -18,6 +18,9 @@ export function LSPIS001_standalone_skip_directive_not_supported(
   node: AST.SkipDirective,
   acceptor: ValidationAcceptor,
 ): void {
-  if (node.kind !== AST.SyntaxKind.SkipDirective || !node.token) return;
+  if (!node.token) {
+    return;
+  }
+
   acceptor(diagnosticFromCode(LspCodes.SkipDirective.InvalidSkip, node.token));
 }
