@@ -4216,27 +4216,73 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
+    likeAttribute = rule(
+        sequence(tokens.LIKE),
+        (state: ParserState): ast.LikeAttribute => {
+            const element: ast.LikeAttribute = {
+                kind: ast.SyntaxKind.LikeAttribute,
+                container: null,
+                reference: null,
+            };
 
-//continue here!
+            state.consume(element, CstNodeKind.LikeAttribute_LIKE, tokens.LIKE);
+            element.reference = this.locatorCall.rule(state);
 
+            return element;
+        }
+    );
 
+    handleAttribute = rule(
+        sequence(tokens.HANDLE),
+        (state: ParserState): ast.HandleAttribute => {
+            const element: ast.HandleAttribute = {
+                kind: ast.SyntaxKind.HandleAttribute,
+                container: null,
+                size: null,
+                type: null,
+            };
 
+            state.consume(element, CstNodeKind.HandleAttribute_HANDLE, tokens.HANDLE);
 
+            // Optional size in parentheses
+            if (state.tryConsume(element, CstNodeKind.HandleAttribute_OpenParenSize, tokens.OpenParen)) {
+                const sizeToken = state.consume(element, CstNodeKind.HandleAttribute_SizeNumber, tokens.NUMBER);
+                if (sizeToken) {
+                    element.size = sizeToken.image;
+                }
+                state.consume(element, CstNodeKind.HandleAttribute_CloseParenSize, tokens.CloseParen);
+            }
 
+            // Required type reference
+            if (state.canConsume(tokens.ID)) {
+                // Simple type reference: HANDLE MYTYPE
+                const idToken = state.consume(element, CstNodeKind.HandleAttribute_TypeId0, tokens.ID);
+                if (idToken) {
+                    element.type = ast.createReference(
+                        element,
+                        idToken,
+                        ast.ReferenceType.Type,
+                    );
+                }
+            } else if (state.tryConsume(element, CstNodeKind.HandleAttribute_OpenParenType, tokens.OpenParen)) {
+                // Parenthesized type reference: HANDLE (MYTYPE)
+                const idToken = state.consume(element, CstNodeKind.HandleAttribute_TypeId1, tokens.ID);
+                if (idToken) {
+                    element.type = ast.createReference(
+                        element,
+                        idToken,
+                        ast.ReferenceType.Type,
+                    );
+                }
+                state.consume(element, CstNodeKind.HandleAttribute_CloseParenType, tokens.CloseParen);
+            } else {
+                // TODO: better error message
+                throw new Error("Expected type name or parenthesized type name in HANDLE attribute");
+            }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+            return element;
+        }
+    );
 
     dimensions = rule(
         sequence(tokens.OpenParen),
@@ -4304,21 +4350,110 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
                 // Star bound (indicates variable size)
+                element.expression = "*";
             } else {
                 // Expression bound
                 element.expression = this.expression.rule(state);
 
                 // Optional REFER clause
                 if (state.tryConsume(element, CstNodeKind.Bound_REFER, tokens.REFER)) {
-                    state.consume(element, CstNodeKind.Bound_OpenParenRefer, tokens.OpenParen);
+                    state.consume(element, CstNodeKind.Bound_OpenParen, tokens.OpenParen);
                     element.refer = this.locatorCall.rule(state);
-                    state.consume(element, CstNodeKind.Bound_CloseParenRefer, tokens.CloseParen);
+                    state.consume(element, CstNodeKind.Bound_CloseParen, tokens.CloseParen);
                 }
             }
 
             return element;
         }
     );
+
+    environmentAttribute = rule(
+        sequence(tokens.ENVIRONMENT),
+        (state: ParserState): ast.EnvironmentAttribute => {
+            const element: ast.EnvironmentAttribute = {
+                kind: ast.SyntaxKind.EnvironmentAttribute,
+                container: null,
+                items: [],
+            };
+
+            state.consume(element, CstNodeKind.EnvironmentAttribute_ENVIRONMENT, tokens.ENVIRONMENT);
+            state.consume(element, CstNodeKind.EnvironmentAttribute_OpenParen, tokens.OpenParen);
+
+            // Parse zero or more environment attribute items
+            while (!state.eof && !state.canConsume(tokens.CloseParen)) {
+                element.items.push(this.environmentAttributeItem.rule(state));
+
+                // TODO: research, This does not align to the language spec
+                // Optional comma between items
+                state.tryConsume(element, CstNodeKind.EnvironmentAttributeItem_Comma, tokens.Comma);
+            }
+
+            state.consume(element, CstNodeKind.EnvironmentAttribute_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    environmentAttributeItem = rule(
+        sequence(tokens.ID),
+        (state: ParserState): ast.EnvironmentAttributeItem => {
+            const element: ast.EnvironmentAttributeItem = {
+                kind: ast.SyntaxKind.EnvironmentAttributeItem,
+                container: null,
+                environment: null,
+                args: [],
+            };
+
+            const envToken = state.consume(element, CstNodeKind.EnvironmentAttributeItem_Environment, tokens.ID);
+            if (envToken) {
+                element.environment = envToken.image;
+            }
+
+            // Optional arguments in parentheses
+            if (state.tryConsume(element, CstNodeKind.EnvironmentAttributeItem_OpenParen, tokens.OpenParen)) {
+                // Optional expression list
+                if (state.canConsumeFirst(this.expression.first)) {
+                    element.args.push(this.expression.rule(state));
+
+                    while (!state.eof && !state.canConsume(tokens.CloseParen)) {
+                        // Optional comma before next expression
+                        state.tryConsume(element, CstNodeKind.EnvironmentAttributeItem_Comma, tokens.Comma);
+
+                        if (state.canConsumeFirst(this.expression.first)) {
+                            element.args.push(this.expression.rule(state));
+                        } else {
+                            break; //TODO is this correct?! Very weird behavior
+                        }
+                    }
+                }
+
+                state.consume(element, CstNodeKind.EnvironmentAttributeItem_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+    //continue here!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
