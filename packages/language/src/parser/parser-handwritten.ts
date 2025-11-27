@@ -589,7 +589,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
-    ruleAllocateAttribute = orRule<ast.AllocateAttribute>(
+    allocateAttribute = orRule<ast.AllocateAttribute>(
         () => this.allocateDimension,
         () => this.allocateType,
         () => this.allocateLocationReferenceIn,
@@ -1748,141 +1748,702 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
-flushStatement = rule(
-    sequence(tokens.FLUSH),
-    (state: ParserState): ast.FlushStatement => {
-        const element: ast.FlushStatement = {
-            kind: ast.SyntaxKind.FlushStatement,
-            container: null,
-            file: null,
-        };
+    flushStatement = rule(
+        sequence(tokens.FLUSH),
+        (state: ParserState): ast.FlushStatement => {
+            const element: ast.FlushStatement = {
+                kind: ast.SyntaxKind.FlushStatement,
+                container: null,
+                file: null,
+            };
 
-        state.consume(element, CstNodeKind.FlushStatement_FLUSH, tokens.FLUSH);
-        state.consume(element, CstNodeKind.FlushStatement_FILE, tokens.FILE);
-        state.consume(element, CstNodeKind.FlushStatement_OpenParen, tokens.OpenParen);
+            state.consume(element, CstNodeKind.FlushStatement_FLUSH, tokens.FLUSH);
+            state.consume(element, CstNodeKind.FlushStatement_FILE, tokens.FILE);
+            state.consume(element, CstNodeKind.FlushStatement_OpenParen, tokens.OpenParen);
 
-        if (state.canConsumeFirst(this.locatorCall.first)) {
-            element.file = this.locatorCall.rule(state);
-        } else if (state.tryConsume(element, CstNodeKind.FlushStatement_Star, tokens.Star)) {
-            const starToken = state.last;
-            element.file = starToken!.image as "*";
-        } else {
-            // TODO better error message
-            throw new Error("Expected locator call or '*' in FLUSH statement");
-        }
-
-        state.consume(element, CstNodeKind.FlushStatement_CloseParen, tokens.CloseParen);
-        state.consume(element, CstNodeKind.FlushStatement_Semicolon, tokens.Semicolon);
-
-        return element;
-    }
-);
-
-formatStatement = rule(
-    sequence(tokens.FORMAT),
-    (state: ParserState): ast.FormatStatement => {
-        const element: ast.FormatStatement = {
-            kind: ast.SyntaxKind.FormatStatement,
-            container: null,
-            list: null,
-        };
-
-        state.consume(element, CstNodeKind.FormatStatement_FORMAT, tokens.FORMAT);
-        state.consume(element, CstNodeKind.FormatStatement_OpenParen, tokens.OpenParen);
-        element.list = this.formatList.rule(state);
-        state.consume(element, CstNodeKind.FormatStatement_CloseParen, tokens.CloseParen);
-        state.consume(element, CstNodeKind.FormatStatement_Semicolon, tokens.Semicolon);
-
-        return element;
-    }
-);
-
-formatList = rule(
-    () => this.formatListItem.first,
-    (state: ParserState): ast.FormatList => {
-        const element: ast.FormatList = {
-            kind: ast.SyntaxKind.FormatList,
-            container: null,
-            items: [],
-        };
-
-        element.items.push(this.formatListItem.rule(state));
-
-        while (state.tryConsume(element, CstNodeKind.FormatList_Comma, tokens.Comma)) {
-            element.items.push(this.formatListItem.rule(state));
-        }
-
-        return element;
-    }
-);
-
-formatListItem = rule(
-    choice(
-        () => this.formatListItemLevel,
-        () => this.formatItem,
-        sequence(tokens.OpenParen),
-    ),
-    (state: ParserState): ast.FormatListItem => {
-        const element: ast.FormatListItem = {
-            kind: ast.SyntaxKind.FormatListItem,
-            container: null,
-            level: null,
-            item: null,
-            list: null,
-        };
-
-        // Optional level
-        if (state.canConsumeFirst(this.formatListItemLevel.first)) {
-            element.level = this.formatListItemLevel.rule(state);
-        }
-
-        // Either format item or nested list
-        if (state.canConsumeFirst(this.formatItem.first)) {
-            element.item = this.formatItem.rule(state);
-        } else if (state.canConsume(tokens.OpenParen)) {
-            state.consume(element, CstNodeKind.FormatListItem_OpenParen, tokens.OpenParen);
-            element.list = this.formatList.rule(state);
-            state.consume(element, CstNodeKind.FormatListItem_CloseParen, tokens.CloseParen);
-        } else {
-            // TODO better error message
-            throw new Error("Expected format item or parenthesized format list");
-        }
-
-        return element;
-    }
-);
-
-formatListItemLevel = rule(
-    choice(
-        sequence(tokens.NUMBER),
-        sequence(tokens.OpenParen),
-    ),
-    (state: ParserState): ast.FormatListItemLevel => {
-        const element: ast.FormatListItemLevel = {
-            kind: ast.SyntaxKind.FormatListItemLevel,
-            container: null,
-            level: null,
-        };
-
-        if (state.canConsume(tokens.NUMBER)) {
-            const levelToken = state.consume(element, CstNodeKind.FormatListItemLevel_LevelNumber, tokens.NUMBER);
-            if (levelToken) {
-                element.level = levelToken.image;
+            if (state.canConsumeFirst(this.locatorCall.first)) {
+                element.file = this.locatorCall.rule(state);
+            } else if (state.tryConsume(element, CstNodeKind.FlushStatement_Star, tokens.Star)) {
+                const starToken = state.last;
+                element.file = starToken!.image as "*";
+            } else {
+                // TODO better error message
+                throw new Error("Expected locator call or '*' in FLUSH statement");
             }
-        } else if (state.canConsume(tokens.OpenParen)) {
-            state.consume(element, CstNodeKind.FormatListItemLevel_OpenParen, tokens.OpenParen);
-            element.level = this.expression.rule(state);
-            state.consume(element, CstNodeKind.FormatListItemLevel_CloseParen, tokens.CloseParen);
-        } else {
-            // TODO better error message
-            throw new Error("Expected number or parenthesized expression for format list item level");
+
+            state.consume(element, CstNodeKind.FlushStatement_CloseParen, tokens.CloseParen);
+            state.consume(element, CstNodeKind.FlushStatement_Semicolon, tokens.Semicolon);
+
+            return element;
         }
+    );
 
-        return element;
-    }
-);
+    formatStatement = rule(
+        sequence(tokens.FORMAT),
+        (state: ParserState): ast.FormatStatement => {
+            const element: ast.FormatStatement = {
+                kind: ast.SyntaxKind.FormatStatement,
+                container: null,
+                list: null,
+            };
 
+            state.consume(element, CstNodeKind.FormatStatement_FORMAT, tokens.FORMAT);
+            state.consume(element, CstNodeKind.FormatStatement_OpenParen, tokens.OpenParen);
+            element.list = this.formatList.rule(state);
+            state.consume(element, CstNodeKind.FormatStatement_CloseParen, tokens.CloseParen);
+            state.consume(element, CstNodeKind.FormatStatement_Semicolon, tokens.Semicolon);
 
+            return element;
+        }
+    );
+
+    formatList = rule(
+        () => this.formatListItem.first,
+        (state: ParserState): ast.FormatList => {
+            const element: ast.FormatList = {
+                kind: ast.SyntaxKind.FormatList,
+                container: null,
+                items: [],
+            };
+
+            element.items.push(this.formatListItem.rule(state));
+
+            while (state.tryConsume(element, CstNodeKind.FormatList_Comma, tokens.Comma)) {
+                element.items.push(this.formatListItem.rule(state));
+            }
+
+            return element;
+        }
+    );
+
+    formatListItem = rule(
+        choice(
+            () => this.formatListItemLevel,
+            () => this.formatItem,
+            sequence(tokens.OpenParen),
+        ),
+        (state: ParserState): ast.FormatListItem => {
+            const element: ast.FormatListItem = {
+                kind: ast.SyntaxKind.FormatListItem,
+                container: null,
+                level: null,
+                item: null,
+                list: null,
+            };
+
+            // Optional level
+            if (state.canConsumeFirst(this.formatListItemLevel.first)) {
+                element.level = this.formatListItemLevel.rule(state);
+            }
+
+            // Either format item or nested list
+            if (state.canConsumeFirst(this.formatItem.first)) {
+                element.item = this.formatItem.rule(state);
+            } else if (state.canConsume(tokens.OpenParen)) {
+                state.consume(element, CstNodeKind.FormatListItem_OpenParen, tokens.OpenParen);
+                element.list = this.formatList.rule(state);
+                state.consume(element, CstNodeKind.FormatListItem_CloseParen, tokens.CloseParen);
+            } else {
+                // TODO better error message
+                throw new Error("Expected format item or parenthesized format list");
+            }
+
+            return element;
+        }
+    );
+
+    formatListItemLevel = rule(
+        choice(
+            sequence(tokens.NUMBER),
+            sequence(tokens.OpenParen),
+        ),
+        (state: ParserState): ast.FormatListItemLevel => {
+            const element: ast.FormatListItemLevel = {
+                kind: ast.SyntaxKind.FormatListItemLevel,
+                container: null,
+                level: null,
+            };
+
+            if (state.canConsume(tokens.NUMBER)) {
+                const levelToken = state.consume(element, CstNodeKind.FormatListItemLevel_LevelNumber, tokens.NUMBER);
+                if (levelToken) {
+                    element.level = levelToken.image;
+                }
+            } else if (state.canConsume(tokens.OpenParen)) {
+                state.consume(element, CstNodeKind.FormatListItemLevel_OpenParen, tokens.OpenParen);
+                element.level = this.expression.rule(state);
+                state.consume(element, CstNodeKind.FormatListItemLevel_CloseParen, tokens.CloseParen);
+            } else {
+                // TODO better error message
+                throw new Error("Expected number or parenthesized expression for format list item level");
+            }
+
+            return element;
+        }
+    );
+
+    formatItem = orRule<ast.FormatItem>(
+        () => this.AFormatItem,
+        () => this.BFormatItem,
+        () => this.CFormatItem,
+        () => this.EFormatItem,
+        () => this.FFormatItem,
+        () => this.PFormatItem,
+        () => this.columnFormatItem,
+        () => this.GFormatItem,
+        () => this.LFormatItem,
+        () => this.lineFormatItem,
+        () => this.pageFormatItem,
+        () => this.RFormatItem,
+        () => this.skipFormatItem,
+        () => this.VFormatItem,
+        () => this.XFormatItem,
+    );
+
+    AFormatItem = rule(
+        sequence(tokens.A),
+        (state: ParserState): ast.AFormatItem => {
+            const element: ast.AFormatItem = {
+                kind: ast.SyntaxKind.AFormatItem,
+                container: null,
+                fieldWidth: null,
+            };
+
+            state.consume(element, CstNodeKind.AFormatItem_A, tokens.A);
+
+            if (state.tryConsume(element, CstNodeKind.AFormatItem_OpenParen, tokens.OpenParen)) {
+                element.fieldWidth = this.expression.rule(state);
+                state.consume(element, CstNodeKind.AFormatItem_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+
+    BFormatItem = rule(
+        sequence(tokens.B),
+        (state: ParserState): ast.BFormatItem => {
+            const element: ast.BFormatItem = {
+                kind: ast.SyntaxKind.BFormatItem,
+                container: null,
+                fieldWidth: null,
+            };
+
+            state.consume(element, CstNodeKind.BFormatItem_B, tokens.B);
+
+            if (state.tryConsume(element, CstNodeKind.BFormatItem_OpenParen, tokens.OpenParen)) {
+                element.fieldWidth = this.expression.rule(state);
+                state.consume(element, CstNodeKind.BFormatItem_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+
+    CFormatItem = rule(
+        sequence(tokens.C),
+        (state: ParserState): ast.CFormatItem => {
+            const element: ast.CFormatItem = {
+                kind: ast.SyntaxKind.CFormatItem,
+                container: null,
+                item: null,
+            };
+
+            state.consume(element, CstNodeKind.CFormatItem_C, tokens.C);
+            state.consume(element, CstNodeKind.CFormatItem_OpenParen, tokens.OpenParen);
+
+            if (state.canConsumeFirst(this.FFormatItem.first)) {
+                element.item = this.FFormatItem.rule(state);
+            } else if (state.canConsumeFirst(this.EFormatItem.first)) {
+                element.item = this.EFormatItem.rule(state);
+            } else if (state.canConsumeFirst(this.PFormatItem.first)) {
+                element.item = this.PFormatItem.rule(state);
+            } else {
+                // TODO better error message
+                throw new Error("Expected F, E, or P format item in C format item");
+            }
+
+            state.consume(element, CstNodeKind.CFormatItem_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    FFormatItem = rule(
+        sequence(tokens.F),
+        (state: ParserState): ast.FFormatItem => {
+            const element: ast.FFormatItem = {
+                kind: ast.SyntaxKind.FFormatItem,
+                container: null,
+                fieldWidth: null,
+                fractionalDigits: null,
+                scalingFactor: null,
+            };
+
+            state.consume(element, CstNodeKind.FFormatItem_F, tokens.F);
+            state.consume(element, CstNodeKind.FFormatItem_OpenParen, tokens.OpenParen);
+            element.fieldWidth = this.expression.rule(state);
+
+            // Optional fractional digits and scaling factor
+            if (state.tryConsume(element, CstNodeKind.FFormatItem_CommaFractional, tokens.Comma)) {
+                element.fractionalDigits = this.expression.rule(state);
+
+                // Optional scaling factor
+                if (state.tryConsume(element, CstNodeKind.FFormatItem_CommaScalingFactor, tokens.Comma)) {
+                    element.scalingFactor = this.expression.rule(state);
+                }
+            }
+
+            state.consume(element, CstNodeKind.FFormatItem_CloseParen, tokens.CloseParen);
+            return element;
+        }
+    );
+
+    EFormatItem = rule(
+        sequence(tokens.E),
+        (state: ParserState): ast.EFormatItem => {
+            const element: ast.EFormatItem = {
+                kind: ast.SyntaxKind.EFormatItem,
+                container: null,
+                fieldWidth: null,
+                fractionalDigits: null,
+                significantDigits: null,
+            };
+
+            state.consume(element, CstNodeKind.EFormatItem_E, tokens.E);
+            state.consume(element, CstNodeKind.EFormatItem_OpenParen, tokens.OpenParen);
+            element.fieldWidth = this.expression.rule(state);
+            state.consume(element, CstNodeKind.EFormatItem_Comma0, tokens.Comma);
+            element.fractionalDigits = this.expression.rule(state);
+
+            // Optional significant digits
+            if (state.tryConsume(element, CstNodeKind.EFormatItem_Comma1, tokens.Comma)) {
+                element.significantDigits = this.expression.rule(state);
+            }
+
+            state.consume(element, CstNodeKind.EFormatItem_CloseParen, tokens.CloseParen);
+            return element;
+        }
+    );
+
+    PFormatItem = rule(
+        sequence(tokens.P),
+        (state: ParserState): ast.PFormatItem => {
+            const element: ast.PFormatItem = {
+                kind: ast.SyntaxKind.PFormatItem,
+                container: null,
+                specification: null,
+            };
+
+            state.consume(element, CstNodeKind.PFormatItem_P, tokens.P);
+            const specToken = state.consume(element, CstNodeKind.PFormatItem_SpecificationString, tokens.STRING_TERM);
+            if (specToken) {
+                element.specification = specToken.image;
+            }
+
+            return element;
+        }
+    );
+
+    columnFormatItem = rule(
+        sequence(tokens.COLUMN),
+        (state: ParserState): ast.ColumnFormatItem => {
+            const element: ast.ColumnFormatItem = {
+                kind: ast.SyntaxKind.ColumnFormatItem,
+                container: null,
+                characterPosition: null,
+            };
+
+            state.consume(element, CstNodeKind.ColumnFormatItem_COLUMN, tokens.COLUMN);
+            state.consume(element, CstNodeKind.ColumnFormatItem_OpenParen, tokens.OpenParen);
+            element.characterPosition = this.expression.rule(state);
+            state.consume(element, CstNodeKind.ColumnFormatItem_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    GFormatItem = rule(
+        sequence(tokens.G),
+        (state: ParserState): ast.GFormatItem => {
+            const element: ast.GFormatItem = {
+                kind: ast.SyntaxKind.GFormatItem,
+                container: null,
+                fieldWidth: null,
+            };
+
+            state.consume(element, CstNodeKind.GFormatItem_G, tokens.G);
+
+            if (state.tryConsume(element, CstNodeKind.GFormatItem_OpenParen, tokens.OpenParen)) {
+                element.fieldWidth = this.expression.rule(state);
+                state.consume(element, CstNodeKind.GFormatItem_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+
+    LFormatItem = rule(
+        sequence(tokens.L),
+        (state: ParserState): ast.LFormatItem => {
+            const element: ast.LFormatItem = {
+                kind: ast.SyntaxKind.LFormatItem,
+                container: null,
+            };
+
+            state.consume(element, CstNodeKind.LFormatItem_L, tokens.L);
+
+            return element;
+        }
+    );
+
+    lineFormatItem = rule(
+        sequence(tokens.LINE),
+        (state: ParserState): ast.LineFormatItem => {
+            const element: ast.LineFormatItem = {
+                kind: ast.SyntaxKind.LineFormatItem,
+                container: null,
+                lineNumber: null,
+            };
+
+            state.consume(element, CstNodeKind.LineFormatItem_LINE, tokens.LINE);
+            state.consume(element, CstNodeKind.LineFormatItem_OpenParen, tokens.OpenParen);
+            element.lineNumber = this.expression.rule(state);
+            state.consume(element, CstNodeKind.LineFormatItem_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    pageFormatItem = rule(
+        sequence(tokens.PAGE),
+        (state: ParserState): ast.PageFormatItem => {
+            const element: ast.PageFormatItem = {
+                kind: ast.SyntaxKind.PageFormatItem,
+                container: null,
+            };
+
+            state.consume(element, CstNodeKind.PageFormatItem_PAGE, tokens.PAGE);
+
+            return element;
+        }
+    );
+
+    RFormatItem = rule(
+        sequence(tokens.R),
+        (state: ParserState): ast.RFormatItem => {
+            const element: ast.RFormatItem = {
+                kind: ast.SyntaxKind.RFormatItem,
+                container: null,
+                labelReference: null,
+            };
+
+            state.consume(element, CstNodeKind.RFormatItem_R, tokens.R);
+            state.consume(element, CstNodeKind.RFormatItem_OpenParen, tokens.OpenParen);
+            const labelToken = state.consume(element, CstNodeKind.RFormatItem_LabelRef, tokens.ID);
+            if (labelToken) {
+                element.labelReference = labelToken.image;
+            }
+            state.consume(element, CstNodeKind.RFormatItem_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    skipFormatItem = rule(
+        sequence(tokens.SKIP),
+        (state: ParserState): ast.SkipFormatItem => {
+            const element: ast.SkipFormatItem = {
+                kind: ast.SyntaxKind.SkipFormatItem,
+                container: null,
+                skip: null,
+            };
+
+            state.consume(element, CstNodeKind.SkipFormatItem_SKIP, tokens.SKIP);
+
+            if (state.tryConsume(element, CstNodeKind.SkipFormatItem_OpenParen, tokens.OpenParen)) {
+                element.skip = this.expression.rule(state);
+                state.consume(element, CstNodeKind.SkipFormatItem_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+
+    VFormatItem = rule(
+        sequence(tokens.V),
+        (state: ParserState): ast.VFormatItem => {
+            const element: ast.VFormatItem = {
+                kind: ast.SyntaxKind.VFormatItem,
+                container: null,
+            };
+
+            state.consume(element, CstNodeKind.VFormatItem_V, tokens.V);
+
+            return element;
+        }
+    );
+
+    XFormatItem = rule(
+        sequence(tokens.X),
+        (state: ParserState): ast.XFormatItem => {
+            const element: ast.XFormatItem = {
+                kind: ast.SyntaxKind.XFormatItem,
+                container: null,
+                width: null,
+            };
+
+            state.consume(element, CstNodeKind.XFormatItem_X, tokens.X);
+            state.consume(element, CstNodeKind.XFormatItem_OpenParen, tokens.OpenParen);
+            element.width = this.expression.rule(state);
+            state.consume(element, CstNodeKind.XFormatItem_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    freeStatement = rule(
+        sequence(tokens.FREE),
+        (state: ParserState): ast.FreeStatement => {
+            const element: ast.FreeStatement = {
+                kind: ast.SyntaxKind.FreeStatement,
+                container: null,
+                references: [],
+            };
+
+            state.consume(element, CstNodeKind.FreeStatement_FREE, tokens.FREE);
+            element.references.push(this.locatorCall.rule(state));
+
+            while (state.tryConsume(element, CstNodeKind.FreeStatement_Comma, tokens.Comma)) {
+                element.references.push(this.locatorCall.rule(state));
+            }
+
+            state.consume(element, CstNodeKind.FreeStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    getStatement = rule(
+        sequence(tokens.GET),
+        (state: ParserState): ast.GetStatement => {
+            let element: ast.GetStatement = {
+                kind: ast.SyntaxKind.GetFileStatement,
+                container: null,
+                specifications: [],
+            } as ast.GetFileStatement;
+
+            state.consume(element, CstNodeKind.GetStatement_GET, tokens.GET);
+
+            if (state.tryConsume(element, CstNodeKind.GetStatement_STRING, tokens.STRING)) {
+                // STRING variant
+                const stringStatement: ast.GetStringStatement = {
+                    kind: ast.SyntaxKind.GetStringStatement,
+                    container: null,
+                    dataSpecification: null,
+                    expression: null,
+                };
+                element = stringStatement;
+
+                state.consume(element, CstNodeKind.GetStatement_OpenParen, tokens.OpenParen);
+                stringStatement.expression = this.expression.rule(state);
+                state.consume(element, CstNodeKind.GetStatement_CloseParen, tokens.CloseParen);
+                stringStatement.dataSpecification = this.dataSpecificationOptions.rule(state);
+            } else {
+                // FILE variant - one or more file specifications
+                const fileStatement = element as ast.GetFileStatement;
+
+                do {
+                    if (state.canConsumeFirst(this.getFile.first)) {
+                        fileStatement.specifications.push(this.getFile.rule(state));
+                    } else if (state.canConsumeFirst(this.getCopy.first)) {
+                        fileStatement.specifications.push(this.getCopy.rule(state));
+                    } else if (state.canConsumeFirst(this.getSkip.first)) {
+                        fileStatement.specifications.push(this.getSkip.rule(state));
+                    } else if (state.canConsumeFirst(this.dataSpecificationOptions.first)) {
+                        fileStatement.specifications.push(this.dataSpecificationOptions.rule(state));
+                    } else {
+                        // TODO: better error message
+                        throw new Error("Expected file specification in GET statement");
+                    }
+                } while (!state.eof &&
+                !state.canConsume(tokens.Semicolon) &&
+                    (state.canConsumeFirst(this.getFile.first) ||
+                        state.canConsumeFirst(this.getCopy.first) ||
+                        state.canConsumeFirst(this.getSkip.first) ||
+                        state.canConsumeFirst(this.dataSpecificationOptions.first)));
+            }
+
+            state.consume(element, CstNodeKind.GetStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    getFile = rule(
+        sequence(tokens.FILE),
+        (state: ParserState): ast.GetFile => {
+            const element: ast.GetFile = {
+                kind: ast.SyntaxKind.GetFile,
+                container: null,
+                file: null,
+            };
+
+            state.consume(element, CstNodeKind.GetFile_FILE, tokens.FILE);
+            state.consume(element, CstNodeKind.GetFile_OpenParen, tokens.OpenParen);
+            element.file = this.expression.rule(state);
+            state.consume(element, CstNodeKind.GetFile_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    getCopy = rule(
+        sequence(tokens.COPY),
+        (state: ParserState): ast.GetCopy => {
+            const element: ast.GetCopy = {
+                kind: ast.SyntaxKind.GetCopy,
+                container: null,
+                copyReference: null,
+            };
+
+            state.consume(element, CstNodeKind.GetCopy_COPY, tokens.COPY);
+
+            if (state.tryConsume(element, CstNodeKind.GetCopy_OpenParen, tokens.OpenParen)) {
+                const idToken = state.consume(element, CstNodeKind.GetCopy_CopyReference, tokens.ID);
+                if (idToken) {
+                    element.copyReference = idToken.image;
+                }
+                state.consume(element, CstNodeKind.GetCopy_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+
+    getSkip = rule(
+        sequence(tokens.SKIP),
+        (state: ParserState): ast.GetSkip => {
+            const element: ast.GetSkip = {
+                kind: ast.SyntaxKind.GetSkip,
+                container: null,
+                skipExpression: null,
+            };
+
+            state.consume(element, CstNodeKind.GetSkip_SKIP, tokens.SKIP);
+
+            if (state.tryConsume(element, CstNodeKind.GetSkip_OpenParen, tokens.OpenParen)) {
+                element.skipExpression = this.expression.rule(state);
+                state.consume(element, CstNodeKind.GetSkip_CloseParen, tokens.CloseParen);
+            }
+
+            return element;
+        }
+    );
+
+    goToStatement = rule(
+        choice(
+            sequence(tokens.GO),
+            sequence(tokens.GOTO)
+        ),
+        (state: ParserState): ast.GoToStatement => {
+            const element: ast.GoToStatement = {
+                kind: ast.SyntaxKind.GoToStatement,
+                container: null,
+                label: null,
+            };
+
+            if (state.canConsume(tokens.GO)) {
+                state.consume(element, CstNodeKind.GoToStatement_GO, tokens.GO);
+                state.consume(element, CstNodeKind.GoToStatement_TO, tokens.TO);
+            } else if (state.tryConsume(element, CstNodeKind.GoToStatement_GOTO, tokens.GOTO)) {
+                // GOTO consumed
+            } else {
+                // TODO better error message
+                throw new Error("Expected GO TO or GOTO");
+            }
+
+            element.label = this.labelReference.rule(state);
+            state.consume(element, CstNodeKind.GoToStatement_Semicolon, tokens.Semicolon);
+
+            return element;
+        }
+    );
+
+    genericAttribute = rule(
+        sequence(tokens.GENERIC),
+        (state: ParserState): ast.GenericAttribute => {
+            const element: ast.GenericAttribute = {
+                kind: ast.SyntaxKind.GenericAttribute,
+                container: null,
+                references: [],
+            };
+
+            state.consume(element, CstNodeKind.GenericAttribute_GENERIC, tokens.GENERIC);
+            state.consume(element, CstNodeKind.GenericAttribute_OpenParen, tokens.OpenParen);
+
+            // Optional generic references
+            if (state.canConsumeFirst(this.genericReference.first)) {
+                element.references.push(this.genericReference.rule(state));
+
+                while (state.tryConsume(element, CstNodeKind.GenericAttribute_Comma, tokens.Comma)) {
+                    element.references.push(this.genericReference.rule(state));
+                }
+            }
+
+            state.consume(element, CstNodeKind.GenericAttribute_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    genericReference = rule(
+        () => this.referenceItem.first,
+        (state: ParserState): ast.GenericReference => {
+            const element: ast.GenericReference = {
+                kind: ast.SyntaxKind.GenericReference,
+                container: null,
+                descriptors: [],
+                otherwise: false,
+                entry: null,
+            };
+
+            element.entry = this.referenceItem.rule(state);
+
+            if (state.tryConsume(element, CstNodeKind.GenericReference_WHEN, tokens.WHEN)) {
+                state.consume(element, CstNodeKind.GenericReference_OpenParen, tokens.OpenParen);
+
+                if (state.canConsumeFirst(this.genericDescriptor.first)) {
+                    element.descriptors.push(this.genericDescriptor.rule(state));
+                }
+
+                state.consume(element, CstNodeKind.GenericReference_CloseParen, tokens.CloseParen);
+            } else if (state.tryConsume(element, CstNodeKind.GenericReference_OTHERWISE, tokens.OTHERWISE)) {
+                element.otherwise = true;
+            }
+
+            return element;
+        }
+    );
+
+    genericDescriptor = rule(
+        () => this.declarationAttribute.first,
+        (state: ParserState): ast.GenericDescriptor => {
+            const element: ast.GenericDescriptor = {
+                kind: ast.SyntaxKind.GenericDescriptor,
+                container: null,
+                attributes: [],
+            };
+
+            element.attributes.push(this.declarationAttribute.rule(state));
+
+            while (state.tryConsume(element, CstNodeKind.GenericDescriptor_Comma, tokens.Comma)) {
+                element.attributes.push(this.declarationAttribute.rule(state));
+            }
+
+            return element;
+        }
+    );
 
 
 
