@@ -4433,43 +4433,619 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             return element;
         }
     );
-    //continue here!
+
+    entryAttribute = rule(
+        sequence(tokens.LIMITED, tokens.ENTRY),
+        (state: ParserState): ast.EntryAttribute => {
+            const element: ast.EntryAttribute = {
+                kind: ast.SyntaxKind.EntryAttribute,
+                container: null,
+                entryToken: null,
+                attributes: [],
+                options: [],
+                variable: [],
+                limited: [],
+                returns: [],
+                environmentName: [],
+            };
+
+            // Parse zero or more LIMITED tokens at the beginning
+            while (state.tryConsume(element, CstNodeKind.EntryAttribute_Limited0, tokens.LIMITED)) {
+                const limitedToken = state.last;
+                if (limitedToken) {
+                    element.limited.push(limitedToken);
+                }
+            }
+
+            // Parse required ENTRY token
+            element.entryToken = state.consume(element, CstNodeKind.EntryAttribute_ENTRY, tokens.ENTRY);
+
+            // Optional parameter list
+            if (state.tryConsume(element, CstNodeKind.EntryAttribute_OpenParenAttribute, tokens.OpenParen)) {
+                element.attributes.push(this.entryDescription.rule(state));
+
+                while (state.tryConsume(element, CstNodeKind.EntryAttribute_CommaAttribute, tokens.Comma)) {
+                    element.attributes.push(this.entryDescription.rule(state));
+                }
+
+                state.consume(element, CstNodeKind.EntryAttribute_CloseParenAttribute, tokens.CloseParen);
+            }
+
+            // Parse zero or more trailing options
+            while (!state.eof && !state.canConsume(tokens.Semicolon)) {
+                if (state.canConsumeFirst(this.options.first)) {
+                    element.options.push(this.options.rule(state));
+                } else if (state.tryConsume(element, CstNodeKind.EntryAttribute_Variable, tokens.VARIABLE)) {
+                    const variableToken = state.last;
+                    if (variableToken) {
+                        element.variable.push(variableToken);
+                    }
+                } else if (state.tryConsume(element, CstNodeKind.EntryAttribute_Limited1, tokens.LIMITED)) {
+                    const limitedToken = state.last;
+                    if (limitedToken) {
+                        element.limited.push(limitedToken);
+                    }
+                } else if (state.canConsumeFirst(this.returnsOption.first)) {
+                    element.returns.push(this.returnsOption.rule(state));
+                } else if (state.tryConsume(element, CstNodeKind.EntryAttribute_EXTERNAL, tokens.EXTERNAL)) {
+                    if (state.tryConsume(element, CstNodeKind.EntryAttribute_OpenParenEnv, tokens.OpenParen)) {
+                        const envExpression = this.expression.rule(state);
+                        element.environmentName.push(envExpression);
+                        state.consume(element, CstNodeKind.EntryAttribute_CloseParenEnv, tokens.CloseParen);
+                    }
+                } else {
+                    // TODO: better error message
+                    throw new Error("Unexpected token in ENTRY attribute");
+                }
+            }
+
+            return element;
+        }
+    );
+
+    returnsOption = rule(
+        sequence(tokens.RETURNS),
+        (state: ParserState): ast.ReturnsOption => {
+            const element: ast.ReturnsOption = {
+                kind: ast.SyntaxKind.ReturnsOption,
+                container: null,
+                returnAttributes: [],
+            };
+
+            state.consume(element, CstNodeKind.ReturnsOption_RETURNS, tokens.RETURNS);
+            state.consume(element, CstNodeKind.ReturnsOption_OpenParen, tokens.OpenParen);
+
+            // Parse zero or more declaration attributes
+            while (!state.eof && !state.canConsume(tokens.CloseParen)) {
+                if (state.canConsumeFirst(this.declarationAttribute.first)) {
+                    element.returnAttributes.push(this.declarationAttribute.rule(state));
+                } else {
+                    // TODO: better error message
+                    throw new Error("Expected declaration attribute in RETURNS clause");
+                }
+            }
+
+            state.consume(element, CstNodeKind.ReturnsOption_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    entryDescription = orRule<ast.EntryDescription>(
+        () => this.entryParameterDescription,
+        () => this.entryUnionDescription,
+    );
+
+    entryParameterDescription = rule(
+        choice(
+            sequence(tokens.Star),
+            () => this.declarationAttribute.first,
+        ),
+        (state: ParserState): ast.EntryParameterDescription => {
+            const element: ast.EntryParameterDescription = {
+                kind: ast.SyntaxKind.EntryParameterDescription,
+                container: null,
+                attributes: [],
+                star: false,
+            };
+
+            if (state.tryConsume(element, CstNodeKind.EntryParameterDescription_Star, tokens.Star)) {
+                element.star = true;
+                // Parse optional attributes after the star
+                while (state.canConsumeFirst(this.declarationAttribute.first)) {
+                    element.attributes.push(this.declarationAttribute.rule(state));
+                }
+            } else {
+                // Parse at least one declaration attribute
+                element.attributes.push(this.declarationAttribute.rule(state));
+
+                // Parse additional attributes
+                while (state.canConsumeFirst(this.declarationAttribute.first)) {
+                    element.attributes.push(this.declarationAttribute.rule(state));
+                }
+            }
+
+            return element;
+        }
+    );
+
+    entryUnionDescription = rule(
+        sequence(tokens.NUMBER),
+        (state: ParserState): ast.EntryUnionDescription => {
+            const element: ast.EntryUnionDescription = {
+                kind: ast.SyntaxKind.EntryUnionDescription,
+                container: null,
+                init: null,
+                attributes: [],
+                prefixedAttributes: [],
+            };
+
+            const initToken = state.consume(element, CstNodeKind.EntryUnionDescription_InitNumber, tokens.NUMBER);
+            if (initToken) {
+                element.init = initToken.image;
+            }
+
+            // Parse zero or more declaration attributes
+            while (state.canConsumeFirst(this.declarationAttribute.first)) {
+                element.attributes.push(this.declarationAttribute.rule(state));
+            }
+
+            // Required comma
+            state.consume(element, CstNodeKind.EntryUnionDescription_Comma, tokens.Comma);
+
+            // Parse zero or more prefixed attributes
+            while (state.canConsumeFirst(this.prefixedAttribute.first)) {
+                element.prefixedAttributes.push(this.prefixedAttribute.rule(state));
+            }
+
+            return element;
+        }
+    );
+
+    prefixedAttribute = rule(
+        sequence(tokens.NUMBER),
+        (state: ParserState): ast.PrefixedAttribute => {
+            const element: ast.PrefixedAttribute = {
+                kind: ast.SyntaxKind.PrefixedAttribute,
+                container: null,
+                level: null,
+                attributes: [],
+            };
+
+            const levelToken = state.consume(element, CstNodeKind.PrefixedAttribute_LevelNumber, tokens.NUMBER);
+            if (levelToken) {
+                element.level = levelToken.image;
+            }
+
+            // Parse zero or more declaration attributes
+            while (state.canConsumeFirst(this.declarationAttribute.first)) {
+                element.attributes.push(this.declarationAttribute.rule(state));
+            }
+
+            return element;
+        }
+    );
+
+    procedureParameter = rule(
+        sequence(tokens.ID),
+        (state: ParserState): ast.ProcedureParameter => {
+            const element: ast.ProcedureParameter = {
+                kind: ast.SyntaxKind.ProcedureParameter,
+                container: null,
+                ref: null,
+            };
+
+            const idToken = state.consume(element, CstNodeKind.ProcedureParameter_Id, tokens.ID);
+            if (idToken) {
+                element.ref = ast.createReference(
+                    element,
+                    idToken,
+                    ast.ReferenceType.Variable,
+                );
+            }
+
+            return element;
+        }
+    );
+
+    referenceItem = rule(
+        sequence(tokens.ID),
+        (state: ParserState): ast.ReferenceItem => {
+            const element: ast.ReferenceItem = {
+                kind: ast.SyntaxKind.ReferenceItem,
+                container: null,
+                ref: null,
+                dimensions: null,
+            };
+
+            const idToken = state.consume(element, CstNodeKind.ReferenceItem_Ref, tokens.ID);
+            if (idToken) {
+                element.ref = ast.createReference(
+                    element,
+                    idToken,
+                    ast.ReferenceType.Variable,
+                );
+            }
+
+            // Optional dimensions
+            if (state.canConsumeFirst(this.dimensions.first)) {
+                element.dimensions = this.dimensions.rule(state);
+            }
+
+            return element;
+        }
+    );
+
+    // BinaryExpression - More complex with intermediate transformation
+    binaryExpression = rule(
+        () => this.primaryExpression.first,
+        (state: ParserState): ast.BinaryExpression => {
+            const element: IntermediateBinaryExpression = {
+                infix: true,
+                items: [],
+                operators: [],
+                operatorTokens: [],
+            };
+
+            // Parse first primary expression
+            element.items.push(this.primaryExpression.rule(state));
+
+            // Parse zero or more operator-expression pairs
+            while (state.canConsume(tokens.BinaryOperator)) {
+                const operatorToken = state.consume(element as any, CstNodeKind.BinaryExpression_Operator, tokens.BinaryOperator);
+                if (operatorToken) {
+                    element.operators.push(
+                        tokens.BinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx)
+                    );
+                    element.operatorTokens.push(operatorToken);
+                }
+                element.items.push(this.primaryExpression.rule(state));
+            }
+
+            // TODO Transform intermediate representation to final AST
+            return element;
+        }
+    );
+
+    expression = this.binaryExpression;
+
+    primaryExpression = orRule<ast.Expression>(
+        () => this.literal,
+        () => this.parenthesizedExpression,
+        () => this.unaryExpression,
+        () => this.locatorCall,
+    );
+
+    parenthesizedExpression = rule(
+        sequence(tokens.OpenParen),
+        (state: ParserState): ast.Parenthesis | ast.Literal => {
+            const element: ast.Parenthesis = {
+                kind: ast.SyntaxKind.Parenthesis,
+                container: null,
+                value: null,
+                do: null,
+            };
+
+            state.consume(element, CstNodeKind.ParenthesizedExpression_OpenParen, tokens.OpenParen);
+            element.value = this.expression.rule(state);
+
+            // Optional DO clause
+            if (state.tryConsume(element, CstNodeKind.ParenthesizedExpression_DO, tokens.DO)) {
+                element.do = this.doType3.rule(state);
+            }
+
+            state.consume(element, CstNodeKind.ParenthesizedExpression_CloseParen, tokens.CloseParen);
+
+            // Optional literal multiplication - this is a special case where parentheses can be followed by a literal
+            if (state.canConsumeFirst(this.literalValue.first)) {
+                // Replace the parenthesis with a literal that has the parenthesis as its multiplier
+                const literal: ast.Literal = {
+                    kind: ast.SyntaxKind.Literal,
+                    container: null,
+                    multiplier: element,
+                    value: null,
+                };
+                literal.value = this.literalValue.rule(state);
+                return literal;
+            }
+
+            return element;
+        }
+    );
+
+    memberCall = rule(
+        sequence(tokens.ID), // TODO: () => this.referenceItem.first,
+        (state: ParserState): ast.MemberCall => {
+            let element: ast.MemberCall = {
+                kind: ast.SyntaxKind.MemberCall,
+                container: null,
+                element: null,
+                previous: null,
+            };
+
+            // Parse first reference item
+            element.element = this.referenceItem.rule(state);
+
+            // Parse zero or more dot-separated member accesses
+            while (state.tryConsume(element, CstNodeKind.MemberCall_Dot, tokens.Dot)) {
+                // Create a new MemberCall for the chain
+                const previous = element;
+                element = {
+                    kind: ast.SyntaxKind.MemberCall,
+                    container: null,
+                    element: null,
+                    previous: previous,
+                };
+
+                element.element = this.referenceItem.rule(state);
+            }
+
+            return element;
+        }
+    );
+
+    locatorCall = rule(
+        () => this.memberCall.first,
+        (state: ParserState): ast.LocatorCall => {
+            let element: ast.LocatorCall = {
+                kind: ast.SyntaxKind.LocatorCall,
+                container: null,
+                element: null,
+                previous: null,
+                pointer: false,
+                handle: false,
+            };
+
+            // Parse first member call
+            element.element = this.memberCall.rule(state);
+
+            // Parse zero or more pointer/handle chains
+            while (!state.eof && (state.canConsume(tokens.MinusGreaterThan) || state.canConsume(tokens.EqualsGreaterThan))) {
+                // Create a new LocatorCall for the chain
+                const previous = element;
+                element = {
+                    kind: ast.SyntaxKind.LocatorCall,
+                    container: null,
+                    element: null,
+                    previous: previous,
+                    pointer: false,
+                    handle: false,
+                };
+
+                if (state.tryConsume(element, CstNodeKind.LocatorCall_Pointer, tokens.MinusGreaterThan)) {
+                    element.pointer = true;
+                } else if (state.tryConsume(element, CstNodeKind.LocatorCall_Handle, tokens.EqualsGreaterThan)) {
+                    element.handle = true;
+                }
+
+                element.element = this.memberCall.rule(state);
+            }
+
+            return element;
+        }
+    );
+
+    procedureCall = rule(
+        sequence(tokens.ID),
+        (state: ParserState): ast.ProcedureCall => {
+            const element: ast.ProcedureCall = {
+                kind: ast.SyntaxKind.ProcedureCall,
+                container: null,
+                procedure: null,
+                args1: null,
+                args2: null,
+            };
+
+            const idToken = state.consume(element, CstNodeKind.ProcedureCall_ProcedureRef, tokens.ID);
+            if (idToken) {
+                element.procedure = ast.createReference(
+                    element,
+                    idToken,
+                    ast.ReferenceType.Variable,
+                );
+            }
+
+            /* //TODO was this correctly translated?
+            
+            let i = 0;
+                // Use MANY to prevent grammar ambiguity
+                this.MANY({
+                  DEF: () => {
+                    this.SUBRULE_ASSIGN(this.ProcedureCallArgs, {
+                      assign: (result) => {
+                        if (i === 0) {
+                          element.args1 = result;
+                        } else {
+                          element.args2 = result;
+                        }
+                      },
+                    });
+                    i++;
+                  },
+                  // Use a gate to prevent parsing this more than twice
+                  GATE: () => i < 2,
+                });
+            
+            */
+
+            // Parse optional argument lists (up to 2)
+            let argCount = 0;
+            while (argCount < 2 && state.canConsumeFirst(this.procedureCallArgs.first)) {
+                const args = this.procedureCallArgs.rule(state);
+                if (argCount === 0) {
+                    element.args1 = args;
+                } else {
+                    element.args2 = args;
+                }
+                argCount++;
+            }
+
+            return element;
+        }
+    );
+
+    procedureCallArgs = rule(
+        sequence(tokens.OpenParen),
+        (state: ParserState): ast.ProcedureCallArgs => {
+            const element: ast.ProcedureCallArgs = {
+                kind: ast.SyntaxKind.ProcedureCallArgs,
+                container: null,
+                list: [],
+            };
+
+            state.consume(element, CstNodeKind.ProcedureCallArgs_OpenParen, tokens.OpenParen);
+
+            // Optional argument list
+            if (!state.canConsume(tokens.CloseParen)) {
+                // Parse first argument (expression or star)
+                if (state.canConsume(tokens.Star)) {
+                    const starToken = state.consume(element, CstNodeKind.ProcedureCallArgs_Star0, tokens.Star);
+                    element.list.push(starToken!.image as "*");
+                } else {
+                    element.list.push(this.expression.rule(state));
+                }
+
+                // Parse additional comma-separated arguments
+                while (state.tryConsume(element, CstNodeKind.ProcedureCallArgs_Comma, tokens.Comma)) {
+                    if (state.canConsume(tokens.Star)) {
+                        const starToken = state.consume(element, CstNodeKind.ProcedureCallArgs_Star1, tokens.Star);
+                        element.list.push(starToken!.image as "*");
+                    } else {
+                        element.list.push(this.expression.rule(state));
+                    }
+                }
+            }
+
+            state.consume(element, CstNodeKind.ProcedureCallArgs_CloseParen, tokens.CloseParen);
+
+            return element;
+        }
+    );
+
+    labelReference = rule(
+        sequence(tokens.ID),
+        (state: ParserState): ast.LabelReference => {
+            const element: ast.LabelReference = {
+                kind: ast.SyntaxKind.LabelReference,
+                container: null,
+                label: null,
+            };
+
+            const idToken = state.consume(element, CstNodeKind.LabelReference_LabelRef, tokens.ID);
+            if (idToken) {
+                element.label = ast.createReference(
+                    element,
+                    idToken,
+                    ast.ReferenceType.Variable,
+                );
+            }
+
+            return element;
+        }
+    );
+
+    unaryExpression = rule(
+        sequence(tokens.UnaryOperator),
+        (state: ParserState): ast.UnaryExpression => {
+            const element: ast.UnaryExpression = {
+                kind: ast.SyntaxKind.UnaryExpression,
+                container: null,
+                op: null,
+                expr: null,
+            };
+
+            const operatorToken = state.consume(element, CstNodeKind.UnaryExpression_Operator, tokens.UnaryOperator);
+            if (operatorToken) {
+                element.op = tokens.UnaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx);
+            }
+
+            element.expr = this.expression.rule(state);
+
+            return element;
+        }
+    );
+
+    literal = rule(
+        () => this.literalValue.first,
+        (state: ParserState): ast.Literal => {
+            const element: ast.Literal = {
+                kind: ast.SyntaxKind.Literal,
+                container: null,
+                multiplier: null,
+                value: null,
+            };
+
+            element.value = this.literalValue.rule(state);
+
+            return element;
+        }
+    );
+
+    literalValue = orRule<ast.LiteralValue>(
+        () => this.stringLiteral,
+        () => this.numberLiteral,
+    );
+
+    stringLiteral = rule(
+        sequence(tokens.STRING_TERM),
+        (state: ParserState): ast.StringLiteral => {
+            const element: ast.StringLiteral = {
+                kind: ast.SyntaxKind.StringLiteral,
+                container: null,
+                value: null,
+            };
+
+            const stringToken = state.consume(element, CstNodeKind.StringLiteral_ValueString, tokens.STRING_TERM);
+            if (stringToken) {
+                element.value = stringToken.image;
+            }
+
+            return element;
+        }
+    );
+
+    numberLiteral = rule(
+        sequence(tokens.NUMBER),
+        (state: ParserState): ast.NumberLiteral => {
+            const element: ast.NumberLiteral = {
+                kind: ast.SyntaxKind.NumberLiteral,
+                container: null,
+                value: null,
+            };
+
+            const numberToken = state.consume(element, CstNodeKind.NumberLiteral_ValueNumber, tokens.NUMBER);
+            if (numberToken) {
+                element.value = numberToken.image;
+            }
+
+            return element;
+        }
+    );
 
 
+    fqn = rule(
+        sequence(tokens.ID),
+        (state: ParserState): string => {
+            let fqn = "";
 
+            const firstIdToken = state.consume(null as any, CstNodeKind.FQN_ID_0, tokens.ID);
+            if (firstIdToken) {
+                fqn += firstIdToken.image;
+            }
 
+            while (state.canConsume(tokens.Dot)) {
+                state.consume(null as any, CstNodeKind.FQN_Dot_0, tokens.Dot);
+                fqn += ".";
 
+                const nextIdToken = state.consume(null as any, CstNodeKind.FQN_ID_1, tokens.ID);
+                if (nextIdToken) {
+                    fqn += nextIdToken.image;
+                }
+            }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            return fqn;
+        }
+    );
 }
 
 export const HandwrittenParserInstance = new HandwrittenParser();
