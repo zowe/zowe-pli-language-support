@@ -9,15 +9,13 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
+
+/**
+ * Test for invalid %SKIP directive
+ */
 
 // @wrap: main
-//// IGNO: PROCEDURE OPTIONS (MAIN);
-//// %SKIP (2);
-////<|skipped:   dcl A fixed bin(31);
-////   dcl B fixed bin(31);
-////|>   dcl WHAT fixed bin(31);
-////   WHAT = 123;
-//// END;
+//// %<|1:SKIP|>;
 
-preprocessor.expectSkippedCodeAt("skipped");
+verify.expectErrorCodesAt(1, code.LspCodes.SkipDirective.InvalidSkip);

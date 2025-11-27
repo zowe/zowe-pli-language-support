@@ -27,4 +27,12 @@ export const LspCodes = {
     severity: Severity.W,
     message: (token: any) => `Input text "${token}" must be uppercase.`,
   } as ParametricPLICode,
+  SkipDirective: {
+    InvalidSkip: {
+      code: "LSPIS001",
+      severity: Severity.W,
+      message:
+        "Standalone SKIP directive is not supported by the language server.",
+    } as SimplePLICode,
+  },
 };
