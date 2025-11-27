@@ -69,16 +69,6 @@ export function skippedCodeRanges(
 
   for (const [index, token] of tokens.entries()) {
     if (
-      token.kind === CstNodeKind.SkipDirective_SKIP &&
-      token.element?.kind === SyntaxKind.SkipDirective
-    ) {
-      const element = token.element;
-      const line = textDocument.positionAt(token.startOffset).line + 1;
-      result.push({
-        start: { line, character: 0 },
-        end: { line: line + element.lineCount, character: 0 },
-      });
-    } else if (
       token.kind === CstNodeKind.IfStatement_IF &&
       token.element?.kind === SyntaxKind.IfStatement
     ) {

@@ -5,6 +5,7 @@ import { MACRO_NamePrefix } from "./macro/nameprefix";
 import { MACRO_Case } from "./macro/case";
 import { ValidationChecks } from "./validator";
 import { IBM1352IE_declared_item_pp_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
+import { LSPIS001_standalone_skip_directive_not_supported } from "./language-server/LSPIS001-skip-statement-not-supported";
 
 export function registerPreprocessorValidationChecks(): ValidationChecks {
   return {
@@ -16,5 +17,6 @@ export function registerPreprocessorValidationChecks(): ValidationChecks {
     DeclaredVariable: [MACRO_NamePrefix],
     Program: [MACRO_Case],
     ProcedureStatement: [MACRO_Deprecate, MACRO_NamePrefix],
+    SkipDirective: [LSPIS001_standalone_skip_directive_not_supported],
   };
 }
