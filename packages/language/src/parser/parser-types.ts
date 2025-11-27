@@ -18,6 +18,7 @@ export type TokenTypeSequence = {
 export type TokenTypeChoice = {
     type: "choice";
     sequences: TokenTypeSequence[];
+    ruleMaps: RuleMap<any>[];
 };
 
 export type FirstSet = TokenTypeChoice | TokenTypeSequence;
@@ -29,10 +30,11 @@ export function sequence(...tokenTypes: TokenType[]): TokenTypeSequence {
     };
 }
 
-export function choice(...sequences: TokenTypeSequence[]): TokenTypeChoice {
+export function choice(...sequences: (TokenTypeSequence|(() => RuleMap<any>))[]): TokenTypeChoice {
     return {
         type: "choice",
-        sequences,
+        sequences: sequences.filter((s): s is TokenTypeSequence => !(s instanceof Function)),
+        ruleMaps: sequences.filter((s): s is () => RuleMap<any> => s instanceof Function).map(s => s()),
     };
 }
 
@@ -55,6 +57,9 @@ function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
     } else {
         for (const sequence of firstSet.sequences) {
             compileToMap(map, sequence, action);
+        }
+        for (const ruleMap of firstSet.ruleMaps) {
+            mergeMaps(map, ruleMap);
         }
     }
 }

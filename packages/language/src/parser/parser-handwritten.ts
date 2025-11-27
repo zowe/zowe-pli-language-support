@@ -4,6 +4,7 @@ import { IRecognitionException } from "chevrotain";
 import { finalParserState, ParserState } from "./parser-state";
 import * as tokens from "./tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { constructBinaryExpression, IntermediateBinaryExpression } from "./abstract-parser";
 
 export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     private _input: tokens.Token[] = [];
@@ -1215,7 +1216,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     defineOrdinalStatement = rule(
         sequence(tokens.DEFINE, tokens.ORDINAL),
-        (state: ParserState): ast.DefineOrdinalStatement {
+        (state: ParserState): ast.DefineOrdinalStatement => {
             const element: ast.DefineOrdinalStatement = {
                 kind: ast.SyntaxKind.DefineOrdinalStatement,
                 container: null,
@@ -1240,7 +1241,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             state.consume(element, CstNodeKind.DefineOrdinalStatement_OpenParenValues, tokens.OpenParen);
-            element.ordinalValues = this.ordinalValues.rule(state);
+            element.ordinalValues = this.ordinalValueList.rule(state);
             state.consume(element, CstNodeKind.DefineOrdinalStatement_CloseParenValues, tokens.CloseParen);
 
             while (!state.canConsume(tokens.Semicolon)) {
@@ -1818,8 +1819,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     formatListItem = rule(
         choice(
-            () => this.formatListItemLevel,
-            () => this.formatItem,
+            () => this.formatListItemLevel.first,
+            () => this.formatItem.first,
             sequence(tokens.OpenParen),
         ),
         (state: ParserState): ast.FormatListItem => {
@@ -2471,130 +2472,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
-    // TODO: This is a preprocessor directive - maybe we can reintegrate it later?
-    // IncludeDirective = this.RULE("IncludeDirective", () => {
-    //   let element = this.push(this.createIncludeDirective());
-
-    //   this.CONSUME_ASSIGN1(tokens.PercentINCLUDE, (token) => {
-    //     this.tokenPayload(token, element, CstNodeKind.IncludeDirective_INCLUDE);
-    //   });
-    //   this.SUBRULE_ASSIGN1(this.IncludeItem, {
-    //     assign: (result) => {
-    //       element.items.push(result);
-    //     },
-    //   });
-    //   this.MANY1(() => {
-    //     this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-    //       this.tokenPayload(token, element, CstNodeKind.IncludeDirective_Comma);
-    //     });
-    //     this.SUBRULE_ASSIGN2(this.IncludeItem, {
-    //       assign: (result) => {
-    //         element.items.push(result);
-    //       },
-    //     });
-    //   });
-    //   this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-    //     this.tokenPayload(token, element, CstNodeKind.IncludeDirective_Semicolon);
-    //   });
-
-    //   return this.pop<ast.IncludeDirective>();
-    // });
-    // private createIncludeItem(): ast.IncludeItem {
-    //   return {
-    //     kind: ast.SyntaxKind.IncludeItem,
-    //     container: null,
-    //     file: null,
-    //     ddname: false,
-    //   };
-    // }
-
-    // IncludeItem = this.RULE("IncludeItem", () => {
-    //   let element = this.push(this.createIncludeItem());
-
-    //   this.OR1([
-    //     {
-    //       ALT: () => {
-    //         this.OR2([
-    //           {
-    //             ALT: () => {
-    //               this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-    //                 this.tokenPayload(
-    //                   token,
-    //                   element,
-    //                   CstNodeKind.IncludeItem_FileString0,
-    //                 );
-    //                 element.file = token.image;
-    //               });
-    //             },
-    //           },
-    //           {
-    //             ALT: () => {
-    //               this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-    //                 this.tokenPayload(
-    //                   token,
-    //                   element,
-    //                   CstNodeKind.IncludeItem_FileID0,
-    //                 );
-    //                 element.file = token.image;
-    //               });
-    //             },
-    //           },
-    //         ]);
-    //       },
-    //     },
-    //     {
-    //       ALT: () => {
-    //         this.CONSUME_ASSIGN1(tokens.ddname, (token) => {
-    //           this.tokenPayload(token, element, CstNodeKind.IncludeItem_DDName);
-    //           element.ddname = true;
-    //         });
-    //         this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-    //           this.tokenPayload(
-    //             token,
-    //             element,
-    //             CstNodeKind.IncludeItem_OpenParen,
-    //           );
-    //         });
-    //         this.OR3([
-    //           {
-    //             ALT: () => {
-    //               this.CONSUME_ASSIGN2(tokens.STRING_TERM, (token) => {
-    //                 this.tokenPayload(
-    //                   token,
-    //                   element,
-    //                   CstNodeKind.IncludeItem_FileString1,
-    //                 );
-    //                 element.file = token.image;
-    //               });
-    //             },
-    //           },
-    //           {
-    //             ALT: () => {
-    //               this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-    //                 this.tokenPayload(
-    //                   token,
-    //                   element,
-    //                   CstNodeKind.IncludeItem_FileID1,
-    //                 );
-    //                 element.file = token.image;
-    //               });
-    //             },
-    //           },
-    //         ]);
-    //         this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-    //           this.tokenPayload(
-    //             token,
-    //             element,
-    //             CstNodeKind.IncludeItem_CloseParen,
-    //           );
-    //         });
-    //       },
-    //     },
-    //   ]);
-
-    //   return this.pop<ast.IncludeItem>();
-    // });
-
     indForAttribute = rule(
         sequence(tokens.INDFOR),
         (state: ParserState): ast.IndForAttribute => {
@@ -3033,7 +2910,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.data = true;
                 if (state.tryConsume(element, CstNodeKind.DataSpecificationOptions_OpenParenData, tokens.OpenParen)) {
                     element.dataListItems.push(this.dataSpecificationDataListItem.rule(state));
-                    while (state.tryConsume(element, CstNodeKind.DataSpecificationOptions_CommaData, tokens.Comma)) {
+                    while (state.tryConsume(element, CstNodeKind.DataSpecificationOptions_Comma, tokens.Comma)) {
                         element.dataListItems.push(this.dataSpecificationDataListItem.rule(state));
                     }
                     state.consume(element, CstNodeKind.DataSpecificationOptions_CloseParenData, tokens.CloseParen);
@@ -3544,11 +3421,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         }
                     }
                     state.consume(element, CstNodeKind.InitialAttribute_CloseParenDirect, tokens.CloseParen);
-                } else if (state.tryConsume(element, CstNodeKind.InitialAttribute_CALL, tokens.CALL)) {
+                } else if (state.tryConsume(element, CstNodeKind.InitialAttribute_Call, tokens.CALL)) {
                     // INITIAL CALL variant
                     element.call = true;
                     element.procedureCall = this.procedureCall.rule(state);
-                } else if (state.tryConsume(element, CstNodeKind.InitialAttribute_TO, tokens.TO)) {
+                } else if (state.tryConsume(element, CstNodeKind.InitialAttribute_To, tokens.TO)) {
                     // INITIAL TO variant  
                     element.to = true;
                     state.consume(element, CstNodeKind.InitialAttribute_OpenParenTo, tokens.OpenParen);
@@ -3842,7 +3719,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
-    private commonDeclarationAttributes: (() => RuleFirstPair<ast.DeclarationAttribute>)[] = [
+    private commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAttribute>)[] = [
         () => this.initialAttribute,
         () => this.dateAttribute,
         () => this.handleAttribute,
@@ -3862,7 +3739,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         () => this.indForAttribute,
     ];
 
-    defaultDeclarationAttribute = orRule<ast.DeclarationAttribute>(
+    defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute>(
         ...this.commonDeclarationAttributes,
         () => this.defaultValueAttribute,
     );
@@ -4676,10 +4553,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
-    // BinaryExpression - More complex with intermediate transformation
-    binaryExpression = rule(
+    expression = rule(
         () => this.primaryExpression.first,
-        (state: ParserState): ast.BinaryExpression => {
+        (state: ParserState): ast.Expression => {
             const element: IntermediateBinaryExpression = {
                 infix: true,
                 items: [],
@@ -4702,12 +4578,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.items.push(this.primaryExpression.rule(state));
             }
 
-            // TODO Transform intermediate representation to final AST
-            return element;
+            return constructBinaryExpression(element)!; //TODO check nonnull assertion
         }
     );
-
-    expression = this.binaryExpression;
 
     primaryExpression = orRule<ast.Expression>(
         () => this.literal,
