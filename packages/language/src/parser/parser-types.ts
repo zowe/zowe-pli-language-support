@@ -1,6 +1,7 @@
 import { IRecognitionException , IToken, TokenType} from "chevrotain";
 import { ParserState } from "./parser-state";
 import { expandTokenTypeIndices } from "./tokens";
+import { memoize } from "lodash-es";
 
 export interface Parser<TAst, TToken extends IToken = IToken> {
     set input(value: TToken[]);
@@ -18,7 +19,7 @@ export type TokenTypeSequence = {
 export type TokenTypeChoice = {
     type: "choice";
     sequences: TokenTypeSequence[];
-    ruleMaps: RuleMap<any>[];
+    ruleMaps: (() => RuleMap<any>)[];
 };
 
 export type FirstSet = TokenTypeChoice | TokenTypeSequence;
@@ -34,7 +35,7 @@ export function choice(...sequences: (TokenTypeSequence|(() => RuleMap<any>))[])
     return {
         type: "choice",
         sequences: sequences.filter((s): s is TokenTypeSequence => !(s instanceof Function)),
-        ruleMaps: sequences.filter((s): s is () => RuleMap<any> => s instanceof Function).map(s => s()),
+        ruleMaps: sequences.filter((s): s is () => RuleMap<any> => s instanceof Function),
     };
 }
 
@@ -59,13 +60,13 @@ function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
             compileToMap(map, sequence, action);
         }
         for (const ruleMap of firstSet.ruleMaps) {
-            mergeMaps(map, ruleMap);
+            mergeMaps(map, ruleMap());
         }
     }
 }
 
 export type RuleFirstPair<T> = {
-    first: RuleMap<any>;
+    first: () =>RuleMap<any>;
     rule: Rule<T>;
 };
 
@@ -85,29 +86,38 @@ function mergeMaps<T>(target: RuleMap<T>, source: RuleMap<T>) {
 }
 
 export function orRule<T>(...rules: (() => RuleFirstPair<T>)[]): RuleFirstPair<T> {
-    const map: RuleMap<T> = new Map();
-    for (const rule of rules) {
-        mergeMaps(map, rule().first);
-    }
-    return {
-        first: map,
-        rule: (state: ParserState) => {
-            return state.consumeAlternatives<T>(map)!;
+    class RuleFirstPairWrapper implements RuleFirstPair<T> {
+        first: () => RuleMap<any>;
+        rule: Rule<T>;
+        constructor(...rules: (() => RuleFirstPair<T>)[]) {
+            this.first = memoize(() => {
+                const map: RuleMap<T> = new Map();
+                for (const rule of rules) {
+                    mergeMaps(map, rule().first());
+                }
+                return map;
+            });
+            this.rule = (state: ParserState) => {
+                return state.consumeAlternatives<T>(this.first())!;
+            };
         }
-    };
+    }
+    return new RuleFirstPairWrapper(...rules);
 }
 
 export function rule<T>(set: FirstSet|(() => RuleMap<any>), action: Rule<T>): RuleFirstPair<T> {
-    const map: RuleMap<T> = new Map();
     if (typeof set === "function") {
         return {
-            first: set(),
+            first: set,
             rule: action,
         };
     } else {
-        compileToMap(map, set, action);
         return {
-            first: map,
+            first: memoize(() => {
+                const map: RuleMap<T> = new Map();
+                compileToMap(map, set, action);
+                return map;
+            }),
             rule: action,
         };
     }
