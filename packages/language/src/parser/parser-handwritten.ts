@@ -396,7 +396,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         }
     );
 
-    firstEntryStatement = rule(
+    entryStatement = rule(
         sequence(tokens.ENTRY),
         (state: ParserState): ast.EntryStatement => {
             const element: ast.EntryStatement = {
