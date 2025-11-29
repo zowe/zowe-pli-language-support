@@ -21,6 +21,7 @@ import { LLStarLookaheadStrategy } from "chevrotain-allstar";
 import {
   BinaryOperator,
   Expression,
+  isSyntaxNode,
   SyntaxKind,
   type BinaryExpression,
   type SyntaxNode,
@@ -197,15 +198,15 @@ export class AbstractParser extends EmbeddedActionsParser {
     ruleToCall: ParserMethod<ARGS, R>,
     options: SubruleAssignMethodOpts<ARGS, R>,
   ): void {
-    let value: R;
+    let value: R | undefined | null;
     try {
       value = this.subrule(index, ruleToCall, options);
     } finally {
       this.ACTION(() => {
-        if (value === undefined) {
+        if (!Boolean(value)) {
           value = this.pop();
         }
-        if (value !== undefined) {
+        if (isSyntaxNode(value)) {
           options.assign(value);
         }
       });
@@ -334,9 +335,16 @@ const binaryPrecedence = buildPrecendenceMap([
 export function constructBinaryExpression(
   obj: IntermediateBinaryExpression,
 ): Expression | null {
-  if (obj.items.length === 1) {
+  // If there are no items, that means we have parsed an "empty" expression
+  // Simply return null in this case
+  if (obj.items.length === 0) {
+    return null;
+  }
+  if (obj.items.length === 1 && obj.operators.length === 0) {
     // Captured just a single, non-binary expression
     // Simply return the expression as is.
+    // Note that in some cases there might only be one item, but still more than 0 operators
+    // This usually indicates a parser error, but we still need to handle it gracefully
     return obj.items[0];
   }
   // Find the operator with the lowest precedence (highest value in precedence map)
