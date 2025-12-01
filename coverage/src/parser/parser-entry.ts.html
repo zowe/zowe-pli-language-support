@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.91% </span>
+                <span class="strong">94.64% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>56/59</span>
+                <span class='fraction'>53/56</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.91% </span>
+                <span class="strong">94.64% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>56/59</span>
+                <span class='fraction'>53/56</span>
             </div>
         
             
@@ -148,10 +148,7 @@
 <a name='L83'></a><a href='#L83'>83</a>
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a>
-<a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L86'></a><a href='#L86'>86</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -191,12 +188,9 @@
 <span class="cline-any cline-yes">1556x</span>
 <span class="cline-any cline-yes">1556x</span>
 <span class="cline-any cline-yes">1556x</span>
+<span class="cline-any cline-yes">1556x</span>
 <span class="cline-any cline-yes">601x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">601x</span>
-<span class="cline-any cline-yes">601x</span>
-<span class="cline-any cline-yes">601x</span>
-<span class="cline-any cline-yes">601x</span>
 <span class="cline-any cline-yes">601x</span>
 <span class="cline-any cline-yes">601x</span>
 <span class="cline-any cline-yes">1556x</span>
@@ -208,9 +202,7 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1556x</span>
-<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
@@ -224,8 +216,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">937x</span>
 <span class="cline-any cline-yes">937x</span>
-<span class="cline-any cline-yes">937x</span>
-<span class="cline-any cline-yes">937x</span>
+<span class="cline-any cline-yes">1556x</span>
+<span class="cline-any cline-yes">1556x</span>
+<span class="cline-any cline-yes">1556x</span>
+<span class="cline-any cline-yes">1556x</span>
 <span class="cline-any cline-yes">1556x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -276,16 +270,13 @@ export function preprocessorParse(
   let index = state.index;
   let token = state.token;
   while (token) {
+    let stmt: ast.Statement | null = null;
     let isTokenStatement = true;
     switch (token.tokenTypeIdx) {
       case t.Percent.tokenTypeIdx:
         isTokenStatement = false;
         // Parse a preprocessor statement
-        const ppStmt = statement(state);
-        if (ppStmt) {
-          recursivelySetContainer(ppStmt);
-          statements.push(ppStmt);
-        }
+        stmt = statement(state);
         break;
       case t.INCLUDE_ALT.tokenTypeIdx:
         isTokenStatement = false;
@@ -294,8 +285,7 @@ export function preprocessorParse(
         const includeAlt = includeAltStatement(state);
         const includeAltStmt = ast.createStatement();
         includeAltStmt.value = includeAlt;
-        recursivelySetContainer(includeAltStmt);
-        statements.push(includeAltStmt);
+        stmt = includeAltStmt;
         break;
       case t.SQL.tokenTypeIdx:
         if (isSqlAttributeStatement(state)) {
@@ -303,16 +293,17 @@ export function preprocessorParse(
           const sqlAttrStmt = sqlAttributeStatement(state);
           const sqlAttrStatement = ast.createStatement();
           sqlAttrStatement.value = sqlAttrStmt;
-          recursivelySetContainer(sqlAttrStatement);
-          statements.push(sqlAttrStatement);
+          stmt = sqlAttrStatement;
         }
         break;
     }
     if (isTokenStatement) {
       // Otherwise construct a token statement
-      const tokenStmt = consumeTokenStatement(state);
-      recursivelySetContainer(tokenStmt);
-      statements.push(tokenStmt);
+      stmt = consumeTokenStatement(state);
+    }
+    if (stmt) {
+      recursivelySetContainer(stmt);
+      statements.push(stmt);
     }
     if (index === state.index) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
 <span class="cstat-no" title="statement not covered" >      console.error("Parser did not advance at token: " + token.image);</span>
@@ -334,7 +325,7 @@ export function preprocessorParse(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-01T10:42:10.727Z
+                at 2025-12-01T12:57:39.593Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
