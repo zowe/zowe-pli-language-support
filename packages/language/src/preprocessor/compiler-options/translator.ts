@@ -14,7 +14,6 @@ import {
   Diagnostic,
   diagnosticFromCode,
   isDiagnostic,
-  Severity,
 } from "../../language-server/types";
 import {
   CompilerOption,
@@ -175,14 +174,13 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
         reportError(err);
       }
     } else {
-      this.diagnostics.push({
-        ...diagnosticFromCode(
+      this.diagnostics.push(
+        diagnosticFromCode(
           CompilerOptionsCodes.UnknownOption,
           option.token,
           option.name,
         ),
-        severity: Severity.E,
-      });
+      );
     }
   }
 

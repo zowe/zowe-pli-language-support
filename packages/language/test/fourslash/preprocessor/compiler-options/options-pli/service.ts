@@ -33,7 +33,7 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Service.InvalidEmptyPlainParameter.message(),
 });
 verify.expectDiagnosticsAt(11, {
-  message: code.CompilerOptions.Service.InvalidParameterLength.message("80"),
+  message: code.CompilerOptions.Service.InvalidParameterLength.message(80),
 });
 verify.expectDiagnosticsAt(14, {
   message: code.CompilerOptions.DupeOptionIssue.message("NOSERV"),

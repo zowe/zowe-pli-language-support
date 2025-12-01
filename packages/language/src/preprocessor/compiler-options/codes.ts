@@ -10,7 +10,7 @@
  */
 
 import { Severity } from "../../language-server/types";
-import { PLICodes, ParametricPLICode } from "../../validation/pli-codes";
+import { PLICodes } from "../../validation/pli-codes";
 import { CompilerOptions } from "./options";
 
 export const CompilerOptionsCodes = {
@@ -18,8 +18,8 @@ export const CompilerOptionsCodes = {
   // Only the message is presented to the user.
   UnknownOption: {
     ...PLICodes.Warning.IBM1159I,
-    Severity: Severity.E,
-  } as ParametricPLICode,
+    severity: Severity.E,
+  },
 
   InvalidParameterCount: {
     code: "COOP01",
@@ -33,50 +33,50 @@ export const CompilerOptionsCodes = {
         return `Expected between ${min} and ${max} argument${max === 1 ? "" : "s"}, but received ${received}.`;
       }
     },
-  } as ParametricPLICode,
+  },
 
   DupeOptionIssue: {
     code: "COOP02",
     severity: Severity.W,
     message: (name: string) => `Duplicate compiler option found for ${name}.`,
-  } as ParametricPLICode,
+  },
 
   MutexOptionIssue: {
     code: "COOP03",
     severity: Severity.W,
     message: (name: string) =>
       `Mutually exclusive compiler options found for ${name}, only the last one will take effect.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedOption: {
     code: "COOP04",
     severity: Severity.E,
     message: () => `Expected a compiler option with arguments.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedPlain: {
     code: "COOP05",
     severity: Severity.E,
     message: () => `Expected a plain text value.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedString: {
     code: "COOP06",
     severity: Severity.E,
     message: () => `Expected a string value.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedPlainOrString: {
     code: "COOP07",
     severity: Severity.E,
     message: () => `Expected a plain text or string value.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedNumber: {
     code: "COOP08",
     severity: Severity.E,
     message: () => `Expected a number.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedNumberRange: {
     code: "COOP09",
@@ -96,33 +96,33 @@ export const CompilerOptionsCodes = {
         throw new Error("At least one of min or max must be defined");
       }
     },
-  } as ParametricPLICode,
+  },
 
   ExpectedPlainNotEmpty: {
     code: "COOP10",
     severity: Severity.E,
     message: () => `Expected a value.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedInitializedValue: {
     code: "COOP11",
     severity: Severity.E,
     message: () => `Expected compiler option to be initialized before use.`,
-  } as ParametricPLICode,
+  },
 
   ExpectedPlainTranslate: {
     code: "COOP12",
     severity: Severity.E,
     message: (...values: string[]) =>
       `Expected one of '${values.splice(1).join("', '")}', but received '${values[0]}'.`,
-  } as ParametricPLICode,
+  },
 
   OptionNotSupported: {
     code: "COOP13",
     severity: Severity.W,
     message: (option: string) =>
       `The compiler option '${option}' is recognized but not supported by this preprocessor.`,
-  } as ParametricPLICode,
+  },
 
   Assert: {
     InvalidParameter: {
@@ -130,7 +130,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ENTRY" or "CONDITION", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Aggregate: {
@@ -139,7 +139,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "DECIMAL" or "BINARY", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Attributes: {
@@ -148,7 +148,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL" or "SHORT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   BackReg: {
@@ -157,7 +157,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "5" or "11", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   BiFPrec: {
@@ -166,7 +166,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "31" or "15", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Blank: {
@@ -175,13 +175,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a single character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParameter: {
       code: "COBL02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected a valid blank character from the PLI character set, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Brackets: {
@@ -190,19 +190,19 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a two-character string, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParameter: {
       code: "COBR02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected valid bracket characters from the PLI character set, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidEqualCharacters: {
       code: "COBR03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected two different characters for brackets, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Case: {
@@ -211,7 +211,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "UPPER" or "ASIS", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   CaseRules: {
@@ -220,13 +220,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "KEYWORD", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidKeywordParameter: {
       code: "COCR02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "MIXED", "UPPER", "LOWER" or "START", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Check: {
@@ -235,7 +235,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STORAGE" or "NOSTORAGE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   CmPat: {
@@ -244,7 +244,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "LE", "V1", "V2" or "V3", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   CodePage: {
@@ -253,7 +253,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected one of ${Array.from(CompilerOptions.PLI_CODEPAGE_SET).join(", ")}, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Compile: {
@@ -262,7 +262,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected S, W or E, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Copyright: {
@@ -271,7 +271,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a string up to 1000 characters long, but received length ${value.length}.`,
-    } as ParametricPLICode,
+    },
   },
 
   CSectCut: {
@@ -280,7 +280,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a number between 0 and 7, but received '${value}.`,
-    } as ParametricPLICode,
+    },
   },
 
   Currency: {
@@ -289,7 +289,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a single character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     // TODO ssm: Mainframe actually reports a warning IBM1105I, and truncates to the first character.
   },
 
@@ -298,7 +298,7 @@ export const CompilerOptionsCodes = {
       code: PLICodes.Warning.IBM1172I.code,
       severity: Severity.E,
       message: () => PLICodes.Warning.IBM1172I.message("DBRMLIB"),
-    } as ParametricPLICode,
+    },
   },
 
   DD: {
@@ -307,7 +307,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a text containing only letters, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   DDSQL: {
@@ -315,7 +315,7 @@ export const CompilerOptionsCodes = {
       code: "CODS01",
       severity: Severity.E,
       message: () => `DDSQL option value cannot be empty without parentheses.`,
-    } as ParametricPLICode,
+    },
   },
 
   Decimal: {
@@ -324,7 +324,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected one of 'CHECKFLOAT', 'NOCHECKFLOAT', 'FOFLONADD', 'NOFOFLONADD', 'FOFLONASGN', 'NOFOFLONASGN', 'FOFLONDIV', 'NOFOFLONDIV', 'FOFLONMULT', 'NOFOFLONMULT', 'FORCEDSIGN', 'NOFORCEDSIGN', 'KEEPMINUS', 'NOKEEPMINUS', 'TRUNCFLOAT', 'NOTRUNCFLOAT', but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Default: {
@@ -332,13 +332,13 @@ export const CompilerOptionsCodes = {
       code: "CODF01",
       severity: Severity.E,
       message: (value: string) => `Invalid default option value: ${value}.`,
-    } as ParametricPLICode,
+    },
     InvalidInitFillParameter: {
       code: "CODF02",
       severity: Severity.E,
       message: (value: string) =>
         `INITFILL expects a hex value, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Deprecate: {
@@ -347,13 +347,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected one of BUILTIN, ENTRY, INCLUDE, STMT or VARIABLE, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidStatementParameter: {
       code: "CODP02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected a statement name, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Display: {
@@ -362,23 +362,23 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected STD or WTO, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidWTOParameter: {
       code: "CODI02",
       severity: Severity.E,
       message: (value: string) => `Expected WTO, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidRoutCDEParameter: {
       code: "CODI03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected ROUTCDE, DESC or REPLY, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParameter: {
       code: "CODI04",
       severity: Severity.E,
-      message: (value: string) => `Expected a text or an option.`,
-    } as ParametricPLICode,
+      message: () => `Expected a text or an option.`,
+    },
   },
 
   Exit: {
@@ -386,13 +386,13 @@ export const CompilerOptionsCodes = {
       code: PLICodes.Warning.IBM1172I.code,
       severity: Severity.E,
       message: () => PLICodes.Warning.IBM1172I.message("EXIT"),
-    } as ParametricPLICode,
+    },
     InvalidParameterLength: {
       code: "COEX02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected a string exceeds 1023 character limit. Received ${value.length} characters.`,
-    } as ParametricPLICode,
+    },
   },
 
   Extrn: {
@@ -401,7 +401,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL" or "SHORT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Flag: {
@@ -410,7 +410,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected S, E, I or W, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   FileRef: {
@@ -419,7 +419,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "HASH" or "NOHASH", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Float: {
@@ -428,7 +428,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "DFP" or "NODFP", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   FloatInMath: {
@@ -437,7 +437,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ASIS", "LONG" or "EXTENDED", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   GoNumber: {
@@ -446,7 +446,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "SEPARATE" or "NOSEPARATE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Header: {
@@ -455,7 +455,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "FILE", "FIRST" or "SOURCE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Hgpr: {
@@ -464,7 +464,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "PRESERVE" or "NOPRESERVE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Ignore: {
@@ -473,7 +473,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ASSERT", "DISPLAY" or "PUT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   IncAfter: {
@@ -482,7 +482,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "PROCESS" option with a process name, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   InitAuto: {
@@ -491,7 +491,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "SHORT" or "FULL", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   InSource: {
@@ -500,7 +500,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL", "SHORT", "ALL" or "FIRST", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Json: {
@@ -509,31 +509,31 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "CASE", "ENCODING", "GET", "PARSE" or "TRIMR", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidCaseParameter: {
       code: "COJS02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "UPPER", "LOWER" or "ASIS", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidEncodingParameter: {
       code: "COJS03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "UTF8", "EBCDIC", "37" or "1047", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidGetParameter: {
       code: "COJS04",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "HEEDCASE" or "IGNORECASE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParseParameter: {
       code: "COJS05",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "V1" or "V2", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   LangLvl: {
@@ -542,7 +542,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "OS" or "NOEXT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Limits: {
@@ -551,42 +551,42 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "EXTNAME", "FIXEDBIN", "FIXEDDEC", "NAME" or "STRING", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidFixedBinMinParameter: {
       code: "COLI02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "31" or "63", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidFixedBinMaxParameter: {
       code: "COLI03",
       severity: Severity.E,
       message: (value: string) => `Expected "63", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidFixedDecMinParameter: {
       code: "COLI04",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "15" or "31", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidFixedDecMaxParameter: {
       code: "COLI05",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "15" or "31", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidFixedDecRange: {
       code: "COLI06",
       severity: Severity.E,
       message: () =>
         `The minimum fixed decimal value must be less or equal to the maximum fixed decimal value.`,
-    } as ParametricPLICode,
+    },
     InvalidStringParameter: {
       code: "COLI07",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "32K", "64K", "512K", "8M" or "128M", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   LineCount: {
@@ -595,7 +595,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `The line count must be between 10 and 65535, or 0, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   ListView: {
@@ -604,7 +604,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "SOURCE", "AFTERALL", "AFTERCICS", "AFTERMACRO" or "AFTERSQL", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Lp: {
@@ -613,7 +613,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "32" or "64", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Margini: {
@@ -622,22 +622,21 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a single character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Margins: {
     InvalidMarginPosition: {
       code: "COMR01",
       severity: Severity.E,
-      message: (value: string) =>
-        `The left margin must be less than the right margin.`,
-    } as ParametricPLICode,
+      message: () => `The left margin must be less than the right margin.`,
+    },
     InvalidAnsPosition: {
       code: "COMR02",
       severity: Severity.E,
-      message: (value: string) =>
+      message: () =>
         `The ANS character should be located outside of the values specified by m and n.`,
-    } as ParametricPLICode,
+    },
   },
 
   MaxInit: {
@@ -646,7 +645,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a number followed by "K", "M" or "G", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   MaxNest: {
@@ -655,7 +654,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "BLOCK", "DO" or "IF", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   MaxStmt: {
@@ -664,7 +663,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: () =>
         `The m statement count must be less or equal to the n statement count.`,
-    } as ParametricPLICode,
+    },
   },
 
   MDeck: {
@@ -673,7 +672,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "AFTERALL" or "AFTERMACRO", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   MsgSummary: {
@@ -682,7 +681,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "XREF" or "NOXREF", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   NatLang: {
@@ -691,7 +690,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ENU" or "UEN", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Names: {
@@ -705,13 +704,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.W,
       message: (value: string) =>
         `Expected a single character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParameterCharacter: {
       code: "CONO02",
       severity: Severity.W,
       message: (value: string) =>
         `Expected a valid not character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   OffsetSize: {
@@ -721,7 +720,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "4" or "8", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   OnSnap: {
@@ -730,7 +729,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRINGRANGE" or "STRINGSIZE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Optimize: {
@@ -739,7 +738,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "0", "2", "3" or "TIME", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Options: {
@@ -748,7 +747,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "DOC" or "ALL", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Or: {
@@ -757,13 +756,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.W,
       message: (value: string) =>
         `Expected a single character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParameterCharacter: {
       code: "COOR02",
       severity: Severity.W,
       message: (value: string) =>
         `Expected a valid or character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   PP: {
@@ -771,19 +770,19 @@ export const CompilerOptionsCodes = {
       code: "COPP01",
       severity: Severity.E,
       message: () => `Expected plain or option value type.`,
-    } as ParametricPLICode,
+    },
     InvalidParameter: {
       code: "COPP02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "CICS", "INCLUDE", "MACRO" or "SQL", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidOptionParameter: {
       code: "COPP03",
       severity: Severity.E,
-      message: (pp: string, value: string) =>
+      message: (pp: string, value: number) =>
         `Expected exactly one value for the ${pp} option, but received ${value}.`,
-    } as ParametricPLICode,
+    },
   },
 
   PrecType: {
@@ -792,7 +791,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ANS", "DECDIGIT" or "DECRESULT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Prefix: {
@@ -801,12 +800,12 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected one of the compiler condition "CONFORMANCE", "CONVERSION", "FIXEDOVERFLOW", "INVALIDOP", "OVERFLOW", "SIZE", "STRINGRANGE", "STRINGSIZE", "SUBSCRIPTRANGE", "UNDERFLOW" or "ZERODIVIDE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     ConditionIsAlwaysEnabled: {
       code: "COPX02",
       severity: Severity.E,
       message: (value: string) => `Condition '${value}' is always enabled.`,
-    } as ParametricPLICode,
+    },
   },
 
   Proceed: {
@@ -815,7 +814,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "S", "E" or "W", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Process: {
@@ -824,7 +823,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "DELETE" or "KEEP", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Quote: {
@@ -833,13 +832,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a single character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidParameterCharacter: {
       code: "COQT02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected a valid quote character, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Respect: {
@@ -848,7 +847,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "DATE" or an empty value, but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   RtCheck: {
@@ -857,7 +856,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "NONULLPTR", "NULLPTR" or "NULL370", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Rules: {
@@ -866,55 +865,55 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Received unknown RULES parameter: '${value}'.`,
-    } as ParametricPLICode,
+    },
     ExpectAllSourceParameter: {
       code: "CORU02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL" or "SOURCE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidGotoParameter: {
       code: "CORU03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT", "LOOSE" or "LOOSEFORWARD", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidLaxEntryParameter: {
       code: "CORU04",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT" or "LOOSE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidLaxInOutParameter: {
       code: "CORU05",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidLaxMarginsParameter: {
       code: "CORU06",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT" or "XNUMERIC", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidLaxQualParameter: {
       code: "CORU07",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "FORCE", "STRICT", "LOOSE" or "FULL", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidLaxScaleParameter: {
       code: "CORU08",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidPaddingParameter: {
       code: "CORU08",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Semantic: {
@@ -923,22 +922,22 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "S", "E" or "W", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Service: {
     InvalidParameterLength: {
       code: "COSR01",
       severity: Severity.E,
-      message: (length: string) =>
+      message: (length: number) =>
         `Expected a maximum length of 64 characters, but received '${length}'.`,
-    } as ParametricPLICode,
+    },
     InvalidEmptyPlainParameter: {
       code: "COSR02",
       severity: Severity.E,
       message: () =>
         `Expected a non-empty plain value. Use a string for empty text.`,
-    } as ParametricPLICode,
+    },
   },
 
   Static: {
@@ -947,7 +946,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "SHORT" or "FULL", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   StringOfGraphic: {
@@ -956,7 +955,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "GRAPHIC" or "CHARACTER", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Syntax: {
@@ -965,7 +964,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "S", "E" or "W", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   SysParm: {
@@ -974,7 +973,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `SYSPARM value exceeds maximum length of 1023 characters. Received '${value.length} characters.`,
-    } as ParametricPLICode,
+    },
   },
 
   System: {
@@ -983,7 +982,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "MVS", "CICS", "IMS", "OS", or "TSO", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Test: {
@@ -992,7 +991,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "BLOCK", "NONE", "PATH", "STMT", "HOOK", "NOHOOK", "SEPARATE", "NOSEPARATE", "SEPNAME", "NOSEPNAME", "SOURCE", "NOSOURCE", "SYM" or "NOSYM", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Unroll: {
@@ -1001,7 +1000,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "AUTO" or "NO", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Usage: {
@@ -1010,49 +1009,49 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "HEX", "REGEX", "ROUND", "SUBSTR", "UNSPEC", "UUID" or "VALIDDATE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidHexParameter: {
       code: "COUS02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "SIZE" or "CURRENTSIZE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidRegexParameter: {
       code: "COUS03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "RESET" or "NORESET", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidRoundParameter: {
       code: "COUS04",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "IBM" or "ANS", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidSubstrParameter: {
       code: "COUS05",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT" or "LOOSE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidUnspecParameter: {
       code: "COUS06",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "IBM" or "ANS", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidUuidParameter: {
       code: "COUS07",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "UPPER" or "LOWER", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidValidDateParameter: {
       code: "COUS08",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "LOOSE" or "STRICT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   WideChar: {
@@ -1061,7 +1060,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "BIGENDIAN" or "LITTLEENDIAN", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Writable: {
@@ -1070,7 +1069,7 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FWS" or "PRV", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   XInfo: {
@@ -1079,13 +1078,13 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "DEF", "NODEF", "MSG", "NOMSG", "SYM", "NOSYM", "SYN", "NOSYN", "XML", or "NOXML", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidXmlParameter: {
       code: "COXI06",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "HASH" or "NOHASH", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   Xml: {
@@ -1094,19 +1093,19 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "UPPER", "CASE" or "XMLATTR", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidCaseParameter: {
       code: "COXM02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "UPPER" or "ASIS", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidXmlAttrParameter: {
       code: "COXM03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "APOSTROPHE" or "QUOTE", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   XRef: {
@@ -1115,19 +1114,19 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL", "SHORT", "IMPLICIT", or "EXPLICIT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidLengthParameter: {
       code: "COXR02",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL" or "SHORT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
     InvalidStructureParameter: {
       code: "COXR03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FULL", "SHORT", "IMPLICIT", or "EXPLICIT", but received '${value}'.`,
-    } as ParametricPLICode,
+    },
   },
 
   PPMacro: {
@@ -1137,7 +1136,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "UPPER" or "ASIS", but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
 
     Dbcs: {
@@ -1146,7 +1145,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "EXACT" or "INEXACT", but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
 
     Deprecate: {
@@ -1155,7 +1154,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "ENTRY" suboption, but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
 
     Fixed: {
@@ -1164,7 +1163,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "DECIMAL" or "BINARY", but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
 
     Ignore: {
@@ -1173,7 +1172,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "NOPRINT", but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
 
     NamePrefix: {
@@ -1182,7 +1181,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected a single character, but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
 
     Rescan: {
@@ -1191,7 +1190,7 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "UPPER" or "ASIS", but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
   },
 
@@ -1202,14 +1201,14 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "STMT" suboption, but received '${value}'.`,
-      } as ParametricPLICode,
+      },
 
       InvalidSubStatement: {
         code: "COPPSQL02",
         severity: Severity.E,
         message: (value: string) =>
           `Expected "EXPLAIN", "GRANT", "REVOKE", or "SET_CURRENT_SQLID" suboption, but received '${value}'.`,
-      } as ParametricPLICode,
+      },
     },
   },
 };

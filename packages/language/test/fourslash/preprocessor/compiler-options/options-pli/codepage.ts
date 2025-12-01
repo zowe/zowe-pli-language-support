@@ -27,7 +27,7 @@ verify.expectDiagnosticsAt(8, {
   message: code.CompilerOptions.DupeOptionIssue.message("CP"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.CodePage.InvalidParameter.message("INVALID"),

@@ -29,7 +29,7 @@ verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedNumber.message("INVALID"),
+  message: code.CompilerOptions.ExpectedNumber.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.ExpectedNumberRange.message(-5, 2, 1000),
