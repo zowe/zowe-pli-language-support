@@ -33,7 +33,7 @@ verify.expectDiagnosticsAt(8, {
   message: code.CompilerOptions.MutexOptionIssue.message("NPRO"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Proceed.InvalidParameter.message("INVALID"),

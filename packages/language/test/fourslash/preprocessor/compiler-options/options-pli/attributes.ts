@@ -35,7 +35,7 @@ verify.noDiagnosticsExceptAt(4, [
   code.CompilerOptions.MutexOptionIssue.message("ATTRIBUTES"),
 ]);
 verify.expectDiagnosticsAt(7, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(9, {
   message: code.CompilerOptions.Attributes.InvalidParameter.message("INVALID"),

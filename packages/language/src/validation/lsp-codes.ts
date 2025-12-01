@@ -10,7 +10,6 @@
  */
 
 import { Severity } from "../language-server/types";
-import { ParametricPLICode, SimplePLICode } from "./pli-codes";
 
 export const LspCodes = {
   IncludeResolution: {
@@ -19,20 +18,21 @@ export const LspCodes = {
       severity: Severity.E,
       message:
         "Could not resolve include directive. Plugin configuration is missing",
-    } as SimplePLICode,
+    },
   },
 
   UpperCase: {
     code: "LSPUC001",
     severity: Severity.W,
-    message: (token: any) => `Input text "${token}" must be uppercase.`,
-  } as ParametricPLICode,
+    message: (token: string) => `Input text "${token}" must be uppercase.`,
+  },
+
   SkipDirective: {
     InvalidSkip: {
       code: "LSPIS001",
       severity: Severity.W,
       message:
         "Standalone SKIP directive is not supported by the language server.",
-    } as SimplePLICode,
+    },
   },
 };

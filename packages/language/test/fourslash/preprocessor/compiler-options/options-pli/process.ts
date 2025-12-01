@@ -23,7 +23,7 @@ verify.expectDiagnosticsAt([2, 4, 6, 8, 10], {
   message: code.CompilerOptions.MutexOptionIssue.message("PROCESS"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Process.InvalidParameter.message("INVALID"),

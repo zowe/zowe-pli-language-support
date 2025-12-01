@@ -409,7 +409,6 @@ translator.rule(
       throw diagnosticFromCode(
         CompilerOptionsCodes.DBRMLib.InvalidEmptyParameter,
         dataSetName.token,
-        dataSetName.value,
       );
     }
     options.dbrmlib = dataSetName.value;
@@ -953,7 +952,6 @@ translator.rule(
       throw diagnosticFromCode(
         CompilerOptionsCodes.Exit.InvalidEmptyParameter,
         inparam.token,
-        inparam.value,
       );
     }
     if (inparam.value.length > 1023) {
@@ -1505,7 +1503,7 @@ translator.rule(["LIMITS"], (option, options, acceptor) => {
             throw diagnosticFromCode(
               CompilerOptionsCodes.Limits.InvalidStringParameter,
               value.values[0].token,
-              stringValue,
+              stringValue.toString(),
             );
           }
           break;
@@ -1860,7 +1858,6 @@ translator.rule(
         throw diagnosticFromCode(
           CompilerOptionsCodes.ExpectedPlainNotEmpty,
           value.token,
-          value.value,
         );
       }
       options.name = value.value;
@@ -3151,7 +3148,6 @@ translator.rule(
       throw diagnosticFromCode(
         CompilerOptionsCodes.Service.InvalidEmptyPlainParameter,
         value.token,
-        value.token.image,
       );
     }
     if (value.value.length > 64) {
@@ -3263,7 +3259,6 @@ translator.rule(["SYSPARM"], (option, options) => {
     throw diagnosticFromCode(
       CompilerOptionsCodes.ExpectedPlainNotEmpty,
       option.values[0].token,
-      option.values[0].value,
     );
   }
   if (option.values[0].value.length > 1023) {

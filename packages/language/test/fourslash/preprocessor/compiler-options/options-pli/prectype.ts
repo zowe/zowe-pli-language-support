@@ -25,7 +25,7 @@ verify.expectDiagnosticsAt([2, 2, 6, 8], {
   message: code.CompilerOptions.DupeOptionIssue.message("PRECTYPE"),
 });
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.PrecType.InvalidParameter.message("INVALID"),
