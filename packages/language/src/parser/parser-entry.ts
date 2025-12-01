@@ -35,16 +35,13 @@ export function preprocessorParse(
   let index = state.index;
   let token = state.token;
   while (token) {
+    let stmt: ast.Statement | null = null;
     let isTokenStatement = true;
     switch (token.tokenTypeIdx) {
       case t.Percent.tokenTypeIdx:
         isTokenStatement = false;
         // Parse a preprocessor statement
-        const ppStmt = statement(state);
-        if (ppStmt) {
-          recursivelySetContainer(ppStmt);
-          statements.push(ppStmt);
-        }
+        stmt = statement(state);
         break;
       case t.INCLUDE_ALT.tokenTypeIdx:
         isTokenStatement = false;
@@ -53,8 +50,7 @@ export function preprocessorParse(
         const includeAlt = includeAltStatement(state);
         const includeAltStmt = ast.createStatement();
         includeAltStmt.value = includeAlt;
-        recursivelySetContainer(includeAltStmt);
-        statements.push(includeAltStmt);
+        stmt = includeAltStmt;
         break;
       case t.SQL.tokenTypeIdx:
         if (isSqlAttributeStatement(state)) {
@@ -62,16 +58,17 @@ export function preprocessorParse(
           const sqlAttrStmt = sqlAttributeStatement(state);
           const sqlAttrStatement = ast.createStatement();
           sqlAttrStatement.value = sqlAttrStmt;
-          recursivelySetContainer(sqlAttrStatement);
-          statements.push(sqlAttrStatement);
+          stmt = sqlAttrStatement;
         }
         break;
     }
     if (isTokenStatement) {
       // Otherwise construct a token statement
-      const tokenStmt = consumeTokenStatement(state);
-      recursivelySetContainer(tokenStmt);
-      statements.push(tokenStmt);
+      stmt = consumeTokenStatement(state);
+    }
+    if (stmt) {
+      recursivelySetContainer(stmt);
+      statements.push(stmt);
     }
     if (index === state.index) {
       console.error("Parser did not advance at token: " + token.image);
