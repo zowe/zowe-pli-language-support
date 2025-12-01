@@ -977,6 +977,8 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeLobFile:
     case SyntaxKind.SqlAttributeLobLocator:
     case SyntaxKind.SqlAttributeRowId:
+    case SyntaxKind.SqlAttributeTableLocator:
+    case SyntaxKind.SqlAttributeResultSetLocator:
       break;
     default:
       if (node && "kind" in node) {

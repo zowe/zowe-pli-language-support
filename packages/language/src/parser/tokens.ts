@@ -277,8 +277,6 @@ export const LocateType = registerCombination<ast.LocateType>("LocateType");
 export const OpenOptionType =
   registerCombination<ast.OpenOptionType>("OpenOptionType");
 export const VX = registerCombination<ast.VX>("VX");
-export const CharOrBinary =
-  registerCombination<ast.CharOrBinary>("CharOrBinary");
 export const TypeOrOrdinal =
   registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
 export const BinaryType =
@@ -517,7 +515,6 @@ export const CHARACTER = registerKeyword({
     [DefaultAttribute, ast.DefaultAttribute.CHARACTER],
     [AllocateAttributeType, ast.AllocateAttributeType.CHARACTER],
     [CharType, ast.CharType.CHARACTER],
-    [CharOrBinary, ast.CharOrBinary.CHARACTER],
   ],
 });
 export const DIMACROSS = registerKeyword({
@@ -983,20 +980,15 @@ export const CANCEL = registerKeyword({
   name: "CANCEL",
 });
 export const BINARY = registerKeyword({
-  name: "BINARY",
+  name: ["BINARY", "BIN"],
   categories: [
     [DefaultAttribute, ast.DefaultAttribute.BINARY],
-    [CharOrBinary, ast.CharOrBinary.BINARY],
     [BinaryType, ast.SqlAttributeBinaryType.BINARY],
   ],
 });
 export const VARBINARY = registerKeyword({
   name: "VARBINARY",
   categories: [[BinaryType, ast.SqlAttributeBinaryType.VARBINARY]],
-});
-export const BIN = registerKeyword({
-  name: "BIN",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.BINARY]],
 });
 export const FORMAT = registerKeyword({
   name: "FORMAT",
@@ -1801,6 +1793,15 @@ export const DBCLOB_FILE = registerKeyword({
 });
 export const ROWID = registerKeyword({
   name: "ROWID",
+});
+export const TABLE = registerKeyword({
+  name: "TABLE",
+});
+export const LOCATOR = registerKeyword({
+  name: "LOCATOR",
+});
+export const RESULT_SET_LOCATOR = registerKeyword({
+  name: "RESULT_SET_LOCATOR",
 });
 
 /**

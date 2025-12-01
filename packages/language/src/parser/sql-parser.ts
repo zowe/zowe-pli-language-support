@@ -61,32 +61,36 @@ export function sqlAttributeStatement(
       state,
       attributeStatement.isXml,
     );
-  } else if (state.canConsume(t.CharOrBinary)) {
+  } else if (state.canConsume(t.BINARY) || state.canConsume(t.CHARACTER)) {
     attributeStatement.body = parseSQLAttributeExplicitLob(
       state,
       attributeStatement.isXml,
     );
   } else if (state.canConsume(t.LOBLocator)) {
-    attributeStatement.body = ast.createSQLAttributeLobLocator();
+    attributeStatement.body = ast.createSqlAttributeLobLocator();
     state.consume(
       attributeStatement.body,
       CstNodeKind.SqlAttributeLobLocator_LOB_LOCATOR,
       t.LOBLocator,
     );
   } else if (state.canConsume(t.LOBFile)) {
-    attributeStatement.body = ast.createSQLAttributeLobFile();
+    attributeStatement.body = ast.createSqlAttributeLobFile();
     state.consume(
       attributeStatement.body,
       CstNodeKind.SqlAttributeLobFile_LOB_FILE,
       t.LOBFile,
     );
   } else if (state.canConsume(t.ROWID)) {
-    attributeStatement.body = ast.createSQLAttributeRowId();
+    attributeStatement.body = ast.createSqlAttributeRowId();
     state.consume(
       attributeStatement.body,
       CstNodeKind.SqlAttributeRowId_ROWID,
       t.ROWID,
     );
+  } else if (state.canConsume(t.TABLE)) {
+    attributeStatement.body = parseSqlTableLocator(state);
+  } else if (state.canConsume(t.RESULT_SET_LOCATOR)) {
+    attributeStatement.body = parseSqlResultSetLocator(state);
   }
   return attributeStatement;
 }
@@ -95,7 +99,7 @@ function parseSQLAttributeBinary(
   state: ParserState,
   isXml: boolean,
 ): ast.SqlAttributeBinary {
-  const binary = ast.createSQLAttributeBinary();
+  const binary = ast.createSqlAttributeBinary();
   let typename = "";
   // Can be BINARY or BINARY VARYING or VARBINARY
   if (state.canConsume(t.BINARY)) {
@@ -130,25 +134,24 @@ function parseSQLAttributeExplicitLob(
   state: ParserState,
   isXml: boolean,
 ): ast.SqlAttributeLob {
-  const lob = ast.createSQLAttributeLob();
-  const typeToken = state.consume(
-    lob,
-    CstNodeKind.SqlAttributeLob_Type,
-    t.CharOrBinary,
-  );
-  state.consume(lob, CstNodeKind.SqlAttributeLob_LARGE, t.LARGE);
-  state.consume(lob, CstNodeKind.SqlAttributeLob_OBJECT, t.OBJECT);
+  const lob = ast.createSqlAttributeLob();
   let typename = "";
-  switch (typeToken?.tokenTypeIdx) {
-    case t.CHARACTER.tokenTypeIdx:
-      lob.type = ast.SQLAttributeLobType.CLOB;
-      typename = "CLOB";
-      break;
-    case t.BINARY.tokenTypeIdx:
+  if (state.tryConsume(lob, CstNodeKind.SqlAttributeLob_Type, t.CHARACTER)) {
+    lob.type = ast.SQLAttributeLobType.CLOB;
+    typename = "CLOB";
+  } else {
+    const binToken = state.consume(
+      lob,
+      CstNodeKind.SqlAttributeLob_Type,
+      t.BINARY,
+    );
+    if (binToken) {
       lob.type = ast.SQLAttributeLobType.BLOB;
       typename = "BLOB";
-      break;
+    }
   }
+  state.consume(lob, CstNodeKind.SqlAttributeLob_LARGE, t.LARGE);
+  state.consume(lob, CstNodeKind.SqlAttributeLob_OBJECT, t.OBJECT);
   parseSQLAttributeLobSize(state, lob, isXml, typename);
   return lob;
 }
@@ -157,7 +160,7 @@ function parseSQLAttributeLob(
   state: ParserState,
   isXml: boolean,
 ): ast.SqlAttributeLob {
-  const lob = ast.createSQLAttributeLob();
+  const lob = ast.createSqlAttributeLob();
   const typeToken = state.consume(lob, CstNodeKind.SqlAttributeLob_Type, t.LOB);
   let typename = "";
   switch (typeToken?.tokenTypeIdx) {
@@ -224,4 +227,45 @@ function parseSQLAttributeLobSize(
     isXml ? Severe.IBM3759I : Severe.IBM3756I,
     typename,
   );
+}
+
+function parseSqlTableLocator(
+  state: ParserState,
+): ast.SqlAttributeTableLocator {
+  const locator = ast.createSqlAttributeTableLocator();
+  state.consume(locator, CstNodeKind.SqlAttributeTableLocator_TABLE, t.TABLE);
+  state.consume(locator, CstNodeKind.SqlAttributeTableLocator_LIKE, t.LIKE);
+  const tableNameToken = state.consume(
+    locator,
+    CstNodeKind.SqlAttributeTableLocator_TableName,
+    t.ID,
+  );
+  if (tableNameToken) {
+    locator.name = tableNameToken.image;
+    locator.nameToken = tableNameToken;
+  }
+  state.consume(locator, CstNodeKind.SqlAttributeTableLocator_AS, t.AS);
+  state.consume(
+    locator,
+    CstNodeKind.SqlAttributeTableLocator_LOCATOR,
+    t.LOCATOR,
+  );
+  return locator;
+}
+
+function parseSqlResultSetLocator(
+  state: ParserState,
+): ast.SqlAttributeResultSetLocator {
+  const locator = ast.createSqlAttributeResultSetLocator();
+  state.consume(
+    locator,
+    CstNodeKind.SqlAttributeResultSetLocator_RESULT_SET_LOCATOR,
+    t.RESULT_SET_LOCATOR,
+  );
+  state.consume(
+    locator,
+    CstNodeKind.SqlAttributeResultSetLocator_VARYING,
+    t.VARYING,
+  );
+  return locator;
 }
