@@ -203,7 +203,7 @@ export type MappableTokenType<TEnum extends number = number> = TokenType & {
 export function expandTokenTypeIndices(tokenType: TokenType) {
   const mapping = mappings.get(tokenType.name);
   if (mapping === undefined) {
-    if(tokenType.categoryMatches !== undefined) {
+    if(tokenType.categoryMatches !== undefined && tokenType.categoryMatches.length > 0) {
       return [...tokenType.categoryMatches!];
     } else {
       //TODO never reached :-/? I guess this is a good sign
