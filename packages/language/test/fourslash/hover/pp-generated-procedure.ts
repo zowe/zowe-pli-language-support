@@ -22,7 +22,7 @@
 //// CALL <|2>P1;
 
 const expectedMarkdown2 = hover.codeBlock(
-  "P1: PROC(A,B) OPTIONS(MAIN) RETURNS(FIXED BIN(15));",
+  "P1: PROC(A,B) OPTIONS(MAIN) RETURNS(FIXED BINARY(15));",
 );
 hover.expectMarkdownAt(1, expectedMarkdown2);
 hover.expectMarkdownAt(2, expectedMarkdown2);

@@ -508,7 +508,7 @@ function runInstructionSync(
   return undefined;
 }
 
-const LOB_LOCATOR_TYPE = "FIXED BIN(31)";
+const LOCATOR_TYPE = "FIXED BIN(31)";
 const ROWID_TYPE = "CHAR(40) VARYING";
 const LOB_FILE_TYPE = "LIKE SQL_LOB_FILE";
 const LOB_TYPE = (length: number) => `LIKE SQL_LOB${length}`;
@@ -521,8 +521,13 @@ function runSqlAttributeInstruction(
   if (!body) {
     return;
   }
-  if (body.kind === ast.SyntaxKind.SqlAttributeLobLocator) {
-    context.tokens.push(...lex(LOB_LOCATOR_TYPE));
+  if (
+    // All locator types simply generate the same static attributes
+    body.kind === ast.SyntaxKind.SqlAttributeLobLocator ||
+    body.kind === ast.SyntaxKind.SqlAttributeTableLocator ||
+    body.kind === ast.SyntaxKind.SqlAttributeResultSetLocator
+  ) {
+    context.tokens.push(...lex(LOCATOR_TYPE));
   } else if (body.kind === ast.SyntaxKind.SqlAttributeRowId) {
     context.tokens.push(...lex(ROWID_TYPE));
   } else if (body.kind === ast.SyntaxKind.SqlAttributeBinary) {
