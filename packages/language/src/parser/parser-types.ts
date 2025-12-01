@@ -1,6 +1,5 @@
 import { IRecognitionException , IToken, TokenType} from "chevrotain";
 import { ParserState } from "./parser-state";
-import { expandTokenTypeIndices } from "./tokens";
 import { memoize } from "lodash-es";
 
 export interface Parser<TAst, TToken extends IToken = IToken> {
@@ -43,16 +42,24 @@ export type RuleMap<T=any> = Map<number, RuleMap<T>|Rule<T>>;
 
 function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
     if (firstSet.type === "sequence") {
-        for (const tokenTypeIdx of expandTokenTypeIndices(firstSet.tokenTypes[0])) {
-            if(firstSet.tokenTypes.length > 1) {
-                const map: RuleMap<T> = new Map();
-                compileToMap(map, sequence(...firstSet.tokenTypes.slice(1)), action);
-                map.set(tokenTypeIdx, map);
-            } else {
-                if(map.has(tokenTypeIdx)) {
-                    throw new Error(`Ambiguous grammar detected. Multiple rules lead to the same token type: ${firstSet.tokenTypes[0].name}`);
-                }
-                map.set(tokenTypeIdx, action);
+        const tokenType = firstSet.tokenTypes[0];
+        const tokenTypeIdx = tokenType.tokenTypeIdx!;
+        if(firstSet.tokenTypes.length > 1) {
+            const map: RuleMap<T> = new Map();
+            compileToMap(map, sequence(...firstSet.tokenTypes.slice(1)), action);
+            map.set(tokenTypeIdx, map);
+        } else {
+            if(map.has(tokenTypeIdx)) {
+                throw new Error(`Ambiguous grammar detected. Multiple rules lead to the same token type: ${tokenType.name}`);
+            }
+            map.set(tokenTypeIdx, action);
+            if(tokenType.isParent === true && tokenType.categoryMatchesMap) {
+                for (const [index, ok] of Object.entries(tokenType.categoryMatchesMap)) {
+                    if(ok) {
+                        const idx = Number(index);
+                        map.set(idx, action);
+                    }
+                } 
             }
         }
     } else {

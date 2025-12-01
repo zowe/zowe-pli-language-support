@@ -200,19 +200,6 @@ export type MappableTokenType<TEnum extends number = number> = TokenType & {
   mapFromEnumLiteral(value: TEnum): string;
 };
 
-export function expandTokenTypeIndices(tokenType: TokenType) {
-  const mapping = mappings.get(tokenType.name);
-  if (mapping === undefined) {
-    if(tokenType.categoryMatches !== undefined && tokenType.categoryMatches.length > 0) {
-      return [...tokenType.categoryMatches!];
-    } else {
-      //TODO never reached :-/? I guess this is a good sign
-      return [tokenType.tokenTypeIdx!];
-    }
-  }
-  return Array.from(mapping.mapFrom.keys());
-}
-
 function createMappableToken<TEnum extends number = number>(
   config: ITokenConfig,
 ): MappableTokenType<TEnum> {

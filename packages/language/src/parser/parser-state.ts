@@ -313,10 +313,10 @@ export class ParserState {
 
   private canConsumeFirstItem(map: RuleMap, index: number): boolean {
     const token = this.tokens[this.index+index];
-    if(!map.has(token.tokenTypeIdx)) {
+    if(!map.has(token.tokenTypeIdx!)) {
       return false;
     }
-    const next = map.get(token.tokenTypeIdx)!;
+    const next = map.get(token.tokenTypeIdx!)!;
     if(next instanceof Function) {
       return true;
     } else {
@@ -329,7 +329,7 @@ export class ParserState {
   }
 
   private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T|null {
-    const lookahead = this.tokens[this.index + index].tokenTypeIdx;
+    const lookahead = this.tokens[this.index + index].tokenTypeIdx!;
     if(!map.has(lookahead)) {
       return null;
     }
