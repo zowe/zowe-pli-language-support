@@ -1,6 +1,6 @@
 import { choice, Parser, orRule, rule, sequence, RuleFirstPair } from "./parser-types";
 import * as ast from "../syntax-tree/ast";
-import { IRecognitionException } from "chevrotain";
+import { IRecognitionException, tokenMatcher } from "chevrotain";
 import { finalParserState, ParserState } from "./parser-state";
 import * as tokens from "./tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -91,7 +91,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     );
 
     conditionPrefixItem = rule(
-        sequence(tokens.ID),
+        () => this.condition.first(),
         (state: ParserState): ast.ConditionPrefixItem => {
             const element: ast.ConditionPrefixItem = {
                 kind: ast.SyntaxKind.ConditionPrefixItem,
@@ -462,9 +462,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     statement = rule(
         choice(
-            sequence(tokens.ID),
-            sequence(tokens.OpenParen),
-            //TODO add from Unit first sets
+            () => this.conditionPrefix.first(),
+            () => this.unit.first(),
+            //commented out, because performAssignmentLookahead is used instead of LL(1) lookahead
+            //() => this.labelPrefix.first(),
+            //() => this.assignmentStatement.first(),
         ),
         (state: ParserState): ast.Statement => {
             const element: ast.Statement = {
@@ -483,7 +485,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.labels.push(this.labelPrefix.rule(state));
             }
 
-            element.value = this.unit.rule(state);
+            if(performAssignmentLookahead(n => state.peek(n))) {
+                element.value = this.assignmentStatement.rule(state);
+            } else {
+                element.value = this.unit.rule(state);
+            }
 
             return element;
         }
@@ -492,7 +498,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     unit = orRule<ast.Unit>(
         () => this.allocateStatement,
         () => this.assertStatement,
-        () => this.assignmentStatement,
         () => this.attachStatement,
         () => this.beginStatement,
         () => this.callStatement,
@@ -564,7 +569,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     allocatedVariable = rule(
         choice(
             sequence(tokens.NUMBER),
-            sequence(tokens.ID)
+            () => this.referenceItem.first(),
         ),
         (state: ParserState): ast.AllocatedVariable => {
             const element: ast.AllocatedVariable = {
@@ -635,7 +640,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     );
 
     allocateDimension = rule(
-        sequence(tokens.OpenParen),
+        () => this.dimensions.first(),
         (state: ParserState): ast.AllocateDimension => {
             const element: ast.AllocateDimension = {
                 kind: ast.SyntaxKind.AllocateDimension,
@@ -867,7 +872,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     endStatement = rule(
         choice(
-            sequence(tokens.ID),
+            () => this.labelPrefix.first(),
             sequence(tokens.END)
         ),
         (state: ParserState): ast.EndStatement => {
@@ -1067,7 +1072,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     defaultRangeIdentifiers = rule(
         choice(
             sequence(tokens.Star),
-            sequence(tokens.ID),
+            () => this.defaultRangeIdentifierItem.first()
         ),
         (state: ParserState): ast.DefaultRangeIdentifiers => {
             const element: ast.DefaultRangeIdentifiers = {
@@ -2727,7 +2732,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     );
 
     openOptionsGroup = rule(
-        sequence(tokens.OpenOptionType),
+        () => this.openOption.first(),
         (state: ParserState): ast.OpenOptionsGroup => {
             const element: ast.OpenOptionsGroup = {
                 kind: ast.SyntaxKind.OpenOptionsGroup,
@@ -3643,7 +3648,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     declaredItem = rule(
         choice(
             sequence(tokens.NUMBER),
-            sequence(tokens.ID), // TODO () => this.declaredVariable.first(),
+            () => this.declaredVariable.first(),
             sequence(tokens.Star),
             sequence(tokens.OpenParen),
         ),
@@ -3840,7 +3845,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     dimensionsDataAttribute = rule(
         choice(
             sequence(tokens.DIMENSION),
-            sequence(tokens.OpenParen), //TODO () => this.dimensions.first(),
+            () => this.dimensions.first(),
         ),
         (state: ParserState): ast.DimensionsDataAttribute => {
             const element: ast.DimensionsDataAttribute = {
@@ -4627,7 +4632,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     );
 
     memberCall = rule(
-        sequence(tokens.ID), // TODO: () => this.referenceItem.first(),
+        () => this.referenceItem.first(),
         (state: ParserState): ast.MemberCall => {
             let element: ast.MemberCall = {
                 kind: ast.SyntaxKind.MemberCall,
@@ -4894,31 +4899,68 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             return element;
         }
     );
-
-
-    fqn = rule(
-        sequence(tokens.ID),
-        (state: ParserState): string => {
-            let fqn = "";
-
-            const firstIdToken = state.consume(null as any, CstNodeKind.FQN_ID_0, tokens.ID);
-            if (firstIdToken) {
-                fqn += firstIdToken.image;
-            }
-
-            while (state.canConsume(tokens.Dot)) {
-                state.consume(null as any, CstNodeKind.FQN_Dot_0, tokens.Dot);
-                fqn += ".";
-
-                const nextIdToken = state.consume(null as any, CstNodeKind.FQN_ID_1, tokens.ID);
-                if (nextIdToken) {
-                    fqn += nextIdToken.image;
-                }
-            }
-
-            return fqn;
-        }
-    );
 }
 
 export const HandwrittenParserInstance = new HandwrittenParser();
+
+const expressionTokenTypes = [
+    tokens.ID,
+    tokens.BinaryOperator,
+    tokens.UnaryOperator,
+    tokens.AssignmentOperator,
+    tokens.STRING_TERM,
+    tokens.NUMBER,
+    tokens.Comma,
+];
+
+export function performAssignmentLookahead(
+    lookahead: (la: number) => tokens.Token | undefined,
+): boolean {
+    let i = 1;
+    let token = lookahead(i++);
+    // First token of an assigment needs to be an ID
+    if (!token || !tokenMatcher(token, tokens.ID)) {
+        return false;
+    }
+    token = lookahead(i++);
+    // We have found a match immediately with the assignment operator
+    if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
+        return true;
+    }
+    // Otherwise expect an opening parenthesis
+    if (!token || !tokenMatcher(token, tokens.OpenParen)) {
+        return false;
+    }
+    // The compiler will not use more than 160 tokens to perform the lookahead
+    const max = 160;
+    let parenthesis = 1;
+    while (i < max) {
+        const token = lookahead(i++);
+        if (!token) {
+            return false;
+        }
+        if (parenthesis === 0) {
+            // If we are outside of the parentheses, we always try to match the assignment operator
+            return tokenMatcher(token, tokens.AssignmentOperator);
+        }
+        if (tokenMatcher(token, tokens.OpenParen)) {
+            parenthesis++;
+        } else if (tokenMatcher(token, tokens.CloseParen)) {
+            parenthesis--;
+        } else if (tokenMatcher(token, tokens.Semicolon)) {
+            // Semicolon indicates the end of the statement
+            return false;
+        } else {
+            if (
+                !expressionTokenTypes.some((tokenType) =>
+                    tokenMatcher(token, tokenType),
+                )
+            ) {
+                return false;
+            }
+            // Continue with the next token, the current token is a valid expression token
+        }
+    }
+    // If we reach this point, the lookahead was not successful
+    return false;
+}
