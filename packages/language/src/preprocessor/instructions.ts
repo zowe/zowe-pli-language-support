@@ -330,19 +330,20 @@ export enum VariableVisibility {
 export interface DeclareInstruction {
   kind: InstructionKind.Declare;
   name: string;
-  node: ast.SyntaxNode | null;
+  node?: ast.SyntaxNode;
   /**
    * If defined, it contains the lower and upper bounds of the n-dimensional array
    */
-  dimensions: DimensionBoundsInstruction[] | undefined;
+  dimensions?: DimensionBoundsInstruction[];
   type: DeclaredType;
   mode: ScanMode;
+  initial?: ExpressionInstruction[];
   /**
    * If defined, it indicates whether the variable is part of a PROCEDURE or not.
    *
    * However, this information is not used in the preprocessor, it is only used for error reporting.
    */
-  visibility: VariableVisibility | null;
+  visibility?: VariableVisibility;
 }
 
 export function createDeclareInstruction(
@@ -350,8 +351,9 @@ export function createDeclareInstruction(
   dimensions: DimensionBoundsInstruction[] | undefined,
   type: DeclaredType,
   mode: ScanMode,
-  visibility?: VariableVisibility | null,
-  node: ast.SyntaxNode | null = null,
+  initial: ExpressionInstruction[] | undefined,
+  visibility: VariableVisibility | undefined,
+  node: ast.SyntaxNode | undefined,
 ): DeclareInstruction {
   return {
     kind: InstructionKind.Declare,
@@ -360,7 +362,8 @@ export function createDeclareInstruction(
     type,
     mode,
     node,
-    visibility: visibility ?? null,
+    initial,
+    visibility,
   };
 }
 

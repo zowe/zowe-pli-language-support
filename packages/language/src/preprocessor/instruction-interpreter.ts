@@ -223,6 +223,24 @@ function generateVariableValue(
       };
     }
   }
+  if (instruction.initial) {
+    // Currently only supports scalar initial values for simple arrays or scalar variables
+    if (isArrayValue(value)) {
+      for (
+        let i = 0;
+        i < value.array.length && i < instruction.initial.length;
+        i++
+      ) {
+        const expr = instruction.initial[i];
+        const evaluated = evaluateExpression(expr, context);
+        value.array[i] = evaluated;
+      }
+    } else if (instruction.initial.length > 0) {
+      const expr = instruction.initial[0];
+      const evaluated = evaluateExpression(expr, context);
+      value = evaluated;
+    }
+  }
   return value;
 }
 
