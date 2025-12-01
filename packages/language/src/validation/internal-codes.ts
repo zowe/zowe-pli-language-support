@@ -10,7 +10,7 @@
  */
 
 import { Severity } from "../language-server/types";
-import { ParametricPLICode, PLICode, Error } from "./pli-codes";
+import { PLICode, Error } from "./pli-codes";
 
 export const InternalCodes = {
   DiagnosticURIMismatch: {
@@ -18,7 +18,7 @@ export const InternalCodes = {
     severity: Severity.E,
     message: (label: string, file: string, uri: string) =>
       `Expected diagnostic at label "${label}" to be in file "${file}" but received: ${uri}`,
-  } as ParametricPLICode,
+  },
 };
 
 export const TypeSystemCodes: PLICode[] = [

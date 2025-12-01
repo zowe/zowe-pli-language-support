@@ -27,7 +27,7 @@ verify.expectDiagnosticsAt([2, 4, 6, 8, 12, 14], {
   message: code.CompilerOptions.DupeOptionIssue.message("MAXNEST"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedOption.message("INVALID"),
+  message: code.CompilerOptions.ExpectedOption.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.ExpectedNumberRange.message(100, 1, 50),

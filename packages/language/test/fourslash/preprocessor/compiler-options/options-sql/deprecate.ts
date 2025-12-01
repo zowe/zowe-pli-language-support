@@ -18,7 +18,7 @@
 ////*PROCESS PP(SQL("DEPRECATE(STMT(GRANT))"));
 
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.ExpectedOption.message(""),
+  message: code.CompilerOptions.ExpectedOption.message(),
 });
 verify.expectDiagnosticsAt(2, {
   message:

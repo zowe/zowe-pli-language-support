@@ -26,7 +26,7 @@ verify.expectDiagnosticsAt([4, 6, 8, 10, 12], {
   message: code.CompilerOptions.DupeOptionIssue.message("BLANK"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedString.message(""),
+  message: code.CompilerOptions.ExpectedString.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Blank.InvalidParameterLength.message(""),

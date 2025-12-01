@@ -51,7 +51,7 @@ verify.expectDiagnosticsAt([5, 6, 7], {
   message: code.CompilerOptions.ExpectedNumber.message(),
 });
 verify.expectDiagnosticsAt(8, {
-  message: code.CompilerOptions.ExpectedNumber.message("INVALID"),
+  message: code.CompilerOptions.ExpectedNumber.message(),
 });
 verify.expectDiagnosticsAt(9, {
   message: code.CompilerOptions.ExpectedNumber.message(),
@@ -76,10 +76,10 @@ verify.expectDiagnosticsAt(14, {
   message: code.CompilerOptions.Limits.InvalidFixedDecRange.message(),
 });
 verify.expectDiagnosticsAt(15, {
-  message: code.CompilerOptions.ExpectedNumberRange.message("3", "31", "100"),
+  message: code.CompilerOptions.ExpectedNumberRange.message(3, 31, 100),
 });
 verify.expectDiagnosticsAt(16, {
-  message: code.CompilerOptions.ExpectedNumberRange.message("3", "7", "100"),
+  message: code.CompilerOptions.ExpectedNumberRange.message(3, 7, 100),
 });
 // TODO ssmifi: In an upcoming revision, the LIMITS compiler option should not report dupes. (#321)
 verify.expectDiagnosticsAt(

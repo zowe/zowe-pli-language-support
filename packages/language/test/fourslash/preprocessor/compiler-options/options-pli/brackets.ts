@@ -27,7 +27,7 @@ verify.expectDiagnosticsAt([4, 6, 8, 10, 12, 14], {
   message: code.CompilerOptions.DupeOptionIssue.message("BRACKETS"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedString.message(""),
+  message: code.CompilerOptions.ExpectedString.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Brackets.InvalidParameterLength.message(""),
