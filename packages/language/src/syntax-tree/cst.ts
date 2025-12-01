@@ -706,4 +706,11 @@ export enum CstNodeKind {
   SqlAttributeLob_Length,
   SqlAttributeLob_LengthModifier,
   SqlAttributeLob_CloseParen,
+  SqlAttributeTableLocator_TABLE,
+  SqlAttributeTableLocator_LIKE,
+  SqlAttributeTableLocator_TableName,
+  SqlAttributeTableLocator_AS,
+  SqlAttributeTableLocator_LOCATOR,
+  SqlAttributeResultSetLocator_RESULT_SET_LOCATOR,
+  SqlAttributeResultSetLocator_VARYING,
 }

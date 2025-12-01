@@ -31,11 +31,11 @@
 //// CALL <|3>MyProc2;
 
 const expectedMarkdown = hover.codeBlock(
-  "MYPROC: PROC(A,B,C) OPTIONS(MAIN, ORDER) RECURSIVE REORDER RETURNS(FIXED BIN(31));",
+  "MYPROC: PROC(A,B,C) OPTIONS(MAIN, ORDER) RECURSIVE REORDER RETURNS(FIXED BINARY(31));",
 );
 hover.expectMarkdownAt(1, expectedMarkdown);
 hover.expectMarkdownAt(2, expectedMarkdown);
 hover.expectMarkdownAt(
   3,
-  hover.codeBlock("MYPROC2: PROC(A) RETURNS(FIXED BIN(15));"),
+  hover.codeBlock("MYPROC2: PROC(A) RETURNS(FIXED BINARY(15));"),
 );
