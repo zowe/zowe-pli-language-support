@@ -979,9 +979,7 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeRowId:
       break;
     default:
-      if (node && "kind" in node) {
-        assertUnreachable(node);
-      }
+      assertUnreachable(node);
   }
 }
 
