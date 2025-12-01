@@ -17,7 +17,7 @@ import {
 } from "./abstract-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
-import { performAssignmentLookahead } from "./parser-chevrotain";
+import { performAssignmentLookahead } from "./parser-handwritten";
 import { TokenType } from "chevrotain";
 import {
   diagnostic,
