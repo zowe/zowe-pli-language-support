@@ -210,6 +210,8 @@ export enum SyntaxKind {
   SqlAttributeLobLocator,
   SqlAttributeLobFile,
   SqlAttributeRowId,
+  SqlAttributeTableLocator,
+  SqlAttributeResultSetLocator,
   TypeAttribute,
   UnaryExpression,
   ValueAttribute,
@@ -435,11 +437,6 @@ export enum CharType {
   CHARACTER,
   WIDECHAR,
   UCHAR,
-}
-
-export enum CharOrBinary {
-  CHARACTER,
-  BINARY,
 }
 
 export enum PutAttribute {
@@ -850,6 +847,8 @@ export type SyntaxNode =
   | SqlAttributeLobLocator
   | SqlAttributeLobFile
   | SqlAttributeRowId
+  | SqlAttributeTableLocator
+  | SqlAttributeResultSetLocator
   | TypeAttribute
   | UnaryExpression
   | ValueAttribute
@@ -2739,7 +2738,7 @@ export interface SqlAttributeBinary extends AstNode {
   size: SQLAttributeLobSize | null;
 }
 
-export function createSQLAttributeBinary(): SqlAttributeBinary {
+export function createSqlAttributeBinary(): SqlAttributeBinary {
   return {
     kind: SyntaxKind.SqlAttributeBinary,
     container: null,
@@ -2768,7 +2767,7 @@ export interface SqlAttributeLob extends AstNode {
   size: SQLAttributeLobSize | null;
 }
 
-export function createSQLAttributeLob(): SqlAttributeLob {
+export function createSqlAttributeLob(): SqlAttributeLob {
   return {
     kind: SyntaxKind.SqlAttributeLob,
     container: null,
@@ -2783,7 +2782,7 @@ export interface SqlAttributeLobLocator extends AstNode {
   type: SQLAttributeLobType | null;
 }
 
-export function createSQLAttributeLobLocator(): SqlAttributeLobLocator {
+export function createSqlAttributeLobLocator(): SqlAttributeLobLocator {
   return {
     kind: SyntaxKind.SqlAttributeLobLocator,
     container: null,
@@ -2796,7 +2795,7 @@ export interface SqlAttributeLobFile extends AstNode {
   type: SQLAttributeLobType | null;
 }
 
-export function createSQLAttributeLobFile(): SqlAttributeLobFile {
+export function createSqlAttributeLobFile(): SqlAttributeLobFile {
   return {
     kind: SyntaxKind.SqlAttributeLobFile,
     container: null,
@@ -2808,9 +2807,35 @@ export interface SqlAttributeRowId extends AstNode {
   kind: SyntaxKind.SqlAttributeRowId;
 }
 
-export function createSQLAttributeRowId(): SqlAttributeRowId {
+export function createSqlAttributeRowId(): SqlAttributeRowId {
   return {
     kind: SyntaxKind.SqlAttributeRowId,
+    container: null,
+  };
+}
+
+export interface SqlAttributeTableLocator extends AstNode {
+  kind: SyntaxKind.SqlAttributeTableLocator;
+  name: string | null;
+  nameToken: Token | null;
+}
+
+export function createSqlAttributeTableLocator(): SqlAttributeTableLocator {
+  return {
+    kind: SyntaxKind.SqlAttributeTableLocator,
+    container: null,
+    name: null,
+    nameToken: null,
+  };
+}
+
+export interface SqlAttributeResultSetLocator extends AstNode {
+  kind: SyntaxKind.SqlAttributeResultSetLocator;
+}
+
+export function createSqlAttributeResultSetLocator(): SqlAttributeResultSetLocator {
+  return {
+    kind: SyntaxKind.SqlAttributeResultSetLocator,
     container: null,
   };
 }
@@ -2820,7 +2845,9 @@ export type SqlAttributeType =
   | SqlAttributeLob
   | SqlAttributeLobLocator
   | SqlAttributeLobFile
-  | SqlAttributeRowId;
+  | SqlAttributeRowId
+  | SqlAttributeTableLocator
+  | SqlAttributeResultSetLocator;
 
 export interface SqlAttributeStatement extends AstNode {
   kind: SyntaxKind.SqlAttributeStatement;
