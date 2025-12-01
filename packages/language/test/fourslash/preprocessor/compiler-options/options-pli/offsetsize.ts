@@ -21,7 +21,7 @@ verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.OffsetSize.InvalidParameter.message("200"),

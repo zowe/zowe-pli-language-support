@@ -18,7 +18,7 @@
 ////*PROCESS <|4:N|>('XY');
 
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt([1, 2], {
   message: code.CompilerOptions.MutexOptionIssue.message("NAME"),

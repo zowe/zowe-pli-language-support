@@ -24,7 +24,7 @@ verify.expectDiagnosticsAt([4, 6, 8], {
   message: code.CompilerOptions.DupeOptionIssue.message("BACKREG"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(""),
+  message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.BackReg.InvalidParameter.message("INVALID"),

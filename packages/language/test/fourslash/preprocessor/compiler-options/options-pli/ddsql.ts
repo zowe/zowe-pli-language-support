@@ -24,7 +24,7 @@ verify.expectDiagnosticsAt([4, 6, 8], {
   message: code.CompilerOptions.DupeOptionIssue.message("DDSQL"),
 });
 verify.expectDiagnosticsAt(5, {
-  message: code.CompilerOptions.DDSQL.InvalidParameter.message(""),
+  message: code.CompilerOptions.DDSQL.InvalidParameter.message(),
 });
 verify.noDiagnostics(7);
 verify.expectCompilerOptions({
