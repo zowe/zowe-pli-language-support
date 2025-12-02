@@ -12,12 +12,14 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 
 const DEFAULT_LINE_CUTOFF = 100;
+const DEFAULT_COLUMN_CUTOFF = 76;
 
 export function getFileContentPreview(
   unit: CompilationUnit,
   key: string,
   document: TextDocument,
   lineCutoff = DEFAULT_LINE_CUTOFF,
+  columnCutoff = DEFAULT_COLUMN_CUTOFF,
 ) {
   const partialContent = unit.services.includeCache.get(key);
   if (partialContent) {

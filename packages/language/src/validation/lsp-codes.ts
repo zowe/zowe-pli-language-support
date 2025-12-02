@@ -20,6 +20,12 @@ export const LspCodes = {
       message:
         "Could not resolve include directive. Plugin configuration is missing",
     } as SimplePLICode,
+    FileNotFound: {
+      code: "LSPIR002",
+      severity: Severity.S,
+      message: (includefilename: string) =>
+        `INCLUDE file "${includefilename}" not found.`,
+    } as ParametricPLICode,
   },
 
   UpperCase: {

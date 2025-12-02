@@ -2031,6 +2031,16 @@ function setFilePath(
       ) {
         // Make sure the path is explicitly relative
         relative = "./" + relative;
+      } else if (
+        // Check if the path IS absolute
+        relative.startsWith("../") ||
+        relative.startsWith("/") ||
+        (relative.charAt(1) === ":" && relative.charAt(2) === "/")
+      ) {
+        // In this case, we are setting the absolute path as the relative path
+        // because it's the value showcased on the preview.
+        item.relativeFilePath = context.currentUri.path;
+        return;
       }
       item.relativeFilePath = relative;
     }
@@ -2085,6 +2095,7 @@ async function runInclude(
   item: IncludeItem,
   context: InterpreterContext,
 ): Promise<string | null> {
+  console.log(context.unit.processGroup, context.unit.programConfig);
   const uri = await resolveIncludeFileUri(item, context);
 
   function failToResolve(error?: any): void {
@@ -2097,9 +2108,14 @@ async function runInclude(
         LspCodes.IncludeResolution.MissingConfiguration,
         item.token,
       );
-    } else {
+    } else { 
+      // diagnostic = diagnosticFromCode(
+      //   PLICodes.Severe.IBM3841I,
+      //   item.token,
+      //   getFileNameOrPartialName(item)!,
+      // );
       diagnostic = diagnosticFromCode(
-        PLICodes.Severe.IBM3841I,
+        LspCodes.IncludeResolution.FileNotFound,
         item.token,
         getFileNameOrPartialName(item)!,
       );
