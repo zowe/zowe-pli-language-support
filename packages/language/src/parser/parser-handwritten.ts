@@ -29,7 +29,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 statements: [],
             };
             // Parse one or more packages (or top-level statements)
-            while (!state.eof && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof) {
                 const statement = this.statement.rule(state);
                 program.statements.push(statement);
             }
@@ -367,7 +367,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
             state.consume(element, CstNodeKind.ProcedureStatement_Semicolon0, tokens.Semicolon);
 
-            while (!state.eof && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -379,7 +379,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     );
 
     labelPrefix = rule(
-        sequence(tokens.ID),
+        sequence(tokens.ID, tokens.Colon),
         (state: ParserState): ast.LabelPrefix => {
             const element: ast.LabelPrefix = {
                 kind: ast.SyntaxKind.LabelPrefix,
@@ -490,6 +490,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             } else {
                 element.value = this.unit.rule(state);
             }
+
+            state.recover();
 
             return element;
         }
@@ -872,8 +874,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     endStatement = rule(
         choice(
-            () => this.labelPrefix.first(),
-            sequence(tokens.END)
+            sequence(tokens.END),
+            //TODO: sequence(zeroOrMore(() => this.labelPrefix.first()), tokens.END),
+            sequence(tokens.ID, tokens.Colon, tokens.END),
         ),
         (state: ParserState): ast.EndStatement => {
             const element: ast.EndStatement = {
@@ -1211,6 +1214,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.canConsumeFirst(this.declarationAttribute.first())) {
                 element.attributes.push(this.declarationAttribute.rule(state));
+                while(!state.canConsume(tokens.Semicolon)) {
+                    state.tryConsume(element, CstNodeKind.DefineAliasStatement_Comma, tokens.Comma);
+                    element.attributes.push(this.declarationAttribute.rule(state));
+                }
             }
 
             state.consume(element, CstNodeKind.DefineAliasStatement_Semicolon, tokens.Semicolon);
@@ -3558,7 +3565,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     initialAttributeSpecification = rule(
         choice(
-            sequence(tokens.OpenParen),
+            //LL(2) conflicts expression, decide at runtime
+            //sequence(tokens.OpenParen, tokens.Star),
             () => this.expression.first(),
         ),
         (state: ParserState): ast.InitialAttributeSpecification => {
@@ -3570,7 +3578,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 expression: null,
             };
 
-            if (state.canConsume(tokens.OpenParen)) {
+            if (state.canConsume(tokens.OpenParen, tokens.Star)) {
                 // (Star) variant
                 state.consume(element, CstNodeKind.InitialAttributeSpecification_OpenParen, tokens.OpenParen);
                 state.consume(element, CstNodeKind.InitialAttributeSpecification_Star, tokens.Star);
@@ -3740,7 +3748,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         () => this.entryAttribute,
         () => this.likeAttribute,
         () => this.typeAttribute,
-        () => this.genericAttribute,
+       //TODO reenable with custom lookahead () => this.genericAttribute,
         () => this.indForAttribute,
     ];
 
@@ -4317,7 +4325,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
     );
 
     entryAttribute = rule(
-        sequence(tokens.LIMITED, tokens.ENTRY),
+        choice(
+            sequence(tokens.LIMITED),
+            sequence(tokens.ENTRY),
+        ),
         (state: ParserState): ast.EntryAttribute => {
             const element: ast.EntryAttribute = {
                 kind: ast.SyntaxKind.EntryAttribute,

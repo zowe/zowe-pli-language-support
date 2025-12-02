@@ -45,9 +45,9 @@ function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
         const tokenType = firstSet.tokenTypes[0];
         const tokenTypeIdx = tokenType.tokenTypeIdx!;
         if(firstSet.tokenTypes.length > 1) {
-            const map: RuleMap<T> = new Map();
-            compileToMap(map, sequence(...firstSet.tokenTypes.slice(1)), action);
-            map.set(tokenTypeIdx, map);
+            const innerMap: RuleMap<T> = new Map();
+            compileToMap(innerMap, sequence(...firstSet.tokenTypes.slice(1)), action);
+            map.set(tokenTypeIdx, innerMap);
         } else {
             if(map.has(tokenTypeIdx)) {
                 throw new Error(`Ambiguous grammar detected. Multiple rules lead to the same token type: ${tokenType.name}`);
@@ -67,7 +67,7 @@ function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
             compileToMap(map, sequence, action);
         }
         for (const ruleMap of firstSet.ruleMaps) {
-            mergeMaps(map, ruleMap());
+            mergeMaps(map, ruleMap(), action);
         }
     }
 }
@@ -77,17 +77,17 @@ export type RuleFirstPair<T> = {
     rule: Rule<T>;
 };
 
-function mergeMaps<T>(target: RuleMap<T>, source: RuleMap<T>) {
+function mergeMaps<T>(target: RuleMap<T>, source: RuleMap<T>, action?: Rule<T>) {
     for (const [key, value] of source) {
         if (target.has(key)) {
             const existing = target.get(key);
             if (existing instanceof Function || value instanceof Function) {
                 throw new Error(`Ambiguous grammar detected. Multiple rules lead to the same token type index: ${key}`);
             } else {
-                mergeMaps(existing as RuleMap<T>, value as RuleMap<T>);
+                mergeMaps(existing as RuleMap<T>, value as RuleMap<T>, action);
             }
         } else {
-            target.set(key, value);
+            target.set(key, action ?? value);
         }
     }
 }
@@ -115,7 +115,11 @@ export function orRule<T>(...rules: (() => RuleFirstPair<T>)[]): RuleFirstPair<T
 export function rule<T>(set: FirstSet|(() => RuleMap<any>), action: Rule<T>): RuleFirstPair<T> {
     if (typeof set === "function") {
         return {
-            first: set,
+            first: memoize(() => {
+                const map = new Map<number, RuleMap<T>>();
+                mergeMaps(map, set(), action);
+                return map;
+            }),
             rule: action,
         };
     } else {

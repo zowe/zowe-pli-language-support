@@ -167,20 +167,31 @@ export class ParserState {
     if (this.mode === ParserStateMode.Preprocessor) {
       this.performPreprocessorRecovery();
     } else if (this.mode === ParserStateMode.Final) {
-      // TODO: Implement error recovery for PLI parser
+      this.performMainParserRecovery();
     }
     this.inError = false;
   }
 
-  /**
-   * Resets the error state without performing any recovery.
-   * This is particularly useful in the preprocessor, where we can simply parse "TokenStatement" elements
-   */
-  skipRecovery(): void {
-    this.inError = false;
+  private performMainParserRecovery(): void {
+    const currentLine = (this.token || this.last)?.startLine ?? 0;
+    while (this.index < this.tokens.length) {
+      const token = this.tokens[this.index];
+      if (token.startLine !== currentLine) {
+        // Moved to next line, stop here
+        break;
+      } else if (tokenMatcher(token, t.Semicolon)) {
+        this.index++;
+        break;
+      } else if (tokenMatcher(token, t.END)) {
+        this.index++;
+        break;
+      } else {
+        this.index++;
+      }
+    }
   }
 
-  private performPreprocessorRecovery(): void {
+private performPreprocessorRecovery(): void {
     // If the preprocessor parser encounters an error, it should attempt to:
     // 1. Find a semicolon at the current line, and skip that token
     // 2. Find a percent sign at the current line, and stop
@@ -311,12 +322,18 @@ export class ParserState {
     return this.consume(element, kind, tokenType);
   }
 
+  private mapMatch(map: RuleMap, tokenType: TokenType): number|undefined {
+    return [tokenType.tokenTypeIdx??-1, ...(tokenType.CATEGORIES??[]).map(cat => cat.tokenTypeIdx??-1)]
+      .find(index => map.has(index));
+  }
+
   private canConsumeFirstItem(map: RuleMap, index: number): boolean {
-    const token = this.tokens[this.index+index];
-    if(!map.has(token.tokenTypeIdx!)) {
+    const tokenType = this.tokens[this.index+index].tokenType;
+    const idx = this.mapMatch(map, tokenType);
+    if(idx === undefined) {
       return false;
     }
-    const next = map.get(token.tokenTypeIdx!)!;
+    const next = map.get(idx)!;
     if(next instanceof Function) {
       return true;
     } else {
@@ -329,11 +346,12 @@ export class ParserState {
   }
 
   private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T|null {
-    const lookahead = this.tokens[this.index + index].tokenTypeIdx!;
-    if(!map.has(lookahead)) {
+    const lookahead = this.tokens[this.index + index].tokenType;
+    const idx = this.mapMatch(map, lookahead);
+    if(idx === undefined) {
       return null;
     }
-    const next = map.get(lookahead)!;
+    const next = map.get(idx)!;
     if(next instanceof Function) {
       return next(this);
     } else {
