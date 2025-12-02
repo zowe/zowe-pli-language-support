@@ -42,7 +42,7 @@
 
 verify.expectExclusiveDiagnosticsAt(1, [
   {
-    message: code.Severe.IBM3841I.message("M2"),
+    message: code.LspCodes.IncludeResolution.FileNotFound.message("M2"),
   },
 ]);
 

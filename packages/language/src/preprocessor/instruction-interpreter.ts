@@ -2104,7 +2104,7 @@ async function runInclude(
       );
     } else {
       diagnostic = diagnosticFromCode(
-        PLICodes.Severe.IBM3841I,
+        LspCodes.IncludeResolution.FileNotFound,
         item.token,
         getFileNameOrPartialName(item)!,
       );
