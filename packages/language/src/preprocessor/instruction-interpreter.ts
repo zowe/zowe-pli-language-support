@@ -2049,7 +2049,7 @@ async function runIncludeInstruction(
  * @param filePath File path to set, if null, no changes are made
  * @param context Used for currentUri to calculate relative paths
  */
-function setFilePath(
+export function setFilePath(
   item: { filePath: string | null; relativeFilePath: string | null },
   filePath: string | null,
   context: InterpreterContext,
@@ -2057,8 +2057,8 @@ function setFilePath(
   if (filePath) {
     item.filePath = filePath;
     if (context.currentUri) {
-      const dirname = UriUtils.dirname(context.currentUri);
-      let relative = UriUtils.relative(dirname, filePath);
+      const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+      let relative = UriUtils.relative(workspace, filePath);
       if (
         // If the path isn't already relative
         !relative.startsWith("../") &&
@@ -2069,6 +2069,17 @@ function setFilePath(
       ) {
         // Make sure the path is explicitly relative
         relative = "./" + relative;
+      } else if (
+        // Check if the path IS absolute
+        relative.startsWith("../") ||
+        relative.startsWith("/") ||
+        (relative.charAt(1) === ":" &&
+          (relative.charAt(2) === "/" || relative.charAt(2) === "\\"))
+      ) {
+        // In this case, we are setting the absolute path as the relative path
+        // because it's the value showcased on the preview.
+        item.relativeFilePath = context.currentUri.path;
+        return;
       }
       item.relativeFilePath = relative;
     }
