@@ -2104,7 +2104,7 @@ async function runInclude(
       );
     } else {
       diagnostic = diagnosticFromCode(
-        LspCodes.IncludeResolution.FileNotFound,
+        PLICodes.Severe.IBM1848I,
         item.token,
         getFileNameOrPartialName(item)!,
       );
