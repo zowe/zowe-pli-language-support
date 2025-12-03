@@ -74,7 +74,7 @@ function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
 
 export type RuleFirstPair<T> = {
     first: () =>RuleMap<any>;
-    rule: Rule<T>;
+    rule: Rule<T|null>;
 };
 
 function mergeMaps<T>(target: RuleMap<T>, source: RuleMap<T>, action?: Rule<T>) {
@@ -95,7 +95,7 @@ function mergeMaps<T>(target: RuleMap<T>, source: RuleMap<T>, action?: Rule<T>) 
 export function orRule<T>(...rules: (() => RuleFirstPair<T>)[]): RuleFirstPair<T> {
     class RuleFirstPairWrapper implements RuleFirstPair<T> {
         first: () => RuleMap<any>;
-        rule: Rule<T>;
+        rule: Rule<T|null>;
         constructor(...rules: (() => RuleFirstPair<T>)[]) {
             this.first = memoize(() => {
                 const map: RuleMap<T> = new Map();
@@ -105,7 +105,7 @@ export function orRule<T>(...rules: (() => RuleFirstPair<T>)[]): RuleFirstPair<T
                 return map;
             });
             this.rule = (state: ParserState) => {
-                return state.consumeAlternatives<T>(this.first())!;
+                return state.consumeAlternatives<T>(this.first());
             };
         }
     }

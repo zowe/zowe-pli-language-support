@@ -17,7 +17,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
     parse(): ast.Program {
         const state = finalParserState(this._input);
-        return this.pliProgram.rule(state);
+        return this.pliProgram.rule(state)!;
     }
 
     pliProgram = rule(
@@ -30,7 +30,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
             // Parse one or more packages (or top-level statements)
             const { inc } = state.createLoopContext();
-            while (!state.eof) {
+            while (state.canConsumeFirst(this.statement.first()) && state.canConsumeFirst(this.statement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && program.statements.push(statement);
@@ -63,7 +63,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
             state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
             const { inc } = state.createLoopContext();
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -405,7 +405,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.ProcedureStatement_Semicolon0, tokens.Semicolon);
 
             const { inc: inc3 } = state.createLoopContext(3);
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
                 inc3();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -922,7 +922,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             state.consume(element, CstNodeKind.BeginStatement_Semicolon0, tokens.Semicolon);
             const { inc } = state.createLoopContext();
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
                 inc();
                 const stmt = this.statement.rule(state);
                 stmt && element.statements.push(stmt);
@@ -1632,7 +1632,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             // Parse statements until END
             const { inc } = state.createLoopContext();
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -3212,7 +3212,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.QualifyStatement_Semicolon0, tokens.Semicolon);
 
             const { inc } = state.createLoopContext();
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -4023,7 +4023,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         () => this.defaultValueAttribute,
     );
 
-    declarationAttribute = rule<ast.DeclarationAttribute>(() => this.internalDeclarationAttribute.first(), (state): ast.DeclarationAttribute => {
+    declarationAttribute = rule<ast.DeclarationAttribute|null>(() => this.internalDeclarationAttribute.first(), (state) => {
         switch (this.performGenericAttributeLookahead(state)) {
             case 'complex':
                 return this.genericAttribute.rule(state);
