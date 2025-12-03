@@ -1576,7 +1576,13 @@ function stringLiteral(state: ParserState): ast.Literal {
 }
 
 function unpackCharacterValue(literal: string): string {
-  return literal.substring(1, literal.length - 1).replace(/""/g, '"');
+  const type = literal.charAt(0);
+  const content = literal.substring(1, literal.length - 1);
+  if (type === "'") {
+    return content.replace(/''/g, "'");
+  } else {
+    return content.replace(/""/g, '"');
+  }
 }
 
 const XCharCodeLower = "x".charCodeAt(0);

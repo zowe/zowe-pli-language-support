@@ -19,6 +19,9 @@ import {
   ProgramConfig,
 } from "../../src/workspace/plugin-configuration-provider";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { tokenize } from "../../src/parser/tokenizer";
+import { fullCode } from "../../src/language-server/types";
+import { PLICodes } from "../../src/validation/pli-codes";
 
 type TokenizeFunction = (text: string) => Promise<string[]>;
 
@@ -37,6 +40,14 @@ describe("PL/1 Lexer", () => {
       );
       return diagnostics.map((e) => e.message);
     };
+  });
+
+  test("Avoid infinite loop on unterminated string", async () => {
+    const result = tokenize('"test', undefined);
+    expect(result).toBeDefined();
+    expect(result.tokens).toHaveLength(0);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0].code).toBe(fullCode(PLICodes.Severe.IBM3961I));
   });
 
   test("Preprocessor garbage", async () => {
