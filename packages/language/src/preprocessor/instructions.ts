@@ -86,6 +86,7 @@ export enum InstructionKind {
   Goto,
   Note,
   SqlAttribute,
+  CicsResponseCode,
 
   // Expression types
   BinaryExpression,
@@ -111,7 +112,13 @@ export type Instruction =
   | DeclareInstruction
   | NoteInstruction
   | CallInstruction
-  | SqlAttributeInstruction;
+  | SqlAttributeInstruction
+  | CicsResponseInstruction;
+
+export interface CicsResponseInstruction {
+  kind: InstructionKind.CicsResponseCode;
+  code: ast.CicsResponseCode;
+}
 
 export interface SqlAttributeInstruction {
   kind: InstructionKind.SqlAttribute;

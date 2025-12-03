@@ -184,6 +184,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.SqlAttributeStatement:
       instruction = generateSqlAttributeInstruction(value);
       break;
+    case ast.SyntaxKind.CicsResponseStatement:
+      instruction = generateCicsResponseInstruction(value);
+      break;
     default:
       return undefined;
   }
@@ -299,6 +302,16 @@ function generateNoteInstruction(
         code,
       }
     : undefined;
+}
+
+function generateCicsResponseInstruction(
+  node: ast.CicsResponseStatement,
+): inst.CicsResponseInstruction {
+  const code = node.code ?? ast.CicsResponseCode.NORMAL;
+  return {
+    kind: inst.InstructionKind.CicsResponseCode,
+    code,
+  };
 }
 
 function generateSqlAttributeInstruction(

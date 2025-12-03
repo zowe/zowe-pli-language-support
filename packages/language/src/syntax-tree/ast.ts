@@ -224,6 +224,7 @@ export enum SyntaxKind {
   WriteStatement,
   WriteStatementOption,
   XFormatItem,
+  CicsResponseStatement,
 }
 
 export enum KeywordConditions {
@@ -842,6 +843,7 @@ export type SyntaxNode =
   | StopStatement
   | StringLiteral
   | SqlAttributeStatement
+  | CicsResponseStatement
   | SqlAttributeBinary
   | SqlAttributeLob
   | SqlAttributeLobLocator
@@ -1041,7 +1043,8 @@ export type Unit =
   | PrintDirective
   | NoPrintDirective
   | SkipDirective
-  | SqlAttributeStatement;
+  | SqlAttributeStatement
+  | CicsResponseStatement;
 
 // Preprocessor AST
 
@@ -2861,5 +2864,44 @@ export function createSQLAttributeStatement(): SqlAttributeStatement {
     container: null,
     isXml: false,
     body: null,
+  };
+}
+
+// Values sourced from:
+// https://www.ibmmainframer.com/cics-tutorial/cics-response-option/
+export enum CicsResponseCode {
+  NORMAL = 0,
+  NOTFND = 13,
+  DUPREC = 14,
+  INVREQ = 16,
+  NOSPACE = 18,
+  NOTOPEN = 19,
+  ENDFILE = 20,
+  LENGERR = 22,
+  QZERO = 23,
+  QBUSY = 25,
+  ITEMERR = 26,
+  PGMIDERR = 27,
+  ENDDATA = 29,
+  MAPFAIL = 36,
+  QIDERR = 44,
+  ENQBUSY = 55,
+  DISABLED = 84,
+}
+
+export interface CicsResponseStatement extends AstNode {
+  kind: SyntaxKind.CicsResponseStatement;
+  token: Token | null;
+  code: CicsResponseCode | null;
+  codeToken: Token | null;
+}
+
+export function createCicsResponseStatement(): CicsResponseStatement {
+  return {
+    kind: SyntaxKind.CicsResponseStatement,
+    container: null,
+    token: null,
+    code: null,
+    codeToken: null,
   };
 }
