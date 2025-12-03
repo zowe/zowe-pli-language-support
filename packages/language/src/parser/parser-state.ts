@@ -182,9 +182,6 @@ export class ParserState {
       } else if (tokenMatcher(token, t.Semicolon)) {
         this.index++;
         break;
-      } else if (tokenMatcher(token, t.END)) {
-        this.index++;
-        break;
       } else {
         this.index++;
       }
@@ -346,6 +343,9 @@ private performPreprocessorRecovery(): void {
   }
 
   private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T|null {
+    if(this.index + index >= this.tokens.length) {
+      return null;
+    }
     const lookahead = this.tokens[this.index + index].tokenType;
     const idx = this.mapMatch(map, lookahead);
     if(idx === undefined) {

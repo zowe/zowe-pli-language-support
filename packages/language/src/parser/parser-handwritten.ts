@@ -201,7 +201,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.Options_OPTIONS, tokens.OPTIONS);
             state.consume(element, CstNodeKind.Options_OpenParen, tokens.OpenParen);
             element.items.push(this.optionsItem.rule(state));
-            while (!state.canConsume(tokens.CloseParen)) {
+            while (state.canConsume(tokens.Comma) || state.canConsumeFirst(this.optionsItem.first())) {
                 state.tryConsume(element, CstNodeKind.Options_Comma, tokens.Comma);
                 element.items.push(this.optionsItem.rule(state));
             }
@@ -331,7 +331,14 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 state.consume(element, CstNodeKind.ProcedureStatement_CloseParenParams, tokens.CloseParen);
             }
 
-            while (!state.eof && !state.canConsume(tokens.Semicolon)) {
+            while (!state.eof && (
+                state.canConsume(tokens.RETURNS)
+                || state.canConsumeFirst(this.options.first())
+                || state.canConsume(tokens.RECURSIVE)
+                || state.canConsume(tokens.ProcedureOrder)
+                || state.canConsumeFirst(this.environmentOption.first())
+                || state.canConsume(tokens.ScopeAttribute)
+            )) {
                 if (state.canConsume(tokens.RETURNS)) {
                     element.options.push(this.returnsOption.rule(state));
                 } else if (state.canConsumeFirst(this.options.first())) {
@@ -361,14 +368,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         );
                         element.options.push(scope);
                     }
-                } else {
-                    //TODO better error message
-                    throw new Error("Unexpected token in procedure statement options");
                 }
             }
             state.consume(element, CstNodeKind.ProcedureStatement_Semicolon0, tokens.Semicolon);
 
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.canConsumeFirst(this.endStatement.first())) {
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -425,7 +429,13 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse optional attributes (can appear multiple times)
-            while (!state.eof && !state.canConsume(tokens.Semicolon)) {
+            while (!state.eof && (
+                state.canConsumeFirst(this.environmentOption.first())
+                || state.canConsume(tokens.VARIABLE)
+                || state.canConsume(tokens.LIMITED)
+                || state.canConsume(tokens.RETURNS)
+                || state.canConsumeFirst(this.options.first())
+            )) {
                 if (state.canConsumeFirst(this.environmentOption.first())) {
                     element.environmentName.push(this.environmentOption.rule(state));
                 } else if (state.tryConsume(element, CstNodeKind.EntryStatement_Variable, tokens.VARIABLE)) {
@@ -436,9 +446,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     element.returns.push(this.returnsOption.rule(state));
                 } else if (state.canConsumeFirst(this.options.first())) {
                     element.options.push(this.options.rule(state));
-                } else {
-                    // TODO: better error message
-                    throw new Error("Unexpected token in entry statement");
                 }
             }
 
@@ -752,7 +759,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             // Parse left-hand side references (comma-separated)
             element.refs.push(this.locatorCall.rule(state));
-
             while (state.tryConsume(element, CstNodeKind.AssignmentStatement_Comma0, tokens.Comma)) {
                 element.refs.push(this.locatorCall.rule(state));
             }
@@ -862,7 +868,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             state.consume(element, CstNodeKind.BeginStatement_Semicolon0, tokens.Semicolon);
 
-            while (!state.eof && !state.canConsume(tokens.END)) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 element.statements.push(this.statement.rule(state));
             }
 
@@ -1215,7 +1221,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.canConsumeFirst(this.declarationAttribute.first())) {
                 element.attributes.push(this.declarationAttribute.rule(state));
-                while(!state.canConsume(tokens.Semicolon)) {
+                while(state.canConsume(tokens.Comma) || state.canConsumeFirst(this.declarationAttribute.first())) {
                     state.tryConsume(element, CstNodeKind.DefineAliasStatement_Comma, tokens.Comma);
                     element.attributes.push(this.declarationAttribute.rule(state));
                 }
@@ -1257,7 +1263,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.ordinalValues = this.ordinalValueList.rule(state);
             state.consume(element, CstNodeKind.DefineOrdinalStatement_CloseParenValues, tokens.CloseParen);
 
-            while (!state.canConsume(tokens.Semicolon)) {
+            while (state.canConsume(tokens.SIGNED) 
+                || state.canConsume(tokens.UNSIGNED)
+                || state.canConsume(tokens.PRECISION)
+            ) {
                 if (state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_Signed0, tokens.SIGNED)) {
                     element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
                 } else if (state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_Unsigned0, tokens.UNSIGNED)) {
@@ -1270,9 +1279,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         element.precision = precisionNumberToken.image;
                     }
                     state.consume(element, CstNodeKind.DefineOrdinalStatement_CloseParenPrecision, tokens.CloseParen);
-                } else {
-                    //TODO better error message
-                    throw new Error("Unexpected token in DEFINE ORDINAL statement");
                 }
             }
 
@@ -1524,7 +1530,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.DoStatement_Semicolon0, tokens.Semicolon);
 
             // Parse statements until END
-            while (!state.eof && !state.canConsume(tokens.END)) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -2277,12 +2283,12 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         // TODO: better error message
                         throw new Error("Expected file specification in GET statement");
                     }
-                } while (!state.eof &&
-                !state.canConsume(tokens.Semicolon) &&
-                    (state.canConsumeFirst(this.getFile.first()) ||
-                        state.canConsumeFirst(this.getCopy.first()) ||
-                        state.canConsumeFirst(this.getSkip.first()) ||
-                        state.canConsumeFirst(this.dataSpecificationOptions.first())));
+                } while (!state.eof && (
+                    state.canConsumeFirst(this.getFile.first()) ||
+                    state.canConsumeFirst(this.getCopy.first()) ||
+                    state.canConsumeFirst(this.getSkip.first()) ||
+                    state.canConsumeFirst(this.dataSpecificationOptions.first())
+                ));
             }
 
             state.consume(element, CstNodeKind.GetStatement_Semicolon, tokens.Semicolon);
@@ -2846,14 +2852,11 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         fileStatement.items.push(this.putItem.rule(state));
                     } else if (state.canConsumeFirst(this.dataSpecificationOptions.first())) {
                         fileStatement.items.push(this.dataSpecificationOptions.rule(state));
-                    } else {
-                        // TODO: better error message
-                        throw new Error("Expected put item or data specification in PUT statement");
                     }
-                } while (!state.eof &&
-                !state.canConsume(tokens.Semicolon) &&
-                    (state.canConsumeFirst(this.putItem.first()) ||
-                        state.canConsumeFirst(this.dataSpecificationOptions.first())));
+                } while (!state.eof && (
+                    state.canConsumeFirst(this.putItem.first()) ||
+                    state.canConsumeFirst(this.dataSpecificationOptions.first())
+                ));
             }
 
             state.consume(element, CstNodeKind.PutStatement_Semicolon, tokens.Semicolon);
@@ -2936,9 +2939,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 } while (!state.eof &&
                 !state.canConsume(tokens.Semicolon) &&
                     state.canConsume(tokens.OpenParen));
-            } else {
-                // TODO better error message
-                throw new Error("Expected LIST, DATA, or EDIT in data specification options");
             }
 
             return element;
@@ -3235,14 +3235,14 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.SelectStatement_Semicolon0, tokens.Semicolon);
 
             // Parse WHEN and OTHERWISE statements
-            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+            while (!state.eof && (
+                state.canConsumeFirst(this.whenStatement.first())
+                || state.canConsumeFirst(this.otherwiseStatement.first())
+            )) {
                 if (state.canConsumeFirst(this.whenStatement.first())) {
                     element.cases.push(this.whenStatement.rule(state));
                 } else if (state.canConsumeFirst(this.otherwiseStatement.first())) {
                     element.cases.push(this.otherwiseStatement.rule(state));
-                } else {
-                    // TODO: better error message
-                    throw new Error("Expected WHEN or OTHERWISE statement in SELECT block");
                 }
             }
 
@@ -3926,7 +3926,12 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.ReturnsAttribute_OpenParen, tokens.OpenParen);
 
             // Parse zero or more declaration attributes
-            while (!state.eof && !state.canConsume(tokens.CloseParen)) {
+            while (!state.eof && (
+                state.canConsumeFirst(this.computationDataAttribute.first())
+                || state.canConsumeFirst(this.dateAttribute.first())
+                || state.canConsumeFirst(this.valueListAttribute.first())
+                || state.canConsumeFirst(this.valueRangeAttribute.first())
+            )) {
                 if (state.canConsumeFirst(this.computationDataAttribute.first())) {
                     element.attrs.push(this.computationDataAttribute.rule(state));
                 } else if (state.canConsumeFirst(this.dateAttribute.first())) {
@@ -3935,9 +3940,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     element.attrs.push(this.valueListAttribute.rule(state));
                 } else if (state.canConsumeFirst(this.valueRangeAttribute.first())) {
                     element.attrs.push(this.valueRangeAttribute.rule(state));
-                } else {
-                    // TODO: better error message
-                    throw new Error("Expected declaration attribute in RETURNS clause");
                 }
             }
 
@@ -4266,7 +4268,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.EnvironmentAttribute_OpenParen, tokens.OpenParen);
 
             // Parse zero or more environment attribute items
-            while (!state.eof && !state.canConsume(tokens.CloseParen)) {
+            while (!state.eof && state.canConsumeFirst(this.environmentAttributeItem.first())) {
                 element.items.push(this.environmentAttributeItem.rule(state));
 
                 // TODO: research, This does not align to the language spec
@@ -4301,7 +4303,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 if (state.canConsumeFirst(this.expression.first())) {
                     element.args.push(this.expression.rule(state));
 
-                    while (!state.eof && !state.canConsume(tokens.CloseParen)) {
+                    while (!state.eof && (
+                        state.canConsume(tokens.Comma)
+                        || state.canConsumeFirst(this.expression.first())
+                    )) {
                         // Optional comma before next expression
                         state.tryConsume(element, CstNodeKind.EnvironmentAttributeItem_Comma, tokens.Comma);
 
@@ -4408,13 +4413,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.ReturnsOption_OpenParen, tokens.OpenParen);
 
             // Parse zero or more declaration attributes
-            while (!state.eof && !state.canConsume(tokens.CloseParen)) {
-                if (state.canConsumeFirst(this.declarationAttribute.first())) {
-                    element.returnAttributes.push(this.declarationAttribute.rule(state));
-                } else {
-                    // TODO: better error message
-                    throw new Error("Expected declaration attribute in RETURNS clause");
-                }
+            while (!state.eof && state.canConsumeFirst(this.declarationAttribute.first())
+            ) {
+                element.returnAttributes.push(this.declarationAttribute.rule(state));
             }
 
             state.consume(element, CstNodeKind.ReturnsOption_CloseParen, tokens.CloseParen);
@@ -4927,7 +4928,11 @@ const expressionTokenTypes = [
 export function performAssignmentLookahead(
     state: ParserState
 ): boolean {
-    const lookahead: (la: number) => tokens.Token | undefined = (la) => state.peek(la);
+    let previousToken: tokens.Token | undefined = undefined;
+    const lookahead: (la: number) => tokens.Token | undefined = (la) => {
+        previousToken = state.peek(la - 1);
+        return state.peek(la);
+    };
     let i = 1;
     let token = lookahead(i++);
     // First token of an assigment needs to be an ID
@@ -4964,6 +4969,11 @@ export function performAssignmentLookahead(
                 )
             ) {
                 return false;
+            }
+            if(tokenMatcher(token, tokens.ID)) {
+                if(previousToken && tokenMatcher(previousToken, tokens.ID)) {
+                    return false;
+                }
             }
             // Continue with the next token, the current token is a valid expression token
         }
