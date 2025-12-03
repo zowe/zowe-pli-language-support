@@ -31,6 +31,7 @@ import {
   SyntaxKind,
 } from "../../syntax-tree/ast";
 import { ML_COMMENT, SL_COMMENT, Token } from "../../parser/tokens";
+import { URI } from "../../utils/uri";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
 const semicolonToken = createToken({ name: "semicolon", pattern: ";" });
@@ -273,6 +274,7 @@ export interface AbstractCompilerOptions {
  */
 export function parseAbstractCompilerOptions(
   input: string,
+  uri?: URI,
   offset?: number,
 ): AbstractCompilerOptions {
   // Remove everything after the first ;.
@@ -285,11 +287,17 @@ export function parseAbstractCompilerOptions(
     0,
     semicolonTokenPosition === -1 ? undefined : semicolonTokenPosition,
   ) as Token[];
+  if (uri) {
+    for (const token of tokens) {
+      token.uri = uri;
+    }
+  }
   parser.input = tokens;
   const compilerOptions = parser.compilerOptions();
   const issues: Diagnostic[] = [];
   for (const lexerError of lexerResult.errors) {
     issues.push({
+      uri: uri?.toString(),
       message: lexerError.message,
       range: {
         start: lexerError.offset,
@@ -304,6 +312,7 @@ export function parseAbstractCompilerOptions(
         ? tokens[tokens.length - 1]
         : (parserError.token as Token);
     issues.push({
+      uri: uri?.toString(),
       message: parserError.message,
       range: tokenToRange(errorToken),
       severity: 1,
