@@ -1576,7 +1576,15 @@ function stringLiteral(state: ParserState): ast.Literal {
 }
 
 function unpackCharacterValue(literal: string): string {
-  return literal.substring(1, literal.length - 1).replace(/""/g, '"');
+  let length = literal.length;
+  // Remove ending quotes if not escaped
+  if (
+    (literal.endsWith('"') || literal.endsWith("'")) &&
+    literal.charAt(length - 2) !== "\\"
+  ) {
+    length--;
+  }
+  return literal.substring(1, length).replace(/""/g, '"');
 }
 
 const XCharCodeLower = "x".charCodeAt(0);

@@ -16,7 +16,12 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options";
-import { diagnostic, Diagnostic, fullCode } from "../language-server/types";
+import {
+  diagnostic,
+  Diagnostic,
+  diagnosticFromCode,
+  fullCode,
+} from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
 import { NOT_CHARACTER } from "../utils/const";
 
@@ -96,6 +101,7 @@ class TokenizerContext {
   public line: number = 0;
   public column: number = 0;
   public uri: URI | undefined;
+  public diagnostics: Diagnostic[] = [];
 
   private storedIndex: number = 0;
   private storedLine: number = 0;
@@ -246,7 +252,28 @@ function tokenizeRegex(tokenType: TokenType, regex: RegExp): TokenizeFunc {
   };
 }
 
-const tokenizeString = tokenizeRegex(tokens.STRING_TERM, stringRegex);
+function tokenizeString(context: TokenizerContext): tokens.Token | undefined {
+  const result = tokenizeStringInternal(context);
+  if (result) {
+    return result;
+  }
+  // Unterminated string, consume until the end of the line
+  const start = context.index;
+  let i = context.index;
+  while (i < context.length) {
+    const char = context.input[i];
+    if (char === "\n") {
+      break;
+    }
+    i++;
+  }
+  context.advance(i - start, false);
+  const token = context.createTokenInstance(tokens.STRING_TERM);
+  context.diagnostics.push(diagnosticFromCode(PLICodes.Severe.IBM3961I, token));
+  return token;
+}
+
+const tokenizeStringInternal = tokenizeRegex(tokens.STRING_TERM, stringRegex);
 const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
 
 function tokenizeOrSymbol(context: TokenizerContext): tokens.Token | undefined {
@@ -513,7 +540,6 @@ export function tokenize(
   uri: URI | undefined,
 ): TokenizationResult {
   const context = new TokenizerContext(input, uri);
-  const diagnostics: Diagnostic[] = [];
   let previous: tokens.Token | undefined = undefined;
 
   while (context.index < context.length) {
@@ -531,6 +557,7 @@ export function tokenize(
 
     const fn = funcs.get(char);
     if (fn) {
+      const index = context.index;
       const token = fn(context);
       if (token !== undefined) {
         if (previous && previous.endOffset + 1 === token.startOffset) {
@@ -538,6 +565,9 @@ export function tokenize(
         }
         context.tokens.push(token);
         previous = token;
+      } else if (context.index === index) {
+        // No progress made, avoid infinite loop
+        context.index++;
       }
     } else {
       if (uri) {
@@ -551,7 +581,7 @@ export function tokenize(
           uri.toString(),
         );
         issue.code = fullCode(PLICodes.Error.IBM3550I);
-        diagnostics.push(issue);
+        context.diagnostics.push(issue);
       }
       context.index++;
     }
@@ -559,7 +589,7 @@ export function tokenize(
 
   return {
     tokens: context.tokens,
-    diagnostics: diagnostics,
+    diagnostics: context.diagnostics,
   };
 }
 
