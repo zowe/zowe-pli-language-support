@@ -88,22 +88,6 @@ function validateSyntaxNode(
   });
 }
 
-export function filteredDiagnosticsWithUri(
-  diagnostics: Diagnostic[] | undefined,
-  uri: string,
-): Diagnostic[] {
-  if (!diagnostics) {
-    return [];
-  }
-  const filteredDiagnostics: Diagnostic[] = [];
-  for (const issue of diagnostics) {
-    if (issue.range && !isNaN(issue.range.start)) {
-      filteredDiagnostics.push({ ...issue, uri });
-    }
-  }
-  return filteredDiagnostics;
-}
-
 export function parserErrorsToDiagnostics(
   parserErrors: IRecognitionException[],
 ): Diagnostic[] {
