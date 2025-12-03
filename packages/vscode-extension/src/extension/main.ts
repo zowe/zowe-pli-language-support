@@ -56,7 +56,7 @@ function registerOnDidOpenTextDocListener(
 ) {
   const listener = vscode.window.onDidChangeActiveTextEditor(
     async (document) => {
-      if (!document) {
+      if (!document || !shouldShowInfoMessage) {
         return;
       }
       // settle on the 1st workspace folder available
@@ -74,11 +74,7 @@ function registerOnDidOpenTextDocListener(
         document.document.fileName,
       );
 
-      if (
-        !isPliDocument ||
-        fs.existsSync(plipluginPath) ||
-        !shouldShowInfoMessage
-      ) {
+      if (!isPliDocument || fs.existsSync(plipluginPath)) {
         // not a pli file or config already exists
         return;
       }
