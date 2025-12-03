@@ -29,7 +29,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 statements: [],
             };
             // Parse one or more packages (or top-level statements)
+            const { inc } = state.createLoopContext();
             while (!state.eof) {
+                inc();
                 const statement = this.statement.rule(state);
                 program.statements.push(statement);
             }
@@ -60,7 +62,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.options = this.options.rule(state);
             }
             state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
+            const { inc } = state.createLoopContext();
             while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+                inc();
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -79,7 +83,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 items: [],
             };
 
+            const { inc } = state.createLoopContext();
             do {
+                inc();
                 state.consume(element, CstNodeKind.ConditionPrefix_OpenParen, tokens.OpenParen);
                 element.items.push(this.conditionPrefixItem.rule(state));
                 state.consume(element, CstNodeKind.ConditionPrefix_CloseParen, tokens.CloseParen);
@@ -100,7 +106,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             element.conditions.push(this.condition.rule(state));
+            const { inc } = state.createLoopContext();
             while (state.canConsume(tokens.Comma)) {
+                inc();
                 state.consume(element, CstNodeKind.ConditionPrefixItem_Comma, tokens.Comma);
                 element.conditions.push(this.condition.rule(state));
             }
@@ -146,7 +154,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.all = true;
             } else {
                 element.procedures.push(this.exportsItem.rule(state));
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.Exports_Comma, tokens.Comma)) {
+                    inc();
                     element.procedures.push(this.exportsItem.rule(state));
                 }
             }
@@ -176,7 +186,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 if (varToken) {
                     element.variables.push(varToken.image);
                 }
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.Reserves_Comma, tokens.Comma)) {
+                    inc();
                     const nextVarToken = state.consume(element, CstNodeKind.Reserves_Variables1, tokens.ID);
                     if (nextVarToken) {
                         element.variables.push(nextVarToken.image);
@@ -201,7 +213,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.Options_OPTIONS, tokens.OPTIONS);
             state.consume(element, CstNodeKind.Options_OpenParen, tokens.OpenParen);
             element.items.push(this.optionsItem.rule(state));
+            const { inc } = state.createLoopContext();
             while (state.canConsume(tokens.Comma) || state.canConsumeFirst(this.optionsItem.first())) {
+                inc();
                 state.tryConsume(element, CstNodeKind.Options_Comma, tokens.Comma);
                 element.items.push(this.optionsItem.rule(state));
             }
@@ -292,7 +306,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 if (idToken) {
                     element.parameters.push(idToken.image);
                 }
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.NoMapOptionsItem_Comma, tokens.Comma)) {
+                    inc();
                     const nextIdToken = state.consume(element, CstNodeKind.NoMapOptionsItem_Parameters1, tokens.ID);
                     if (nextIdToken) {
                         element.parameters.push(nextIdToken.image);
@@ -325,12 +341,15 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.tryConsume(element, CstNodeKind.ProcedureStatement_OpenParenParams, tokens.OpenParen)) {
                 element.parameters.push(this.procedureParameter.rule(state));
+                const { inc } = state.createLoopContext(1);
                 while (state.tryConsume(element, CstNodeKind.ProcedureStatement_Comma, tokens.Comma)) {
+                    inc();
                     element.parameters.push(this.procedureParameter.rule(state));
                 }
                 state.consume(element, CstNodeKind.ProcedureStatement_CloseParenParams, tokens.CloseParen);
             }
 
+            const { inc } = state.createLoopContext(2);
             while (!state.eof && (
                 state.canConsume(tokens.RETURNS)
                 || state.canConsumeFirst(this.options.first())
@@ -339,6 +358,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 || state.canConsumeFirst(this.environmentOption.first())
                 || state.canConsume(tokens.ScopeAttribute)
             )) {
+                inc();
                 if (state.canConsume(tokens.RETURNS)) {
                     element.options.push(this.returnsOption.rule(state));
                 } else if (state.canConsumeFirst(this.options.first())) {
@@ -372,7 +392,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
             state.consume(element, CstNodeKind.ProcedureStatement_Semicolon0, tokens.Semicolon);
 
+            const { inc: inc3 } = state.createLoopContext(3);
             while (!state.canConsumeFirst(this.endStatement.first())) {
+                inc3();
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -421,7 +443,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             if (state.tryConsume(element, CstNodeKind.EntryStatement_OpenParenParams, tokens.OpenParen)) {
                 if (state.canConsumeFirst(this.procedureParameter.first())) {
                     element.parameters.push(this.procedureParameter.rule(state));
+                    const { inc } = state.createLoopContext(1);
                     while (state.tryConsume(element, CstNodeKind.EntryStatement_Comma, tokens.Comma)) {
+                        inc();
                         element.parameters.push(this.procedureParameter.rule(state));
                     }
                 }
@@ -429,6 +453,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse optional attributes (can appear multiple times)
+            const { inc } = state.createLoopContext(2);
             while (!state.eof && (
                 state.canConsumeFirst(this.environmentOption.first())
                 || state.canConsume(tokens.VARIABLE)
@@ -436,6 +461,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 || state.canConsume(tokens.RETURNS)
                 || state.canConsumeFirst(this.options.first())
             )) {
+                inc();
                 if (state.canConsumeFirst(this.environmentOption.first())) {
                     element.environmentName.push(this.environmentOption.rule(state));
                 } else if (state.tryConsume(element, CstNodeKind.EntryStatement_Variable, tokens.VARIABLE)) {
@@ -489,11 +515,13 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.condition = this.conditionPrefix.rule(state);
             }
 
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.labelPrefix.first())) {
+                inc();
                 element.labels.push(this.labelPrefix.rule(state));
             }
 
-            if(performAssignmentLookahead(state)) {
+            if (performAssignmentLookahead(state)) {
                 element.value = this.assignmentStatement.rule(state);
             } else {
                 element.value = this.unit.rule(state);
@@ -568,7 +596,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
             state.consume(element, CstNodeKind.AllocateStatement_ALLOCATE, tokens.ALLOCATE);
             element.variables.push(this.allocatedVariable.rule(state));
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.AllocateStatement_Comma, tokens.Comma)) {
+                inc();
                 element.variables.push(this.allocatedVariable.rule(state));
             }
             state.consume(element, CstNodeKind.AllocateStatement_Semicolon, tokens.Semicolon);
@@ -759,7 +789,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             // Parse left-hand side references (comma-separated)
             element.refs.push(this.locatorCall.rule(state));
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.AssignmentStatement_Comma0, tokens.Comma)) {
+                inc();
                 element.refs.push(this.locatorCall.rule(state));
             }
 
@@ -867,8 +899,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             state.consume(element, CstNodeKind.BeginStatement_Semicolon0, tokens.Semicolon);
-
+            const { inc } = state.createLoopContext();
             while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+                inc();
                 element.statements.push(this.statement.rule(state));
             }
 
@@ -894,7 +927,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             // Parse optional label prefixes
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.labelPrefix.first())) {
+                inc();
                 element.labels.push(this.labelPrefix.rule(state));
             }
 
@@ -971,7 +1006,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.CloseStatement_CloseParen0, tokens.CloseParen);
 
             // Additional files (can have optional commas)
+            const { inc } = state.createLoopContext();
             while (state.canConsume(tokens.FILE) || state.canConsume(tokens.Comma)) {
+                inc();
                 // Optional comma before additional file
                 state.tryConsume(element, CstNodeKind.CloseStatement_Comma, tokens.Comma);
 
@@ -1011,7 +1048,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             element.expressions.push(this.defaultExpression.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DefaultStatement_Comma, tokens.Comma)) {
+                inc();
                 element.expressions.push(this.defaultExpression.rule(state));
             }
 
@@ -1033,8 +1072,18 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             element.expression = this.defaultExpressionPart.rule(state);
 
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.defaultDeclarationAttribute.first())) {
-                element.attributes.push(this.defaultDeclarationAttribute.rule(state));
+                inc();
+                switch (this.performGenericAttributeLookahead(state)) {
+                    case 'none':
+                    case 'simple':
+                        element.attributes.push(this.defaultDeclarationAttribute.rule(state));
+                        break;
+                    case 'complex':
+                        element.attributes.push(this.genericAttribute.rule(state));
+                        break;
+                }
             }
 
             return element;
@@ -1102,7 +1151,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse additional comma-separated identifiers
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DefaultRangeIdentifiers_Comma, tokens.Comma)) {
+                inc();
                 if (state.canConsume(tokens.Star)) {
                     const starToken = state.consume(element, CstNodeKind.DefaultRangeIdentifiers_Star1, tokens.Star);
                     if (starToken) {
@@ -1221,7 +1272,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.canConsumeFirst(this.declarationAttribute.first())) {
                 element.attributes.push(this.declarationAttribute.rule(state));
-                while(state.canConsume(tokens.Comma) || state.canConsumeFirst(this.declarationAttribute.first())) {
+                const { inc } = state.createLoopContext();
+                while (state.canConsume(tokens.Comma) || state.canConsumeFirst(this.declarationAttribute.first())) {
+                    inc();
                     state.tryConsume(element, CstNodeKind.DefineAliasStatement_Comma, tokens.Comma);
                     element.attributes.push(this.declarationAttribute.rule(state));
                 }
@@ -1263,10 +1316,12 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.ordinalValues = this.ordinalValueList.rule(state);
             state.consume(element, CstNodeKind.DefineOrdinalStatement_CloseParenValues, tokens.CloseParen);
 
-            while (state.canConsume(tokens.SIGNED) 
+            const { inc } = state.createLoopContext();
+            while (state.canConsume(tokens.SIGNED)
                 || state.canConsume(tokens.UNSIGNED)
                 || state.canConsume(tokens.PRECISION)
             ) {
+                inc();
                 if (state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_Signed0, tokens.SIGNED)) {
                     element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
                 } else if (state.tryConsume(element, CstNodeKind.DefineOrdinalStatement_Unsigned0, tokens.UNSIGNED)) {
@@ -1298,7 +1353,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             element.members.push(this.ordinalValue.rule(state));
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.OrdinalValueList_Comma, tokens.Comma)) {
+                inc();
                 element.members.push(this.ordinalValue.rule(state));
             }
 
@@ -1352,7 +1409,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             element.items.push(this.declaredItem.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DefineStructureStatement_Comma, tokens.Comma)) {
+                inc();
                 element.items.push(this.declaredItem.rule(state));
             }
 
@@ -1463,7 +1522,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     element.rout.push(routToken.image);
                 }
 
+                const { inc } = state.createLoopContext(1);
                 while (state.tryConsume(element, CstNodeKind.DisplayStatement_CommaRout, tokens.Comma)) {
+                    inc();
                     const nextRoutToken = state.consume(element, CstNodeKind.DisplayStatement_RoutNumber1, tokens.NUMBER);
                     if (nextRoutToken) {
                         element.rout.push(nextRoutToken.image);
@@ -1481,7 +1542,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         element.desc.push(descToken.image);
                     }
 
+                    const { inc } = state.createLoopContext(2);
                     while (state.tryConsume(element, CstNodeKind.DisplayStatement_CommaDesc, tokens.Comma)) {
+                        inc();
                         const nextDescToken = state.consume(element, CstNodeKind.DisplayStatement_DescNumber1, tokens.NUMBER);
                         if (nextDescToken) {
                             element.desc.push(nextDescToken.image);
@@ -1530,7 +1593,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.DoStatement_Semicolon0, tokens.Semicolon);
 
             // Parse statements until END
+            const { inc } = state.createLoopContext();
             while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+                inc();
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -1614,7 +1679,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             element.specifications.push(this.doSpecification.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DoType3_Comma, tokens.Comma)) {
+                inc();
                 element.specifications.push(this.doSpecification.rule(state));
             }
 
@@ -1727,7 +1794,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.FetchStatement_FETCH, tokens.FETCH);
             element.entries.push(this.fetchEntry.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.FetchStatement_Comma, tokens.Comma)) {
+                inc();
                 element.entries.push(this.fetchEntry.rule(state));
             }
 
@@ -1828,7 +1897,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             element.items.push(this.formatListItem.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.FormatList_Comma, tokens.Comma)) {
+                inc();
                 element.items.push(this.formatListItem.rule(state));
             }
 
@@ -2234,7 +2305,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.FreeStatement_FREE, tokens.FREE);
             element.references.push(this.locatorCall.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.FreeStatement_Comma, tokens.Comma)) {
+                inc();
                 element.references.push(this.locatorCall.rule(state));
             }
 
@@ -2269,8 +2342,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 stringStatement.dataSpecification = this.dataSpecificationOptions.rule(state);
             } else {
                 // FILE variant - one or more file specifications
+                const { inc } = state.createLoopContext();
                 const fileStatement = element as ast.GetFileStatement;
                 do {
+                    inc();
                     if (state.canConsumeFirst(this.getFile.first())) {
                         fileStatement.specifications.push(this.getFile.rule(state));
                     } else if (state.canConsumeFirst(this.getCopy.first())) {
@@ -2403,7 +2478,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             if (state.canConsumeFirst(this.genericReference.first())) {
                 element.references.push(this.genericReference.rule(state));
 
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.GenericAttribute_Comma, tokens.Comma)) {
+                    inc();
                     element.references.push(this.genericReference.rule(state));
                 }
             }
@@ -2413,6 +2490,59 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             return element;
         }
     );
+
+    private performGenericAttributeLookahead(state: ParserState): 'none' | 'simple' | 'complex' {
+        const expressionTokenTypes = [
+            tokens.ID,
+            tokens.BinaryOperator,
+            tokens.UnaryOperator,
+            tokens.AssignmentOperator,
+            tokens.STRING_TERM,
+            tokens.NUMBER,
+            tokens.Comma,
+            tokens.Dot,
+            tokens.Colon,
+        ];
+
+        const lookahead = (la: number) => state.peek(la);
+        const la1 = lookahead(1);
+        if (la1 && !tokenMatcher(la1, tokens.GENERIC)) {
+            return 'none';
+        }
+        const la2 = lookahead(2);
+        if (!la2 || !tokenMatcher(la2, tokens.OpenParen)) {
+            return 'simple';
+        }
+
+        const max = 160;
+        let i = 3;
+        let parenthesis = 1;
+        while (i < max) {
+            const token = lookahead(i++);
+            if (!token) {
+                return 'simple';
+            }
+            if (tokenMatcher(token, tokens.OpenParen)) {
+                parenthesis++;
+            } else if (tokenMatcher(token, tokens.CloseParen)) {
+                parenthesis--;
+                if (parenthesis === 0) {
+                    return 'simple';
+                }
+            } else {
+                if (
+                    !expressionTokenTypes.some((tokenType) =>
+                        tokenMatcher(token, tokenType),
+                    )
+                ) {
+                    return 'complex';
+                }
+                // Continue with the next token, the current token is a valid expression token
+            }
+        }
+
+        return 'complex';
+    }
 
     genericReference = rule(
         () => this.referenceItem.first(),
@@ -2453,8 +2583,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             element.attributes.push(this.declarationAttribute.rule(state));
-
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.GenericDescriptor_Comma, tokens.Comma)) {
+                inc();
                 element.attributes.push(this.declarationAttribute.rule(state));
             }
 
@@ -2561,7 +2692,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.LocateStatement_LOCATE, tokens.LOCATE);
             element.variable = this.locatorCall.rule(state);
 
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.locateStatementOption.first())) {
+                inc();
                 element.arguments.push(this.locateStatementOption.rule(state));
             }
 
@@ -2626,7 +2759,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.conditions.push(this.condition.rule(state));
 
             // Parse additional comma-separated conditions
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.OnStatement_Comma, tokens.Comma)) {
+                inc();
                 element.conditions.push(this.condition.rule(state));
             }
 
@@ -2732,7 +2867,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             element.options.push(this.openOptionsGroup.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.OpenStatement_Comma, tokens.Comma)) {
+                inc();
                 element.options.push(this.openOptionsGroup.rule(state));
             }
 
@@ -2755,7 +2892,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.options.push(this.openOption.rule(state));
 
             // Parse additional options as long as we can consume OpenOptionType tokens
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.openOption.first())) {
+                inc();
                 element.options.push(this.openOption.rule(state));
             }
 
@@ -2847,7 +2986,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 fileStatement.kind = ast.SyntaxKind.PutFileStatement;
 
                 // Parse one or more put items or data specification options
+                const { inc } = state.createLoopContext();
                 do {
+                    inc();
                     if (state.canConsumeFirst(this.putItem.first())) {
                         fileStatement.items.push(this.putItem.rule(state));
                     } else if (state.canConsumeFirst(this.dataSpecificationOptions.first())) {
@@ -2920,7 +3061,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.data = true;
                 if (state.tryConsume(element, CstNodeKind.DataSpecificationOptions_OpenParenData, tokens.OpenParen)) {
                     element.dataListItems.push(this.dataSpecificationDataListItem.rule(state));
+                    const { inc } = state.createLoopContext(1);
                     while (state.tryConsume(element, CstNodeKind.DataSpecificationOptions_Comma, tokens.Comma)) {
+                        inc();
                         element.dataListItems.push(this.dataSpecificationDataListItem.rule(state));
                     }
                     state.consume(element, CstNodeKind.DataSpecificationOptions_CloseParenData, tokens.CloseParen);
@@ -2928,7 +3071,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             } else if (state.tryConsume(element, CstNodeKind.DataSpecificationOptions_Edit, tokens.EDIT)) {
                 // EDIT variant
                 element.edit = true;
+                const { inc } = state.createLoopContext(2);
                 do {
+                    inc();
                     state.consume(element, CstNodeKind.DataSpecificationOptions_OpenParenEdit, tokens.OpenParen);
                     element.dataLists.push(this.dataSpecificationDataList.rule(state));
                     state.consume(element, CstNodeKind.DataSpecificationOptions_CloseParenEdit, tokens.CloseParen);
@@ -2955,8 +3100,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             element.items.push(this.dataSpecificationDataListItem.rule(state));
-
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DataSpecificationDataList_Comma, tokens.Comma)) {
+                inc();
                 element.items.push(this.dataSpecificationDataListItem.rule(state));
             }
 
@@ -2995,7 +3141,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.QualifyStatement_QUALIFY, tokens.QUALIFY);
             state.consume(element, CstNodeKind.QualifyStatement_Semicolon0, tokens.Semicolon);
 
+            const { inc } = state.createLoopContext();
             while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
+                inc();
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -3017,8 +3165,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             state.consume(element, CstNodeKind.ReadStatement_READ, tokens.READ);
-
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.readStatementOption.first())) {
+                inc();
                 element.arguments.push(this.readStatementOption.rule(state));
             }
 
@@ -3088,7 +3237,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     element.references.push(idToken.image);
                 }
 
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.ReleaseStatement_Comma, tokens.Comma)) {
+                    inc();
                     const nextIdToken = state.consume(element, CstNodeKind.ReleaseStatement_References1, tokens.ID);
                     if (nextIdToken) {
                         element.references.push(nextIdToken.image);
@@ -3156,7 +3307,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.conditions.push(this.condition.rule(state));
 
             // Parse additional comma-separated conditions
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.RevertStatement_Comma, tokens.Comma)) {
+                inc();
                 element.conditions.push(this.condition.rule(state));
             }
 
@@ -3178,7 +3331,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.RewriteStatement_REWRITE, tokens.REWRITE);
 
             // Parse zero or more rewrite statement options
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.rewriteStatementOption.first())) {
+                inc();
                 element.arguments.push(this.rewriteStatementOption.rule(state));
             }
 
@@ -3235,10 +3390,12 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.SelectStatement_Semicolon0, tokens.Semicolon);
 
             // Parse WHEN and OTHERWISE statements
+            const { inc } = state.createLoopContext();
             while (!state.eof && (
                 state.canConsumeFirst(this.whenStatement.first())
                 || state.canConsumeFirst(this.otherwiseStatement.first())
             )) {
+                inc();
                 if (state.canConsumeFirst(this.whenStatement.first())) {
                     element.cases.push(this.whenStatement.rule(state));
                 } else if (state.canConsumeFirst(this.otherwiseStatement.first())) {
@@ -3271,7 +3428,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.conditions.push(this.expression.rule(state));
 
             // Parse additional comma-separated conditions
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.WhenStatement_Comma, tokens.Comma)) {
+                inc();
                 element.conditions.push(this.expression.rule(state));
             }
 
@@ -3362,7 +3521,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             state.consume(element, CstNodeKind.WriteStatement_WRITE, tokens.WRITE);
 
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.writeStatementOption.first())) {
+                inc();
                 element.arguments.push(this.writeStatementOption.rule(state));
             }
 
@@ -3423,7 +3584,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     // INITIAL (items) variant
                     if (state.canConsumeFirst(this.initialAttributeItem.first())) {
                         element.items.push(this.initialAttributeItem.rule(state));
+                        const { inc } = state.createLoopContext(1);
                         while (state.tryConsume(element, CstNodeKind.InitialAttribute_CommaDirect, tokens.Comma)) {
+                            inc();
                             element.items.push(this.initialAttributeItem.rule(state));
                         }
                     }
@@ -3440,7 +3603,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                     state.consume(element, CstNodeKind.InitialAttribute_CloseParenTo, tokens.CloseParen);
                     state.consume(element, CstNodeKind.InitialAttribute_OpenParenToItem, tokens.OpenParen);
                     element.items.push(this.initialAttributeItem.rule(state));
+                    const { inc } = state.createLoopContext(2);
                     while (state.tryConsume(element, CstNodeKind.InitialAttribute_CommaToItem, tokens.Comma)) {
+                        inc();
                         element.items.push(this.initialAttributeItem.rule(state));
                     }
                     state.consume(element, CstNodeKind.InitialAttribute_CloseParenToItem, tokens.CloseParen);
@@ -3453,7 +3618,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.across = true;
                 state.consume(element, CstNodeKind.InitialAttribute_OpenParenInitAcross, tokens.OpenParen);
                 element.expressions.push(this.initAcrossExpression.rule(state));
+                const { inc } = state.createLoopContext(3);
                 while (state.tryConsume(element, CstNodeKind.InitialAttribute_CommaInitAcross, tokens.Comma)) {
+                    inc();
                     element.expressions.push(this.initAcrossExpression.rule(state));
                 }
                 state.consume(element, CstNodeKind.InitialAttribute_CloseParenInitAcross, tokens.CloseParen);
@@ -3529,7 +3696,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.InitAcrossExpression_OpenParen, tokens.OpenParen);
             element.expressions.push(this.expression.rule(state));
 
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.InitAcrossExpression_Comma, tokens.Comma)) {
+                inc();
                 element.expressions.push(this.expression.rule(state));
             }
 
@@ -3610,8 +3779,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen, tokens.OpenParen);
 
             element.items.push(this.initialAttributeItem.rule(state));
-
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.InitialAttributeSpecificationIterationValue_Comma, tokens.Comma)) {
+                inc();
                 element.items.push(this.initialAttributeItem.rule(state));
             }
 
@@ -3637,8 +3807,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             element.items.push(this.declaredItem.rule(state));
-
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DeclareStatement_Comma, tokens.Comma)) {
+                inc();
                 element.items.push(this.declaredItem.rule(state));
             }
 
@@ -3688,7 +3859,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 // Nested items in parentheses
                 element.elements.push(this.declaredItem.rule(state));
 
+                const { inc } = state.createLoopContext(1);
                 while (state.tryConsume(element, CstNodeKind.DeclaredItem_Comma, tokens.Comma)) {
+                    inc();
                     element.elements.push(this.declaredItem.rule(state));
                 }
 
@@ -3699,7 +3872,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse attributes (can appear multiple times)
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.declarationAttribute.first())) {
+                inc();
                 element.attributes.push(this.declarationAttribute.rule(state));
             }
 
@@ -3743,8 +3918,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         () => this.entryAttribute,
         () => this.likeAttribute,
         () => this.typeAttribute,
-        //TODO reenable with custom lookahead 
-        //() => this.genericAttribute,
+        //() => this.genericAttribute, using performGenericAttributeLookahead as lookahead
         () => this.indForAttribute,
     ];
 
@@ -3753,7 +3927,16 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         () => this.defaultValueAttribute,
     );
 
-    declarationAttribute = orRule<ast.DeclarationAttribute>(
+    declarationAttribute = rule<ast.DeclarationAttribute>(() => this.internalDeclarationAttribute.first(), (state): ast.DeclarationAttribute => {
+        switch (this.performGenericAttributeLookahead(state)) {
+            case 'complex':
+                return this.genericAttribute.rule(state);
+            default:
+                return this.defaultDeclarationAttribute.rule(state) as ast.DeclarationAttribute;
+        }
+    });
+
+    internalDeclarationAttribute = orRule<ast.DeclarationAttribute>(
         ...this.commonDeclarationAttributes,
         () => this.valueAttribute,
     );
@@ -3926,12 +4109,14 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.ReturnsAttribute_OpenParen, tokens.OpenParen);
 
             // Parse zero or more declaration attributes
+            const { inc } = state.createLoopContext();
             while (!state.eof && (
                 state.canConsumeFirst(this.computationDataAttribute.first())
                 || state.canConsumeFirst(this.dateAttribute.first())
                 || state.canConsumeFirst(this.valueListAttribute.first())
                 || state.canConsumeFirst(this.valueRangeAttribute.first())
             )) {
+                inc();
                 if (state.canConsumeFirst(this.computationDataAttribute.first())) {
                     element.attrs.push(this.computationDataAttribute.rule(state));
                 } else if (state.canConsumeFirst(this.dateAttribute.first())) {
@@ -3988,8 +4173,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.DefaultValueAttribute_OpenParen, tokens.OpenParen);
 
             element.items.push(this.defaultValueAttributeItem.rule(state));
-
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.DefaultValueAttribute_Comma, tokens.Comma)) {
+                inc();
                 element.items.push(this.defaultValueAttributeItem.rule(state));
             }
 
@@ -4030,7 +4216,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.attributes.push(this.declarationAttribute.rule(state));
 
             // Parse additional attributes
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.declarationAttribute.first())) {
+                inc();
                 element.attributes.push(this.declarationAttribute.rule(state));
             }
 
@@ -4052,7 +4240,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.canConsumeFirst(this.expression.first())) {
                 element.values.push(this.expression.rule(state));
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.ValueListAttribute_Comma, tokens.Comma)) {
+                    inc();
                     element.values.push(this.expression.rule(state));
                 }
             }
@@ -4093,7 +4283,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.canConsumeFirst(this.expression.first())) {
                 element.values.push(this.expression.rule(state));
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.ValueRangeAttribute_Comma, tokens.Comma)) {
+                    inc();
                     element.values.push(this.expression.rule(state));
                 }
             }
@@ -4188,8 +4380,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             // Optional dimension bounds
             if (state.canConsumeFirst(this.dimensionBound.first())) {
                 element.dimensions.push(this.dimensionBound.rule(state));
-
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)) {
+                    inc();
                     element.dimensions.push(this.dimensionBound.rule(state));
                 }
             }
@@ -4268,7 +4461,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.EnvironmentAttribute_OpenParen, tokens.OpenParen);
 
             // Parse zero or more environment attribute items
+            const { inc } = state.createLoopContext();
             while (!state.eof && state.canConsumeFirst(this.environmentAttributeItem.first())) {
+                inc();
                 element.items.push(this.environmentAttributeItem.rule(state));
 
                 // TODO: research, This does not align to the language spec
@@ -4302,11 +4497,12 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 // Optional expression list
                 if (state.canConsumeFirst(this.expression.first())) {
                     element.args.push(this.expression.rule(state));
-
+                    const { inc } = state.createLoopContext();
                     while (!state.eof && (
                         state.canConsume(tokens.Comma)
                         || state.canConsumeFirst(this.expression.first())
                     )) {
+                        inc();
                         // Optional comma before next expression
                         state.tryConsume(element, CstNodeKind.EnvironmentAttributeItem_Comma, tokens.Comma);
 
@@ -4344,7 +4540,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
 
             // Parse zero or more LIMITED tokens at the beginning
+            const { inc } = state.createLoopContext(1);
             while (state.tryConsume(element, CstNodeKind.EntryAttribute_Limited0, tokens.LIMITED)) {
+                inc();
                 const limitedToken = state.last;
                 if (limitedToken) {
                     element.limited.push(limitedToken);
@@ -4358,7 +4556,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             if (state.tryConsume(element, CstNodeKind.EntryAttribute_OpenParenAttribute, tokens.OpenParen)) {
                 element.attributes.push(this.entryDescription.rule(state));
 
+                const { inc } = state.createLoopContext(2);
                 while (state.tryConsume(element, CstNodeKind.EntryAttribute_CommaAttribute, tokens.Comma)) {
+                    inc();
                     element.attributes.push(this.entryDescription.rule(state));
                 }
 
@@ -4366,6 +4566,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse zero or more trailing options
+            const { inc: inc3 } = state.createLoopContext(3);
             while (!state.eof && (
                 state.canConsumeFirst(this.options.first())
                 || state.canConsume(tokens.VARIABLE)
@@ -4373,6 +4574,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 || state.canConsumeFirst(this.returnsOption.first())
                 || state.canConsume(tokens.EXTERNAL)
             )) {
+                inc3();
                 if (state.canConsumeFirst(this.options.first())) {
                     element.options.push(this.options.rule(state));
                 } else if (state.tryConsume(element, CstNodeKind.EntryAttribute_Variable, tokens.VARIABLE)) {
@@ -4413,8 +4615,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.ReturnsOption_OpenParen, tokens.OpenParen);
 
             // Parse zero or more declaration attributes
+            const { inc } = state.createLoopContext();
             while (!state.eof && state.canConsumeFirst(this.declarationAttribute.first())
             ) {
+                inc();
                 element.returnAttributes.push(this.declarationAttribute.rule(state));
             }
 
@@ -4445,7 +4649,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             if (state.tryConsume(element, CstNodeKind.EntryParameterDescription_Star, tokens.Star)) {
                 element.star = true;
                 // Parse optional attributes after the star
+                const { inc } = state.createLoopContext(1);
                 while (state.canConsumeFirst(this.declarationAttribute.first())) {
+                    inc();
                     element.attributes.push(this.declarationAttribute.rule(state));
                 }
             } else {
@@ -4453,7 +4659,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.attributes.push(this.declarationAttribute.rule(state));
 
                 // Parse additional attributes
+                const { inc } = state.createLoopContext(2);
                 while (state.canConsumeFirst(this.declarationAttribute.first())) {
+                    inc();
                     element.attributes.push(this.declarationAttribute.rule(state));
                 }
             }
@@ -4479,7 +4687,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse zero or more declaration attributes
+            const { inc } = state.createLoopContext(1);
             while (state.canConsumeFirst(this.declarationAttribute.first())) {
+                inc();
                 element.attributes.push(this.declarationAttribute.rule(state));
             }
 
@@ -4487,7 +4697,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.EntryUnionDescription_Comma, tokens.Comma);
 
             // Parse zero or more prefixed attributes
+            const { inc: inc2 } = state.createLoopContext(2);
             while (state.canConsumeFirst(this.prefixedAttribute.first())) {
+                inc2();
                 element.prefixedAttributes.push(this.prefixedAttribute.rule(state));
             }
 
@@ -4511,7 +4723,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse zero or more declaration attributes
+            const { inc } = state.createLoopContext();
             while (state.canConsumeFirst(this.declarationAttribute.first())) {
+                inc();
                 element.attributes.push(this.declarationAttribute.rule(state));
             }
 
@@ -4583,7 +4797,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.items.push(this.primaryExpression.rule(state));
 
             // Parse zero or more operator-expression pairs
+            const { inc } = state.createLoopContext();
             while (state.canConsume(tokens.BinaryOperator)) {
+                inc();
                 const operatorToken = state.consume(element as any, CstNodeKind.BinaryExpression_Operator, tokens.BinaryOperator);
                 if (operatorToken) {
                     element.operators.push(
@@ -4656,7 +4872,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.element = this.referenceItem.rule(state);
 
             // Parse zero or more dot-separated member accesses
+            const { inc } = state.createLoopContext();
             while (state.tryConsume(element, CstNodeKind.MemberCall_Dot, tokens.Dot)) {
+                inc();
                 // Create a new MemberCall for the chain
                 const previous = element;
                 element = {
@@ -4689,7 +4907,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             element.element = this.memberCall.rule(state);
 
             // Parse zero or more pointer/handle chains
+            const { inc } = state.createLoopContext();
             while (!state.eof && (state.canConsume(tokens.MinusGreaterThan) || state.canConsume(tokens.EqualsGreaterThan))) {
+                inc();
                 // Create a new LocatorCall for the chain
                 const previous = element;
                 element = {
@@ -4759,7 +4979,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             // Parse optional argument lists (up to 2)
             let argCount = 0;
+            const { inc } = state.createLoopContext();
             while (argCount < 2 && state.canConsumeFirst(this.procedureCallArgs.first())) {
+                inc();
                 const args = this.procedureCallArgs.rule(state);
                 if (argCount === 0) {
                     element.args1 = args;
@@ -4795,7 +5017,9 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 }
 
                 // Parse additional comma-separated arguments
+                const { inc } = state.createLoopContext();
                 while (state.tryConsume(element, CstNodeKind.ProcedureCallArgs_Comma, tokens.Comma)) {
+                    inc();
                     if (state.canConsume(tokens.Star)) {
                         const starToken = state.consume(element, CstNodeKind.ProcedureCallArgs_Star1, tokens.Star);
                         element.list.push(starToken!.image as "*");
@@ -4914,20 +5138,20 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
 export const HandwrittenParserInstance = new HandwrittenParser();
 
-const expressionTokenTypes = [
-    tokens.ID,
-    tokens.BinaryOperator,
-    tokens.UnaryOperator,
-    tokens.AssignmentOperator,
-    tokens.STRING_TERM,
-    tokens.NUMBER,
-    tokens.Comma,
-    tokens.Dot,
-];
-
 export function performAssignmentLookahead(
     state: ParserState
 ): boolean {
+    const expressionTokenTypes = [
+        tokens.ID,
+        tokens.BinaryOperator,
+        tokens.UnaryOperator,
+        tokens.AssignmentOperator,
+        tokens.STRING_TERM,
+        tokens.NUMBER,
+        tokens.Comma,
+        tokens.Dot,
+    ];
+
     let previousToken: tokens.Token | undefined = undefined;
     const lookahead: (la: number) => tokens.Token | undefined = (la) => {
         previousToken = state.peek(la - 1);
@@ -4944,7 +5168,7 @@ export function performAssignmentLookahead(
     if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
         return true;
     }
-    
+
     // The compiler will not use more than 160 tokens to perform the lookahead
     const max = 160;
     let parenthesis = 0;
@@ -4955,7 +5179,7 @@ export function performAssignmentLookahead(
         }
         if (parenthesis === 0 && tokenMatcher(token, tokens.AssignmentOperator)) {
             return true;
-        }if (tokenMatcher(token, tokens.OpenParen)) {
+        } if (tokenMatcher(token, tokens.OpenParen)) {
             parenthesis++;
         } else if (tokenMatcher(token, tokens.CloseParen)) {
             parenthesis--;
@@ -4970,8 +5194,8 @@ export function performAssignmentLookahead(
             ) {
                 return false;
             }
-            if(tokenMatcher(token, tokens.ID)) {
-                if(previousToken && tokenMatcher(previousToken, tokens.ID)) {
+            if (tokenMatcher(token, tokens.ID)) {
+                if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
                     return false;
                 }
             }

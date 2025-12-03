@@ -57,6 +57,22 @@ export class ParserState {
     this.index = 0;
   }
 
+  createLoopContext(id: number = 1) {
+    const regex = /parser\-handwritten\.ts:(\d+)/;
+    const stack = new Error().stack!.split("\n");
+    const location = stack.find(line => regex.test(line))!;
+    const match = location.match(regex)![1]+` (loop id: ${id})`;
+    let lastIndex = -1;
+    return {
+      inc: () => {
+        if(lastIndex === this.index) {
+          throw new Error(`Possible infinite loop detected in parser at ${match} after ${this.token?.image} token.`);
+        }
+        lastIndex = this.index;
+      }
+    }
+  }
+
   enterProcedure(): void {
     this.inProcedure = true;
   }
@@ -325,6 +341,9 @@ private performPreprocessorRecovery(): void {
   }
 
   private canConsumeFirstItem(map: RuleMap, index: number): boolean {
+    if(this.index + index >= this.tokens.length) {
+      return false;
+    }
     const tokenType = this.tokens[this.index+index].tokenType;
     const idx = this.mapMatch(map, tokenType);
     if(idx === undefined) {
