@@ -19,7 +19,6 @@ import {
   generatePreprocessorValidationDiagnostics,
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
-  filteredDiagnosticsWithUri,
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { assignDebugKinds } from "../utils/debug-kinds";
@@ -75,7 +74,7 @@ export async function tokenize(
   );
   compilationUnit.diagnostics.addAll(
     DiagnosticCategory.CompilerOptions,
-    filteredDiagnosticsWithUri(result.compilerOptions.result?.issues, uri),
+    (result.compilerOptions.result?.issues ?? []).filter((e) => e.uri === uri),
   );
   return result;
 }
