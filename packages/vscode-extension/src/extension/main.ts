@@ -47,73 +47,93 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 /**
- * Listen for file open events, and prompt if we can create a .pliplugin folder
+ * Listen for changes on file activation, and prompt if we can create a .pliplugin folder
  * @returns Disposable listener
  */
+let shouldShowInfoMessage = true;
 function registerOnDidOpenTextDocListener(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
-  const listener = vscode.workspace.onDidOpenTextDocument(async (document) => {
-    // settle on the 1st workspace folder available
-    // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!workspaceFolder) {
-      return;
-    }
+  const listener = vscode.window.onDidChangeActiveTextEditor(
+    async (document) => {
+      if (!document) {
+        return;
+      }
+      // settle on the 1st workspace folder available
+      // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
+      const workspaceFolder =
+        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (!workspaceFolder) {
+        return;
+      }
+      // check if we can create a .pliplugin folder
+      const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+      const isPliDocument = document.document.languageId === "pli";
+      const currentFileRelativePath = path.relative(
+        workspaceFolder,
+        document.document.fileName,
+      );
 
-    // check if we can create a .pliplugin folder
-    const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+      if (
+        !isPliDocument ||
+        fs.existsSync(plipluginPath) ||
+        !shouldShowInfoMessage
+      ) {
+        // not a pli file or config already exists
+        return;
+      }
+      sendTelemetryEvent(
+        "pli.language.support.documentOpened",
+        telemetryReporter,
+      );
 
-    if (document.languageId !== "pli" || fs.existsSync(plipluginPath)) {
-      // not a pli file or config already exists
-      return;
-    }
-    sendTelemetryEvent(
-      "pli.language.support.documentOpened",
-      telemetryReporter,
-    );
+      const userResponse = await vscode.window.showInformationMessage(
+        `Create a '.pliplugin' folder in the project root using '${currentFileRelativePath}' as the entry point in 'pgm_conf.json'?`,
+        "Yes",
+        "No",
+        "Don't show again",
+      );
 
-    const userResponse = await vscode.window.showInformationMessage(
-      "Create a '.pliplugin' folder in the project root using this file as the entry point in 'pgm_conf.json'?",
-      "Yes",
-      "No",
-    );
-
-    if (userResponse !== "Yes") {
-      return;
-    }
-
-    // create the .pliplugin folder and files, using the current file as the entry point
-    fs.mkdirSync(plipluginPath);
-    fs.writeFileSync(
-      path.join(plipluginPath, "pgm_conf.json"),
-      JSON.stringify(
-        {
-          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-          pgms: [
+      if (userResponse === "Don't show again") {
+        shouldShowInfoMessage = false;
+      } else if (userResponse === "Yes") {
+        // create the .pliplugin folder and files, using the current file as the entry point
+        fs.mkdirSync(plipluginPath);
+        fs.writeFileSync(
+          path.join(plipluginPath, "pgm_conf.json"),
+          JSON.stringify(
             {
-              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-              program: path.relative(workspaceFolder, document.fileName),
+              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+              pgms: [
+                {
+                  ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
+                  program: path.relative(
+                    workspaceFolder,
+                    currentFileRelativePath,
+                  ),
+                },
+              ],
             },
-          ],
-        },
-        null,
-        2,
-      ),
-    );
-    fs.writeFileSync(
-      path.join(plipluginPath, "proc_grps.json"),
-      JSON.stringify(
-        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-        null,
-        2,
-      ),
-    );
+            null,
+            2,
+          ),
+        );
+        fs.writeFileSync(
+          path.join(plipluginPath, "proc_grps.json"),
+          JSON.stringify(
+            PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+            null,
+            2,
+          ),
+        );
 
-    vscode.window.showInformationMessage(
-      "'.pliplugin' folder and files created successfully.",
-    );
-  });
+        vscode.window.showInformationMessage(
+          "'.pliplugin' folder and files created successfully.",
+        );
+      }
+    },
+  );
+
   return listener;
 }
 
