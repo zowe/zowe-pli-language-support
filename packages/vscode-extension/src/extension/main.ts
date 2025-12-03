@@ -107,10 +107,7 @@ function registerOnDidOpenTextDocListener(
               pgms: [
                 {
                   ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-                  program: path.relative(
-                    workspaceFolder,
-                    currentFileRelativePath,
-                  ),
+                  program: currentFileRelativePath,
                 },
               ],
             },
