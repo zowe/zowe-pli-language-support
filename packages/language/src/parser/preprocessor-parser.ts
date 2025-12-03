@@ -17,8 +17,7 @@ import {
 } from "./abstract-parser";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
-import { performAssignmentLookahead } from "./parser-handwritten";
-import { TokenType } from "chevrotain";
+import { tokenMatcher, TokenType } from "chevrotain";
 import {
   diagnostic,
   diagnosticFromCode,
@@ -1648,4 +1647,66 @@ function isXInstruction(token: t.Token | null | undefined): boolean {
   }
   const char0 = token.image.charCodeAt(0);
   return char0 === XCharCodeLower || char0 === XCharCode;
+}
+
+const expressionTokenTypes = [
+    t.ID,
+    t.BinaryOperator,
+    t.UnaryOperator,
+    t.AssignmentOperator,
+    t.STRING_TERM,
+    t.NUMBER,
+    t.Comma,
+];
+
+export function performAssignmentLookahead(
+    lookahead: (la: number) => t.Token | undefined,
+): boolean {
+    let i = 1;
+    let token = lookahead(i++);
+    // First token of an assigment needs to be an ID
+    if (!token || !tokenMatcher(token, t.ID)) {
+        return false;
+    }
+    token = lookahead(i++);
+    // We have found a match immediately with the assignment operator
+    if (token && tokenMatcher(token, t.AssignmentOperator)) {
+        return true;
+    }
+    // Otherwise expect an opening parenthesis
+    if (!token || !tokenMatcher(token, t.OpenParen)) {
+        return false;
+    }
+    // The compiler will not use more than 160 tokens to perform the lookahead
+    const max = 160;
+    let parenthesis = 1;
+    while (i < max) {
+        const token = lookahead(i++);
+        if (!token) {
+            return false;
+        }
+        if (parenthesis === 0) {
+            // If we are outside of the parentheses, we always try to match the assignment operator
+            return tokenMatcher(token, t.AssignmentOperator);
+        }
+        if (tokenMatcher(token, t.OpenParen)) {
+            parenthesis++;
+        } else if (tokenMatcher(token, t.CloseParen)) {
+            parenthesis--;
+        } else if (tokenMatcher(token, t.Semicolon)) {
+            // Semicolon indicates the end of the statement
+            return false;
+        } else {
+            if (
+                !expressionTokenTypes.some((tokenType) =>
+                    tokenMatcher(token, tokenType),
+                )
+            ) {
+                return false;
+            }
+            // Continue with the next token, the current token is a valid expression token
+        }
+    }
+    // If we reach this point, the lookahead was not successful
+    return false;
 }

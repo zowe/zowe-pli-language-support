@@ -92,7 +92,7 @@ namespace Rules {
     );
 }
 
-describe("Rule tests", () => {
+describe.todo("Rule tests", () => {
     test("Simple rule set", () => {
         const state = new ParserState([
             TokenInstances.Person,

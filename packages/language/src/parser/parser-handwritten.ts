@@ -60,7 +60,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.options = this.options.rule(state);
             }
             state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
-            while (!state.eof && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 const statement = this.statement.rule(state);
                 element.statements.push(statement);
             }
@@ -201,7 +201,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.Options_OPTIONS, tokens.OPTIONS);
             state.consume(element, CstNodeKind.Options_OpenParen, tokens.OpenParen);
             element.items.push(this.optionsItem.rule(state));
-            while (state.tryConsume(element, CstNodeKind.Options_Comma, tokens.Comma)) {
+            while (!state.canConsume(tokens.CloseParen)) {
+                state.tryConsume(element, CstNodeKind.Options_Comma, tokens.Comma);
                 element.items.push(this.optionsItem.rule(state));
             }
             state.consume(element, CstNodeKind.Options_CloseParen, tokens.CloseParen);
@@ -485,7 +486,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                 element.labels.push(this.labelPrefix.rule(state));
             }
 
-            if(performAssignmentLookahead(n => state.peek(n))) {
+            if(performAssignmentLookahead(state)) {
                 element.value = this.assignmentStatement.rule(state);
             } else {
                 element.value = this.unit.rule(state);
@@ -2250,22 +2251,19 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             if (state.tryConsume(element, CstNodeKind.GetStatement_STRING, tokens.STRING)) {
                 // STRING variant
-                const stringStatement: ast.GetStringStatement = {
-                    kind: ast.SyntaxKind.GetStringStatement,
-                    container: null,
-                    dataSpecification: null,
-                    expression: null,
-                };
-                element = stringStatement;
+                const stringStatement = element as unknown as ast.GetStringStatement;
+                stringStatement.kind = ast.SyntaxKind.GetStringStatement;
+                stringStatement.container = null;
+                stringStatement.dataSpecification = null;
+                stringStatement.expression = null;
 
-                state.consume(element, CstNodeKind.GetStatement_OpenParen, tokens.OpenParen);
+                state.consume(stringStatement, CstNodeKind.GetStatement_OpenParen, tokens.OpenParen);
                 stringStatement.expression = this.expression.rule(state);
-                state.consume(element, CstNodeKind.GetStatement_CloseParen, tokens.CloseParen);
+                state.consume(stringStatement, CstNodeKind.GetStatement_CloseParen, tokens.CloseParen);
                 stringStatement.dataSpecification = this.dataSpecificationOptions.rule(state);
             } else {
                 // FILE variant - one or more file specifications
                 const fileStatement = element as ast.GetFileStatement;
-
                 do {
                     if (state.canConsumeFirst(this.getFile.first())) {
                         fileStatement.specifications.push(this.getFile.rule(state));
@@ -2828,22 +2826,19 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             if (state.canConsume(tokens.Semicolon)) {
                 // No optional content, just consume semicolon
             } else if (state.tryConsume(element, CstNodeKind.PutStatement_STRING, tokens.STRING)) {
-                // STRING variant - replace with string statement
-                const stringStatement: ast.PutStringStatement = {
-                    kind: ast.SyntaxKind.PutStringStatement,
-                    container: null,
-                    dataSpecification: null,
-                    stringExpression: null,
-                };
-                element = stringStatement;
-
-                state.consume(element, CstNodeKind.PutStatement_OpenParen, tokens.OpenParen);
+                const stringStatement: ast.PutStringStatement = element as unknown as ast.PutStringStatement;
+                stringStatement.kind = ast.SyntaxKind.PutStringStatement;
+                stringStatement.container = null;
+                stringStatement.dataSpecification = null;
+                stringStatement.stringExpression = null;
+                state.consume(stringStatement, CstNodeKind.PutStatement_OpenParen, tokens.OpenParen);
                 stringStatement.stringExpression = this.expression.rule(state);
-                state.consume(element, CstNodeKind.PutStatement_CloseParen, tokens.CloseParen);
+                state.consume(stringStatement, CstNodeKind.PutStatement_CloseParen, tokens.CloseParen);
                 stringStatement.dataSpecification = this.dataSpecificationOptions.rule(state);
             } else {
                 // FILE variant - keep as file statement
                 const fileStatement = element as ast.PutFileStatement;
+                fileStatement.kind = ast.SyntaxKind.PutFileStatement;
 
                 // Parse one or more put items or data specification options
                 do {
@@ -3748,7 +3743,8 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
         () => this.entryAttribute,
         () => this.likeAttribute,
         () => this.typeAttribute,
-       //TODO reenable with custom lookahead () => this.genericAttribute,
+        //TODO reenable with custom lookahead 
+        //() => this.genericAttribute,
         () => this.indForAttribute,
     ];
 
@@ -4365,7 +4361,13 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
 
             // Parse zero or more trailing options
-            while (!state.eof && !state.canConsume(tokens.Semicolon)) {
+            while (!state.eof && (
+                state.canConsumeFirst(this.options.first())
+                || state.canConsume(tokens.VARIABLE)
+                || state.canConsume(tokens.LIMITED)
+                || state.canConsumeFirst(this.returnsOption.first())
+                || state.canConsume(tokens.EXTERNAL)
+            )) {
                 if (state.canConsumeFirst(this.options.first())) {
                     element.options.push(this.options.rule(state));
                 } else if (state.tryConsume(element, CstNodeKind.EntryAttribute_Variable, tokens.VARIABLE)) {
@@ -4386,9 +4388,6 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
                         element.environmentName.push(envExpression);
                         state.consume(element, CstNodeKind.EntryAttribute_CloseParenEnv, tokens.CloseParen);
                     }
-                } else {
-                    // TODO: better error message
-                    throw new Error("Unexpected token in ENTRY attribute");
                 }
             }
 
@@ -4922,39 +4921,36 @@ const expressionTokenTypes = [
     tokens.STRING_TERM,
     tokens.NUMBER,
     tokens.Comma,
+    tokens.Dot,
 ];
 
 export function performAssignmentLookahead(
-    lookahead: (la: number) => tokens.Token | undefined,
+    state: ParserState
 ): boolean {
+    const lookahead: (la: number) => tokens.Token | undefined = (la) => state.peek(la);
     let i = 1;
     let token = lookahead(i++);
     // First token of an assigment needs to be an ID
     if (!token || !tokenMatcher(token, tokens.ID)) {
         return false;
     }
-    token = lookahead(i++);
+    token = lookahead(i);
     // We have found a match immediately with the assignment operator
     if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
         return true;
     }
-    // Otherwise expect an opening parenthesis
-    if (!token || !tokenMatcher(token, tokens.OpenParen)) {
-        return false;
-    }
+    
     // The compiler will not use more than 160 tokens to perform the lookahead
     const max = 160;
-    let parenthesis = 1;
+    let parenthesis = 0;
     while (i < max) {
         const token = lookahead(i++);
         if (!token) {
             return false;
         }
-        if (parenthesis === 0) {
-            // If we are outside of the parentheses, we always try to match the assignment operator
-            return tokenMatcher(token, tokens.AssignmentOperator);
-        }
-        if (tokenMatcher(token, tokens.OpenParen)) {
+        if (parenthesis === 0 && tokenMatcher(token, tokens.AssignmentOperator)) {
+            return true;
+        }if (tokenMatcher(token, tokens.OpenParen)) {
             parenthesis++;
         } else if (tokenMatcher(token, tokens.CloseParen)) {
             parenthesis--;
