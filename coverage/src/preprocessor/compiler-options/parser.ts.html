@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.69% </span>
+                <span class="strong">97.76% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>254/260</span>
+                <span class='fraction'>262/268</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.56% </span>
+                <span class="strong">97.67% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>40/41</span>
+                <span class='fraction'>42/43</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.69% </span>
+                <span class="strong">97.76% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>254/260</span>
+                <span class='fraction'>262/268</span>
             </div>
         
             
@@ -380,7 +380,16 @@
 <a name='L315'></a><a href='#L315'>315</a>
 <a name='L316'></a><a href='#L316'>316</a>
 <a name='L317'></a><a href='#L317'>317</a>
-<a name='L318'></a><a href='#L318'>318</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a>
+<a name='L326'></a><a href='#L326'>326</a>
+<a name='L327'></a><a href='#L327'>327</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -413,6 +422,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -657,6 +667,7 @@
 <span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-yes">2436x</span>
+<span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2436x</span>
@@ -668,9 +679,15 @@
 <span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-yes">2436x</span>
+<span class="cline-any cline-yes">1143x</span>
+<span class="cline-any cline-yes">4831x</span>
+<span class="cline-any cline-yes">4831x</span>
+<span class="cline-any cline-yes">1143x</span>
 <span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-yes">2436x</span>
 <span class="cline-any cline-yes">2436x</span>
+<span class="cline-any cline-yes">2436x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
@@ -685,6 +702,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -730,6 +748,7 @@ import {
   SyntaxKind,
 } from "../../syntax-tree/ast";
 import { ML_COMMENT, SL_COMMENT, Token } from "../../parser/tokens";
+import { URI } from "../../utils/uri";
 &nbsp;
 const commaToken = createToken({ name: "comma", pattern: "," });
 const semicolonToken = createToken({ name: "semicolon", pattern: ";" });
@@ -972,6 +991,7 @@ export interface AbstractCompilerOptions {
  */
 export function parseAbstractCompilerOptions(
   input: string,
+  uri?: URI,
   offset?: number,
 ): AbstractCompilerOptions {
   // Remove everything after the first ;.
@@ -984,11 +1004,17 @@ export function parseAbstractCompilerOptions(
     0,
     semicolonTokenPosition === -1 ? undefined : semicolonTokenPosition,
   ) as Token[];
+  if (uri) {
+    for (const token of tokens) {
+      token.uri = uri;
+    }
+  }
   parser.input = tokens;
   const compilerOptions = parser.compilerOptions();
   const issues: Diagnostic[] = [];
   for (const lexerError of lexerResult.errors) {
     issues.push({
+      uri: uri?.toString(),
       message: lexerError.message,
       range: {
         start: lexerError.offset,
@@ -1003,6 +1029,7 @@ export function parseAbstractCompilerOptions(
         ? tokens[tokens.length - 1<span class="branch-0 cbranch-no" title="branch not covered" >]</span>
 <span class="cstat-no" title="statement not covered" >        : (parserError.token as Token);</span>
     issues.push({
+      uri: uri?.toString(),
       message: parserError.message,
       range: tokenToRange(errorToken),
       severity: 1,
@@ -1021,7 +1048,7 @@ export function parseAbstractCompilerOptions(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-02T16:06:54.219Z
+                at 2025-12-03T09:53:46.870Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
