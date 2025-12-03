@@ -268,9 +268,11 @@ function tokenizeString(context: TokenizerContext): tokens.Token | undefined {
     i++;
   }
   context.advance(i - start, false);
+  // Generate the token for the error diagnostic
   const token = context.createTokenInstance(tokens.STRING_TERM);
   context.diagnostics.push(diagnosticFromCode(PLICodes.Severe.IBM3961I, token));
-  return token;
+  // But return undefined to indicate no valid token was created
+  return undefined;
 }
 
 const tokenizeStringInternal = tokenizeRegex(tokens.STRING_TERM, stringRegex);

@@ -42,9 +42,10 @@ describe("PL/1 Lexer", () => {
     };
   });
 
-  test("Avoid infinite loop on unrecognized characters", async () => {
+  test("Avoid infinite loop on unterminated string", async () => {
     const result = tokenize('"test', undefined);
     expect(result).toBeDefined();
+    expect(result.tokens).toHaveLength(0);
     expect(result.diagnostics).toHaveLength(1);
     expect(result.diagnostics[0].code).toBe(fullCode(PLICodes.Severe.IBM3961I));
   });
