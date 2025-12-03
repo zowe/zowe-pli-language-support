@@ -74,6 +74,7 @@ export class CompilerOptionsProcessor {
     for (const [index, srcCompilerOpts] of sourceCompilerOptions.entries()) {
       const srcAbstractOptions = parseAbstractCompilerOptions(
         srcCompilerOpts,
+        uri,
         ranges[index].start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
       );
 

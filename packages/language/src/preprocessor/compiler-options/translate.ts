@@ -81,6 +81,7 @@ function parseNestedOptions<T extends CompilerOptionsPP>(
   for (const item of items) {
     const nestedOptions = parseAbstractCompilerOptions(
       item.value as string,
+      item.token?.uri,
       (item.token?.startOffset ?? 0) + 1,
     );
     nestedOptions.options.forEach((option) => ppTranslator.translate(option));
