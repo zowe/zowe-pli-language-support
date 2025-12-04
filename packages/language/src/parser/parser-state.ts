@@ -66,6 +66,7 @@ export class ParserState {
     return {
       inc: () => {
         if(lastIndex === this.index) {
+          ///this.inError = true;
           throw new Error(`Possible infinite loop detected in parser at ${match} after ${this.token?.image} token.`);
         }
         lastIndex = this.index;
@@ -368,6 +369,7 @@ private performPreprocessorRecovery(): void {
     const lookahead = this.tokens[this.index + index].tokenType;
     const idx = this.mapMatch(map, lookahead);
     if(idx === undefined) {
+      this.inError = true;
       return null;
     }
     const next = map.get(idx)!;

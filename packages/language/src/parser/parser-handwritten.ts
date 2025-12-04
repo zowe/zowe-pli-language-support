@@ -30,7 +30,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             };
             // Parse one or more packages (or top-level statements)
             const { inc } = state.createLoopContext();
-            while (state.canConsumeFirst(this.statement.first()) && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && program.statements.push(statement);
@@ -63,7 +63,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             }
             state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
             const { inc } = state.createLoopContext();
-            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -405,7 +405,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.ProcedureStatement_Semicolon0, tokens.Semicolon);
 
             const { inc: inc3 } = state.createLoopContext(3);
-            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 inc3();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -922,7 +922,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             state.consume(element, CstNodeKind.BeginStatement_Semicolon0, tokens.Semicolon);
             const { inc } = state.createLoopContext();
-            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 inc();
                 const stmt = this.statement.rule(state);
                 stmt && element.statements.push(stmt);
@@ -1621,10 +1621,10 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             if (state.canConsumeFirst(this.doType2.first()) || state.canConsumeFirst(this.doType3.first()) || state.canConsume(tokens.LOOP)) {
                 if (state.canConsumeFirst(this.doType2.first())) {
                     element.doType2 = this.doType2.rule(state);
-                } else if (state.canConsumeFirst(this.doType3.first())) {
-                    element.doType3 = this.doType3.rule(state);
                 } else if (state.tryConsume(element, CstNodeKind.DoStatement_LOOP, tokens.LOOP)) {
                     element.doType4 = true;
+                } else if (state.canConsumeFirst(this.doType3.first())) {
+                    element.doType3 = this.doType3.rule(state);
                 }
             }
 
@@ -1632,7 +1632,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
 
             // Parse statements until END
             const { inc } = state.createLoopContext();
-            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -3212,7 +3212,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             state.consume(element, CstNodeKind.QualifyStatement_Semicolon0, tokens.Semicolon);
 
             const { inc } = state.createLoopContext();
-            while (!state.canConsumeFirst(this.endStatement.first()) && state.canConsumeFirst(this.statement.first())) {
+            while (!state.eof && !state.canConsumeFirst(this.endStatement.first())) {
                 inc();
                 const statement = this.statement.rule(state);
                 statement && element.statements.push(statement);
@@ -4028,7 +4028,7 @@ export class HandwrittenParser implements Parser<ast.Program, tokens.Token> {
             case 'complex':
                 return this.genericAttribute.rule(state);
             default:
-                return this.defaultDeclarationAttribute.rule(state) as ast.DeclarationAttribute;
+                return this.internalDeclarationAttribute.rule(state);
         }
     });
 

@@ -85,7 +85,8 @@ namespace Rules {
         (state) => {
             const program: AST.StatementNode[] = [];
             while (!state.eof && state.canConsumeFirst(statement.first())) {
-                program.push(statement.rule(state));
+                const stmt = statement.rule(state);
+                stmt && program.push(stmt);
             }
             return program;
         }
@@ -102,7 +103,7 @@ describe.todo("Rule tests", () => {
             TokenInstances.Exclamation,
         ], ParserStateMode.Final);
 
-        const result = Rules.program.rule(state);
+        const result = Rules.program.rule(state)!;
 
         expect(result.length).toBe(2);
         expect(result[0].kind).toBe(1);
@@ -117,7 +118,7 @@ describe.todo("Rule tests", () => {
             TokenInstances.IdPerson,
         ], ParserStateMode.Final);
 
-        const result = Rules.program.rule(state);
+        const result = Rules.program.rule(state)!;
 
         expect(result.length).toBe(1);
         expect(result[0].kind).toBe(1);
