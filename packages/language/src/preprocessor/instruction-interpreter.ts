@@ -2104,7 +2104,7 @@ async function runInclude(
       );
     } else {
       diagnostic = diagnosticFromCode(
-        PLICodes.Severe.IBM3841I,
+        PLICodes.Severe.IBM1848I,
         item.token,
         getFileNameOrPartialName(item)!,
       );
