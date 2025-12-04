@@ -24,9 +24,9 @@ import {
 } from "../../workspace/plugin-configuration-provider";
 
 import { Commands, PluginConfiguration } from "../constants";
-import { PLICodes } from "../../validation/pli-codes";
 import { LspCodes } from "../../validation/lsp-codes";
 import { fullCode } from "../types";
+import { PLICodes } from "../../validation/pli-codes";
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
@@ -146,7 +146,7 @@ export async function applyQuickFixes(
 ): Promise<CodeAction[] | undefined> {
   const actions: CodeAction[] = [];
   // PLI CODES LIST
-  const CODE_UNRESOLVED_INCLUDE = fullCode(PLICodes.Severe.IBM3841I); // The INCLUDE file could not be found, or if found, it could not be opened.
+  const CODE_UNRESOLVED_INCLUDE = fullCode(PLICodes.Severe.IBM1848I); // The INCLUDE file could not be found
   const CODE_MISSING_CONFIG = fullCode(
     LspCodes.IncludeResolution.MissingConfiguration,
   ); // "Could not resolve include directive. Plugin configuration is missing"

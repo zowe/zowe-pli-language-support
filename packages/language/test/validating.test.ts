@@ -386,7 +386,7 @@ describe("Validating", () => {
         END EP;
       `);
       assertDiagnostic(doc, {
-        message: "The INCLUDE file nonexistent.pli could not be opened.",
+        message: "The INCLUDE file for nonexistent.pli could not be found.",
         severity: Severity.S,
       });
       setPluginConfigurationProvider(undefined);
