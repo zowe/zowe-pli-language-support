@@ -24,6 +24,7 @@ import {
   CodeActionKind,
   Diagnostic,
   Location,
+  LocationLink,
   TextEdit,
   WorkspaceFolder,
 } from "vscode-languageserver-types";
@@ -177,14 +178,19 @@ export function startLanguageServer(connection: Connection): void {
       if (textDocument && compilationUnit) {
         const offset = textDocument.offsetAt(position);
         const definition = definitionRequest(compilationUnit, uri, offset);
-        const lspDefinitions: Location[] = [];
+        const lspDefinitions: LocationLink[] = [];
         for (const def of definition) {
           const doc = compilationUnit?.services.files.getDocument(def.uri);
           if (doc) {
             const range = rangeToLSP(doc, def.range);
+            const sourceRange = def.source
+              ? rangeToLSP(textDocument, def.source)
+              : undefined;
             lspDefinitions.push({
-              uri: def.uri,
-              range,
+              targetUri: def.uri,
+              targetRange: range,
+              targetSelectionRange: range,
+              originSelectionRange: sourceRange,
             });
           }
         }

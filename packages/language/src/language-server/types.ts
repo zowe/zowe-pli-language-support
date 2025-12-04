@@ -27,6 +27,7 @@ export type Offset = number;
 export interface Location {
   uri: string;
   range: Range;
+  source?: Range;
 }
 
 export interface Range {
