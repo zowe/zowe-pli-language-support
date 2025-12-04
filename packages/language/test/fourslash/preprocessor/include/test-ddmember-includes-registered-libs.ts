@@ -42,7 +42,7 @@
 
 verify.expectExclusiveDiagnosticsAt(1, [
   {
-    message: code.Severe.IBM3841I.message("M2"),
+    message: code.Severe.IBM1848I.message("M2"),
   },
 ]);
 
