@@ -136,6 +136,7 @@ const mappings = new Map<
     mapFrom: Map<number, string>;
   }
 >();
+
 interface KeywordConfig {
   /**
    * The keyword name or names (aliases). The first name is the canonical name.

@@ -344,13 +344,15 @@ const procedureStatement = rule(
         element.xProc = procToken?.image[0].toUpperCase() === "X";
 
         if (state.tryConsume(element, CstNodeKind.ProcedureStatement_OpenParenParams, tokens.OpenParen)) {
-            const lhs = procedureParameter.rule(state);
-            lhs && element.parameters.push(lhs);
-            const { inc } = state.createLoopContext(1);
-            while (state.tryConsume(element, CstNodeKind.ProcedureStatement_Comma, tokens.Comma)) {
-                inc();
-                const rhs = procedureParameter.rule(state);
-                rhs && element.parameters.push(rhs);
+            if(state.canConsumeFirst(procedureParameter.first())) {
+                const lhs = procedureParameter.rule(state);
+                lhs && element.parameters.push(lhs);
+                const { inc } = state.createLoopContext(1);
+                while (state.tryConsume(element, CstNodeKind.ProcedureStatement_Comma, tokens.Comma)) {
+                    inc();
+                    const rhs = procedureParameter.rule(state);
+                    rhs && element.parameters.push(rhs);
+                }
             }
             state.consume(element, CstNodeKind.ProcedureStatement_CloseParenParams, tokens.CloseParen);
         }
@@ -2585,6 +2587,14 @@ function performGenericAttributeLookahead(state: ParserState): 'none' | 'simple'
                 )
             ) {
                 return 'complex';
+            }
+
+            if (tokenMatcher(token, tokens.ID)) {
+                //assume complex if an identifier is preceded by another identifier (likely a keyword)
+                const previousToken = lookahead(i - 2);
+                if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
+                    return 'complex';
+                }
             }
             // Continue with the next token, the current token is a valid expression token
         }
@@ -4996,7 +5006,7 @@ const memberCall = rule(
 
         // Parse zero or more dot-separated member accesses
         const { inc } = state.createLoopContext();
-        while (state.tryConsume(element, CstNodeKind.MemberCall_Dot, tokens.Dot)) {
+        while (state.canConsume(tokens.Dot)) {
             inc();
             // Create a new MemberCall for the chain
             const previous = element;
@@ -5006,7 +5016,7 @@ const memberCall = rule(
                 element: null,
                 previous: previous,
             };
-
+            state.consume(element, CstNodeKind.MemberCall_Dot, tokens.Dot);
             element.element = referenceItem.rule(state);
         }
 

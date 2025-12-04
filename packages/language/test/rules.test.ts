@@ -1,8 +1,7 @@
 import { createToken, TokenType } from "chevrotain";
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { orRule, rule, sequence } from "../src/parser/parser-types";
 import { SyntaxNode } from "../src/syntax-tree/ast";
-import test from "node:test";
 import { ParserState, ParserStateMode } from "../src/parser/parser-state";
 import { createTokenInstance as originalCreateTokenInstance, Token } from "../src/parser/tokens";
 
@@ -93,7 +92,7 @@ namespace Rules {
     );
 }
 
-describe.todo("Rule tests", () => {
+describe("Rule tests", () => {
     test("Simple rule set", () => {
         const state = new ParserState([
             TokenInstances.Person,
