@@ -83,10 +83,7 @@ export async function tokenize(
 export function parse(compilationUnit: CompilationUnit): Program {
   const { tree, diagnostics } = parsePli(compilationUnit.tokens);
   compilationUnit.ast = tree;
-  compilationUnit.diagnostics.addAll(
-    DiagnosticCategory.Parser,
-    diagnostics,
-  );
+  compilationUnit.diagnostics.addAll(DiagnosticCategory.Parser, diagnostics);
 
   if (process.env.NODE_ENV === "development") {
     assignDebugKinds(tree);

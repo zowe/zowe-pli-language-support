@@ -60,18 +60,20 @@ export class ParserState {
   createLoopContext(id: number = 1) {
     const regex = /parser\-handwritten\.ts:(\d+)/;
     const stack = new Error().stack!.split("\n");
-    const location = stack.find(line => regex.test(line))!;
-    const match = location.match(regex)![1]+` (loop id: ${id})`;
+    const location = stack.find((line) => regex.test(line))!;
+    const match = location.match(regex)![1] + ` (loop id: ${id})`;
     let lastIndex = -1;
     return {
       inc: () => {
-        if(lastIndex === this.index) {
+        if (lastIndex === this.index) {
           ///this.inError = true;
-          throw new Error(`Possible infinite loop detected in parser at ${match} after ${this.token?.image} token.`);
+          throw new Error(
+            `Possible infinite loop detected in parser at ${match} after ${this.token?.image} token.`,
+          );
         }
         lastIndex = this.index;
-      }
-    }
+      },
+    };
   }
 
   enterProcedure(): void {
@@ -205,7 +207,7 @@ export class ParserState {
     }
   }
 
-private performPreprocessorRecovery(): void {
+  private performPreprocessorRecovery(): void {
     // If the preprocessor parser encounters an error, it should attempt to:
     // 1. Find a semicolon at the current line, and skip that token
     // 2. Find a percent sign at the current line, and stop
@@ -336,25 +338,27 @@ private performPreprocessorRecovery(): void {
     return this.consume(element, kind, tokenType);
   }
 
-  private mapMatch(map: RuleMap, tokenType: TokenType): number|undefined {
-    return [tokenType.tokenTypeIdx??-1, ...(tokenType.CATEGORIES??[]).map(cat => cat.tokenTypeIdx??-1)]
-      .find(index => map.has(index));
+  private mapMatch(map: RuleMap, tokenType: TokenType): number | undefined {
+    return [
+      tokenType.tokenTypeIdx ?? -1,
+      ...(tokenType.CATEGORIES ?? []).map((cat) => cat.tokenTypeIdx ?? -1),
+    ].find((index) => map.has(index));
   }
 
   private canConsumeFirstItem(map: RuleMap, index: number): boolean {
-    if(this.index + index >= this.tokens.length) {
+    if (this.index + index >= this.tokens.length) {
       return false;
     }
-    const tokenType = this.tokens[this.index+index].tokenType;
+    const tokenType = this.tokens[this.index + index].tokenType;
     const idx = this.mapMatch(map, tokenType);
-    if(idx === undefined) {
+    if (idx === undefined) {
       return false;
     }
     const next = map.get(idx)!;
-    if(next instanceof Function) {
+    if (next instanceof Function) {
       return true;
     } else {
-      return this.canConsumeFirstItem(next, index+1);
+      return this.canConsumeFirstItem(next, index + 1);
     }
   }
 
@@ -362,27 +366,27 @@ private performPreprocessorRecovery(): void {
     return this.canConsumeFirstItem(firstSet, 0);
   }
 
-  private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T|null {
-    if(this.eof || this.inError) {
+  private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T | null {
+    if (this.eof || this.inError) {
       return null;
     }
     const token = this.tokens[this.index + index];
     const lookahead = token.tokenType;
     const idx = this.mapMatch(map, lookahead);
-    if(idx === undefined) {
+    if (idx === undefined) {
       //TODO this.error(`Expected '', but found '${lookahead.name}'.`, token, Severity.S)
       this.inError = true;
       return null;
     }
     const next = map.get(idx)!;
-    if(next instanceof Function) {
+    if (next instanceof Function) {
       return next(this);
     } else {
-      return this.consumeAlternativesItem(next, index+1);
+      return this.consumeAlternativesItem(next, index + 1);
     }
   }
 
-  consumeAlternatives<T>(map: RuleMap<T>): T|null {
+  consumeAlternatives<T>(map: RuleMap<T>): T | null {
     return this.consumeAlternativesItem(map, 0);
   }
 }
