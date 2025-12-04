@@ -163,7 +163,7 @@ describe("applyQuickFixes", () => {
 
     const diagnostics = [
       {
-        code: fullCode(PLICodes.Severe.IBM3841I),
+        code: fullCode(PLICodes.Severe.IBM1848I),
         data: { unresolvedFile: "file1.inc", entryUri: "/workspace/main.pli" },
       },
       {
@@ -172,7 +172,7 @@ describe("applyQuickFixes", () => {
         data: {},
       },
       {
-        code: fullCode(PLICodes.Severe.IBM3841I),
+        code: fullCode(PLICodes.Severe.IBM1848I),
         data: { unresolvedFile: "file2.inc", entryUri: "/workspace/main.pli" },
       },
     ] as Diagnostic[];
@@ -211,7 +211,7 @@ describe("applyQuickFixes", () => {
 
     const diagnostics = [
       {
-        code: fullCode(PLICodes.Severe.IBM3841I),
+        code: fullCode(PLICodes.Severe.IBM1848I),
         data: {
           unresolvedFile: "missing.inc",
           entryUri: "/workspace/main.pli",
