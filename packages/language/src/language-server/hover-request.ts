@@ -237,7 +237,6 @@ function decodeBound(bound: Bound | null): string | null {
 }
 
 interface IncludeItemNode {
-  sourceText: string | null;
   filePath: string | null;
   relativeFilePath: string | null;
 }
