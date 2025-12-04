@@ -51,12 +51,23 @@ export function activate(context: vscode.ExtensionContext): void {
  * @returns Disposable listener
  */
 let shouldShowInfoMessage = true;
+namespace PopUpOptions {
+  export const CONFIG_CREATION = {
+    infoTitle: (relativePath: string) =>
+      `Create a '.pliplugin' folder in the project root using '${relativePath}' as the entry point in 'pgm_conf.json'?`,
+
+    userOptions: ["Yes", "No", "Don't show again"] as const,
+
+    successMessage: "'.pliplugin' folder and files created successfully.",
+  };
+}
+
 function registerOnDidOpenTextDocListener(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
   const listener = vscode.window.onDidChangeActiveTextEditor(
-    async (document) => {
-      if (!document || !shouldShowInfoMessage) {
+    async (textEditor) => {
+      if (!textEditor || !shouldShowInfoMessage) {
         return;
       }
       // settle on the 1st workspace folder available
@@ -68,10 +79,10 @@ function registerOnDidOpenTextDocListener(
       }
       // check if we can create a .pliplugin folder
       const plipluginPath = path.join(workspaceFolder, ".pliplugin");
-      const isPliDocument = document.document.languageId === "pli";
+      const isPliDocument = textEditor.document.languageId === "pli";
       const currentFileRelativePath = path.relative(
         workspaceFolder,
-        document.document.fileName,
+        textEditor.document.fileName,
       );
 
       if (!isPliDocument || fs.existsSync(plipluginPath)) {
@@ -84,15 +95,16 @@ function registerOnDidOpenTextDocListener(
       );
 
       const userResponse = await vscode.window.showInformationMessage(
-        `Create a '.pliplugin' folder in the project root using '${currentFileRelativePath}' as the entry point in 'pgm_conf.json'?`,
-        "Yes",
-        "No",
-        "Don't show again",
+        PopUpOptions.CONFIG_CREATION.infoTitle(currentFileRelativePath),
+        ...PopUpOptions.CONFIG_CREATION.userOptions,
       );
 
-      if (userResponse === "Don't show again") {
+      // If user clicks "Don't show again"
+      if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[2]) {
         shouldShowInfoMessage = false;
-      } else if (userResponse === "Yes") {
+      }
+      // If user clicks "Yes"
+      else if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[0]) {
         // create the .pliplugin folder and files, using the current file as the entry point
         fs.mkdirSync(plipluginPath);
         fs.writeFileSync(
@@ -121,7 +133,7 @@ function registerOnDidOpenTextDocListener(
         );
 
         vscode.window.showInformationMessage(
-          "'.pliplugin' folder and files created successfully.",
+          PopUpOptions.CONFIG_CREATION.successMessage,
         );
       }
     },
