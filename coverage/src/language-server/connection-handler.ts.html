@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.33% </span>
+                <span class="strong">7.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>24/327</span>
+                <span class='fraction'>24/332</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.33% </span>
+                <span class="strong">7.22% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>24/327</span>
+                <span class='fraction'>24/332</span>
             </div>
         
             
@@ -439,7 +439,13 @@
 <a name='L374'></a><a href='#L374'>374</a>
 <a name='L375'></a><a href='#L375'>375</a>
 <a name='L376'></a><a href='#L376'>376</a>
-<a name='L377'></a><a href='#L377'>377</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L377'></a><a href='#L377'>377</a>
+<a name='L378'></a><a href='#L378'>378</a>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a>
+<a name='L381'></a><a href='#L381'>381</a>
+<a name='L382'></a><a href='#L382'>382</a>
+<a name='L383'></a><a href='#L383'>383</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -468,6 +474,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -604,6 +611,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -841,6 +853,7 @@ import {
   CodeActionKind,
   Diagnostic,
   Location,
+  LocationLink,
   TextEdit,
   WorkspaceFolder,
 } from "vscode-languageserver-types";
@@ -994,14 +1007,19 @@ export <span class="fstat-no" title="function not covered" >function startLangua
 <span class="cstat-no" title="statement not covered" >      if (textDocument &amp;&amp; compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >        const offset = textDocument.offsetAt(position);</span>
 <span class="cstat-no" title="statement not covered" >        const definition = definitionRequest(compilationUnit, uri, offset);</span>
-<span class="cstat-no" title="statement not covered" >        const lspDefinitions: Location[] = [];</span>
+<span class="cstat-no" title="statement not covered" >        const lspDefinitions: LocationLink[] = [];</span>
 <span class="cstat-no" title="statement not covered" >        for (const def of definition) {</span>
 <span class="cstat-no" title="statement not covered" >          const doc = compilationUnit?.services.files.getDocument(def.uri);</span>
 <span class="cstat-no" title="statement not covered" >          if (doc) {</span>
 <span class="cstat-no" title="statement not covered" >            const range = rangeToLSP(doc, def.range);</span>
+<span class="cstat-no" title="statement not covered" >            const sourceRange = def.source</span>
+<span class="cstat-no" title="statement not covered" >              ? rangeToLSP(textDocument, def.source)</span>
+<span class="cstat-no" title="statement not covered" >              : undefined;</span>
 <span class="cstat-no" title="statement not covered" >            lspDefinitions.push({</span>
-<span class="cstat-no" title="statement not covered" >              uri: def.uri,</span>
-<span class="cstat-no" title="statement not covered" >              range,</span>
+<span class="cstat-no" title="statement not covered" >              targetUri: def.uri,</span>
+<span class="cstat-no" title="statement not covered" >              targetRange: range,</span>
+<span class="cstat-no" title="statement not covered" >              targetSelectionRange: range,</span>
+<span class="cstat-no" title="statement not covered" >              originSelectionRange: sourceRange,</span>
 <span class="cstat-no" title="statement not covered" >            });</span>
 <span class="cstat-no" title="statement not covered" >          }</span>
 <span class="cstat-no" title="statement not covered" >        }</span>
@@ -1198,7 +1216,7 @@ export <span class="fstat-no" title="function not covered" >function startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-03T15:07:14.545Z
+                at 2025-12-04T16:21:05.635Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
