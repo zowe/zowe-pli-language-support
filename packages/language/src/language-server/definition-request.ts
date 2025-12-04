@@ -11,7 +11,7 @@
 
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenSearch } from "../utils/search";
-import { Location } from "./types";
+import { Location, tokenToRange } from "./types";
 import {
   getNameToken,
   getReference,
@@ -65,6 +65,7 @@ export function definitionRequest(
           start: nameToken.startOffset,
           end: nameToken.endOffset + 1,
         },
+        source: tokenToRange(token),
       },
     ];
   } else if (
@@ -73,8 +74,13 @@ export function definitionRequest(
       token.element?.kind === SyntaxKind.IncludeItemMember ||
       token.element?.kind === SyntaxKind.InscanDirective)
   ) {
-    // TODO @montymxb Nov 7th, 2025: Highlighting for members is incomplete, only gets the member & not the full ddname.
-    // see: https://github.com/zowe/zowe-pli-language-support/issues/466
+    let sourceRange = tokenToRange(token);
+    if (
+      token.element.kind !== SyntaxKind.InscanDirective &&
+      token.element.range
+    ) {
+      sourceRange = token.element.range;
+    }
     // allow jumping to the resolved file when present
     const filePath = token.element.filePath;
     if (filePath) {
@@ -85,6 +91,7 @@ export function definitionRequest(
             start: 0,
             end: 0,
           },
+          source: sourceRange,
         },
       ];
     }
