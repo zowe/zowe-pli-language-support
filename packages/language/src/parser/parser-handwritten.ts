@@ -4906,7 +4906,7 @@ const referenceItem = rule(
 
 const expression = rule(
     () => primaryExpression.first(),
-    (state: ParserState): ast.Expression => {
+    (state: ParserState): ast.Expression|null => {
         const element: IntermediateBinaryExpression = {
             infix: true,
             items: [],
@@ -4933,7 +4933,7 @@ const expression = rule(
             rhs && element.items.push(rhs);
         }
 
-        return constructBinaryExpression(element)!; //TODO check nonnull assertion
+        return element && element.items.length > 0 ? constructBinaryExpression(element) : null;
     }
 );
 

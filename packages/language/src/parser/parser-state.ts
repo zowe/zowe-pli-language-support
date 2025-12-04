@@ -370,7 +370,8 @@ private performPreprocessorRecovery(): void {
     const lookahead = token.tokenType;
     const idx = this.mapMatch(map, lookahead);
     if(idx === undefined) {
-      this.error(`Expected '', but found '${lookahead.name}'.`, token, Severity.S)
+      //TODO this.error(`Expected '', but found '${lookahead.name}'.`, token, Severity.S)
+      this.inError = true;
       return null;
     }
     const next = map.get(idx)!;

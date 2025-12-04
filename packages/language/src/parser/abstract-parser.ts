@@ -137,13 +137,13 @@ export class AbstractParser extends EmbeddedActionsParser {
       this.push({});
       this.OR(
         alts ??
-          (alts = rules().map((rule, idx) => ({
-            ALT: () => {
-              this.subrule_assign(idx, rule, {
-                assign: (result) => this.replace(result),
-              });
-            },
-          }))),
+        (alts = rules().map((rule, idx) => ({
+          ALT: () => {
+            this.subrule_assign(idx, rule, {
+              assign: (result) => this.replace(result),
+            });
+          },
+        }))),
       );
       return this.pop();
     });
