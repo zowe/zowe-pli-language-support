@@ -112,7 +112,13 @@ export function orRule<T>(...rules: (() => RuleFirstPair<T>)[]): RuleFirstPair<T
     return new RuleFirstPairWrapper(...rules);
 }
 
-export function rule<T>(set: FirstSet|(() => RuleMap<any>), action: Rule<T>): RuleFirstPair<T> {
+export function rule<T>(set: FirstSet|(() => RuleMap<any>), originalAction: Rule<T>): RuleFirstPair<T> {
+    const action = (state: ParserState) => {
+        if(state.eof) {
+            return null;
+        }
+        return originalAction(state);
+    }
     if (typeof set === "function") {
         return {
             first: memoize(() => {

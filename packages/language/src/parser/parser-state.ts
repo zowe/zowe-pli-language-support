@@ -363,13 +363,14 @@ private performPreprocessorRecovery(): void {
   }
 
   private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T|null {
-    if(this.index + index >= this.tokens.length) {
+    if(this.eof || this.inError) {
       return null;
     }
-    const lookahead = this.tokens[this.index + index].tokenType;
+    const token = this.tokens[this.index + index];
+    const lookahead = token.tokenType;
     const idx = this.mapMatch(map, lookahead);
     if(idx === undefined) {
-      this.inError = true;
+      this.error(`Expected '', but found '${lookahead.name}'.`, token, Severity.S)
       return null;
     }
     const next = map.get(idx)!;

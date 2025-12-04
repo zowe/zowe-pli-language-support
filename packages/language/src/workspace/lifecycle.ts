@@ -18,6 +18,7 @@ import {
   generatePreprocessorValidationDiagnostics,
   linkingErrorsToDiagnostics,
   parserErrorsToDiagnostics,
+  filteredDiagnosticsWithUri,
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { assignDebugKinds } from "../utils/debug-kinds";
@@ -25,7 +26,7 @@ import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
-import { ParserInstance } from "../parser/parser-instance";
+import { parsePli } from "../parser/parser-handwritten";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -80,19 +81,18 @@ export async function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): Program {
-  ParserInstance.input = compilationUnit.tokens;
-  const ast = ParserInstance.parse();
-  compilationUnit.ast = ast;
+  const { tree, diagnostics } = parsePli(compilationUnit.tokens);
+  compilationUnit.ast = tree;
   compilationUnit.diagnostics.addAll(
     DiagnosticCategory.Parser,
-    parserErrorsToDiagnostics(ParserInstance.errors),
+    diagnostics,
   );
 
   if (process.env.NODE_ENV === "development") {
-    assignDebugKinds(ast);
+    assignDebugKinds(tree);
   }
 
-  return ast;
+  return tree;
 }
 
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
