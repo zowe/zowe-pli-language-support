@@ -15,22 +15,14 @@ export function parsePli(input: tokens.Token[]): {
 } {
   const state = finalParserState(input);
   const program = pliProgram.rule(state)!;
-  const tree = program ?? {
-    kind: ast.SyntaxKind.Program,
-    container: null,
-    statements: [],
-  };
+  const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
 }
 
 const pliProgram = rule(
   () => statement.first(),
   (state: ParserState): ast.Program => {
-    const program: ast.Program = {
-      kind: ast.SyntaxKind.Program,
-      container: null,
-      statements: [],
-    };
+    const program = ast.createProgram();
     // Parse one or more packages (or top-level statements)
     const { inc } = state.createLoopContext();
     while (!state.eof) {
@@ -45,15 +37,7 @@ const pliProgram = rule(
 const packageRule = rule(
   sequence(tokens.PACKAGE),
   (state: ParserState): ast.Package => {
-    const element: ast.Package = {
-      kind: ast.SyntaxKind.Package,
-      container: null,
-      statements: [],
-      end: null,
-      exports: null,
-      options: null,
-      reserves: null,
-    };
+    const element = ast.createPackage();
     state.consume(element, CstNodeKind.Package_PACKAGE, tokens.PACKAGE);
     if (state.canConsumeFirst(exports.first())) {
       element.exports = exports.rule(state);
@@ -80,11 +64,7 @@ const packageRule = rule(
 const conditionPrefix = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.ConditionPrefix => {
-    const element: ast.ConditionPrefix = {
-      kind: ast.SyntaxKind.ConditionPrefix,
-      container: null,
-      items: [],
-    };
+    const element = ast.createConditionPrefix();
 
     const { inc } = state.createLoopContext();
     do {
@@ -111,11 +91,7 @@ const conditionPrefix = rule(
 const conditionPrefixItem = rule(
   () => condition.first(),
   (state: ParserState): ast.ConditionPrefixItem => {
-    const element: ast.ConditionPrefixItem = {
-      kind: ast.SyntaxKind.ConditionPrefixItem,
-      container: null,
-      conditions: [],
-    };
+    const element = ast.createConditionPrefixItem();
 
     const lhs = condition.rule(state);
     lhs && element.conditions.push(lhs);
@@ -138,11 +114,7 @@ const conditionPrefixItem = rule(
 const exportsItem = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.ExportsItem => {
-    const element: ast.ExportsItem = {
-      kind: ast.SyntaxKind.ExportsItem,
-      container: null,
-      reference: null,
-    };
+    const element = ast.createExportsItem();
     const token = state.consume(
       element,
       CstNodeKind.Exports_Procedure,
@@ -162,12 +134,7 @@ const exportsItem = rule(
 const exports = rule(
   sequence(tokens.EXPORTS),
   (state: ParserState): ast.Exports => {
-    const element: ast.Exports = {
-      kind: ast.SyntaxKind.Exports,
-      container: null,
-      procedures: [],
-      all: false,
-    };
+    const element = ast.createExports();
 
     state.consume(element, CstNodeKind.Exports_EXPORTS, tokens.EXPORTS);
     state.consume(element, CstNodeKind.Exports_OpenParen, tokens.OpenParen);
@@ -195,12 +162,7 @@ const exports = rule(
 const reserves = rule(
   sequence(tokens.RESERVES),
   (state: ParserState): ast.Reserves => {
-    const element: ast.Reserves = {
-      kind: ast.SyntaxKind.Reserves,
-      container: null,
-      all: false,
-      variables: [],
-    };
+    const element = ast.createReserves();
 
     state.consume(element, CstNodeKind.Reserves_RESERVES, tokens.RESERVES);
     state.consume(element, CstNodeKind.Reserves_OpenParen, tokens.OpenParen);
@@ -240,12 +202,7 @@ const reserves = rule(
 const options = rule(
   sequence(tokens.OPTIONS),
   (state: ParserState): ast.Options => {
-    const element: ast.Options = {
-      kind: ast.SyntaxKind.Options,
-      container: null,
-      items: [],
-    };
-
+    const element = ast.createOptions();
     state.consume(element, CstNodeKind.Options_OPTIONS, tokens.OPTIONS);
     state.consume(element, CstNodeKind.Options_OpenParen, tokens.OpenParen);
     const lhs = optionsItem.rule(state);
@@ -276,11 +233,7 @@ const optionsItem = orRule<ast.OptionsItem>(
 const simpleOptionsItem = rule(
   sequence(tokens.SimpleOptions),
   (state: ParserState): ast.SimpleOptionsItem => {
-    const element: ast.SimpleOptionsItem = {
-      kind: ast.SyntaxKind.SimpleOptionsItem,
-      container: null,
-      value: null,
-    };
+    const element = ast.createSimpleOptionsItem();
     const token = state.consume(
       element,
       CstNodeKind.SimpleOptionsItem_Value,
@@ -296,11 +249,7 @@ const simpleOptionsItem = rule(
 const linkageOptionsItem = rule(
   sequence(tokens.LINKAGE),
   (state: ParserState): ast.LinkageOptionsItem => {
-    const element: ast.LinkageOptionsItem = {
-      kind: ast.SyntaxKind.LinkageOptionsItem,
-      container: null,
-      value: null,
-    };
+    const element = ast.createLinkageOptionsItem();
     state.consume(
       element,
       CstNodeKind.LinkageOptionsItem_Linkage,
@@ -333,11 +282,7 @@ const linkageOptionsItem = rule(
 const CMPATOptionsItem = rule(
   sequence(tokens.CMPAT),
   (state: ParserState): ast.CMPATOptionsItem => {
-    const element: ast.CMPATOptionsItem = {
-      kind: ast.SyntaxKind.CMPATOptionsItem,
-      container: null,
-      value: null,
-    };
+    const element = ast.createCMPATOptionsItem();
     state.consume(element, CstNodeKind.CMPATOptionsItem_CMPAT, tokens.CMPAT);
     state.consume(
       element,
@@ -364,12 +309,7 @@ const CMPATOptionsItem = rule(
 const noMapOptionsItem = rule(
   sequence(tokens.NoMapOption),
   (state: ParserState): ast.NoMapOptionsItem => {
-    const element: ast.NoMapOptionsItem = {
-      kind: ast.SyntaxKind.NoMapOptionsItem,
-      container: null,
-      parameters: [],
-      type: null,
-    };
+    const element = ast.createNoMapOptionsItem();
     const typeToken = state.consume(
       element,
       CstNodeKind.NoMapOptionsItem_Type,
@@ -428,17 +368,7 @@ const noMapOptionsItem = rule(
 const procedureStatement = rule(
   sequence(tokens.PROCEDURE),
   (state: ParserState): ast.ProcedureStatement => {
-    const element: ast.ProcedureStatement = {
-      kind: ast.SyntaxKind.ProcedureStatement,
-      container: null,
-      procToken: null,
-      end: null,
-      options: [],
-      parameters: [],
-      statements: [],
-      statement: false,
-      xProc: false,
-    };
+    const element = ast.createProcedureStatement();
     const procToken = state.consume(
       element,
       CstNodeKind.ProcedureStatement_PROCEDURE,
@@ -566,12 +496,7 @@ const procedureStatement = rule(
 const labelPrefix = rule(
   sequence(tokens.ID, tokens.Colon),
   (state: ParserState): ast.LabelPrefix => {
-    const element: ast.LabelPrefix = {
-      kind: ast.SyntaxKind.LabelPrefix,
-      container: null,
-      nameToken: null,
-      name: null,
-    };
+    const element = ast.createLabelPrefix();
     const idToken = state.consume(
       element,
       CstNodeKind.LabelPrefix_Name,
@@ -589,19 +514,8 @@ const labelPrefix = rule(
 const entryStatement = rule(
   sequence(tokens.ENTRY),
   (state: ParserState): ast.EntryStatement => {
-    const element: ast.EntryStatement = {
-      kind: ast.SyntaxKind.EntryStatement,
-      container: null,
-      parameters: [],
-      variable: [],
-      limited: [],
-      returns: [],
-      options: [],
-      environmentName: [],
-    };
-
+    const element = ast.createEntryStatement();
     state.consume(element, CstNodeKind.EntryStatement_ENTRY, tokens.ENTRY);
-
     if (
       state.tryConsume(
         element,
@@ -717,13 +631,7 @@ const statement = rule(
     //() => assignmentStatement.first(),
   ),
   (state: ParserState): ast.Statement => {
-    const element: ast.Statement = {
-      kind: ast.SyntaxKind.Statement,
-      container: null,
-      condition: null,
-      labels: [],
-      value: null,
-    };
+    const element = ast.createStatement();
 
     if (state.canConsumeFirst(conditionPrefix.first())) {
       element.condition = conditionPrefix.rule(state);
@@ -804,11 +712,7 @@ const unit = orRule<ast.Unit>(
 const allocateStatement = rule(
   sequence(tokens.ALLOCATE),
   (state: ParserState): ast.AllocateStatement => {
-    const element: ast.AllocateStatement = {
-      kind: ast.SyntaxKind.AllocateStatement,
-      container: null,
-      variables: [],
-    };
+    const element = ast.createAllocateStatement();
     state.consume(
       element,
       CstNodeKind.AllocateStatement_ALLOCATE,
@@ -840,13 +744,7 @@ const allocateStatement = rule(
 const allocatedVariable = rule(
   choice(sequence(tokens.NUMBER), () => referenceItem.first()),
   (state: ParserState): ast.AllocatedVariable => {
-    const element: ast.AllocatedVariable = {
-      kind: ast.SyntaxKind.AllocatedVariable,
-      container: null,
-      level: null,
-      var: null,
-      attribute: null,
-    };
+    const element = ast.createAllocatedVariable();
 
     if (
       state.tryConsume(
@@ -880,11 +778,7 @@ const allocateAttribute = orRule<ast.AllocateAttribute>(
 const allocateLocationReferenceIn = rule(
   sequence(tokens.IN),
   (state: ParserState): ast.AllocateLocationReferenceIn => {
-    const element: ast.AllocateLocationReferenceIn = {
-      kind: ast.SyntaxKind.AllocateLocationReferenceIn,
-      container: null,
-      area: null,
-    };
+    const element = ast.createAllocateLocationReferenceIn();
 
     state.consume(
       element,
@@ -910,12 +804,7 @@ const allocateLocationReferenceIn = rule(
 const allocateLocationReferenceSet = rule(
   sequence(tokens.SET),
   (state: ParserState): ast.AllocateLocationReferenceSet => {
-    const element: ast.AllocateLocationReferenceSet = {
-      kind: ast.SyntaxKind.AllocateLocationReferenceSet,
-      container: null,
-      locatorVariable: null,
-    };
-
+    const element = ast.createAllocateLocationReferenceSet();
     state.consume(
       element,
       CstNodeKind.AllocateLocationReferenceSet_SET,
@@ -932,7 +821,6 @@ const allocateLocationReferenceSet = rule(
       CstNodeKind.AllocateLocationReferenceSet_CloseParen,
       tokens.CloseParen,
     );
-
     return element;
   },
 );
@@ -940,12 +828,7 @@ const allocateLocationReferenceSet = rule(
 const allocateDimension = rule(
   () => dimensions.first(),
   (state: ParserState): ast.AllocateDimension => {
-    const element: ast.AllocateDimension = {
-      kind: ast.SyntaxKind.AllocateDimension,
-      container: null,
-      dimensions: null,
-    };
-
+    const element = ast.createAllocateDimension();
     element.dimensions = dimensions.rule(state);
 
     return element;
@@ -955,12 +838,7 @@ const allocateDimension = rule(
 const allocateType = rule(
   sequence(tokens.AllocateAttributeType),
   (state: ParserState): ast.AllocateType => {
-    const element: ast.AllocateType = {
-      kind: ast.SyntaxKind.AllocateType,
-      container: null,
-      type: null,
-      dimensions: null,
-    };
+    const element = ast.createAllocateType();
 
     const typeToken = state.consume(
       element,
@@ -984,18 +862,7 @@ const allocateType = rule(
 const assertStatement = rule(
   sequence(tokens.ASSERT),
   (state: ParserState): ast.AssertStatement => {
-    const element: ast.AssertStatement = {
-      kind: ast.SyntaxKind.AssertStatement,
-      container: null,
-      true: false,
-      actual: null,
-      false: false,
-      unreachable: false,
-      displayExpression: null,
-      compare: false,
-      expected: null,
-      operator: null,
-    };
+    const element = ast.createAssertStatement();
 
     state.consume(element, CstNodeKind.AssertStatement_ASSERT, tokens.ASSERT);
 
@@ -1086,14 +953,7 @@ const assertStatement = rule(
 const assignmentStatement = rule(
   () => locatorCall.first(),
   (state: ParserState): ast.AssignmentStatement => {
-    const element: ast.AssignmentStatement = {
-      kind: ast.SyntaxKind.AssignmentStatement,
-      container: null,
-      refs: [],
-      operator: null,
-      expression: null,
-      dimacrossExpr: null,
-    };
+    const element = ast.createAssignmentStatement();
 
     // Parse left-hand side references (comma-separated)
     const lhs = locatorCall.rule(state);
@@ -1172,14 +1032,7 @@ const assignmentStatement = rule(
 const attachStatement = rule(
   sequence(tokens.ATTACH),
   (state: ParserState): ast.AttachStatement => {
-    const element: ast.AttachStatement = {
-      kind: ast.SyntaxKind.AttachStatement,
-      container: null,
-      reference: null,
-      task: null,
-      environment: false,
-      tstack: null,
-    };
+    const element = ast.createAttachStatement();
 
     state.consume(element, CstNodeKind.AttachStatement_ATTACH, tokens.ATTACH);
     element.reference = locatorCall.rule(state);
@@ -1252,19 +1105,9 @@ const attachStatement = rule(
 const beginStatement = rule(
   sequence(tokens.BEGIN),
   (state: ParserState): ast.BeginStatement => {
-    const element: ast.BeginStatement = {
-      kind: ast.SyntaxKind.BeginStatement,
-      container: null,
-      options: null,
-      recursive: false,
-      statements: [],
-      end: null,
-      order: false,
-      reorder: false,
-    };
+    const element = ast.createBeginStatement();
 
     state.consume(element, CstNodeKind.BeginStatement_BEGIN, tokens.BEGIN);
-
     if (state.canConsumeFirst(options.first())) {
       element.options = options.rule(state);
     }
@@ -1320,12 +1163,7 @@ const endStatement = rule(
     sequence(tokens.ID, tokens.Colon, tokens.END),
   ),
   (state: ParserState): ast.EndStatement => {
-    const element: ast.EndStatement = {
-      kind: ast.SyntaxKind.EndStatement,
-      container: null,
-      labels: [],
-      label: null,
-    };
+    const element = ast.createEndStatement();
 
     // Parse optional label prefixes
     const { inc } = state.createLoopContext();
@@ -1349,11 +1187,7 @@ const endStatement = rule(
 const callStatement = rule(
   sequence(tokens.CALL),
   (state: ParserState): ast.CallStatement => {
-    const element: ast.CallStatement = {
-      kind: ast.SyntaxKind.CallStatement,
-      container: null,
-      call: null,
-    };
+    const element = ast.createCallStatement();
     state.consume(element, CstNodeKind.CallStatement_CALL, tokens.CALL);
     element.call = procedureCall.rule(state);
     state.consume(
@@ -1368,11 +1202,7 @@ const callStatement = rule(
 const cancelThreadStatement = rule(
   sequence(tokens.CANCEL),
   (state: ParserState): ast.CancelThreadStatement => {
-    const element: ast.CancelThreadStatement = {
-      kind: ast.SyntaxKind.CancelThreadStatement,
-      container: null,
-      thread: null,
-    };
+    const element = ast.createCancelThreadStatement();
 
     state.consume(
       element,
@@ -1408,11 +1238,7 @@ const cancelThreadStatement = rule(
 const closeStatement = rule(
   sequence(tokens.CLOSE),
   (state: ParserState): ast.CloseStatement => {
-    const element: ast.CloseStatement = {
-      kind: ast.SyntaxKind.CloseStatement,
-      container: null,
-      files: [],
-    };
+    const element = ast.createCloseStatement();
 
     state.consume(element, CstNodeKind.CloseStatement_CLOSE, tokens.CLOSE);
     state.consume(element, CstNodeKind.CloseStatement_FILE0, tokens.FILE);
@@ -1496,11 +1322,7 @@ const closeStatement = rule(
 const defaultStatement = rule(
   sequence(tokens.DEFAULT),
   (state: ParserState): ast.DefaultStatement => {
-    const element: ast.DefaultStatement = {
-      kind: ast.SyntaxKind.DefaultStatement,
-      container: null,
-      expressions: [],
-    };
+    const element = ast.createDefaultStatement();
 
     state.consume(
       element,
@@ -1537,12 +1359,7 @@ const defaultStatement = rule(
 const defaultExpression = rule(
   () => defaultExpressionPart.first(),
   (state: ParserState): ast.DefaultExpression => {
-    const element: ast.DefaultExpression = {
-      kind: ast.SyntaxKind.DefaultExpression,
-      container: null,
-      expression: null,
-      attributes: [],
-    };
+    const element = ast.createDefaultExpression();
 
     element.expression = defaultExpressionPart.rule(state);
 
@@ -1573,12 +1390,7 @@ const defaultExpressionPart = rule(
     sequence(tokens.OpenParen),
   ),
   (state: ParserState): ast.DefaultExpressionPart => {
-    const element: ast.DefaultExpressionPart = {
-      kind: ast.SyntaxKind.DefaultExpressionPart,
-      container: null,
-      expression: null,
-      identifiers: null,
-    };
+    const element = ast.createDefaultExpressionPart();
 
     if (state.canConsume(tokens.DESCRIPTORS)) {
       // DESCRIPTORS variant
@@ -1633,11 +1445,7 @@ const defaultExpressionPart = rule(
 const defaultRangeIdentifiers = rule(
   choice(sequence(tokens.Star), () => defaultRangeIdentifierItem.first()),
   (state: ParserState): ast.DefaultRangeIdentifiers => {
-    const element: ast.DefaultRangeIdentifiers = {
-      kind: ast.SyntaxKind.DefaultRangeIdentifiers,
-      container: null,
-      identifiers: [],
-    };
+    const element = ast.createDefaultRangeIdentifiers();
 
     // Parse first identifier (Star or DefaultRangeIdentifierItem)
     if (state.canConsume(tokens.Star)) {
@@ -1686,12 +1494,7 @@ const defaultRangeIdentifiers = rule(
 const defaultRangeIdentifierItem = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.DefaultRangeIdentifierItem => {
-    const element: ast.DefaultRangeIdentifierItem = {
-      kind: ast.SyntaxKind.DefaultRangeIdentifierItem,
-      container: null,
-      from: null,
-      to: null,
-    };
+    const element = ast.createDefaultRangeIdentifierItem();
 
     const fromToken = state.consume(
       element,
@@ -1726,12 +1529,7 @@ const defaultRangeIdentifierItem = rule(
 const defaultAttributeExpression = rule(
   () => defaultAttributeExpressionNot.first(),
   (state: ParserState): ast.DefaultAttributeExpression => {
-    const element: ast.DefaultAttributeExpression = {
-      kind: ast.SyntaxKind.DefaultAttributeExpression,
-      container: null,
-      items: [],
-      operators: [],
-    };
+    const element = ast.createDefaultAttributeExpression();
 
     // Parse first DefaultAttributeExpressionNot
     const lhs = defaultAttributeExpressionNot.rule(state);
@@ -1762,12 +1560,7 @@ const defaultAttributeExpression = rule(
 const defaultAttributeExpressionNot = rule(
   choice(sequence(tokens.NOT), sequence(tokens.DefaultAttribute)),
   (state: ParserState): ast.DefaultAttributeExpressionNot => {
-    const element: ast.DefaultAttributeExpressionNot = {
-      kind: ast.SyntaxKind.DefaultAttributeExpressionNot,
-      container: null,
-      not: false,
-      value: null,
-    };
+    const element = ast.createDefaultAttributeExpressionNot();
 
     if (
       state.tryConsume(
@@ -1797,14 +1590,7 @@ const defaultAttributeExpressionNot = rule(
 const defineAliasStatement = rule(
   sequence(tokens.DEFINE, tokens.ALIAS),
   (state: ParserState): ast.DefineAliasStatement => {
-    const element: ast.DefineAliasStatement = {
-      kind: ast.SyntaxKind.DefineAliasStatement,
-      container: null,
-      name: null,
-      nameToken: null,
-      attributes: [],
-      xDefine: false,
-    };
+    const element = ast.createDefineAliasStatement();
 
     const defineToken = state.consume(
       element,
@@ -1862,16 +1648,7 @@ const defineAliasStatement = rule(
 const defineOrdinalStatement = rule(
   sequence(tokens.DEFINE, tokens.ORDINAL),
   (state: ParserState): ast.DefineOrdinalStatement => {
-    const element: ast.DefineOrdinalStatement = {
-      kind: ast.SyntaxKind.DefineOrdinalStatement,
-      container: null,
-      name: null,
-      nameToken: null,
-      attributes: [],
-      ordinalValues: null,
-      precision: null,
-      xDefine: false,
-    };
+    const element = ast.createDefineOrdinalStatement();
 
     const defineToken = state.consume(
       element,
@@ -1974,11 +1751,7 @@ const defineOrdinalStatement = rule(
 const ordinalValueList = rule(
   () => ordinalValue.first(),
   (state: ParserState): ast.OrdinalValueList => {
-    const element: ast.OrdinalValueList = {
-      kind: ast.SyntaxKind.OrdinalValueList,
-      container: null,
-      members: [],
-    };
+    const element = ast.createOrdinalValueList();
 
     const lhs = ordinalValue.rule(state);
     lhs && element.members.push(lhs);
@@ -2002,13 +1775,7 @@ const ordinalValueList = rule(
 const ordinalValue = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.OrdinalValue => {
-    const element: ast.OrdinalValue = {
-      kind: ast.SyntaxKind.OrdinalValue,
-      container: null,
-      name: null,
-      nameToken: null,
-      value: null,
-    };
+    const element = ast.createOrdinalValue();
 
     const idToken = state.consume(
       element,
@@ -2043,12 +1810,7 @@ const ordinalValue = rule(
 const defineStructureStatement = rule(
   sequence(tokens.DEFINE, tokens.STRUCTURE),
   (state: ParserState): ast.DefineStructureStatement => {
-    const element: ast.DefineStructureStatement = {
-      kind: ast.SyntaxKind.DefineStructureStatement,
-      container: null,
-      xDefine: false,
-      items: [],
-    };
+    const element = ast.createDefineStructureStatement();
 
     const defineToken = state.consume(
       element,
@@ -2094,11 +1856,7 @@ const defineStructureStatement = rule(
 const delayStatement = rule(
   sequence(tokens.DELAY),
   (state: ParserState): ast.DelayStatement => {
-    const element: ast.DelayStatement = {
-      kind: ast.SyntaxKind.DelayStatement,
-      container: null,
-      delay: null,
-    };
+    const element = ast.createDelayStatement();
 
     state.consume(element, CstNodeKind.DelayStatement_DELAY, tokens.DELAY);
     state.consume(
@@ -2125,12 +1883,7 @@ const delayStatement = rule(
 const deleteStatement = rule(
   sequence(tokens.DELETE),
   (state: ParserState): ast.DeleteStatement => {
-    const element: ast.DeleteStatement = {
-      kind: ast.SyntaxKind.DeleteStatement,
-      container: null,
-      file: null,
-      key: null,
-    };
+    const element = ast.createDeleteStatement();
 
     state.consume(element, CstNodeKind.DeleteStatement_DELETE, tokens.DELETE);
     state.consume(element, CstNodeKind.DeleteStatement_FILE, tokens.FILE);
@@ -2176,11 +1929,7 @@ const deleteStatement = rule(
 const detachStatement = rule(
   sequence(tokens.DETACH),
   (state: ParserState): ast.DetachStatement => {
-    const element: ast.DetachStatement = {
-      kind: ast.SyntaxKind.DetachStatement,
-      container: null,
-      reference: null,
-    };
+    const element = ast.createDetachStatement();
 
     state.consume(element, CstNodeKind.DetachStatement_DETACH, tokens.DETACH);
     state.consume(element, CstNodeKind.DetachStatement_THREAD, tokens.THREAD);
@@ -2208,14 +1957,7 @@ const detachStatement = rule(
 const displayStatement = rule(
   sequence(tokens.DISPLAY),
   (state: ParserState): ast.DisplayStatement => {
-    const element: ast.DisplayStatement = {
-      kind: ast.SyntaxKind.DisplayStatement,
-      container: null,
-      expression: null,
-      reply: null,
-      rout: [],
-      desc: [],
-    };
+    const element = ast.createDisplayStatement();
 
     state.consume(
       element,
@@ -2366,17 +2108,7 @@ const displayStatement = rule(
 const doStatement = rule(
   sequence(tokens.DO),
   (state: ParserState): ast.DoStatement => {
-    const element: ast.DoStatement = {
-      kind: ast.SyntaxKind.DoStatement,
-      container: null,
-      doToken: null,
-      doType2: null,
-      doType3: null,
-      doType4: false,
-      statements: [],
-      end: null,
-      skip: false,
-    };
+    const element = ast.createDoStatement();
 
     const doToken = state.consume(
       element,
@@ -2435,12 +2167,7 @@ const doType2 = orRule<ast.DoType2>(
 const doWhile = rule(
   sequence(tokens.WHILE),
   (state: ParserState): ast.DoWhile => {
-    const element: ast.DoWhile = {
-      kind: ast.SyntaxKind.DoWhile,
-      container: null,
-      while: null,
-      until: null,
-    };
+    const element = ast.createDoWhile();
 
     state.consume(element, CstNodeKind.DoWhile_WHILE, tokens.WHILE);
     state.consume(
@@ -2477,12 +2204,7 @@ const doWhile = rule(
 const doUntil = rule(
   sequence(tokens.UNTIL),
   (state: ParserState): ast.DoUntil => {
-    const element: ast.DoUntil = {
-      kind: ast.SyntaxKind.DoUntil,
-      container: null,
-      until: null,
-      while: null,
-    };
+    const element = ast.createDoUntil();
 
     state.consume(element, CstNodeKind.DoUntil_UNTIL, tokens.UNTIL);
     state.consume(
@@ -2519,12 +2241,7 @@ const doUntil = rule(
 const doType3 = rule(
   () => memberCall.first(),
   (state: ParserState): ast.DoType3 => {
-    const element: ast.DoType3 = {
-      kind: ast.SyntaxKind.DoType3,
-      container: null,
-      variable: null,
-      specifications: [],
-    };
+    const element = ast.createDoType3();
 
     element.variable = memberCall.rule(state);
     state.consume(element, CstNodeKind.DoType3_Equals, tokens.Equals);
@@ -2546,17 +2263,7 @@ const doType3 = rule(
 const doSpecification = rule(
   () => expression.first(),
   (state: ParserState): ast.DoSpecification => {
-    const element: ast.DoSpecification = {
-      kind: ast.SyntaxKind.DoSpecification,
-      container: null,
-      expression: null,
-      upthru: null,
-      downthru: null,
-      repeat: null,
-      whileOrUntil: null,
-      to: null,
-      by: null,
-    };
+    const element = ast.createDoSpecification();
 
     element.expression = expression.rule(state);
 
@@ -2632,11 +2339,7 @@ const doSpecification = rule(
 const execStatement = rule(
   sequence(tokens.EXEC),
   (state: ParserState): ast.ExecStatement => {
-    const element: ast.ExecStatement = {
-      kind: ast.SyntaxKind.ExecStatement,
-      container: null,
-      query: null,
-    };
+    const element = ast.createExecStatement();
 
     state.consume(element, CstNodeKind.ExecStatement_EXEC, tokens.EXEC);
     const queryToken = state.consume(
@@ -2660,11 +2363,7 @@ const execStatement = rule(
 const exitStatement = rule(
   sequence(tokens.EXIT),
   (state: ParserState): ast.ExitStatement => {
-    const element: ast.ExitStatement = {
-      kind: ast.SyntaxKind.ExitStatement,
-      container: null,
-    };
-
+    const element = ast.createExitStatement();
     state.consume(element, CstNodeKind.ExitStatement_EXIT, tokens.EXIT);
     state.consume(
       element,
@@ -2679,11 +2378,7 @@ const exitStatement = rule(
 const fetchStatement = rule(
   sequence(tokens.FETCH),
   (state: ParserState): ast.FetchStatement => {
-    const element: ast.FetchStatement = {
-      kind: ast.SyntaxKind.FetchStatement,
-      container: null,
-      entries: [],
-    };
+    const element = ast.createFetchStatement();
 
     state.consume(element, CstNodeKind.FetchStatement_FETCH, tokens.FETCH);
     const lhs = fetchEntry.rule(state);
@@ -2711,13 +2406,7 @@ const fetchStatement = rule(
 const fetchEntry = rule(
   () => referenceItem.first(),
   (state: ParserState): ast.FetchEntry => {
-    const element: ast.FetchEntry = {
-      kind: ast.SyntaxKind.FetchEntry,
-      container: null,
-      entry: null,
-      set: null,
-      title: null,
-    };
+    const element = ast.createFetchEntry();
 
     element.entry = referenceItem.rule(state);
 
@@ -2758,11 +2447,7 @@ const fetchEntry = rule(
 const flushStatement = rule(
   sequence(tokens.FLUSH),
   (state: ParserState): ast.FlushStatement => {
-    const element: ast.FlushStatement = {
-      kind: ast.SyntaxKind.FlushStatement,
-      container: null,
-      file: null,
-    };
+    const element = ast.createFlushStatement();
 
     state.consume(element, CstNodeKind.FlushStatement_FLUSH, tokens.FLUSH);
     state.consume(element, CstNodeKind.FlushStatement_FILE, tokens.FILE);
@@ -2802,11 +2487,7 @@ const flushStatement = rule(
 const formatStatement = rule(
   sequence(tokens.FORMAT),
   (state: ParserState): ast.FormatStatement => {
-    const element: ast.FormatStatement = {
-      kind: ast.SyntaxKind.FormatStatement,
-      container: null,
-      list: null,
-    };
+    const element = ast.createFormatStatement();
 
     state.consume(element, CstNodeKind.FormatStatement_FORMAT, tokens.FORMAT);
     state.consume(
@@ -2833,11 +2514,7 @@ const formatStatement = rule(
 const formatList = rule(
   () => formatListItem.first(),
   (state: ParserState): ast.FormatList => {
-    const element: ast.FormatList = {
-      kind: ast.SyntaxKind.FormatList,
-      container: null,
-      items: [],
-    };
+    const element = ast.createFormatList();
 
     const lhs = formatListItem.rule(state);
     lhs && element.items.push(lhs);
@@ -2862,13 +2539,7 @@ const formatListItem = rule(
     sequence(tokens.OpenParen),
   ),
   (state: ParserState): ast.FormatListItem => {
-    const element: ast.FormatListItem = {
-      kind: ast.SyntaxKind.FormatListItem,
-      container: null,
-      level: null,
-      item: null,
-      list: null,
-    };
+    const element = ast.createFormatListItem();
 
     // Optional level
     if (state.canConsumeFirst(formatListItemLevel.first())) {
@@ -2902,11 +2573,7 @@ const formatListItem = rule(
 const formatListItemLevel = rule(
   choice(sequence(tokens.NUMBER), sequence(tokens.OpenParen)),
   (state: ParserState): ast.FormatListItemLevel => {
-    const element: ast.FormatListItemLevel = {
-      kind: ast.SyntaxKind.FormatListItemLevel,
-      container: null,
-      level: null,
-    };
+    const element = ast.createFormatListItemLevel();
 
     if (state.canConsume(tokens.NUMBER)) {
       const levelToken = state.consume(
@@ -2961,11 +2628,7 @@ const formatItem = orRule<ast.FormatItem>(
 const AFormatItem = rule(
   sequence(tokens.A),
   (state: ParserState): ast.AFormatItem => {
-    const element: ast.AFormatItem = {
-      kind: ast.SyntaxKind.AFormatItem,
-      container: null,
-      fieldWidth: null,
-    };
+    const element = ast.createAFormatItem();
 
     state.consume(element, CstNodeKind.AFormatItem_A, tokens.A);
 
@@ -2991,11 +2654,7 @@ const AFormatItem = rule(
 const BFormatItem = rule(
   sequence(tokens.B),
   (state: ParserState): ast.BFormatItem => {
-    const element: ast.BFormatItem = {
-      kind: ast.SyntaxKind.BFormatItem,
-      container: null,
-      fieldWidth: null,
-    };
+    const element = ast.createBFormatItem();
 
     state.consume(element, CstNodeKind.BFormatItem_B, tokens.B);
 
@@ -3021,11 +2680,7 @@ const BFormatItem = rule(
 const CFormatItem = rule(
   sequence(tokens.C),
   (state: ParserState): ast.CFormatItem => {
-    const element: ast.CFormatItem = {
-      kind: ast.SyntaxKind.CFormatItem,
-      container: null,
-      item: null,
-    };
+    const element = ast.createCFormatItem();
 
     state.consume(element, CstNodeKind.CFormatItem_C, tokens.C);
     state.consume(element, CstNodeKind.CFormatItem_OpenParen, tokens.OpenParen);
@@ -3054,13 +2709,7 @@ const CFormatItem = rule(
 const FFormatItem = rule(
   sequence(tokens.F),
   (state: ParserState): ast.FFormatItem => {
-    const element: ast.FFormatItem = {
-      kind: ast.SyntaxKind.FFormatItem,
-      container: null,
-      fieldWidth: null,
-      fractionalDigits: null,
-      scalingFactor: null,
-    };
+    const element = ast.createFFormatItem();
 
     state.consume(element, CstNodeKind.FFormatItem_F, tokens.F);
     state.consume(element, CstNodeKind.FFormatItem_OpenParen, tokens.OpenParen);
@@ -3100,13 +2749,7 @@ const FFormatItem = rule(
 const EFormatItem = rule(
   sequence(tokens.E),
   (state: ParserState): ast.EFormatItem => {
-    const element: ast.EFormatItem = {
-      kind: ast.SyntaxKind.EFormatItem,
-      container: null,
-      fieldWidth: null,
-      fractionalDigits: null,
-      significantDigits: null,
-    };
+    const element = ast.createEFormatItem();
 
     state.consume(element, CstNodeKind.EFormatItem_E, tokens.E);
     state.consume(element, CstNodeKind.EFormatItem_OpenParen, tokens.OpenParen);
@@ -3133,11 +2776,7 @@ const EFormatItem = rule(
 const PFormatItem = rule(
   sequence(tokens.P),
   (state: ParserState): ast.PFormatItem => {
-    const element: ast.PFormatItem = {
-      kind: ast.SyntaxKind.PFormatItem,
-      container: null,
-      specification: null,
-    };
+    const element = ast.createPFormatItem();
 
     state.consume(element, CstNodeKind.PFormatItem_P, tokens.P);
     const specToken = state.consume(
@@ -3156,11 +2795,7 @@ const PFormatItem = rule(
 const columnFormatItem = rule(
   sequence(tokens.COLUMN),
   (state: ParserState): ast.ColumnFormatItem => {
-    const element: ast.ColumnFormatItem = {
-      kind: ast.SyntaxKind.ColumnFormatItem,
-      container: null,
-      characterPosition: null,
-    };
+    const element = ast.createColumnFormatItem();
 
     state.consume(element, CstNodeKind.ColumnFormatItem_COLUMN, tokens.COLUMN);
     state.consume(
@@ -3182,11 +2817,7 @@ const columnFormatItem = rule(
 const GFormatItem = rule(
   sequence(tokens.G),
   (state: ParserState): ast.GFormatItem => {
-    const element: ast.GFormatItem = {
-      kind: ast.SyntaxKind.GFormatItem,
-      container: null,
-      fieldWidth: null,
-    };
+    const element = ast.createGFormatItem();
 
     state.consume(element, CstNodeKind.GFormatItem_G, tokens.G);
 
@@ -3212,10 +2843,7 @@ const GFormatItem = rule(
 const LFormatItem = rule(
   sequence(tokens.L),
   (state: ParserState): ast.LFormatItem => {
-    const element: ast.LFormatItem = {
-      kind: ast.SyntaxKind.LFormatItem,
-      container: null,
-    };
+    const element = ast.createLFormatItem();
 
     state.consume(element, CstNodeKind.LFormatItem_L, tokens.L);
 
@@ -3226,11 +2854,7 @@ const LFormatItem = rule(
 const lineFormatItem = rule(
   sequence(tokens.LINE),
   (state: ParserState): ast.LineFormatItem => {
-    const element: ast.LineFormatItem = {
-      kind: ast.SyntaxKind.LineFormatItem,
-      container: null,
-      lineNumber: null,
-    };
+    const element = ast.createLineFormatItem();
 
     state.consume(element, CstNodeKind.LineFormatItem_LINE, tokens.LINE);
     state.consume(
@@ -3252,10 +2876,7 @@ const lineFormatItem = rule(
 const pageFormatItem = rule(
   sequence(tokens.PAGE),
   (state: ParserState): ast.PageFormatItem => {
-    const element: ast.PageFormatItem = {
-      kind: ast.SyntaxKind.PageFormatItem,
-      container: null,
-    };
+    const element = ast.createPageFormatItem();
 
     state.consume(element, CstNodeKind.PageFormatItem_PAGE, tokens.PAGE);
 
@@ -3266,11 +2887,7 @@ const pageFormatItem = rule(
 const RFormatItem = rule(
   sequence(tokens.R),
   (state: ParserState): ast.RFormatItem => {
-    const element: ast.RFormatItem = {
-      kind: ast.SyntaxKind.RFormatItem,
-      container: null,
-      labelReference: null,
-    };
+    const element = ast.createRFormatItem();
 
     state.consume(element, CstNodeKind.RFormatItem_R, tokens.R);
     state.consume(element, CstNodeKind.RFormatItem_OpenParen, tokens.OpenParen);
@@ -3295,11 +2912,7 @@ const RFormatItem = rule(
 const skipFormatItem = rule(
   sequence(tokens.SKIP),
   (state: ParserState): ast.SkipFormatItem => {
-    const element: ast.SkipFormatItem = {
-      kind: ast.SyntaxKind.SkipFormatItem,
-      container: null,
-      skip: null,
-    };
+    const element = ast.createSkipFormatItem();
 
     state.consume(element, CstNodeKind.SkipFormatItem_SKIP, tokens.SKIP);
 
@@ -3325,10 +2938,7 @@ const skipFormatItem = rule(
 const VFormatItem = rule(
   sequence(tokens.V),
   (state: ParserState): ast.VFormatItem => {
-    const element: ast.VFormatItem = {
-      kind: ast.SyntaxKind.VFormatItem,
-      container: null,
-    };
+    const element = ast.createVFormatItem();
 
     state.consume(element, CstNodeKind.VFormatItem_V, tokens.V);
 
@@ -3339,12 +2949,7 @@ const VFormatItem = rule(
 const XFormatItem = rule(
   sequence(tokens.X),
   (state: ParserState): ast.XFormatItem => {
-    const element: ast.XFormatItem = {
-      kind: ast.SyntaxKind.XFormatItem,
-      container: null,
-      width: null,
-    };
-
+    const element = ast.createXFormatItem();
     state.consume(element, CstNodeKind.XFormatItem_X, tokens.X);
     state.consume(element, CstNodeKind.XFormatItem_OpenParen, tokens.OpenParen);
     element.width = expression.rule(state);
@@ -3353,7 +2958,6 @@ const XFormatItem = rule(
       CstNodeKind.XFormatItem_CloseParen,
       tokens.CloseParen,
     );
-
     return element;
   },
 );
@@ -3361,11 +2965,7 @@ const XFormatItem = rule(
 const freeStatement = rule(
   sequence(tokens.FREE),
   (state: ParserState): ast.FreeStatement => {
-    const element: ast.FreeStatement = {
-      kind: ast.SyntaxKind.FreeStatement,
-      container: null,
-      references: [],
-    };
+    const element = ast.createFreeStatement();
 
     state.consume(element, CstNodeKind.FreeStatement_FREE, tokens.FREE);
     const lhs = locatorCall.rule(state);
@@ -3393,11 +2993,7 @@ const freeStatement = rule(
 const getStatement = rule(
   sequence(tokens.GET),
   (state: ParserState): ast.GetStatement => {
-    let element: ast.GetStatement = {
-      kind: ast.SyntaxKind.GetFileStatement,
-      container: null,
-      specifications: [],
-    } as ast.GetFileStatement;
+    let element = ast.createGetFileStatement();
 
     state.consume(element, CstNodeKind.GetStatement_GET, tokens.GET);
 
@@ -3467,17 +3063,11 @@ const getStatement = rule(
 const getFile = rule(
   sequence(tokens.FILE),
   (state: ParserState): ast.GetFile => {
-    const element: ast.GetFile = {
-      kind: ast.SyntaxKind.GetFile,
-      container: null,
-      file: null,
-    };
-
+    const element = ast.createGetFile();
     state.consume(element, CstNodeKind.GetFile_FILE, tokens.FILE);
     state.consume(element, CstNodeKind.GetFile_OpenParen, tokens.OpenParen);
     element.file = expression.rule(state);
     state.consume(element, CstNodeKind.GetFile_CloseParen, tokens.CloseParen);
-
     return element;
   },
 );
@@ -3485,11 +3075,7 @@ const getFile = rule(
 const getCopy = rule(
   sequence(tokens.COPY),
   (state: ParserState): ast.GetCopy => {
-    const element: ast.GetCopy = {
-      kind: ast.SyntaxKind.GetCopy,
-      container: null,
-      copyReference: null,
-    };
+    const element = ast.createGetCopy();
 
     state.consume(element, CstNodeKind.GetCopy_COPY, tokens.COPY);
 
@@ -3514,11 +3100,7 @@ const getCopy = rule(
 const getSkip = rule(
   sequence(tokens.SKIP),
   (state: ParserState): ast.GetSkip => {
-    const element: ast.GetSkip = {
-      kind: ast.SyntaxKind.GetSkip,
-      container: null,
-      skipExpression: null,
-    };
+    const element = ast.createGetSkip();
 
     state.consume(element, CstNodeKind.GetSkip_SKIP, tokens.SKIP);
 
@@ -3536,11 +3118,7 @@ const getSkip = rule(
 const goToStatement = rule(
   choice(sequence(tokens.GO), sequence(tokens.GOTO)),
   (state: ParserState): ast.GoToStatement => {
-    const element: ast.GoToStatement = {
-      kind: ast.SyntaxKind.GoToStatement,
-      container: null,
-      label: null,
-    };
+    const element = ast.createGoToStatement();
 
     if (state.canConsume(tokens.GO)) {
       state.consume(element, CstNodeKind.GoToStatement_GO, tokens.GO);
@@ -3568,11 +3146,7 @@ const goToStatement = rule(
 const genericAttribute = rule(
   sequence(tokens.GENERIC),
   (state: ParserState): ast.GenericAttribute => {
-    const element: ast.GenericAttribute = {
-      kind: ast.SyntaxKind.GenericAttribute,
-      container: null,
-      references: [],
-    };
+    const element = ast.createGenericAttribute();
 
     state.consume(
       element,
@@ -3680,13 +3254,7 @@ function performGenericAttributeLookahead(
 const genericReference = rule(
   () => referenceItem.first(),
   (state: ParserState): ast.GenericReference => {
-    const element: ast.GenericReference = {
-      kind: ast.SyntaxKind.GenericReference,
-      container: null,
-      descriptors: [],
-      otherwise: false,
-      entry: null,
-    };
+    const element = ast.createGenericReference();
 
     element.entry = referenceItem.rule(state);
 
@@ -3726,11 +3294,7 @@ const genericReference = rule(
 const genericDescriptor = rule(
   () => declarationAttribute.first(),
   (state: ParserState): ast.GenericDescriptor => {
-    const element: ast.GenericDescriptor = {
-      kind: ast.SyntaxKind.GenericDescriptor,
-      container: null,
-      attributes: [],
-    };
+    const element = ast.createGenericDescriptor();
 
     const lhs = declarationAttribute.rule(state);
     lhs && element.attributes.push(lhs);
@@ -3754,15 +3318,7 @@ const genericDescriptor = rule(
 const ifStatement = rule(
   sequence(tokens.IF),
   (state: ParserState): ast.IfStatement => {
-    const element: ast.IfStatement = {
-      kind: ast.SyntaxKind.IfStatement,
-      container: null,
-      expression: null,
-      elseRange: null,
-      else: null,
-      unitRange: null,
-      unit: null,
-    };
+    const element = ast.createIfStatement();
 
     state.consume(element, CstNodeKind.IfStatement_IF, tokens.IF);
     element.expression = expression.rule(state);
@@ -3780,11 +3336,7 @@ const ifStatement = rule(
 const indForAttribute = rule(
   sequence(tokens.INDFOR),
   (state: ParserState): ast.IndForAttribute => {
-    const element: ast.IndForAttribute = {
-      kind: ast.SyntaxKind.IndForAttribute,
-      container: null,
-      reference: null,
-    };
+    const element = ast.createIndForAttribute();
 
     state.consume(element, CstNodeKind.IndForAttribute_INDFOR, tokens.INDFOR);
     element.reference = locatorCall.rule(state);
@@ -3796,11 +3348,7 @@ const indForAttribute = rule(
 const iterateStatement = rule(
   sequence(tokens.ITERATE),
   (state: ParserState): ast.IterateStatement => {
-    const element: ast.IterateStatement = {
-      kind: ast.SyntaxKind.IterateStatement,
-      container: null,
-      label: null,
-    };
+    const element = ast.createIterateStatement();
 
     state.consume(
       element,
@@ -3825,12 +3373,7 @@ const iterateStatement = rule(
 const leaveStatement = rule(
   sequence(tokens.LEAVE),
   (state: ParserState): ast.LeaveStatement => {
-    const element: ast.LeaveStatement = {
-      kind: ast.SyntaxKind.LeaveStatement,
-      container: null,
-      label: null,
-      leaveToken: null,
-    };
+    const element = ast.createLeaveStatement();
 
     const leaveToken = state.consume(
       element,
@@ -3856,12 +3399,7 @@ const leaveStatement = rule(
 const locateStatement = rule(
   sequence(tokens.LOCATE),
   (state: ParserState): ast.LocateStatement => {
-    const element: ast.LocateStatement = {
-      kind: ast.SyntaxKind.LocateStatement,
-      container: null,
-      variable: null,
-      arguments: [],
-    };
+    const element = ast.createLocateStatement();
 
     state.consume(element, CstNodeKind.LocateStatement_LOCATE, tokens.LOCATE);
     element.variable = locatorCall.rule(state);
@@ -3886,12 +3424,7 @@ const locateStatement = rule(
 const locateStatementOption = rule(
   sequence(tokens.LocateType),
   (state: ParserState): ast.LocateStatementOption => {
-    const element: ast.LocateStatementOption = {
-      kind: ast.SyntaxKind.LocateStatementOption,
-      container: null,
-      type: null,
-      element: null,
-    };
+    const element = ast.createLocateStatementOption();
 
     const typeToken = state.consume(
       element,
@@ -3921,17 +3454,12 @@ const locateStatementOption = rule(
 const nullStatement = rule(
   sequence(tokens.Semicolon),
   (state: ParserState): ast.NullStatement => {
-    const element: ast.NullStatement = {
-      kind: ast.SyntaxKind.NullStatement,
-      container: null,
-    };
-
+    const element = ast.createNullStatement();
     state.consume(
       element,
       CstNodeKind.NullStatement_Semicolon,
       tokens.Semicolon,
     );
-
     return element;
   },
 );
@@ -3939,14 +3467,7 @@ const nullStatement = rule(
 const onStatement = rule(
   sequence(tokens.ON),
   (state: ParserState): ast.OnStatement => {
-    const element: ast.OnStatement = {
-      kind: ast.SyntaxKind.OnStatement,
-      container: null,
-      conditions: [],
-      snap: false,
-      system: false,
-      onUnit: null,
-    };
+    const element = ast.createOnStatement();
 
     state.consume(element, CstNodeKind.OnStatement_ON, tokens.ON);
 
@@ -3996,12 +3517,7 @@ const condition = orRule<ast.Condition>(
 const keywordCondition = rule(
   sequence(tokens.KeywordConditions),
   (state: ParserState): ast.KeywordCondition => {
-    const element: ast.KeywordCondition = {
-      kind: ast.SyntaxKind.KeywordCondition,
-      container: null,
-      keyword: null,
-    };
-
+    const element = ast.createKeywordCondition();
     const token = state.consume(
       element,
       CstNodeKind.KeywordCondition_Keyword,
@@ -4012,7 +3528,6 @@ const keywordCondition = rule(
         token.tokenTypeIdx,
       );
     }
-
     return element;
   },
 );
@@ -4020,11 +3535,7 @@ const keywordCondition = rule(
 const namedCondition = rule(
   sequence(tokens.CONDITION),
   (state: ParserState): ast.NamedCondition => {
-    const element: ast.NamedCondition = {
-      kind: ast.SyntaxKind.NamedCondition,
-      container: null,
-      name: null,
-    };
+    const element = ast.createNamedCondition();
 
     state.consume(
       element,
@@ -4059,12 +3570,7 @@ const namedCondition = rule(
 const fileReferenceCondition = rule(
   sequence(tokens.FileReferenceConditions),
   (state: ParserState): ast.FileReferenceCondition => {
-    const element: ast.FileReferenceCondition = {
-      kind: ast.SyntaxKind.FileReferenceCondition,
-      container: null,
-      keyword: null,
-      fileReference: null,
-    };
+    const element = ast.createFileReferenceCondition();
 
     const keywordToken = state.consume(
       element,
@@ -4100,11 +3606,7 @@ const fileReferenceCondition = rule(
 const openStatement = rule(
   sequence(tokens.OPEN),
   (state: ParserState): ast.OpenStatement => {
-    const element: ast.OpenStatement = {
-      kind: ast.SyntaxKind.OpenStatement,
-      container: null,
-      options: [],
-    };
+    const element = ast.createOpenStatement();
 
     state.consume(element, CstNodeKind.OpenStatement_OPEN, tokens.OPEN);
 
@@ -4133,11 +3635,7 @@ const openStatement = rule(
 const openOptionsGroup = rule(
   () => openOption.first(),
   (state: ParserState): ast.OpenOptionsGroup => {
-    const element: ast.OpenOptionsGroup = {
-      kind: ast.SyntaxKind.OpenOptionsGroup,
-      container: null,
-      options: [],
-    };
+    const element = ast.createOpenOptionsGroup();
 
     // Parse at least one open option
     const lhs = openOption.rule(state);
@@ -4163,12 +3661,7 @@ const openOption = rule(
     // THIS IS NOT THE CASE
     // It can appear on its own
     // Therefore, we simply combine all open options into one single rule
-    const element: ast.OpenOption = {
-      kind: ast.SyntaxKind.OpenOption,
-      container: null,
-      option: null,
-      expression: null,
-    };
+    const element = ast.createOpenOption();
 
     const optionToken = state.consume(
       element,
@@ -4206,11 +3699,7 @@ const openOption = rule(
 const procincDirective = rule(
   sequence(tokens.PROCINC),
   (state: ParserState): ast.ProcincDirective => {
-    const element: ast.ProcincDirective = {
-      kind: ast.SyntaxKind.ProcincDirective,
-      container: null,
-      datasetName: null,
-    };
+    const element = ast.createProcincDirective();
 
     state.consume(
       element,
@@ -4241,11 +3730,7 @@ const putStatement = rule(
   sequence(tokens.PUT),
   (state: ParserState): ast.PutStatement => {
     // Start with file statement as default
-    let element: ast.PutStatement = {
-      kind: ast.SyntaxKind.PutFileStatement,
-      container: null,
-      items: [],
-    } as ast.PutFileStatement;
+    let element = ast.createPutFileStatement();
 
     state.consume(element, CstNodeKind.PutStatement_PUT, tokens.PUT);
 
@@ -4308,12 +3793,7 @@ const putStatement = rule(
 const putItem = rule(
   sequence(tokens.PutAttribute),
   (state: ParserState): ast.PutItem => {
-    const element: ast.PutItem = {
-      kind: ast.SyntaxKind.PutItem,
-      container: null,
-      attribute: null,
-      expression: null,
-    };
+    const element = ast.createPutItem();
 
     const attributeToken = state.consume(
       element,
@@ -4346,16 +3826,7 @@ const dataSpecificationOptions = rule(
     sequence(tokens.EDIT),
   ),
   (state: ParserState): ast.DataSpecificationOptions => {
-    const element: ast.DataSpecificationOptions = {
-      kind: ast.SyntaxKind.DataSpecificationOptions,
-      container: null,
-      dataList: null,
-      edit: false,
-      dataLists: [],
-      formatLists: [],
-      data: false,
-      dataListItems: [],
-    };
+    const element = ast.createDataSpecificationOptions();
 
     if (state.canConsume(tokens.LIST) || state.canConsume(tokens.OpenParen)) {
       // LIST variant (LIST is optional)
@@ -4462,12 +3933,7 @@ const dataSpecificationOptions = rule(
 const dataSpecificationDataList = rule(
   () => dataSpecificationDataListItem.first(),
   (state: ParserState): ast.DataSpecificationDataList => {
-    const element: ast.DataSpecificationDataList = {
-      kind: ast.SyntaxKind.DataSpecificationDataList,
-      container: null,
-      items: [],
-    };
-
+    const element = ast.createDataSpecificationDataList();
     const lhs = dataSpecificationDataListItem.rule(state);
     lhs && element.items.push(lhs);
     const { inc } = state.createLoopContext();
@@ -4482,7 +3948,6 @@ const dataSpecificationDataList = rule(
       const rhs = dataSpecificationDataListItem.rule(state);
       rhs && element.items.push(rhs);
     }
-
     return element;
   },
 );
@@ -4490,11 +3955,7 @@ const dataSpecificationDataList = rule(
 const dataSpecificationDataListItem = rule(
   () => expression.first(),
   (state: ParserState): ast.DataSpecificationDataListItem => {
-    const element: ast.DataSpecificationDataListItem = {
-      kind: ast.SyntaxKind.DataSpecificationDataListItem,
-      container: null,
-      value: null,
-    };
+    const element = ast.createDataSpecificationDataListItem();
 
     // TODO: research, in some example, this can be found:
     // ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
@@ -4508,12 +3969,7 @@ const dataSpecificationDataListItem = rule(
 const qualifyStatement = rule(
   sequence(tokens.QUALIFY),
   (state: ParserState): ast.QualifyStatement => {
-    const element: ast.QualifyStatement = {
-      kind: ast.SyntaxKind.QualifyStatement,
-      container: null,
-      statements: [],
-      end: null,
-    };
+    const element = ast.createQualifyStatement();
 
     state.consume(
       element,
@@ -4547,11 +4003,7 @@ const qualifyStatement = rule(
 const readStatement = rule(
   sequence(tokens.READ),
   (state: ParserState): ast.ReadStatement => {
-    const element: ast.ReadStatement = {
-      kind: ast.SyntaxKind.ReadStatement,
-      container: null,
-      arguments: [],
-    };
+    const element = ast.createReadStatement();
 
     state.consume(element, CstNodeKind.ReadStatement_READ, tokens.READ);
     const { inc } = state.createLoopContext();
@@ -4574,12 +4026,7 @@ const readStatement = rule(
 const readStatementOption = rule(
   sequence(tokens.ReadStatementType),
   (state: ParserState): ast.ReadStatementOption => {
-    const element: ast.ReadStatementOption = {
-      kind: ast.SyntaxKind.ReadStatementOption,
-      container: null,
-      type: null,
-      value: null,
-    };
+    const element = ast.createReadStatementOption();
 
     const typeToken = state.consume(
       element,
@@ -4611,11 +4058,7 @@ const readStatementOption = rule(
 const reinitStatement = rule(
   sequence(tokens.REINIT),
   (state: ParserState): ast.ReinitStatement => {
-    const element: ast.ReinitStatement = {
-      kind: ast.SyntaxKind.ReinitStatement,
-      container: null,
-      reference: null,
-    };
+    const element = ast.createReinitStatement();
 
     state.consume(element, CstNodeKind.ReinitStatement_REINIT, tokens.REINIT);
     element.reference = locatorCall.rule(state);
@@ -4632,12 +4075,7 @@ const reinitStatement = rule(
 const releaseStatement = rule(
   sequence(tokens.RELEASE),
   (state: ParserState): ast.ReleaseStatement => {
-    const element: ast.ReleaseStatement = {
-      kind: ast.SyntaxKind.ReleaseStatement,
-      container: null,
-      star: false,
-      references: [],
-    };
+    const element = ast.createReleaseStatement();
 
     state.consume(
       element,
@@ -4692,10 +4130,7 @@ const releaseStatement = rule(
 const resignalStatement = rule(
   sequence(tokens.RESIGNAL),
   (state: ParserState): ast.ResignalStatement => {
-    const element: ast.ResignalStatement = {
-      kind: ast.SyntaxKind.ResignalStatement,
-      container: null,
-    };
+    const element = ast.createResignalStatement();
 
     state.consume(
       element,
@@ -4715,12 +4150,7 @@ const resignalStatement = rule(
 const returnStatement = rule(
   sequence(tokens.RETURN),
   (state: ParserState): ast.ReturnStatement => {
-    const element: ast.ReturnStatement = {
-      kind: ast.SyntaxKind.ReturnStatement,
-      container: null,
-      expression: null,
-      returnToken: null,
-    };
+    const element = ast.createReturnStatement();
 
     element.returnToken = state.consume(
       element,
@@ -4757,11 +4187,7 @@ const returnStatement = rule(
 const revertStatement = rule(
   sequence(tokens.REVERT),
   (state: ParserState): ast.RevertStatement => {
-    const element: ast.RevertStatement = {
-      kind: ast.SyntaxKind.RevertStatement,
-      container: null,
-      conditions: [],
-    };
+    const element = ast.createRevertStatement();
 
     state.consume(element, CstNodeKind.RevertStatement_REVERT, tokens.REVERT);
 
@@ -4792,11 +4218,7 @@ const revertStatement = rule(
 const rewriteStatement = rule(
   sequence(tokens.REWRITE),
   (state: ParserState): ast.RewriteStatement => {
-    const element: ast.RewriteStatement = {
-      kind: ast.SyntaxKind.RewriteStatement,
-      container: null,
-      arguments: [],
-    };
+    const element = ast.createRewriteStatement();
 
     state.consume(
       element,
@@ -4825,12 +4247,7 @@ const rewriteStatement = rule(
 const rewriteStatementOption = rule(
   sequence(tokens.RewriteStatementType),
   (state: ParserState): ast.RewriteStatementOption => {
-    const element: ast.RewriteStatementOption = {
-      kind: ast.SyntaxKind.RewriteStatementOption,
-      container: null,
-      type: null,
-      value: null,
-    };
+    const element = ast.createRewriteStatementOption();
 
     const typeToken = state.consume(
       element,
@@ -4862,14 +4279,7 @@ const rewriteStatementOption = rule(
 const selectStatement = rule(
   sequence(tokens.SELECT),
   (state: ParserState): ast.SelectStatement => {
-    const element: ast.SelectStatement = {
-      kind: ast.SyntaxKind.SelectStatement,
-      container: null,
-      selectToken: null,
-      cases: [],
-      on: null,
-      end: null,
-    };
+    const element = ast.createSelectStatement();
 
     const selectToken = state.consume(
       element,
@@ -4931,13 +4341,7 @@ const selectStatement = rule(
 const whenStatement = rule(
   sequence(tokens.WHEN),
   (state: ParserState): ast.WhenStatement => {
-    const element: ast.WhenStatement = {
-      kind: ast.SyntaxKind.WhenStatement,
-      container: null,
-      range: null,
-      conditions: [],
-      unit: null,
-    };
+    const element = ast.createWhenStatement();
 
     state.consume(element, CstNodeKind.WhenStatement_WHEN, tokens.WHEN);
     state.consume(
@@ -4974,12 +4378,7 @@ const whenStatement = rule(
 const otherwiseStatement = rule(
   sequence(tokens.OTHERWISE),
   (state: ParserState): ast.OtherwiseStatement => {
-    const element: ast.OtherwiseStatement = {
-      kind: ast.SyntaxKind.OtherwiseStatement,
-      container: null,
-      unit: null,
-      range: null,
-    };
+    const element = ast.createOtherwiseStatement();
 
     state.consume(
       element,
@@ -4995,11 +4394,7 @@ const otherwiseStatement = rule(
 const signalStatement = rule(
   sequence(tokens.SIGNAL),
   (state: ParserState): ast.SignalStatement => {
-    const element: ast.SignalStatement = {
-      kind: ast.SyntaxKind.SignalStatement,
-      container: null,
-      condition: [],
-    };
+    const element = ast.createSignalStatement();
 
     state.consume(element, CstNodeKind.SignalStatement_SIGNAL, tokens.SIGNAL);
     const cond = condition.rule(state);
@@ -5017,10 +4412,7 @@ const signalStatement = rule(
 const stopStatement = rule(
   sequence(tokens.STOP),
   (state: ParserState): ast.StopStatement => {
-    const element: ast.StopStatement = {
-      kind: ast.SyntaxKind.StopStatement,
-      container: null,
-    };
+    const element = ast.createStopStatement();
 
     state.consume(element, CstNodeKind.StopStatement_STOP, tokens.STOP);
     state.consume(
@@ -5036,12 +4428,7 @@ const stopStatement = rule(
 const waitStatement = rule(
   sequence(tokens.WAIT),
   (state: ParserState): ast.WaitStatement => {
-    const element: ast.WaitStatement = {
-      kind: ast.SyntaxKind.WaitStatement,
-      container: null,
-      task: null,
-    };
-
+    const element = ast.createWaitStatement();
     state.consume(element, CstNodeKind.WaitStatement_WAIT, tokens.WAIT);
     state.consume(element, CstNodeKind.WaitStatement_THREAD, tokens.THREAD);
     state.consume(
@@ -5068,11 +4455,7 @@ const waitStatement = rule(
 const writeStatement = rule(
   sequence(tokens.WRITE),
   (state: ParserState): ast.WriteStatement => {
-    const element: ast.WriteStatement = {
-      kind: ast.SyntaxKind.WriteStatement,
-      container: null,
-      arguments: [],
-    };
+    const element = ast.createWriteStatement();
 
     state.consume(element, CstNodeKind.WriteStatement_WRITE, tokens.WRITE);
 
@@ -5096,12 +4479,7 @@ const writeStatement = rule(
 const writeStatementOption = rule(
   sequence(tokens.WriteStatementType),
   (state: ParserState): ast.WriteStatementOption => {
-    const element: ast.WriteStatementOption = {
-      kind: ast.SyntaxKind.WriteStatementOption,
-      container: null,
-      type: null,
-      value: null,
-    };
+    const element = ast.createWriteStatementOption();
 
     const typeToken = state.consume(
       element,
@@ -5133,19 +4511,7 @@ const writeStatementOption = rule(
 const initialAttribute = rule(
   choice(sequence(tokens.INITIAL), sequence(tokens.INITACROSS)),
   (state: ParserState): ast.InitialAttribute => {
-    const element: ast.InitialAttribute = {
-      kind: ast.SyntaxKind.InitialAttribute,
-      container: null,
-      across: false,
-      expressions: [],
-      direct: false,
-      items: [],
-      call: false,
-      procedureCall: null,
-      to: false,
-      content: null,
-      token: null,
-    };
+    const element = ast.createInitialAttribute();
 
     if (state.canConsume(tokens.INITIAL)) {
       const token = state.consume(
@@ -5283,12 +4649,7 @@ const initialAttribute = rule(
 const initialToContent = rule(
   choice(sequence(tokens.Varying), sequence(tokens.CharType)),
   (state: ParserState): ast.InitialToContent => {
-    const element: ast.InitialToContent = {
-      kind: ast.SyntaxKind.InitialToContent,
-      container: null,
-      varying: null,
-      type: null,
-    };
+    const element = ast.createInitialToContent();
 
     // Varying and char tokens can appear in any order
     if (state.canConsume(tokens.Varying)) {
@@ -5351,11 +4712,7 @@ const initialToContent = rule(
 const initAcrossExpression = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.InitAcrossExpression => {
-    const element: ast.InitAcrossExpression = {
-      kind: ast.SyntaxKind.InitAcrossExpression,
-      container: null,
-      expressions: [],
-    };
+    const element = ast.createInitAcrossExpression();
 
     state.consume(
       element,
@@ -5396,17 +4753,12 @@ const initialAttributeItem = orRule<ast.InitialAttributeItem>(
 const initialAttributeItemStar = rule(
   sequence(tokens.Star),
   (state: ParserState): ast.InitialAttributeItemStar => {
-    const element: ast.InitialAttributeItemStar = {
-      kind: ast.SyntaxKind.InitialAttributeItemStar,
-      container: null,
-    };
-
+    const element = ast.createInitialAttributeItemStar();
     state.consume(
       element,
       CstNodeKind.InitialAttributeItemStar_Star,
       tokens.Star,
     );
-
     return element;
   },
 );
@@ -5418,13 +4770,7 @@ const initialAttributeSpecification = rule(
     () => expression.first(),
   ),
   (state: ParserState): ast.InitialAttributeSpecification => {
-    const element: ast.InitialAttributeSpecification = {
-      kind: ast.SyntaxKind.InitialAttributeSpecification,
-      container: null,
-      star: false,
-      item: null,
-      expression: null,
-    };
+    const element = ast.createInitialAttributeSpecification();
 
     if (state.canConsume(tokens.OpenParen, tokens.Star)) {
       // (Star) variant
@@ -5467,11 +4813,7 @@ const initialAttributeSpecificationIteration =
 const initialAttributeSpecificationIterationValue = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.InitialAttributeSpecificationIterationValue => {
-    const element: ast.InitialAttributeSpecificationIterationValue = {
-      kind: ast.SyntaxKind.InitialAttributeSpecificationIterationValue,
-      container: null,
-      items: [],
-    };
+    const element = ast.createInitialAttributeSpecificationIterationValue();
 
     state.consume(
       element,
@@ -5507,12 +4849,7 @@ const initialAttributeSpecificationIterationValue = rule(
 const declareStatement = rule(
   sequence(tokens.DECLARE),
   (state: ParserState): ast.DeclareStatement => {
-    const element: ast.DeclareStatement = {
-      kind: ast.SyntaxKind.DeclareStatement,
-      container: null,
-      items: [],
-      xDeclare: false,
-    };
+    const element = ast.createDeclareStatement();
 
     const declareToken = state.consume(
       element,
@@ -5556,14 +4893,7 @@ const declaredItem = rule(
     sequence(tokens.OpenParen),
   ),
   (state: ParserState): ast.DeclaredItem => {
-    let element: ast.DeclaredItem = {
-      kind: ast.SyntaxKind.DeclaredItem,
-      container: null,
-      level: null,
-      attributes: [],
-      elements: [],
-      levelToken: null,
-    };
+    let element = ast.createDeclaredItem();
 
     // Optional level number
     if (
@@ -5640,12 +4970,7 @@ const declaredItem = rule(
 const declaredVariable = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.DeclaredVariable => {
-    const element: ast.DeclaredVariable = {
-      kind: ast.SyntaxKind.DeclaredVariable,
-      container: null,
-      name: null,
-      nameToken: null,
-    };
+    const element = ast.createDeclaredVariable();
 
     const idToken = state.consume(
       element,
@@ -5707,11 +5032,7 @@ const internalDeclarationAttribute = orRule<ast.DeclarationAttribute>(
 const dateAttribute = rule(
   sequence(tokens.DATE),
   (state: ParserState): ast.DateAttribute => {
-    const element: ast.DateAttribute = {
-      kind: ast.SyntaxKind.DateAttribute,
-      container: null,
-      pattern: null,
-    };
+    const element = ast.createDateAttribute();
 
     state.consume(element, CstNodeKind.DateAttribute_DATE, tokens.DATE);
 
@@ -5744,12 +5065,7 @@ const dateAttribute = rule(
 const definedAttribute = rule(
   sequence(tokens.DEFINED),
   (state: ParserState): ast.DefinedAttribute => {
-    const element: ast.DefinedAttribute = {
-      kind: ast.SyntaxKind.DefinedAttribute,
-      container: null,
-      reference: null,
-      position: null,
-    };
+    const element = ast.createDefinedAttribute();
 
     state.consume(
       element,
@@ -5804,12 +5120,7 @@ const definedAttribute = rule(
 const pictureAttribute = rule(
   choice(sequence(tokens.PICTURE), sequence(tokens.WIDEPIC)),
   (state: ParserState): ast.PictureAttribute => {
-    const element: ast.PictureAttribute = {
-      kind: ast.SyntaxKind.PictureAttribute,
-      container: null,
-      picture: null,
-      pictureToken: null,
-    };
+    const element = ast.createPictureAttribute();
 
     if (state.canConsume(tokens.PICTURE)) {
       element.pictureToken = state.consume(
@@ -5846,11 +5157,7 @@ const pictureAttribute = rule(
 const dimensionsDataAttribute = rule(
   choice(sequence(tokens.DIMENSION), () => dimensions.first()),
   (state: ParserState): ast.DimensionsDataAttribute => {
-    const element: ast.DimensionsDataAttribute = {
-      kind: ast.SyntaxKind.DimensionsDataAttribute,
-      container: null,
-      dimensions: null,
-    };
+    const element = ast.createDimensionsDataAttribute();
 
     // Optional DIMENSION keyword
     state.tryConsume(
@@ -5869,12 +5176,7 @@ const dimensionsDataAttribute = rule(
 const typeAttribute = rule(
   sequence(tokens.TypeOrOrdinal),
   (state: ParserState): ast.TypeAttribute => {
-    const element: ast.TypeAttribute = {
-      kind: ast.SyntaxKind.TypeAttribute,
-      container: null,
-      type: null,
-      typeToken: null,
-    };
+    const element = ast.createTypeAttribute();
 
     // "TYPE" and "ORDINAL" are interchangeable here
     // We need to validate that the "ORDINAL" keyword is used exclusively with ordinal types
@@ -5938,11 +5240,7 @@ const typeAttribute = rule(
 const returnsAttribute = rule(
   sequence(tokens.RETURNS),
   (state: ParserState): ast.ReturnsAttribute => {
-    const element: ast.ReturnsAttribute = {
-      kind: ast.SyntaxKind.ReturnsAttribute,
-      container: null,
-      attrs: [],
-    };
+    const element = ast.createReturnsAttribute();
 
     state.consume(
       element,
@@ -5993,13 +5291,7 @@ const returnsAttribute = rule(
 const computationDataAttribute = rule(
   sequence(tokens.DefaultAttribute),
   (state: ParserState): ast.ComputationDataAttribute => {
-    const element: ast.ComputationDataAttribute = {
-      kind: ast.SyntaxKind.ComputationDataAttribute,
-      typeToken: null,
-      container: null,
-      type: null,
-      dimensions: null,
-    };
+    const element = ast.createComputationDataAttribute();
 
     const token = state.consume(
       element,
@@ -6025,11 +5317,7 @@ const computationDataAttribute = rule(
 const defaultValueAttribute = rule(
   sequence(tokens.VALUE),
   (state: ParserState): ast.DefaultValueAttribute => {
-    const element: ast.DefaultValueAttribute = {
-      kind: ast.SyntaxKind.DefaultValueAttribute,
-      container: null,
-      items: [],
-    };
+    const element = ast.createDefaultValueAttribute();
 
     state.consume(
       element,
@@ -6070,11 +5358,7 @@ const defaultValueAttribute = rule(
 const valueAttribute = rule(
   sequence(tokens.VALUE),
   (state: ParserState): ast.ValueAttribute => {
-    const element: ast.ValueAttribute = {
-      kind: ast.SyntaxKind.ValueAttribute,
-      container: null,
-      value: null,
-    };
+    const element = ast.createValueAttribute();
 
     state.consume(element, CstNodeKind.ValueAttribute_VALUE, tokens.VALUE);
     state.consume(
@@ -6096,11 +5380,7 @@ const valueAttribute = rule(
 const defaultValueAttributeItem = rule(
   () => declarationAttribute.first(),
   (state: ParserState): ast.DefaultValueAttributeItem => {
-    const element: ast.DefaultValueAttributeItem = {
-      kind: ast.SyntaxKind.DefaultValueAttributeItem,
-      container: null,
-      attributes: [],
-    };
+    const element = ast.createDefaultValueAttributeItem();
 
     // Parse at least one declaration attribute
     const lhs = declarationAttribute.rule(state);
@@ -6121,11 +5401,7 @@ const defaultValueAttributeItem = rule(
 const valueListAttribute = rule(
   sequence(tokens.VALUELIST),
   (state: ParserState): ast.ValueListAttribute => {
-    const element: ast.ValueListAttribute = {
-      kind: ast.SyntaxKind.ValueListAttribute,
-      container: null,
-      values: [],
-    };
+    const element = ast.createValueListAttribute();
 
     state.consume(
       element,
@@ -6168,11 +5444,7 @@ const valueListAttribute = rule(
 const valueListFromAttribute = rule(
   sequence(tokens.VALUELISTFROM),
   (state: ParserState): ast.ValueListFromAttribute => {
-    const element: ast.ValueListFromAttribute = {
-      kind: ast.SyntaxKind.ValueListFromAttribute,
-      container: null,
-      from: null,
-    };
+    const element = ast.createValueListFromAttribute();
 
     state.consume(
       element,
@@ -6188,11 +5460,7 @@ const valueListFromAttribute = rule(
 const valueRangeAttribute = rule(
   sequence(tokens.VALUERANGE),
   (state: ParserState): ast.ValueRangeAttribute => {
-    const element: ast.ValueRangeAttribute = {
-      kind: ast.SyntaxKind.ValueRangeAttribute,
-      container: null,
-      values: [],
-    };
+    const element = ast.createValueRangeAttribute();
 
     state.consume(
       element,
@@ -6235,11 +5503,7 @@ const valueRangeAttribute = rule(
 const likeAttribute = rule(
   sequence(tokens.LIKE),
   (state: ParserState): ast.LikeAttribute => {
-    const element: ast.LikeAttribute = {
-      kind: ast.SyntaxKind.LikeAttribute,
-      container: null,
-      reference: null,
-    };
+    const element = ast.createLikeAttribute();
 
     state.consume(element, CstNodeKind.LikeAttribute_LIKE, tokens.LIKE);
     element.reference = locatorCall.rule(state);
@@ -6251,12 +5515,7 @@ const likeAttribute = rule(
 const handleAttribute = rule(
   sequence(tokens.HANDLE),
   (state: ParserState): ast.HandleAttribute => {
-    const element: ast.HandleAttribute = {
-      kind: ast.SyntaxKind.HandleAttribute,
-      container: null,
-      size: null,
-      type: null,
-    };
+    const element = ast.createHandleAttribute();
 
     state.consume(element, CstNodeKind.HandleAttribute_HANDLE, tokens.HANDLE);
 
@@ -6337,12 +5596,7 @@ const handleAttribute = rule(
 const dimensions = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.Dimensions => {
-    const element: ast.Dimensions = {
-      kind: ast.SyntaxKind.Dimensions,
-      container: null,
-      dimensions: [],
-      token: null,
-    };
+    const element = ast.createDimensions();
 
     const openToken = state.consume(
       element,
@@ -6378,12 +5632,7 @@ const dimensions = rule(
 const dimensionBound = rule(
   () => bound.first(),
   (state: ParserState): ast.DimensionBound => {
-    const element: ast.DimensionBound = {
-      kind: ast.SyntaxKind.DimensionBound,
-      container: null,
-      lower: null,
-      upper: null,
-    };
+    const element = ast.createDimensionBound();
 
     // First bound is the upper bound
     element.upper = bound.rule(state);
@@ -6403,12 +5652,7 @@ const dimensionBound = rule(
 const bound = rule(
   choice(sequence(tokens.Star), () => expression.first()),
   (state: ParserState): ast.Bound => {
-    const element: ast.Bound = {
-      kind: ast.SyntaxKind.Bound,
-      container: null,
-      expression: null,
-      refer: null,
-    };
+    const element = ast.createBound();
 
     if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
       // Star bound (indicates variable size)
@@ -6432,11 +5676,7 @@ const bound = rule(
 const environmentAttribute = rule(
   sequence(tokens.ENVIRONMENT),
   (state: ParserState): ast.EnvironmentAttribute => {
-    const element: ast.EnvironmentAttribute = {
-      kind: ast.SyntaxKind.EnvironmentAttribute,
-      container: null,
-      items: [],
-    };
+    const element = ast.createEnvironmentAttribute();
 
     state.consume(
       element,
@@ -6481,12 +5721,7 @@ const environmentAttribute = rule(
 const environmentAttributeItem = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.EnvironmentAttributeItem => {
-    const element: ast.EnvironmentAttributeItem = {
-      kind: ast.SyntaxKind.EnvironmentAttributeItem,
-      container: null,
-      environment: null,
-      args: [],
-    };
+    const element = ast.createEnvironmentAttributeItem();
 
     const envToken = state.consume(
       element,
@@ -6546,17 +5781,7 @@ const environmentAttributeItem = rule(
 const entryAttribute = rule(
   choice(sequence(tokens.LIMITED), sequence(tokens.ENTRY)),
   (state: ParserState): ast.EntryAttribute => {
-    const element: ast.EntryAttribute = {
-      kind: ast.SyntaxKind.EntryAttribute,
-      container: null,
-      entryToken: null,
-      attributes: [],
-      options: [],
-      variable: [],
-      limited: [],
-      returns: [],
-      environmentName: [],
-    };
+    const element = ast.createEntryAttribute();
 
     // Parse zero or more LIMITED tokens at the beginning
     const { inc } = state.createLoopContext(1);
@@ -6683,11 +5908,7 @@ const entryAttribute = rule(
 const returnsOption = rule(
   sequence(tokens.RETURNS),
   (state: ParserState): ast.ReturnsOption => {
-    const element: ast.ReturnsOption = {
-      kind: ast.SyntaxKind.ReturnsOption,
-      container: null,
-      returnAttributes: [],
-    };
+    const element = ast.createReturnsOption();
 
     state.consume(element, CstNodeKind.ReturnsOption_RETURNS, tokens.RETURNS);
     state.consume(
@@ -6722,12 +5943,7 @@ const entryDescription = orRule<ast.EntryDescription>(
 const entryParameterDescription = rule(
   choice(sequence(tokens.Star), () => declarationAttribute.first()),
   (state: ParserState): ast.EntryParameterDescription => {
-    const element: ast.EntryParameterDescription = {
-      kind: ast.SyntaxKind.EntryParameterDescription,
-      container: null,
-      attributes: [],
-      star: false,
-    };
+    const element = ast.createEntryParameterDescription();
 
     if (
       state.tryConsume(
@@ -6765,13 +5981,7 @@ const entryParameterDescription = rule(
 const entryUnionDescription = rule(
   sequence(tokens.NUMBER),
   (state: ParserState): ast.EntryUnionDescription => {
-    const element: ast.EntryUnionDescription = {
-      kind: ast.SyntaxKind.EntryUnionDescription,
-      container: null,
-      init: null,
-      attributes: [],
-      prefixedAttributes: [],
-    };
+    const element = ast.createEntryUnionDescription();
 
     const initToken = state.consume(
       element,
@@ -6812,12 +6022,7 @@ const entryUnionDescription = rule(
 const prefixedAttribute = rule(
   sequence(tokens.NUMBER),
   (state: ParserState): ast.PrefixedAttribute => {
-    const element: ast.PrefixedAttribute = {
-      kind: ast.SyntaxKind.PrefixedAttribute,
-      container: null,
-      level: null,
-      attributes: [],
-    };
+    const element = ast.createPrefixedAttribute();
 
     const levelToken = state.consume(
       element,
@@ -6843,11 +6048,7 @@ const prefixedAttribute = rule(
 const procedureParameter = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.ProcedureParameter => {
-    const element: ast.ProcedureParameter = {
-      kind: ast.SyntaxKind.ProcedureParameter,
-      container: null,
-      ref: null,
-    };
+    const element = ast.createProcedureParameter();
 
     const idToken = state.consume(
       element,
@@ -6869,12 +6070,7 @@ const procedureParameter = rule(
 const referenceItem = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.ReferenceItem => {
-    const element: ast.ReferenceItem = {
-      kind: ast.SyntaxKind.ReferenceItem,
-      container: null,
-      ref: null,
-      dimensions: null,
-    };
+    const element = ast.createReferenceItem();
 
     const idToken = state.consume(
       element,
@@ -6947,12 +6143,7 @@ const primaryExpression = orRule<ast.Expression>(
 const parenthesizedExpression = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.Parenthesis | ast.Literal => {
-    const element: ast.Parenthesis = {
-      kind: ast.SyntaxKind.Parenthesis,
-      container: null,
-      value: null,
-      do: null,
-    };
+    const element = ast.createParenthesis();
 
     state.consume(
       element,
@@ -6998,12 +6189,7 @@ const parenthesizedExpression = rule(
 const memberCall = rule(
   () => referenceItem.first(),
   (state: ParserState): ast.MemberCall => {
-    let element: ast.MemberCall = {
-      kind: ast.SyntaxKind.MemberCall,
-      container: null,
-      element: null,
-      previous: null,
-    };
+    let element = ast.createMemberCall();
 
     // Parse first reference item
     element.element = referenceItem.rule(state);
@@ -7031,14 +6217,7 @@ const memberCall = rule(
 const locatorCall = rule(
   () => memberCall.first(),
   (state: ParserState): ast.LocatorCall => {
-    let element: ast.LocatorCall = {
-      kind: ast.SyntaxKind.LocatorCall,
-      container: null,
-      element: null,
-      previous: null,
-      pointer: false,
-      handle: false,
-    };
+    let element = ast.createLocatorCall();
 
     // Parse first member call
     element.element = memberCall.rule(state);
@@ -7090,13 +6269,7 @@ const locatorCall = rule(
 const procedureCall = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.ProcedureCall => {
-    const element: ast.ProcedureCall = {
-      kind: ast.SyntaxKind.ProcedureCall,
-      container: null,
-      procedure: null,
-      args1: null,
-      args2: null,
-    };
+    const element = ast.createProcedureCall();
 
     const idToken = state.consume(
       element,
@@ -7155,11 +6328,7 @@ const procedureCall = rule(
 const procedureCallArgs = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.ProcedureCallArgs => {
-    const element: ast.ProcedureCallArgs = {
-      kind: ast.SyntaxKind.ProcedureCallArgs,
-      container: null,
-      list: [],
-    };
+    const element = ast.createProcedureCallArgs();
 
     state.consume(
       element,
@@ -7219,11 +6388,7 @@ const procedureCallArgs = rule(
 const labelReference = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.LabelReference => {
-    const element: ast.LabelReference = {
-      kind: ast.SyntaxKind.LabelReference,
-      container: null,
-      label: null,
-    };
+    const element = ast.createLabelReference();
 
     const idToken = state.consume(
       element,
@@ -7245,12 +6410,7 @@ const labelReference = rule(
 const unaryExpression = rule(
   sequence(tokens.UnaryOperator),
   (state: ParserState): ast.UnaryExpression => {
-    const element: ast.UnaryExpression = {
-      kind: ast.SyntaxKind.UnaryExpression,
-      container: null,
-      op: null,
-      expr: null,
-    };
+    const element = ast.createUnaryExpression();
 
     const operatorToken = state.consume(
       element,
@@ -7272,15 +6432,8 @@ const unaryExpression = rule(
 const literal = rule(
   () => literalValue.first(),
   (state: ParserState): ast.Literal => {
-    const element: ast.Literal = {
-      kind: ast.SyntaxKind.Literal,
-      container: null,
-      multiplier: null,
-      value: null,
-    };
-
+    const element = ast.createLiteral();
     element.value = literalValue.rule(state);
-
     return element;
   },
 );
@@ -7293,11 +6446,7 @@ const literalValue = orRule<ast.LiteralValue>(
 const stringLiteral = rule(
   sequence(tokens.STRING_TERM),
   (state: ParserState): ast.StringLiteral => {
-    const element: ast.StringLiteral = {
-      kind: ast.SyntaxKind.StringLiteral,
-      container: null,
-      value: null,
-    };
+    const element = ast.createStringLiteral();
 
     const stringToken = state.consume(
       element,
@@ -7315,11 +6464,7 @@ const stringLiteral = rule(
 const numberLiteral = rule(
   sequence(tokens.NUMBER),
   (state: ParserState): ast.NumberLiteral => {
-    const element: ast.NumberLiteral = {
-      kind: ast.SyntaxKind.NumberLiteral,
-      container: null,
-      value: null,
-    };
+    const element = ast.createNumberLiteral();
 
     const numberToken = state.consume(
       element,
