@@ -698,14 +698,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         break;
       }
 
-      /**
-       * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-generic-attribute
-       */
-      case ast.DefaultAttribute.GENERIC: {
-        //TODO
-        break;
-      }
-
       /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-keyed-attribute */
       case ast.DefaultAttribute.KEYED: {
         //TODO
@@ -756,7 +748,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.DIMACROSS:
       case ast.DefaultAttribute.EVENT:
       case ast.DefaultAttribute.EXCLUSIVE:
-      case ast.DefaultAttribute.GENERIC:
       case ast.DefaultAttribute.INONLY:
       case ast.DefaultAttribute.INOUT:
       case ast.DefaultAttribute.IRREDUCIBLE:

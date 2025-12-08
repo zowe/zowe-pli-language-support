@@ -287,7 +287,6 @@ export enum DefaultAttribute {
   UNION,
   BYADDR,
   BYVALUE,
-  GENERIC,
   INONLY,
   NOINIT,
   UCHAR,

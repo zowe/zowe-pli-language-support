@@ -1372,17 +1372,8 @@ const defaultExpression = rule(
     const { inc } = state.createLoopContext("DefaultExpression");
     while (state.canConsumeFirst(defaultDeclarationAttribute.first())) {
       inc();
-      switch (performGenericAttributeLookahead(state)) {
-        case "none":
-        case "simple":
-          const attr = defaultDeclarationAttribute.rule(state);
-          attr && element.attributes.push(attr);
-          break;
-        case "complex":
-          const generic = genericAttribute.rule(state);
-          generic && element.attributes.push(generic);
-          break;
-      }
+      const attr = defaultDeclarationAttribute.rule(state);
+      attr && element.attributes.push(attr);
     }
 
     return element;
@@ -3635,36 +3626,6 @@ const openOption = rule(
   },
 );
 
-const procincDirective = rule(
-  sequence(tokens.PROCINC),
-  (state: ParserState): ast.ProcincDirective => {
-    const element = ast.createProcincDirective();
-
-    state.consume(
-      element,
-      CstNodeKind.ProcincDirective_PROCINC,
-      tokens.PROCINC,
-    );
-
-    const datasetToken = state.consume(
-      element,
-      CstNodeKind.ProcincDirective_DatasetName,
-      tokens.ID,
-    );
-    if (datasetToken) {
-      element.datasetName = datasetToken.image;
-    }
-
-    state.consume(
-      element,
-      CstNodeKind.ProcincDirective_Semicolon,
-      tokens.Semicolon,
-    );
-
-    return element;
-  },
-);
-
 const putStatement = rule(
   sequence(tokens.PUT),
   (state: ParserState): ast.PutStatement => {
@@ -4940,7 +4901,7 @@ const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAtt
     () => entryAttribute,
     () => likeAttribute,
     () => typeAttribute,
-    //() => genericAttribute, using performGenericAttributeLookahead as lookahead
+    () => genericAttribute,
     () => indForAttribute,
   ];
 
@@ -4949,19 +4910,7 @@ const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute>(
   () => defaultValueAttribute,
 );
 
-const declarationAttribute = rule<ast.DeclarationAttribute | null>(
-  () => internalDeclarationAttribute.first(),
-  (state) => {
-    switch (performGenericAttributeLookahead(state)) {
-      case "complex":
-        return genericAttribute.rule(state);
-      default:
-        return internalDeclarationAttribute.rule(state);
-    }
-  },
-);
-
-const internalDeclarationAttribute = orRule<ast.DeclarationAttribute>(
+const declarationAttribute = orRule<ast.DeclarationAttribute>(
   ...commonDeclarationAttributes,
   () => valueAttribute,
 );
@@ -6479,69 +6428,6 @@ export function performAssignmentLookahead(state: ParserState): boolean {
   }
   // If we reach this point, the lookahead was not successful
   return false;
-}
-
-function performGenericAttributeLookahead(
-  state: ParserState,
-): "none" | "simple" | "complex" {
-  const expressionTokenTypes = [
-    tokens.ID,
-    tokens.BinaryOperator,
-    tokens.UnaryOperator,
-    tokens.AssignmentOperator,
-    tokens.STRING_TERM,
-    tokens.NUMBER,
-    tokens.Comma,
-    tokens.Dot,
-    tokens.Colon,
-  ];
-
-  const lookahead = (la: number) => state.peek(la);
-  const la1 = lookahead(1);
-  if (la1 && !tokenMatcher(la1, tokens.GENERIC)) {
-    return "none";
-  }
-  const la2 = lookahead(2);
-  if (!la2 || !tokenMatcher(la2, tokens.OpenParen)) {
-    return "simple";
-  }
-
-  const max = 160;
-  let i = 3;
-  let parenthesis = 1;
-  while (i < max) {
-    const token = lookahead(i++);
-    if (!token) {
-      return "simple";
-    }
-    if (tokenMatcher(token, tokens.OpenParen)) {
-      parenthesis++;
-    } else if (tokenMatcher(token, tokens.CloseParen)) {
-      parenthesis--;
-      if (parenthesis === 0) {
-        return "simple";
-      }
-    } else {
-      if (
-        !expressionTokenTypes.some((tokenType) =>
-          tokenMatcher(token, tokenType),
-        )
-      ) {
-        return "complex";
-      }
-
-      if (tokenMatcher(token, tokens.ID)) {
-        //assume complex if an identifier is preceded by another identifier (likely a keyword)
-        const previousToken = lookahead(i - 2);
-        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
-          return "complex";
-        }
-      }
-      // Continue with the next token, the current token is a valid expression token
-    }
-  }
-
-  return "complex";
 }
 
 function performEndStatementLookahead(state: ParserState): boolean {

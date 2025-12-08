@@ -855,7 +855,6 @@ export const DECIMAL = registerKeyword({
 });
 export const GENERIC = registerKeyword({
   name: "GENERIC",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.GENERIC]],
 });
 export const HEXADEC = registerKeyword({
   name: "HEXADEC",
