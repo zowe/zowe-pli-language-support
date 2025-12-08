@@ -1496,6 +1496,44 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
         t.ENTRY,
       );
       attributes.push(entryAttribute);
+    } else if (state.canConsume(t.INITIAL)) {
+      const initialAttribute = ast.createInitialAttribute();
+      state.consume(
+        initialAttribute,
+        CstNodeKind.InitialAttribute_INITIAL,
+        t.INITIAL,
+      );
+      state.consume(
+        initialAttribute,
+        CstNodeKind.InitialAttribute_OpenParenDirect,
+        t.OpenParen,
+      );
+      const firstExpr = expression(state);
+      if (firstExpr) {
+        const spec = ast.createInitialAttributeSpecification();
+        spec.expression = firstExpr;
+        initialAttribute.items.push(spec);
+      }
+      while (
+        state.tryConsume(
+          initialAttribute,
+          CstNodeKind.InitialAttribute_CommaDirect,
+          t.Comma,
+        )
+      ) {
+        const expr = expression(state);
+        if (expr) {
+          const spec = ast.createInitialAttributeSpecification();
+          spec.expression = expr;
+          initialAttribute.items.push(spec);
+        }
+      }
+      state.consume(
+        initialAttribute,
+        CstNodeKind.InitialAttribute_CloseParenDirect,
+        t.CloseParen,
+      );
+      attributes.push(initialAttribute);
     } else {
       break;
     }

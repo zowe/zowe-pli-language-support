@@ -358,6 +358,7 @@ function generateDeclareInstruction(
       continue; // Skip variables without a name
     }
     const dimensions = getDimensions(item);
+    const initial = getInitial(item);
     // Generate an instruction for each declared variable
     const attributes = getAttributes(item);
     let type: inst.DeclaredType = inst.DeclaredType.Character;
@@ -370,7 +371,7 @@ function generateDeclareInstruction(
     } else if (attributes.includes("NOSCAN")) {
       scanMode = ast.ScanMode.NOSCAN;
     }
-    let visibility: inst.VariableVisibility | null = null;
+    let visibility: inst.VariableVisibility | undefined;
     if (attributes.includes("INTERNAL")) {
       visibility = inst.VariableVisibility.Internal;
     } else if (attributes.includes("EXTERNAL")) {
@@ -382,6 +383,7 @@ function generateDeclareInstruction(
         dimensions,
         type,
         scanMode,
+        initial,
         visibility,
         item,
       ),
@@ -396,26 +398,19 @@ function generateReplaceInstruction(
   // A replace instruction is a combination of a declare and an assignment
   const instructions: inst.Instruction[] = [];
   if (statement.name && statement.nameToken && statement.literal) {
+    const literal = generateExpressionInstruction(statement.literal, true);
+    const initial = literal ? [literal] : undefined;
     instructions.push(
       inst.createDeclareInstruction(
         statement.name,
         undefined,
         inst.DeclaredType.Character,
         ast.ScanMode.RESCAN,
-        null,
+        initial,
+        undefined,
         statement,
       ),
     );
-    const literal = generateExpressionInstruction(statement.literal, true);
-    if (literal) {
-      instructions.push(
-        inst.createAssignmentInstruction(
-          [inst.createReferenceItemInstruction(statement.name, null, [])],
-          ast.AssignmentOperator.Equals,
-          literal,
-        ),
-      );
-    }
   }
   return inst.createCompoundInstruction(instructions);
 }
@@ -470,6 +465,33 @@ function getDimensions(
     });
   }
   return instructions;
+}
+
+function getInitial(
+  item: ast.DeclaredVariable,
+): inst.ExpressionInstruction[] | undefined {
+  let container = item.container;
+  while (container?.kind === ast.SyntaxKind.DeclaredItem) {
+    for (const attribute of container.attributes) {
+      if (attribute.kind === ast.SyntaxKind.InitialAttribute) {
+        const initialExpressions: inst.ExpressionInstruction[] = [];
+        for (const item of attribute.items) {
+          if (
+            item.kind === ast.SyntaxKind.InitialAttributeSpecification &&
+            item.expression
+          ) {
+            const expr = generateExpressionInstruction(item.expression);
+            if (expr) {
+              initialExpressions.push(expr);
+            }
+          }
+        }
+        return initialExpressions;
+      }
+    }
+    container = container.container;
+  }
+  return undefined;
 }
 
 function generateSelectInstructionFromIf(

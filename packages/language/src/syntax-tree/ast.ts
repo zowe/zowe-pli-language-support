@@ -2007,6 +2007,21 @@ export interface InitialAttribute extends AstNode {
   content: InitialToContent | null;
   token: Token | null;
 }
+export function createInitialAttribute(): InitialAttribute {
+  return {
+    kind: SyntaxKind.InitialAttribute,
+    container: null,
+    across: false,
+    expressions: [],
+    direct: false,
+    items: [],
+    call: false,
+    procedureCall: null,
+    to: false,
+    content: null,
+    token: null,
+  };
+}
 export interface InitialAttributeItemStar extends AstNode {
   kind: SyntaxKind.InitialAttributeItemStar;
 }
@@ -2015,6 +2030,15 @@ export interface InitialAttributeSpecification extends AstNode {
   star: boolean;
   item: InitialAttributeSpecificationIteration | null;
   expression: Expression | null;
+}
+export function createInitialAttributeSpecification(): InitialAttributeSpecification {
+  return {
+    kind: SyntaxKind.InitialAttributeSpecification,
+    container: null,
+    star: false,
+    item: null,
+    expression: null,
+  };
 }
 export interface InitialAttributeSpecificationIterationValue extends AstNode {
   kind: SyntaxKind.InitialAttributeSpecificationIterationValue;
