@@ -55,7 +55,7 @@ const packageRule = rule(
     }
     state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
     const { inc } = state.createLoopContext("Package");
-    while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -478,7 +478,7 @@ const procedureStatement = rule(
     );
 
     const { inc: inc3 } = state.createLoopContext("ProcedureStatement 3");
-    while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc3();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -1143,7 +1143,7 @@ const beginStatement = rule(
       tokens.Semicolon,
     );
     const { inc } = state.createLoopContext("BeginStatement");
-    while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -2144,7 +2144,7 @@ const doStatement = rule(
 
     // Parse statements until END
     const { inc } = state.createLoopContext("DoStatement");
-    while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -3188,69 +3188,6 @@ const genericAttribute = rule(
   },
 );
 
-function performGenericAttributeLookahead(
-  state: ParserState,
-): "none" | "simple" | "complex" {
-  const expressionTokenTypes = [
-    tokens.ID,
-    tokens.BinaryOperator,
-    tokens.UnaryOperator,
-    tokens.AssignmentOperator,
-    tokens.STRING_TERM,
-    tokens.NUMBER,
-    tokens.Comma,
-    tokens.Dot,
-    tokens.Colon,
-  ];
-
-  const lookahead = (la: number) => state.peek(la);
-  const la1 = lookahead(1);
-  if (la1 && !tokenMatcher(la1, tokens.GENERIC)) {
-    return "none";
-  }
-  const la2 = lookahead(2);
-  if (!la2 || !tokenMatcher(la2, tokens.OpenParen)) {
-    return "simple";
-  }
-
-  const max = 160;
-  let i = 3;
-  let parenthesis = 1;
-  while (i < max) {
-    const token = lookahead(i++);
-    if (!token) {
-      return "simple";
-    }
-    if (tokenMatcher(token, tokens.OpenParen)) {
-      parenthesis++;
-    } else if (tokenMatcher(token, tokens.CloseParen)) {
-      parenthesis--;
-      if (parenthesis === 0) {
-        return "simple";
-      }
-    } else {
-      if (
-        !expressionTokenTypes.some((tokenType) =>
-          tokenMatcher(token, tokenType),
-        )
-      ) {
-        return "complex";
-      }
-
-      if (tokenMatcher(token, tokens.ID)) {
-        //assume complex if an identifier is preceded by another identifier (likely a keyword)
-        const previousToken = lookahead(i - 2);
-        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
-          return "complex";
-        }
-      }
-      // Continue with the next token, the current token is a valid expression token
-    }
-  }
-
-  return "complex";
-}
-
 const genericReference = rule(
   () => referenceItem.first(),
   (state: ParserState): ast.GenericReference => {
@@ -3983,7 +3920,7 @@ const qualifyStatement = rule(
     );
 
     const { inc } = state.createLoopContext("QualifyStatement");
-    while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -6538,4 +6475,85 @@ export function performAssignmentLookahead(state: ParserState): boolean {
   }
   // If we reach this point, the lookahead was not successful
   return false;
+}
+
+function performGenericAttributeLookahead(
+  state: ParserState,
+): "none" | "simple" | "complex" {
+  const expressionTokenTypes = [
+    tokens.ID,
+    tokens.BinaryOperator,
+    tokens.UnaryOperator,
+    tokens.AssignmentOperator,
+    tokens.STRING_TERM,
+    tokens.NUMBER,
+    tokens.Comma,
+    tokens.Dot,
+    tokens.Colon,
+  ];
+
+  const lookahead = (la: number) => state.peek(la);
+  const la1 = lookahead(1);
+  if (la1 && !tokenMatcher(la1, tokens.GENERIC)) {
+    return "none";
+  }
+  const la2 = lookahead(2);
+  if (!la2 || !tokenMatcher(la2, tokens.OpenParen)) {
+    return "simple";
+  }
+
+  const max = 160;
+  let i = 3;
+  let parenthesis = 1;
+  while (i < max) {
+    const token = lookahead(i++);
+    if (!token) {
+      return "simple";
+    }
+    if (tokenMatcher(token, tokens.OpenParen)) {
+      parenthesis++;
+    } else if (tokenMatcher(token, tokens.CloseParen)) {
+      parenthesis--;
+      if (parenthesis === 0) {
+        return "simple";
+      }
+    } else {
+      if (
+        !expressionTokenTypes.some((tokenType) =>
+          tokenMatcher(token, tokenType),
+        )
+      ) {
+        return "complex";
+      }
+
+      if (tokenMatcher(token, tokens.ID)) {
+        //assume complex if an identifier is preceded by another identifier (likely a keyword)
+        const previousToken = lookahead(i - 2);
+        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
+          return "complex";
+        }
+      }
+      // Continue with the next token, the current token is a valid expression token
+    }
+  }
+
+  return "complex";
+}
+
+function performEndStatementLookahead(state: ParserState): boolean {
+  const lookahead = (la: number) => state.peek(la);
+  let index: number = 1;
+  let token: tokens.Token|undefined = undefined;
+  while((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
+    const idToken = lookahead(index);
+    const colonToken = lookahead(index+1);
+    if(!idToken || !colonToken) {
+      return false;
+    }
+    if(!tokenMatcher(idToken, tokens.ID) || !tokenMatcher(colonToken, tokens.Colon)) {
+      return false;
+    }
+    index += 2;
+  }
+  return token !== undefined && tokenMatcher(token, tokens.END);
 }
