@@ -5917,24 +5917,8 @@ export class PliParser extends AbstractParser {
     return this.pop<ast.WriteStatementOption>();
   });
 
-  private createInitialAttribute(): ast.InitialAttribute {
-    return {
-      kind: ast.SyntaxKind.InitialAttribute,
-      container: null,
-      across: false,
-      expressions: [],
-      direct: false,
-      items: [],
-      call: false,
-      procedureCall: null,
-      to: false,
-      content: null,
-      token: null,
-    };
-  }
-
   InitialAttribute = this.RULE("InitialAttribute", () => {
-    let element = this.push(this.createInitialAttribute());
+    let element = this.push(ast.createInitialAttribute());
 
     this.OR1([
       {
