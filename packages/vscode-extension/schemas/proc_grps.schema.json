@@ -66,6 +66,10 @@
               "instruction-counter-limit": {
                 "type": "number",
                 "description": "Maximum number of times to run an instructions during preprocessing. The default is 5000."
+              },
+              "case-upper-validation": {
+                "type": "boolean",
+                "description": "Whether to validate the CASE(UPPER) macro option and provide diagnostics for quickfixes."
               }
             }
           }

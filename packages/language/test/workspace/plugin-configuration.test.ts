@@ -44,7 +44,11 @@ describe("Plugin Configuration Tests", () => {
       $computedLibs: [],
       $computedLibsSet: new Set<string>(),
       includeExtensions: [".inc"],
-      lspOptions: { checkMargins: false, instructionCounterLimit: 5000 },
+      lspOptions: {
+        checkMargins: false,
+        instructionCounterLimit: 5000,
+        caseUpperValidation: false,
+      },
       pliOptions: {},
       implicitBuiltins: new Set(),
     };
@@ -163,6 +167,7 @@ describe("Plugin Configuration Tests", () => {
         lspOptions: {
           checkMargins: false,
           instructionCounterLimit: 5000,
+          caseUpperValidation: false,
         },
         pliOptions: {},
         implicitBuiltins: new Set(),
