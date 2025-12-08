@@ -11,11 +11,14 @@ import {
 import { Severe } from "../validation/pli-codes";
 import { Severity } from "../language-server/types";
 
-export function parsePli(input: tokens.Token[]): {
+export function parsePli(
+  input: tokens.Token[],
+  debugging: boolean,
+): {
   tree: ast.Program;
   diagnostics: any;
 } {
-  const state = finalParserState(input);
+  const state = finalParserState(input, debugging);
   const program = pliProgram.rule(state)!;
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
@@ -4818,7 +4821,9 @@ const initialAttributeSpecificationIterationValue = rule(
 
     const lhs = initialAttributeItem.rule(state);
     lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext("InitialAttributeSpecificationIterationValue");
+    const { inc } = state.createLoopContext(
+      "InitialAttributeSpecificationIterationValue",
+    );
     while (
       state.tryConsume(
         element,

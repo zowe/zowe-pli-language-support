@@ -32,8 +32,11 @@ export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
 }
 
-export function finalParserState(tokens: t.Token[]): ParserState {
-  return new ParserState(tokens, ParserStateMode.Final);
+export function finalParserState(
+  tokens: t.Token[],
+  debugging: boolean,
+): ParserState {
+  return new ParserState(tokens, ParserStateMode.Final, debugging);
 }
 
 export enum ParserStateMode {
@@ -49,24 +52,33 @@ export class ParserState {
   public inError = false;
 
   private inProcedure = false;
+  private debugLoops: boolean;
 
-  constructor(tokens: t.Token[], mode: ParserStateMode) {
+  constructor(tokens: t.Token[], mode: ParserStateMode, debugLoops = false) {
     this.tokens = tokens;
     this.mode = mode;
     this.diagnostics = [];
     this.index = 0;
+    this.debugLoops = debugLoops;
   }
 
   createLoopContext(name: string) {
     let lastIndex = -1;
+    if (this.debugLoops) {
+      return {
+        inc: () => {
+          if (lastIndex === this.index) {
+            throw new Error(
+              `Possible infinite loop detected in parser at rule ${name} after ${this.token?.image} token.`,
+            );
+          }
+          lastIndex = this.index;
+        },
+      };
+    }
     return {
       inc: () => {
-        if (lastIndex === this.index) {
-          throw new Error(
-            `Possible infinite loop detected in parser at rule ${name} after ${this.token?.image} token.`,
-          );
-        }
-        lastIndex = this.index;
+        /* nothing to do */
       },
     };
   }
