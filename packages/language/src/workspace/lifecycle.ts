@@ -24,7 +24,7 @@ import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
-import { parsePli } from "../parser/parser-handwritten";
+import { parsePli } from "../parser/parser";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
