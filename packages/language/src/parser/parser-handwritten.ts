@@ -8,6 +8,8 @@ import {
   constructBinaryExpression,
   IntermediateBinaryExpression,
 } from "./abstract-parser";
+import { Severe } from "../validation/pli-codes";
+import { Severity } from "../language-server/types";
 
 export function parsePli(input: tokens.Token[]): {
   tree: ast.Program;
@@ -936,8 +938,7 @@ const assertStatement = rule(
     ) {
       element.unreachable = true;
     } else {
-      // TODO better error message
-      throw new Error("Expected ASSERT statement variant");
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
     }
 
     if (
@@ -1014,8 +1015,8 @@ const assignmentStatement = rule(
         // BY DIMACROSS variant
         element.dimacrossExpr = expression.rule(state);
       } else {
-        //TODO better error message
-        throw new Error("Expected NAME or DIMACROSS after BY");
+        state.error(Severe.IBM3988I, state.token, Severity.S);
+        return element;
       }
     }
 
@@ -1261,8 +1262,8 @@ const closeStatement = rule(
     ) {
       element.files.push("*");
     } else {
-      //TODO better error message
-      throw new Error("Expected file reference or '*' in CLOSE statement");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     state.consume(
@@ -1298,8 +1299,8 @@ const closeStatement = rule(
       ) {
         element.files.push("*");
       } else {
-        //TODO better error message
-        throw new Error("Expected file reference or '*' in CLOSE statement");
+        state.error(Severe.IBM3988I, state.token, Severity.S);
+        return element;
       }
 
       state.consume(
@@ -1432,10 +1433,8 @@ const defaultExpressionPart = rule(
         tokens.CloseParen,
       );
     } else {
-      //TODO better error message
-      throw new Error(
-        "Expected DESCRIPTORS, RANGE, or parenthesized expression in DefaultExpressionPart",
-      );
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
@@ -2465,8 +2464,8 @@ const flushStatement = rule(
       const starToken = state.last;
       element.file = starToken!.image as "*";
     } else {
-      // TODO better error message
-      throw new Error("Expected locator call or '*' in FLUSH statement");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     state.consume(
@@ -2562,8 +2561,8 @@ const formatListItem = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO better error message
-      throw new Error("Expected format item or parenthesized format list");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
@@ -2597,10 +2596,8 @@ const formatListItemLevel = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO better error message
-      throw new Error(
-        "Expected number or parenthesized expression for format list item level",
-      );
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
@@ -2692,8 +2689,8 @@ const CFormatItem = rule(
     } else if (state.canConsumeFirst(PFormatItem.first())) {
       element.item = PFormatItem.rule(state);
     } else {
-      // TODO better error message
-      throw new Error("Expected F, E, or P format item in C format item");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     state.consume(
@@ -3038,8 +3035,8 @@ const getStatement = rule(
           const dataSpec = dataSpecificationOptions.rule(state);
           dataSpec && fileStatement.specifications.push(dataSpec);
         } else {
-          // TODO: better error message
-          throw new Error("Expected file specification in GET statement");
+          state.error(Severe.IBM3988I, state.token, Severity.S);
+          return element;
         }
       } while (
         !state.eof &&
@@ -3128,8 +3125,8 @@ const goToStatement = rule(
     ) {
       // GOTO consumed
     } else {
-      // TODO better error message
-      throw new Error("Expected GO TO or GOTO");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     element.label = labelReference.rule(state);
@@ -4601,8 +4598,8 @@ const initialAttribute = rule(
           tokens.CloseParen,
         );
       } else {
-        // TODO: better error message
-        throw new Error("Expected '(', 'CALL', or 'TO' after INITIAL");
+        state.error(Severe.IBM3988I, state.token, Severity.S);
+        return element;
       }
     } else if (
       state.tryConsume(
@@ -4638,8 +4635,8 @@ const initialAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO: better error message
-      throw new Error("Expected INITIAL or INITACROSS");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
@@ -4699,10 +4696,8 @@ const initialToContent = rule(
         }
       }
     } else {
-      // TODO: better error message
-      throw new Error(
-        "Expected VARYING or character type in INITIAL TO content",
-      );
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
@@ -4949,10 +4944,8 @@ const declaredItem = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO better error message
-      throw new Error(
-        "Expected variable name, '*', or parenthesized items in DECLARE statement",
-      );
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     // Parse attributes (can appear multiple times)
@@ -5089,8 +5082,8 @@ const definedAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO better error message
-      throw new Error("Expected member call in DEFINED attribute");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     if (
@@ -5135,8 +5128,8 @@ const pictureAttribute = rule(
         tokens.WIDEPIC,
       );
     } else {
-      // TODO better error message
-      throw new Error("Expected PICTURE or WIDEPIC");
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     if (state.canConsume(tokens.STRING_TERM)) {
@@ -5227,10 +5220,8 @@ const typeAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO: better error message
-      throw new Error(
-        "Expected type name or parenthesized type name in TYPE attribute",
-      );
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
@@ -5583,10 +5574,8 @@ const handleAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      // TODO: better error message
-      throw new Error(
-        "Expected type name or parenthesized type name in HANDLE attribute",
-      );
+      state.error(Severe.IBM3988I, state.token, Severity.S);
+      return element;
     }
 
     return element;
