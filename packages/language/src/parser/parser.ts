@@ -26,7 +26,7 @@ const pliProgram = rule(
   (state: ParserState): ast.Program => {
     const program = ast.createProgram();
     // Parse one or more packages (or top-level statements)
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("PliProgram");
     while (!state.eof) {
       inc();
       const stmt = statement.rule(state);
@@ -51,7 +51,7 @@ const packageRule = rule(
       element.options = options.rule(state);
     }
     state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("Package");
     while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
       inc();
       const stmt = statement.rule(state);
@@ -68,7 +68,7 @@ const conditionPrefix = rule(
   (state: ParserState): ast.ConditionPrefix => {
     const element = ast.createConditionPrefix();
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("ConditionPrefix");
     do {
       inc();
       state.consume(
@@ -97,7 +97,7 @@ const conditionPrefixItem = rule(
 
     const lhs = condition.rule(state);
     lhs && element.conditions.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("ConditionPrefixItem");
     while (state.canConsume(tokens.Comma)) {
       inc();
       state.consume(
@@ -146,7 +146,7 @@ const exports = rule(
     } else {
       const lhs = exportsItem.rule(state);
       lhs && element.procedures.push(lhs);
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("Exports");
       while (
         state.tryConsume(element, CstNodeKind.Exports_Comma, tokens.Comma)
       ) {
@@ -180,7 +180,7 @@ const reserves = rule(
       if (varToken) {
         element.variables.push(varToken.image);
       }
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("Reserves");
       while (
         state.tryConsume(element, CstNodeKind.Reserves_Comma, tokens.Comma)
       ) {
@@ -209,7 +209,7 @@ const options = rule(
     state.consume(element, CstNodeKind.Options_OpenParen, tokens.OpenParen);
     const lhs = optionsItem.rule(state);
     lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("Options");
     while (
       state.canConsume(tokens.Comma) ||
       state.canConsumeFirst(optionsItem.first())
@@ -338,7 +338,7 @@ const noMapOptionsItem = rule(
       if (idToken) {
         element.parameters.push(idToken.image);
       }
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("NoMapOptionsItem");
       while (
         state.tryConsume(
           element,
@@ -389,7 +389,7 @@ const procedureStatement = rule(
       if (state.canConsumeFirst(procedureParameter.first())) {
         const lhs = procedureParameter.rule(state);
         lhs && element.parameters.push(lhs);
-        const { inc } = state.createLoopContext(1);
+        const { inc } = state.createLoopContext("ProcedureStatement 1");
         while (
           state.tryConsume(
             element,
@@ -409,7 +409,7 @@ const procedureStatement = rule(
       );
     }
 
-    const { inc } = state.createLoopContext(2);
+    const { inc } = state.createLoopContext("ProcedureStatement 2");
     while (
       !state.eof &&
       (state.canConsume(tokens.RETURNS) ||
@@ -474,7 +474,7 @@ const procedureStatement = rule(
       tokens.Semicolon,
     );
 
-    const { inc: inc3 } = state.createLoopContext(3);
+    const { inc: inc3 } = state.createLoopContext("ProcedureStatement 3");
     while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
       inc3();
       const stmt = statement.rule(state);
@@ -528,7 +528,7 @@ const entryStatement = rule(
       if (state.canConsumeFirst(procedureParameter.first())) {
         const lhs = procedureParameter.rule(state);
         lhs && element.parameters.push(lhs);
-        const { inc } = state.createLoopContext(1);
+        const { inc } = state.createLoopContext("EntryStatement 1");
         while (
           state.tryConsume(
             element,
@@ -549,7 +549,7 @@ const entryStatement = rule(
     }
 
     // Parse optional attributes (can appear multiple times)
-    const { inc } = state.createLoopContext(2);
+    const { inc } = state.createLoopContext("EntryStatement 2");
     while (
       !state.eof &&
       (state.canConsumeFirst(environmentOption.first()) ||
@@ -639,7 +639,7 @@ const statement = rule(
       element.condition = conditionPrefix.rule(state);
     }
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("Statement");
     while (state.canConsumeFirst(labelPrefix.first())) {
       inc();
       const label = labelPrefix.rule(state);
@@ -722,7 +722,7 @@ const allocateStatement = rule(
     );
     const lhs = allocatedVariable.rule(state);
     lhs && element.variables.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("AllocateStatement");
     while (
       state.tryConsume(
         element,
@@ -959,7 +959,7 @@ const assignmentStatement = rule(
     // Parse left-hand side references (comma-separated)
     const lhs = locatorCall.rule(state);
     lhs && element.refs.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("AssignmentStatement");
     while (
       state.tryConsume(
         element,
@@ -1139,7 +1139,7 @@ const beginStatement = rule(
       CstNodeKind.BeginStatement_Semicolon0,
       tokens.Semicolon,
     );
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("BeginStatement");
     while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
       inc();
       const stmt = statement.rule(state);
@@ -1167,7 +1167,7 @@ const endStatement = rule(
     const element = ast.createEndStatement();
 
     // Parse optional label prefixes
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("EndStatement");
     while (state.canConsumeFirst(labelPrefix.first())) {
       inc();
       const prefix = labelPrefix.rule(state);
@@ -1273,7 +1273,7 @@ const closeStatement = rule(
     );
 
     // Additional files (can have optional commas)
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("CloseStatement");
     while (state.canConsume(tokens.FILE) || state.canConsume(tokens.Comma)) {
       inc();
       // Optional comma before additional file
@@ -1334,7 +1334,7 @@ const defaultStatement = rule(
     const lhs = defaultExpression.rule(state);
     lhs && element.expressions.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefaultStatement");
     while (
       state.tryConsume(
         element,
@@ -1364,7 +1364,7 @@ const defaultExpression = rule(
 
     element.expression = defaultExpressionPart.rule(state);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefaultExpression");
     while (state.canConsumeFirst(defaultDeclarationAttribute.first())) {
       inc();
       switch (performGenericAttributeLookahead(state)) {
@@ -1462,7 +1462,7 @@ const defaultRangeIdentifiers = rule(
     }
 
     // Parse additional comma-separated identifiers
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefaultRangeIdentifiers");
     while (
       state.tryConsume(
         element,
@@ -1618,7 +1618,7 @@ const defineAliasStatement = rule(
     if (state.canConsumeFirst(declarationAttribute.first())) {
       const lhs = declarationAttribute.rule(state);
       lhs && element.attributes.push(lhs);
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("DefineAliasStatement");
       while (
         state.canConsume(tokens.Comma) ||
         state.canConsumeFirst(declarationAttribute.first())
@@ -1685,7 +1685,7 @@ const defineOrdinalStatement = rule(
       tokens.CloseParen,
     );
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefineOrdinalStatement");
     while (
       state.canConsume(tokens.SIGNED) ||
       state.canConsume(tokens.UNSIGNED) ||
@@ -1754,7 +1754,7 @@ const ordinalValueList = rule(
 
     const lhs = ordinalValue.rule(state);
     lhs && element.members.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("OrdinalValueList");
     while (
       state.tryConsume(
         element,
@@ -1829,7 +1829,7 @@ const defineStructureStatement = rule(
     const lhs = declaredItem.rule(state);
     lhs && element.items.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefineStructureStatement");
     while (
       state.tryConsume(
         element,
@@ -2019,7 +2019,7 @@ const displayStatement = rule(
         element.rout.push(routToken.image);
       }
 
-      const { inc } = state.createLoopContext(1);
+      const { inc } = state.createLoopContext("DisplayStatement 1");
       while (
         state.tryConsume(
           element,
@@ -2067,7 +2067,7 @@ const displayStatement = rule(
           element.desc.push(descToken.image);
         }
 
-        const { inc } = state.createLoopContext(2);
+        const { inc } = state.createLoopContext("DisplayStatement 2");
         while (
           state.tryConsume(
             element,
@@ -2140,7 +2140,7 @@ const doStatement = rule(
     );
 
     // Parse statements until END
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DoStatement");
     while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
       inc();
       const stmt = statement.rule(state);
@@ -2248,7 +2248,7 @@ const doType3 = rule(
     const lhs = doSpecification.rule(state);
     lhs && element.specifications.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DoType3");
     while (state.tryConsume(element, CstNodeKind.DoType3_Comma, tokens.Comma)) {
       inc();
       const rhs = doSpecification.rule(state);
@@ -2383,7 +2383,7 @@ const fetchStatement = rule(
     const lhs = fetchEntry.rule(state);
     lhs && element.entries.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("FetchStatement");
     while (
       state.tryConsume(element, CstNodeKind.FetchStatement_Comma, tokens.Comma)
     ) {
@@ -2518,7 +2518,7 @@ const formatList = rule(
     const lhs = formatListItem.rule(state);
     lhs && element.items.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("FormatList");
     while (
       state.tryConsume(element, CstNodeKind.FormatList_Comma, tokens.Comma)
     ) {
@@ -2968,7 +2968,7 @@ const freeStatement = rule(
     const lhs = locatorCall.rule(state);
     lhs && element.references.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("FreeStatement");
     while (
       state.tryConsume(element, CstNodeKind.FreeStatement_Comma, tokens.Comma)
     ) {
@@ -3018,7 +3018,7 @@ const getStatement = rule(
       stringStatement.dataSpecification = dataSpecificationOptions.rule(state);
     } else {
       // FILE variant - one or more file specifications
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("GetStatement");
       const fileStatement = element as ast.GetFileStatement;
       do {
         inc();
@@ -3161,7 +3161,7 @@ const genericAttribute = rule(
       const lhs = genericReference.rule(state);
       lhs && element.references.push(lhs);
 
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("GenericAttribute");
       while (
         state.tryConsume(
           element,
@@ -3295,7 +3295,7 @@ const genericDescriptor = rule(
 
     const lhs = declarationAttribute.rule(state);
     lhs && element.attributes.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("GenericDescriptor");
     while (
       state.tryConsume(
         element,
@@ -3401,7 +3401,7 @@ const locateStatement = rule(
     state.consume(element, CstNodeKind.LocateStatement_LOCATE, tokens.LOCATE);
     element.variable = locatorCall.rule(state);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("LocateStatement");
     while (state.canConsumeFirst(locateStatementOption.first())) {
       inc();
       const option = locateStatementOption.rule(state);
@@ -3473,7 +3473,7 @@ const onStatement = rule(
     lhs && element.conditions.push(lhs);
 
     // Parse additional comma-separated conditions
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("OnStatement");
     while (
       state.tryConsume(element, CstNodeKind.OnStatement_Comma, tokens.Comma)
     ) {
@@ -3610,7 +3610,7 @@ const openStatement = rule(
     const lhs = openOptionsGroup.rule(state);
     lhs && element.options.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("OpenStatement");
     while (
       state.tryConsume(element, CstNodeKind.OpenStatement_Comma, tokens.Comma)
     ) {
@@ -3639,7 +3639,7 @@ const openOptionsGroup = rule(
     lhs && element.options.push(lhs);
 
     // Parse additional options as long as we can consume OpenOptionType tokens
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("OpenOptionsGroup");
     while (state.canConsumeFirst(openOption.first())) {
       inc();
       const rhs = openOption.rule(state);
@@ -3760,7 +3760,7 @@ const putStatement = rule(
       fileStatement.kind = ast.SyntaxKind.PutFileStatement;
 
       // Parse one or more put items or data specification options
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("PutStatement");
       do {
         inc();
         if (state.canConsumeFirst(putItem.first())) {
@@ -3861,7 +3861,7 @@ const dataSpecificationOptions = rule(
       ) {
         const lhs = dataSpecificationDataListItem.rule(state);
         lhs && element.dataListItems.push(lhs);
-        const { inc } = state.createLoopContext(1);
+        const { inc } = state.createLoopContext("DataSpecificationOptions 1");
         while (
           state.tryConsume(
             element,
@@ -3888,7 +3888,7 @@ const dataSpecificationOptions = rule(
     ) {
       // EDIT variant
       element.edit = true;
-      const { inc } = state.createLoopContext(2);
+      const { inc } = state.createLoopContext("DataSpecificationOptions 2");
       do {
         inc();
         state.consume(
@@ -3933,7 +3933,7 @@ const dataSpecificationDataList = rule(
     const element = ast.createDataSpecificationDataList();
     const lhs = dataSpecificationDataListItem.rule(state);
     lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DataSpecificationDataList");
     while (
       state.tryConsume(
         element,
@@ -3979,7 +3979,7 @@ const qualifyStatement = rule(
       tokens.Semicolon,
     );
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("QualifyStatement");
     while (!state.eof && !state.canConsumeFirst(endStatement.first())) {
       inc();
       const stmt = statement.rule(state);
@@ -4003,7 +4003,7 @@ const readStatement = rule(
     const element = ast.createReadStatement();
 
     state.consume(element, CstNodeKind.ReadStatement_READ, tokens.READ);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("ReadStatement");
     while (state.canConsumeFirst(readStatementOption.first())) {
       inc();
       const option = readStatementOption.rule(state);
@@ -4094,7 +4094,7 @@ const releaseStatement = rule(
         element.references.push(idToken.image);
       }
 
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("ReleaseStatement");
       while (
         state.tryConsume(
           element,
@@ -4193,7 +4193,7 @@ const revertStatement = rule(
     lhs && element.conditions.push(lhs);
 
     // Parse additional comma-separated conditions
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("RevertStatement");
     while (
       state.tryConsume(element, CstNodeKind.RevertStatement_Comma, tokens.Comma)
     ) {
@@ -4224,7 +4224,7 @@ const rewriteStatement = rule(
     );
 
     // Parse zero or more rewrite statement options
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("RewriteStatement");
     while (state.canConsumeFirst(rewriteStatementOption.first())) {
       inc();
       const option = rewriteStatementOption.rule(state);
@@ -4308,7 +4308,7 @@ const selectStatement = rule(
     );
 
     // Parse WHEN and OTHERWISE statements
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("SelectStatement");
     while (
       !state.eof &&
       (state.canConsumeFirst(whenStatement.first()) ||
@@ -4352,7 +4352,7 @@ const whenStatement = rule(
     lhs && element.conditions.push(lhs);
 
     // Parse additional comma-separated conditions
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("WhenStatement");
     while (
       state.tryConsume(element, CstNodeKind.WhenStatement_Comma, tokens.Comma)
     ) {
@@ -4456,7 +4456,7 @@ const writeStatement = rule(
 
     state.consume(element, CstNodeKind.WriteStatement_WRITE, tokens.WRITE);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("WriteStatement");
     while (state.canConsumeFirst(writeStatementOption.first())) {
       inc();
       const option = writeStatementOption.rule(state);
@@ -4529,7 +4529,7 @@ const initialAttribute = rule(
         if (state.canConsumeFirst(initialAttributeItem.first())) {
           const lhs = initialAttributeItem.rule(state);
           lhs && element.items.push(lhs);
-          const { inc } = state.createLoopContext(1);
+          const { inc } = state.createLoopContext("InitialAttribute 1");
           while (
             state.tryConsume(
               element,
@@ -4580,7 +4580,7 @@ const initialAttribute = rule(
         );
         const lhs = initialAttributeItem.rule(state);
         lhs && element.items.push(lhs);
-        const { inc } = state.createLoopContext(2);
+        const { inc } = state.createLoopContext("InitialAttribute 2");
         while (
           state.tryConsume(
             element,
@@ -4617,7 +4617,7 @@ const initialAttribute = rule(
       );
       const lhs = initAcrossExpression.rule(state);
       lhs && element.expressions.push(lhs);
-      const { inc } = state.createLoopContext(3);
+      const { inc } = state.createLoopContext("InitialAttribute 3");
       while (
         state.tryConsume(
           element,
@@ -4717,7 +4717,7 @@ const initAcrossExpression = rule(
     const lhs = expression.rule(state);
     lhs && element.expressions.push(lhs);
 
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("InitAcrossExpression");
     while (
       state.tryConsume(
         element,
@@ -4818,7 +4818,7 @@ const initialAttributeSpecificationIterationValue = rule(
 
     const lhs = initialAttributeItem.rule(state);
     lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("InitialAttributeSpecificationIterationValue");
     while (
       state.tryConsume(
         element,
@@ -4857,7 +4857,7 @@ const declareStatement = rule(
 
     const lhs = declaredItem.rule(state);
     lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DeclareStatement");
     while (
       state.tryConsume(
         element,
@@ -4929,7 +4929,7 @@ const declaredItem = rule(
       const lhs = declaredItem.rule(state);
       lhs && element.elements.push(lhs);
 
-      const { inc } = state.createLoopContext(1);
+      const { inc } = state.createLoopContext("DeclaredItem 1");
       while (
         state.tryConsume(element, CstNodeKind.DeclaredItem_Comma, tokens.Comma)
       ) {
@@ -4949,7 +4949,7 @@ const declaredItem = rule(
     }
 
     // Parse attributes (can appear multiple times)
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DeclaredItem 2");
     while (state.canConsumeFirst(declarationAttribute.first())) {
       inc();
       const attr = declarationAttribute.rule(state);
@@ -5245,7 +5245,7 @@ const returnsAttribute = rule(
     );
 
     // Parse zero or more declaration attributes
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("ReturnsAttribute");
     while (
       !state.eof &&
       (state.canConsumeFirst(computationDataAttribute.first()) ||
@@ -5323,7 +5323,7 @@ const defaultValueAttribute = rule(
 
     const lhs = defaultValueAttributeItem.rule(state);
     lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefaultValueAttribute");
     while (
       state.tryConsume(
         element,
@@ -5378,7 +5378,7 @@ const defaultValueAttributeItem = rule(
     lhs && element.attributes.push(lhs);
 
     // Parse additional attributes
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("DefaultValueAttributeItem");
     while (state.canConsumeFirst(declarationAttribute.first())) {
       inc();
       const rhs = declarationAttribute.rule(state);
@@ -5408,7 +5408,7 @@ const valueListAttribute = rule(
     if (state.canConsumeFirst(expression.first())) {
       const lhs = expression.rule(state);
       lhs && element.values.push(lhs);
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("ValueListAttribute");
       while (
         state.tryConsume(
           element,
@@ -5467,7 +5467,7 @@ const valueRangeAttribute = rule(
     if (state.canConsumeFirst(expression.first())) {
       const lhs = expression.rule(state);
       lhs && element.values.push(lhs);
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("ValueRangeAttribute");
       while (
         state.tryConsume(
           element,
@@ -5598,7 +5598,7 @@ const dimensions = rule(
     if (state.canConsumeFirst(dimensionBound.first())) {
       const lhs = dimensionBound.rule(state);
       lhs && element.dimensions.push(lhs);
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("Dimensions");
       while (
         state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
       ) {
@@ -5679,7 +5679,7 @@ const environmentAttribute = rule(
     );
 
     // Parse zero or more environment attribute items
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("EnvironmentAttribute");
     while (
       !state.eof &&
       state.canConsumeFirst(environmentAttributeItem.first())
@@ -5733,7 +5733,7 @@ const environmentAttributeItem = rule(
       if (state.canConsumeFirst(expression.first())) {
         const lhs = expression.rule(state);
         lhs && element.args.push(lhs);
-        const { inc } = state.createLoopContext();
+        const { inc } = state.createLoopContext("EnvironmentAttributeItem");
         while (
           !state.eof &&
           (state.canConsume(tokens.Comma) ||
@@ -5773,7 +5773,7 @@ const entryAttribute = rule(
     const element = ast.createEntryAttribute();
 
     // Parse zero or more LIMITED tokens at the beginning
-    const { inc } = state.createLoopContext(1);
+    const { inc } = state.createLoopContext("EntryAttribute 1");
     while (
       state.tryConsume(
         element,
@@ -5806,7 +5806,7 @@ const entryAttribute = rule(
       const lhs = entryDescription.rule(state);
       lhs && element.attributes.push(lhs);
 
-      const { inc } = state.createLoopContext(2);
+      const { inc } = state.createLoopContext("EntryAttribute 2");
       while (
         state.tryConsume(
           element,
@@ -5827,7 +5827,7 @@ const entryAttribute = rule(
     }
 
     // Parse zero or more trailing options
-    const { inc: inc3 } = state.createLoopContext(3);
+    const { inc: inc3 } = state.createLoopContext("EntryAttribute 3");
     while (
       !state.eof &&
       (state.canConsumeFirst(options.first()) ||
@@ -5907,7 +5907,7 @@ const returnsOption = rule(
     );
 
     // Parse zero or more declaration attributes
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("ReturnsOption");
     while (!state.eof && state.canConsumeFirst(declarationAttribute.first())) {
       inc();
       const attr = declarationAttribute.rule(state);
@@ -5943,7 +5943,7 @@ const entryParameterDescription = rule(
     ) {
       element.star = true;
       // Parse optional attributes after the star
-      const { inc } = state.createLoopContext(1);
+      const { inc } = state.createLoopContext("EntryParameterDescription 1");
       while (state.canConsumeFirst(declarationAttribute.first())) {
         inc();
         const attr = declarationAttribute.rule(state);
@@ -5955,7 +5955,7 @@ const entryParameterDescription = rule(
       lhs && element.attributes.push(lhs);
 
       // Parse additional attributes
-      const { inc } = state.createLoopContext(2);
+      const { inc } = state.createLoopContext("EntryParameterDescription 2");
       while (state.canConsumeFirst(declarationAttribute.first())) {
         inc();
         const rhs = declarationAttribute.rule(state);
@@ -5982,7 +5982,7 @@ const entryUnionDescription = rule(
     }
 
     // Parse zero or more declaration attributes
-    const { inc } = state.createLoopContext(1);
+    const { inc } = state.createLoopContext("EntryUnionDescription 1");
     while (state.canConsumeFirst(declarationAttribute.first())) {
       inc();
       const attr = declarationAttribute.rule(state);
@@ -5997,7 +5997,7 @@ const entryUnionDescription = rule(
     );
 
     // Parse zero or more prefixed attributes
-    const { inc: inc2 } = state.createLoopContext(2);
+    const { inc: inc2 } = state.createLoopContext("EntryUnionDescription 2");
     while (state.canConsumeFirst(prefixedAttribute.first())) {
       inc2();
       const attr = prefixedAttribute.rule(state);
@@ -6023,7 +6023,7 @@ const prefixedAttribute = rule(
     }
 
     // Parse zero or more declaration attributes
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("PrefixedAttribute");
     while (state.canConsumeFirst(declarationAttribute.first())) {
       inc();
       const attr = declarationAttribute.rule(state);
@@ -6098,7 +6098,7 @@ const expression = rule(
     lhs && element.items.push(lhs);
 
     // Parse zero or more operator-expression pairs
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("BinaryExpression");
     while (state.canConsume(tokens.BinaryOperator)) {
       inc();
       const operatorToken = state.consume(
@@ -6184,7 +6184,7 @@ const memberCall = rule(
     element.element = referenceItem.rule(state);
 
     // Parse zero or more dot-separated member accesses
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("MemberCall");
     while (state.canConsume(tokens.Dot)) {
       inc();
       // Create a new MemberCall for the chain
@@ -6212,7 +6212,7 @@ const locatorCall = rule(
     element.element = memberCall.rule(state);
 
     // Parse zero or more pointer/handle chains
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("LocatorCall");
     while (
       !state.eof &&
       (state.canConsume(tokens.MinusGreaterThan) ||
@@ -6298,7 +6298,7 @@ const procedureCall = rule(
 
     // Parse optional argument lists (up to 2)
     let argCount = 0;
-    const { inc } = state.createLoopContext();
+    const { inc } = state.createLoopContext("ProcedureCall");
     while (argCount < 2 && state.canConsumeFirst(procedureCallArgs.first())) {
       inc();
       const args = procedureCallArgs.rule(state);
@@ -6341,7 +6341,7 @@ const procedureCallArgs = rule(
       }
 
       // Parse additional comma-separated arguments
-      const { inc } = state.createLoopContext();
+      const { inc } = state.createLoopContext("ProcedureCallArgs");
       while (
         state.tryConsume(
           element,

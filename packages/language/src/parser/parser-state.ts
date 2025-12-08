@@ -57,18 +57,13 @@ export class ParserState {
     this.index = 0;
   }
 
-  createLoopContext(id: number = 1) {
-    const regex = /parser\-handwritten\.ts:(\d+)/;
-    const stack = new Error().stack!.split("\n");
-    const location = stack.find((line) => regex.test(line))!;
-    const match = location.match(regex)![1] + ` (loop id: ${id})`;
+  createLoopContext(name: string) {
     let lastIndex = -1;
     return {
       inc: () => {
         if (lastIndex === this.index) {
-          ///this.inError = true;
           throw new Error(
-            `Possible infinite loop detected in parser at ${match} after ${this.token?.image} token.`,
+            `Possible infinite loop detected in parser at rule ${name} after ${this.token?.image} token.`,
           );
         }
         lastIndex = this.index;
