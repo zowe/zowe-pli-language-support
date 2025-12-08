@@ -44,6 +44,12 @@ export function activate(context: vscode.ExtensionContext): void {
   if (workspaceFolder) {
     watchPlipluginFolder(client, workspaceFolder, context, telemetryReporter);
   }
+
+  handleMissingConfig(
+    vscode.window.activeTextEditor,
+    telemetryReporter,
+    "pli.language.support.documentOpened",
+  );
 }
 
 /**
@@ -62,82 +68,93 @@ namespace PopUpOptions {
   };
 }
 
+async function handleMissingConfig(
+  textEditor: vscode.TextEditor | undefined,
+  telemetryReporter: TelemetryReporter | undefined,
+  telemetryEvent: string | undefined,
+) {
+  if (!textEditor || !shouldShowInfoMessage) {
+    return;
+  }
+
+  // settle on the 1st workspace folder available
+  // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!workspaceFolder) {
+    return;
+  }
+
+  // check if we can create a .pliplugin folder
+  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+  const isPliDocument = textEditor.document.languageId === "pli";
+  const currentFileRelativePath = path.relative(
+    workspaceFolder,
+    textEditor.document.fileName,
+  );
+
+  // Not a Pli document or Config exists or Telemetry Event description not provided
+  if (!isPliDocument || fs.existsSync(plipluginPath) || !telemetryEvent) {
+    return;
+  }
+
+  sendTelemetryEvent(telemetryEvent, telemetryReporter);
+
+  const userResponse = await vscode.window.showInformationMessage(
+    PopUpOptions.CONFIG_CREATION.infoTitle(currentFileRelativePath),
+    ...PopUpOptions.CONFIG_CREATION.userOptions,
+  );
+
+  // If user clicks "Don't show again"
+  if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[2]) {
+    shouldShowInfoMessage = false;
+    return;
+  }
+  // If user clicks "Yes"
+  if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[0]) {
+    fs.mkdirSync(plipluginPath);
+    fs.writeFileSync(
+      path.join(plipluginPath, "pgm_conf.json"),
+      JSON.stringify(
+        {
+          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+          pgms: [
+            {
+              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
+              program: currentFileRelativePath,
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+
+    fs.writeFileSync(
+      path.join(plipluginPath, "proc_grps.json"),
+      JSON.stringify(
+        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+        null,
+        2,
+      ),
+    );
+
+    // confirmation message
+    vscode.window.showInformationMessage(
+      PopUpOptions.CONFIG_CREATION.successMessage,
+    );
+  }
+}
+
 function registerOnDidOpenTextDocListener(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
-  const listener = vscode.window.onDidChangeActiveTextEditor(
-    async (textEditor) => {
-      if (!textEditor || !shouldShowInfoMessage) {
-        return;
-      }
-      // settle on the 1st workspace folder available
-      // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
-      const workspaceFolder =
-        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-      if (!workspaceFolder) {
-        return;
-      }
-      // check if we can create a .pliplugin folder
-      const plipluginPath = path.join(workspaceFolder, ".pliplugin");
-      const isPliDocument = textEditor.document.languageId === "pli";
-      const currentFileRelativePath = path.relative(
-        workspaceFolder,
-        textEditor.document.fileName,
-      );
-
-      if (!isPliDocument || fs.existsSync(plipluginPath)) {
-        // not a pli file or config already exists
-        return;
-      }
-      sendTelemetryEvent(
-        "pli.language.support.documentOpened",
-        telemetryReporter,
-      );
-
-      const userResponse = await vscode.window.showInformationMessage(
-        PopUpOptions.CONFIG_CREATION.infoTitle(currentFileRelativePath),
-        ...PopUpOptions.CONFIG_CREATION.userOptions,
-      );
-
-      // If user clicks "Don't show again"
-      if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[2]) {
-        shouldShowInfoMessage = false;
-      }
-      // If user clicks "Yes"
-      else if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[0]) {
-        // create the .pliplugin folder and files, using the current file as the entry point
-        fs.mkdirSync(plipluginPath);
-        fs.writeFileSync(
-          path.join(plipluginPath, "pgm_conf.json"),
-          JSON.stringify(
-            {
-              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-              pgms: [
-                {
-                  ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-                  program: currentFileRelativePath,
-                },
-              ],
-            },
-            null,
-            2,
-          ),
-        );
-        fs.writeFileSync(
-          path.join(plipluginPath, "proc_grps.json"),
-          JSON.stringify(
-            PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-            null,
-            2,
-          ),
-        );
-
-        vscode.window.showInformationMessage(
-          PopUpOptions.CONFIG_CREATION.successMessage,
-        );
-      }
-    },
-  );
+  const listener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+    await handleMissingConfig(
+      editor,
+      telemetryReporter,
+      "pli.language.support.documentAtivated",
+    );
+  });
 
   return listener;
 }
