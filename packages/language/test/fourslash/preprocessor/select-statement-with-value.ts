@@ -13,9 +13,9 @@
 
 //// %VAR = 42;
 //// %SELECT (VAR);
-//// %WHEN (21) X
-//// %WHEN (42) Y
-//// %OTHERWISE Z
+//// %WHEN (21) DO; X %END;
+//// %WHEN (42) DO; Y %END;
+//// %OTHERWISE DO; Z %END;
 //// %END;
 
 preprocessor.expectTokens("Y");

@@ -15,10 +15,10 @@
 //// %DECLARE C fixed;
 //// %C = 42;
 //// %SELECT (C);
-//// %WHEN (1) <|skipped:PUT(1);|>
-//// %WHEN (2) <|skipped:PUT(2);|>
-//// %WHEN (3) <|skipped:PUT(3);|>
-//// %OTHERWISE PUT(4);
+//// %WHEN (1) <|skipped:DO; PUT(1); %END;|>
+//// %WHEN (2) <|skipped:DO; PUT(2); %END;|>
+//// %WHEN (3) <|skipped:DO; PUT(3); %END;|>
+//// %OTHERWISE DO; PUT(4); %END;
 //// %END;
 
 preprocessor.expectSkippedCodeAt("skipped");

@@ -11,9 +11,17 @@
 
 /// <reference path="../framework.ts" />
 
-//// %SELECT;
-//// %WHEN (0, 1, 2) DO; X %END;
-//// %OTHERWISE DO Y %END;
-//// %END;
+// @filename: cpy/lib.pli
+//// LIB_VAR
 
-preprocessor.expectTokens("X");
+// @filename: main.pli
+//// %IF 1 %THEN <|INCLUDE|> lib;
+//// %IF 1 %THEN <|%|>INCLUDE lib;
+
+// This asserts that the statement after IF-THEN does not require a percent sign
+// BUT can have one if desired
+preprocessor.expectTokens(`
+  LIB_VAR
+  LIB_VAR
+`);
+verify.noDiagnostics(["%", "INCLUDE"]);

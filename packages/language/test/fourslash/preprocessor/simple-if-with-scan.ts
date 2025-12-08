@@ -11,10 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
-//// %IF 1 %THEN
+//// %IF 1 %THEN DO;
 ////   %A = 123;
-//// %ELSE
+//// %END;
+//// %ELSE DO;
 ////   %A = 456;
+//// %END;
 //// %ACTIVATE A;
 //// dcl X fixed;
 //// X = A;
