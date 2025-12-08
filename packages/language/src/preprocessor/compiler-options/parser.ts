@@ -11,7 +11,6 @@
 
 import {
   ConsumeMethodOpts,
-  createToken,
   EmbeddedActionsParser,
   Lexer,
   TokenType,
@@ -32,6 +31,7 @@ import {
 } from "../../syntax-tree/ast";
 import { ML_COMMENT, SL_COMMENT, Token } from "../../parser/tokens";
 import { URI } from "../../utils/uri";
+import { createToken } from "../../parser/token-type-factory";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
 const semicolonToken = createToken({ name: "semicolon", pattern: ";" });

@@ -1,4 +1,4 @@
-import { createToken, TokenType } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { describe, expect, test } from "vitest";
 import { orRule, rule, sequence } from "../src/parser/parser-types";
 import { SyntaxNode } from "../src/syntax-tree/ast";
@@ -7,6 +7,7 @@ import {
   createTokenInstance as originalCreateTokenInstance,
   Token,
 } from "../src/parser/tokens";
+import { createToken } from "../src/parser/token-type-factory";
 
 namespace Tokens {
   export const ID = createToken({
@@ -107,9 +108,10 @@ namespace Rules {
     () => statement.first(),
     (state) => {
       const program: AST.StatementNode[] = [];
-      while (!state.eof && state.canConsumeFirst(statement.first())) {
+      while (!state.eof) {
         const stmt = statement.rule(state);
         stmt && program.push(stmt);
+        state.recover();
       }
       return program;
     },
@@ -151,5 +153,18 @@ describe("Rule tests", () => {
     expect(result.length).toBe(1);
     expect(result[0].kind).toBe(1);
     expect((result[0] as AST.PersonNode).name).toBe("Person");
+  });
+
+  test("Error", () => {
+    const state = new ParserState(
+      [TokenInstances.IdBob],
+      ParserStateMode.Final,
+      true,
+    );
+
+    Rules.program.rule(state)!;
+
+    expect(state.diagnostics.length).toBe(1);
+    expect(state.diagnostics[0].message).toBe("Expected any of {HELLO, PERSON}, but found 'ID'.");
   });
 });

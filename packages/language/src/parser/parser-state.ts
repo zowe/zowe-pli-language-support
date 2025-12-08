@@ -27,6 +27,7 @@ import {
   PLICodes,
   SimplePLICode,
 } from "../validation/pli-codes";
+import { tokenIdxToClass } from "./token-type-factory";
 
 export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
@@ -381,8 +382,8 @@ export class ParserState {
     const lookahead = token.tokenType;
     const idx = this.mapMatch(map, lookahead);
     if (idx === undefined) {
-      //TODO this.error(`Expected '', but found '${lookahead.name}'.`, token, Severity.S)
-      this.inError = true;
+      const tokenTypeNames = [...map.keys()].map(idx => tokenIdxToClass(idx)).filter(k => k !== undefined).map(tk => tk!.name).join(", ");
+      this.error(`Expected any of {${tokenTypeNames}}, but found '${lookahead.name}'.`, token, Severity.S)
       return null;
     }
     const next = map.get(idx)!;

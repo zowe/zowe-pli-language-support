@@ -9,10 +9,11 @@
  *
  */
 
-import { createToken, ITokenConfig, Lexer, TokenType } from "chevrotain";
+import { ITokenConfig, Lexer, TokenType } from "chevrotain";
 import { URI } from "../utils/uri";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as ast from "../syntax-tree/ast";
+import { createToken } from "./token-type-factory";
 
 export interface Token {
   /**
