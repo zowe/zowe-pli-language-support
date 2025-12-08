@@ -17,8 +17,6 @@ import {
   generatePliValidationDiagnostics,
   generatePreprocessorValidationDiagnostics,
   linkingErrorsToDiagnostics,
-  parserErrorsToDiagnostics,
-  filteredDiagnosticsWithUri,
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { assignDebugKinds } from "../utils/debug-kinds";

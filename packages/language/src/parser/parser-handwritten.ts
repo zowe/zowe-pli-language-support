@@ -1015,7 +1015,7 @@ const assignmentStatement = rule(
         // BY DIMACROSS variant
         element.dimacrossExpr = expression.rule(state);
       } else {
-        state.error(Severe.IBM3988I, state.token, Severity.S);
+        state.error(Severe.IBM3988I.message, state.token, Severity.S);
         return element;
       }
     }
@@ -1262,7 +1262,7 @@ const closeStatement = rule(
     ) {
       element.files.push("*");
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -1299,7 +1299,7 @@ const closeStatement = rule(
       ) {
         element.files.push("*");
       } else {
-        state.error(Severe.IBM3988I, state.token, Severity.S);
+        state.error(Severe.IBM3988I.message, state.token, Severity.S);
         return element;
       }
 
@@ -1433,7 +1433,7 @@ const defaultExpressionPart = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -2464,7 +2464,7 @@ const flushStatement = rule(
       const starToken = state.last;
       element.file = starToken!.image as "*";
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -2561,7 +2561,7 @@ const formatListItem = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -2596,7 +2596,7 @@ const formatListItemLevel = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -2689,7 +2689,7 @@ const CFormatItem = rule(
     } else if (state.canConsumeFirst(PFormatItem.first())) {
       element.item = PFormatItem.rule(state);
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -3035,7 +3035,7 @@ const getStatement = rule(
           const dataSpec = dataSpecificationOptions.rule(state);
           dataSpec && fileStatement.specifications.push(dataSpec);
         } else {
-          state.error(Severe.IBM3988I, state.token, Severity.S);
+          state.error(Severe.IBM3988I.message, state.token, Severity.S);
           return element;
         }
       } while (
@@ -3125,7 +3125,7 @@ const goToStatement = rule(
     ) {
       // GOTO consumed
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -4598,7 +4598,7 @@ const initialAttribute = rule(
           tokens.CloseParen,
         );
       } else {
-        state.error(Severe.IBM3988I, state.token, Severity.S);
+        state.error(Severe.IBM3988I.message, state.token, Severity.S);
         return element;
       }
     } else if (
@@ -4635,7 +4635,7 @@ const initialAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -4696,7 +4696,7 @@ const initialToContent = rule(
         }
       }
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -4944,7 +4944,7 @@ const declaredItem = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -5082,7 +5082,7 @@ const definedAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -5128,7 +5128,7 @@ const pictureAttribute = rule(
         tokens.WIDEPIC,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -5220,7 +5220,7 @@ const typeAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
@@ -5574,7 +5574,7 @@ const handleAttribute = rule(
         tokens.CloseParen,
       );
     } else {
-      state.error(Severe.IBM3988I, state.token, Severity.S);
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
       return element;
     }
 
