@@ -160,3 +160,9 @@ export function rule<T>(
     };
   }
 }
+
+export function throwHasManualLookahead(): never {
+  throw new Error(
+    "This rule has manual lookahead and cannot be used in automatic parsing.",
+  );
+}

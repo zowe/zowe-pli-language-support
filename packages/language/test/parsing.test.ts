@@ -960,7 +960,7 @@ describe("PL/I Parsing tests", () => {
     generateAndAssertValidSymbolTable(doc);
   });
 
-   test("END statement with many labels", async () => {
+  test("END statement with many labels", async () => {
     const doc = await parseStmts(`
       DO LOOP;
       last:

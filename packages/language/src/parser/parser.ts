@@ -1,4 +1,11 @@
-import { choice, orRule, rule, RuleFirstPair, sequence } from "./parser-types";
+import {
+  choice,
+  orRule,
+  rule,
+  RuleFirstPair,
+  sequence,
+  throwHasManualLookahead,
+} from "./parser-types";
 import * as ast from "../syntax-tree/ast";
 import { tokenMatcher } from "chevrotain";
 import { finalParserState, ParserState } from "./parser-state";
@@ -695,7 +702,6 @@ const unit = orRule<ast.Unit>(
   () => nullStatement,
   () => onStatement,
   () => openStatement,
-  () => procincDirective, // TODO integrate into preprocessor
   () => putStatement,
   () => qualifyStatement,
   () => readStatement,
@@ -1161,11 +1167,7 @@ const beginStatement = rule(
 );
 
 const endStatement = rule(
-  choice(
-    sequence(tokens.END),
-    //TODO: sequence(zeroOrMore(() => labelPrefix.first()), tokens.END),
-    sequence(tokens.ID, tokens.Colon, tokens.END),
-  ),
+  () => throwHasManualLookahead(),
   (state: ParserState): ast.EndStatement => {
     const element = ast.createEndStatement();
 
@@ -6432,6 +6434,8 @@ export function performAssignmentLookahead(state: ParserState): boolean {
   // First token of an assigment needs to be an ID
   if (!token || !tokenMatcher(token, tokens.ID)) {
     return false;
+  } else if (token.tokenTypeIdx === tokens.ID.tokenTypeIdx) {
+    return true;
   }
   token = lookahead(i);
   // We have found a match immediately with the assignment operator
@@ -6543,14 +6547,17 @@ function performGenericAttributeLookahead(
 function performEndStatementLookahead(state: ParserState): boolean {
   const lookahead = (la: number) => state.peek(la);
   let index: number = 1;
-  let token: tokens.Token|undefined = undefined;
-  while((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
+  let token: tokens.Token | undefined = undefined;
+  while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
     const idToken = lookahead(index);
-    const colonToken = lookahead(index+1);
-    if(!idToken || !colonToken) {
+    const colonToken = lookahead(index + 1);
+    if (!idToken || !colonToken) {
       return false;
     }
-    if(!tokenMatcher(idToken, tokens.ID) || !tokenMatcher(colonToken, tokens.Colon)) {
+    if (
+      !tokenMatcher(idToken, tokens.ID) ||
+      !tokenMatcher(colonToken, tokens.Colon)
+    ) {
       return false;
     }
     index += 2;

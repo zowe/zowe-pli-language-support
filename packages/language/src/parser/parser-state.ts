@@ -382,8 +382,16 @@ export class ParserState {
     const lookahead = token.tokenType;
     const idx = this.mapMatch(map, lookahead);
     if (idx === undefined) {
-      const tokenTypeNames = [...map.keys()].map(idx => tokenIdxToClass(idx)).filter(k => k !== undefined).map(tk => tk!.name).join(", ");
-      this.error(`Expected any of {${tokenTypeNames}}, but found '${lookahead.name}'.`, token, Severity.S)
+      const tokenTypeNames = [...map.keys()]
+        .map((idx) => tokenIdxToClass(idx))
+        .filter((k) => k !== undefined)
+        .map((tk) => tk!.name)
+        .join(", ");
+      this.error(
+        `Expected any of {${tokenTypeNames}}, but found '${lookahead.name}'.`,
+        token,
+        Severity.S,
+      );
       return null;
     }
     const next = map.get(idx)!;
