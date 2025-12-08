@@ -15,12 +15,7 @@ import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 
 export function isCicsResponseStatement(state: ParserState): boolean {
-  return state.canConsume(
-    t.DFHRESP,
-    t.OpenParen,
-    t.CicsResponseCode,
-    t.CloseParen,
-  );
+  return state.canConsume(t.DFHRESP, t.OpenParen, t.ID, t.CloseParen);
 }
 
 export function cicsResponseStatement(
@@ -47,6 +42,9 @@ export function cicsResponseStatement(
     statement.code = t.CicsResponseCode.mapToEnumLiteral(
       codeToken.tokenTypeIdx,
     );
+  } else if (state.canConsume(t.ID)) {
+    // Invalid CICS response code, skip the token
+    state.index++;
   }
   state.consume(
     statement,

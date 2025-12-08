@@ -11,7 +11,10 @@
 
 /// <reference path="../../framework.ts" />
 
-//// DFHRESP(TEST)
+//// DFHRESP(<|TEST|>)
 
-// If the DFHRESP code is unrecognized, the preprocessor should output a token statement instead
-preprocessor.expectTokens("DFHRESP(TEST)");
+// Expect no output tokens for an invalid DFHRESP code
+preprocessor.expectTokens("");
+verify.expectDiagnosticsAt("TEST", {
+  severity: constants.Severity.S,
+});

@@ -13,4 +13,6 @@
 
 //// DFHRESP(DISABLED)
 
+// Expect that the DISABLED code map to the correct number
+// Note: Applies to all other valid codes as well
 preprocessor.expectTokens("84");

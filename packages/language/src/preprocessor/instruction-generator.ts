@@ -306,11 +306,13 @@ function generateNoteInstruction(
 
 function generateCicsResponseInstruction(
   node: ast.CicsResponseStatement,
-): inst.CicsResponseInstruction {
-  const code = node.code ?? ast.CicsResponseCode.NORMAL;
+): inst.CicsResponseInstruction | undefined {
+  if (node.code === null) {
+    return undefined;
+  }
   return {
     kind: inst.InstructionKind.CicsResponseCode,
-    code,
+    code: node.code,
   };
 }
 
