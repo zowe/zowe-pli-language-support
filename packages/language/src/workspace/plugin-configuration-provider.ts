@@ -109,6 +109,13 @@ export interface ProcessGroup {
   };
 
   /**
+   * Whether member name validation is enabled for this process group.
+   * Validation constraints member names to no more than 8 chars, starting with a letter,
+   * and only containing A-Z, 0-9, @, #, _, and $ (case insensitively).
+   */
+  memberNameValidation?: boolean;
+
+  /**
    * Number of issues found in the compiler options for this process group.
    * Used to avoid duplicate issue reporting later on when running translation in a program context
    */
@@ -130,6 +137,7 @@ export function deserializeProcessGroup(
   const lspOptions = obj["lsp-options"] || {};
   const checkMargins = lspOptions["check-margins"] ?? false;
   const instructionCounterLimit = lspOptions["instruction-counter-limit"];
+  const memberNameValidation = obj["member-name-validation"];
   return {
     name: obj.name,
     compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
@@ -149,6 +157,9 @@ export function deserializeProcessGroup(
         ? instructionCounterLimit
         : MAX_INSTRUCTION_COUNTER,
     },
+    memberNameValidation: isBoolean(memberNameValidation)
+      ? memberNameValidation
+      : undefined,
   };
 }
 
@@ -168,6 +179,7 @@ export function serializeProcessGroup(
     "implicit-builtins": Array.from(group.implicitBuiltins).map((b) =>
       b.toLowerCase(),
     ),
+    "member-name-validation": group.memberNameValidation,
     "lsp-options": {
       "check-margins": group.lspOptions.checkMargins,
     },
@@ -181,6 +193,7 @@ interface SerializedProcessGroup {
   libs?: string[];
   "include-extensions"?: string[];
   "implicit-builtins"?: string[];
+  "member-name-validation"?: boolean;
   "lsp-options"?: {
     "check-margins"?: boolean;
     "instruction-counter-limit"?: number;

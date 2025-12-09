@@ -9,19 +9,12 @@
  *
  */
 
-import { CompletionKeywords } from "../../src/language-server/completion/keywords";
-import { Diagnostic } from "../../src/language-server/types";
-import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
-import { type Severity } from "../../src/language-server/types";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
-import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
+import { CompletionKeywords } from "../../src/language-server/completion/keywords";
+import { Diagnostic, type Severity } from "../../src/language-server/types";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
-import {
-  InternalCodes,
-  TypeSystemCodes,
-} from "../../src/validation/internal-codes";
-import { PLICode, PLICodes } from "../../src/validation/pli-codes";
+import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { DefaultAttribute, SyntaxKind } from "../../src/syntax-tree/ast";
 import {
   AccessMode,
@@ -48,7 +41,13 @@ import {
   TypeDescriptions,
   Volatility,
 } from "../../src/typesystem/descriptions";
+import {
+  InternalCodes,
+  TypeSystemCodes,
+} from "../../src/validation/internal-codes";
 import { LspCodes } from "../../src/validation/lsp-codes";
+import { PLICode, PLICodes } from "../../src/validation/pli-codes";
+import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
@@ -326,6 +325,7 @@ export interface HarnessTesterInterface {
         ErrorRight: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT;
       };
     };
+    LSP: typeof LspCodes;
     CompilerOptions: typeof CompilerOptionsCodes;
     TypeSystem: typeof TypeSystemCodes;
   };

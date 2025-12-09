@@ -11,6 +11,7 @@
         "SYSTEM": "MVS",
         "MARGINS": "2,72"
       },
+      "member-name-validation": true,
       "libs": [
         "cpy"
       ],
