@@ -51,6 +51,10 @@
               "type": "string"
             }
           },
+          "member-name-validation": {
+            "type": "boolean",
+            "description": "Whether to enable member name validation for this procedure group."
+          },
           "lsp-options": {
             "type": "object",
             "description": "Options for the Language Server Protocol.",
