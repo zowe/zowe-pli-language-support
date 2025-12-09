@@ -35,7 +35,7 @@ export const LspCodes = {
         "Standalone SKIP directive is not supported by the language server.",
     },
   },
-  
+
   /**
    * Member name validation codes
    */
@@ -57,6 +57,6 @@ export const LspCodes = {
       severity: Severity.E,
       message:
         "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
-    }
+    },
   },
 };
