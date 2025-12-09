@@ -9,13 +9,15 @@
  *
  */
 
-import { InternalCodes } from "../../../src/validation/internal-codes";
-import { HarnessTesterInterface } from "../harness-interface";
-import { PliMarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
 import { CompilerOptionsCodes } from "../../../src/preprocessor/compiler-options/codes";
-import { TypeSystemCodes } from "../../../src/validation/internal-codes";
-import { PLICodes } from "../../../src/validation/pli-codes";
+import { PliMarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
+import {
+  InternalCodes,
+  TypeSystemCodes,
+} from "../../../src/validation/internal-codes";
 import { LspCodes } from "../../../src/validation/lsp-codes";
+import { PLICodes } from "../../../src/validation/pli-codes";
+import { HarnessTesterInterface } from "../harness-interface";
 
 export const HarnessCodes: HarnessTesterInterface["code"] = {
   Severe: PLICodes.Severe,
@@ -30,6 +32,7 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
       ErrorRight: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
     },
   },
+  LSP: LspCodes,
   CompilerOptions: CompilerOptionsCodes,
   TypeSystem: TypeSystemCodes,
 };
