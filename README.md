@@ -122,9 +122,10 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
       ],
       "include-extensions": [
         ".cpy", ".copy"
-      ]
+      ],
+      "member-name-validation": true
     },
-{
+    {
       "name": "GROUP2",
       "libs": [
         "lib2",

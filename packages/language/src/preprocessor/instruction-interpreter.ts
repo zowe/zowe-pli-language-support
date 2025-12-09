@@ -9,9 +9,18 @@
  *
  */
 
+import { tokenMatcher } from "chevrotain";
 import { TextDocuments } from "../language-server/text-documents";
+import { Diagnostic, diagnosticFromCode } from "../language-server/types";
+import { preprocessorParse } from "../parser/parser-entry";
+import { preprocessorParserState } from "../parser/parser-state";
+import { tokenize } from "../parser/tokenizer";
 import { Token } from "../parser/tokens";
+import * as ast from "../syntax-tree/ast";
+import { CstNodeKind } from "../syntax-tree/cst";
 import { URI, UriUtils } from "../utils/uri";
+import { LspCodes } from "../validation/lsp-codes";
+import { PLICodes } from "../validation/pli-codes";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import {
@@ -24,17 +33,8 @@ import {
   InstructionGeneratorResult,
 } from "./instruction-generator";
 import * as inst from "./instructions";
-import * as ast from "../syntax-tree/ast";
 import { MarginsProcessor } from "./pli-margins-processor";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { tokenize } from "../parser/tokenizer";
-import { preprocessorParserState } from "../parser/parser-state";
-import { preprocessorParse } from "../parser/parser-entry";
-import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { tokenMatcher } from "chevrotain";
-import { PLICodes } from "../validation/pli-codes";
-import { LspCodes } from "../validation/lsp-codes";
 
 interface Variable {
   name: string;
@@ -2308,6 +2308,40 @@ async function resolveIncludeFileUri(
       }
     }
 
+    /**
+     * Helper to check & validate member names when member name validations are enabled.
+     * Pushes diagnostics to the context when validation fails.
+     * Effectively a noop when member name validation is disabled in the process group.
+     * @param memberName Member to validate, implied to be a member of an existing ddlib entry
+     */
+    function checkToValidateMember(memberName: string): void {
+      if (!pgroup?.memberNameValidation) {
+        return;
+      }
+      // apply additional validation to the member name
+      if (memberName.length > 8) {
+        // emit diagnostic for member names > 8 characters
+        context.diagnostics.push(
+          diagnosticFromCode(
+            LspCodes.MemberValidation.ExceedsMaxLength,
+            item.token,
+          ),
+        );
+      }
+
+      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
+      if (!memberNameRegex.test(memberName)) {
+        // emit a diagnostic for invalid member names
+        context.diagnostics.push(
+          diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
+        );
+      }
+    }
+
+    let libMatch: URI | undefined;
+    // whether a match was found for a member include
+    let needsMemberValidation = isMemberWithoutDDName;
+
     for (const lib of computedLibs) {
       if (isLibsDir(lib)) {
         const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
@@ -2317,32 +2351,34 @@ async function resolveIncludeFileUri(
           // This is done to ensure resolution order of libs is maintained as members > files
           // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
           // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
-          const memberMatch = await FileSystemProviderInstance.search({
+          libMatch = await FileSystemProviderInstance.search({
             dirPath: resolveLibFileUri(lib.dir),
             member: fileNameOrPartial,
           });
-          if (memberMatch) {
-            return memberMatch;
+          if (libMatch) {
+            break;
           }
         }
 
         // perform standard search
-        const match = await FileSystemProviderInstance.search({
+        libMatch = await FileSystemProviderInstance.search({
           path: libFileUri,
           extensions: pgroup.includeExtensions,
         });
-        if (match) {
-          return match;
+        if (libMatch) {
+          // regular file match, no member to validate
+          needsMemberValidation = false;
+          break;
         }
       } else if (isMemberWithoutDDName) {
         // standalone member w/out an explicit ddname, search within ddlib for a match
         const ddLibUri = resolveLibFileUri(lib.ddLib);
-        const ddMemberMatch = await FileSystemProviderInstance.search({
+        libMatch = await FileSystemProviderInstance.search({
           path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
           extensions: [],
         });
-        if (ddMemberMatch) {
-          return ddMemberMatch;
+        if (libMatch) {
+          break;
         }
       } else if (
         isMemberIncludeItem(item) &&
@@ -2353,16 +2389,23 @@ async function resolveIncludeFileUri(
         const end = lib.ddLib.length - item.ddname.length;
         const libPath = lib.ddLib.substring(0, end);
         const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
-        const ddMemberMatch = await FileSystemProviderInstance.search({
+        libMatch = await FileSystemProviderInstance.search({
           path: ddLibUri,
           extensions: [],
         });
-        if (ddMemberMatch) {
-          return ddMemberMatch;
+        if (libMatch) {
+          break;
         }
       }
     }
+
+    // depending on whether we matched a member, check to apply validation on the name
+    if (needsMemberValidation) {
+      checkToValidateMember(fileNameOrPartial);
+    }
+    return libMatch;
   }
+
   return undefined;
 }
 
