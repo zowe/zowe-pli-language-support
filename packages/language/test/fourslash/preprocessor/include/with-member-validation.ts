@@ -65,7 +65,7 @@ verify.expectExclusiveDiagnosticsAt(3, []);
 // one for invalid starting char, and another for unresolved include
 verify.expectExclusiveDiagnosticsAt(4, [
   code.LSP.MemberValidation.InvalidName,
-  code.Severe.IBM3841I,
+  code.Severe.IBM1848I,
 ]);
 
 // lastly verify no diagnostics on the legitimate file include
