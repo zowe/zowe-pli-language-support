@@ -2308,6 +2308,9 @@ async function resolveIncludeFileUri(
       }
     }
 
+    // what constitutes a valid member name, whether it's a member or file include
+    const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
+
     /**
      * Helper to check & validate member names when member name validations are enabled.
      * Pushes diagnostics to the context when validation fails.
@@ -2329,7 +2332,6 @@ async function resolveIncludeFileUri(
         );
       }
 
-      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
       if (!memberNameRegex.test(memberName)) {
         // emit a diagnostic for invalid member names
         context.diagnostics.push(
@@ -2346,9 +2348,10 @@ async function resolveIncludeFileUri(
       if (isLibsDir(lib)) {
         const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
 
-        if (isMemberWithoutDDName) {
-          // attempt to first resolve for any DDName that introduces this member
+        if (memberNameRegex.test(fileNameOrPartial)) {
+          // attempt to first resolve for any DDName that may introduce a member by this name
           // This is done to ensure resolution order of libs is maintained as members > files
+          // Same applies for both member & file includes, to ensure behavior is consistent.
           // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
           // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
           libMatch = await FileSystemProviderInstance.search({
