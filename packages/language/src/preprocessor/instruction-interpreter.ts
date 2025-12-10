@@ -2083,7 +2083,7 @@ export function setFilePath(
         // because it's the value showcased on the preview.
         if (isWindows) {
           let path = context.currentUri.path;
-          path.substring(1);
+          path = path.substring(1);
           path = path[0].toUpperCase() + path.slice(1);
           item.relativeFilePath = path;
         } else {

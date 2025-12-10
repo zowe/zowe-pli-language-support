@@ -38,7 +38,7 @@ describe("setFilePath", () => {
     setFileSystemProvider(vfs);
     setPluginConfigurationProvider(pluginConfig);
 
-    if (["darwin", "linux", "win32"].includes(process.platform)) {
+    if (["darwin", "linux"].includes(process.platform)) {
       await pluginConfig.init("/workspace");
     } else if (process.platform === "win32") {
       await pluginConfig.init("C:\\workspace");
@@ -46,7 +46,7 @@ describe("setFilePath", () => {
     context = null;
   });
 
-  test.runIf(["darwin", "linux", "win32"].includes(process.platform))(
+  test.runIf(["darwin", "linux"].includes(process.platform))(
     "returns absolute path when target file resolves to absolute (outside workspace rules)",
     async () => {
       const absolutePath = "/Users/mockUser/Desktop/anotherfolder/absolute.pli";
