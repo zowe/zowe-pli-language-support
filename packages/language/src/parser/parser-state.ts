@@ -28,16 +28,14 @@ import {
   SimplePLICode,
 } from "../validation/pli-codes";
 import { tokenIdxToClass } from "./token-type-factory";
+import * as environment from "../workspace/environment";
 
 export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
 }
 
-export function finalParserState(
-  tokens: t.Token[],
-  debugging: boolean,
-): ParserState {
-  return new ParserState(tokens, ParserStateMode.Final, debugging);
+export function finalParserState(tokens: t.Token[]): ParserState {
+  return new ParserState(tokens, ParserStateMode.Final);
 }
 
 export enum ParserStateMode {
@@ -53,18 +51,16 @@ export class ParserState {
   public inError = false;
 
   private inProcedure = false;
-  private debugLoops: boolean;
 
-  constructor(tokens: t.Token[], mode: ParserStateMode, debugLoops = false) {
+  constructor(tokens: t.Token[], mode: ParserStateMode) {
     this.tokens = tokens;
     this.mode = mode;
     this.diagnostics = [];
     this.index = 0;
-    this.debugLoops = debugLoops;
   }
 
   createLoopContext(name: string) {
-    if (this.debugLoops) {
+    if (environment.IsDebugging) {
       let lastIndex = -1;
       return {
         inc: () => {

@@ -18,14 +18,11 @@ import {
 import { Severe } from "../validation/pli-codes";
 import { Severity } from "../language-server/types";
 
-export function parsePli(
-  input: tokens.Token[],
-  debugging: boolean,
-): {
+export function parsePli(input: tokens.Token[]): {
   tree: ast.Program;
   diagnostics: any;
 } {
-  const state = finalParserState(input, debugging);
+  const state = finalParserState(input);
   const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };

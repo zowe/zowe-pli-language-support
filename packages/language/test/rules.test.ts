@@ -130,7 +130,6 @@ describe("Rule tests", () => {
         TokenInstances.Exclamation,
       ],
       ParserStateMode.Final,
-      true,
     );
 
     const result = Rules.program.rule(state)!;
@@ -146,7 +145,6 @@ describe("Rule tests", () => {
     const state = new ParserState(
       [TokenInstances.Person, TokenInstances.IdPerson],
       ParserStateMode.Final,
-      true,
     );
 
     const result = Rules.program.rule(state)!;
@@ -160,7 +158,6 @@ describe("Rule tests", () => {
     const state = new ParserState(
       [TokenInstances.IdBob],
       ParserStateMode.Final,
-      true,
     );
 
     Rules.program.rule(state)!;

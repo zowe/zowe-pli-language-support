@@ -25,6 +25,7 @@ import { interruptAndCheck } from "../utils/promises";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { parsePli } from "../parser/parser";
+import * as environment from "../workspace/environment";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -79,13 +80,11 @@ export async function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): Program {
-  const debugging = process.env.NODE_ENV === "development";
-
-  const { tree, diagnostics } = parsePli(compilationUnit.tokens, debugging);
+  const { tree, diagnostics } = parsePli(compilationUnit.tokens);
   compilationUnit.ast = tree;
   compilationUnit.diagnostics.addAll(DiagnosticCategory.Parser, diagnostics);
 
-  if (debugging) {
+  if (environment.IsDebugging) {
     assignDebugKinds(tree);
   }
 
