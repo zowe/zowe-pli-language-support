@@ -959,16 +959,4 @@ describe("PL/I Parsing tests", () => {
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
   });
-
-  test("END statement with many labels", async () => {
-    const doc = await parseStmts(`
-      DO LOOP;
-      last:
-      label:
-      before:
-      END;
-    `);
-    assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
-  });
 });

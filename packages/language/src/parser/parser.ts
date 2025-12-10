@@ -26,7 +26,7 @@ export function parsePli(
   diagnostics: any;
 } {
   const state = finalParserState(input, debugging);
-  const program = pliProgram.rule(state)!;
+  const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
 }
@@ -662,11 +662,40 @@ const statement = rule(
       element.value = unit.rule(state);
     }
 
-    state.recover();
+    recover(
+      state,
+      () =>
+        state.canConsumeFirst(statement.first()) ||
+        performAssignmentLookahead(state),
+    );
 
     return element;
   },
 );
+
+//this logic is also used in the tests, so the break condition is generic
+export function recover(
+  state: ParserState,
+  breakCondition: () => boolean,
+): void {
+  if (!state.inError) {
+    // Prevent error recovery if not in error state.
+    return;
+  }
+  while (state.index < state.tokens.length) {
+    const token = state.tokens[state.index];
+    if (tokenMatcher(token, tokens.Semicolon)) {
+      state.index++;
+      break;
+    }
+    if (breakCondition()) {
+      break;
+    } else {
+      state.index++;
+    }
+  }
+  state.inError = false;
+}
 
 const unit = orRule<ast.Unit>(
   () => allocateStatement,

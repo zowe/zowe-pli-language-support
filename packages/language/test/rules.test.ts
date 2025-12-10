@@ -8,6 +8,7 @@ import {
   Token,
 } from "../src/parser/tokens";
 import { createToken } from "../src/parser/token-type-factory";
+import { recover } from "../src/parser/parser";
 
 namespace Tokens {
   export const ID = createToken({
@@ -111,7 +112,7 @@ namespace Rules {
       while (!state.eof) {
         const stmt = statement.rule(state);
         stmt && program.push(stmt);
-        state.recover();
+        recover(state, () => state.canConsumeFirst(statement.first()));
       }
       return program;
     },

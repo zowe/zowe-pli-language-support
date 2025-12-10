@@ -64,8 +64,8 @@ export class ParserState {
   }
 
   createLoopContext(name: string) {
-    let lastIndex = -1;
     if (this.debugLoops) {
+      let lastIndex = -1;
       return {
         inc: () => {
           if (lastIndex === this.index) {
@@ -194,25 +194,8 @@ export class ParserState {
     if (this.mode === ParserStateMode.Preprocessor) {
       this.performPreprocessorRecovery();
     } else if (this.mode === ParserStateMode.Final) {
-      this.performMainParserRecovery();
     }
     this.inError = false;
-  }
-
-  private performMainParserRecovery(): void {
-    const currentLine = (this.token || this.last)?.startLine ?? 0;
-    while (this.index < this.tokens.length) {
-      const token = this.tokens[this.index];
-      if (token.startLine !== currentLine) {
-        // Moved to next line, stop here
-        break;
-      } else if (tokenMatcher(token, t.Semicolon)) {
-        this.index++;
-        break;
-      } else {
-        this.index++;
-      }
-    }
   }
 
   /**
@@ -355,10 +338,19 @@ export class ParserState {
   }
 
   private mapMatch(map: RuleMap, tokenType: TokenType): number | undefined {
-    return [
-      tokenType.tokenTypeIdx ?? -1,
-      ...(tokenType.CATEGORIES ?? []).map((cat) => cat.tokenTypeIdx ?? -1),
-    ].find((index) => map.has(index));
+    const tokenTypeIdx = tokenType.tokenTypeIdx ?? -1;
+    if (map.has(tokenTypeIdx)) {
+      return tokenTypeIdx;
+    }
+    if (tokenType.CATEGORIES) {
+      for (const category of tokenType.CATEGORIES) {
+        const categoryIdx = category.tokenTypeIdx ?? -1;
+        if (map.has(categoryIdx)) {
+          return categoryIdx;
+        }
+      }
+    }
+    return undefined;
   }
 
   private canConsumeFirstItem(map: RuleMap, index: number): boolean {

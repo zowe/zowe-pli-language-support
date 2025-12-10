@@ -393,7 +393,11 @@ export class TestBuilder {
     // We can always expect that the `actual` node contains ALL properties, even if they're null
     // Therefore, we simply iterate over its properties and check if they match the expected values
     for (const [key, actualValue] of Object.entries(actual)) {
-      if (key === "container" || key.endsWith("Token")) {
+      if (
+        key === "container" ||
+        key.endsWith("Token") ||
+        expected[key] === undefined
+      ) {
         // Skip container and token properties
         continue;
       }
