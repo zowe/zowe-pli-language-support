@@ -215,6 +215,14 @@ export class ParserState {
     }
   }
 
+  /**
+   * Resets the error state without performing any recovery.
+   * This is particularly useful in the preprocessor, where we can simply parse "TokenStatement" elements
+   */
+  skipRecovery(): void {
+    this.inError = false;
+  }
+
   private performPreprocessorRecovery(): void {
     // If the preprocessor parser encounters an error, it should attempt to:
     // 1. Find a semicolon at the current line, and skip that token
