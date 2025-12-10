@@ -46,6 +46,7 @@ describe("setFilePath", () => {
     context = null;
   });
 
+  // UNIX TESTS
   test.runIf(["darwin", "linux"].includes(process.platform))(
     "returns absolute path when target file resolves to absolute (outside workspace rules)",
     async () => {
@@ -67,6 +68,45 @@ describe("setFilePath", () => {
     },
   );
 
+  test.runIf(["darwin", "linux"].includes(process.platform))(
+    "returns './file.pli' when file is directly under workspace root",
+    async () => {
+      const relPath = "/workspace/relative.pli";
+      await vfs.writeFile(URI.parse(relPath), " DECLARE VARC FIXED;");
+
+      const doc = TextDocument.create(
+        URI.file(relPath).toString(),
+        "pli",
+        1,
+        " DECLARE VARC FIXED;",
+      );
+      context = { currentUri: URI.parse(doc.uri) };
+      setFilePath(item, doc.uri, context);
+
+      expect(item.relativeFilePath).toBe("./relative.pli");
+    },
+  );
+
+  test.runIf(["darwin", "linux"].includes(process.platform))(
+    "returns './nested/file.pli' for a nested file in workspace",
+    async () => {
+      const nestedPath = "/workspace/nested/relative-nested.pli";
+      await vfs.writeFile(URI.parse(nestedPath), " DECLARE VARC FIXED;");
+
+      const doc = TextDocument.create(
+        URI.file(nestedPath).toString(),
+        "pli",
+        1,
+        " DECLARE VARC FIXED;",
+      );
+      context = { currentUri: URI.parse(doc.uri) };
+      setFilePath(item, doc.uri, context);
+
+      expect(item.relativeFilePath).toBe("./nested/relative-nested.pli");
+    },
+  );
+
+  // WINDOWS TESTS
   test.runIf(process.platform === "win32")(
     "returns absolute path when target file resolves to absolute (outside workspace rules)",
     async () => {
@@ -89,35 +129,41 @@ describe("setFilePath", () => {
     },
   );
 
-  test("returns './file.pli' when file is directly under workspace root", async () => {
-    const relPath = "/workspace/relative.pli";
-    await vfs.writeFile(URI.parse(relPath), " DECLARE VARC FIXED;");
+  test.runIf(process.platform === "win32")(
+    "returns './file.pli' when file is directly under workspace root",
+    async () => {
+      const relPath = "\\workspace\\relative.pli";
+      await vfs.writeFile(URI.parse(relPath), " DECLARE VARC FIXED;");
 
-    const doc = TextDocument.create(
-      URI.file(relPath).toString(),
-      "pli",
-      1,
-      " DECLARE VARC FIXED;",
-    );
-    context = { currentUri: URI.parse(doc.uri) };
-    setFilePath(item, doc.uri, context);
+      const doc = TextDocument.create(
+        URI.file(relPath).toString(),
+        "pli",
+        1,
+        " DECLARE VARC FIXED;",
+      );
+      context = { currentUri: URI.parse(doc.uri) };
+      setFilePath(item, doc.uri, context);
 
-    expect(item.relativeFilePath).toBe("./relative.pli");
-  });
+      expect(item.relativeFilePath).toBe("./relative.pli");
+    },
+  );
 
-  test("returns './nested/file.pli' for a nested file in workspace", async () => {
-    const nestedPath = "/workspace/nested/relative-nested.pli";
-    await vfs.writeFile(URI.parse(nestedPath), " DECLARE VARC FIXED;");
+  test.runIf(process.platform === "win32")(
+    "returns './nested/file.pli' for a nested file in workspace",
+    async () => {
+      const nestedPath = "\\workspace\\nested\\relative-nested.pli";
+      await vfs.writeFile(URI.parse(nestedPath), " DECLARE VARC FIXED;");
 
-    const doc = TextDocument.create(
-      URI.file(nestedPath).toString(),
-      "pli",
-      1,
-      " DECLARE VARC FIXED;",
-    );
-    context = { currentUri: URI.parse(doc.uri) };
-    setFilePath(item, doc.uri, context);
+      const doc = TextDocument.create(
+        URI.file(nestedPath).toString(),
+        "pli",
+        1,
+        " DECLARE VARC FIXED;",
+      );
+      context = { currentUri: URI.parse(doc.uri) };
+      setFilePath(item, doc.uri, context);
 
-    expect(item.relativeFilePath).toBe("./nested/relative-nested.pli");
-  });
+      expect(item.relativeFilePath).toBe("./nested/relative-nested.pli");
+    },
+  );
 });
