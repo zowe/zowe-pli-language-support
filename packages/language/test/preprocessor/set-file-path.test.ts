@@ -132,7 +132,7 @@ describe("setFilePath", () => {
   test.runIf(process.platform === "win32")(
     "returns './file.pli' when file is directly under workspace root",
     async () => {
-      const relPath = "\\workspace\\relative.pli";
+      const relPath = "C:\\workspace\\relative.pli";
       await vfs.writeFile(URI.parse(relPath), " DECLARE VARC FIXED;");
 
       const doc = TextDocument.create(
@@ -151,7 +151,7 @@ describe("setFilePath", () => {
   test.runIf(process.platform === "win32")(
     "returns './nested/file.pli' for a nested file in workspace",
     async () => {
-      const nestedPath = "\\workspace\\nested\\relative-nested.pli";
+      const nestedPath = "C:\\workspace\\nested\\relative-nested.pli";
       await vfs.writeFile(URI.parse(nestedPath), " DECLARE VARC FIXED;");
 
       const doc = TextDocument.create(
