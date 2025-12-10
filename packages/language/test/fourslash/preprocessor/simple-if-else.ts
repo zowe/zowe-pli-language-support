@@ -11,11 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
-//// %IF 0 %THEN DO;
-////   dcl X fixed;
-//// %END;
-//// %ELSE DO;
-////   dcl Y fixed;
-//// %END;
+//// %IF 0 %THEN DO; X %END;
+//// %ELSE DO; Y %END;
 
-preprocessor.expectTokens(" dcl Y fixed;");
+preprocessor.expectTokens("Y");

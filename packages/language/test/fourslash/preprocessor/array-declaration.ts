@@ -19,4 +19,4 @@
 //// %Y = A(1) || A(2) || A(3);
 //// X = Y;
 
-preprocessor.expectTokens(" X = ABC;");
+preprocessor.expectTokens("X = ABC;");

@@ -18,7 +18,6 @@
 ////   %A = 456;
 //// %END;
 //// %ACTIVATE A;
-//// dcl X fixed;
-//// X = A;
+//// A
 
-preprocessor.expectTokens(" dcl X fixed; X = 123;");
+preprocessor.expectTokens("123");

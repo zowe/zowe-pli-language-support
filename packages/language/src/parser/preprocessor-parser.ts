@@ -118,12 +118,6 @@ interface StatementParseOptions {
   labels: boolean;
 }
 
-/**
- * @param state
- * @param withEnd Whether the `END` statement is allowed
- * @param endPercent Whether the `END` statement must be prefixed with a `%` (even in a procedure)
- * @returns
- */
 export function commonStatement(
   state: ParserState,
   options: StatementParseOptions & { withEnd: false },
