@@ -11,7 +11,7 @@
 
 // Tests that file & member includes resolve in a BFS search order
 // I.e. shallowest matching file/member is included first
-// And for matching depth, alphabetical order dictates which is included first
+// And for matching depth, alphabetical order breaks the tie
 
 /// <reference path="../../framework.ts" />
 
