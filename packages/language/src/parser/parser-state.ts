@@ -384,7 +384,7 @@ export class ParserState {
         .map((tk) => tk!.name)
         .join(", ");
       this.error(
-        `Expected any of {${tokenTypeNames}}, but found '${lookahead.name}'.`,
+        `Expected any of {${tokenTypeNames}}, but found ${generateTokenErrorName(token)}.`,
         token,
         Severity.S,
       );

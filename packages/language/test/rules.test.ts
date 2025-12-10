@@ -164,7 +164,7 @@ describe("Rule tests", () => {
 
     expect(state.diagnostics.length).toBe(1);
     expect(state.diagnostics[0].message).toBe(
-      "Expected any of {HELLO, PERSON}, but found 'ID'.",
+      `Expected any of {HELLO, PERSON}, but found "Bob".`,
     );
   });
 });
