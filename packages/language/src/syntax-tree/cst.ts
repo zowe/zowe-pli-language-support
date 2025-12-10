@@ -713,4 +713,8 @@ export enum CstNodeKind {
   SqlAttributeTableLocator_LOCATOR,
   SqlAttributeResultSetLocator_RESULT_SET_LOCATOR,
   SqlAttributeResultSetLocator_VARYING,
+  CicsResponseStatement_DFHRESP,
+  CicsResponseStatement_OpenParen,
+  CicsResponseStatement_CicsResponseCode,
+  CicsResponseStatement_CloseParen,
 }
