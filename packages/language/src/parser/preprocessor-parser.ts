@@ -69,7 +69,7 @@ export function statement(
       return commonStatement(state, {
         withEnd: end,
         endPercent: endP,
-        startPercent: false,
+        startPercent: false, // Percent token already consumed
         labels: true,
       });
     } else {
@@ -80,7 +80,7 @@ export function statement(
     return commonStatement(state, {
       withEnd: end,
       endPercent: endP,
-      startPercent: false,
+      startPercent: false, // Inside of a procedure, percent not required
       labels: true,
     });
   }
@@ -1061,10 +1061,10 @@ function selectStatement(state: ParserState): ast.SelectStatement {
     );
   }
   state.consume(statement, CstNodeKind.SelectStatement_Semicolon0, t.Semicolon);
-  while (state.canConsumeKeyword(t.WHEN)) {
+  while (state.canPercentConsume(t.WHEN)) {
     statement.cases.push(whenStatement(state));
   }
-  if (state.canConsumeKeyword(t.OTHERWISE)) {
+  if (state.canPercentConsume(t.OTHERWISE)) {
     statement.cases.push(otherwiseStatement(state));
   }
   // END statement is preceded by a percent
@@ -1075,7 +1075,7 @@ function selectStatement(state: ParserState): ast.SelectStatement {
 
 function whenStatement(state: ParserState): ast.WhenStatement {
   const when = ast.createWhenStatement();
-  state.consumeKeyword(when, CstNodeKind.WhenStatement_WHEN, t.WHEN);
+  state.percentConsume(when, CstNodeKind.WhenStatement_WHEN, t.WHEN);
   state.consume(when, CstNodeKind.WhenStatement_OpenParen, t.OpenParen);
   let exp = expression(state);
   if (exp) {
@@ -1101,7 +1101,7 @@ function whenStatement(state: ParserState): ast.WhenStatement {
 
 function otherwiseStatement(state: ParserState): ast.OtherwiseStatement {
   const otherwise = ast.createOtherwiseStatement();
-  state.consumeKeyword(
+  state.percentConsume(
     otherwise,
     CstNodeKind.OtherwiseStatement_OTHERWISE,
     t.OTHERWISE,
@@ -1127,7 +1127,15 @@ function ifStatement(state: ParserState): ast.IfStatement {
   const ifStatement = ast.createIfStatement();
   state.consume(ifStatement, CstNodeKind.IfStatement_IF, t.IF);
   ifStatement.expression = expression(state);
-  state.consumeKeyword(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
+  if (state.isInProcedure()) {
+    // Inside of procedure: % before THEN is an error
+    state.percentConsume(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
+  } else {
+    // Outside of procedure: % before THEN is optional!
+    // NOTE: The language reference requires a % here, but the compiler does not enforce it
+    state.tryConsume(ifStatement, CstNodeKind.Percentage, t.Percent);
+    state.consume(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
+  }
   const unitRangeStart = state.token?.startOffset;
   ifStatement.unit = statementAfterCase(state);
   if (unitRangeStart != undefined && state.last) {
@@ -1136,8 +1144,8 @@ function ifStatement(state: ParserState): ast.IfStatement {
       end: state.last.endOffset + 1,
     };
   }
-  if (state.canConsumeKeyword(t.ELSE)) {
-    state.consumeKeyword(ifStatement, CstNodeKind.IfStatement_ELSE, t.ELSE);
+  if (state.canPercentConsume(t.ELSE)) {
+    state.percentConsume(ifStatement, CstNodeKind.IfStatement_ELSE, t.ELSE);
     const elseRangeStart = state.token?.startOffset;
     ifStatement.else = statementAfterCase(state);
     if (elseRangeStart != undefined && state.last) {

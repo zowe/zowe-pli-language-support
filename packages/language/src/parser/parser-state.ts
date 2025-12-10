@@ -259,7 +259,7 @@ export class ParserState {
     }
   }
 
-  canConsumeKeyword(...tokenTypes: TokenType[]): boolean {
+  canPercentConsume(...tokenTypes: TokenType[]): boolean {
     const withPercent = this.canConsume(t.Percent, ...tokenTypes);
     if (this.isInProcedure()) {
       // In a procedure, we should only consume the tokens if there's no percentage sign
@@ -271,25 +271,31 @@ export class ParserState {
     }
   }
 
-  tryConsumeKeyword(
+  tryPercentConsume(
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
   ): t.Token | null {
-    if (this.canConsumeKeyword(tokenType)) {
-      return this.consumeKeyword(element, kind, tokenType);
+    if (this.canPercentConsume(tokenType)) {
+      return this.percentConsume(element, kind, tokenType);
     } else {
       return null;
     }
   }
 
-  consumeKeyword(
+  /**
+   * Consumes the given token type, handling the optional percent sign.
+   *
+   * Whether a percent sign is expected or not depends on whether the parser
+   * is currently inside a procedure or not.
+   */
+  percentConsume(
     element: SyntaxNode | undefined,
     kind: CstNodeKind | undefined,
     tokenType: TokenType,
   ): t.Token | null {
     if (!this.isInProcedure()) {
-      // If were outside of a procedure, we must have a percent token
+      // If we're outside of a procedure, we must have a percent token
       this.consume(element, CstNodeKind.Percentage, t.Percent);
     } else if (this.canConsume(t.Percent)) {
       // If we're inside a procedure, there shouldn't be a percent token
