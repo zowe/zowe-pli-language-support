@@ -225,6 +225,7 @@ export enum SyntaxKind {
   WriteStatementOption,
   XFormatItem,
   CicsResponseStatement,
+  CicsExecStatement,
 }
 
 export enum KeywordConditions {
@@ -659,9 +660,20 @@ export type SyntaxNode =
   // Preprocessor nodes
   | ActivateStatement
   | ActivateItem
+  | AnswerStatement
   | DeactivateStatement
   | TokenStatement
-  | AnswerStatement
+  | CicsExecStatement
+  | CicsResponseStatement
+  | SqlAttributeStatement
+  | SqlAttributeBinary
+  | SqlAttributeLob
+  | SqlAttributeLobLocator
+  | SqlAttributeLobFile
+  | SqlAttributeRowId
+  | SqlAttributeTableLocator
+  | SqlAttributeResultSetLocator
+
   // Normal nodes
   | AFormatItem
   | AllocateDimension
@@ -842,15 +854,6 @@ export type SyntaxNode =
   | Statement
   | StopStatement
   | StringLiteral
-  | SqlAttributeStatement
-  | CicsResponseStatement
-  | SqlAttributeBinary
-  | SqlAttributeLob
-  | SqlAttributeLobLocator
-  | SqlAttributeLobFile
-  | SqlAttributeRowId
-  | SqlAttributeTableLocator
-  | SqlAttributeResultSetLocator
   | TypeAttribute
   | UnaryExpression
   | ValueAttribute
@@ -1044,7 +1047,8 @@ export type Unit =
   | NoPrintDirective
   | SkipDirective
   | SqlAttributeStatement
-  | CicsResponseStatement;
+  | CicsResponseStatement
+  | CicsExecStatement;
 
 // Preprocessor AST
 
@@ -2921,5 +2925,18 @@ export function createCicsResponseStatement(): CicsResponseStatement {
     token: null,
     code: null,
     codeToken: null,
+  };
+}
+
+// This is a placeholder for future CICS EXEC statements
+// It is currently used to generate the correct AST structure
+export interface CicsExecStatement extends AstNode {
+  kind: SyntaxKind.CicsExecStatement;
+}
+
+export function createCicsExecStatement(): CicsExecStatement {
+  return {
+    kind: SyntaxKind.CicsExecStatement,
+    container: null,
   };
 }
