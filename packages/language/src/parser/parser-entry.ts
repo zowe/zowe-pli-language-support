@@ -20,6 +20,7 @@ import {
   statement,
 } from "./preprocessor-parser";
 import { isSqlAttributeStatement, sqlAttributeStatement } from "./sql-parser";
+import { cicsResponseStatement, isCicsResponseStatement } from "./cics-parser";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -61,6 +62,15 @@ export function preprocessorParse(
           stmt = sqlAttrStatement;
         }
         break;
+      case t.DFHRESP.tokenTypeIdx:
+        if (isCicsResponseStatement(state)) {
+          isTokenStatement = false;
+          const cicsRespStmt = cicsResponseStatement(state);
+          const cicsRespStatement = ast.createStatement();
+          cicsRespStatement.value = cicsRespStmt;
+          stmt = cicsRespStatement;
+        }
+        break;
     }
     if (isTokenStatement) {
       // Otherwise construct a token statement
@@ -74,6 +84,8 @@ export function preprocessorParse(
       console.error("Parser did not advance at token: " + token.image);
       state.index++;
     }
+    // Always recover after each statement
+    state.skipRecovery();
     token = state.token;
     index = state.index;
   }

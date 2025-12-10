@@ -979,6 +979,7 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeRowId:
     case SyntaxKind.SqlAttributeTableLocator:
     case SyntaxKind.SqlAttributeResultSetLocator:
+    case SyntaxKind.CicsResponseStatement:
       break;
     default:
       assertUnreachable(node);

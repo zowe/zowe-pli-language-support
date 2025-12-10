@@ -522,8 +522,20 @@ function runInstructionSync(
       break;
     case inst.InstructionKind.SqlAttribute:
       runSqlAttributeInstruction(instruction, context);
+      break;
+    case inst.InstructionKind.CicsResponseCode:
+      runCicsResponseInstruction(instruction, context);
+      break;
   }
   return undefined;
+}
+
+function runCicsResponseInstruction(
+  instruction: inst.CicsResponseInstruction,
+  context: InterpreterContext,
+): void {
+  const codeValue = instruction.code.toString();
+  context.tokens.push(...lex(codeValue));
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
