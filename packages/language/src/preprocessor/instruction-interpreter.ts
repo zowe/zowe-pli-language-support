@@ -2073,8 +2073,7 @@ export function setFilePath(
         // Check if the path IS absolute
         relative.startsWith("../") ||
         relative.startsWith("/") ||
-        (relative.charAt(1) === ":" &&
-          (relative.charAt(2) === "/" || relative.charAt(2) === "\\"))
+        (relative.charAt(1) === ":" && relative.charAt(2) === "/")
       ) {
         // In this case, we are setting the absolute path as the relative path
         // because it's the value showcased on the preview.
