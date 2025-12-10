@@ -78,13 +78,13 @@ describe("setFilePath", () => {
         URI.file(absolutePath).toString(),
         "pli",
         1,
-        " DECLARE VARCpnpm lin FIXED;",
+        " DECLARE VARC FIXED;",
       );
       context = { currentUri: URI.parse(doc.uri) };
       setFilePath(item, doc.uri, context);
 
       expect(item.relativeFilePath).toBe(
-        "../Users/mockUser/Desktop/anotherfolder/absolute.pli",
+        "C:/Users/mockUser/Desktop/anotherfolder/absolute.pli",
       );
     },
   );

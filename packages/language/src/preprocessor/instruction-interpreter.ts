@@ -2059,6 +2059,10 @@ export function setFilePath(
     if (context.currentUri) {
       const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
       let relative = UriUtils.relative(workspace, filePath);
+      let isWindows = false;
+      if (context.currentUri.path.charAt(1) === "c") {
+        isWindows = true;
+      }
       if (
         // If the path isn't already relative
         !relative.startsWith("../") &&
@@ -2077,7 +2081,14 @@ export function setFilePath(
       ) {
         // In this case, we are setting the absolute path as the relative path
         // because it's the value showcased on the preview.
-        item.relativeFilePath = context.currentUri.path;
+        if (isWindows) {
+          let path = context.currentUri.path;
+          path.substring(1);
+          path = path[0].toUpperCase() + path.slice(1);
+          item.relativeFilePath = path;
+        } else {
+          item.relativeFilePath = context.currentUri.path;
+        }
         return;
       }
       item.relativeFilePath = relative;
