@@ -285,6 +285,8 @@ export const LOB = registerCombination<ast.LOB>("LOB");
 export const LOBLocator = registerCombination<ast.LOBLocator>("LOBLocator");
 export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
 export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
+export const CicsResponseCode =
+  registerCombination<ast.CicsResponseCode>("CicsResponseCode");
 
 // Custom functions
 
@@ -906,7 +908,10 @@ export const STORAGE = registerKeyword({
 });
 export const ENDFILE = registerKeyword({
   name: "ENDFILE",
-  categories: [[FileReferenceConditions, ast.FileReferenceConditions.ENDFILE]],
+  categories: [
+    [FileReferenceConditions, ast.FileReferenceConditions.ENDFILE],
+    [CicsResponseCode, ast.CicsResponseCode.ENDFILE],
+  ],
 });
 export const ENDPAGE = registerKeyword({
   name: "ENDPAGE",
@@ -1015,7 +1020,10 @@ export const NATIVE = registerKeyword({
 });
 export const NORMAL = registerKeyword({
   name: "NORMAL",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.NORMAL]],
+  categories: [
+    [DefaultAttribute, ast.DefaultAttribute.NORMAL],
+    [CicsResponseCode, ast.CicsResponseCode.NORMAL],
+  ],
 });
 export const OFFSET = registerKeyword({
   name: "OFFSET",
@@ -1804,11 +1812,77 @@ export const RESULT_SET_LOCATOR = registerKeyword({
   name: "RESULT_SET_LOCATOR",
 });
 
+// CICS Keywords
+
+export const DFHRESP = registerKeyword({
+  name: "DFHRESP",
+});
+export const NOTFND = registerKeyword({
+  name: "NOTFND",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.NOTFND]],
+});
+export const DUPREC = registerKeyword({
+  name: "DUPREC",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.DUPREC]],
+});
+export const INVREQ = registerKeyword({
+  name: "INVREQ",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.INVREQ]],
+});
+export const NOSPACE = registerKeyword({
+  name: "NOSPACE",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.NOSPACE]],
+});
+export const NOTOPEN = registerKeyword({
+  name: "NOTOPEN",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.NOTOPEN]],
+});
+export const LENGERR = registerKeyword({
+  name: "LENGERR",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.LENGERR]],
+});
+export const QZERO = registerKeyword({
+  name: "QZERO",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.QZERO]],
+});
+export const QBUSY = registerKeyword({
+  name: "QBUSY",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.QBUSY]],
+});
+export const ITEMERR = registerKeyword({
+  name: "ITEMERR",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.ITEMERR]],
+});
+export const PGMIDERR = registerKeyword({
+  name: "PGMIDERR",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.PGMIDERR]],
+});
+export const ENDDATA = registerKeyword({
+  name: "ENDDATA",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.ENDDATA]],
+});
+export const MAPFAIL = registerKeyword({
+  name: "MAPFAIL",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.MAPFAIL]],
+});
+export const QIDERR = registerKeyword({
+  name: "QIDERR",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.QIDERR]],
+});
+export const ENQBUSY = registerKeyword({
+  name: "ENQBUSY",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.ENQBUSY]],
+});
+export const DISABLED = registerKeyword({
+  name: "DISABLED",
+  categories: [[CicsResponseCode, ast.CicsResponseCode.DISABLED]],
+});
+
 /**
  * Characters which start a preprocessor directive.
  * Used as start/stop points for the token statement
  */
-export const PPSignifier = [Percent, INCLUDE_ALT, SQL];
+export const PPSignifier = [Percent, INCLUDE_ALT, SQL, DFHRESP];
 
 export const terminals = [
   WS,
