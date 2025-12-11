@@ -20,4 +20,4 @@
 //// dcl X fixed;
 //// X = A;
 
-preprocessor.expectTokens(" dcl X fixed; X = 4;");
+preprocessor.expectTokens("dcl X fixed; X = 4;");

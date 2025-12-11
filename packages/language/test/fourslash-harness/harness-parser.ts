@@ -71,7 +71,7 @@ class HarnessTestParser {
     private context: Context,
   ) {
     // Reverse it for performance reasons, faster to pop than shift
-    this.lines = text.split("\n").toReversed();
+    this.lines = text.split(/\r?\n/).toReversed();
     this.text = text;
   }
 

@@ -14,7 +14,7 @@
 // @wrap: main
 //// %SELECT;
 //// %WHEN (1) <|notSkipped:%DO; %END;|>
-//// %WHEN (2) DCL TEST FIXED;
+//// %WHEN (2) DO; DCL TEST FIXED; %END;
 //// %END;
 
 preprocessor.not.expectSkippedCodeAt("notSkipped");

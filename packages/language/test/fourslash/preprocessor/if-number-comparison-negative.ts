@@ -12,9 +12,11 @@
 /// <reference path="../framework.ts" />
 
 //// %A = 12;
-//// %IF A = 3 %THEN
+//// %IF A = 3 %THEN DO;
 ////   ERROR
-//// %ELSE
+//// %END;
+//// %ELSE DO;
 ////   CORRECT
+//// %END;
 
 preprocessor.expectTokens("CORRECT");

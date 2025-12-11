@@ -66,13 +66,23 @@ export function statement(
   let endP = endPercent ?? false;
   if (!state.isInProcedure()) {
     if (state.tryConsume(undefined, CstNodeKind.Percentage, t.Percent)) {
-      return commonStatement(state, end, endP);
+      return commonStatement(state, {
+        withEnd: end,
+        endPercent: endP,
+        startPercent: false, // Percent token already consumed
+        labels: true,
+      });
     } else {
       return consumeTokenStatement(state);
     }
   } else {
     //state.isInProcedure()
-    return commonStatement(state, end, endP);
+    return commonStatement(state, {
+      withEnd: end,
+      endPercent: endP,
+      startPercent: false, // Inside of a procedure, percent not required
+      labels: true,
+    });
   }
 }
 
@@ -89,22 +99,46 @@ function labels(state: ParserState): ast.LabelPrefix[] {
   return labels;
 }
 
-/**
- * @param state
- * @param withEnd Whether the `END` statement is allowed
- * @param endPercent Whether the `END` statement must be prefixed with a `%` (even in a procedure)
- * @returns
- */
+interface StatementParseOptions {
+  /**
+   * Whether or not the `END` statement is allowed
+   */
+  withEnd: boolean;
+  /**
+   * Whether or not the `END` statement must be prefixed with a `%` (even in a procedure)
+   */
+  endPercent: boolean;
+  /**
+   * Whether or not the statement is allowed to start with an optional `%` token.
+   */
+  startPercent: boolean;
+  /**
+   * Whether or not the statement is allowed to have labels.
+   */
+  labels: boolean;
+}
+
 export function commonStatement(
   state: ParserState,
-  withEnd: boolean,
-  endPercent: boolean,
+  options: StatementParseOptions & { withEnd: false },
+): ast.Statement | null;
+export function commonStatement(
+  state: ParserState,
+  options: StatementParseOptions,
+): ast.Statement | ast.EndStatement | null;
+export function commonStatement(
+  state: ParserState,
+  options: StatementParseOptions,
 ): ast.Statement | ast.EndStatement | null {
   const statement = ast.createStatement();
   let startPercent: t.Token | null = null;
-  if (state.isInProcedure()) {
+  if (state.isInProcedure() || options.startPercent) {
     // In some cases, we enter this function with the current token being a `%`
-    // This might be due to errors in the input, or if we are parsing a procedure end statement
+    // This might be due to:
+    // 1. Errors in the input
+    // 2. If we are parsing a procedure end statement
+    // 3. If we are parsing a statement inside of a IF or SELECT statement
+    //    These are not required to have a `%` prefix, but can have one anyway
     // After parsing the "unit" below, we will check if we have a `%END` statement
     // Only then will we actually know whether this token is invalid
     startPercent = state.tryConsume(
@@ -113,8 +147,11 @@ export function commonStatement(
       t.Percent,
     );
   }
-  const stmtLabels = labels(state);
-  statement.labels = stmtLabels;
+  let stmtLabels: ast.LabelPrefix[] = [];
+  if (options.labels) {
+    stmtLabels = labels(state);
+    statement.labels = stmtLabels;
+  }
   let unit: ast.Unit | null = null;
   let endStmt: ast.EndStatement | null = null;
   if (performAssignmentLookahead((la) => state.peek(la))) {
@@ -134,7 +171,7 @@ export function commonStatement(
         unit = doStatement(state);
         break;
       case t.END.tokenTypeIdx:
-        if (withEnd) {
+        if (options.withEnd) {
           endStmt = endStatement(state, stmtLabels);
         }
         break;
@@ -176,7 +213,7 @@ export function commonStatement(
         unit = declareStatement(state);
         break;
       case t.END.tokenTypeIdx:
-        if (withEnd) {
+        if (options.withEnd) {
           endStmt = endStatement(state, stmtLabels);
         }
         break;
@@ -248,7 +285,7 @@ export function commonStatement(
   // Recover at the end of a statement, noop if not in error case
   state.recover();
   if (endStmt) {
-    if (!endPercent && startPercent) {
+    if (!options.endPercent && startPercent) {
       // We have a starting percent, but don't require it for the %END statement
       state.diagnostics.push(
         diagnosticFromCode(PLICodes.Severe.IBM3762I, startPercent),
@@ -264,8 +301,9 @@ export function commonStatement(
         state.token || state.last,
       ),
     );
-  } else if (startPercent) {
-    // We have a starting percent, but didn't parse a %END statement, this is always an error
+  } else if (startPercent && !options.startPercent) {
+    // We have a starting percent, but didn't parse a %END statement
+    // This is an error if we don't allow starting percents
     state.diagnostics.push(
       diagnosticFromCode(PLICodes.Severe.IBM3762I, startPercent),
     );
@@ -1017,10 +1055,10 @@ function selectStatement(state: ParserState): ast.SelectStatement {
     );
   }
   state.consume(statement, CstNodeKind.SelectStatement_Semicolon0, t.Semicolon);
-  while (state.canConsumeKeyword(t.WHEN)) {
+  while (state.canPercentConsume(t.WHEN)) {
     statement.cases.push(whenStatement(state));
   }
-  if (state.canConsumeKeyword(t.OTHERWISE)) {
+  if (state.canPercentConsume(t.OTHERWISE)) {
     statement.cases.push(otherwiseStatement(state));
   }
   // END statement is preceded by a percent
@@ -1031,7 +1069,7 @@ function selectStatement(state: ParserState): ast.SelectStatement {
 
 function whenStatement(state: ParserState): ast.WhenStatement {
   const when = ast.createWhenStatement();
-  state.consumeKeyword(when, CstNodeKind.WhenStatement_WHEN, t.WHEN);
+  state.percentConsume(when, CstNodeKind.WhenStatement_WHEN, t.WHEN);
   state.consume(when, CstNodeKind.WhenStatement_OpenParen, t.OpenParen);
   let exp = expression(state);
   if (exp) {
@@ -1045,7 +1083,7 @@ function whenStatement(state: ParserState): ast.WhenStatement {
   }
   state.consume(when, CstNodeKind.WhenStatement_CloseParen, t.CloseParen);
   const rangeStart = state.token?.startOffset;
-  when.unit = statement(state);
+  when.unit = statementAfterCase(state);
   if (rangeStart != undefined && state.last) {
     when.range = {
       start: rangeStart,
@@ -1057,13 +1095,13 @@ function whenStatement(state: ParserState): ast.WhenStatement {
 
 function otherwiseStatement(state: ParserState): ast.OtherwiseStatement {
   const otherwise = ast.createOtherwiseStatement();
-  state.consumeKeyword(
+  state.percentConsume(
     otherwise,
     CstNodeKind.OtherwiseStatement_OTHERWISE,
     t.OTHERWISE,
   );
   const rangeStart = state.token?.startOffset;
-  otherwise.unit = statement(state);
+  otherwise.unit = statementAfterCase(state);
   if (rangeStart != undefined && state.last) {
     otherwise.range = {
       start: rangeStart,
@@ -1083,19 +1121,27 @@ function ifStatement(state: ParserState): ast.IfStatement {
   const ifStatement = ast.createIfStatement();
   state.consume(ifStatement, CstNodeKind.IfStatement_IF, t.IF);
   ifStatement.expression = expression(state);
-  state.consumeKeyword(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
+  if (state.isInProcedure()) {
+    // Inside of procedure: % before THEN is an error
+    state.percentConsume(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
+  } else {
+    // Outside of procedure: % before THEN is optional!
+    // NOTE: The language reference requires a % here, but the compiler does not enforce it
+    state.tryConsume(ifStatement, CstNodeKind.Percentage, t.Percent);
+    state.consume(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
+  }
   const unitRangeStart = state.token?.startOffset;
-  ifStatement.unit = statement(state);
+  ifStatement.unit = statementAfterCase(state);
   if (unitRangeStart != undefined && state.last) {
     ifStatement.unitRange = {
       start: unitRangeStart,
       end: state.last.endOffset + 1,
     };
   }
-  if (state.canConsumeKeyword(t.ELSE)) {
-    state.consumeKeyword(ifStatement, CstNodeKind.IfStatement_ELSE, t.ELSE);
+  if (state.canPercentConsume(t.ELSE)) {
+    state.percentConsume(ifStatement, CstNodeKind.IfStatement_ELSE, t.ELSE);
     const elseRangeStart = state.token?.startOffset;
-    ifStatement.else = statement(state);
+    ifStatement.else = statementAfterCase(state);
     if (elseRangeStart != undefined && state.last) {
       ifStatement.elseRange = {
         start: elseRangeStart,
@@ -1104,6 +1150,17 @@ function ifStatement(state: ParserState): ast.IfStatement {
     }
   }
   return ifStatement;
+}
+
+// Statement used after IF, WHEN and OTHERWISE clauses
+// Has special semantics that uses an optional starting percent and prohibits labels
+function statementAfterCase(state: ParserState): ast.Statement | null {
+  return commonStatement(state, {
+    withEnd: false,
+    endPercent: false,
+    startPercent: true, // Can optionally start with a percent
+    labels: false, // Labels are not allowed here
+  });
 }
 
 function deactivateStatement(state: ParserState): ast.DeactivateStatement {

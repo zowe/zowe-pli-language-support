@@ -15,4 +15,4 @@
 //// DCL A CHARACTER;
 
 /* A is not replaced */
-preprocessor.expectTokens(" DCL A CHARACTER;");
+preprocessor.expectTokens("DCL A CHARACTER;");
