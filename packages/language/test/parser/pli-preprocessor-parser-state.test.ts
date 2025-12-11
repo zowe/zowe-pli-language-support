@@ -11,13 +11,13 @@
 
 import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-tokens";
-import { preprocessorParserState } from "../../src/parser/parser-state";
+import { ParserState } from "../../src/parser/parser-state";
 import { URI } from "../../src/utils/uri";
 import { tokenize } from "../../src/parser/tokenizer";
 
 function parserStateFromText(text: string, uri: URI) {
   const result = tokenize(text, uri);
-  const state = preprocessorParserState(result.tokens);
+  const state = new ParserState(result.tokens);
   return state;
 }
 

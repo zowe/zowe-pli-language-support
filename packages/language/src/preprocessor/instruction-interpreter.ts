@@ -13,7 +13,7 @@ import { tokenMatcher } from "chevrotain";
 import { TextDocuments } from "../language-server/text-documents";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse } from "../parser/parser-entry";
-import { preprocessorParserState } from "../parser/parser-state";
+import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
@@ -2189,7 +2189,7 @@ async function runInclude(
         uri,
       );
       const tokenizeResult = tokenize(processedContent, uri);
-      const subState = preprocessorParserState(tokenizeResult.tokens);
+      const subState = new ParserState(tokenizeResult.tokens);
       const subProgram = preprocessorParse(subState);
       subProgram.diagnostics.push(...tokenizeResult.diagnostics);
       const result = generateInstructions(subProgram.statements);

@@ -30,31 +30,33 @@ import {
 import { tokenIdxToClass } from "./token-type-factory";
 import * as environment from "../workspace/environment";
 
-export function preprocessorParserState(tokens: t.Token[]): ParserState {
-  return new ParserState(tokens, ParserStateMode.Preprocessor);
+export enum RecoveryResult {
+  /**
+   * Recover at the current token
+   */
+  Recover,
+  /**
+   * Recover after the current token
+   */
+  RecoverNext,
+  /**
+   * Continue the recovery process (the parser state will go on to the next token)
+   */
+  Continue,
 }
 
-export function finalParserState(tokens: t.Token[]): ParserState {
-  return new ParserState(tokens, ParserStateMode.Final);
-}
-
-export enum ParserStateMode {
-  Preprocessor,
-  Final,
-}
+export type RecoveryFunction = () => RecoveryResult;
 
 export class ParserState {
   readonly tokens: t.Token[];
-  readonly mode: ParserStateMode;
   readonly diagnostics: Diagnostic[];
   public index: number;
   public inError = false;
 
   private inProcedure = false;
 
-  constructor(tokens: t.Token[], mode: ParserStateMode) {
+  constructor(tokens: t.Token[]) {
     this.tokens = tokens;
-    this.mode = mode;
     this.diagnostics = [];
     this.index = 0;
   }
@@ -182,14 +184,22 @@ export class ParserState {
     this.inError = true;
   }
 
-  recover(): void {
+  recover(fn: RecoveryFunction): void {
     if (!this.inError) {
       // Prevent error recovery if not in error state.
       return;
     }
-    if (this.mode === ParserStateMode.Preprocessor) {
-      this.performPreprocessorRecovery();
-    } else if (this.mode === ParserStateMode.Final) {
+    let state = RecoveryResult.Continue;
+    while (
+      this.index < this.tokens.length &&
+      state === RecoveryResult.Continue
+    ) {
+      // Advance to the next token
+      this.index++;
+      state = fn();
+    }
+    if (state === RecoveryResult.RecoverNext) {
+      this.index++;
     }
     this.inError = false;
   }
@@ -200,28 +210,6 @@ export class ParserState {
    */
   skipRecovery(): void {
     this.inError = false;
-  }
-
-  private performPreprocessorRecovery(): void {
-    // If the preprocessor parser encounters an error, it should attempt to:
-    // 1. Find a semicolon at the current line, and skip that token
-    // 2. Find a percent sign at the current line, and stop
-    // 3. If neither is found, skip to the next line
-    const currentLine = (this.token || this.last)?.startLine ?? 0;
-    while (this.index < this.tokens.length) {
-      const token = this.tokens[this.index];
-      if (token.startLine !== currentLine) {
-        // Moved to next line, stop here
-        break;
-      } else if (tokenMatcher(token, t.Semicolon)) {
-        this.index++;
-        break;
-      } else if (tokenMatcher(token, t.Percent)) {
-        break;
-      } else {
-        this.index++;
-      }
-    }
   }
 
   tryConsume(
