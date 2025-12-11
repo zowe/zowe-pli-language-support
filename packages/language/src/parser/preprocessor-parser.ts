@@ -9,7 +9,11 @@
  *
  */
 
-import { generateTokenErrorName, ParserState } from "./parser-state";
+import {
+  generateTokenErrorName,
+  ParserState,
+  RecoveryResult,
+} from "./parser-state";
 import * as ast from "../syntax-tree/ast";
 import {
   constructBinaryExpression,
@@ -282,7 +286,8 @@ export function commonStatement(
     }
   }
   // Recover at the end of a statement, noop if not in error case
-  state.recover();
+  const lastToken = state.token || state.last;
+  state.recover(() => performRecovery(state, lastToken));
   if (endStmt) {
     if (!options.endPercent && startPercent) {
       // We have a starting percent, but don't require it for the %END statement
@@ -310,6 +315,29 @@ export function commonStatement(
 
   statement.value = unit;
   return statement;
+}
+
+function performRecovery(
+  state: ParserState,
+  lastToken?: t.Token,
+): RecoveryResult {
+  // If the preprocessor parser encounters an error, it should attempt to:
+  // 1. Find a semicolon at the current line, and skip that token
+  // 2. Find a percent sign at the current line, and stop
+  // 3. If neither is found, skip to the next line
+  const currentLine = lastToken?.startLine ?? 0;
+  const currentToken = state.token;
+  if (!currentToken) {
+    return RecoveryResult.Continue;
+  }
+  if (currentToken.startLine !== currentLine) {
+    return RecoveryResult.Recover;
+  } else if (tokenMatcher(currentToken, t.Percent)) {
+    return RecoveryResult.Recover;
+  } else if (tokenMatcher(currentToken, t.Semicolon)) {
+    return RecoveryResult.RecoverNext;
+  }
+  return RecoveryResult.Continue;
 }
 
 function callStatement(state: ParserState): ast.CallStatement {

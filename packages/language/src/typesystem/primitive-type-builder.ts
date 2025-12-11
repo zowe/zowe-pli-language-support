@@ -726,6 +726,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.EVENT: //no documentation found
       case ast.DefaultAttribute.EXCLUSIVE: //no documentation found
       case ast.DefaultAttribute.IRREDUCIBLE: //no documentation found, but @see https://www.ibm.com/support/pages/apar/PI26521
+      case ast.DefaultAttribute.REDUCIBLE: //no documentation found
       case ast.DefaultAttribute.MEMBER: //no documentation found
       case ast.DefaultAttribute.NATIVE: //no documentation found
       case ast.DefaultAttribute.NOINIT: //no documentation found
@@ -740,41 +741,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.DefaultAttribute.RESERVED: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
       case ast.DefaultAttribute.STRUCTURE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=definitions-defining-typed-structures-unions
       case ast.DefaultAttribute.VARIABLE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
-      case ast.DefaultAttribute.BACKWARDS:
-      case ast.DefaultAttribute.BYADDR:
-      case ast.DefaultAttribute.BYVALUE:
-      case ast.DefaultAttribute.CONDITION:
-      case ast.DefaultAttribute.CONSTANT:
-      case ast.DefaultAttribute.DIMACROSS:
-      case ast.DefaultAttribute.EVENT:
-      case ast.DefaultAttribute.EXCLUSIVE:
-      case ast.DefaultAttribute.INONLY:
-      case ast.DefaultAttribute.INOUT:
-      case ast.DefaultAttribute.IRREDUCIBLE:
-      case ast.DefaultAttribute.REDUCIBLE:
-      case ast.DefaultAttribute.KEYED:
-      case ast.DefaultAttribute.LABEL:
-      case ast.DefaultAttribute.LIST:
-      case ast.DefaultAttribute.MEMBER:
-      case ast.DefaultAttribute.NATIVE:
-      case ast.DefaultAttribute.NOINIT:
-      case ast.DefaultAttribute.NONNATIVE:
-      case ast.DefaultAttribute.NOSCAN:
-      case ast.DefaultAttribute.NULLINIT:
-      case ast.DefaultAttribute.OPTIONAL:
-      case ast.DefaultAttribute.OPTIONS:
-      case ast.DefaultAttribute.OUTONLY:
-      case ast.DefaultAttribute.PARAMETER:
-      case ast.DefaultAttribute.POSITION:
-      case ast.DefaultAttribute.PRINT:
-      case ast.DefaultAttribute.RANGE:
-      case ast.DefaultAttribute.RESCAN:
-      case ast.DefaultAttribute.RESERVED:
-      case ast.DefaultAttribute.SCAN:
-      case ast.DefaultAttribute.STRUCTURE:
-      case ast.DefaultAttribute.TRANSIENT:
-      case ast.DefaultAttribute.UNION:
-      case ast.DefaultAttribute.VARIABLE:
       case ast.DefaultAttribute.CHARGRAPHIC:
       case ast.DefaultAttribute.JSONIGNORE:
       case ast.DefaultAttribute.JSONNAME:
