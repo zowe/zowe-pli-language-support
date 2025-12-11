@@ -10,8348 +10,6435 @@
  */
 
 import {
-  AbstractParser,
+  choice,
+  orRule,
+  rule,
+  RuleFirstPair,
+  sequence,
+  throwHasManualLookahead,
+} from "./parser-types";
+import * as ast from "../syntax-tree/ast";
+import { tokenMatcher } from "chevrotain";
+import { finalParserState, ParserState } from "./parser-state";
+import * as tokens from "./tokens";
+import { CstNodeKind } from "../syntax-tree/cst";
+import {
+  constructBinaryExpression,
   IntermediateBinaryExpression,
 } from "./abstract-parser";
-import * as tokens from "./tokens";
-import * as ast from "../syntax-tree/ast";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { ParserMethod, tokenMatcher } from "chevrotain";
+import { Severe } from "../validation/pli-codes";
+import { Severity } from "../language-server/types";
 
-export class PliParser extends AbstractParser {
-  constructor() {
-    super(tokens.all);
-    this.performSelfAnalysis();
-  }
+export function parsePli(input: tokens.Token[]): {
+  tree: ast.Program;
+  diagnostics: any;
+} {
+  const state = finalParserState(input);
+  const program = pliProgram.rule(state);
+  const tree = program ?? ast.createProgram();
+  return { tree, diagnostics: state.diagnostics };
+}
 
-  parse(): ast.Program {
-    let result: ast.Program | undefined;
-    try {
-      result = this.PliProgram();
-    } catch {
-      // Parser errors on the root rule are not caught within Chevrotain
-      // so we catch them here instead
+const pliProgram = rule(
+  () => statement.first(),
+  (state: ParserState): ast.Program => {
+    const program = ast.createProgram();
+    // Parse one or more packages (or top-level statements)
+    const { inc } = state.createLoopContext("PliProgram");
+    while (!state.eof) {
+      inc();
+      const stmt = statement.rule(state);
+      stmt && program.statements.push(stmt);
     }
-    if (result === undefined) {
-      return this.pop<ast.Program>();
+    return program;
+  },
+);
+
+const packageRule = rule(
+  sequence(tokens.PACKAGE),
+  (state: ParserState): ast.Package => {
+    const element = ast.createPackage();
+    state.consume(element, CstNodeKind.Package_PACKAGE, tokens.PACKAGE);
+    if (state.canConsumeFirst(exports.first())) {
+      element.exports = exports.rule(state);
     }
-    return result;
-  }
+    if (state.canConsumeFirst(reserves.first())) {
+      element.reserves = reserves.rule(state);
+    }
+    if (state.canConsumeFirst(options.first())) {
+      element.options = options.rule(state);
+    }
+    state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
+    const { inc } = state.createLoopContext("Package");
+    while (!state.eof && !performEndStatementLookahead(state)) {
+      inc();
+      const stmt = statement.rule(state);
+      stmt && element.statements.push(stmt);
+    }
+    element.end = endStatement.rule(state);
+    state.consume(element, CstNodeKind.Package_Semicolon1, tokens.Semicolon);
+    return element;
+  },
+);
 
-  private createPliProgram(): ast.Program {
-    return {
-      kind: ast.SyntaxKind.Program,
-      container: null,
-      statements: [],
-    };
-  }
+const conditionPrefix = rule(
+  sequence(tokens.OpenParen),
+  (state: ParserState): ast.ConditionPrefix => {
+    const element = ast.createConditionPrefix();
 
-  PliProgram = this.RULE("PliProgram", () => {
-    let element = this.push(this.createPliProgram());
+    const { inc } = state.createLoopContext("ConditionPrefix");
+    do {
+      inc();
+      state.consume(
+        element,
+        CstNodeKind.ConditionPrefix_OpenParen,
+        tokens.OpenParen,
+      );
+      const item = conditionPrefixItem.rule(state);
+      item && element.items.push(item);
+      state.consume(
+        element,
+        CstNodeKind.ConditionPrefix_CloseParen,
+        tokens.CloseParen,
+      );
+      state.consume(element, CstNodeKind.ConditionPrefix_Colon, tokens.Colon);
+    } while (state.canConsume(tokens.OpenParen));
 
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN(this.Statement, {
-        assign: (result) => {
-          element.statements.push(result);
-        },
-      });
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.Program>();
-  });
-  private createPackage(): ast.Package {
-    return {
-      kind: ast.SyntaxKind.Package,
-      container: null,
-      exports: null,
-      reserves: null,
-      options: null,
-      statements: [],
-      end: null,
-    };
-  }
+const conditionPrefixItem = rule(
+  () => condition.first(),
+  (state: ParserState): ast.ConditionPrefixItem => {
+    const element = ast.createConditionPrefixItem();
 
-  Package = this.RULE("Package", () => {
-    let element = this.push(this.createPackage());
+    const lhs = condition.rule(state);
+    lhs && element.conditions.push(lhs);
+    const { inc } = state.createLoopContext("ConditionPrefixItem");
+    while (state.canConsume(tokens.Comma)) {
+      inc();
+      state.consume(
+        element,
+        CstNodeKind.ConditionPrefixItem_Comma,
+        tokens.Comma,
+      );
+      const rhs = condition.rule(state);
+      rhs && element.conditions.push(rhs);
+    }
 
-    this.CONSUME_ASSIGN1(tokens.PACKAGE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Package_PACKAGE);
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.Exports, {
-        assign: (result) => {
-          element.exports = result;
-        },
-      });
-    });
-    this.OPTION2(() => {
-      this.SUBRULE_ASSIGN1(this.Reserves, {
-        assign: (result) => {
-          element.reserves = result;
-        },
-      });
-    });
-    this.OPTION3(() => {
-      this.SUBRULE_ASSIGN1(this.Options, {
-        assign: (result) => {
-          element.options = result;
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Package_Semicolon0);
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.Statement, {
-        assign: (result) => {
-          element.statements.push(result);
-        },
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.EndStatement, {
-      assign: (result) => {
-        element.end = result;
-      },
-    });
-    this.CONSUME_ASSIGN2(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Package_Semicolon1);
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.Package>();
-  });
-  private createConditionPrefix(): ast.ConditionPrefix {
-    return {
-      kind: ast.SyntaxKind.ConditionPrefix,
-      container: null,
-      items: [],
-    };
-  }
-
-  ConditionPrefix = this.RULE("ConditionPrefix", () => {
-    let element = this.push(this.createConditionPrefix());
-
-    this.AT_LEAST_ONE1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ConditionPrefix_OpenParen,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.ConditionPrefixItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ConditionPrefix_CloseParen,
-        );
-      });
-      this.CONSUME_ASSIGN1(tokens.Colon, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.ConditionPrefix_Colon);
-      });
-    });
-
-    return this.pop<ast.ConditionPrefix>();
-  });
-  private createConditionPrefixItem(): ast.ConditionPrefixItem {
-    return {
-      kind: ast.SyntaxKind.ConditionPrefixItem,
-      container: null,
-      conditions: [],
-    };
-  }
-
-  ConditionPrefixItem = this.RULE("ConditionPrefixItem", () => {
-    let element = this.push(this.createConditionPrefixItem());
-
-    this.SUBRULE_ASSIGN1(this.Condition, {
-      assign: (result) => {
-        element.conditions.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ConditionPrefixItem_Comma,
-        );
-      });
-      this.SUBRULE_ASSIGN2(this.Condition, {
-        assign: (result) => {
-          element.conditions.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.ConditionPrefixItem>();
-  });
-
-  private createExportsItem(): ast.ExportsItem {
-    return {
-      kind: ast.SyntaxKind.ExportsItem,
-      container: null,
-      reference: null,
-    };
-  }
-
-  ExportsItem = this.RULE("ExportsItem", () => {
-    let element = this.push(this.createExportsItem());
-
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Exports_Procedure);
+const exportsItem = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.ExportsItem => {
+    const element = ast.createExportsItem();
+    const token = state.consume(
+      element,
+      CstNodeKind.Exports_Procedure,
+      tokens.ID,
+    );
+    if (token) {
       element.reference = ast.createReference(
         element,
         token,
         ast.ReferenceType.Variable,
       );
-    });
+    }
+    return element;
+  },
+);
 
-    return this.pop<ast.ExportsItem>();
-  });
+const exports = rule(
+  sequence(tokens.EXPORTS),
+  (state: ParserState): ast.Exports => {
+    const element = ast.createExports();
 
-  private createExports(): ast.Exports {
-    return {
-      kind: ast.SyntaxKind.Exports,
-      container: null,
-      all: false,
-      procedures: [],
-    };
-  }
+    state.consume(element, CstNodeKind.Exports_EXPORTS, tokens.EXPORTS);
+    state.consume(element, CstNodeKind.Exports_OpenParen, tokens.OpenParen);
 
-  Exports = this.RULE("Exports", () => {
-    let element = this.push(this.createExports());
+    if (state.tryConsume(element, CstNodeKind.Exports_AllStar, tokens.Star)) {
+      element.all = true;
+    } else {
+      const lhs = exportsItem.rule(state);
+      lhs && element.procedures.push(lhs);
+      const { inc } = state.createLoopContext("Exports");
+      while (
+        state.tryConsume(element, CstNodeKind.Exports_Comma, tokens.Comma)
+      ) {
+        inc();
+        const rhs = exportsItem.rule(state);
+        rhs && element.procedures.push(rhs);
+      }
+    }
 
-    this.CONSUME_ASSIGN1(tokens.EXPORTS, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Exports_EXPORTS);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Exports_OpenParen);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.Exports_AllStar);
-            element.all = true;
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.ExportsItem, {
-            assign: (result) => {
-              element.procedures.push(result);
-            },
-          });
-          this.MANY1(() => {
-            this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.Exports_Comma);
-            });
-            this.SUBRULE_ASSIGN2(this.ExportsItem, {
-              assign: (result) => {
-                element.procedures.push(result);
-              },
-            });
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Exports_CloseParen);
-    });
+    state.consume(element, CstNodeKind.Exports_CloseParen, tokens.CloseParen);
+    return element;
+  },
+);
 
-    return this.pop<ast.Exports>();
-  });
-  private createReserves(): ast.Reserves {
-    return {
-      kind: ast.SyntaxKind.Reserves,
-      container: null,
-      all: false,
-      variables: [],
-    };
-  }
+const reserves = rule(
+  sequence(tokens.RESERVES),
+  (state: ParserState): ast.Reserves => {
+    const element = ast.createReserves();
 
-  Reserves = this.RULE("Reserves", () => {
-    let element = this.push(this.createReserves());
+    state.consume(element, CstNodeKind.Reserves_RESERVES, tokens.RESERVES);
+    state.consume(element, CstNodeKind.Reserves_OpenParen, tokens.OpenParen);
 
-    this.CONSUME_ASSIGN1(tokens.RESERVES, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Reserves_RESERVES);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Reserves_OpenParen);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.Reserves_AllStar);
-            element.all = true;
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.Reserves_Variables0);
-            element.variables.push(token.image);
-          });
-          this.MANY1(() => {
-            this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.Reserves_Comma);
-            });
-            this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.Reserves_Variables1,
-              );
-              element.variables.push(token.image);
-            });
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Reserves_CloseParen);
-    });
-
-    return this.pop<ast.Reserves>();
-  });
-  private createOptions(): ast.Options {
-    return {
-      kind: ast.SyntaxKind.Options,
-      container: null,
-      items: [],
-    };
-  }
-
-  Options = this.RULE("Options", () => {
-    let element = this.push(this.createOptions());
-
-    this.CONSUME_ASSIGN1(tokens.OPTIONS, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Options_OPTIONS);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Options_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.OptionsItem, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-          this.tokenPayload(token, element, CstNodeKind.Options_Comma);
-        });
-      });
-      this.SUBRULE_ASSIGN2(this.OptionsItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Options_CloseParen);
-    });
-
-    return this.pop<ast.Options>();
-  });
-
-  OptionsItem = this.RULE("OptionsItem", () => {
-    let element = this.push<ast.OptionsItem>(null!);
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN(tokens.SimpleOptions, (token) => {
-            element = this.replace({
-              kind: ast.SyntaxKind.SimpleOptionsItem,
-              container: null,
-              value: tokens.SimpleOptions.mapToEnumLiteral(token.tokenTypeIdx),
-            });
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.SimpleOptionsItem_Value,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.CMPATOptionsItem, {
-            assign: (result) => {
-              element = this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LinkageOptionsItem, {
-            assign: (result) => {
-              element = this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.NoMapOptionsItem, {
-            assign: (result) => {
-              element = this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.OptionsItem>();
-  });
-  private createLinkageOptionsItem(): ast.LinkageOptionsItem {
-    return {
-      kind: ast.SyntaxKind.LinkageOptionsItem,
-      container: null,
-      value: null,
-    };
-  }
-
-  LinkageOptionsItem = this.RULE("LinkageOptionsItem", () => {
-    let element = this.push(this.createLinkageOptionsItem());
-
-    this.CONSUME_ASSIGN1(tokens.LINKAGE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_Linkage);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    if (state.tryConsume(element, CstNodeKind.Reserves_AllStar, tokens.Star)) {
+      element.all = true;
+    } else {
+      const varToken = state.consume(
         element,
-        CstNodeKind.LinkageOptionsItem_OpenParen,
+        CstNodeKind.Reserves_Variables0,
+        tokens.ID,
       );
-    });
-    this.CONSUME_ASSIGN1(tokens.LinkageOption, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LinkageOptionsItem_Value);
-      element.value = tokens.LinkageOption.mapToEnumLiteral(token.tokenTypeIdx);
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.LinkageOptionsItem_CloseParen,
-      );
-    });
-
-    return this.pop<ast.LinkageOptionsItem>();
-  });
-  private createCMPATOptionsItem(): ast.CMPATOptionsItem {
-    return {
-      kind: ast.SyntaxKind.CMPATOptionsItem,
-      container: null,
-      value: null,
-    };
-  }
-
-  CMPATOptionsItem = this.RULE("CMPATOptionsItem", () => {
-    let element = this.push(this.createCMPATOptionsItem());
-
-    this.CONSUME_ASSIGN1(tokens.CMPAT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_CMPAT);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_OpenParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.VX, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CMPATOptionsItem_Value);
-      element.value = tokens.VX.mapToEnumLiteral(token.tokenTypeIdx);
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.CMPATOptionsItem_CloseParen,
-      );
-    });
-
-    return this.pop<ast.CMPATOptionsItem>();
-  });
-  private createNoMapOptionsItem(): ast.NoMapOptionsItem {
-    return {
-      kind: ast.SyntaxKind.NoMapOptionsItem,
-      container: null,
-      type: null,
-      parameters: [],
-    };
-  }
-
-  NoMapOptionsItem = this.RULE("NoMapOptionsItem", () => {
-    let element = this.push(this.createNoMapOptionsItem());
-
-    this.CONSUME_ASSIGN1(tokens.NoMapOption, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NoMapOptionsItem_Type);
-      element.type = tokens.NoMapOption.mapToEnumLiteral(token.tokenTypeIdx);
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+      if (varToken) {
+        element.variables.push(varToken.image);
+      }
+      const { inc } = state.createLoopContext("Reserves");
+      while (
+        state.tryConsume(element, CstNodeKind.Reserves_Comma, tokens.Comma)
+      ) {
+        inc();
+        const nextVarToken = state.consume(
           element,
-          CstNodeKind.NoMapOptionsItem_OpenParen,
+          CstNodeKind.Reserves_Variables1,
+          tokens.ID,
         );
-      });
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.NoMapOptionsItem_Parameters0,
-          );
-          element.parameters.push(token.image);
-        });
-        this.MANY1(() => {
-          this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.NoMapOptionsItem_Comma,
-            );
-          });
-          this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.NoMapOptionsItem_Parameters1,
-            );
-            element.parameters.push(token.image);
-          });
-        });
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.NoMapOptionsItem_CloseParen,
-        );
-      });
-    });
-
-    return this.pop<ast.NoMapOptionsItem>();
-  });
-
-  ProcedureStatement = this.RULE("ProcedureStatement", () => {
-    let element = this.push(ast.createProcedureStatement());
-
-    this.CONSUME_ASSIGN1(tokens.PROCEDURE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ProcedureStatement_PROCEDURE,
-      );
-      element.procToken = token;
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ProcedureStatement_OpenParenParams,
-        );
-      });
-      this.OPTION1(() => {
-        this.SUBRULE_ASSIGN1(this.ProcedureParameter, {
-          assign: (result) => {
-            element.parameters.push(result);
-          },
-        });
-        this.MANY1(() => {
-          this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.ProcedureStatement_Comma,
-            );
-          });
-          this.SUBRULE_ASSIGN2(this.ProcedureParameter, {
-            assign: (result) => {
-              element.parameters.push(result);
-            },
-          });
-        });
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ProcedureStatement_CloseParenParams,
-        );
-      });
-    });
-    this.MANY2(() => {
-      this.OR2([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.ReturnsOption, {
-              assign: (result) => {
-                element.options.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.Options, {
-              assign: (result) => {
-                element.options.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.RECURSIVE, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.ProcedureStatement_Recursive,
-              );
-              const recursive = ast.createProcedureRecursiveOption();
-              element.options.push(recursive);
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.ProcedureOrder, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.ProcedureStatement_Order,
-              );
-              const order = ast.createProcedureOrderOption();
-              order.order = tokens.ProcedureOrder.mapToEnumLiteral(
-                token.tokenTypeIdx,
-              );
-              element.options.push(order);
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN(this.EnvironmentOption, {
-              assign: (result) => {
-                element.options.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN(tokens.ScopeAttribute, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.ScopeAttribute_Scope,
-              );
-              const scope = ast.createProcedureScopeOption();
-              scope.scope = tokens.ScopeAttribute.mapToEnumLiteral(
-                token.tokenTypeIdx,
-              );
-              element.options.push(scope);
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ProcedureStatement_Semicolon0,
-      );
-    });
-    this.MANY3(() => {
-      this.SUBRULE_ASSIGN1(this.Statement, {
-        assign: (result) => {
-          element.statements.push(result);
-        },
-      });
-    });
-    this.OPTION4(() => {
-      this.CONSUME_ASSIGN2(tokens.PROCEDURE, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.ProcedureStatement_PROCEDURE_END,
-        );
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.EndStatement, {
-      assign: (result) => {
-        element.end = result;
-      },
-    });
-    this.CONSUME_ASSIGN2(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ProcedureStatement_Semicolon1,
-      );
-    });
-
-    return this.pop<ast.ProcedureStatement>();
-  });
-
-  private createLabelPrefix(): ast.LabelPrefix {
-    return {
-      kind: ast.SyntaxKind.LabelPrefix,
-      container: null,
-      nameToken: null,
-      name: null,
-    };
-  }
-
-  LabelPrefix = this.RULE("LabelPrefix", () => {
-    let element = this.push(this.createLabelPrefix());
-
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LabelPrefix_Name);
-      element.name = token.image;
-      element.nameToken = token;
-    });
-    this.CONSUME_ASSIGN1(tokens.Colon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LabelPrefix_Colon);
-    });
-
-    return this.pop<ast.LabelPrefix>();
-  });
-  private createEntryStatement(): ast.EntryStatement {
-    return {
-      kind: ast.SyntaxKind.EntryStatement,
-      container: null,
-      parameters: [],
-      variable: [],
-      limited: [],
-      returns: [],
-      options: [],
-      environmentName: [],
-    };
-  }
-
-  EntryStatement = this.RULE("EntryStatement", () => {
-    let element = this.push(this.createEntryStatement());
-
-    this.CONSUME_ASSIGN1(tokens.ENTRY, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EntryStatement_ENTRY);
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EntryStatement_OpenParenParams,
-        );
-      });
-      this.OPTION1(() => {
-        this.SUBRULE_ASSIGN1(this.ProcedureParameter, {
-          assign: (result) => {
-            element.parameters.push(result);
-          },
-        });
-        this.MANY1(() => {
-          this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.EntryStatement_Comma);
-          });
-          this.SUBRULE_ASSIGN2(this.ProcedureParameter, {
-            assign: (result) => {
-              element.parameters.push(result);
-            },
-          });
-        });
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EntryStatement_CloseParenParams,
-        );
-      });
-    });
-    this.MANY2(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.EnvironmentOption, {
-              assign: (result) => {
-                element.environmentName.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.VARIABLE, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.EntryStatement_Variable,
-              );
-              element.variable.push(token.image as "VARIABLE");
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.LIMITED, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.EntryStatement_Limited,
-              );
-              element.limited.push(token.image as "LIMITED");
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.ReturnsOption, {
-              assign: (result) => {
-                element.returns.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.Options, {
-              assign: (result) => {
-                element.options.push(result);
-              },
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EntryStatement_Semicolon);
-    });
-
-    return this.pop<ast.EntryStatement>();
-  });
-
-  EnvironmentOption = this.RULE("EnvironmentOption", () => {
-    const element = this.push(ast.createEnvironmentOption());
-    this.CONSUME_ASSIGN1(tokens.EXTERNAL, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EntryStatement_EXTERNAL);
-    });
-    this.OPTION3(() => {
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EntryStatement_OpenParenEnv,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.environment = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EntryStatement_CloseParenEnv,
-        );
-      });
-    });
-    return this.pop<ast.EnvironmentOption>();
-  });
-
-  private createStatement(): ast.Statement {
-    return {
-      kind: ast.SyntaxKind.Statement,
-      container: null,
-      condition: null,
-      labels: [],
-      value: null,
-    };
-  }
-
-  Statement = this.RULE("Statement", () => {
-    let element = this.push(this.createStatement());
-
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.ConditionPrefix, {
-        assign: (result) => {
-          element.condition = result;
-        },
-      });
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelPrefix, {
-        assign: (result) => {
-          element.labels.push(result);
-        },
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.Unit, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
-
-    return this.pop<ast.Statement>();
-  });
-
-  Unit = this.OR_RULE<ast.Unit>("Unit", () => [
-    this.DeclareStatement,
-    this.AllocateStatement,
-    this.AssertStatement,
-    this.AttachStatement,
-    this.BeginStatement,
-    this.CallStatement,
-    this.CancelThreadStatement,
-    this.CloseStatement,
-    this.DefaultStatement,
-    this.DefineAliasStatement,
-    this.DefineOrdinalStatement,
-    this.DefineStructureStatement,
-    this.DelayStatement,
-    this.DeleteStatement,
-    this.DetachStatement,
-    this.DisplayStatement,
-    this.DoStatement,
-    this.EntryStatement,
-    this.ExecStatement,
-    this.ExitStatement,
-    this.FetchStatement,
-    this.FlushStatement,
-    this.FormatStatement,
-    this.FreeStatement,
-    this.GetStatement,
-    this.GoToStatement,
-    this.IfStatement,
-    this.IterateStatement,
-    this.LeaveStatement,
-    this.LocateStatement,
-    this.NullStatement,
-    this.OnStatement,
-    this.OpenStatement,
-    this.ProcincDirective, // TODO integrate into preprocessor
-    this.PutStatement,
-    this.QualifyStatement,
-    this.ReadStatement,
-    this.ReinitStatement,
-    this.ReleaseStatement,
-    this.ResignalStatement,
-    this.ReturnStatement,
-    this.RevertStatement,
-    this.RewriteStatement,
-    this.SelectStatement,
-    this.SignalStatement,
-    this.StopStatement,
-    this.WaitStatement,
-    this.WriteStatement,
-    this.ProcedureStatement,
-    this.Package,
-    this.AssignmentStatement,
-  ]);
-
-  private createAllocateStatement(): ast.AllocateStatement {
-    return {
-      kind: ast.SyntaxKind.AllocateStatement,
-      container: null,
-      variables: [],
-    };
-  }
-
-  AllocateStatement = this.RULE("AllocateStatement", () => {
-    let element = this.push(this.createAllocateStatement());
-
-    this.CONSUME_ASSIGN1(tokens.ALLOCATE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AllocateStatement_ALLOCATE);
-    });
-    this.SUBRULE_ASSIGN1(this.AllocatedVariable, {
-      assign: (result) => {
-        element.variables.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.AllocateStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.AllocatedVariable, {
-        assign: (result) => {
-          element.variables.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AllocateStatement_Semicolon,
-      );
-    });
-
-    return this.pop<ast.AllocateStatement>();
-  });
-  private createAllocatedVariable(): ast.AllocatedVariable {
-    return {
-      kind: ast.SyntaxKind.AllocatedVariable,
-      container: null,
-      level: null,
-      var: null,
-      attribute: null,
-    };
-  }
-
-  AllocatedVariable = this.RULE("AllocatedVariable", () => {
-    let element = this.push(this.createAllocatedVariable());
-
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AllocatedVariable_LevelNumber,
-        );
-        element.level = token.image;
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
-      assign: (result) => {
-        element.var = result;
-      },
-    });
-    this.OPTION2(() => {
-      this.SUBRULE_ASSIGN1(this.AllocateAttribute, {
-        assign: (result) => {
-          element.attribute = result;
-        },
-      });
-    });
-
-    return this.pop<ast.AllocatedVariable>();
-  });
-
-  AllocateAttribute = this.OR_RULE<ast.AllocateAttribute>(
-    "AllocateAttribute",
-    () => [
-      this.AllocateDimension,
-      this.AllocateType,
-      this.AllocateLocationReferenceIn,
-      this.AllocateLocationReferenceSet,
-      this.InitialAttribute,
-    ],
-  );
-
-  private createAllocateLocationReferenceIn(): ast.AllocateLocationReferenceIn {
-    return {
-      kind: ast.SyntaxKind.AllocateLocationReferenceIn,
-      container: null,
-      area: null,
-    };
-  }
-
-  AllocateLocationReferenceIn = this.RULE("AllocateLocationReferenceIn", () => {
-    let element = this.push(this.createAllocateLocationReferenceIn());
-
-    this.CONSUME_ASSIGN1(tokens.IN, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AllocateLocationReferenceIn_IN,
-      );
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AllocateLocationReferenceIn_OpenParen,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.area = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AllocateLocationReferenceIn_CloseParen,
-      );
-    });
-
-    return this.pop<ast.AllocateLocationReferenceIn>();
-  });
-  private createAllocateLocationReferenceSet(): ast.AllocateLocationReferenceSet {
-    return {
-      kind: ast.SyntaxKind.AllocateLocationReferenceSet,
-      container: null,
-      locatorVariable: null,
-    };
-  }
-
-  AllocateLocationReferenceSet = this.RULE(
-    "AllocateLocationReferenceSet",
-    () => {
-      let element = this.push(this.createAllocateLocationReferenceSet());
-
-      this.CONSUME_ASSIGN1(tokens.SET, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AllocateLocationReferenceSet_SET,
-        );
-      });
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AllocateLocationReferenceSet_OpenParen,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.LocatorCall, {
-        assign: (result) => {
-          element.locatorVariable = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AllocateLocationReferenceSet_CloseParen,
-        );
-      });
-
-      return this.pop<ast.AllocateLocationReferenceSet>();
-    },
-  );
-  private createAllocateDimension(): ast.AllocateDimension {
-    return {
-      kind: ast.SyntaxKind.AllocateDimension,
-      container: null,
-      dimensions: null,
-    };
-  }
-
-  AllocateDimension = this.RULE("AllocateDimension", () => {
-    let element = this.push(this.createAllocateDimension());
-
-    this.SUBRULE_ASSIGN1(this.Dimensions, {
-      assign: (result) => {
-        element.dimensions = result;
-      },
-    });
-
-    return this.pop<ast.AllocateDimension>();
-  });
-  private createAllocateType(): ast.AllocateType {
-    return {
-      kind: ast.SyntaxKind.AllocateType,
-      container: null,
-      type: null,
-      dimensions: null,
-    };
-  }
-
-  AllocateType = this.RULE("AllocateType", () => {
-    let element = this.push(this.createAllocateType());
-
-    this.CONSUME_ASSIGN(tokens.AllocateAttributeType, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AllocateAttributeType_Type);
-      element.type = tokens.AllocateAttributeType.mapToEnumLiteral(
-        token.tokenTypeIdx,
-      );
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.Dimensions, {
-        assign: (result) => {
-          element.dimensions = result;
-        },
-      });
-    });
-
-    return this.pop<ast.AllocateType>();
-  });
-
-  private createAssertStatement(): ast.AssertStatement {
-    return {
-      kind: ast.SyntaxKind.AssertStatement,
-      container: null,
-      true: false,
-      actual: null,
-      false: false,
-      unreachable: false,
-      displayExpression: null,
-      compare: false,
-      expected: null,
-      operator: null,
-    };
-  }
-
-  AssertStatement = this.RULE("AssertStatement", () => {
-    let element = this.push(this.createAssertStatement());
-
-    this.CONSUME_ASSIGN1(tokens.ASSERT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AssertStatement_ASSERT);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Boolean, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_Boolean,
-            );
-            if (token.image.toUpperCase() === "TRUE") {
-              element.true = true;
-            } else {
-              element.false = true;
-            }
-          });
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_OpenParen0,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.Expression, {
-            assign: (result) => {
-              element.actual = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_CloseParen0,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.COMPARE, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_COMPARE,
-            );
-            element.compare = true;
-          });
-          this.CONSUME_ASSIGN3(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_OpenParen1,
-            );
-          });
-          this.SUBRULE_ASSIGN3(this.Expression, {
-            assign: (result) => {
-              element.actual = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_Comma0,
-            );
-          });
-          this.SUBRULE_ASSIGN4(this.Expression, {
-            assign: (result) => {
-              element.expected = result;
-            },
-          });
-          this.OPTION1(() => {
-            this.CONSUME_ASSIGN2(tokens.Comma, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.AssertStatement_Comma1,
-              );
-            });
-            this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.AssertStatement_OperatorString,
-              );
-              element.operator = token.image;
-            });
-          });
-          this.CONSUME_ASSIGN3(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_CloseParen1,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.UNREACHABLE, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.AssertStatement_UNREACHABLE,
-            );
-            element.unreachable = true;
-          });
-        },
-      },
-    ]);
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.TEXT, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.AssertStatement_TEXT);
-      });
-      this.SUBRULE_ASSIGN5(this.Expression, {
-        assign: (result) => {
-          element.displayExpression = result;
-        },
-      });
-    });
-
-    return this.pop<ast.AssertStatement>();
-  });
-  private createAssignmentStatement(): ast.AssignmentStatement {
-    return {
-      kind: ast.SyntaxKind.AssignmentStatement,
-      container: null,
-      refs: [],
-      operator: null,
-      expression: null,
-      dimacrossExpr: null,
-    };
-  }
-
-  AssignmentStatement = this.RULE("AssignmentStatement", () => {
-    let element = this.push(this.createAssignmentStatement());
-
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.refs.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AssignmentStatement_Comma0,
-        );
-      });
-      this.SUBRULE_ASSIGN2(this.LocatorCall, {
-        assign: (result) => {
-          element.refs.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.AssignmentOperator, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AssignmentStatement_Operator,
-      );
-      element.operator = tokens.AssignmentOperator.mapToEnumLiteral(
-        token.tokenTypeIdx,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.expression = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN2(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AssignmentStatement_Comma1,
-        );
-      });
-      this.CONSUME_ASSIGN1(tokens.BY, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.AssignmentStatement_BY);
-      });
-      this.OR1([
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.NAME, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.AssignmentStatement_NAME,
-              );
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.DIMACROSS, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.AssignmentStatement_DIMACROSS,
-              );
-            });
-            this.SUBRULE_ASSIGN2(this.Expression, {
-              assign: (result) => {
-                element.dimacrossExpr = result;
-              },
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AssignmentStatement_Semicolon,
-      );
-    });
-
-    return this.pop<ast.AssignmentStatement>();
-  });
-
-  private createAttachStatement(): ast.AttachStatement {
-    return {
-      kind: ast.SyntaxKind.AttachStatement,
-      container: null,
-      reference: null,
-      task: null,
-      environment: false,
-      tstack: null,
-    };
-  }
-
-  AttachStatement = this.RULE("AttachStatement", () => {
-    let element = this.push(this.createAttachStatement());
-
-    this.CONSUME_ASSIGN1(tokens.ATTACH, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AttachStatement_ATTACH);
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.reference = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.THREAD, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AttachStatement_THREAD);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AttachStatement_OpenParenTask,
-      );
-    });
-    this.SUBRULE_ASSIGN2(this.LocatorCall, {
-      assign: (result) => {
-        element.task = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.AttachStatement_CloseParenTask,
-      );
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.ENVIRONMENT, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AttachStatement_ENVIRONMENT,
-        );
-        element.environment = true;
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AttachStatement_OpenParenEnvironment,
-        );
-      });
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN1(tokens.TSTACK, (token) => {
-          this.tokenPayload(token, element, CstNodeKind.AttachStatement_TSTACK);
-        });
-        this.CONSUME_ASSIGN3(tokens.OpenParen, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.AttachStatement_OpenParenTStack,
-          );
-        });
-        this.SUBRULE_ASSIGN1(this.Expression, {
-          assign: (result) => {
-            element.tstack = result;
-          },
-        });
-        this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.AttachStatement_CloseParenTStack,
-          );
-        });
-      });
-      this.CONSUME_ASSIGN3(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.AttachStatement_CloseParenEnvironment,
-        );
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AttachStatement_Semicolon);
-    });
-
-    return this.pop<ast.AttachStatement>();
-  });
-  private createBeginStatement(): ast.BeginStatement {
-    return {
-      kind: ast.SyntaxKind.BeginStatement,
-      container: null,
-      options: null,
-      recursive: false,
-      statements: [],
-      end: null,
-      order: false,
-      reorder: false,
-    };
-  }
-
-  BeginStatement = this.RULE("BeginStatement", () => {
-    let element = this.push(this.createBeginStatement());
-
-    this.CONSUME_ASSIGN1(tokens.BEGIN, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.BeginStatement_BEGIN);
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.Options, {
-        assign: (result) => {
-          element.options = result;
-        },
-      });
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.RECURSIVE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.BeginStatement_RECURSIVE);
-        element.recursive = true;
-      });
-    });
-    this.OPTION3(() => {
-      this.CONSUME_ASSIGN1(tokens.ORDER, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.BeginStatement_ORDER);
-        if (token.image.toUpperCase() === "ORDER") {
-          element.order = true;
-        } else if (token.image.toUpperCase() === "REORDER") {
-          element.reorder = true;
+        if (nextVarToken) {
+          element.variables.push(nextVarToken.image);
         }
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.BeginStatement_Semicolon0);
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.Statement, {
-        assign: (result) => {
-          element.statements.push(result);
-        },
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.EndStatement, {
-      assign: (result) => {
-        element.end = result;
-      },
-    });
-    this.CONSUME_ASSIGN2(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.BeginStatement_Semicolon1);
-    });
+      }
+    }
 
-    return this.pop<ast.BeginStatement>();
-  });
+    state.consume(element, CstNodeKind.Reserves_CloseParen, tokens.CloseParen);
+    return element;
+  },
+);
 
-  EndStatement = this.RULE("EndStatement", () => {
-    let element = this.push(ast.createEndStatement());
+const options = rule(
+  sequence(tokens.OPTIONS),
+  (state: ParserState): ast.Options => {
+    const element = ast.createOptions();
+    state.consume(element, CstNodeKind.Options_OPTIONS, tokens.OPTIONS);
+    state.consume(element, CstNodeKind.Options_OpenParen, tokens.OpenParen);
+    const lhs = optionsItem.rule(state);
+    lhs && element.items.push(lhs);
+    const { inc } = state.createLoopContext("Options");
+    while (
+      state.canConsume(tokens.Comma) ||
+      state.canConsumeFirst(optionsItem.first())
+    ) {
+      inc();
+      state.tryConsume(element, CstNodeKind.Options_Comma, tokens.Comma);
+      const rhs = optionsItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
+    state.consume(element, CstNodeKind.Options_CloseParen, tokens.CloseParen);
 
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelPrefix, {
-        assign: (result) => {
-          element.labels.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.END, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EndStatement_END);
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelReference, {
-        assign: (result) => {
-          element.label = result;
-        },
-      });
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.EndStatement>();
-  });
-  private createCallStatement(): ast.CallStatement {
-    return {
-      kind: ast.SyntaxKind.CallStatement,
-      container: null,
-      call: null,
-    };
-  }
+const optionsItem = orRule<ast.OptionsItem>(
+  () => simpleOptionsItem,
+  () => linkageOptionsItem,
+  () => CMPATOptionsItem,
+  () => noMapOptionsItem,
+);
 
-  CallStatement = this.RULE("CallStatement", () => {
-    let element = this.push(this.createCallStatement());
+const simpleOptionsItem = rule(
+  sequence(tokens.SimpleOptions),
+  (state: ParserState): ast.SimpleOptionsItem => {
+    const element = ast.createSimpleOptionsItem();
+    const token = state.consume(
+      element,
+      CstNodeKind.SimpleOptionsItem_Value,
+      tokens.SimpleOptions,
+    );
+    if (token) {
+      element.value = tokens.SimpleOptions.mapToEnumLiteral(token.tokenTypeIdx);
+    }
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.CALL, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CallStatement_CALL);
-    });
-    this.SUBRULE_ASSIGN1(this.ProcedureCall, {
-      assign: (result) => {
-        element.call = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CallStatement_Semicolon);
-    });
-
-    return this.pop<ast.CallStatement>();
-  });
-  private createCancelThreadStatement(): ast.CancelThreadStatement {
-    return {
-      kind: ast.SyntaxKind.CancelThreadStatement,
-      container: null,
-      thread: null,
-    };
-  }
-
-  CancelThreadStatement = this.RULE("CancelThreadStatement", () => {
-    let element = this.push(this.createCancelThreadStatement());
-
-    this.CONSUME_ASSIGN1(tokens.CANCEL, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.CancelThreadStatement_CANCEL,
+const linkageOptionsItem = rule(
+  sequence(tokens.LINKAGE),
+  (state: ParserState): ast.LinkageOptionsItem => {
+    const element = ast.createLinkageOptionsItem();
+    state.consume(
+      element,
+      CstNodeKind.LinkageOptionsItem_Linkage,
+      tokens.LINKAGE,
+    );
+    state.consume(
+      element,
+      CstNodeKind.LinkageOptionsItem_OpenParen,
+      tokens.OpenParen,
+    );
+    const valueToken = state.consume(
+      element,
+      CstNodeKind.LinkageOptionsItem_Value,
+      tokens.LinkageOption,
+    );
+    if (valueToken) {
+      element.value = tokens.LinkageOption.mapToEnumLiteral(
+        valueToken.tokenTypeIdx,
       );
-    });
-    this.CONSUME_ASSIGN1(tokens.THREAD, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.CancelThreadStatement_THREAD,
-      );
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.CancelThreadStatement_OpenParen,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.thread = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.CancelThreadStatement_CloseParen,
-      );
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.CancelThreadStatement_Semicolon,
-      );
-    });
+    }
+    state.consume(
+      element,
+      CstNodeKind.LinkageOptionsItem_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
 
-    return this.pop<ast.CancelThreadStatement>();
-  });
-  private createCloseStatement(): ast.CloseStatement {
-    return {
-      kind: ast.SyntaxKind.CloseStatement,
-      container: null,
-      files: [],
-    };
-  }
+const CMPATOptionsItem = rule(
+  sequence(tokens.CMPAT),
+  (state: ParserState): ast.CMPATOptionsItem => {
+    const element = ast.createCMPATOptionsItem();
+    state.consume(element, CstNodeKind.CMPATOptionsItem_CMPAT, tokens.CMPAT);
+    state.consume(
+      element,
+      CstNodeKind.CMPATOptionsItem_OpenParen,
+      tokens.OpenParen,
+    );
+    const vxToken = state.consume(
+      element,
+      CstNodeKind.CMPATOptionsItem_Value,
+      tokens.VX,
+    );
+    if (vxToken) {
+      element.value = tokens.VX.mapToEnumLiteral(vxToken.tokenTypeIdx);
+    }
+    state.consume(
+      element,
+      CstNodeKind.CMPATOptionsItem_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
 
-  CloseStatement = this.RULE("CloseStatement", () => {
-    let element = this.push(this.createCloseStatement());
+const noMapOptionsItem = rule(
+  sequence(tokens.NoMapOption),
+  (state: ParserState): ast.NoMapOptionsItem => {
+    const element = ast.createNoMapOptionsItem();
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.NoMapOptionsItem_Type,
+      tokens.NoMapOption,
+    );
+    if (typeToken) {
+      element.type = tokens.NoMapOption.mapToEnumLiteral(
+        typeToken.tokenTypeIdx,
+      );
+    }
 
-    this.CONSUME_ASSIGN1(tokens.CLOSE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CloseStatement_CLOSE);
-    });
-    this.CONSUME_ASSIGN1(tokens.FILE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CloseStatement_FILE0);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CloseStatement_OpenParen0);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.MemberCall, {
-            assign: (result) => {
-              element.files.push(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.CloseStatement_FilesStar0,
-            );
-            element.files.push(token.image as "*");
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CloseStatement_CloseParen0);
-    });
-    this.MANY1(() => {
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-          this.tokenPayload(token, element, CstNodeKind.CloseStatement_Comma);
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.NoMapOptionsItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      const idToken = state.consume(
+        element,
+        CstNodeKind.NoMapOptionsItem_Parameters0,
+        tokens.ID,
+      );
+      if (idToken) {
+        element.parameters.push(idToken.image);
+      }
+      const { inc } = state.createLoopContext("NoMapOptionsItem");
+      while (
+        state.tryConsume(
+          element,
+          CstNodeKind.NoMapOptionsItem_Comma,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const nextIdToken = state.consume(
+          element,
+          CstNodeKind.NoMapOptionsItem_Parameters1,
+          tokens.ID,
+        );
+        if (nextIdToken) {
+          element.parameters.push(nextIdToken.image);
+        }
+      }
+      state.consume(
+        element,
+        CstNodeKind.NoMapOptionsItem_CloseParen,
+        tokens.CloseParen,
+      );
+    }
+
+    return element;
+  },
+);
+
+const procedureStatement = rule(
+  sequence(tokens.PROCEDURE),
+  (state: ParserState): ast.ProcedureStatement => {
+    const element = ast.createProcedureStatement();
+    const procToken = state.consume(
+      element,
+      CstNodeKind.ProcedureStatement_PROCEDURE,
+      tokens.PROCEDURE,
+    );
+    element.procToken = procToken;
+    element.xProc = procToken?.image[0].toUpperCase() === "X";
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.ProcedureStatement_OpenParenParams,
+        tokens.OpenParen,
+      )
+    ) {
+      if (state.canConsumeFirst(procedureParameter.first())) {
+        const lhs = procedureParameter.rule(state);
+        lhs && element.parameters.push(lhs);
+        const { inc } = state.createLoopContext("ProcedureStatement 1");
+        while (
+          state.tryConsume(
+            element,
+            CstNodeKind.ProcedureStatement_Comma,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const rhs = procedureParameter.rule(state);
+          rhs && element.parameters.push(rhs);
+        }
+      }
+      state.consume(
+        element,
+        CstNodeKind.ProcedureStatement_CloseParenParams,
+        tokens.CloseParen,
+      );
+    }
+
+    const { inc } = state.createLoopContext("ProcedureStatement 2");
+    while (
+      !state.eof &&
+      (state.canConsume(tokens.RETURNS) ||
+        state.canConsumeFirst(options.first()) ||
+        state.canConsume(tokens.RECURSIVE) ||
+        state.canConsume(tokens.ProcedureOrder) ||
+        state.canConsumeFirst(environmentOption.first()) ||
+        state.canConsume(tokens.ScopeAttribute))
+    ) {
+      inc();
+      if (state.canConsume(tokens.RETURNS)) {
+        const option = returnsOption.rule(state);
+        option && element.options.push(option);
+      } else if (state.canConsumeFirst(options.first())) {
+        const opts = options.rule(state);
+        opts && element.options.push(opts);
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.ProcedureStatement_Recursive,
+          tokens.RECURSIVE,
+        )
+      ) {
+        element.options.push({
+          kind: ast.SyntaxKind.ProcedureRecursiveOption,
+          container: null,
         });
-      });
-      this.CONSUME_ASSIGN2(tokens.FILE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.CloseStatement_FILE1);
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.CloseStatement_OpenParen);
-      });
-      this.OR2([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN2(this.MemberCall, {
-              assign: (result) => {
-                element.files.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN2(tokens.Star, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.CloseStatement_FilesStar1,
-              );
-              element.files.push(token.image as "*");
-            });
-          },
-        },
-      ]);
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
+      } else if (state.canConsume(tokens.ProcedureOrder)) {
+        const token = state.consume(
           element,
-          CstNodeKind.CloseStatement_CloseParen1,
+          CstNodeKind.ProcedureStatement_Order,
+          tokens.ProcedureOrder,
         );
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CloseStatement_Semicolon);
-    });
-
-    return this.pop<ast.CloseStatement>();
-  });
-  private createDefaultStatement(): ast.DefaultStatement {
-    return {
-      kind: ast.SyntaxKind.DefaultStatement,
-      container: null,
-      expressions: [],
-    };
-  }
-
-  DefaultStatement = this.RULE("DefaultStatement", () => {
-    let element = this.push(this.createDefaultStatement());
-
-    this.CONSUME_ASSIGN1(tokens.DEFAULT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DefaultStatement_DEFAULT);
-    });
-    this.SUBRULE_ASSIGN1(this.DefaultExpression, {
-      assign: (result) => {
-        element.expressions.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DefaultStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.DefaultExpression, {
-        assign: (result) => {
-          element.expressions.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DefaultStatement_Semicolon);
-    });
-
-    return this.pop<ast.DefaultStatement>();
-  });
-  private createDefaultExpression(): ast.DefaultExpression {
-    return {
-      kind: ast.SyntaxKind.DefaultExpression,
-      container: null,
-      expression: null,
-      attributes: [],
-    };
-  }
-
-  DefaultExpression = this.RULE("DefaultExpression", () => {
-    let element = this.push(this.createDefaultExpression());
-
-    this.SUBRULE_ASSIGN1(this.DefaultExpressionPart, {
-      assign: (result) => {
-        element.expression = result;
-      },
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.DefaultDeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.DefaultExpression>();
-  });
-  private createDefaultExpressionPart(): ast.DefaultExpressionPart {
-    return {
-      kind: ast.SyntaxKind.DefaultExpressionPart,
-      container: null,
-      expression: null,
-      identifiers: null,
-    };
-  }
-
-  DefaultExpressionPart = this.RULE("DefaultExpressionPart", () => {
-    let element = this.push(this.createDefaultExpressionPart());
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.DESCRIPTORS, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DefaultExpressionPart_DESCRIPTORS,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.DefaultAttributeExpression, {
-            assign: (result) => {
-              element.expression = result;
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.OR2([
-            {
-              ALT: () => {
-                this.CONSUME_ASSIGN1(tokens.RANGE, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.DefaultExpressionPart_RANGE,
-                  );
-                });
-                this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.DefaultExpressionPart_OpenParenRange,
-                  );
-                });
-                this.SUBRULE_ASSIGN1(this.DefaultRangeIdentifiers, {
-                  assign: (result) => {
-                    element.identifiers = result;
-                  },
-                });
-                this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.DefaultExpressionPart_CloseParenRange,
-                  );
-                });
-              },
-            },
-            {
-              ALT: () => {
-                this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.DefaultExpressionPart_OpenParenAttribute,
-                  );
-                });
-                this.SUBRULE_ASSIGN2(this.DefaultAttributeExpression, {
-                  assign: (result) => {
-                    element.expression = result;
-                  },
-                });
-                this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.DefaultExpressionPart_CloseParenAttribute,
-                  );
-                });
-              },
-            },
-          ]);
-        },
-      },
-    ]);
-
-    return this.pop<ast.DefaultExpressionPart>();
-  });
-  private createDefaultRangeIdentifiers(): ast.DefaultRangeIdentifiers {
-    return {
-      kind: ast.SyntaxKind.DefaultRangeIdentifiers,
-      container: null,
-      identifiers: [],
-    };
-  }
-
-  DefaultRangeIdentifiers = this.RULE("DefaultRangeIdentifiers", () => {
-    let element = this.push(this.createDefaultRangeIdentifiers());
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DefaultRangeIdentifiers_Star0,
-            );
-            element.identifiers.push(token.image as "*");
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DefaultRangeIdentifierItem, {
-            assign: (result) => {
-              element.identifiers.push(result);
-            },
-          });
-        },
-      },
-    ]);
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
+        if (token) {
+          const order = ast.createProcedureOrderOption();
+          order.order = tokens.ProcedureOrder.mapToEnumLiteral(
+            token.tokenTypeIdx,
+          );
+          element.options.push(order);
+        }
+      } else if (state.canConsumeFirst(environmentOption.first())) {
+        const option = environmentOption.rule(state);
+        option && element.options.push(option);
+      } else if (state.canConsume(tokens.ScopeAttribute)) {
+        const scopeToken = state.consume(
           element,
-          CstNodeKind.DefaultRangeIdentifiers_Comma,
+          CstNodeKind.ScopeAttribute_Scope,
+          tokens.ScopeAttribute,
         );
-      });
-      this.OR2([
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN2(tokens.Star, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefaultRangeIdentifiers_Star1,
-              );
-              element.identifiers.push(token.image as "*");
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN2(this.DefaultRangeIdentifierItem, {
-              assign: (result) => {
-                element.identifiers.push(result);
-              },
-            });
-          },
-        },
-      ]);
-    });
+        if (scopeToken) {
+          const scope = ast.createProcedureScopeOption();
+          scope.scope = tokens.ScopeAttribute.mapToEnumLiteral(
+            scopeToken.tokenTypeIdx,
+          );
+          element.options.push(scope);
+        }
+      }
+    }
+    state.consume(
+      element,
+      CstNodeKind.ProcedureStatement_Semicolon0,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.DefaultRangeIdentifiers>();
-  });
-  private createDefaultRangeIdentifierItem(): ast.DefaultRangeIdentifierItem {
-    return {
-      kind: ast.SyntaxKind.DefaultRangeIdentifierItem,
-      container: null,
-      from: null,
-      to: null,
-    };
-  }
+    const { inc: inc3 } = state.createLoopContext("ProcedureStatement 3");
+    while (!state.eof && !performEndStatementLookahead(state)) {
+      inc3();
+      const stmt = statement.rule(state);
+      stmt && element.statements.push(stmt);
+    }
+    state.tryConsume(
+      element,
+      CstNodeKind.ProcedureStatement_PROCEDURE_END,
+      tokens.PROCEDURE,
+    );
+    element.end = endStatement.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.ProcedureStatement_Semicolon1,
+      tokens.Semicolon,
+    );
+    return element;
+  },
+);
 
-  DefaultRangeIdentifierItem = this.RULE("DefaultRangeIdentifierItem", () => {
-    let element = this.push(this.createDefaultRangeIdentifierItem());
+const labelPrefix = rule(
+  sequence(tokens.ID, tokens.Colon),
+  (state: ParserState): ast.LabelPrefix => {
+    const element = ast.createLabelPrefix();
+    const idToken = state.consume(
+      element,
+      CstNodeKind.LabelPrefix_Name,
+      tokens.ID,
+    );
+    if (idToken) {
+      element.name = idToken.image;
+      element.nameToken = idToken;
+    }
+    state.consume(element, CstNodeKind.LabelPrefix_Colon, tokens.Colon);
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(
-        token,
+const entryStatement = rule(
+  sequence(tokens.ENTRY),
+  (state: ParserState): ast.EntryStatement => {
+    const element = ast.createEntryStatement();
+    state.consume(element, CstNodeKind.EntryStatement_ENTRY, tokens.ENTRY);
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.DefaultRangeIdentifierItem_FromID,
+        CstNodeKind.EntryStatement_OpenParenParams,
+        tokens.OpenParen,
+      )
+    ) {
+      if (state.canConsumeFirst(procedureParameter.first())) {
+        const lhs = procedureParameter.rule(state);
+        lhs && element.parameters.push(lhs);
+        const { inc } = state.createLoopContext("EntryStatement 1");
+        while (
+          state.tryConsume(
+            element,
+            CstNodeKind.EntryStatement_Comma,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const rhs = procedureParameter.rule(state);
+          rhs && element.parameters.push(rhs);
+        }
+      }
+      state.consume(
+        element,
+        CstNodeKind.EntryStatement_CloseParenParams,
+        tokens.CloseParen,
       );
-      element.from = token.image;
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.Colon, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefaultRangeIdentifierItem_Colon,
-        );
-      });
-      this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefaultRangeIdentifierItem_ToID,
-        );
-        element.to = token.image;
-      });
-    });
+    }
 
-    return this.pop<ast.DefaultRangeIdentifierItem>();
-  });
-  private createDefaultAttributeExpression(): ast.DefaultAttributeExpression {
-    return {
-      kind: ast.SyntaxKind.DefaultAttributeExpression,
-      container: null,
-      items: [],
-      operators: [],
-    };
+    // Parse optional attributes (can appear multiple times)
+    const { inc } = state.createLoopContext("EntryStatement 2");
+    while (
+      !state.eof &&
+      (state.canConsumeFirst(environmentOption.first()) ||
+        state.canConsume(tokens.VARIABLE) ||
+        state.canConsume(tokens.LIMITED) ||
+        state.canConsume(tokens.RETURNS) ||
+        state.canConsumeFirst(options.first()))
+    ) {
+      inc();
+      if (state.canConsumeFirst(environmentOption.first())) {
+        const option = environmentOption.rule(state);
+        option && element.environmentName.push(option);
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.EntryStatement_Variable,
+          tokens.VARIABLE,
+        )
+      ) {
+        element.variable.push("VARIABLE");
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.EntryStatement_Limited,
+          tokens.LIMITED,
+        )
+      ) {
+        element.limited.push("LIMITED");
+      } else if (state.canConsumeFirst(returnsOption.first())) {
+        const option = returnsOption.rule(state);
+        option && element.returns.push(option);
+      } else if (state.canConsumeFirst(options.first())) {
+        const opts = options.rule(state);
+        opts && element.options.push(opts);
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.EntryStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const environmentOption = rule(
+  sequence(tokens.EXTERNAL),
+  (state: ParserState): ast.EnvironmentOption => {
+    const element = ast.createEnvironmentOption();
+    state.consume(
+      element,
+      CstNodeKind.EntryStatement_EXTERNAL,
+      tokens.EXTERNAL,
+    );
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.EntryStatement_OpenParenEnv,
+        tokens.OpenParen,
+      )
+    ) {
+      element.environment = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.EntryStatement_CloseParenEnv,
+        tokens.CloseParen,
+      );
+    }
+    return element;
+  },
+);
+
+const statement = rule(
+  choice(
+    () => conditionPrefix.first(),
+    () => unit.first(),
+    //commented out, because performAssignmentLookahead is used instead of LL(1) lookahead
+    //() => labelPrefix.first(),
+    //() => assignmentStatement.first(),
+  ),
+  (state: ParserState): ast.Statement => {
+    const element = ast.createStatement();
+
+    if (state.canConsumeFirst(conditionPrefix.first())) {
+      element.condition = conditionPrefix.rule(state);
+    }
+
+    const { inc } = state.createLoopContext("Statement");
+    while (state.canConsumeFirst(labelPrefix.first())) {
+      inc();
+      const label = labelPrefix.rule(state);
+      label && element.labels.push(label);
+    }
+
+    if (performAssignmentLookahead(state)) {
+      element.value = assignmentStatement.rule(state);
+    } else {
+      element.value = unit.rule(state);
+    }
+
+    recover(
+      state,
+      () =>
+        state.canConsumeFirst(statement.first()) ||
+        performAssignmentLookahead(state),
+    );
+
+    return element;
+  },
+);
+
+//this logic is also used in the tests, so the break condition is generic
+export function recover(
+  state: ParserState,
+  breakCondition: () => boolean,
+): void {
+  if (!state.inError) {
+    // Prevent error recovery if not in error state.
+    return;
   }
+  while (state.index < state.tokens.length) {
+    const token = state.tokens[state.index];
+    if (tokenMatcher(token, tokens.Semicolon)) {
+      state.index++;
+      break;
+    }
+    if (breakCondition()) {
+      break;
+    } else {
+      state.index++;
+    }
+  }
+  state.inError = false;
+}
 
-  DefaultAttributeExpression = this.RULE("DefaultAttributeExpression", () => {
-    let element = this.push(this.createDefaultAttributeExpression());
+const unit = orRule<ast.Unit>(
+  () => allocateStatement,
+  () => assertStatement,
+  () => attachStatement,
+  () => beginStatement,
+  () => callStatement,
+  () => cancelThreadStatement,
+  () => closeStatement,
+  () => declareStatement,
+  () => defaultStatement,
+  () => defineAliasStatement,
+  () => defineOrdinalStatement,
+  () => defineStructureStatement,
+  () => delayStatement,
+  () => deleteStatement,
+  () => detachStatement,
+  () => displayStatement,
+  () => doStatement,
+  () => entryStatement,
+  () => execStatement,
+  () => exitStatement,
+  () => fetchStatement,
+  () => flushStatement,
+  () => formatStatement,
+  () => freeStatement,
+  () => getStatement,
+  () => goToStatement,
+  () => ifStatement,
+  () => iterateStatement,
+  () => leaveStatement,
+  () => locateStatement,
+  () => nullStatement,
+  () => onStatement,
+  () => openStatement,
+  () => putStatement,
+  () => qualifyStatement,
+  () => readStatement,
+  () => reinitStatement,
+  () => releaseStatement,
+  () => resignalStatement,
+  () => returnStatement,
+  () => revertStatement,
+  () => rewriteStatement,
+  () => selectStatement,
+  () => signalStatement,
+  () => stopStatement,
+  () => waitStatement,
+  () => writeStatement,
+  () => procedureStatement,
+  () => packageRule,
+);
 
-    this.SUBRULE_ASSIGN1(this.DefaultAttributeExpressionNot, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.DefaultAttributeBinaryOperator, (token) => {
-        this.tokenPayload(
-          token,
+const allocateStatement = rule(
+  sequence(tokens.ALLOCATE),
+  (state: ParserState): ast.AllocateStatement => {
+    const element = ast.createAllocateStatement();
+    state.consume(
+      element,
+      CstNodeKind.AllocateStatement_ALLOCATE,
+      tokens.ALLOCATE,
+    );
+    const lhs = allocatedVariable.rule(state);
+    lhs && element.variables.push(lhs);
+    const { inc } = state.createLoopContext("AllocateStatement");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.AllocateStatement_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = allocatedVariable.rule(state);
+      rhs && element.variables.push(rhs);
+    }
+    state.consume(
+      element,
+      CstNodeKind.AllocateStatement_Semicolon,
+      tokens.Semicolon,
+    );
+    return element;
+  },
+);
+
+const allocatedVariable = rule(
+  choice(sequence(tokens.NUMBER), () => referenceItem.first()),
+  (state: ParserState): ast.AllocatedVariable => {
+    const element = ast.createAllocatedVariable();
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AllocatedVariable_LevelNumber,
+        tokens.NUMBER,
+      )
+    ) {
+      const levelToken = state.last;
+      element.level = levelToken!.image;
+    }
+
+    element.var = referenceItem.rule(state);
+
+    if (state.canConsumeFirst(allocateAttribute.first())) {
+      element.attribute = allocateAttribute.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const allocateAttribute = orRule<ast.AllocateAttribute>(
+  () => allocateDimension,
+  () => allocateType,
+  () => allocateLocationReferenceIn,
+  () => allocateLocationReferenceSet,
+  () => initialAttribute,
+);
+
+const allocateLocationReferenceIn = rule(
+  sequence(tokens.IN),
+  (state: ParserState): ast.AllocateLocationReferenceIn => {
+    const element = ast.createAllocateLocationReferenceIn();
+
+    state.consume(
+      element,
+      CstNodeKind.AllocateLocationReferenceIn_IN,
+      tokens.IN,
+    );
+    state.consume(
+      element,
+      CstNodeKind.AllocateLocationReferenceIn_OpenParen,
+      tokens.OpenParen,
+    );
+    element.area = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.AllocateLocationReferenceIn_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const allocateLocationReferenceSet = rule(
+  sequence(tokens.SET),
+  (state: ParserState): ast.AllocateLocationReferenceSet => {
+    const element = ast.createAllocateLocationReferenceSet();
+    state.consume(
+      element,
+      CstNodeKind.AllocateLocationReferenceSet_SET,
+      tokens.SET,
+    );
+    state.consume(
+      element,
+      CstNodeKind.AllocateLocationReferenceSet_OpenParen,
+      tokens.OpenParen,
+    );
+    element.locatorVariable = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.AllocateLocationReferenceSet_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
+
+const allocateDimension = rule(
+  () => dimensions.first(),
+  (state: ParserState): ast.AllocateDimension => {
+    const element = ast.createAllocateDimension();
+    element.dimensions = dimensions.rule(state);
+
+    return element;
+  },
+);
+
+const allocateType = rule(
+  sequence(tokens.AllocateAttributeType),
+  (state: ParserState): ast.AllocateType => {
+    const element = ast.createAllocateType();
+
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.AllocateAttributeType_Type,
+      tokens.AllocateAttributeType,
+    );
+    if (typeToken) {
+      element.type = tokens.AllocateAttributeType.mapToEnumLiteral(
+        typeToken.tokenTypeIdx,
+      );
+    }
+
+    if (state.canConsumeFirst(dimensions.first())) {
+      element.dimensions = dimensions.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const assertStatement = rule(
+  sequence(tokens.ASSERT),
+  (state: ParserState): ast.AssertStatement => {
+    const element = ast.createAssertStatement();
+
+    state.consume(element, CstNodeKind.AssertStatement_ASSERT, tokens.ASSERT);
+
+    if (state.canConsume(tokens.Boolean)) {
+      const boolToken = state.consume(
+        element,
+        CstNodeKind.AssertStatement_Boolean,
+        tokens.Boolean,
+      );
+      if (boolToken) {
+        if (boolToken.image.toUpperCase() === "TRUE") {
+          element.true = true;
+        } else {
+          element.false = true;
+        }
+      }
+      state.consume(
+        element,
+        CstNodeKind.AssertStatement_OpenParen0,
+        tokens.OpenParen,
+      );
+      element.actual = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.AssertStatement_CloseParen0,
+        tokens.CloseParen,
+      );
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AssertStatement_COMPARE,
+        tokens.COMPARE,
+      )
+    ) {
+      element.compare = true;
+      state.consume(
+        element,
+        CstNodeKind.AssertStatement_OpenParen1,
+        tokens.OpenParen,
+      );
+      element.actual = expression.rule(state);
+      state.consume(element, CstNodeKind.AssertStatement_Comma0, tokens.Comma);
+      element.expected = expression.rule(state);
+      if (
+        state.tryConsume(
           element,
-          CstNodeKind.DefaultAttributeExpression_Operators,
+          CstNodeKind.AssertStatement_Comma1,
+          tokens.Comma,
+        )
+      ) {
+        const operatorToken = state.consume(
+          element,
+          CstNodeKind.AssertStatement_OperatorString,
+          tokens.STRING_TERM,
         );
+        if (operatorToken) {
+          element.operator = operatorToken.image;
+        }
+      }
+      state.consume(
+        element,
+        CstNodeKind.AssertStatement_CloseParen1,
+        tokens.CloseParen,
+      );
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AssertStatement_UNREACHABLE,
+        tokens.UNREACHABLE,
+      )
+    ) {
+      element.unreachable = true;
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+    }
+
+    if (
+      state.tryConsume(element, CstNodeKind.AssertStatement_TEXT, tokens.TEXT)
+    ) {
+      element.displayExpression = expression.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const assignmentStatement = rule(
+  () => locatorCall.first(),
+  (state: ParserState): ast.AssignmentStatement => {
+    const element = ast.createAssignmentStatement();
+
+    // Parse left-hand side references (comma-separated)
+    const lhs = locatorCall.rule(state);
+    lhs && element.refs.push(lhs);
+    const { inc } = state.createLoopContext("AssignmentStatement");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.AssignmentStatement_Comma0,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = locatorCall.rule(state);
+      rhs && element.refs.push(rhs);
+    }
+
+    // Parse assignment operator
+    const operatorToken = state.consume(
+      element,
+      CstNodeKind.AssignmentStatement_Operator,
+      tokens.AssignmentOperator,
+    );
+    if (operatorToken) {
+      element.operator = tokens.AssignmentOperator.mapToEnumLiteral(
+        operatorToken.tokenTypeIdx,
+      );
+    }
+
+    // Parse right-hand side expression
+    element.expression = expression.rule(state);
+
+    // Optional BY clause
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AssignmentStatement_Comma1,
+        tokens.Comma,
+      )
+    ) {
+      state.consume(element, CstNodeKind.AssignmentStatement_BY, tokens.BY);
+
+      if (
+        state.tryConsume(
+          element,
+          CstNodeKind.AssignmentStatement_NAME,
+          tokens.NAME,
+        )
+      ) {
+        // BY NAME variant
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.AssignmentStatement_DIMACROSS,
+          tokens.DIMACROSS,
+        )
+      ) {
+        // BY DIMACROSS variant
+        element.dimacrossExpr = expression.rule(state);
+      } else {
+        state.error(Severe.IBM3988I.message, state.token, Severity.S);
+        return element;
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.AssignmentStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const attachStatement = rule(
+  sequence(tokens.ATTACH),
+  (state: ParserState): ast.AttachStatement => {
+    const element = ast.createAttachStatement();
+
+    state.consume(element, CstNodeKind.AttachStatement_ATTACH, tokens.ATTACH);
+    element.reference = locatorCall.rule(state);
+    state.consume(element, CstNodeKind.AttachStatement_THREAD, tokens.THREAD);
+    state.consume(
+      element,
+      CstNodeKind.AttachStatement_OpenParenTask,
+      tokens.OpenParen,
+    );
+    element.task = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.AttachStatement_CloseParenTask,
+      tokens.CloseParen,
+    );
+
+    // Optional ENVIRONMENT clause
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AttachStatement_ENVIRONMENT,
+        tokens.ENVIRONMENT,
+      )
+    ) {
+      element.environment = true;
+      state.consume(
+        element,
+        CstNodeKind.AttachStatement_OpenParenEnvironment,
+        tokens.OpenParen,
+      );
+
+      // Optional TSTACK inside ENVIRONMENT
+      if (
+        state.tryConsume(
+          element,
+          CstNodeKind.AttachStatement_TSTACK,
+          tokens.TSTACK,
+        )
+      ) {
+        state.consume(
+          element,
+          CstNodeKind.AttachStatement_OpenParenTStack,
+          tokens.OpenParen,
+        );
+        element.tstack = expression.rule(state);
+        state.consume(
+          element,
+          CstNodeKind.AttachStatement_CloseParenTStack,
+          tokens.CloseParen,
+        );
+      }
+
+      state.consume(
+        element,
+        CstNodeKind.AttachStatement_CloseParenEnvironment,
+        tokens.CloseParen,
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.AttachStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const beginStatement = rule(
+  sequence(tokens.BEGIN),
+  (state: ParserState): ast.BeginStatement => {
+    const element = ast.createBeginStatement();
+
+    state.consume(element, CstNodeKind.BeginStatement_BEGIN, tokens.BEGIN);
+    if (state.canConsumeFirst(options.first())) {
+      element.options = options.rule(state);
+    }
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.BeginStatement_RECURSIVE,
+        tokens.RECURSIVE,
+      )
+    ) {
+      element.recursive = true;
+    }
+
+    if (
+      state.tryConsume(element, CstNodeKind.BeginStatement_ORDER, tokens.ORDER)
+    ) {
+      const orderToken = state.last;
+      if (orderToken!.image.toUpperCase() === "ORDER") {
+        element.order = true;
+      } else if (orderToken!.image.toUpperCase() === "REORDER") {
+        element.reorder = true;
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.BeginStatement_Semicolon0,
+      tokens.Semicolon,
+    );
+    const { inc } = state.createLoopContext("BeginStatement");
+    while (!state.eof && !performEndStatementLookahead(state)) {
+      inc();
+      const stmt = statement.rule(state);
+      stmt && element.statements.push(stmt);
+    }
+
+    element.end = endStatement.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.BeginStatement_Semicolon1,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const endStatement = rule(
+  () => throwHasManualLookahead(),
+  (state: ParserState): ast.EndStatement => {
+    const element = ast.createEndStatement();
+
+    // Parse optional label prefixes
+    const { inc } = state.createLoopContext("EndStatement");
+    while (state.canConsumeFirst(labelPrefix.first())) {
+      inc();
+      const prefix = labelPrefix.rule(state);
+      prefix && element.labels.push(prefix);
+    }
+
+    state.consume(element, CstNodeKind.EndStatement_END, tokens.END);
+
+    // Optional label reference
+    if (state.canConsumeFirst(labelReference.first())) {
+      element.label = labelReference.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const callStatement = rule(
+  sequence(tokens.CALL),
+  (state: ParserState): ast.CallStatement => {
+    const element = ast.createCallStatement();
+    state.consume(element, CstNodeKind.CallStatement_CALL, tokens.CALL);
+    element.call = procedureCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.CallStatement_Semicolon,
+      tokens.Semicolon,
+    );
+    return element;
+  },
+);
+
+const cancelThreadStatement = rule(
+  sequence(tokens.CANCEL),
+  (state: ParserState): ast.CancelThreadStatement => {
+    const element = ast.createCancelThreadStatement();
+
+    state.consume(
+      element,
+      CstNodeKind.CancelThreadStatement_CANCEL,
+      tokens.CANCEL,
+    );
+    state.consume(
+      element,
+      CstNodeKind.CancelThreadStatement_THREAD,
+      tokens.THREAD,
+    );
+    state.consume(
+      element,
+      CstNodeKind.CancelThreadStatement_OpenParen,
+      tokens.OpenParen,
+    );
+    element.thread = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.CancelThreadStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    state.consume(
+      element,
+      CstNodeKind.CancelThreadStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const closeStatement = rule(
+  sequence(tokens.CLOSE),
+  (state: ParserState): ast.CloseStatement => {
+    const element = ast.createCloseStatement();
+
+    state.consume(element, CstNodeKind.CloseStatement_CLOSE, tokens.CLOSE);
+    state.consume(element, CstNodeKind.CloseStatement_FILE0, tokens.FILE);
+    state.consume(
+      element,
+      CstNodeKind.CloseStatement_OpenParen0,
+      tokens.OpenParen,
+    );
+
+    // First file - either MemberCall or Star
+    if (state.canConsumeFirst(memberCall.first())) {
+      const call = memberCall.rule(state);
+      call && element.files.push(call);
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.CloseStatement_FilesStar0,
+        tokens.Star,
+      )
+    ) {
+      element.files.push("*");
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.CloseStatement_CloseParen0,
+      tokens.CloseParen,
+    );
+
+    // Additional files (can have optional commas)
+    const { inc } = state.createLoopContext("CloseStatement");
+    while (state.canConsume(tokens.FILE) || state.canConsume(tokens.Comma)) {
+      inc();
+      // Optional comma before additional file
+      state.tryConsume(element, CstNodeKind.CloseStatement_Comma, tokens.Comma);
+
+      state.consume(element, CstNodeKind.CloseStatement_FILE1, tokens.FILE);
+      state.consume(
+        element,
+        CstNodeKind.CloseStatement_OpenParen,
+        tokens.OpenParen,
+      );
+
+      // File reference - either MemberCall or Star
+      if (state.canConsumeFirst(memberCall.first())) {
+        const call = memberCall.rule(state);
+        call && element.files.push(call);
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.CloseStatement_FilesStar1,
+          tokens.Star,
+        )
+      ) {
+        element.files.push("*");
+      } else {
+        state.error(Severe.IBM3988I.message, state.token, Severity.S);
+        return element;
+      }
+
+      state.consume(
+        element,
+        CstNodeKind.CloseStatement_CloseParen1,
+        tokens.CloseParen,
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.CloseStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const defaultStatement = rule(
+  sequence(tokens.DEFAULT),
+  (state: ParserState): ast.DefaultStatement => {
+    const element = ast.createDefaultStatement();
+
+    state.consume(
+      element,
+      CstNodeKind.DefaultStatement_DEFAULT,
+      tokens.DEFAULT,
+    );
+
+    const lhs = defaultExpression.rule(state);
+    lhs && element.expressions.push(lhs);
+
+    const { inc } = state.createLoopContext("DefaultStatement");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.DefaultStatement_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = defaultExpression.rule(state);
+      rhs && element.expressions.push(rhs);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.DefaultStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const defaultExpression = rule(
+  () => defaultExpressionPart.first(),
+  (state: ParserState): ast.DefaultExpression => {
+    const element = ast.createDefaultExpression();
+
+    element.expression = defaultExpressionPart.rule(state);
+
+    const { inc } = state.createLoopContext("DefaultExpression");
+    while (state.canConsumeFirst(defaultDeclarationAttribute.first())) {
+      inc();
+      const attr = defaultDeclarationAttribute.rule(state);
+      attr && element.attributes.push(attr);
+    }
+
+    return element;
+  },
+);
+
+const defaultExpressionPart = rule(
+  choice(
+    sequence(tokens.DESCRIPTORS),
+    sequence(tokens.RANGE),
+    sequence(tokens.OpenParen),
+  ),
+  (state: ParserState): ast.DefaultExpressionPart => {
+    const element = ast.createDefaultExpressionPart();
+
+    if (state.canConsume(tokens.DESCRIPTORS)) {
+      // DESCRIPTORS variant
+      state.consume(
+        element,
+        CstNodeKind.DefaultExpressionPart_DESCRIPTORS,
+        tokens.DESCRIPTORS,
+      );
+      element.expression = defaultAttributeExpression.rule(state);
+    } else if (state.canConsume(tokens.RANGE)) {
+      // RANGE variant
+      state.consume(
+        element,
+        CstNodeKind.DefaultExpressionPart_RANGE,
+        tokens.RANGE,
+      );
+      state.consume(
+        element,
+        CstNodeKind.DefaultExpressionPart_OpenParenRange,
+        tokens.OpenParen,
+      );
+      element.identifiers = defaultRangeIdentifiers.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DefaultExpressionPart_CloseParenRange,
+        tokens.CloseParen,
+      );
+    } else if (state.canConsume(tokens.OpenParen)) {
+      // Parenthesized attribute expression variant
+      state.consume(
+        element,
+        CstNodeKind.DefaultExpressionPart_OpenParenAttribute,
+        tokens.OpenParen,
+      );
+      element.expression = defaultAttributeExpression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DefaultExpressionPart_CloseParenAttribute,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    return element;
+  },
+);
+
+const defaultRangeIdentifiers = rule(
+  choice(sequence(tokens.Star), () => defaultRangeIdentifierItem.first()),
+  (state: ParserState): ast.DefaultRangeIdentifiers => {
+    const element = ast.createDefaultRangeIdentifiers();
+
+    // Parse first identifier (Star or DefaultRangeIdentifierItem)
+    if (state.canConsume(tokens.Star)) {
+      const starToken = state.consume(
+        element,
+        CstNodeKind.DefaultRangeIdentifiers_Star0,
+        tokens.Star,
+      );
+      if (starToken) {
+        element.identifiers.push("*");
+      }
+    } else {
+      const item = defaultRangeIdentifierItem.rule(state);
+      item && element.identifiers.push(item);
+    }
+
+    // Parse additional comma-separated identifiers
+    const { inc } = state.createLoopContext("DefaultRangeIdentifiers");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.DefaultRangeIdentifiers_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      if (state.canConsume(tokens.Star)) {
+        const starToken = state.consume(
+          element,
+          CstNodeKind.DefaultRangeIdentifiers_Star1,
+          tokens.Star,
+        );
+        if (starToken) {
+          element.identifiers.push("*");
+        }
+      } else {
+        const item = defaultRangeIdentifierItem.rule(state);
+        item && element.identifiers.push(item);
+      }
+    }
+
+    return element;
+  },
+);
+
+const defaultRangeIdentifierItem = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.DefaultRangeIdentifierItem => {
+    const element = ast.createDefaultRangeIdentifierItem();
+
+    const fromToken = state.consume(
+      element,
+      CstNodeKind.DefaultRangeIdentifierItem_FromID,
+      tokens.ID,
+    );
+    if (fromToken) {
+      element.from = fromToken.image;
+    }
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DefaultRangeIdentifierItem_Colon,
+        tokens.Colon,
+      )
+    ) {
+      const toToken = state.consume(
+        element,
+        CstNodeKind.DefaultRangeIdentifierItem_ToID,
+        tokens.ID,
+      );
+      if (toToken) {
+        element.to = toToken.image;
+      }
+    }
+
+    return element;
+  },
+);
+
+const defaultAttributeExpression = rule(
+  () => defaultAttributeExpressionNot.first(),
+  (state: ParserState): ast.DefaultAttributeExpression => {
+    const element = ast.createDefaultAttributeExpression();
+
+    // Parse first DefaultAttributeExpressionNot
+    const lhs = defaultAttributeExpressionNot.rule(state);
+    lhs && element.items.push(lhs);
+
+    // Parse optional binary operator and second operand
+    if (state.canConsume(tokens.DefaultAttributeBinaryOperator)) {
+      const operatorToken = state.consume(
+        element,
+        CstNodeKind.DefaultAttributeExpression_Operators,
+        tokens.DefaultAttributeBinaryOperator,
+      );
+      if (operatorToken) {
         element.operators.push(
           tokens.DefaultAttributeBinaryOperator.mapToEnumLiteral(
-            token.tokenTypeIdx,
+            operatorToken.tokenTypeIdx,
           ),
         );
-      });
-      this.SUBRULE_ASSIGN2(this.DefaultAttributeExpressionNot, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.DefaultAttributeExpression>();
-  });
-  private createDefaultAttributeExpressionNot(): ast.DefaultAttributeExpressionNot {
-    return {
-      kind: ast.SyntaxKind.DefaultAttributeExpressionNot,
-      container: null,
-      not: false,
-      value: null,
-    };
-  }
-
-  DefaultAttributeExpressionNot = this.RULE(
-    "DefaultAttributeExpressionNot",
-    () => {
-      let element = this.push(this.createDefaultAttributeExpressionNot());
-
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN1(tokens.NOT, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.DefaultAttributeExpressionNot_NOT,
-          );
-          element.not = true;
-        });
-      });
-      this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
-        element.value = tokens.DefaultAttribute.mapToEnumLiteral(
-          token.tokenTypeIdx,
-        );
-      });
-
-      return this.pop<ast.DefaultAttributeExpressionNot>();
-    },
-  );
-
-  private createDefineAliasStatement(): ast.DefineAliasStatement {
-    return {
-      kind: ast.SyntaxKind.DefineAliasStatement,
-      container: null,
-      name: null,
-      nameToken: null,
-      xDefine: false,
-      attributes: [],
-    };
-  }
-
-  DefineAliasStatement = this.RULE("DefineAliasStatement", () => {
-    let element = this.push(this.createDefineAliasStatement());
-
-    this.CONSUME_ASSIGN1(tokens.DEFINE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineAliasStatement_DEFINE,
-      );
-      if (token.image.charAt(0).toUpperCase() === "X") {
-        element.xDefine = true;
       }
-    });
-    this.CONSUME_ASSIGN1(tokens.ALIAS, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_ALIAS);
-    });
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DefineAliasStatement_Name);
-      element.name = token.image;
-      element.nameToken = token;
-    });
-    this.OPTION2(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-      this.MANY1(() => {
-        this.OPTION1(() => {
-          this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DefineAliasStatement_Comma,
-            );
-          });
-        });
-        this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
-          assign: (result) => {
-            element.attributes.push(result);
-          },
-        });
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
+      const rhs = defaultAttributeExpressionNot.rule(state);
+      rhs && element.items.push(rhs);
+    }
+
+    return element;
+  },
+);
+
+const defaultAttributeExpressionNot = rule(
+  choice(sequence(tokens.NOT), sequence(tokens.DefaultAttribute)),
+  (state: ParserState): ast.DefaultAttributeExpressionNot => {
+    const element = ast.createDefaultAttributeExpressionNot();
+
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.DefineAliasStatement_Semicolon,
+        CstNodeKind.DefaultAttributeExpressionNot_NOT,
+        tokens.NOT,
+      )
+    ) {
+      element.not = true;
+    }
+
+    const attributeToken = state.consume(
+      element,
+      CstNodeKind.DefaultAttribute_Value,
+      tokens.DefaultAttribute,
+    );
+    if (attributeToken) {
+      element.value = tokens.DefaultAttribute.mapToEnumLiteral(
+        attributeToken.tokenTypeIdx,
       );
-    });
+    }
 
-    return this.pop<ast.DefineAliasStatement>();
-  });
-  private createDefineOrdinalStatement(): ast.DefineOrdinalStatement {
-    return {
-      kind: ast.SyntaxKind.DefineOrdinalStatement,
-      container: null,
-      name: null,
-      nameToken: null,
-      ordinalValues: null,
-      xDefine: false,
-      attributes: [],
-      precision: null,
-    };
-  }
+    return element;
+  },
+);
 
-  DefineOrdinalStatement = this.RULE("DefineOrdinalStatement", () => {
-    let element = this.push(this.createDefineOrdinalStatement());
+const defineAliasStatement = rule(
+  sequence(tokens.DEFINE, tokens.ALIAS),
+  (state: ParserState): ast.DefineAliasStatement => {
+    const element = ast.createDefineAliasStatement();
 
-    this.CONSUME_ASSIGN1(tokens.DEFINE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineOrdinalStatement_DEFINE,
-      );
-      if (token.image.charAt(0).toUpperCase() === "X") {
-        element.xDefine = true;
+    const defineToken = state.consume(
+      element,
+      CstNodeKind.DefineAliasStatement_DEFINE,
+      tokens.DEFINE,
+    );
+    if (defineToken?.image.charAt(0).toUpperCase() === "X") {
+      element.xDefine = true;
+    }
+    state.consume(
+      element,
+      CstNodeKind.DefineAliasStatement_ALIAS,
+      tokens.ALIAS,
+    );
+
+    const nameToken = state.consume(
+      element,
+      CstNodeKind.DefineAliasStatement_Name,
+      tokens.ID,
+    );
+    if (nameToken) {
+      element.name = nameToken.image;
+      element.nameToken = nameToken;
+    }
+
+    if (state.canConsumeFirst(declarationAttribute.first())) {
+      const lhs = declarationAttribute.rule(state);
+      lhs && element.attributes.push(lhs);
+      const { inc } = state.createLoopContext("DefineAliasStatement");
+      while (
+        state.canConsume(tokens.Comma) ||
+        state.canConsumeFirst(declarationAttribute.first())
+      ) {
+        inc();
+        state.tryConsume(
+          element,
+          CstNodeKind.DefineAliasStatement_Comma,
+          tokens.Comma,
+        );
+        const rhs = declarationAttribute.rule(state);
+        rhs && element.attributes.push(rhs);
       }
-    });
-    this.CONSUME_ASSIGN1(tokens.ORDINAL, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineOrdinalStatement_ORDINAL,
-      );
-    });
-    this.CONSUME_ASSIGN(tokens.ID, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineOrdinalStatement_Name,
-      );
-      element.name = token.image;
-      element.nameToken = token;
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineOrdinalStatement_OpenParenValues,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.OrdinalValueList, {
-      assign: (result) => {
-        element.ordinalValues = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineOrdinalStatement_CloseParenValues,
-      );
-    });
+    }
 
-    // zero or more attributes following
-    this.MANY(() => {
-      // either signed/unsigned OR a precision attribute
-      this.OR2([
-        {
-          // signed
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.SIGNED, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_Signed0,
-              );
-              element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
-            });
-          },
-        },
-        {
-          // unsigned
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.UNSIGNED, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_Unsigned0,
-              );
-              element.attributes.push(ast.DefineOrdinalAttribute.UNSIGNED);
-            });
-          },
-        },
-        {
-          // attribute w/ precision val (will only take one)
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.PRECISION, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_PRECISION,
-              );
-              element.attributes.push(ast.DefineOrdinalAttribute.PRECISION);
-            });
-            this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_OpenParenPrecision,
-              );
-            });
-            this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_PrecisionNumber,
-              );
-              // will override prior precisions (but this parses in 6.1 PL/I strangely enough)
-              element.precision = token.image;
-            });
-            this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DefineOrdinalStatement_CloseParenPrecision,
-              );
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineOrdinalStatement_Semicolon,
-      );
-    });
+    state.consume(
+      element,
+      CstNodeKind.DefineAliasStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.DefineOrdinalStatement>();
-  });
-  private createOrdinalValueList(): ast.OrdinalValueList {
-    return {
-      kind: ast.SyntaxKind.OrdinalValueList,
-      container: null,
-      members: [],
-    };
-  }
+    return element;
+  },
+);
 
-  OrdinalValueList = this.RULE("OrdinalValueList", () => {
-    let element = this.push(this.createOrdinalValueList());
+const defineOrdinalStatement = rule(
+  sequence(tokens.DEFINE, tokens.ORDINAL),
+  (state: ParserState): ast.DefineOrdinalStatement => {
+    const element = ast.createDefineOrdinalStatement();
 
-    this.SUBRULE_ASSIGN1(this.OrdinalValue, {
-      assign: (result) => {
-        element.members.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OrdinalValueList_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.OrdinalValue, {
-        assign: (result) => {
-          element.members.push(result);
-        },
-      });
-    });
+    const defineToken = state.consume(
+      element,
+      CstNodeKind.DefineOrdinalStatement_DEFINE,
+      tokens.DEFINE,
+    );
+    if (defineToken?.image.charAt(0).toUpperCase() === "X") {
+      element.xDefine = true;
+    }
+    state.consume(
+      element,
+      CstNodeKind.DefineOrdinalStatement_ORDINAL,
+      tokens.ORDINAL,
+    );
 
-    return this.pop<ast.OrdinalValueList>();
-  });
-  private createOrdinalValue(): ast.OrdinalValue {
-    return {
-      kind: ast.SyntaxKind.OrdinalValue,
-      container: null,
-      name: null,
-      nameToken: null,
-      value: null,
-    };
-  }
+    const nameToken = state.consume(
+      element,
+      CstNodeKind.DefineOrdinalStatement_Name,
+      tokens.ID,
+    );
+    if (nameToken) {
+      element.name = nameToken.image;
+      element.nameToken = nameToken;
+    }
 
-  OrdinalValue = this.RULE("OrdinalValue", () => {
-    let element = this.push(this.createOrdinalValue());
+    state.consume(
+      element,
+      CstNodeKind.DefineOrdinalStatement_OpenParenValues,
+      tokens.OpenParen,
+    );
+    element.ordinalValues = ordinalValueList.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DefineOrdinalStatement_CloseParenValues,
+      tokens.CloseParen,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.OrdinalValue_Name);
-      element.name = token.image;
-      element.nameToken = token;
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.VALUE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OrdinalValue_VALUE);
-      });
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OrdinalValue_OpenParen);
-      });
-      // The spec says that the value is *just* a number.
-      // However, the compiler allows unary expressions in here as well
-      // (e.g. -1, +2, etc.). For consistency, we allow any expression here.
-      // TODO: We can later add a check to ensure that the value is a number.
-      this.SUBRULE_ASSIGN(this.Expression, {
-        assign: (result) => {
-          element.value = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OrdinalValue_CloseParen);
-      });
-    });
-
-    return this.pop<ast.OrdinalValue>();
-  });
-  private createDefineStructureStatement(): ast.DefineStructureStatement {
-    return {
-      kind: ast.SyntaxKind.DefineStructureStatement,
-      container: null,
-      xDefine: false,
-      items: [],
-    };
-  }
-
-  DefineStructureStatement = this.RULE("DefineStructureStatement", () => {
-    let element = this.push(this.createDefineStructureStatement());
-
-    this.CONSUME_ASSIGN(tokens.DEFINE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefineStructureStatement_DEFINE,
-      );
-      if (token.image.charAt(0).toUpperCase() === "X") {
-        element.xDefine = true;
+    const { inc } = state.createLoopContext("DefineOrdinalStatement");
+    while (
+      state.canConsume(tokens.SIGNED) ||
+      state.canConsume(tokens.UNSIGNED) ||
+      state.canConsume(tokens.PRECISION)
+    ) {
+      inc();
+      if (
+        state.tryConsume(
+          element,
+          CstNodeKind.DefineOrdinalStatement_Signed0,
+          tokens.SIGNED,
+        )
+      ) {
+        element.attributes.push(ast.DefineOrdinalAttribute.SIGNED);
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.DefineOrdinalStatement_Unsigned0,
+          tokens.UNSIGNED,
+        )
+      ) {
+        element.attributes.push(ast.DefineOrdinalAttribute.UNSIGNED);
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.DefineOrdinalStatement_PRECISION,
+          tokens.PRECISION,
+        )
+      ) {
+        element.attributes.push(ast.DefineOrdinalAttribute.PRECISION);
+        state.consume(
+          element,
+          CstNodeKind.DefineOrdinalStatement_OpenParenPrecision,
+          tokens.OpenParen,
+        );
+        const precisionNumberToken = state.consume(
+          element,
+          CstNodeKind.DefineOrdinalStatement_PrecisionNumber,
+          tokens.NUMBER,
+        );
+        if (precisionNumberToken) {
+          element.precision = precisionNumberToken.image;
+        }
+        state.consume(
+          element,
+          CstNodeKind.DefineOrdinalStatement_CloseParenPrecision,
+          tokens.CloseParen,
+        );
       }
-    });
-    this.CONSUME_ASSIGN(tokens.STRUCTURE, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.DefineOrdinalStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const ordinalValueList = rule(
+  () => ordinalValue.first(),
+  (state: ParserState): ast.OrdinalValueList => {
+    const element = ast.createOrdinalValueList();
+
+    const lhs = ordinalValue.rule(state);
+    lhs && element.members.push(lhs);
+    const { inc } = state.createLoopContext("OrdinalValueList");
+    while (
+      state.tryConsume(
         element,
-        CstNodeKind.DefineStructureStatement_STRUCTURE,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.DeclaredItem, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefineStructureStatement_Comma,
-        );
-      });
-      this.SUBRULE_ASSIGN2(this.DeclaredItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
+        CstNodeKind.OrdinalValueList_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = ordinalValue.rule(state);
+      rhs && element.members.push(rhs);
+    }
+
+    return element;
+  },
+);
+
+const ordinalValue = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.OrdinalValue => {
+    const element = ast.createOrdinalValue();
+
+    const idToken = state.consume(
+      element,
+      CstNodeKind.OrdinalValue_Name,
+      tokens.ID,
+    );
+    if (idToken) {
+      element.name = idToken.image;
+      element.nameToken = idToken;
+    }
+
+    if (
+      state.tryConsume(element, CstNodeKind.OrdinalValue_VALUE, tokens.VALUE)
+    ) {
+      state.consume(
         element,
-        CstNodeKind.DefineStructureStatement_Semicolon,
+        CstNodeKind.OrdinalValue_OpenParen,
+        tokens.OpenParen,
       );
-    });
-
-    return this.pop<ast.DefineStructureStatement>();
-  });
-
-  private createDelayStatement(): ast.DelayStatement {
-    return {
-      kind: ast.SyntaxKind.DelayStatement,
-      container: null,
-      delay: null,
-    };
-  }
-
-  DelayStatement = this.RULE("DelayStatement", () => {
-    let element = this.push(this.createDelayStatement());
-
-    this.CONSUME_ASSIGN1(tokens.DELAY, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DelayStatement_DELAY);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DelayStatement_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.delay = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DelayStatement_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DelayStatement_Semicolon);
-    });
-
-    return this.pop<ast.DelayStatement>();
-  });
-
-  private createDeleteStatement(): ast.DeleteStatement {
-    return {
-      kind: ast.SyntaxKind.DeleteStatement,
-      container: null,
-      file: null,
-      key: null,
-    };
-  }
-
-  DeleteStatement = this.RULE("DeleteStatement", () => {
-    let element = this.push(this.createDeleteStatement());
-
-    this.CONSUME_ASSIGN1(tokens.DELETE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DeleteStatement_DELETE);
-    });
-    this.CONSUME_ASSIGN1(tokens.FILE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DeleteStatement_FILE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+      element.value = expression.rule(state);
+      state.consume(
         element,
-        CstNodeKind.DeleteStatement_OpenParenFile,
+        CstNodeKind.OrdinalValue_CloseParen,
+        tokens.CloseParen,
       );
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.file = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    return element;
+  },
+);
+
+const defineStructureStatement = rule(
+  sequence(tokens.DEFINE, tokens.STRUCTURE),
+  (state: ParserState): ast.DefineStructureStatement => {
+    const element = ast.createDefineStructureStatement();
+
+    const defineToken = state.consume(
+      element,
+      CstNodeKind.DefineStructureStatement_DEFINE,
+      tokens.DEFINE,
+    );
+    if (defineToken?.image.charAt(0).toUpperCase() === "X") {
+      element.xDefine = true;
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.DefineStructureStatement_STRUCTURE,
+      tokens.STRUCTURE,
+    );
+
+    const lhs = declaredItem.rule(state);
+    lhs && element.items.push(lhs);
+
+    const { inc } = state.createLoopContext("DefineStructureStatement");
+    while (
+      state.tryConsume(
         element,
-        CstNodeKind.DeleteStatement_CloseParenFile,
-      );
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.KEY, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DeleteStatement_KEY);
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DeleteStatement_OpenParenKey,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.key = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DeleteStatement_CloseParenKey,
-        );
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DeleteStatement_Semicolon);
-    });
+        CstNodeKind.DefineStructureStatement_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = declaredItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
 
-    return this.pop<ast.DeleteStatement>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.DefineStructureStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  private createDetachStatement(): ast.DetachStatement {
-    return {
-      kind: ast.SyntaxKind.DetachStatement,
-      container: null,
-      reference: null,
-    };
-  }
+    return element;
+  },
+);
 
-  DetachStatement = this.RULE("DetachStatement", () => {
-    let element = this.push(this.createDetachStatement());
+const delayStatement = rule(
+  sequence(tokens.DELAY),
+  (state: ParserState): ast.DelayStatement => {
+    const element = ast.createDelayStatement();
 
-    this.CONSUME_ASSIGN1(tokens.DETACH, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DetachStatement_DETACH);
-    });
-    this.CONSUME_ASSIGN1(tokens.THREAD, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DetachStatement_THREAD);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DetachStatement_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.reference = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DetachStatement_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DetachStatement_Semicolon);
-    });
+    state.consume(element, CstNodeKind.DelayStatement_DELAY, tokens.DELAY);
+    state.consume(
+      element,
+      CstNodeKind.DelayStatement_OpenParen,
+      tokens.OpenParen,
+    );
+    element.delay = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DelayStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    state.consume(
+      element,
+      CstNodeKind.DelayStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.DetachStatement>();
-  });
+    return element;
+  },
+);
 
-  private createDisplayStatement(): ast.DisplayStatement {
-    return {
-      kind: ast.SyntaxKind.DisplayStatement,
-      container: null,
-      expression: null,
-      reply: null,
-      rout: [],
-      desc: [],
-    };
-  }
+const deleteStatement = rule(
+  sequence(tokens.DELETE),
+  (state: ParserState): ast.DeleteStatement => {
+    const element = ast.createDeleteStatement();
 
-  DisplayStatement = this.RULE("DisplayStatement", () => {
-    let element = this.push(this.createDisplayStatement());
+    state.consume(element, CstNodeKind.DeleteStatement_DELETE, tokens.DELETE);
+    state.consume(element, CstNodeKind.DeleteStatement_FILE, tokens.FILE);
+    state.consume(
+      element,
+      CstNodeKind.DeleteStatement_OpenParenFile,
+      tokens.OpenParen,
+    );
+    element.file = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DeleteStatement_CloseParenFile,
+      tokens.CloseParen,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.DISPLAY, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DisplayStatement_DISPLAY);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    // Optional KEY clause
+    if (
+      state.tryConsume(element, CstNodeKind.DeleteStatement_KEY, tokens.KEY)
+    ) {
+      state.consume(
         element,
-        CstNodeKind.DisplayStatement_OpenParenExpression,
+        CstNodeKind.DeleteStatement_OpenParenKey,
+        tokens.OpenParen,
       );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.expression = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+      element.key = expression.rule(state);
+      state.consume(
         element,
-        CstNodeKind.DisplayStatement_CloseParenExpression,
+        CstNodeKind.DeleteStatement_CloseParenKey,
+        tokens.CloseParen,
       );
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.REPLY, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DisplayStatement_REPLY);
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.DeleteStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const detachStatement = rule(
+  sequence(tokens.DETACH),
+  (state: ParserState): ast.DetachStatement => {
+    const element = ast.createDetachStatement();
+
+    state.consume(element, CstNodeKind.DetachStatement_DETACH, tokens.DETACH);
+    state.consume(element, CstNodeKind.DetachStatement_THREAD, tokens.THREAD);
+    state.consume(
+      element,
+      CstNodeKind.DetachStatement_OpenParen,
+      tokens.OpenParen,
+    );
+    element.reference = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DetachStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    state.consume(
+      element,
+      CstNodeKind.DetachStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const displayStatement = rule(
+  sequence(tokens.DISPLAY),
+  (state: ParserState): ast.DisplayStatement => {
+    const element = ast.createDisplayStatement();
+
+    state.consume(
+      element,
+      CstNodeKind.DisplayStatement_DISPLAY,
+      tokens.DISPLAY,
+    );
+    state.consume(
+      element,
+      CstNodeKind.DisplayStatement_OpenParenExpression,
+      tokens.OpenParen,
+    );
+    element.expression = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DisplayStatement_CloseParenExpression,
+      tokens.CloseParen,
+    );
+
+    // Optional REPLY clause
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DisplayStatement_REPLY,
+        tokens.REPLY,
+      )
+    ) {
+      state.consume(
+        element,
+        CstNodeKind.DisplayStatement_OpenParenReply,
+        tokens.OpenParen,
+      );
+      element.reply = locatorCall.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DisplayStatement_CloseParenReply,
+        tokens.CloseParen,
+      );
+    }
+
+    // Optional ROUTCDE clause
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DisplayStatement_ROUTCDE,
+        tokens.ROUTCDE,
+      )
+    ) {
+      state.consume(
+        element,
+        CstNodeKind.DisplayStatement_OpenParenRout,
+        tokens.OpenParen,
+      );
+
+      const routToken = state.consume(
+        element,
+        CstNodeKind.DisplayStatement_RoutNumber0,
+        tokens.NUMBER,
+      );
+      if (routToken) {
+        element.rout.push(routToken.image);
+      }
+
+      const { inc } = state.createLoopContext("DisplayStatement 1");
+      while (
+        state.tryConsume(
           element,
-          CstNodeKind.DisplayStatement_OpenParenReply,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.LocatorCall, {
-        assign: (result) => {
-          element.reply = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
+          CstNodeKind.DisplayStatement_CommaRout,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const nextRoutToken = state.consume(
           element,
-          CstNodeKind.DisplayStatement_CloseParenReply,
+          CstNodeKind.DisplayStatement_RoutNumber1,
+          tokens.NUMBER,
         );
-      });
-    });
-    this.OPTION3(() => {
-      this.CONSUME_ASSIGN1(tokens.ROUTCDE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DisplayStatement_ROUTCDE);
-      });
-      this.CONSUME_ASSIGN3(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+        if (nextRoutToken) {
+          element.rout.push(nextRoutToken.image);
+        }
+      }
+
+      state.consume(
+        element,
+        CstNodeKind.DisplayStatement_CloseParenRout,
+        tokens.CloseParen,
+      );
+
+      // Optional DESC clause (only if ROUTCDE is present)
+      if (
+        state.tryConsume(
           element,
-          CstNodeKind.DisplayStatement_OpenParenRout,
-        );
-      });
-      this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-        this.tokenPayload(
-          token,
+          CstNodeKind.DisplayStatement_DESC,
+          tokens.DESC,
+        )
+      ) {
+        state.consume(
           element,
-          CstNodeKind.DisplayStatement_RoutNumber0,
+          CstNodeKind.DisplayStatement_OpenParenDesc,
+          tokens.OpenParen,
         );
-        element.rout.push(token.image);
-      });
-      this.MANY1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
+
+        const descToken = state.consume(
+          element,
+          CstNodeKind.DisplayStatement_DescNumber0,
+          tokens.NUMBER,
+        );
+        if (descToken) {
+          element.desc.push(descToken.image);
+        }
+
+        const { inc } = state.createLoopContext("DisplayStatement 2");
+        while (
+          state.tryConsume(
             element,
-            CstNodeKind.DisplayStatement_CommaRout,
-          );
-        });
-        this.CONSUME_ASSIGN2(tokens.NUMBER, (token) => {
-          this.tokenPayload(
-            token,
+            CstNodeKind.DisplayStatement_CommaDesc,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const nextDescToken = state.consume(
             element,
-            CstNodeKind.DisplayStatement_RoutNumber1,
+            CstNodeKind.DisplayStatement_DescNumber1,
+            tokens.NUMBER,
           );
-          element.rout.push(token.image);
-        });
-      });
-      this.CONSUME_ASSIGN3(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
+          if (nextDescToken) {
+            element.desc.push(nextDescToken.image);
+          }
+        }
+
+        state.consume(
           element,
-          CstNodeKind.DisplayStatement_CloseParenRout,
+          CstNodeKind.DisplayStatement_CloseParenDesc,
+          tokens.CloseParen,
         );
-      });
-      this.OPTION2(() => {
-        this.CONSUME_ASSIGN1(tokens.DESC, (token) => {
-          this.tokenPayload(token, element, CstNodeKind.DisplayStatement_DESC);
-        });
-        this.CONSUME_ASSIGN4(tokens.OpenParen, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.DisplayStatement_OpenParenDesc,
-          );
-        });
-        this.CONSUME_ASSIGN3(tokens.NUMBER, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.DisplayStatement_DescNumber0,
-          );
-          element.desc.push(token.image);
-        });
-        this.MANY2(() => {
-          this.CONSUME_ASSIGN2(tokens.Comma, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DisplayStatement_CommaDesc,
-            );
-          });
-          this.CONSUME_ASSIGN4(tokens.NUMBER, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DisplayStatement_DescNumber1,
-            );
-            element.desc.push(token.image);
-          });
-        });
-        this.CONSUME_ASSIGN4(tokens.CloseParen, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.DisplayStatement_CloseParenDesc,
-          );
-        });
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DisplayStatement_Semicolon);
-    });
+      }
+    }
 
-    return this.pop<ast.DisplayStatement>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.DisplayStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  DoStatement = this.RULE("DoStatement", () => {
-    let element = this.push(ast.createDoStatement());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.DO, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoStatement_DO);
-      element.doToken = token;
-    });
-    this.OPTION1(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.DoType2, {
-              assign: (result) => {
-                element.doType2 = result;
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.DoType3, {
-              assign: (result) => {
-                element.doType3 = result;
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.LOOP, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.DoStatement_LOOP);
-              element.doType4 = true;
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoStatement_Semicolon0);
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.Statement, {
-        assign: (result) => {
-          element.statements.push(result);
-        },
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.EndStatement, {
-      assign: (result) => {
-        element.end = result;
-      },
-    });
-    this.CONSUME_ASSIGN2(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoStatement_Semicolon1);
-    });
+const doStatement = rule(
+  sequence(tokens.DO),
+  (state: ParserState): ast.DoStatement => {
+    const element = ast.createDoStatement();
 
-    return this.pop<ast.DoStatement>();
-  });
+    const doToken = state.consume(
+      element,
+      CstNodeKind.DoStatement_DO,
+      tokens.DO,
+    );
+    element.doToken = doToken;
 
-  DoType2 = this.OR_RULE<ast.DoType2>("DoType2", () => [
-    this.DoWhile,
-    this.DoUntil,
-  ]);
+    // Optional DO type specification
+    if (
+      state.canConsumeFirst(doType2.first()) ||
+      state.canConsumeFirst(doType3.first()) ||
+      state.canConsume(tokens.LOOP)
+    ) {
+      if (state.canConsumeFirst(doType2.first())) {
+        element.doType2 = doType2.rule(state);
+      } else if (
+        state.tryConsume(element, CstNodeKind.DoStatement_LOOP, tokens.LOOP)
+      ) {
+        element.doType4 = true;
+      } else if (state.canConsumeFirst(doType3.first())) {
+        element.doType3 = doType3.rule(state);
+      }
+    }
 
-  DoWhile = this.RULE("DoWhile", () => {
-    let element = this.push(ast.createDoWhile());
+    state.consume(
+      element,
+      CstNodeKind.DoStatement_Semicolon0,
+      tokens.Semicolon,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.WHILE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoWhile_WHILE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoWhile_OpenParenWhile);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.while = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoWhile_CloseParenWhile);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.UNTIL, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoWhile_UNTIL);
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoWhile_OpenParenUntil);
-      });
-      this.SUBRULE_ASSIGN2(this.Expression, {
-        assign: (result) => {
-          element.until = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoWhile_CloseParenUntil);
-      });
-    });
+    // Parse statements until END
+    const { inc } = state.createLoopContext("DoStatement");
+    while (!state.eof && !performEndStatementLookahead(state)) {
+      inc();
+      const stmt = statement.rule(state);
+      stmt && element.statements.push(stmt);
+    }
 
-    return this.pop<ast.DoWhile>();
-  });
+    element.end = endStatement.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DoStatement_Semicolon1,
+      tokens.Semicolon,
+    );
 
-  DoUntil = this.RULE("DoUntil", () => {
-    let element = this.push(ast.createDoUntil());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.UNTIL, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoUntil_UNTIL);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoUntil_OpenParenUntil);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.until = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoUntil_CloseParenUntil);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.WHILE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoUntil_WHILE);
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoUntil_OpenParenWhile);
-      });
-      this.SUBRULE_ASSIGN2(this.Expression, {
-        assign: (result) => {
-          element.while = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoUntil_CloseParenWhile);
-      });
-    });
+const doType2 = orRule<ast.DoType2>(
+  () => doWhile,
+  () => doUntil,
+);
 
-    return this.pop<ast.DoUntil>();
-  });
+const doWhile = rule(
+  sequence(tokens.WHILE),
+  (state: ParserState): ast.DoWhile => {
+    const element = ast.createDoWhile();
 
-  DoType3 = this.RULE("DoType3", () => {
-    let element = this.push(ast.createDoType3());
+    state.consume(element, CstNodeKind.DoWhile_WHILE, tokens.WHILE);
+    state.consume(
+      element,
+      CstNodeKind.DoWhile_OpenParenWhile,
+      tokens.OpenParen,
+    );
+    element.while = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DoWhile_CloseParenWhile,
+      tokens.CloseParen,
+    );
 
-    this.SUBRULE_ASSIGN1(this.MemberCall, {
-      assign: (result) => {
-        element.variable = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.Equals, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DoType3_Equals);
-    });
-    this.SUBRULE_ASSIGN1(this.DoSpecification, {
-      assign: (result) => {
-        element.specifications.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DoType3_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.DoSpecification, {
-        assign: (result) => {
-          element.specifications.push(result);
-        },
-      });
-    });
+    // Optional UNTIL clause
+    if (state.tryConsume(element, CstNodeKind.DoWhile_UNTIL, tokens.UNTIL)) {
+      state.consume(
+        element,
+        CstNodeKind.DoWhile_OpenParenUntil,
+        tokens.OpenParen,
+      );
+      element.until = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DoWhile_CloseParenUntil,
+        tokens.CloseParen,
+      );
+    }
 
-    return this.pop<ast.DoType3>();
-  });
+    return element;
+  },
+);
 
-  private createDoSpecification(): ast.DoSpecification {
-    return {
-      kind: ast.SyntaxKind.DoSpecification,
-      container: null,
-      expression: null,
-      upthru: null,
-      downthru: null,
-      repeat: null,
-      whileOrUntil: null,
-      to: null,
-      by: null,
-    };
-  }
+const doUntil = rule(
+  sequence(tokens.UNTIL),
+  (state: ParserState): ast.DoUntil => {
+    const element = ast.createDoUntil();
 
-  DoSpecification = this.RULE("DoSpecification", () => {
-    let element = this.push(this.createDoSpecification());
+    state.consume(element, CstNodeKind.DoUntil_UNTIL, tokens.UNTIL);
+    state.consume(
+      element,
+      CstNodeKind.DoUntil_OpenParenUntil,
+      tokens.OpenParen,
+    );
+    element.until = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.DoUntil_CloseParenUntil,
+      tokens.CloseParen,
+    );
 
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.expression = result;
-      },
-    });
-    this.OPTION3(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.TO, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DoSpecification_TO0,
-              );
-            });
-            this.SUBRULE_ASSIGN2(this.Expression, {
-              assign: (result) => {
-                element.to = result;
-              },
-            });
-            this.OPTION1(() => {
-              this.CONSUME_ASSIGN1(tokens.BY, (token) => {
-                this.tokenPayload(
-                  token,
-                  element,
-                  CstNodeKind.DoSpecification_BY0,
-                );
-              });
-              this.SUBRULE_ASSIGN3(this.Expression, {
-                assign: (result) => {
-                  element.by = result;
-                },
-              });
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN2(tokens.BY, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DoSpecification_BY1,
-              );
-            });
-            this.SUBRULE_ASSIGN4(this.Expression, {
-              assign: (result) => {
-                element.by = result;
-              },
-            });
-            this.OPTION2(() => {
-              this.CONSUME_ASSIGN2(tokens.TO, (token) => {
-                this.tokenPayload(
-                  token,
-                  element,
-                  CstNodeKind.DoSpecification_TO1,
-                );
-              });
-              this.SUBRULE_ASSIGN5(this.Expression, {
-                assign: (result) => {
-                  element.to = result;
-                },
-              });
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.UPTHRU, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DoSpecification_UPTHRU,
-              );
-            });
-            this.SUBRULE_ASSIGN6(this.Expression, {
-              assign: (result) => {
-                element.upthru = result;
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.DOWNTHRU, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DoSpecification_DOWNTHRU,
-              );
-            });
-            this.SUBRULE_ASSIGN7(this.Expression, {
-              assign: (result) => {
-                element.downthru = result;
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.REPEAT, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DoSpecification_REPEAT,
-              );
-            });
-            this.SUBRULE_ASSIGN8(this.Expression, {
-              assign: (result) => {
-                element.repeat = result;
-              },
-            });
-          },
-        },
-      ]);
-    });
-    this.OPTION4(() => {
-      this.OR2([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.DoWhile, {
-              assign: (result) => {
-                element.whileOrUntil = result;
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.DoUntil, {
-              assign: (result) => {
-                element.whileOrUntil = result;
-              },
-            });
-          },
-        },
-      ]);
-    });
+    // Optional WHILE clause
+    if (state.tryConsume(element, CstNodeKind.DoUntil_WHILE, tokens.WHILE)) {
+      state.consume(
+        element,
+        CstNodeKind.DoUntil_OpenParenWhile,
+        tokens.OpenParen,
+      );
+      element.while = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DoUntil_CloseParenWhile,
+        tokens.CloseParen,
+      );
+    }
 
-    return this.pop<ast.DoSpecification>();
-  });
-  private createExecStatement(): ast.ExecStatement {
-    return {
-      kind: ast.SyntaxKind.ExecStatement,
-      container: null,
-      query: null,
-    };
-  }
+    return element;
+  },
+);
 
-  ExecStatement = this.RULE("ExecStatement", () => {
-    let element = this.push(this.createExecStatement());
+const doType3 = rule(
+  () => memberCall.first(),
+  (state: ParserState): ast.DoType3 => {
+    const element = ast.createDoType3();
 
-    this.CONSUME_ASSIGN1(tokens.EXEC, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ExecStatement_EXEC);
-    });
-    this.CONSUME_ASSIGN1(tokens.ExecFragment, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ExecStatement_Query);
-      element.query = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ExecStatement_Semicolon);
-    });
+    element.variable = memberCall.rule(state);
+    state.consume(element, CstNodeKind.DoType3_Equals, tokens.Equals);
 
-    return this.pop<ast.ExecStatement>();
-  });
+    const lhs = doSpecification.rule(state);
+    lhs && element.specifications.push(lhs);
 
-  private createExitStatement(): ast.ExitStatement {
-    return { kind: ast.SyntaxKind.ExitStatement, container: null };
-  }
+    const { inc } = state.createLoopContext("DoType3");
+    while (state.tryConsume(element, CstNodeKind.DoType3_Comma, tokens.Comma)) {
+      inc();
+      const rhs = doSpecification.rule(state);
+      rhs && element.specifications.push(rhs);
+    }
 
-  ExitStatement = this.RULE("ExitStatement", () => {
-    let element = this.push(this.createExitStatement());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.EXIT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ExitStatement_EXIT);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ExitStatement_Semicolon);
-    });
+const doSpecification = rule(
+  () => expression.first(),
+  (state: ParserState): ast.DoSpecification => {
+    const element = ast.createDoSpecification();
 
-    return this.pop<ast.ExitStatement>();
-  });
+    element.expression = expression.rule(state);
 
-  private createFetchStatement(): ast.FetchStatement {
-    return {
-      kind: ast.SyntaxKind.FetchStatement,
-      container: null,
-      entries: [],
-    };
-  }
+    // Optional TO/BY/UPTHRU/DOWNTHRU/REPEAT clause
+    if (
+      state.canConsume(tokens.TO) ||
+      state.canConsume(tokens.BY) ||
+      state.canConsume(tokens.UPTHRU) ||
+      state.canConsume(tokens.DOWNTHRU) ||
+      state.canConsume(tokens.REPEAT)
+    ) {
+      if (state.canConsume(tokens.TO)) {
+        state.consume(element, CstNodeKind.DoSpecification_TO0, tokens.TO);
+        element.to = expression.rule(state);
 
-  FetchStatement = this.RULE("FetchStatement", () => {
-    let element = this.push(this.createFetchStatement());
+        if (
+          state.tryConsume(element, CstNodeKind.DoSpecification_BY0, tokens.BY)
+        ) {
+          element.by = expression.rule(state);
+        }
+      } else if (state.canConsume(tokens.BY)) {
+        state.consume(element, CstNodeKind.DoSpecification_BY1, tokens.BY);
+        element.by = expression.rule(state);
 
-    this.CONSUME_ASSIGN1(tokens.FETCH, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FetchStatement_FETCH);
-    });
-    this.SUBRULE_ASSIGN1(this.FetchEntry, {
-      assign: (result) => {
-        element.entries.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FetchStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.FetchEntry, {
-        assign: (result) => {
-          element.entries.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FetchStatement_Semicolon);
-    });
-
-    return this.pop<ast.FetchStatement>();
-  });
-
-  private createFetchEntry(): ast.FetchEntry {
-    return {
-      kind: ast.SyntaxKind.FetchEntry,
-      container: null,
-      entry: null,
-      set: null,
-      title: null,
-    };
-  }
-
-  FetchEntry = this.RULE("FetchEntry", () => {
-    let element = this.push(this.createFetchEntry());
-    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
-      assign: (result) => {
-        element.entry = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.SET, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FetchEntry_SET);
-      });
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FetchEntry_OpenParenSet);
-      });
-      this.SUBRULE_ASSIGN1(this.LocatorCall, {
-        assign: (result) => {
-          element.set = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FetchEntry_CloseParenSet);
-      });
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.TITLE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FetchEntry_TITLE);
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+        if (
+          state.tryConsume(element, CstNodeKind.DoSpecification_TO1, tokens.TO)
+        ) {
+          element.to = expression.rule(state);
+        }
+      } else if (
+        state.tryConsume(
           element,
-          CstNodeKind.FetchEntry_OpenParenTitle,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.title = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
+          CstNodeKind.DoSpecification_UPTHRU,
+          tokens.UPTHRU,
+        )
+      ) {
+        element.upthru = expression.rule(state);
+      } else if (
+        state.tryConsume(
           element,
-          CstNodeKind.FetchEntry_CloseParenTitle,
-        );
-      });
-    });
-
-    return this.pop<ast.FetchEntry>();
-  });
-
-  private createFlushStatement(): ast.FlushStatement {
-    return {
-      kind: ast.SyntaxKind.FlushStatement,
-      container: null,
-      file: null,
-    };
-  }
-
-  FlushStatement = this.RULE("FlushStatement", () => {
-    let element = this.push(this.createFlushStatement());
-
-    this.CONSUME_ASSIGN1(tokens.FLUSH, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FlushStatement_FLUSH);
-    });
-    this.CONSUME_ASSIGN1(tokens.FILE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FlushStatement_FILE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FlushStatement_OpenParen);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.LocatorCall, {
-            assign: (result) => {
-              element.file = result;
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.FlushStatement_Star);
-            element.file = token.image as "*";
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FlushStatement_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FlushStatement_Semicolon);
-    });
-
-    return this.pop<ast.FlushStatement>();
-  });
-  private createFormatStatement(): ast.FormatStatement {
-    return {
-      kind: ast.SyntaxKind.FormatStatement,
-      container: null,
-      list: null,
-    };
-  }
-
-  FormatStatement = this.RULE("FormatStatement", () => {
-    let element = this.push(this.createFormatStatement());
-
-    this.CONSUME_ASSIGN1(tokens.FORMAT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FormatStatement_FORMAT);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FormatStatement_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.FormatList, {
-      assign: (result) => {
-        element.list = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FormatStatement_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FormatStatement_Semicolon);
-    });
-
-    return this.pop<ast.FormatStatement>();
-  });
-  private createFormatList(): ast.FormatList {
-    return {
-      kind: ast.SyntaxKind.FormatList,
-      container: null,
-      items: [],
-    };
-  }
-
-  FormatList = this.RULE("FormatList", () => {
-    let element = this.push(this.createFormatList());
-
-    this.SUBRULE_ASSIGN1(this.FormatListItem, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FormatList_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.FormatListItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.FormatList>();
-  });
-
-  private createFormatListItem(): ast.FormatListItem {
-    return {
-      kind: ast.SyntaxKind.FormatListItem,
-      container: null,
-      level: null,
-      item: null,
-      list: null,
-    };
-  }
-
-  FormatListItem = this.RULE("FormatListItem", () => {
-    let element = this.push(this.createFormatListItem());
-
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.FormatListItemLevel, {
-        assign: (result) => {
-          element.level = result;
-        },
-      });
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FormatItem, {
-            assign: (result) => {
-              element.item = result;
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.FormatListItem_OpenParen,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.FormatList, {
-            assign: (result) => {
-              element.list = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.FormatListItem_CloseParen,
-            );
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.FormatListItem>();
-  });
-
-  private createFormatListItemLevel(): ast.FormatListItemLevel {
-    return {
-      kind: ast.SyntaxKind.FormatListItemLevel,
-      container: null,
-      level: null,
-    };
-  }
-
-  FormatListItemLevel = this.RULE("FormatListItemLevel", () => {
-    let element = this.push(this.createFormatListItemLevel());
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.FormatListItemLevel_LevelNumber,
-            );
-            element.level = token.image;
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.FormatListItemLevel_OpenParen,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.Expression, {
-            assign: (result) => {
-              element.level = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.FormatListItemLevel_CloseParen,
-            );
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.FormatListItemLevel>();
-  });
-
-  FormatItem = this.OR_RULE<ast.FormatItem>("FormatItem", () => [
-    this.AFormatItem,
-    this.BFormatItem,
-    this.CFormatItem,
-    this.EFormatItem,
-    this.FFormatItem,
-    this.PFormatItem,
-    this.ColumnFormatItem,
-    this.GFormatItem,
-    this.LFormatItem,
-    this.LineFormatItem,
-    this.PageFormatItem,
-    this.RFormatItem,
-    this.SkipFormatItem,
-    this.VFormatItem,
-    this.XFormatItem,
-  ]);
-
-  AFormatItem = this.RULE("AFormatItem", () => {
-    let element = this.push(ast.createAFormatItem());
-
-    this.CONSUME_ASSIGN1(tokens.A, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.AFormatItem_A);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.AFormatItem_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.fieldWidth = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.AFormatItem_CloseParen);
-      });
-    });
-
-    return this.pop<ast.AFormatItem>();
-  });
-  private createBFormatItem(): ast.BFormatItem {
-    return {
-      kind: ast.SyntaxKind.BFormatItem,
-      container: null,
-      fieldWidth: null,
-    };
-  }
-
-  BFormatItem = this.RULE("BFormatItem", () => {
-    let element = this.push(this.createBFormatItem());
-
-    this.CONSUME_ASSIGN1(tokens.B, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.BFormatItem_B);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.BFormatItem_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.fieldWidth = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.BFormatItem_CloseParen);
-      });
-    });
-
-    return this.pop<ast.BFormatItem>();
-  });
-  private createCFormatItem(): ast.CFormatItem {
-    return {
-      kind: ast.SyntaxKind.CFormatItem,
-      container: null,
-      item: null,
-    };
-  }
-
-  CFormatItem = this.RULE("CFormatItem", () => {
-    let element = this.push(this.createCFormatItem());
-
-    this.CONSUME_ASSIGN1(tokens.C, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CFormatItem_C);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CFormatItem_OpenParen);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.FFormatItem, {
-            assign: (result) => {
-              element.item = result;
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.EFormatItem, {
-            assign: (result) => {
-              element.item = result;
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.PFormatItem, {
-            assign: (result) => {
-              element.item = result;
-            },
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.CFormatItem_CloseParen);
-    });
-
-    return this.pop<ast.CFormatItem>();
-  });
-
-  private createFFormatItem(): ast.FFormatItem {
-    return {
-      kind: ast.SyntaxKind.FFormatItem,
-      container: null,
-      fieldWidth: null,
-      fractionalDigits: null,
-      scalingFactor: null,
-    };
-  }
-
-  FFormatItem = this.RULE("FFormatItem", () => {
-    let element = this.push(this.createFFormatItem());
-
-    this.CONSUME_ASSIGN1(tokens.F, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FFormatItem_F);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FFormatItem_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.fieldWidth = result;
-      },
-    });
-    this.OPTION2(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
+          CstNodeKind.DoSpecification_DOWNTHRU,
+          tokens.DOWNTHRU,
+        )
+      ) {
+        element.downthru = expression.rule(state);
+      } else if (
+        state.tryConsume(
           element,
-          CstNodeKind.FFormatItem_CommaFractional,
-        );
-      });
-      this.SUBRULE_ASSIGN2(this.Expression, {
-        assign: (result) => {
-          element.fractionalDigits = result;
-        },
-      });
-      this.OPTION1(() => {
-        this.CONSUME_ASSIGN2(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.FFormatItem_CommaScalingFactor,
-          );
-        });
-        this.SUBRULE_ASSIGN3(this.Expression, {
-          assign: (result) => {
-            element.scalingFactor = result;
-          },
-        });
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FFormatItem_CloseParen);
-    });
+          CstNodeKind.DoSpecification_REPEAT,
+          tokens.REPEAT,
+        )
+      ) {
+        element.repeat = expression.rule(state);
+      }
+    }
 
-    return this.pop<ast.FFormatItem>();
-  });
+    // Optional WHILE or UNTIL clause
+    if (
+      state.canConsumeFirst(doWhile.first()) ||
+      state.canConsumeFirst(doUntil.first())
+    ) {
+      if (state.canConsumeFirst(doWhile.first())) {
+        element.whileOrUntil = doWhile.rule(state);
+      } else {
+        element.whileOrUntil = doUntil.rule(state);
+      }
+    }
 
-  private createEFormatItem(): ast.EFormatItem {
-    return {
-      kind: ast.SyntaxKind.EFormatItem,
-      container: null,
-      fieldWidth: null,
-      fractionalDigits: null,
-      significantDigits: null,
-    };
-  }
+    return element;
+  },
+);
 
-  EFormatItem = this.RULE("EFormatItem", () => {
-    let element = this.push(this.createEFormatItem());
+const execStatement = rule(
+  sequence(tokens.EXEC),
+  (state: ParserState): ast.ExecStatement => {
+    const element = ast.createExecStatement();
 
-    this.CONSUME_ASSIGN1(tokens.E, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EFormatItem_E);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EFormatItem_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.fieldWidth = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EFormatItem_Comma0);
-    });
-    this.SUBRULE_ASSIGN2(this.Expression, {
-      assign: (result) => {
-        element.fractionalDigits = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN2(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.EFormatItem_Comma1);
-      });
-      this.SUBRULE_ASSIGN3(this.Expression, {
-        assign: (result) => {
-          element.significantDigits = result;
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.EFormatItem_CloseParen);
-    });
+    state.consume(element, CstNodeKind.ExecStatement_EXEC, tokens.EXEC);
+    const queryToken = state.consume(
+      element,
+      CstNodeKind.ExecStatement_Query,
+      tokens.ExecFragment,
+    );
+    if (queryToken) {
+      element.query = queryToken.image;
+    }
+    state.consume(
+      element,
+      CstNodeKind.ExecStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.EFormatItem>();
-  });
-  private createPFormatItem(): ast.PFormatItem {
-    return {
-      kind: ast.SyntaxKind.PFormatItem,
-      container: null,
-      specification: null,
-    };
-  }
+    return element;
+  },
+);
 
-  PFormatItem = this.RULE("PFormatItem", () => {
-    let element = this.push(this.createPFormatItem());
+const exitStatement = rule(
+  sequence(tokens.EXIT),
+  (state: ParserState): ast.ExitStatement => {
+    const element = ast.createExitStatement();
+    state.consume(element, CstNodeKind.ExitStatement_EXIT, tokens.EXIT);
+    state.consume(
+      element,
+      CstNodeKind.ExitStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.P, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PFormatItem_P);
-    });
-    this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-      this.tokenPayload(
-        token,
+    return element;
+  },
+);
+
+const fetchStatement = rule(
+  sequence(tokens.FETCH),
+  (state: ParserState): ast.FetchStatement => {
+    const element = ast.createFetchStatement();
+
+    state.consume(element, CstNodeKind.FetchStatement_FETCH, tokens.FETCH);
+    const lhs = fetchEntry.rule(state);
+    lhs && element.entries.push(lhs);
+
+    const { inc } = state.createLoopContext("FetchStatement");
+    while (
+      state.tryConsume(element, CstNodeKind.FetchStatement_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = fetchEntry.rule(state);
+      rhs && element.entries.push(rhs);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.FetchStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const fetchEntry = rule(
+  () => referenceItem.first(),
+  (state: ParserState): ast.FetchEntry => {
+    const element = ast.createFetchEntry();
+
+    element.entry = referenceItem.rule(state);
+
+    // Optional SET clause
+    if (state.tryConsume(element, CstNodeKind.FetchEntry_SET, tokens.SET)) {
+      state.consume(
         element,
-        CstNodeKind.PFormatItem_SpecificationString,
+        CstNodeKind.FetchEntry_OpenParenSet,
+        tokens.OpenParen,
       );
-      element.specification = token.image;
-    });
-
-    return this.pop<ast.PFormatItem>();
-  });
-  private createColumnFormatItem(): ast.ColumnFormatItem {
-    return {
-      kind: ast.SyntaxKind.ColumnFormatItem,
-      container: null,
-      characterPosition: null,
-    };
-  }
-
-  ColumnFormatItem = this.RULE("ColumnFormatItem", () => {
-    let element = this.push(this.createColumnFormatItem());
-
-    this.CONSUME_ASSIGN1(tokens.COLUMN, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ColumnFormatItem_COLUMN);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ColumnFormatItem_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.characterPosition = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+      element.set = locatorCall.rule(state);
+      state.consume(
         element,
-        CstNodeKind.ColumnFormatItem_CloseParen,
+        CstNodeKind.FetchEntry_CloseParenSet,
+        tokens.CloseParen,
       );
-    });
+    }
 
-    return this.pop<ast.ColumnFormatItem>();
-  });
-  private createGFormatItem(): ast.GFormatItem {
-    return {
-      kind: ast.SyntaxKind.GFormatItem,
-      container: null,
-      fieldWidth: null,
-    };
-  }
+    // Optional TITLE clause
+    if (state.tryConsume(element, CstNodeKind.FetchEntry_TITLE, tokens.TITLE)) {
+      state.consume(
+        element,
+        CstNodeKind.FetchEntry_OpenParenTitle,
+        tokens.OpenParen,
+      );
+      element.title = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.FetchEntry_CloseParenTitle,
+        tokens.CloseParen,
+      );
+    }
 
-  GFormatItem = this.RULE("GFormatItem", () => {
-    let element = this.push(this.createGFormatItem());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.G, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GFormatItem_G);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GFormatItem_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.fieldWidth = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GFormatItem_CloseParen);
-      });
-    });
+const flushStatement = rule(
+  sequence(tokens.FLUSH),
+  (state: ParserState): ast.FlushStatement => {
+    const element = ast.createFlushStatement();
 
-    return this.pop<ast.GFormatItem>();
-  });
-  private createLFormatItem(): ast.LFormatItem {
-    return { kind: ast.SyntaxKind.LFormatItem, container: null };
-  }
+    state.consume(element, CstNodeKind.FlushStatement_FLUSH, tokens.FLUSH);
+    state.consume(element, CstNodeKind.FlushStatement_FILE, tokens.FILE);
+    state.consume(
+      element,
+      CstNodeKind.FlushStatement_OpenParen,
+      tokens.OpenParen,
+    );
 
-  LFormatItem = this.RULE("LFormatItem", () => {
-    let element = this.push(this.createLFormatItem());
+    if (state.canConsumeFirst(locatorCall.first())) {
+      element.file = locatorCall.rule(state);
+    } else if (
+      state.tryConsume(element, CstNodeKind.FlushStatement_Star, tokens.Star)
+    ) {
+      const starToken = state.last;
+      element.file = starToken!.image as "*";
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
 
-    this.CONSUME_ASSIGN1(tokens.L, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LFormatItem_L);
-    });
+    state.consume(
+      element,
+      CstNodeKind.FlushStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    state.consume(
+      element,
+      CstNodeKind.FlushStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.LFormatItem>();
-  });
-  private createLineFormatItem(): ast.LineFormatItem {
-    return {
-      kind: ast.SyntaxKind.LineFormatItem,
-      container: null,
-      lineNumber: null,
-    };
-  }
+    return element;
+  },
+);
 
-  LineFormatItem = this.RULE("LineFormatItem", () => {
-    let element = this.push(this.createLineFormatItem());
+const formatStatement = rule(
+  sequence(tokens.FORMAT),
+  (state: ParserState): ast.FormatStatement => {
+    const element = ast.createFormatStatement();
 
-    this.CONSUME_ASSIGN1(tokens.LINE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineFormatItem_LINE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineFormatItem_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.lineNumber = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LineFormatItem_CloseParen);
-    });
+    state.consume(element, CstNodeKind.FormatStatement_FORMAT, tokens.FORMAT);
+    state.consume(
+      element,
+      CstNodeKind.FormatStatement_OpenParen,
+      tokens.OpenParen,
+    );
+    element.list = formatList.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.FormatStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    state.consume(
+      element,
+      CstNodeKind.FormatStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.LineFormatItem>();
-  });
-  private createPageFormatItem(): ast.PageFormatItem {
-    return { kind: ast.SyntaxKind.PageFormatItem, container: null };
-  }
+    return element;
+  },
+);
 
-  PageFormatItem = this.RULE("PageFormatItem", () => {
-    let element = this.push(this.createPageFormatItem());
+const formatList = rule(
+  () => formatListItem.first(),
+  (state: ParserState): ast.FormatList => {
+    const element = ast.createFormatList();
 
-    this.CONSUME_ASSIGN1(tokens.PAGE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PageFormatItem_PAGE);
-    });
+    const lhs = formatListItem.rule(state);
+    lhs && element.items.push(lhs);
 
-    return this.pop<ast.PageFormatItem>();
-  });
-  private createRFormatItem(): ast.RFormatItem {
-    return {
-      kind: ast.SyntaxKind.RFormatItem,
-      container: null,
-      labelReference: null,
-    };
-  }
+    const { inc } = state.createLoopContext("FormatList");
+    while (
+      state.tryConsume(element, CstNodeKind.FormatList_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = formatListItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
 
-  RFormatItem = this.RULE("RFormatItem", () => {
-    let element = this.push(this.createRFormatItem());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.R, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RFormatItem_R);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RFormatItem_OpenParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RFormatItem_LabelRef);
-      element.labelReference = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RFormatItem_CloseParen);
-    });
+const formatListItem = rule(
+  choice(
+    () => formatListItemLevel.first(),
+    () => formatItem.first(),
+    sequence(tokens.OpenParen),
+  ),
+  (state: ParserState): ast.FormatListItem => {
+    const element = ast.createFormatListItem();
 
-    return this.pop<ast.RFormatItem>();
-  });
-  private createSkipFormatItem(): ast.SkipFormatItem {
-    return {
-      kind: ast.SyntaxKind.SkipFormatItem,
-      container: null,
-      skip: null,
-    };
-  }
+    // Optional level
+    if (state.canConsumeFirst(formatListItemLevel.first())) {
+      element.level = formatListItemLevel.rule(state);
+    }
 
-  SkipFormatItem = this.RULE("SkipFormatItem", () => {
-    let element = this.push(this.createSkipFormatItem());
+    // Either format item or nested list
+    if (state.canConsumeFirst(formatItem.first())) {
+      element.item = formatItem.rule(state);
+    } else if (state.canConsume(tokens.OpenParen)) {
+      state.consume(
+        element,
+        CstNodeKind.FormatListItem_OpenParen,
+        tokens.OpenParen,
+      );
+      element.list = formatList.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.FormatListItem_CloseParen,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
 
-    this.CONSUME_ASSIGN1(tokens.SKIP, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SkipFormatItem_SKIP);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.SkipFormatItem_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.skip = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
+    return element;
+  },
+);
+
+const formatListItemLevel = rule(
+  choice(sequence(tokens.NUMBER), sequence(tokens.OpenParen)),
+  (state: ParserState): ast.FormatListItemLevel => {
+    const element = ast.createFormatListItemLevel();
+
+    if (state.canConsume(tokens.NUMBER)) {
+      const levelToken = state.consume(
+        element,
+        CstNodeKind.FormatListItemLevel_LevelNumber,
+        tokens.NUMBER,
+      );
+      if (levelToken) {
+        element.level = levelToken.image;
+      }
+    } else if (state.canConsume(tokens.OpenParen)) {
+      state.consume(
+        element,
+        CstNodeKind.FormatListItemLevel_OpenParen,
+        tokens.OpenParen,
+      );
+      element.level = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.FormatListItemLevel_CloseParen,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    return element;
+  },
+);
+
+const formatItem = orRule<ast.FormatItem>(
+  () => AFormatItem,
+  () => BFormatItem,
+  () => CFormatItem,
+  () => EFormatItem,
+  () => FFormatItem,
+  () => PFormatItem,
+  () => columnFormatItem,
+  () => GFormatItem,
+  () => LFormatItem,
+  () => lineFormatItem,
+  () => pageFormatItem,
+  () => RFormatItem,
+  () => skipFormatItem,
+  () => VFormatItem,
+  () => XFormatItem,
+);
+
+const AFormatItem = rule(
+  sequence(tokens.A),
+  (state: ParserState): ast.AFormatItem => {
+    const element = ast.createAFormatItem();
+
+    state.consume(element, CstNodeKind.AFormatItem_A, tokens.A);
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AFormatItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.fieldWidth = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.AFormatItem_CloseParen,
+        tokens.CloseParen,
+      );
+    }
+
+    return element;
+  },
+);
+
+const BFormatItem = rule(
+  sequence(tokens.B),
+  (state: ParserState): ast.BFormatItem => {
+    const element = ast.createBFormatItem();
+
+    state.consume(element, CstNodeKind.BFormatItem_B, tokens.B);
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.BFormatItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.fieldWidth = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.BFormatItem_CloseParen,
+        tokens.CloseParen,
+      );
+    }
+
+    return element;
+  },
+);
+
+const CFormatItem = rule(
+  sequence(tokens.C),
+  (state: ParserState): ast.CFormatItem => {
+    const element = ast.createCFormatItem();
+
+    state.consume(element, CstNodeKind.CFormatItem_C, tokens.C);
+    state.consume(element, CstNodeKind.CFormatItem_OpenParen, tokens.OpenParen);
+
+    if (state.canConsumeFirst(FFormatItem.first())) {
+      element.item = FFormatItem.rule(state);
+    } else if (state.canConsumeFirst(EFormatItem.first())) {
+      element.item = EFormatItem.rule(state);
+    } else if (state.canConsumeFirst(PFormatItem.first())) {
+      element.item = PFormatItem.rule(state);
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.CFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const FFormatItem = rule(
+  sequence(tokens.F),
+  (state: ParserState): ast.FFormatItem => {
+    const element = ast.createFFormatItem();
+
+    state.consume(element, CstNodeKind.FFormatItem_F, tokens.F);
+    state.consume(element, CstNodeKind.FFormatItem_OpenParen, tokens.OpenParen);
+    element.fieldWidth = expression.rule(state);
+
+    // Optional fractional digits and scaling factor
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.FFormatItem_CommaFractional,
+        tokens.Comma,
+      )
+    ) {
+      element.fractionalDigits = expression.rule(state);
+
+      // Optional scaling factor
+      if (
+        state.tryConsume(
           element,
-          CstNodeKind.SkipFormatItem_CloseParen,
-        );
-      });
-    });
+          CstNodeKind.FFormatItem_CommaScalingFactor,
+          tokens.Comma,
+        )
+      ) {
+        element.scalingFactor = expression.rule(state);
+      }
+    }
 
-    return this.pop<ast.SkipFormatItem>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.FFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
 
-  private createVFormatItem(): ast.VFormatItem {
-    return { kind: ast.SyntaxKind.VFormatItem, container: null };
-  }
+const EFormatItem = rule(
+  sequence(tokens.E),
+  (state: ParserState): ast.EFormatItem => {
+    const element = ast.createEFormatItem();
 
-  VFormatItem = this.RULE("VFormatItem", () => {
-    let element = this.push(this.createVFormatItem());
+    state.consume(element, CstNodeKind.EFormatItem_E, tokens.E);
+    state.consume(element, CstNodeKind.EFormatItem_OpenParen, tokens.OpenParen);
+    element.fieldWidth = expression.rule(state);
+    state.consume(element, CstNodeKind.EFormatItem_Comma0, tokens.Comma);
+    element.fractionalDigits = expression.rule(state);
 
-    this.CONSUME_ASSIGN1(tokens.V, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.VFormatItem_V);
-    });
+    // Optional significant digits
+    if (
+      state.tryConsume(element, CstNodeKind.EFormatItem_Comma1, tokens.Comma)
+    ) {
+      element.significantDigits = expression.rule(state);
+    }
 
-    return this.pop<ast.VFormatItem>();
-  });
-  private createXFormatItem(): ast.XFormatItem {
-    return {
-      kind: ast.SyntaxKind.XFormatItem,
-      container: null,
-      width: null,
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.EFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
 
-  XFormatItem = this.RULE("XFormatItem", () => {
-    let element = this.push(this.createXFormatItem());
+const PFormatItem = rule(
+  sequence(tokens.P),
+  (state: ParserState): ast.PFormatItem => {
+    const element = ast.createPFormatItem();
 
-    this.CONSUME_ASSIGN1(tokens.X, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.XFormatItem_X);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.XFormatItem_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.width = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.XFormatItem_CloseParen);
-    });
+    state.consume(element, CstNodeKind.PFormatItem_P, tokens.P);
+    const specToken = state.consume(
+      element,
+      CstNodeKind.PFormatItem_SpecificationString,
+      tokens.STRING_TERM,
+    );
+    if (specToken) {
+      element.specification = specToken.image;
+    }
 
-    return this.pop<ast.XFormatItem>();
-  });
-  private createFreeStatement(): ast.FreeStatement {
-    return {
-      kind: ast.SyntaxKind.FreeStatement,
-      container: null,
-      references: [],
-    };
-  }
+    return element;
+  },
+);
 
-  FreeStatement = this.RULE("FreeStatement", () => {
-    let element = this.push(this.createFreeStatement());
+const columnFormatItem = rule(
+  sequence(tokens.COLUMN),
+  (state: ParserState): ast.ColumnFormatItem => {
+    const element = ast.createColumnFormatItem();
 
-    this.CONSUME_ASSIGN1(tokens.FREE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FreeStatement_FREE);
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.references.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.FreeStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.LocatorCall, {
-        assign: (result) => {
-          element.references.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.FreeStatement_Semicolon);
-    });
+    state.consume(element, CstNodeKind.ColumnFormatItem_COLUMN, tokens.COLUMN);
+    state.consume(
+      element,
+      CstNodeKind.ColumnFormatItem_OpenParen,
+      tokens.OpenParen,
+    );
+    element.characterPosition = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.ColumnFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
 
-    return this.pop<ast.FreeStatement>();
-  });
-  private createGetFileStatement(): ast.GetFileStatement {
-    return {
-      kind: ast.SyntaxKind.GetFileStatement,
-      container: null,
-      specifications: [],
-    };
-  }
+    return element;
+  },
+);
 
-  private createGetStringStatement(): ast.GetStringStatement {
-    return {
-      kind: ast.SyntaxKind.GetStringStatement,
-      container: null,
-      dataSpecification: null,
-      expression: null,
-    };
-  }
+const GFormatItem = rule(
+  sequence(tokens.G),
+  (state: ParserState): ast.GFormatItem => {
+    const element = ast.createGFormatItem();
 
-  GetStatement = this.RULE("GetStatement", () => {
-    let element: ast.GetStatement = this.push(this.createGetFileStatement());
+    state.consume(element, CstNodeKind.GFormatItem_G, tokens.G);
 
-    this.CONSUME_ASSIGN1(tokens.GET, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GetStatement_GET);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          const fileStatement = element as ast.GetFileStatement;
-          this.AT_LEAST_ONE1(() => {
-            this.OR2([
-              {
-                ALT: () => {
-                  this.SUBRULE_ASSIGN1(this.GetFile, {
-                    assign: (result) => {
-                      fileStatement.specifications.push(result);
-                    },
-                  });
-                },
-              },
-              {
-                ALT: () => {
-                  this.SUBRULE_ASSIGN1(this.GetCopy, {
-                    assign: (result) => {
-                      fileStatement.specifications.push(result);
-                    },
-                  });
-                },
-              },
-              {
-                ALT: () => {
-                  this.SUBRULE_ASSIGN1(this.GetSkip, {
-                    assign: (result) => {
-                      fileStatement.specifications.push(result);
-                    },
-                  });
-                },
-              },
-              {
-                ALT: () => {
-                  this.SUBRULE_ASSIGN1(this.DataSpecificationOptions, {
-                    assign: (result) => {
-                      fileStatement.specifications.push(result);
-                    },
-                  });
-                },
-              },
-            ]);
-          });
-        },
-      },
-      {
-        ALT: () => {
-          const stringStatement = this.replace(this.createGetStringStatement());
-          this.CONSUME_ASSIGN1(tokens.STRING, (token) => {
-            this.tokenPayload(
-              token,
-              stringStatement,
-              CstNodeKind.GetStatement_STRING,
-            );
-          });
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              stringStatement,
-              CstNodeKind.GetStatement_OpenParen,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.Expression, {
-            assign: (result) => {
-              stringStatement.expression = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              stringStatement,
-              CstNodeKind.GetStatement_CloseParen,
-            );
-          });
-          this.SUBRULE_ASSIGN2(this.DataSpecificationOptions, {
-            assign: (result) => {
-              stringStatement.dataSpecification = result;
-            },
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, this.peek(), CstNodeKind.GetStatement_Semicolon);
-    });
-
-    return this.pop<ast.GetStatement>();
-  });
-  private createGetFile(): ast.GetFile {
-    return {
-      kind: ast.SyntaxKind.GetFile,
-      container: null,
-      file: null,
-    };
-  }
-
-  GetFile = this.RULE("GetFile", () => {
-    let element = this.push(this.createGetFile());
-
-    this.CONSUME_ASSIGN1(tokens.FILE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GetFile_FILE);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GetFile_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.file = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GetFile_CloseParen);
-    });
-
-    return this.pop<ast.GetFile>();
-  });
-  private createGetCopy(): ast.GetCopy {
-    return {
-      kind: ast.SyntaxKind.GetCopy,
-      container: null,
-      copyReference: null,
-    };
-  }
-
-  GetCopy = this.RULE("GetCopy", () => {
-    let element = this.push(this.createGetCopy());
-
-    this.CONSUME_ASSIGN1(tokens.COPY, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GetCopy_COPY);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GetCopy_OpenParen);
-      });
-      this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GetCopy_CopyReference);
-        element.copyReference = token.image;
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GetCopy_CloseParen);
-      });
-    });
-
-    return this.pop<ast.GetCopy>();
-  });
-  private createGetSkip(): ast.GetSkip {
-    return {
-      kind: ast.SyntaxKind.GetSkip,
-      container: null,
-      skipExpression: null,
-    };
-  }
-
-  GetSkip = this.RULE("GetSkip", () => {
-    let element = this.push(this.createGetSkip());
-
-    this.CONSUME_ASSIGN1(tokens.SKIP, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GetSkip_SKIP);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GetSkip_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.skipExpression = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GetSkip_CloseParen);
-      });
-    });
-
-    return this.pop<ast.GetSkip>();
-  });
-  private createGoToStatement(): ast.GoToStatement {
-    return {
-      kind: ast.SyntaxKind.GoToStatement,
-      container: null,
-      label: null,
-    };
-  }
-
-  GoToStatement = this.RULE("GoToStatement", () => {
-    let element = this.push(this.createGoToStatement());
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.GO, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.GoToStatement_GO);
-          });
-          this.CONSUME_ASSIGN1(tokens.TO, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.GoToStatement_TO);
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.GOTO, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.GoToStatement_GOTO);
-          });
-        },
-      },
-    ]);
-    this.SUBRULE_ASSIGN1(this.LabelReference, {
-      assign: (result) => {
-        element.label = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GoToStatement_Semicolon);
-    });
-
-    return this.pop<ast.GoToStatement>();
-  });
-
-  private createGenericAttribute(): ast.GenericAttribute {
-    return {
-      kind: ast.SyntaxKind.GenericAttribute,
-      container: null,
-      references: [],
-    };
-  }
-
-  GenericAttribute = this.RULE("GenericAttribute", () => {
-    let element = this.push(this.createGenericAttribute());
-
-    this.CONSUME_ASSIGN(tokens.GENERIC, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GenericAttribute_GENERIC);
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.GenericAttribute_OpenParen);
-    });
-    this.OPTION(() => {
-      this.SUBRULE_ASSIGN1(this.GenericReference, {
-        assign: (result) => {
-          element.references.push(result);
-        },
-      });
-      this.MANY(() => {
-        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-          this.tokenPayload(token, element, CstNodeKind.GenericAttribute_Comma);
-        });
-        this.SUBRULE_ASSIGN2(this.GenericReference, {
-          assign: (result) => {
-            element.references.push(result);
-          },
-        });
-      });
-    });
-
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.GenericAttribute_CloseParen,
-      );
-    });
-
-    return this.pop<ast.GenericAttribute>();
-  });
-
-  private createGenericReference(): ast.GenericReference {
-    return {
-      kind: ast.SyntaxKind.GenericReference,
-      container: null,
-      descriptors: [],
-      otherwise: false,
-      entry: null,
-    };
-  }
-
-  GenericReference = this.RULE("GenericReference", () => {
-    let element = this.push(this.createGenericReference());
-
-    this.SUBRULE_ASSIGN(this.ReferenceItem, {
-      assign: (result) => {
-        element.entry = result;
-      },
-    });
-    this.OR([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN(tokens.WHEN, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.GenericReference_WHEN,
-            );
-          });
-          this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.GenericReference_OpenParen,
-            );
-          });
-          this.OPTION(() => {
-            this.SUBRULE_ASSIGN(this.GenericDescriptor, {
-              assign: (result) => {
-                element.descriptors.push(result);
-              },
-            });
-          });
-          this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.GenericReference_CloseParen,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN(tokens.OTHERWISE, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.GenericReference_OTHERWISE,
-            );
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.GenericReference>();
-  });
-
-  private createGenericDescriptor(): ast.GenericDescriptor {
-    return {
-      kind: ast.SyntaxKind.GenericDescriptor,
-      container: null,
-      attributes: [],
-    };
-  }
-
-  GenericDescriptor = this.RULE("GenericDescriptor", () => {
-    let element = this.push(this.createGenericDescriptor());
-
-    this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
-      assign: (result) => {
-        element.attributes.push(result);
-      },
-    });
-    this.MANY(() => {
-      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.GenericDescriptor_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.GenericDescriptor>();
-  });
-
-  IfStatement = this.RULE("IfStatement", () => {
-    let element = this.push(ast.createIfStatement());
-
-    this.CONSUME_ASSIGN1(tokens.IF, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.IfStatement_IF);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.expression = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.THEN, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.IfStatement_THEN);
-    });
-    this.SUBRULE_ASSIGN1(this.Statement, {
-      assign: (result) => {
-        element.unit = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.ELSE, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.IfStatement_ELSE);
-      });
-      this.SUBRULE_ASSIGN2(this.Statement, {
-        assign: (result) => {
-          element.else = result;
-        },
-      });
-    });
-
-    return this.pop<ast.IfStatement>();
-  });
-
-  // TODO: This is a preprocessor directive - maybe we can reintegrate it later?
-  // IncludeDirective = this.RULE("IncludeDirective", () => {
-  //   let element = this.push(this.createIncludeDirective());
-
-  //   this.CONSUME_ASSIGN1(tokens.PercentINCLUDE, (token) => {
-  //     this.tokenPayload(token, element, CstNodeKind.IncludeDirective_INCLUDE);
-  //   });
-  //   this.SUBRULE_ASSIGN1(this.IncludeItem, {
-  //     assign: (result) => {
-  //       element.items.push(result);
-  //     },
-  //   });
-  //   this.MANY1(() => {
-  //     this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-  //       this.tokenPayload(token, element, CstNodeKind.IncludeDirective_Comma);
-  //     });
-  //     this.SUBRULE_ASSIGN2(this.IncludeItem, {
-  //       assign: (result) => {
-  //         element.items.push(result);
-  //       },
-  //     });
-  //   });
-  //   this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-  //     this.tokenPayload(token, element, CstNodeKind.IncludeDirective_Semicolon);
-  //   });
-
-  //   return this.pop<ast.IncludeDirective>();
-  // });
-  // private createIncludeItem(): ast.IncludeItem {
-  //   return {
-  //     kind: ast.SyntaxKind.IncludeItem,
-  //     container: null,
-  //     file: null,
-  //     ddname: false,
-  //   };
-  // }
-
-  // IncludeItem = this.RULE("IncludeItem", () => {
-  //   let element = this.push(this.createIncludeItem());
-
-  //   this.OR1([
-  //     {
-  //       ALT: () => {
-  //         this.OR2([
-  //           {
-  //             ALT: () => {
-  //               this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-  //                 this.tokenPayload(
-  //                   token,
-  //                   element,
-  //                   CstNodeKind.IncludeItem_FileString0,
-  //                 );
-  //                 element.file = token.image;
-  //               });
-  //             },
-  //           },
-  //           {
-  //             ALT: () => {
-  //               this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-  //                 this.tokenPayload(
-  //                   token,
-  //                   element,
-  //                   CstNodeKind.IncludeItem_FileID0,
-  //                 );
-  //                 element.file = token.image;
-  //               });
-  //             },
-  //           },
-  //         ]);
-  //       },
-  //     },
-  //     {
-  //       ALT: () => {
-  //         this.CONSUME_ASSIGN1(tokens.ddname, (token) => {
-  //           this.tokenPayload(token, element, CstNodeKind.IncludeItem_DDName);
-  //           element.ddname = true;
-  //         });
-  //         this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-  //           this.tokenPayload(
-  //             token,
-  //             element,
-  //             CstNodeKind.IncludeItem_OpenParen,
-  //           );
-  //         });
-  //         this.OR3([
-  //           {
-  //             ALT: () => {
-  //               this.CONSUME_ASSIGN2(tokens.STRING_TERM, (token) => {
-  //                 this.tokenPayload(
-  //                   token,
-  //                   element,
-  //                   CstNodeKind.IncludeItem_FileString1,
-  //                 );
-  //                 element.file = token.image;
-  //               });
-  //             },
-  //           },
-  //           {
-  //             ALT: () => {
-  //               this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-  //                 this.tokenPayload(
-  //                   token,
-  //                   element,
-  //                   CstNodeKind.IncludeItem_FileID1,
-  //                 );
-  //                 element.file = token.image;
-  //               });
-  //             },
-  //           },
-  //         ]);
-  //         this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-  //           this.tokenPayload(
-  //             token,
-  //             element,
-  //             CstNodeKind.IncludeItem_CloseParen,
-  //           );
-  //         });
-  //       },
-  //     },
-  //   ]);
-
-  //   return this.pop<ast.IncludeItem>();
-  // });
-
-  private createIndForAttribute(): ast.IndForAttribute {
-    return {
-      kind: ast.SyntaxKind.IndForAttribute,
-      container: null,
-      reference: null,
-    };
-  }
-
-  IndForAttribute = this.RULE("IndForAttribute", () => {
-    let element = this.push(this.createIndForAttribute());
-
-    this.CONSUME_ASSIGN(tokens.INDFOR, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.IndForAttribute_INDFOR);
-    });
-    this.SUBRULE_ASSIGN(this.LocatorCall, {
-      assign: (result) => {
-        element.reference = result;
-      },
-    });
-
-    return this.pop<ast.IndForAttribute>();
-  });
-
-  private createIterateStatement(): ast.IterateStatement {
-    return {
-      kind: ast.SyntaxKind.IterateStatement,
-      container: null,
-      label: null,
-    };
-  }
-
-  IterateStatement = this.RULE("IterateStatement", () => {
-    let element = this.push(this.createIterateStatement());
-
-    this.CONSUME_ASSIGN1(tokens.ITERATE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.IterateStatement_ITERATE);
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelReference, {
-        assign: (result) => {
-          element.label = result;
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.IterateStatement_Semicolon);
-    });
-
-    return this.pop<ast.IterateStatement>();
-  });
-  private createLeaveStatement(): ast.LeaveStatement {
-    return {
-      kind: ast.SyntaxKind.LeaveStatement,
-      container: null,
-      label: null,
-      leaveToken: null,
-    };
-  }
-
-  LeaveStatement = this.RULE("LeaveStatement", () => {
-    let element = this.push(this.createLeaveStatement());
-
-    this.CONSUME_ASSIGN1(tokens.LEAVE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LeaveStatement_LEAVE);
-      element.leaveToken = token;
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.LabelReference, {
-        assign: (result) => {
-          element.label = result;
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LeaveStatement_Semicolon);
-    });
-
-    return this.pop<ast.LeaveStatement>();
-  });
-
-  private createLocateStatement(): ast.LocateStatement {
-    return {
-      kind: ast.SyntaxKind.LocateStatement,
-      container: null,
-      variable: null,
-      arguments: [],
-    };
-  }
-
-  LocateStatement = this.RULE("LocateStatement", () => {
-    let element = this.push(this.createLocateStatement());
-
-    this.CONSUME_ASSIGN1(tokens.LOCATE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LocateStatement_LOCATE);
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.variable = result;
-      },
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN1(this.LocateStatementOption, {
-        assign: (result) => {
-          element.arguments.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LocateStatement_Semicolon);
-    });
-
-    return this.pop<ast.LocateStatement>();
-  });
-  private createLocateStatementOption(): ast.LocateStatementOption {
-    return {
-      kind: ast.SyntaxKind.LocateStatementOption,
-      container: null,
-      type: null,
-      element: null,
-    };
-  }
-
-  LocateStatementOption = this.RULE("LocateStatementOption", () => {
-    let element = this.push(this.createLocateStatementOption());
-
-    this.CONSUME_ASSIGN1(tokens.LocateType, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LocateStatementOption_Type);
-      element.type = tokens.LocateType.mapToEnumLiteral(token.tokenTypeIdx);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+        CstNodeKind.GFormatItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.fieldWidth = expression.rule(state);
+      state.consume(
         element,
-        CstNodeKind.LocateStatementOption_OpenParen,
+        CstNodeKind.GFormatItem_CloseParen,
+        tokens.CloseParen,
       );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.element = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    return element;
+  },
+);
+
+const LFormatItem = rule(
+  sequence(tokens.L),
+  (state: ParserState): ast.LFormatItem => {
+    const element = ast.createLFormatItem();
+
+    state.consume(element, CstNodeKind.LFormatItem_L, tokens.L);
+
+    return element;
+  },
+);
+
+const lineFormatItem = rule(
+  sequence(tokens.LINE),
+  (state: ParserState): ast.LineFormatItem => {
+    const element = ast.createLineFormatItem();
+
+    state.consume(element, CstNodeKind.LineFormatItem_LINE, tokens.LINE);
+    state.consume(
+      element,
+      CstNodeKind.LineFormatItem_OpenParen,
+      tokens.OpenParen,
+    );
+    element.lineNumber = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.LineFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const pageFormatItem = rule(
+  sequence(tokens.PAGE),
+  (state: ParserState): ast.PageFormatItem => {
+    const element = ast.createPageFormatItem();
+
+    state.consume(element, CstNodeKind.PageFormatItem_PAGE, tokens.PAGE);
+
+    return element;
+  },
+);
+
+const RFormatItem = rule(
+  sequence(tokens.R),
+  (state: ParserState): ast.RFormatItem => {
+    const element = ast.createRFormatItem();
+
+    state.consume(element, CstNodeKind.RFormatItem_R, tokens.R);
+    state.consume(element, CstNodeKind.RFormatItem_OpenParen, tokens.OpenParen);
+    const labelToken = state.consume(
+      element,
+      CstNodeKind.RFormatItem_LabelRef,
+      tokens.ID,
+    );
+    if (labelToken) {
+      element.labelReference = labelToken.image;
+    }
+    state.consume(
+      element,
+      CstNodeKind.RFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const skipFormatItem = rule(
+  sequence(tokens.SKIP),
+  (state: ParserState): ast.SkipFormatItem => {
+    const element = ast.createSkipFormatItem();
+
+    state.consume(element, CstNodeKind.SkipFormatItem_SKIP, tokens.SKIP);
+
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.LocateStatementOption_CloseParen,
+        CstNodeKind.SkipFormatItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.skip = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.SkipFormatItem_CloseParen,
+        tokens.CloseParen,
       );
-    });
+    }
 
-    return this.pop<ast.LocateStatementOption>();
-  });
+    return element;
+  },
+);
 
-  private createNullStatement(): ast.NullStatement {
-    return { kind: ast.SyntaxKind.NullStatement, container: null };
-  }
+const VFormatItem = rule(
+  sequence(tokens.V),
+  (state: ParserState): ast.VFormatItem => {
+    const element = ast.createVFormatItem();
 
-  NullStatement = this.RULE("NullStatement", () => {
-    let element = this.push(this.createNullStatement());
+    state.consume(element, CstNodeKind.VFormatItem_V, tokens.V);
 
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NullStatement_Semicolon);
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.NullStatement>();
-  });
-  private createOnStatement(): ast.OnStatement {
-    return {
-      kind: ast.SyntaxKind.OnStatement,
-      container: null,
-      conditions: [],
-      snap: false,
-      system: false,
-      onUnit: null,
-    };
-  }
+const XFormatItem = rule(
+  sequence(tokens.X),
+  (state: ParserState): ast.XFormatItem => {
+    const element = ast.createXFormatItem();
+    state.consume(element, CstNodeKind.XFormatItem_X, tokens.X);
+    state.consume(element, CstNodeKind.XFormatItem_OpenParen, tokens.OpenParen);
+    element.width = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.XFormatItem_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
 
-  OnStatement = this.RULE("OnStatement", () => {
-    let element = this.push(this.createOnStatement());
+const freeStatement = rule(
+  sequence(tokens.FREE),
+  (state: ParserState): ast.FreeStatement => {
+    const element = ast.createFreeStatement();
 
-    this.CONSUME_ASSIGN1(tokens.ON, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.OnStatement_ON);
-    });
-    this.SUBRULE_ASSIGN1(this.Condition, {
-      assign: (result) => {
-        element.conditions.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OnStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.Condition, {
-        assign: (result) => {
-          element.conditions.push(result);
-        },
-      });
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.SNAP, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OnStatement_Snap);
-        element.snap = true;
-      });
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.SYSTEM, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.OnStatement_System);
-            element.system = true;
-          });
-          this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.OnStatement_Semicolon,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.Statement, {
-            assign: (result) => {
-              element.onUnit = result;
-            },
-          });
-        },
-      },
-    ]);
+    state.consume(element, CstNodeKind.FreeStatement_FREE, tokens.FREE);
+    const lhs = locatorCall.rule(state);
+    lhs && element.references.push(lhs);
 
-    return this.pop<ast.OnStatement>();
-  });
+    const { inc } = state.createLoopContext("FreeStatement");
+    while (
+      state.tryConsume(element, CstNodeKind.FreeStatement_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = locatorCall.rule(state);
+      rhs && element.references.push(rhs);
+    }
 
-  Condition = this.OR_RULE<ast.Condition>("Condition", () => [
-    this.KeywordCondition,
-    this.NamedCondition,
-    this.FileReferenceCondition,
-  ]);
+    state.consume(
+      element,
+      CstNodeKind.FreeStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  private createKeywordCondition(): ast.KeywordCondition {
-    return {
-      kind: ast.SyntaxKind.KeywordCondition,
-      container: null,
-      keyword: null,
-    };
-  }
+    return element;
+  },
+);
 
-  KeywordCondition = this.RULE("KeywordCondition", () => {
-    let element = this.push(this.createKeywordCondition());
+const getStatement = rule(
+  sequence(tokens.GET),
+  (state: ParserState): ast.GetStatement => {
+    let element = ast.createGetFileStatement();
 
-    this.CONSUME_ASSIGN1(tokens.KeywordConditions, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.KeywordCondition_Keyword);
+    state.consume(element, CstNodeKind.GetStatement_GET, tokens.GET);
+
+    if (
+      state.tryConsume(element, CstNodeKind.GetStatement_STRING, tokens.STRING)
+    ) {
+      // STRING variant
+      const stringStatement = element as unknown as ast.GetStringStatement;
+      stringStatement.kind = ast.SyntaxKind.GetStringStatement;
+      stringStatement.container = null;
+      stringStatement.dataSpecification = null;
+      stringStatement.expression = null;
+
+      state.consume(
+        stringStatement,
+        CstNodeKind.GetStatement_OpenParen,
+        tokens.OpenParen,
+      );
+      stringStatement.expression = expression.rule(state);
+      state.consume(
+        stringStatement,
+        CstNodeKind.GetStatement_CloseParen,
+        tokens.CloseParen,
+      );
+      stringStatement.dataSpecification = dataSpecificationOptions.rule(state);
+    } else {
+      // FILE variant - one or more file specifications
+      const { inc } = state.createLoopContext("GetStatement");
+      const fileStatement = element as ast.GetFileStatement;
+      do {
+        inc();
+        if (state.canConsumeFirst(getFile.first())) {
+          const file = getFile.rule(state);
+          file && fileStatement.specifications.push(file);
+        } else if (state.canConsumeFirst(getCopy.first())) {
+          const copy = getCopy.rule(state);
+          copy && fileStatement.specifications.push(copy);
+        } else if (state.canConsumeFirst(getSkip.first())) {
+          const skip = getSkip.rule(state);
+          skip && fileStatement.specifications.push(skip);
+        } else if (state.canConsumeFirst(dataSpecificationOptions.first())) {
+          const dataSpec = dataSpecificationOptions.rule(state);
+          dataSpec && fileStatement.specifications.push(dataSpec);
+        } else {
+          state.error(Severe.IBM3988I.message, state.token, Severity.S);
+          return element;
+        }
+      } while (
+        !state.eof &&
+        (state.canConsumeFirst(getFile.first()) ||
+          state.canConsumeFirst(getCopy.first()) ||
+          state.canConsumeFirst(getSkip.first()) ||
+          state.canConsumeFirst(dataSpecificationOptions.first()))
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.GetStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const getFile = rule(
+  sequence(tokens.FILE),
+  (state: ParserState): ast.GetFile => {
+    const element = ast.createGetFile();
+    state.consume(element, CstNodeKind.GetFile_FILE, tokens.FILE);
+    state.consume(element, CstNodeKind.GetFile_OpenParen, tokens.OpenParen);
+    element.file = expression.rule(state);
+    state.consume(element, CstNodeKind.GetFile_CloseParen, tokens.CloseParen);
+    return element;
+  },
+);
+
+const getCopy = rule(
+  sequence(tokens.COPY),
+  (state: ParserState): ast.GetCopy => {
+    const element = ast.createGetCopy();
+
+    state.consume(element, CstNodeKind.GetCopy_COPY, tokens.COPY);
+
+    if (
+      state.tryConsume(element, CstNodeKind.GetCopy_OpenParen, tokens.OpenParen)
+    ) {
+      const idToken = state.consume(
+        element,
+        CstNodeKind.GetCopy_CopyReference,
+        tokens.ID,
+      );
+      if (idToken) {
+        element.copyReference = idToken.image;
+      }
+      state.consume(element, CstNodeKind.GetCopy_CloseParen, tokens.CloseParen);
+    }
+
+    return element;
+  },
+);
+
+const getSkip = rule(
+  sequence(tokens.SKIP),
+  (state: ParserState): ast.GetSkip => {
+    const element = ast.createGetSkip();
+
+    state.consume(element, CstNodeKind.GetSkip_SKIP, tokens.SKIP);
+
+    if (
+      state.tryConsume(element, CstNodeKind.GetSkip_OpenParen, tokens.OpenParen)
+    ) {
+      element.skipExpression = expression.rule(state);
+      state.consume(element, CstNodeKind.GetSkip_CloseParen, tokens.CloseParen);
+    }
+
+    return element;
+  },
+);
+
+const goToStatement = rule(
+  choice(sequence(tokens.GO), sequence(tokens.GOTO)),
+  (state: ParserState): ast.GoToStatement => {
+    const element = ast.createGoToStatement();
+
+    if (state.canConsume(tokens.GO)) {
+      state.consume(element, CstNodeKind.GoToStatement_GO, tokens.GO);
+      state.consume(element, CstNodeKind.GoToStatement_TO, tokens.TO);
+    } else if (
+      state.tryConsume(element, CstNodeKind.GoToStatement_GOTO, tokens.GOTO)
+    ) {
+      // GOTO consumed
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    element.label = labelReference.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.GoToStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const genericAttribute = rule(
+  sequence(tokens.GENERIC),
+  (state: ParserState): ast.GenericAttribute => {
+    const element = ast.createGenericAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.GenericAttribute_GENERIC,
+      tokens.GENERIC,
+    );
+    state.consume(
+      element,
+      CstNodeKind.GenericAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+
+    // Optional generic references
+    if (state.canConsumeFirst(genericReference.first())) {
+      const lhs = genericReference.rule(state);
+      lhs && element.references.push(lhs);
+
+      const { inc } = state.createLoopContext("GenericAttribute");
+      while (
+        state.tryConsume(
+          element,
+          CstNodeKind.GenericAttribute_Comma,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const rhs = genericReference.rule(state);
+        rhs && element.references.push(rhs);
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.GenericAttribute_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const genericReference = rule(
+  () => referenceItem.first(),
+  (state: ParserState): ast.GenericReference => {
+    const element = ast.createGenericReference();
+
+    element.entry = referenceItem.rule(state);
+
+    if (
+      state.tryConsume(element, CstNodeKind.GenericReference_WHEN, tokens.WHEN)
+    ) {
+      state.consume(
+        element,
+        CstNodeKind.GenericReference_OpenParen,
+        tokens.OpenParen,
+      );
+
+      if (state.canConsumeFirst(genericDescriptor.first())) {
+        const descr = genericDescriptor.rule(state);
+        descr && element.descriptors.push(descr);
+      }
+
+      state.consume(
+        element,
+        CstNodeKind.GenericReference_CloseParen,
+        tokens.CloseParen,
+      );
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.GenericReference_OTHERWISE,
+        tokens.OTHERWISE,
+      )
+    ) {
+      element.otherwise = true;
+    }
+
+    return element;
+  },
+);
+
+const genericDescriptor = rule(
+  () => declarationAttribute.first(),
+  (state: ParserState): ast.GenericDescriptor => {
+    const element = ast.createGenericDescriptor();
+
+    const lhs = declarationAttribute.rule(state);
+    lhs && element.attributes.push(lhs);
+    const { inc } = state.createLoopContext("GenericDescriptor");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.GenericDescriptor_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = declarationAttribute.rule(state);
+      rhs && element.attributes.push(rhs);
+    }
+
+    return element;
+  },
+);
+
+const ifStatement = rule(
+  sequence(tokens.IF),
+  (state: ParserState): ast.IfStatement => {
+    const element = ast.createIfStatement();
+
+    state.consume(element, CstNodeKind.IfStatement_IF, tokens.IF);
+    element.expression = expression.rule(state);
+    state.consume(element, CstNodeKind.IfStatement_THEN, tokens.THEN);
+    element.unit = statement.rule(state);
+
+    if (state.tryConsume(element, CstNodeKind.IfStatement_ELSE, tokens.ELSE)) {
+      element.else = statement.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const indForAttribute = rule(
+  sequence(tokens.INDFOR),
+  (state: ParserState): ast.IndForAttribute => {
+    const element = ast.createIndForAttribute();
+
+    state.consume(element, CstNodeKind.IndForAttribute_INDFOR, tokens.INDFOR);
+    element.reference = locatorCall.rule(state);
+
+    return element;
+  },
+);
+
+const iterateStatement = rule(
+  sequence(tokens.ITERATE),
+  (state: ParserState): ast.IterateStatement => {
+    const element = ast.createIterateStatement();
+
+    state.consume(
+      element,
+      CstNodeKind.IterateStatement_ITERATE,
+      tokens.ITERATE,
+    );
+
+    if (state.canConsumeFirst(labelReference.first())) {
+      element.label = labelReference.rule(state);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.IterateStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const leaveStatement = rule(
+  sequence(tokens.LEAVE),
+  (state: ParserState): ast.LeaveStatement => {
+    const element = ast.createLeaveStatement();
+
+    const leaveToken = state.consume(
+      element,
+      CstNodeKind.LeaveStatement_LEAVE,
+      tokens.LEAVE,
+    );
+    element.leaveToken = leaveToken;
+
+    if (state.canConsumeFirst(labelReference.first())) {
+      element.label = labelReference.rule(state);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.LeaveStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const locateStatement = rule(
+  sequence(tokens.LOCATE),
+  (state: ParserState): ast.LocateStatement => {
+    const element = ast.createLocateStatement();
+
+    state.consume(element, CstNodeKind.LocateStatement_LOCATE, tokens.LOCATE);
+    element.variable = locatorCall.rule(state);
+
+    const { inc } = state.createLoopContext("LocateStatement");
+    while (state.canConsumeFirst(locateStatementOption.first())) {
+      inc();
+      const option = locateStatementOption.rule(state);
+      option && element.arguments.push(option);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.LocateStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const locateStatementOption = rule(
+  sequence(tokens.LocateType),
+  (state: ParserState): ast.LocateStatementOption => {
+    const element = ast.createLocateStatementOption();
+
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.LocateStatementOption_Type,
+      tokens.LocateType,
+    );
+    if (typeToken) {
+      element.type = tokens.LocateType.mapToEnumLiteral(typeToken.tokenTypeIdx);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.LocateStatementOption_OpenParen,
+      tokens.OpenParen,
+    );
+    element.element = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.LocateStatementOption_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const nullStatement = rule(
+  sequence(tokens.Semicolon),
+  (state: ParserState): ast.NullStatement => {
+    const element = ast.createNullStatement();
+    state.consume(
+      element,
+      CstNodeKind.NullStatement_Semicolon,
+      tokens.Semicolon,
+    );
+    return element;
+  },
+);
+
+const onStatement = rule(
+  sequence(tokens.ON),
+  (state: ParserState): ast.OnStatement => {
+    const element = ast.createOnStatement();
+
+    state.consume(element, CstNodeKind.OnStatement_ON, tokens.ON);
+
+    // Parse first condition
+    const lhs = condition.rule(state);
+    lhs && element.conditions.push(lhs);
+
+    // Parse additional comma-separated conditions
+    const { inc } = state.createLoopContext("OnStatement");
+    while (
+      state.tryConsume(element, CstNodeKind.OnStatement_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = condition.rule(state);
+      rhs && element.conditions.push(rhs);
+    }
+
+    // Optional SNAP
+    if (state.tryConsume(element, CstNodeKind.OnStatement_Snap, tokens.SNAP)) {
+      element.snap = true;
+    }
+
+    // Either SYSTEM or a statement
+    if (
+      state.tryConsume(element, CstNodeKind.OnStatement_System, tokens.SYSTEM)
+    ) {
+      element.system = true;
+      state.consume(
+        element,
+        CstNodeKind.OnStatement_Semicolon,
+        tokens.Semicolon,
+      );
+    } else {
+      element.onUnit = statement.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const condition = orRule<ast.Condition>(
+  () => keywordCondition,
+  () => namedCondition,
+  () => fileReferenceCondition,
+);
+
+const keywordCondition = rule(
+  sequence(tokens.KeywordConditions),
+  (state: ParserState): ast.KeywordCondition => {
+    const element = ast.createKeywordCondition();
+    const token = state.consume(
+      element,
+      CstNodeKind.KeywordCondition_Keyword,
+      tokens.KeywordConditions,
+    );
+    if (token) {
       element.keyword = tokens.KeywordConditions.mapToEnumLiteral(
         token.tokenTypeIdx,
       );
-    });
+    }
+    return element;
+  },
+);
 
-    return this.pop<ast.KeywordCondition>();
-  });
-  private createNamedCondition(): ast.NamedCondition {
-    return {
-      kind: ast.SyntaxKind.NamedCondition,
-      container: null,
-      name: null,
-    };
-  }
+const namedCondition = rule(
+  sequence(tokens.CONDITION),
+  (state: ParserState): ast.NamedCondition => {
+    const element = ast.createNamedCondition();
 
-  NamedCondition = this.RULE("NamedCondition", () => {
-    let element = this.push(this.createNamedCondition());
+    state.consume(
+      element,
+      CstNodeKind.NamedCondition_CONDITION,
+      tokens.CONDITION,
+    );
+    state.consume(
+      element,
+      CstNodeKind.NamedCondition_OpenParen,
+      tokens.OpenParen,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.CONDITION, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NamedCondition_CONDITION);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NamedCondition_OpenParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NamedCondition_Name);
-      element.name = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NamedCondition_CloseParen);
-    });
+    const nameToken = state.consume(
+      element,
+      CstNodeKind.NamedCondition_Name,
+      tokens.ID,
+    );
+    if (nameToken) {
+      element.name = nameToken.image;
+    }
 
-    return this.pop<ast.NamedCondition>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.NamedCondition_CloseParen,
+      tokens.CloseParen,
+    );
 
-  private createFileReferenceCondition(): ast.FileReferenceCondition {
-    return {
-      kind: ast.SyntaxKind.FileReferenceCondition,
-      container: null,
-      keyword: null,
-      fileReference: null,
-    };
-  }
+    return element;
+  },
+);
 
-  FileReferenceCondition = this.RULE("FileReferenceCondition", () => {
-    let element = this.push(this.createFileReferenceCondition());
+const fileReferenceCondition = rule(
+  sequence(tokens.FileReferenceConditions),
+  (state: ParserState): ast.FileReferenceCondition => {
+    const element = ast.createFileReferenceCondition();
 
-    this.CONSUME_ASSIGN1(tokens.FileReferenceConditions, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.FileReferenceCondition_Keyword,
-      );
+    const keywordToken = state.consume(
+      element,
+      CstNodeKind.FileReferenceCondition_Keyword,
+      tokens.FileReferenceConditions,
+    );
+    if (keywordToken) {
       element.keyword = tokens.FileReferenceConditions.mapToEnumLiteral(
-        token.tokenTypeIdx,
+        keywordToken.tokenTypeIdx,
       );
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.FileReferenceCondition_OpenParen,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.ReferenceItem, {
-        assign: (result) => {
-          element.fileReference = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.FileReferenceCondition_CloseParen,
-        );
-      });
-    });
+    }
 
-    return this.pop<ast.FileReferenceCondition>();
-  });
-  private createOpenStatement(): ast.OpenStatement {
-    return {
-      kind: ast.SyntaxKind.OpenStatement,
-      container: null,
-      options: [],
-    };
-  }
+    // Optional file reference in parentheses
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.FileReferenceCondition_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.fileReference = referenceItem.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.FileReferenceCondition_CloseParen,
+        tokens.CloseParen,
+      );
+    }
 
-  OpenStatement = this.RULE("OpenStatement", () => {
-    let element = this.push(this.createOpenStatement());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN(tokens.OPEN, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.OpenStatement_OPEN);
-    });
-    this.SUBRULE_ASSIGN1(this.OpenOptionsGroup, {
-      assign: (result) => {
-        element.options.push(result);
-      },
-    });
-    this.MANY(() => {
-      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OpenStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.OpenOptionsGroup, {
-        assign: (result) => {
-          element.options.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.OpenStatement_Semicolon);
-    });
+const openStatement = rule(
+  sequence(tokens.OPEN),
+  (state: ParserState): ast.OpenStatement => {
+    const element = ast.createOpenStatement();
 
-    return this.pop<ast.OpenStatement>();
-  });
-  private createOpenOptionsGroup(): ast.OpenOptionsGroup {
-    return {
-      kind: ast.SyntaxKind.OpenOptionsGroup,
-      container: null,
-      options: [],
-    };
-  }
+    state.consume(element, CstNodeKind.OpenStatement_OPEN, tokens.OPEN);
 
-  OpenOptionsGroup = this.RULE("OpenOptionsGroup", () => {
-    let element = this.push(this.createOpenOptionsGroup());
+    const lhs = openOptionsGroup.rule(state);
+    lhs && element.options.push(lhs);
 
-    this.AT_LEAST_ONE(() => {
-      this.SUBRULE_ASSIGN(this.OpenOption, {
-        assign: (result) => element.options.push(result),
-      });
-    });
+    const { inc } = state.createLoopContext("OpenStatement");
+    while (
+      state.tryConsume(element, CstNodeKind.OpenStatement_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = openOptionsGroup.rule(state);
+      rhs && element.options.push(rhs);
+    }
 
-    return this.pop<ast.OpenOptionsGroup>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.OpenStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  private createOpenOption(): ast.OpenOption {
-    return {
-      kind: ast.SyntaxKind.OpenOption,
-      container: null,
-      option: null,
-      expression: null,
-    };
-  }
+    return element;
+  },
+);
 
-  OpenOption = this.RULE("OpenOption", () => {
+const openOptionsGroup = rule(
+  () => openOption.first(),
+  (state: ParserState): ast.OpenOptionsGroup => {
+    const element = ast.createOpenOptionsGroup();
+
+    // Parse at least one open option
+    const lhs = openOption.rule(state);
+    lhs && element.options.push(lhs);
+
+    // Parse additional options as long as we can consume OpenOptionType tokens
+    const { inc } = state.createLoopContext("OpenOptionsGroup");
+    while (state.canConsumeFirst(openOption.first())) {
+      inc();
+      const rhs = openOption.rule(state);
+      rhs && element.options.push(rhs);
+    }
+
+    return element;
+  },
+);
+
+const openOption = rule(
+  sequence(tokens.OpenOptionType),
+  (state: ParserState): ast.OpenOption => {
     // TODO: explain the discrepancy in the grammar
     // The language reference explains that BUFFERED/UNBUFFERED can only be followed by SEQUENTIAL or DIRECT
     // THIS IS NOT THE CASE
     // It can appear on its own
     // Therefore, we simply combine all open options into one single rule
-    let element = this.push(this.createOpenOption());
+    const element = ast.createOpenOption();
 
-    this.CONSUME_ASSIGN1(tokens.OpenOptionType, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.OpenOption_Type);
+    const optionToken = state.consume(
+      element,
+      CstNodeKind.OpenOption_Type,
+      tokens.OpenOptionType,
+    );
+    if (optionToken) {
       element.option = tokens.OpenOptionType.mapToEnumLiteral(
-        token.tokenTypeIdx,
+        optionToken.tokenTypeIdx,
       );
-    });
-    this.OPTION(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OpenOption_OpenParen);
-      });
-      // Note that only FILE, TITLE, LINESIZE and PAGESIZE are supposed to use this
+    }
+
+    // Optional expression in parentheses
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.OpenOption_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      // Note: Only FILE, TITLE, LINESIZE and PAGESIZE are supposed to use this
       // Validate against this later in the lifecycle
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.expression = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.OpenOption_CloseParen);
-      });
-    });
-
-    return this.pop<ast.OpenOption>();
-  });
-
-  private createProcincDirective(): ast.ProcincDirective {
-    return {
-      kind: ast.SyntaxKind.ProcincDirective,
-      container: null,
-      datasetName: null,
-    };
-  }
-
-  ProcincDirective = this.RULE("ProcincDirective", () => {
-    let element = this.push(this.createProcincDirective());
-
-    this.CONSUME_ASSIGN1(tokens.PROCINC, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ProcincDirective_PROCINC);
-    });
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(
-        token,
+      element.expression = expression.rule(state);
+      state.consume(
         element,
-        CstNodeKind.ProcincDirective_DatasetName,
+        CstNodeKind.OpenOption_CloseParen,
+        tokens.CloseParen,
       );
-      element.datasetName = token.image;
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ProcincDirective_Semicolon);
-    });
+    }
 
-    return this.pop<ast.ProcincDirective>();
-  });
+    return element;
+  },
+);
 
-  private createPutFileStatement(): ast.PutFileStatement {
-    return {
-      kind: ast.SyntaxKind.PutFileStatement,
-      container: null,
-      items: [],
-    };
-  }
+const putStatement = rule(
+  sequence(tokens.PUT),
+  (state: ParserState): ast.PutStatement => {
+    // Start with file statement as default
+    let element = ast.createPutFileStatement();
 
-  private createPutStringStatement(): ast.PutStringStatement {
-    return {
-      kind: ast.SyntaxKind.PutStringStatement,
-      container: null,
-      dataSpecification: null,
-      stringExpression: null,
-    };
-  }
+    state.consume(element, CstNodeKind.PutStatement_PUT, tokens.PUT);
 
-  PutStatement = this.RULE("PutStatement", () => {
-    let element: ast.PutStatement = this.push(this.createPutFileStatement());
-    let assignPayload = (element: ast.PutStatement) => {};
+    if (state.canConsume(tokens.Semicolon)) {
+      // No optional content, just consume semicolon
+    } else if (
+      state.tryConsume(element, CstNodeKind.PutStatement_STRING, tokens.STRING)
+    ) {
+      const stringStatement: ast.PutStringStatement =
+        element as unknown as ast.PutStringStatement;
+      stringStatement.kind = ast.SyntaxKind.PutStringStatement;
+      stringStatement.container = null;
+      stringStatement.dataSpecification = null;
+      stringStatement.stringExpression = null;
+      state.consume(
+        stringStatement,
+        CstNodeKind.PutStatement_OpenParen,
+        tokens.OpenParen,
+      );
+      stringStatement.stringExpression = expression.rule(state);
+      state.consume(
+        stringStatement,
+        CstNodeKind.PutStatement_CloseParen,
+        tokens.CloseParen,
+      );
+      stringStatement.dataSpecification = dataSpecificationOptions.rule(state);
+    } else {
+      // FILE variant - keep as file statement
+      const fileStatement = element as ast.PutFileStatement;
+      fileStatement.kind = ast.SyntaxKind.PutFileStatement;
 
-    this.CONSUME_ASSIGN1(tokens.PUT, (token) => {
-      assignPayload = (element: ast.PutStatement) => {
-        this.tokenPayload(token, element, CstNodeKind.PutStatement_PUT);
-      };
-      assignPayload(element);
-    });
-    this.OPTION1(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            const putFileStatement = element as ast.PutFileStatement;
-            this.AT_LEAST_ONE1(() => {
-              this.OR2([
-                {
-                  ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.PutItem, {
-                      assign: (result) => {
-                        putFileStatement.items.push(result);
-                      },
-                    });
-                  },
-                },
-                {
-                  ALT: () => {
-                    this.SUBRULE_ASSIGN1(this.DataSpecificationOptions, {
-                      assign: (result) => {
-                        putFileStatement.items.push(result);
-                      },
-                    });
-                  },
-                },
-              ]);
-            });
-          },
-        },
-        {
-          ALT: () => {
-            const putStringStatement = this.replace(
-              this.createPutStringStatement(),
-            );
-            assignPayload(putStringStatement);
-            this.CONSUME_ASSIGN1(tokens.STRING, (token) => {
-              this.tokenPayload(
-                token,
-                putStringStatement,
-                CstNodeKind.PutStatement_STRING,
-              );
-            });
-            this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-              this.tokenPayload(
-                token,
-                putStringStatement,
-                CstNodeKind.PutStatement_OpenParen,
-              );
-            });
-            this.SUBRULE_ASSIGN1(this.Expression, {
-              assign: (result) => {
-                putStringStatement.stringExpression = result;
-              },
-            });
-            this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-              this.tokenPayload(
-                token,
-                putStringStatement,
-                CstNodeKind.PutStatement_CloseParen,
-              );
-            });
-            this.SUBRULE_ASSIGN2(this.DataSpecificationOptions, {
-              assign: (result) => {
-                putStringStatement.dataSpecification = result;
-              },
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, this.peek(), CstNodeKind.PutStatement_Semicolon);
-    });
+      // Parse one or more put items or data specification options
+      const { inc } = state.createLoopContext("PutStatement");
+      do {
+        inc();
+        if (state.canConsumeFirst(putItem.first())) {
+          const item = putItem.rule(state);
+          item && fileStatement.items.push(item);
+        } else if (state.canConsumeFirst(dataSpecificationOptions.first())) {
+          const option = dataSpecificationOptions.rule(state);
+          option && fileStatement.items.push(option);
+        }
+      } while (
+        !state.eof &&
+        (state.canConsumeFirst(putItem.first()) ||
+          state.canConsumeFirst(dataSpecificationOptions.first()))
+      );
+    }
 
-    return this.pop<ast.PutStatement>();
-  });
-  private createPutItem(): ast.PutItem {
-    return {
-      kind: ast.SyntaxKind.PutItem,
-      container: null,
-      attribute: null,
-      expression: null,
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.PutStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  PutItem = this.RULE("PutItem", () => {
-    let element = this.push(this.createPutItem());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN(tokens.PutAttribute, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.PutAttribute_FILE);
+const putItem = rule(
+  sequence(tokens.PutAttribute),
+  (state: ParserState): ast.PutItem => {
+    const element = ast.createPutItem();
+
+    const attributeToken = state.consume(
+      element,
+      CstNodeKind.PutAttribute_FILE,
+      tokens.PutAttribute,
+    );
+    if (attributeToken) {
       element.attribute = tokens.PutAttribute.mapToEnumLiteral(
-        token.tokenTypeIdx,
+        attributeToken.tokenTypeIdx,
       );
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.PutItem_OpenParen);
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.expression = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.PutItem_CloseParen);
-      });
-    });
+    }
 
-    return this.pop<ast.PutItem>();
-  });
+    // Optional expression in parentheses
+    if (
+      state.tryConsume(element, CstNodeKind.PutItem_OpenParen, tokens.OpenParen)
+    ) {
+      element.expression = expression.rule(state);
+      state.consume(element, CstNodeKind.PutItem_CloseParen, tokens.CloseParen);
+    }
 
-  private createDataSpecificationOptions(): ast.DataSpecificationOptions {
-    return {
-      kind: ast.SyntaxKind.DataSpecificationOptions,
-      container: null,
-      dataList: null,
-      edit: false,
-      dataLists: [],
-      formatLists: [],
-      data: false,
-      dataListItems: [],
-    };
-  }
+    return element;
+  },
+);
 
-  DataSpecificationOptions = this.RULE("DataSpecificationOptions", () => {
-    let element = this.push(this.createDataSpecificationOptions());
+const dataSpecificationOptions = rule(
+  choice(
+    sequence(tokens.LIST),
+    sequence(tokens.OpenParen),
+    sequence(tokens.DATA),
+    sequence(tokens.EDIT),
+  ),
+  (state: ParserState): ast.DataSpecificationOptions => {
+    const element = ast.createDataSpecificationOptions();
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.OPTION1(() => {
-            this.CONSUME_ASSIGN1(tokens.LIST, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_LIST,
-              );
-            });
-          });
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DataSpecificationOptions_OpenParenList,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.DataSpecificationDataList, {
-            assign: (result) => {
-              element.dataList = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DataSpecificationOptions_CloseParenList,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.DATA, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DataSpecificationOptions_Data,
-            );
-            element.data = true;
-          });
-          this.OPTION2(() => {
-            this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_OpenParenData,
-              );
-            });
-            this.SUBRULE_ASSIGN1(this.DataSpecificationDataListItem, {
-              assign: (result) => {
-                element.dataListItems.push(result);
-              },
-            });
-            this.MANY1(() => {
-              this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-                this.tokenPayload(
-                  token,
-                  element,
-                  CstNodeKind.DataSpecificationOptions_Comma,
-                );
-              });
-              this.SUBRULE_ASSIGN2(this.DataSpecificationDataListItem, {
-                assign: (result) => {
-                  element.dataListItems.push(result);
-                },
-              });
-            });
-            this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_CloseParenData,
-              );
-            });
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.EDIT, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DataSpecificationOptions_Edit,
-            );
-            element.edit = true;
-          });
-          this.AT_LEAST_ONE1(() => {
-            this.CONSUME_ASSIGN3(tokens.OpenParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_OpenParenEdit,
-              );
-            });
-            this.SUBRULE_ASSIGN2(this.DataSpecificationDataList, {
-              assign: (result) => {
-                element.dataLists.push(result);
-              },
-            });
-            this.CONSUME_ASSIGN3(tokens.CloseParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_CloseParenEdit,
-              );
-            });
-            this.CONSUME_ASSIGN4(tokens.OpenParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_OpenParenFormat,
-              );
-            });
-            this.SUBRULE_ASSIGN1(this.FormatList, {
-              assign: (result) => {
-                element.formatLists.push(result);
-              },
-            });
-            this.CONSUME_ASSIGN4(tokens.CloseParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.DataSpecificationOptions_CloseParenFormat,
-              );
-            });
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.DataSpecificationOptions>();
-  });
-  private createDataSpecificationDataList(): ast.DataSpecificationDataList {
-    return {
-      kind: ast.SyntaxKind.DataSpecificationDataList,
-      container: null,
-      items: [],
-    };
-  }
-
-  DataSpecificationDataList = this.RULE("DataSpecificationDataList", () => {
-    let element = this.push(this.createDataSpecificationDataList());
-
-    this.SUBRULE_ASSIGN1(this.DataSpecificationDataListItem, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
+    if (state.canConsume(tokens.LIST) || state.canConsume(tokens.OpenParen)) {
+      // LIST variant (LIST is optional)
+      state.tryConsume(
+        element,
+        CstNodeKind.DataSpecificationOptions_LIST,
+        tokens.LIST,
+      );
+      state.consume(
+        element,
+        CstNodeKind.DataSpecificationOptions_OpenParenList,
+        tokens.OpenParen,
+      );
+      element.dataList = dataSpecificationDataList.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DataSpecificationOptions_CloseParenList,
+        tokens.CloseParen,
+      );
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DataSpecificationOptions_Data,
+        tokens.DATA,
+      )
+    ) {
+      // DATA variant
+      element.data = true;
+      if (
+        state.tryConsume(
           element,
-          CstNodeKind.DataSpecificationDataList_Comma,
+          CstNodeKind.DataSpecificationOptions_OpenParenData,
+          tokens.OpenParen,
+        )
+      ) {
+        const lhs = dataSpecificationDataListItem.rule(state);
+        lhs && element.dataListItems.push(lhs);
+        const { inc } = state.createLoopContext("DataSpecificationOptions 1");
+        while (
+          state.tryConsume(
+            element,
+            CstNodeKind.DataSpecificationOptions_Comma,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const rhs = dataSpecificationDataListItem.rule(state);
+          rhs && element.dataListItems.push(rhs);
+        }
+        state.consume(
+          element,
+          CstNodeKind.DataSpecificationOptions_CloseParenData,
+          tokens.CloseParen,
         );
-      });
-      this.SUBRULE_ASSIGN2(this.DataSpecificationDataListItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-
-    return this.pop<ast.DataSpecificationDataList>();
-  });
-  private createDataSpecificationDataListItem(): ast.DataSpecificationDataListItem {
-    return {
-      kind: ast.SyntaxKind.DataSpecificationDataListItem,
-      container: null,
-      value: null,
-    };
-  }
-
-  DataSpecificationDataListItem = this.RULE(
-    "DataSpecificationDataListItem",
-    () => {
-      let element = this.push(this.createDataSpecificationDataListItem());
-
-      // TODO: research, in some example, this can be found:
-      // ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
-      // However, this does not conform to the language reference
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.value = result;
-        },
-      });
-
-      return this.pop<ast.DataSpecificationDataListItem>();
-    },
-  );
-  private createQualifyStatement(): ast.QualifyStatement {
-    return {
-      kind: ast.SyntaxKind.QualifyStatement,
-      container: null,
-      statements: [],
-      end: null,
-    };
-  }
-
-  QualifyStatement = this.RULE("QualifyStatement", () => {
-    let element = this.push(this.createQualifyStatement());
-
-    this.CONSUME_ASSIGN1(tokens.QUALIFY, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.QualifyStatement_QUALIFY);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
+      }
+    } else if (
+      state.tryConsume(
         element,
-        CstNodeKind.QualifyStatement_Semicolon0,
+        CstNodeKind.DataSpecificationOptions_Edit,
+        tokens.EDIT,
+      )
+    ) {
+      // EDIT variant
+      element.edit = true;
+      const { inc } = state.createLoopContext("DataSpecificationOptions 2");
+      do {
+        inc();
+        state.consume(
+          element,
+          CstNodeKind.DataSpecificationOptions_OpenParenEdit,
+          tokens.OpenParen,
+        );
+        const list = dataSpecificationDataList.rule(state);
+        list && element.dataLists.push(list);
+        state.consume(
+          element,
+          CstNodeKind.DataSpecificationOptions_CloseParenEdit,
+          tokens.CloseParen,
+        );
+
+        state.consume(
+          element,
+          CstNodeKind.DataSpecificationOptions_OpenParenFormat,
+          tokens.OpenParen,
+        );
+        const list2 = formatList.rule(state);
+        list2 && element.formatLists.push(list2);
+        state.consume(
+          element,
+          CstNodeKind.DataSpecificationOptions_CloseParenFormat,
+          tokens.CloseParen,
+        );
+      } while (
+        !state.eof &&
+        !state.canConsume(tokens.Semicolon) &&
+        state.canConsume(tokens.OpenParen)
       );
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN1(this.Statement, {
-        assign: (result) => {
-          element.statements.push(result);
-        },
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.EndStatement, {
-      assign: (result) => {
-        element.end = result;
-      },
-    });
-    this.CONSUME_ASSIGN2(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    return element;
+  },
+);
+
+const dataSpecificationDataList = rule(
+  () => dataSpecificationDataListItem.first(),
+  (state: ParserState): ast.DataSpecificationDataList => {
+    const element = ast.createDataSpecificationDataList();
+    const lhs = dataSpecificationDataListItem.rule(state);
+    lhs && element.items.push(lhs);
+    const { inc } = state.createLoopContext("DataSpecificationDataList");
+    while (
+      state.tryConsume(
         element,
-        CstNodeKind.QualifyStatement_Semicolon1,
-      );
-    });
+        CstNodeKind.DataSpecificationDataList_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = dataSpecificationDataListItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
+    return element;
+  },
+);
 
-    return this.pop<ast.QualifyStatement>();
-  });
-  private createReadStatement(): ast.ReadStatement {
-    return {
-      kind: ast.SyntaxKind.ReadStatement,
-      container: null,
-      arguments: [],
-    };
-  }
+const dataSpecificationDataListItem = rule(
+  () => expression.first(),
+  (state: ParserState): ast.DataSpecificationDataListItem => {
+    const element = ast.createDataSpecificationDataListItem();
 
-  ReadStatement = this.RULE("ReadStatement", () => {
-    let element = this.push(this.createReadStatement());
+    // TODO: research, in some example, this can be found:
+    // ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
+    // However, this does not conform to the language reference
+    element.value = expression.rule(state);
 
-    this.CONSUME_ASSIGN1(tokens.READ, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReadStatement_READ);
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN(this.ReadStatementOption, {
-        assign: (result) => {
-          element.arguments.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReadStatement_Semicolon);
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.ReadStatement>();
-  });
-  private createReadStatementOption(): ast.ReadStatementOption {
-    return {
-      kind: ast.SyntaxKind.ReadStatementOption,
-      container: null,
-      type: null,
-      value: null,
-    };
-  }
+const qualifyStatement = rule(
+  sequence(tokens.QUALIFY),
+  (state: ParserState): ast.QualifyStatement => {
+    const element = ast.createQualifyStatement();
 
-  ReadStatementOption = this.RULE("ReadStatementOption", () => {
-    let element = this.push(this.createReadStatementOption());
+    state.consume(
+      element,
+      CstNodeKind.QualifyStatement_QUALIFY,
+      tokens.QUALIFY,
+    );
+    state.consume(
+      element,
+      CstNodeKind.QualifyStatement_Semicolon0,
+      tokens.Semicolon,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.ReadStatementType, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReadStatementFile_Type);
+    const { inc } = state.createLoopContext("QualifyStatement");
+    while (!state.eof && !performEndStatementLookahead(state)) {
+      inc();
+      const stmt = statement.rule(state);
+      stmt && element.statements.push(stmt);
+    }
+
+    element.end = endStatement.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.QualifyStatement_Semicolon1,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const readStatement = rule(
+  sequence(tokens.READ),
+  (state: ParserState): ast.ReadStatement => {
+    const element = ast.createReadStatement();
+
+    state.consume(element, CstNodeKind.ReadStatement_READ, tokens.READ);
+    const { inc } = state.createLoopContext("ReadStatement");
+    while (state.canConsumeFirst(readStatementOption.first())) {
+      inc();
+      const option = readStatementOption.rule(state);
+      option && element.arguments.push(option);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.ReadStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const readStatementOption = rule(
+  sequence(tokens.ReadStatementType),
+  (state: ParserState): ast.ReadStatementOption => {
+    const element = ast.createReadStatementOption();
+
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.ReadStatementFile_Type,
+      tokens.ReadStatementType,
+    );
+    if (typeToken) {
       element.type = tokens.ReadStatementType.mapToEnumLiteral(
-        token.tokenTypeIdx,
+        typeToken.tokenTypeIdx,
       );
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.ReadStatementFile_OpenParen,
+      tokens.OpenParen,
+    );
+    element.value = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.ReadStatementFile_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const reinitStatement = rule(
+  sequence(tokens.REINIT),
+  (state: ParserState): ast.ReinitStatement => {
+    const element = ast.createReinitStatement();
+
+    state.consume(element, CstNodeKind.ReinitStatement_REINIT, tokens.REINIT);
+    element.reference = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.ReinitStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const releaseStatement = rule(
+  sequence(tokens.RELEASE),
+  (state: ParserState): ast.ReleaseStatement => {
+    const element = ast.createReleaseStatement();
+
+    state.consume(
+      element,
+      CstNodeKind.ReleaseStatement_RELEASE,
+      tokens.RELEASE,
+    );
+
+    if (
+      state.tryConsume(element, CstNodeKind.ReleaseStatement_Star, tokens.Star)
+    ) {
+      element.star = true;
+    } else {
+      const idToken = state.consume(
         element,
-        CstNodeKind.ReadStatementFile_OpenParen,
+        CstNodeKind.ReleaseStatement_References0,
+        tokens.ID,
       );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ReadStatementFile_CloseParen,
-      );
-    });
+      if (idToken) {
+        element.references.push(idToken.image);
+      }
 
-    return this.pop<ast.ReadStatementOption>();
-  });
-
-  private createReinitStatement(): ast.ReinitStatement {
-    return {
-      kind: ast.SyntaxKind.ReinitStatement,
-      container: null,
-      reference: null,
-    };
-  }
-
-  ReinitStatement = this.RULE("ReinitStatement", () => {
-    let element = this.push(this.createReinitStatement());
-
-    this.CONSUME_ASSIGN1(tokens.REINIT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReinitStatement_REINIT);
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.reference = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReinitStatement_Semicolon);
-    });
-
-    return this.pop<ast.ReinitStatement>();
-  });
-  private createReleaseStatement(): ast.ReleaseStatement {
-    return {
-      kind: ast.SyntaxKind.ReleaseStatement,
-      container: null,
-      star: false,
-      references: [],
-    };
-  }
-
-  ReleaseStatement = this.RULE("ReleaseStatement", () => {
-    let element = this.push(this.createReleaseStatement());
-
-    this.CONSUME_ASSIGN1(tokens.RELEASE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_RELEASE);
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.ReleaseStatement_Star,
-            );
-            element.star = true;
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.ReleaseStatement_References0,
-            );
-            element.references.push(token.image);
-          });
-          this.MANY1(() => {
-            this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.ReleaseStatement_Comma,
-              );
-            });
-            this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.ReleaseStatement_References1,
-              );
-              element.references.push(token.image);
-            });
-          });
-        },
-      },
-    ]);
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReleaseStatement_Semicolon);
-    });
-
-    return this.pop<ast.ReleaseStatement>();
-  });
-  private createResignalStatement(): ast.ResignalStatement {
-    return { kind: ast.SyntaxKind.ResignalStatement, container: null };
-  }
-
-  ResignalStatement = this.RULE("ResignalStatement", () => {
-    let element = this.push(this.createResignalStatement());
-
-    this.CONSUME_ASSIGN1(tokens.RESIGNAL, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ResignalStatement_RESIGNAL);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ResignalStatement_Semicolon,
-      );
-    });
-
-    return this.pop<ast.ResignalStatement>();
-  });
-  private createReturnStatement(): ast.ReturnStatement {
-    return {
-      kind: ast.SyntaxKind.ReturnStatement,
-      container: null,
-      expression: null,
-      returnToken: null,
-    };
-  }
-
-  ReturnStatement = this.RULE("ReturnStatement", () => {
-    let element = this.push(this.createReturnStatement());
-
-    this.CONSUME_ASSIGN1(tokens.RETURN, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnStatement_RETURN);
-      element.returnToken = token;
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+      const { inc } = state.createLoopContext("ReleaseStatement");
+      while (
+        state.tryConsume(
           element,
-          CstNodeKind.ReturnStatement_OpenParen,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.expression = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
+          CstNodeKind.ReleaseStatement_Comma,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const nextIdToken = state.consume(
           element,
-          CstNodeKind.ReturnStatement_CloseParen,
+          CstNodeKind.ReleaseStatement_References1,
+          tokens.ID,
         );
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnStatement_Semicolon);
-    });
+        if (nextIdToken) {
+          element.references.push(nextIdToken.image);
+        }
+      }
+    }
 
-    return this.pop<ast.ReturnStatement>();
-  });
-  private createRevertStatement(): ast.RevertStatement {
-    return {
-      kind: ast.SyntaxKind.RevertStatement,
-      container: null,
-      conditions: [],
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ReleaseStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  RevertStatement = this.RULE("RevertStatement", () => {
-    let element = this.push(this.createRevertStatement());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.REVERT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RevertStatement_REVERT);
-    });
-    this.SUBRULE_ASSIGN1(this.Condition, {
-      assign: (result) => {
-        element.conditions.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.RevertStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.Condition, {
-        assign: (result) => {
-          element.conditions.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RevertStatement_Semicolon);
-    });
+const resignalStatement = rule(
+  sequence(tokens.RESIGNAL),
+  (state: ParserState): ast.ResignalStatement => {
+    const element = ast.createResignalStatement();
 
-    return this.pop<ast.RevertStatement>();
-  });
-  private createRewriteStatement(): ast.RewriteStatement {
-    return {
-      kind: ast.SyntaxKind.RewriteStatement,
-      container: null,
-      arguments: [],
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ResignalStatement_RESIGNAL,
+      tokens.RESIGNAL,
+    );
+    state.consume(
+      element,
+      CstNodeKind.ResignalStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  RewriteStatement = this.RULE("RewriteStatement", () => {
-    let element = this.push(this.createRewriteStatement());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.REWRITE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RewriteStatement_REWRITE);
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN(this.RewriteStatementOption, {
-        assign: (result) => {
-          element.arguments.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RewriteStatement_Semicolon);
-    });
+const returnStatement = rule(
+  sequence(tokens.RETURN),
+  (state: ParserState): ast.ReturnStatement => {
+    const element = ast.createReturnStatement();
 
-    return this.pop<ast.RewriteStatement>();
-  });
-  private createRewriteStatementOption(): ast.RewriteStatementOption {
-    return {
-      kind: ast.SyntaxKind.RewriteStatementOption,
-      container: null,
-      type: null,
-      value: null,
-    };
-  }
+    element.returnToken = state.consume(
+      element,
+      CstNodeKind.ReturnStatement_RETURN,
+      tokens.RETURN,
+    );
 
-  RewriteStatementOption = this.RULE("RewriteStatementOption", () => {
-    let element = this.push(this.createRewriteStatementOption());
+    // Optional expression in parentheses
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.ReturnStatement_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.expression = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.ReturnStatement_CloseParen,
+        tokens.CloseParen,
+      );
+    }
 
-    this.CONSUME_ASSIGN1(tokens.RewriteStatementType, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.RewriteStatementFile_FILE);
+    state.consume(
+      element,
+      CstNodeKind.ReturnStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const revertStatement = rule(
+  sequence(tokens.REVERT),
+  (state: ParserState): ast.RevertStatement => {
+    const element = ast.createRevertStatement();
+
+    state.consume(element, CstNodeKind.RevertStatement_REVERT, tokens.REVERT);
+
+    // Parse first condition
+    const lhs = condition.rule(state);
+    lhs && element.conditions.push(lhs);
+
+    // Parse additional comma-separated conditions
+    const { inc } = state.createLoopContext("RevertStatement");
+    while (
+      state.tryConsume(element, CstNodeKind.RevertStatement_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = condition.rule(state);
+      rhs && element.conditions.push(rhs);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.RevertStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const rewriteStatement = rule(
+  sequence(tokens.REWRITE),
+  (state: ParserState): ast.RewriteStatement => {
+    const element = ast.createRewriteStatement();
+
+    state.consume(
+      element,
+      CstNodeKind.RewriteStatement_REWRITE,
+      tokens.REWRITE,
+    );
+
+    // Parse zero or more rewrite statement options
+    const { inc } = state.createLoopContext("RewriteStatement");
+    while (state.canConsumeFirst(rewriteStatementOption.first())) {
+      inc();
+      const option = rewriteStatementOption.rule(state);
+      option && element.arguments.push(option);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.RewriteStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const rewriteStatementOption = rule(
+  sequence(tokens.RewriteStatementType),
+  (state: ParserState): ast.RewriteStatementOption => {
+    const element = ast.createRewriteStatementOption();
+
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.RewriteStatementFile_FILE,
+      tokens.RewriteStatementType,
+    );
+    if (typeToken) {
       element.type = tokens.RewriteStatementType.mapToEnumLiteral(
-        token.tokenTypeIdx,
+        typeToken.tokenTypeIdx,
       );
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.RewriteStatementFile_OpenParen,
+      tokens.OpenParen,
+    );
+    element.value = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.RewriteStatementFile_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const selectStatement = rule(
+  sequence(tokens.SELECT),
+  (state: ParserState): ast.SelectStatement => {
+    const element = ast.createSelectStatement();
+
+    const selectToken = state.consume(
+      element,
+      CstNodeKind.SelectStatement_SELECT,
+      tokens.SELECT,
+    );
+    element.selectToken = selectToken;
+
+    // Optional expression in parentheses
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.RewriteStatementFile_OpenParen,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+        CstNodeKind.SelectStatement_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      element.on = expression.rule(state);
+      state.consume(
         element,
-        CstNodeKind.RewriteStatementFile_CloseParen,
+        CstNodeKind.SelectStatement_CloseParen,
+        tokens.CloseParen,
       );
-    });
+    }
 
-    return this.pop<ast.RewriteStatementOption>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.SelectStatement_Semicolon0,
+      tokens.Semicolon,
+    );
 
-  SelectStatement = this.RULE("SelectStatement", () => {
-    let element = this.push(ast.createSelectStatement());
+    // Parse WHEN and OTHERWISE statements
+    const { inc } = state.createLoopContext("SelectStatement");
+    while (
+      !state.eof &&
+      (state.canConsumeFirst(whenStatement.first()) ||
+        state.canConsumeFirst(otherwiseStatement.first()))
+    ) {
+      inc();
+      if (state.canConsumeFirst(whenStatement.first())) {
+        const when = whenStatement.rule(state);
+        when && element.cases.push(when);
+      } else if (state.canConsumeFirst(otherwiseStatement.first())) {
+        const otherwise = otherwiseStatement.rule(state);
+        otherwise && element.cases.push(otherwise);
+      }
+    }
 
-    this.CONSUME_ASSIGN1(tokens.SELECT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SelectStatement_SELECT);
-      element.selectToken = token;
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.SelectStatement_OpenParen,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.on = result;
-        },
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.SelectStatement_CloseParen,
-        );
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SelectStatement_Semicolon0);
-    });
-    this.MANY1(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.WhenStatement, {
-              assign: (result) => {
-                element.cases.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.OtherwiseStatement, {
-              assign: (result) => {
-                element.cases.push(result);
-              },
-            });
-          },
-        },
-      ]);
-    });
-    this.SUBRULE_ASSIGN1(this.EndStatement, {
-      assign: (result) => {
-        element.end = result;
-      },
-    });
-    this.CONSUME_ASSIGN2(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SelectStatement_Semicolon1);
-    });
+    element.end = endStatement.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.SelectStatement_Semicolon1,
+      tokens.Semicolon,
+    );
 
-    return this.pop<ast.SelectStatement>();
-  });
+    return element;
+  },
+);
 
-  WhenStatement = this.RULE("WhenStatement", () => {
-    let element = this.push(ast.createWhenStatement());
+const whenStatement = rule(
+  sequence(tokens.WHEN),
+  (state: ParserState): ast.WhenStatement => {
+    const element = ast.createWhenStatement();
 
-    this.CONSUME_ASSIGN1(tokens.WHEN, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WhenStatement_WHEN);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WhenStatement_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.conditions.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.WhenStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.Expression, {
-        assign: (result) => {
-          element.conditions.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WhenStatement_CloseParen);
-    });
-    this.SUBRULE_ASSIGN1(this.Statement, {
-      assign: (result) => {
-        element.unit = result;
-      },
-    });
+    state.consume(element, CstNodeKind.WhenStatement_WHEN, tokens.WHEN);
+    state.consume(
+      element,
+      CstNodeKind.WhenStatement_OpenParen,
+      tokens.OpenParen,
+    );
 
-    return this.pop<ast.WhenStatement>();
-  });
+    // Parse first condition
+    const lhs = expression.rule(state);
+    lhs && element.conditions.push(lhs);
 
-  OtherwiseStatement = this.RULE("OtherwiseStatement", () => {
-    let element = this.push(ast.createOtherwiseStatement());
+    // Parse additional comma-separated conditions
+    const { inc } = state.createLoopContext("WhenStatement");
+    while (
+      state.tryConsume(element, CstNodeKind.WhenStatement_Comma, tokens.Comma)
+    ) {
+      inc();
+      const rhs = expression.rule(state);
+      rhs && element.conditions.push(rhs);
+    }
 
-    this.CONSUME_ASSIGN1(tokens.OTHERWISE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.OtherwiseStatement_OTHERWISE,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.Statement, {
-      assign: (result) => {
-        element.unit = result;
-      },
-    });
+    state.consume(
+      element,
+      CstNodeKind.WhenStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    element.unit = statement.rule(state);
 
-    return this.pop<ast.OtherwiseStatement>();
-  });
-  private createSignalStatement(): ast.SignalStatement {
-    return {
-      kind: ast.SyntaxKind.SignalStatement,
-      container: null,
-      condition: [],
-    };
-  }
+    return element;
+  },
+);
 
-  SignalStatement = this.RULE("SignalStatement", () => {
-    let element = this.push(this.createSignalStatement());
+const otherwiseStatement = rule(
+  sequence(tokens.OTHERWISE),
+  (state: ParserState): ast.OtherwiseStatement => {
+    const element = ast.createOtherwiseStatement();
 
-    this.CONSUME_ASSIGN1(tokens.SIGNAL, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SignalStatement_SIGNAL);
-    });
-    this.SUBRULE_ASSIGN1(this.Condition, {
-      assign: (result) => {
-        element.condition.push(result);
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.SignalStatement_Semicolon);
-    });
+    state.consume(
+      element,
+      CstNodeKind.OtherwiseStatement_OTHERWISE,
+      tokens.OTHERWISE,
+    );
+    element.unit = statement.rule(state);
 
-    return this.pop<ast.SignalStatement>();
-  });
+    return element;
+  },
+);
 
-  private createStopStatement(): ast.StopStatement {
-    return { kind: ast.SyntaxKind.StopStatement, container: null };
-  }
+const signalStatement = rule(
+  sequence(tokens.SIGNAL),
+  (state: ParserState): ast.SignalStatement => {
+    const element = ast.createSignalStatement();
 
-  StopStatement = this.RULE("StopStatement", () => {
-    let element = this.push(this.createStopStatement());
+    state.consume(element, CstNodeKind.SignalStatement_SIGNAL, tokens.SIGNAL);
+    const cond = condition.rule(state);
+    cond && element.condition.push(cond);
+    state.consume(
+      element,
+      CstNodeKind.SignalStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.STOP, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.StopStatement_STOP);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.StopStatement_Semicolon);
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.StopStatement>();
-  });
-  private createWaitStatement(): ast.WaitStatement {
-    return {
-      kind: ast.SyntaxKind.WaitStatement,
-      container: null,
-      task: null,
-    };
-  }
+const stopStatement = rule(
+  sequence(tokens.STOP),
+  (state: ParserState): ast.StopStatement => {
+    const element = ast.createStopStatement();
 
-  WaitStatement = this.RULE("WaitStatement", () => {
-    let element = this.push(this.createWaitStatement());
+    state.consume(element, CstNodeKind.StopStatement_STOP, tokens.STOP);
+    state.consume(
+      element,
+      CstNodeKind.StopStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.WAIT, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WaitStatement_WAIT);
-    });
-    this.CONSUME_ASSIGN1(tokens.THREAD, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WaitStatement_THREAD);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WaitStatement_OpenParen);
-    });
-    this.SUBRULE_ASSIGN1(this.LocatorCall, {
-      assign: (result) => {
-        element.task = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WaitStatement_CloseParen);
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WaitStatement_Semicolon);
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.WaitStatement>();
-  });
-  private createWriteStatement(): ast.WriteStatement {
-    return {
-      kind: ast.SyntaxKind.WriteStatement,
-      container: null,
-      arguments: [],
-    };
-  }
+const waitStatement = rule(
+  sequence(tokens.WAIT),
+  (state: ParserState): ast.WaitStatement => {
+    const element = ast.createWaitStatement();
+    state.consume(element, CstNodeKind.WaitStatement_WAIT, tokens.WAIT);
+    state.consume(element, CstNodeKind.WaitStatement_THREAD, tokens.THREAD);
+    state.consume(
+      element,
+      CstNodeKind.WaitStatement_OpenParen,
+      tokens.OpenParen,
+    );
+    element.task = locatorCall.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.WaitStatement_CloseParen,
+      tokens.CloseParen,
+    );
+    state.consume(
+      element,
+      CstNodeKind.WaitStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-  WriteStatement = this.RULE("WriteStatement", () => {
-    let element = this.push(this.createWriteStatement());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN1(tokens.WRITE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WriteStatement_WRITE);
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN1(this.WriteStatementOption, {
-        assign: (result) => {
-          element.arguments.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WriteStatement_Semicolon);
-    });
+const writeStatement = rule(
+  sequence(tokens.WRITE),
+  (state: ParserState): ast.WriteStatement => {
+    const element = ast.createWriteStatement();
 
-    return this.pop<ast.WriteStatement>();
-  });
-  private createWriteStatementOption(): ast.WriteStatementOption {
-    return {
-      kind: ast.SyntaxKind.WriteStatementOption,
-      container: null,
-      type: null,
-      value: null,
-    };
-  }
+    state.consume(element, CstNodeKind.WriteStatement_WRITE, tokens.WRITE);
 
-  WriteStatementOption = this.RULE("WriteStatementOption", () => {
-    let element = this.push(this.createWriteStatementOption());
+    const { inc } = state.createLoopContext("WriteStatement");
+    while (state.canConsumeFirst(writeStatementOption.first())) {
+      inc();
+      const option = writeStatementOption.rule(state);
+      option && element.arguments.push(option);
+    }
 
-    this.CONSUME_ASSIGN1(tokens.WriteStatementType, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.WriteStatementFile_FILE);
+    state.consume(
+      element,
+      CstNodeKind.WriteStatement_Semicolon,
+      tokens.Semicolon,
+    );
+
+    return element;
+  },
+);
+
+const writeStatementOption = rule(
+  sequence(tokens.WriteStatementType),
+  (state: ParserState): ast.WriteStatementOption => {
+    const element = ast.createWriteStatementOption();
+
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.WriteStatementFile_FILE,
+      tokens.WriteStatementType,
+    );
+    if (typeToken) {
       element.type = tokens.WriteStatementType.mapToEnumLiteral(
-        token.tokenTypeIdx,
+        typeToken.tokenTypeIdx,
       );
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.WriteStatementFile_OpenParen,
+      tokens.OpenParen,
+    );
+    element.value = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.WriteStatementFile_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const initialAttribute = rule(
+  choice(sequence(tokens.INITIAL), sequence(tokens.INITACROSS)),
+  (state: ParserState): ast.InitialAttribute => {
+    const element = ast.createInitialAttribute();
+
+    if (state.canConsume(tokens.INITIAL)) {
+      const token = state.consume(
         element,
-        CstNodeKind.WriteStatementFile_OpenParen,
+        CstNodeKind.InitialAttribute_INITIAL,
+        tokens.INITIAL,
       );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+      element.token = token;
+
+      if (
+        state.tryConsume(
+          element,
+          CstNodeKind.InitialAttribute_OpenParenDirect,
+          tokens.OpenParen,
+        )
+      ) {
+        // INITIAL (items) variant
+        if (state.canConsumeFirst(initialAttributeItem.first())) {
+          const lhs = initialAttributeItem.rule(state);
+          lhs && element.items.push(lhs);
+          const { inc } = state.createLoopContext("InitialAttribute 1");
+          while (
+            state.tryConsume(
+              element,
+              CstNodeKind.InitialAttribute_CommaDirect,
+              tokens.Comma,
+            )
+          ) {
+            inc();
+            const rhs = initialAttributeItem.rule(state);
+            rhs && element.items.push(rhs);
+          }
+        }
+        state.consume(
+          element,
+          CstNodeKind.InitialAttribute_CloseParenDirect,
+          tokens.CloseParen,
+        );
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.InitialAttribute_Call,
+          tokens.CALL,
+        )
+      ) {
+        // INITIAL CALL variant
+        element.call = true;
+        element.procedureCall = procedureCall.rule(state);
+      } else if (
+        state.tryConsume(element, CstNodeKind.InitialAttribute_To, tokens.TO)
+      ) {
+        // INITIAL TO variant
+        element.to = true;
+        state.consume(
+          element,
+          CstNodeKind.InitialAttribute_OpenParenTo,
+          tokens.OpenParen,
+        );
+        element.content = initialToContent.rule(state);
+        state.consume(
+          element,
+          CstNodeKind.InitialAttribute_CloseParenTo,
+          tokens.CloseParen,
+        );
+        state.consume(
+          element,
+          CstNodeKind.InitialAttribute_OpenParenToItem,
+          tokens.OpenParen,
+        );
+        const lhs = initialAttributeItem.rule(state);
+        lhs && element.items.push(lhs);
+        const { inc } = state.createLoopContext("InitialAttribute 2");
+        while (
+          state.tryConsume(
+            element,
+            CstNodeKind.InitialAttribute_CommaToItem,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const rhs = initialAttributeItem.rule(state);
+          rhs && element.items.push(rhs);
+        }
+        state.consume(
+          element,
+          CstNodeKind.InitialAttribute_CloseParenToItem,
+          tokens.CloseParen,
+        );
+      } else {
+        state.error(Severe.IBM3988I.message, state.token, Severity.S);
+        return element;
+      }
+    } else if (
+      state.tryConsume(
         element,
-        CstNodeKind.WriteStatementFile_CloseParen,
+        CstNodeKind.InitialAttribute_INITACROSS,
+        tokens.INITACROSS,
+      )
+    ) {
+      // INITACROSS variant
+      element.across = true;
+      state.consume(
+        element,
+        CstNodeKind.InitialAttribute_OpenParenInitAcross,
+        tokens.OpenParen,
       );
-    });
+      const lhs = initAcrossExpression.rule(state);
+      lhs && element.expressions.push(lhs);
+      const { inc } = state.createLoopContext("InitialAttribute 3");
+      while (
+        state.tryConsume(
+          element,
+          CstNodeKind.InitialAttribute_CommaInitAcross,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const rhs = initAcrossExpression.rule(state);
+        rhs && element.expressions.push(rhs);
+      }
+      state.consume(
+        element,
+        CstNodeKind.InitialAttribute_CloseParenInitAcross,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
 
-    return this.pop<ast.WriteStatementOption>();
-  });
+    return element;
+  },
+);
 
-  InitialAttribute = this.RULE("InitialAttribute", () => {
-    let element = this.push(ast.createInitialAttribute());
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.INITIAL, (token) => {
-            element.token = token;
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.InitialAttribute_INITIAL,
-            );
-          });
-          this.OR3([
-            {
-              ALT: () => {
-                this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_OpenParenDirect,
-                  );
-                  element.direct = true;
-                });
-                this.SUBRULE_ASSIGN1(this.InitialAttributeItem, {
-                  assign: (result) => {
-                    element.items.push(result);
-                  },
-                });
-                this.MANY1(() => {
-                  this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-                    this.tokenPayload(
-                      token,
-                      element,
-                      CstNodeKind.InitialAttribute_CommaDirect,
-                    );
-                  });
-                  this.SUBRULE_ASSIGN2(this.InitialAttributeItem, {
-                    assign: (result) => {
-                      element.items.push(result);
-                    },
-                  });
-                });
-                this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_CloseParenDirect,
-                  );
-                });
-              },
-            },
-            {
-              ALT: () => {
-                this.CONSUME_ASSIGN1(tokens.CALL, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_Call,
-                  );
-                  element.call = true;
-                });
-                this.SUBRULE_ASSIGN1(this.ProcedureCall, {
-                  assign: (result) => {
-                    element.procedureCall = result;
-                  },
-                });
-              },
-            },
-            {
-              ALT: () => {
-                this.CONSUME_ASSIGN1(tokens.TO, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_To,
-                  );
-                  element.to = true;
-                });
-                this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_OpenParenTo,
-                  );
-                });
-                this.SUBRULE_ASSIGN1(this.InitialToContent, {
-                  assign: (result) => {
-                    element.content = result;
-                  },
-                });
-                this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_CloseParenTo,
-                  );
-                });
-                this.CONSUME_ASSIGN3(tokens.OpenParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_OpenParenToItem,
-                  );
-                });
-                this.SUBRULE_ASSIGN3(this.InitialAttributeItem, {
-                  assign: (result) => {
-                    element.items.push(result);
-                  },
-                });
-                this.MANY2(() => {
-                  this.CONSUME_ASSIGN2(tokens.Comma, (token) => {
-                    this.tokenPayload(
-                      token,
-                      element,
-                      CstNodeKind.InitialAttribute_CommaToItem,
-                    );
-                  });
-                  this.SUBRULE_ASSIGN4(this.InitialAttributeItem, {
-                    assign: (result) => {
-                      element.items.push(result);
-                    },
-                  });
-                });
-                this.CONSUME_ASSIGN3(tokens.CloseParen, (token) => {
-                  this.tokenPayload(
-                    token,
-                    element,
-                    CstNodeKind.InitialAttribute_CloseParenToItem,
-                  );
-                });
-              },
-            },
-          ]);
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.INITACROSS, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.InitialAttribute_INITACROSS,
-            );
-            element.across = true;
-          });
-          this.CONSUME_ASSIGN4(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.InitialAttribute_OpenParenInitAcross,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.InitAcrossExpression, {
-            assign: (result) => {
-              element.expressions.push(result);
-            },
-          });
-          this.MANY3(() => {
-            this.CONSUME_ASSIGN3(tokens.Comma, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.InitialAttribute_CommaInitAcross,
-              );
-            });
-            this.SUBRULE_ASSIGN2(this.InitAcrossExpression, {
-              assign: (result) => {
-                element.expressions.push(result);
-              },
-            });
-          });
-          this.CONSUME_ASSIGN4(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.InitialAttribute_CloseParenInitAcross,
-            );
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.InitialAttribute>();
-  });
-  private createInitialToContent(): ast.InitialToContent {
-    return {
-      kind: ast.SyntaxKind.InitialToContent,
-      container: null,
-      varying: null,
-      type: null,
-    };
-  }
-
-  InitialToContent = this.RULE("InitialToContent", () => {
-    let element = this.push(this.createInitialToContent());
+const initialToContent = rule(
+  choice(sequence(tokens.Varying), sequence(tokens.CharType)),
+  (state: ParserState): ast.InitialToContent => {
+    const element = ast.createInitialToContent();
 
     // Varying and char tokens can appear in any order
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Varying, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.InitialToContent_VARYING0,
-            );
-            element.varying = tokens.Varying.mapToEnumLiteral(
-              token.tokenTypeIdx,
-            );
-          });
-          this.OPTION1(() => {
-            this.CONSUME_ASSIGN1(tokens.CharType, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.InitialToContent_CHAR0,
-              );
-              element.type = tokens.CharType.mapToEnumLiteral(
-                token.tokenTypeIdx,
-              );
-            });
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN2(tokens.CharType, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.InitialToContent_CHAR1,
-            );
-            element.type = tokens.CharType.mapToEnumLiteral(token.tokenTypeIdx);
-          });
-          this.OPTION2(() => {
-            this.CONSUME_ASSIGN2(tokens.Varying, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.InitialToContent_VARYING1,
-              );
-              element.varying = tokens.Varying.mapToEnumLiteral(
-                token.tokenTypeIdx,
-              );
-            });
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.InitialToContent>();
-  });
-  private createInitAcrossExpression(): ast.InitAcrossExpression {
-    return {
-      kind: ast.SyntaxKind.InitAcrossExpression,
-      container: null,
-      expressions: [],
-    };
-  }
-
-  InitAcrossExpression = this.RULE("InitAcrossExpression", () => {
-    let element = this.push(this.createInitAcrossExpression());
-
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    if (state.canConsume(tokens.Varying)) {
+      const varyingToken = state.consume(
         element,
-        CstNodeKind.InitAcrossExpression_OpenParen,
+        CstNodeKind.InitialToContent_VARYING0,
+        tokens.Varying,
       );
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.expressions.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.InitAcrossExpression_Comma,
+      if (varyingToken) {
+        element.varying = tokens.Varying.mapToEnumLiteral(
+          varyingToken.tokenTypeIdx,
         );
-      });
-      this.SUBRULE_ASSIGN2(this.Expression, {
-        assign: (result) => {
-          element.expressions.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.InitAcrossExpression_CloseParen,
-      );
-    });
-
-    return this.pop<ast.InitAcrossExpression>();
-  });
-
-  InitialAttributeItem = this.RULE("InitialAttributeItem", () => {
-    this.push({});
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.InitialAttributeItemStar, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.InitialAttributeSpecification, {
-            assign: (result) => {
-              this.replace(result);
-            },
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.InitialAttributeItem>();
-  });
-
-  private createInitialAttributeItemStar(): ast.InitialAttributeItemStar {
-    return { kind: ast.SyntaxKind.InitialAttributeItemStar, container: null };
-  }
-
-  InitialAttributeItemStar = this.RULE("InitialAttributeItemStar", () => {
-    let element = this.push(this.createInitialAttributeItemStar());
-
-    this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.InitialAttributeItemStar_Star,
-      );
-    });
-
-    return this.pop<ast.InitialAttributeItemStar>();
-  });
-  private createInitialAttributeSpecification(): ast.InitialAttributeSpecification {
-    return {
-      kind: ast.SyntaxKind.InitialAttributeSpecification,
-      container: null,
-      star: false,
-      item: null,
-      expression: null,
-    };
-  }
-
-  InitialAttributeSpecification = this.RULE(
-    "InitialAttributeSpecification",
-    () => {
-      let element = this.push(this.createInitialAttributeSpecification());
-
-      this.OR1([
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.InitialAttributeSpecification_OpenParen,
-              );
-            });
-            this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.InitialAttributeSpecification_Star,
-              );
-              element.star = true;
-            });
-            this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.InitialAttributeSpecification_CloseParen,
-              );
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.Expression, {
-              assign: (result) => {
-                element.expression = result;
-              },
-            });
-          },
-        },
-      ]);
-      this.OPTION1(() => {
-        this.SUBRULE_ASSIGN1(this.InitialAttributeSpecificationIteration, {
-          assign: (result) => {
-            element.item = result;
-          },
-        });
-      });
-
-      return this.pop<ast.InitialAttributeSpecification>();
-    },
-  );
-
-  InitialAttributeSpecificationIteration = this.RULE(
-    "InitialAttributeSpecificationIteration",
-    () => {
-      this.push({});
-
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.InitialAttributeItemStar, {
-              assign: (result) => {
-                this.replace(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(
-              this.InitialAttributeSpecificationIterationValue,
-              {
-                assign: (result) => {
-                  this.replace(result);
-                },
-              },
-            );
-          },
-        },
-      ]);
-
-      return this.pop<ast.InitialAttributeSpecificationIteration>();
-    },
-  );
-  private createInitialAttributeSpecificationIterationValue(): ast.InitialAttributeSpecificationIterationValue {
-    return {
-      kind: ast.SyntaxKind.InitialAttributeSpecificationIterationValue,
-      container: null,
-      items: [],
-    };
-  }
-
-  InitialAttributeSpecificationIterationValue = this.RULE(
-    "InitialAttributeSpecificationIterationValue",
-    () => {
-      let element = this.push(
-        this.createInitialAttributeSpecificationIterationValue(),
-      );
-
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.InitialAttributeItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-      this.MANY1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.InitialAttributeSpecificationIterationValue_Comma,
-          );
-        });
-        this.SUBRULE_ASSIGN2(this.InitialAttributeItem, {
-          assign: (result) => {
-            element.items.push(result);
-          },
-        });
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.InitialAttributeSpecificationIterationValue_CloseParen,
-        );
-      });
-
-      return this.pop<ast.InitialAttributeSpecificationIterationValue>();
-    },
-  );
-  private createDeclareStatement(): ast.DeclareStatement {
-    return {
-      kind: ast.SyntaxKind.DeclareStatement,
-      container: null,
-      items: [],
-      xDeclare: false,
-    };
-  }
-
-  DeclareStatement = this.RULE("DeclareStatement", () => {
-    let element = this.push(this.createDeclareStatement());
-
-    this.CONSUME_ASSIGN1(tokens.DECLARE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DeclareStatement_DECLARE);
-      if (token.image.charAt(0).toUpperCase() === "X") {
-        element.xDeclare = true;
       }
-    });
-    this.SUBRULE_ASSIGN1(this.DeclaredItem, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DeclareStatement_Comma);
-      });
-      this.SUBRULE_ASSIGN2(this.DeclaredItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.Semicolon, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DeclareStatement_Semicolon);
-    });
 
-    return this.pop<ast.DeclareStatement>();
-  });
+      if (state.canConsume(tokens.CharType)) {
+        const typeToken = state.consume(
+          element,
+          CstNodeKind.InitialToContent_CHAR0,
+          tokens.CharType,
+        );
+        if (typeToken) {
+          element.type = tokens.CharType.mapToEnumLiteral(
+            typeToken.tokenTypeIdx,
+          );
+        }
+      }
+    } else if (state.canConsume(tokens.CharType)) {
+      const typeToken = state.consume(
+        element,
+        CstNodeKind.InitialToContent_CHAR1,
+        tokens.CharType,
+      );
+      if (typeToken) {
+        element.type = tokens.CharType.mapToEnumLiteral(typeToken.tokenTypeIdx);
+      }
 
-  private createWildcardItem(): ast.WildcardItem {
-    return {
-      kind: ast.SyntaxKind.WildcardItem,
-      container: null,
-      token: null,
-    };
-  }
+      if (state.canConsume(tokens.Varying)) {
+        const varyingToken = state.consume(
+          element,
+          CstNodeKind.InitialToContent_VARYING1,
+          tokens.Varying,
+        );
+        if (varyingToken) {
+          element.varying = tokens.Varying.mapToEnumLiteral(
+            varyingToken.tokenTypeIdx,
+          );
+        }
+      }
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
 
-  DeclaredItem = this.RULE("DeclaredItem", () => {
-    let element = this.push(ast.createDeclaredItem());
+    return element;
+  },
+);
 
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DeclaredItem_LevelNumber);
-        element.levelToken = token;
-        element.level = parseInt(token.image);
-      });
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.DeclaredVariable, {
-            assign: (result) => {
-              element.elements.push(result);
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-            const wildcard = this.createWildcardItem();
-            wildcard.token = token;
-            this.tokenPayload(
-              token,
-              wildcard,
-              CstNodeKind.WildcardItem_Asterisk,
-            );
-            element.elements.push(wildcard);
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DeclaredItem_OpenParen,
-            );
-          });
-          this.SUBRULE_ASSIGN1(this.DeclaredItem, {
-            assign: (result) => {
-              element.elements.push(result);
-            },
-          });
-          this.MANY1(() => {
-            this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.DeclaredItem_Comma);
-            });
-            this.SUBRULE_ASSIGN2(this.DeclaredItem, {
-              assign: (result) => {
-                element.elements.push(result);
-              },
-            });
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DeclaredItem_CloseParen,
-            );
-          });
-        },
-      },
-    ]);
-    this.MANY2(() => {
-      this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
+const initAcrossExpression = rule(
+  sequence(tokens.OpenParen),
+  (state: ParserState): ast.InitAcrossExpression => {
+    const element = ast.createInitAcrossExpression();
 
-    return this.pop<ast.DeclaredItem>();
-  });
+    state.consume(
+      element,
+      CstNodeKind.InitAcrossExpression_OpenParen,
+      tokens.OpenParen,
+    );
+    const lhs = expression.rule(state);
+    lhs && element.expressions.push(lhs);
 
-  DeclaredVariable = this.RULE("DeclaredVariable", () => {
-    let element = this.push(ast.createDeclaredVariable());
+    const { inc } = state.createLoopContext("InitAcrossExpression");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.InitAcrossExpression_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = expression.rule(state);
+      rhs && element.expressions.push(rhs);
+    }
 
-    this.CONSUME_ASSIGN(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DeclaredVariable_Name);
-      element.name = token.image;
-      element.nameToken = token;
-    });
+    state.consume(
+      element,
+      CstNodeKind.InitAcrossExpression_CloseParen,
+      tokens.CloseParen,
+    );
 
-    return this.pop<ast.DeclaredVariable>();
-  });
+    return element;
+  },
+);
 
-  private getCommonDeclarationAttributes(): ParserMethod<[], any>[] {
-    return [
-      this.InitialAttribute,
-      this.DateAttribute,
-      this.HandleAttribute,
-      this.DefinedAttribute,
-      this.PictureAttribute,
-      this.EnvironmentAttribute,
-      this.DimensionsDataAttribute,
-      this.ValueListFromAttribute,
-      this.ValueListAttribute,
-      this.ValueRangeAttribute,
-      this.ReturnsAttribute,
-      this.ComputationDataAttribute,
-      this.EntryAttribute,
-      this.LikeAttribute,
-      this.TypeAttribute,
-      this.GenericAttribute,
-      this.IndForAttribute,
-    ];
-  }
+const initialAttributeItem = orRule<ast.InitialAttributeItem>(
+  () => initialAttributeItemStar,
+  () => initialAttributeSpecification,
+);
 
-  DefaultDeclarationAttribute = this.OR_RULE<ast.DefaultDeclarationAttribute>(
-    "DefaultDeclarationAttribute",
-    () => [
-      ...this.getCommonDeclarationAttributes(),
-      this.DefaultValueAttribute,
-    ],
+const initialAttributeItemStar = rule(
+  sequence(tokens.Star),
+  (state: ParserState): ast.InitialAttributeItemStar => {
+    const element = ast.createInitialAttributeItemStar();
+    state.consume(
+      element,
+      CstNodeKind.InitialAttributeItemStar_Star,
+      tokens.Star,
+    );
+    return element;
+  },
+);
+
+const initialAttributeSpecification = rule(
+  choice(
+    //LL(2) conflicts expression, decide at runtime
+    //sequence(tokens.OpenParen, tokens.Star),
+    () => expression.first(),
+  ),
+  (state: ParserState): ast.InitialAttributeSpecification => {
+    const element = ast.createInitialAttributeSpecification();
+
+    if (state.canConsume(tokens.OpenParen, tokens.Star)) {
+      // (Star) variant
+      state.consume(
+        element,
+        CstNodeKind.InitialAttributeSpecification_OpenParen,
+        tokens.OpenParen,
+      );
+      state.consume(
+        element,
+        CstNodeKind.InitialAttributeSpecification_Star,
+        tokens.Star,
+      );
+      element.star = true;
+      state.consume(
+        element,
+        CstNodeKind.InitialAttributeSpecification_CloseParen,
+        tokens.CloseParen,
+      );
+    } else {
+      // Expression variant
+      element.expression = expression.rule(state);
+    }
+
+    // Optional iteration specification
+    if (state.canConsumeFirst(initialAttributeSpecificationIteration.first())) {
+      element.item = initialAttributeSpecificationIteration.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const initialAttributeSpecificationIteration =
+  orRule<ast.InitialAttributeSpecificationIteration>(
+    () => initialAttributeItemStar,
+    () => initialAttributeSpecificationIterationValue,
   );
 
-  DeclarationAttribute = this.OR_RULE<ast.DeclarationAttribute>(
-    "DeclarationAttribute",
-    () => [...this.getCommonDeclarationAttributes(), this.ValueAttribute],
-  );
+const initialAttributeSpecificationIterationValue = rule(
+  sequence(tokens.OpenParen),
+  (state: ParserState): ast.InitialAttributeSpecificationIterationValue => {
+    const element = ast.createInitialAttributeSpecificationIterationValue();
 
-  private createDateAttribute(): ast.DateAttribute {
-    return {
-      kind: ast.SyntaxKind.DateAttribute,
-      container: null,
-      pattern: null,
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen,
+      tokens.OpenParen,
+    );
 
-  DateAttribute = this.RULE("DateAttribute", () => {
-    let element = this.push(this.createDateAttribute());
+    const lhs = initialAttributeItem.rule(state);
+    lhs && element.items.push(lhs);
+    const { inc } = state.createLoopContext(
+      "InitialAttributeSpecificationIterationValue",
+    );
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.InitialAttributeSpecificationIterationValue_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = initialAttributeItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
 
-    this.CONSUME_ASSIGN1(tokens.DATE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DateAttribute_DATE);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DateAttribute_OpenParen);
-      });
-      this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DateAttribute_PatternString,
-        );
-        element.pattern = token.image;
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DateAttribute_CloseParen);
-      });
-    });
+    state.consume(
+      element,
+      CstNodeKind.InitialAttributeSpecificationIterationValue_CloseParen,
+      tokens.CloseParen,
+    );
 
-    return this.pop<ast.DateAttribute>();
-  });
-  private createDefinedAttribute(): ast.DefinedAttribute {
-    return {
-      kind: ast.SyntaxKind.DefinedAttribute,
-      container: null,
-      reference: null,
-      position: null,
-    };
-  }
+    return element;
+  },
+);
 
-  DefinedAttribute = this.RULE("DefinedAttribute", () => {
-    let element = this.push(this.createDefinedAttribute());
+const declareStatement = rule(
+  sequence(tokens.DECLARE),
+  (state: ParserState): ast.DeclareStatement => {
+    const element = ast.createDeclareStatement();
 
-    this.CONSUME_ASSIGN1(tokens.DEFINED, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DefinedAttribute_DEFINED);
-    });
-    this.OR2([
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN1(this.MemberCall, {
-            assign: (result) => {
-              element.reference = result;
-            },
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DefinedAttribute_OpenParenRef,
-            );
-          });
-          this.SUBRULE_ASSIGN2(this.MemberCall, {
-            assign: (result) => {
-              element.reference = result;
-            },
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.DefinedAttribute_CloseParenRef,
-            );
-          });
-        },
-      },
-    ]);
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.POSITION, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefinedAttribute_POSITION,
-        );
-      });
-      this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefinedAttribute_OpenParenPos,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.position = result;
-        },
-      });
-      this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DefinedAttribute_CloseParenPos,
-        );
-      });
-    });
+    const declareToken = state.consume(
+      element,
+      CstNodeKind.DeclareStatement_DECLARE,
+      tokens.DECLARE,
+    );
+    if (declareToken?.image.charAt(0).toUpperCase() === "X") {
+      element.xDeclare = true;
+    }
 
-    return this.pop<ast.DefinedAttribute>();
-  });
-  private createPictureAttribute(): ast.PictureAttribute {
-    return {
-      kind: ast.SyntaxKind.PictureAttribute,
-      container: null,
-      picture: null,
-      pictureToken: null,
-    };
-  }
+    const lhs = declaredItem.rule(state);
+    lhs && element.items.push(lhs);
+    const { inc } = state.createLoopContext("DeclareStatement");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.DeclareStatement_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = declaredItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
 
-  PictureAttribute = this.RULE("PictureAttribute", () => {
-    let element = this.push(this.createPictureAttribute());
+    state.consume(
+      element,
+      CstNodeKind.DeclareStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.PICTURE, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.PictureAttribute_PICTURE,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.WIDEPIC, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.PictureAttribute_WIDEPIC,
-            );
-          });
-        },
-      },
-    ]);
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.PictureAttribute_PictureString,
-        );
-        element.picture = token.image;
-        element.pictureToken = token;
-      });
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.PictureAttribute>();
-  });
-  private createDimensionsDataAttribute(): ast.DimensionsDataAttribute {
-    return {
-      kind: ast.SyntaxKind.DimensionsDataAttribute,
-      container: null,
-      dimensions: null,
-    };
-  }
+const declaredItem = rule(
+  choice(
+    sequence(tokens.NUMBER),
+    () => declaredVariable.first(),
+    sequence(tokens.Star),
+    sequence(tokens.OpenParen),
+  ),
+  (state: ParserState): ast.DeclaredItem => {
+    let element = ast.createDeclaredItem();
 
-  DimensionsDataAttribute = this.RULE("DimensionsDataAttribute", () => {
-    let element = this.push(this.createDimensionsDataAttribute());
+    // Optional level number
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DeclaredItem_LevelNumber,
+        tokens.NUMBER,
+      )
+    ) {
+      const levelToken = state.last;
+      if (levelToken) {
+        element.levelToken = levelToken;
+        element.level = parseInt(levelToken.image, 10);
+      }
+    }
 
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.DIMENSION, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.DimensionsDataAttribute_DIMENSION,
-        );
-      });
-    });
-    this.SUBRULE_ASSIGN1(this.Dimensions, {
-      assign: (dimensions) => {
-        element.dimensions = dimensions;
-      },
-    });
+    // Main content: variable, wildcard, or nested items
+    if (state.canConsumeFirst(declaredVariable.first())) {
+      const variable = declaredVariable.rule(state);
+      variable && element.elements.push(variable);
+    } else if (
+      state.tryConsume(element, CstNodeKind.WildcardItem_Asterisk, tokens.Star)
+    ) {
+      const wildcard: ast.WildcardItem = {
+        kind: ast.SyntaxKind.WildcardItem,
+        container: null,
+        token: state.last!,
+      };
+      element.elements.push(wildcard);
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DeclaredItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      // Nested items in parentheses
+      const lhs = declaredItem.rule(state);
+      lhs && element.elements.push(lhs);
 
-    return this.pop<ast.DimensionsDataAttribute>();
-  });
-  private createTypeAttribute(): ast.TypeAttribute {
-    return {
-      kind: ast.SyntaxKind.TypeAttribute,
-      container: null,
-      type: null,
-      typeToken: null,
-    };
-  }
+      const { inc } = state.createLoopContext("DeclaredItem 1");
+      while (
+        state.tryConsume(element, CstNodeKind.DeclaredItem_Comma, tokens.Comma)
+      ) {
+        inc();
+        const rhs = declaredItem.rule(state);
+        rhs && element.elements.push(rhs);
+      }
 
-  TypeAttribute = this.RULE("TypeAttribute", () => {
-    let element = this.push(this.createTypeAttribute());
+      state.consume(
+        element,
+        CstNodeKind.DeclaredItem_CloseParen,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    // Parse attributes (can appear multiple times)
+    const { inc } = state.createLoopContext("DeclaredItem 2");
+    while (state.canConsumeFirst(declarationAttribute.first())) {
+      inc();
+      const attr = declarationAttribute.rule(state);
+      attr && element.attributes.push(attr);
+    }
+
+    return element;
+  },
+);
+
+const declaredVariable = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.DeclaredVariable => {
+    const element = ast.createDeclaredVariable();
+
+    const idToken = state.consume(
+      element,
+      CstNodeKind.DeclaredVariable_Name,
+      tokens.ID,
+    );
+    if (idToken) {
+      element.name = idToken.image;
+      element.nameToken = idToken;
+    }
+
+    return element;
+  },
+);
+
+const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAttribute>)[] =
+  [
+    () => initialAttribute,
+    () => dateAttribute,
+    () => handleAttribute,
+    () => definedAttribute,
+    () => pictureAttribute,
+    () => environmentAttribute,
+    () => dimensionsDataAttribute,
+    () => valueListFromAttribute,
+    () => valueListAttribute,
+    () => valueRangeAttribute,
+    () => returnsAttribute,
+    () => computationDataAttribute,
+    () => entryAttribute,
+    () => likeAttribute,
+    () => typeAttribute,
+    () => genericAttribute,
+    () => indForAttribute,
+  ];
+
+const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute>(
+  ...commonDeclarationAttributes,
+  () => defaultValueAttribute,
+);
+
+const declarationAttribute = orRule<ast.DeclarationAttribute>(
+  ...commonDeclarationAttributes,
+  () => valueAttribute,
+);
+
+const dateAttribute = rule(
+  sequence(tokens.DATE),
+  (state: ParserState): ast.DateAttribute => {
+    const element = ast.createDateAttribute();
+
+    state.consume(element, CstNodeKind.DateAttribute_DATE, tokens.DATE);
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DateAttribute_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      const patternToken = state.consume(
+        element,
+        CstNodeKind.DateAttribute_PatternString,
+        tokens.STRING_TERM,
+      );
+      if (patternToken) {
+        element.pattern = patternToken.image;
+      }
+      state.consume(
+        element,
+        CstNodeKind.DateAttribute_CloseParen,
+        tokens.CloseParen,
+      );
+    }
+
+    return element;
+  },
+);
+
+const definedAttribute = rule(
+  sequence(tokens.DEFINED),
+  (state: ParserState): ast.DefinedAttribute => {
+    const element = ast.createDefinedAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.DefinedAttribute_DEFINED,
+      tokens.DEFINED,
+    );
+
+    if (state.canConsumeFirst(memberCall.first())) {
+      element.reference = memberCall.rule(state);
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DefinedAttribute_OpenParenRef,
+        tokens.OpenParen,
+      )
+    ) {
+      element.reference = memberCall.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DefinedAttribute_CloseParenRef,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.DefinedAttribute_POSITION,
+        tokens.POSITION,
+      )
+    ) {
+      state.consume(
+        element,
+        CstNodeKind.DefinedAttribute_OpenParenPos,
+        tokens.OpenParen,
+      );
+      element.position = expression.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.DefinedAttribute_CloseParenPos,
+        tokens.CloseParen,
+      );
+    }
+
+    return element;
+  },
+);
+
+const pictureAttribute = rule(
+  choice(sequence(tokens.PICTURE), sequence(tokens.WIDEPIC)),
+  (state: ParserState): ast.PictureAttribute => {
+    const element = ast.createPictureAttribute();
+
+    if (state.canConsume(tokens.PICTURE)) {
+      element.pictureToken = state.consume(
+        element,
+        CstNodeKind.PictureAttribute_PICTURE,
+        tokens.PICTURE,
+      );
+    } else if (state.canConsume(tokens.WIDEPIC)) {
+      element.pictureToken = state.consume(
+        element,
+        CstNodeKind.PictureAttribute_WIDEPIC,
+        tokens.WIDEPIC,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    if (state.canConsume(tokens.STRING_TERM)) {
+      const pictureStringToken = state.consume(
+        element,
+        CstNodeKind.PictureAttribute_PictureString,
+        tokens.STRING_TERM,
+      );
+      if (pictureStringToken) {
+        element.picture = pictureStringToken.image;
+      }
+    }
+
+    return element;
+  },
+);
+
+const dimensionsDataAttribute = rule(
+  choice(sequence(tokens.DIMENSION), () => dimensions.first()),
+  (state: ParserState): ast.DimensionsDataAttribute => {
+    const element = ast.createDimensionsDataAttribute();
+
+    // Optional DIMENSION keyword
+    state.tryConsume(
+      element,
+      CstNodeKind.DimensionsDataAttribute_DIMENSION,
+      tokens.DIMENSION,
+    );
+
+    // Required dimensions
+    element.dimensions = dimensions.rule(state);
+
+    return element;
+  },
+);
+
+const typeAttribute = rule(
+  sequence(tokens.TypeOrOrdinal),
+  (state: ParserState): ast.TypeAttribute => {
+    const element = ast.createTypeAttribute();
 
     // "TYPE" and "ORDINAL" are interchangeable here
     // We need to validate that the "ORDINAL" keyword is used exclusively with ordinal types
     // We do this in the validation phase
-    this.CONSUME_ASSIGN1(tokens.TypeOrOrdinal, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.TypeAttribute_TYPE);
-      element.typeToken = token;
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.TypeAttribute_TypeId0,
-            );
-            element.type = ast.createReference(
-              element,
-              token,
-              ast.ReferenceType.Type,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.TypeAttribute_OpenParen,
-            );
-          });
-          this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.TypeAttribute_TypeId1,
-            );
-            element.type = ast.createReference(
-              element,
-              token,
-              ast.ReferenceType.Type,
-            );
-          });
-          this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.TypeAttribute_CloseParen,
-            );
-          });
-        },
-      },
-    ]);
+    element.typeToken = state.consume(
+      element,
+      CstNodeKind.TypeAttribute_TYPE,
+      tokens.TypeOrOrdinal,
+    );
 
-    return this.pop<ast.TypeAttribute>();
-  });
-
-  private createReturnsAttribute(): ast.ReturnsAttribute {
-    return {
-      kind: ast.SyntaxKind.ReturnsAttribute,
-      container: null,
-      attrs: [],
-    };
-  }
-
-  ReturnsAttribute = this.RULE("ReturnsAttribute", () => {
-    let element = this.push(this.createReturnsAttribute());
-
-    this.CONSUME_ASSIGN1(tokens.RETURNS, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnsAttribute_RETURNS);
-    });
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnsAttribute_OpenParen);
-    });
-    this.MANY1(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.ComputationDataAttribute, {
-              assign: (result) => {
-                element.attrs.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.DateAttribute, {
-              assign: (result) => {
-                element.attrs.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.ValueListAttribute, {
-              assign: (result) => {
-                element.attrs.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.ValueRangeAttribute, {
-              assign: (result) => {
-                element.attrs.push(result);
-              },
-            });
-          },
-        },
-      ]);
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+    if (state.canConsume(tokens.ID)) {
+      // Simple type reference: TYPE MYTYPE
+      const idToken = state.consume(
         element,
-        CstNodeKind.ReturnsAttribute_CloseParen,
+        CstNodeKind.TypeAttribute_TypeId0,
+        tokens.ID,
       );
-    });
+      if (idToken) {
+        element.type = ast.createReference(
+          element,
+          idToken,
+          ast.ReferenceType.Type,
+        );
+      }
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.TypeAttribute_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      // Parenthesized type reference: TYPE (MYTYPE)
+      const idToken = state.consume(
+        element,
+        CstNodeKind.TypeAttribute_TypeId1,
+        tokens.ID,
+      );
+      if (idToken) {
+        element.type = ast.createReference(
+          element,
+          idToken,
+          ast.ReferenceType.Type,
+        );
+      }
+      state.consume(
+        element,
+        CstNodeKind.TypeAttribute_CloseParen,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
 
-    return this.pop<ast.ReturnsAttribute>();
-  });
-  private createComputationDataAttribute(): ast.ComputationDataAttribute {
-    return {
-      kind: ast.SyntaxKind.ComputationDataAttribute,
-      typeToken: null,
-      container: null,
-      type: null,
-      dimensions: null,
-    };
-  }
+    return element;
+  },
+);
 
-  ComputationDataAttribute = this.RULE("ComputationDataAttribute", () => {
-    let element = this.push(this.createComputationDataAttribute());
+const returnsAttribute = rule(
+  sequence(tokens.RETURNS),
+  (state: ParserState): ast.ReturnsAttribute => {
+    const element = ast.createReturnsAttribute();
 
-    this.CONSUME_ASSIGN(tokens.DefaultAttribute, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.DefaultAttribute_Value);
+    state.consume(
+      element,
+      CstNodeKind.ReturnsAttribute_RETURNS,
+      tokens.RETURNS,
+    );
+    state.consume(
+      element,
+      CstNodeKind.ReturnsAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+
+    // Parse zero or more declaration attributes
+    const { inc } = state.createLoopContext("ReturnsAttribute");
+    while (
+      !state.eof &&
+      (state.canConsumeFirst(computationDataAttribute.first()) ||
+        state.canConsumeFirst(dateAttribute.first()) ||
+        state.canConsumeFirst(valueListAttribute.first()) ||
+        state.canConsumeFirst(valueRangeAttribute.first()))
+    ) {
+      inc();
+      if (state.canConsumeFirst(computationDataAttribute.first())) {
+        const attr = computationDataAttribute.rule(state);
+        attr && element.attrs.push(attr);
+      } else if (state.canConsumeFirst(dateAttribute.first())) {
+        const attr = dateAttribute.rule(state);
+        attr && element.attrs.push(attr);
+      } else if (state.canConsumeFirst(valueListAttribute.first())) {
+        const attr = valueListAttribute.rule(state);
+        attr && element.attrs.push(attr);
+      } else if (state.canConsumeFirst(valueRangeAttribute.first())) {
+        const attr = valueRangeAttribute.rule(state);
+        attr && element.attrs.push(attr);
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.ReturnsAttribute_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const computationDataAttribute = rule(
+  sequence(tokens.DefaultAttribute),
+  (state: ParserState): ast.ComputationDataAttribute => {
+    const element = ast.createComputationDataAttribute();
+
+    const token = state.consume(
+      element,
+      CstNodeKind.DefaultAttribute_Value,
+      tokens.DefaultAttribute,
+    );
+    if (token) {
       element.typeToken = token;
       element.type = tokens.DefaultAttribute.mapToEnumLiteral(
         token.tokenTypeIdx,
       );
-    });
-    this.OPTION1(() => {
-      this.SUBRULE_ASSIGN1(this.Dimensions, {
-        assign: (result) => {
-          element.dimensions = result;
-        },
-      });
-    });
+    }
 
-    return this.pop<ast.ComputationDataAttribute>();
-  });
-  private createDefaultValueAttribute(): ast.DefaultValueAttribute {
-    return {
-      kind: ast.SyntaxKind.DefaultValueAttribute,
-      container: null,
-      items: [],
-    };
-  }
+    // Optional dimensions
+    if (state.canConsumeFirst(dimensions.first())) {
+      element.dimensions = dimensions.rule(state);
+    }
 
-  DefaultValueAttribute = this.RULE("DefaultValueAttribute", () => {
-    let element = this.push(this.createDefaultValueAttribute());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN(tokens.VALUE, (token) => {
-      this.tokenPayload(
-        token,
+const defaultValueAttribute = rule(
+  sequence(tokens.VALUE),
+  (state: ParserState): ast.DefaultValueAttribute => {
+    const element = ast.createDefaultValueAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.DefaultValueAttribute_VALUE,
+      tokens.VALUE,
+    );
+    state.consume(
+      element,
+      CstNodeKind.DefaultValueAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const lhs = defaultValueAttributeItem.rule(state);
+    lhs && element.items.push(lhs);
+    const { inc } = state.createLoopContext("DefaultValueAttribute");
+    while (
+      state.tryConsume(
         element,
-        CstNodeKind.DefaultValueAttribute_VALUE,
-      );
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefaultValueAttribute_OpenParen,
-      );
-    });
-    this.SUBRULE_ASSIGN1(this.DefaultValueAttributeItem, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY(() => {
-      this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-        this.tokenPayload(
-          token,
+        CstNodeKind.DefaultValueAttribute_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const rhs = defaultValueAttributeItem.rule(state);
+      rhs && element.items.push(rhs);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.DefaultValueAttribute_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const valueAttribute = rule(
+  sequence(tokens.VALUE),
+  (state: ParserState): ast.ValueAttribute => {
+    const element = ast.createValueAttribute();
+
+    state.consume(element, CstNodeKind.ValueAttribute_VALUE, tokens.VALUE);
+    state.consume(
+      element,
+      CstNodeKind.ValueAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+    element.value = expression.rule(state);
+    state.consume(
+      element,
+      CstNodeKind.ValueAttribute_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const defaultValueAttributeItem = rule(
+  () => declarationAttribute.first(),
+  (state: ParserState): ast.DefaultValueAttributeItem => {
+    const element = ast.createDefaultValueAttributeItem();
+
+    // Parse at least one declaration attribute
+    const lhs = declarationAttribute.rule(state);
+    lhs && element.attributes.push(lhs);
+
+    // Parse additional attributes
+    const { inc } = state.createLoopContext("DefaultValueAttributeItem");
+    while (state.canConsumeFirst(declarationAttribute.first())) {
+      inc();
+      const rhs = declarationAttribute.rule(state);
+      rhs && element.attributes.push(rhs);
+    }
+
+    return element;
+  },
+);
+
+const valueListAttribute = rule(
+  sequence(tokens.VALUELIST),
+  (state: ParserState): ast.ValueListAttribute => {
+    const element = ast.createValueListAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.ValueListAttribute_VALUELIST,
+      tokens.VALUELIST,
+    );
+    state.consume(
+      element,
+      CstNodeKind.ValueListAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+
+    if (state.canConsumeFirst(expression.first())) {
+      const lhs = expression.rule(state);
+      lhs && element.values.push(lhs);
+      const { inc } = state.createLoopContext("ValueListAttribute");
+      while (
+        state.tryConsume(
           element,
-          CstNodeKind.DefaultValueAttribute_Comma,
-        );
-      });
-      this.SUBRULE_ASSIGN2(this.DefaultValueAttributeItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.DefaultValueAttribute_CloseParen,
-      );
-    });
+          CstNodeKind.ValueListAttribute_Comma,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const rhs = expression.rule(state);
+        rhs && element.values.push(rhs);
+      }
+    }
 
-    return this.pop<ast.DefaultValueAttribute>();
-  });
-  private createValueAttribute(): ast.ValueAttribute {
-    return {
-      kind: ast.SyntaxKind.ValueAttribute,
-      container: null,
-      value: null,
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ValueListAttribute_CloseParen,
+      tokens.CloseParen,
+    );
 
-  ValueAttribute = this.RULE("ValueAttribute", () => {
-    let element = this.push(this.createValueAttribute());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN(tokens.VALUE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ValueAttribute_VALUE);
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ValueAttribute_OpenParen);
-    });
-    this.SUBRULE_ASSIGN(this.Expression, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ValueAttribute_CloseParen);
-    });
+const valueListFromAttribute = rule(
+  sequence(tokens.VALUELISTFROM),
+  (state: ParserState): ast.ValueListFromAttribute => {
+    const element = ast.createValueListFromAttribute();
 
-    return this.pop<ast.ValueAttribute>();
-  });
-  private createDefaultValueAttributeItem(): ast.DefaultValueAttributeItem {
-    return {
-      kind: ast.SyntaxKind.DefaultValueAttributeItem,
-      container: null,
-      attributes: [],
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ValueListFromAttribute_VALUELISTFROM,
+      tokens.VALUELISTFROM,
+    );
+    element.from = locatorCall.rule(state);
 
-  DefaultValueAttributeItem = this.RULE("DefaultValueAttributeItem", () => {
-    let element = this.push(this.createDefaultValueAttributeItem());
+    return element;
+  },
+);
 
-    this.AT_LEAST_ONE(() => {
-      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
+const valueRangeAttribute = rule(
+  sequence(tokens.VALUERANGE),
+  (state: ParserState): ast.ValueRangeAttribute => {
+    const element = ast.createValueRangeAttribute();
 
-    return this.pop<ast.DefaultValueAttributeItem>();
-  });
-  private createValueListAttribute(): ast.ValueListAttribute {
-    return {
-      kind: ast.SyntaxKind.ValueListAttribute,
-      container: null,
-      values: [],
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ValueRangeAttribute_VALUERANGE,
+      tokens.VALUERANGE,
+    );
+    state.consume(
+      element,
+      CstNodeKind.ValueRangeAttribute_OpenParen,
+      tokens.OpenParen,
+    );
 
-  ValueListAttribute = this.RULE("ValueListAttribute", () => {
-    let element = this.push(this.createValueListAttribute());
-
-    this.CONSUME_ASSIGN(tokens.VALUELIST, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueListAttribute_VALUELIST,
-      );
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueListAttribute_OpenParen,
-      );
-    });
-    this.OPTION(() => {
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.values.push(result);
-        },
-      });
-      this.MANY(() => {
-        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.ValueListAttribute_Comma,
-          );
-        });
-        this.SUBRULE_ASSIGN2(this.Expression, {
-          assign: (result) => {
-            element.values.push(result);
-          },
-        });
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueListAttribute_CloseParen,
-      );
-    });
-
-    return this.pop<ast.ValueListAttribute>();
-  });
-  private createValueListFromAttribute(): ast.ValueListFromAttribute {
-    return {
-      kind: ast.SyntaxKind.ValueListFromAttribute,
-      container: null,
-      from: null,
-    };
-  }
-
-  ValueListFromAttribute = this.RULE("ValueListFromAttribute", () => {
-    let element = this.push(this.createValueListFromAttribute());
-
-    this.CONSUME_ASSIGN(tokens.VALUELISTFROM, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueListFromAttribute_VALUELISTFROM,
-      );
-    });
-    this.SUBRULE_ASSIGN(this.LocatorCall, {
-      assign: (result) => {
-        element.from = result;
-      },
-    });
-
-    return this.pop<ast.ValueListFromAttribute>();
-  });
-  private createValueRangeAttribute(): ast.ValueRangeAttribute {
-    return {
-      kind: ast.SyntaxKind.ValueRangeAttribute,
-      container: null,
-      values: [],
-    };
-  }
-
-  ValueRangeAttribute = this.RULE("ValueRangeAttribute", () => {
-    let element = this.push(this.createValueRangeAttribute());
-
-    this.CONSUME_ASSIGN(tokens.VALUERANGE, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueRangeAttribute_VALUERANGE,
-      );
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueRangeAttribute_OpenParen,
-      );
-    });
-    this.OPTION(() => {
-      this.SUBRULE_ASSIGN1(this.Expression, {
-        assign: (result) => {
-          element.values.push(result);
-        },
-      });
-      this.MANY(() => {
-        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
-            element,
-            CstNodeKind.ValueRangeAttribute_Comma,
-          );
-        });
-        this.SUBRULE_ASSIGN2(this.Expression, {
-          assign: (result) => {
-            element.values.push(result);
-          },
-        });
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ValueRangeAttribute_CloseParen,
-      );
-    });
-
-    return this.pop<ast.ValueRangeAttribute>();
-  });
-
-  private createLikeAttribute(): ast.LikeAttribute {
-    return {
-      kind: ast.SyntaxKind.LikeAttribute,
-      container: null,
-      reference: null,
-    };
-  }
-
-  LikeAttribute = this.RULE("LikeAttribute", () => {
-    let element = this.push(this.createLikeAttribute());
-
-    this.CONSUME_ASSIGN(tokens.LIKE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LikeAttribute_LIKE);
-    });
-    this.SUBRULE_ASSIGN(this.LocatorCall, {
-      assign: (result) => {
-        element.reference = result;
-      },
-    });
-
-    return this.pop<ast.LikeAttribute>();
-  });
-  private createHandleAttribute(): ast.HandleAttribute {
-    return {
-      kind: ast.SyntaxKind.HandleAttribute,
-      container: null,
-      size: null,
-      type: null,
-    };
-  }
-
-  HandleAttribute = this.RULE("HandleAttribute", () => {
-    let element = this.push(this.createHandleAttribute());
-
-    this.CONSUME_ASSIGN(tokens.HANDLE, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.HandleAttribute_HANDLE);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+    if (state.canConsumeFirst(expression.first())) {
+      const lhs = expression.rule(state);
+      lhs && element.values.push(lhs);
+      const { inc } = state.createLoopContext("ValueRangeAttribute");
+      while (
+        state.tryConsume(
           element,
-          CstNodeKind.HandleAttribute_OpenParenSize,
-        );
-      });
-      this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.HandleAttribute_SizeNumber,
-        );
-        element.size = token.image;
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.HandleAttribute_CloseParenSize,
-        );
-      });
-    });
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.HandleAttribute_TypeId0,
-            );
-            element.type = ast.createReference(
-              element,
-              token,
-              ast.ReferenceType.Type,
-            );
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.HandleAttribute_OpenParenType,
-            );
-          });
-          this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.HandleAttribute_TypeId1,
-            );
-            element.type = ast.createReference(
-              element,
-              token,
-              ast.ReferenceType.Type,
-            );
-          });
-          this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.HandleAttribute_CloseParenType,
-            );
-          });
-        },
-      },
-    ]);
+          CstNodeKind.ValueRangeAttribute_Comma,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const rhs = expression.rule(state);
+        rhs && element.values.push(rhs);
+      }
+    }
 
-    return this.pop<ast.HandleAttribute>();
-  });
-  private createDimensions(): ast.Dimensions {
-    return {
-      kind: ast.SyntaxKind.Dimensions,
-      container: null,
-      dimensions: [],
-      token: null,
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ValueRangeAttribute_CloseParen,
+      tokens.CloseParen,
+    );
 
-  Dimensions = this.RULE("Dimensions", () => {
-    let element = this.push(this.createDimensions());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      element.token = token;
-      this.tokenPayload(token, element, CstNodeKind.Dimensions_OpenParen);
-    });
-    this.OPTION(() => {
-      this.SUBRULE_ASSIGN1(this.DimensionBound, {
-        assign: (result) => {
-          element.dimensions.push(result);
-        },
-      });
-      this.MANY(() => {
-        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-          this.tokenPayload(token, element, CstNodeKind.Dimensions_Comma);
-        });
-        this.SUBRULE_ASSIGN2(this.DimensionBound, {
-          assign: (result) => {
-            element.dimensions.push(result);
-          },
-        });
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.Dimensions_CloseParen);
-    });
+const likeAttribute = rule(
+  sequence(tokens.LIKE),
+  (state: ParserState): ast.LikeAttribute => {
+    const element = ast.createLikeAttribute();
 
-    return this.pop<ast.Dimensions>();
-  });
-  private createDimensionBound(): ast.DimensionBound {
-    return {
-      kind: ast.SyntaxKind.DimensionBound,
-      container: null,
-      lower: null,
-      upper: null,
-    };
-  }
+    state.consume(element, CstNodeKind.LikeAttribute_LIKE, tokens.LIKE);
+    element.reference = locatorCall.rule(state);
 
-  DimensionBound = this.RULE("DimensionBound", () => {
-    let element = this.push(this.createDimensionBound());
+    return element;
+  },
+);
 
-    this.SUBRULE_ASSIGN1(this.Bound, {
-      assign: (result) => {
-        element.upper = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN(tokens.Colon, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.DimensionBound_Colon);
-      });
-      this.SUBRULE_ASSIGN2(this.Bound, {
-        assign: (result) => {
-          element.lower = element.upper;
-          element.upper = result;
-        },
-      });
-    });
+const handleAttribute = rule(
+  sequence(tokens.HANDLE),
+  (state: ParserState): ast.HandleAttribute => {
+    const element = ast.createHandleAttribute();
 
-    return this.pop<ast.DimensionBound>();
-  });
-  private createBound(): ast.Bound {
-    return {
-      kind: ast.SyntaxKind.Bound,
-      container: null,
-      expression: null,
-      refer: null,
-    };
-  }
+    state.consume(element, CstNodeKind.HandleAttribute_HANDLE, tokens.HANDLE);
 
-  Bound = this.RULE("Bound", () => {
-    let element = this.push(this.createBound());
-
-    this.OR1([
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN(tokens.Star, (token) => {
-            this.tokenPayload(token, element, CstNodeKind.Bound_Star);
-            element.expression = token.image as "*";
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE_ASSIGN(this.Expression, {
-            assign: (result) => {
-              element.expression = result;
-            },
-          });
-          this.OPTION1(() => {
-            this.CONSUME_ASSIGN(tokens.REFER, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.Bound_REFER);
-            });
-            this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.Bound_OpenParen);
-            });
-            this.SUBRULE_ASSIGN(this.LocatorCall, {
-              assign: (result) => {
-                element.refer = result;
-              },
-            });
-            this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.Bound_CloseParen);
-            });
-          });
-        },
-      },
-    ]);
-
-    return this.pop<ast.Bound>();
-  });
-  private createEnvironmentAttribute(): ast.EnvironmentAttribute {
-    return {
-      kind: ast.SyntaxKind.EnvironmentAttribute,
-      container: null,
-      items: [],
-    };
-  }
-
-  EnvironmentAttribute = this.RULE("EnvironmentAttribute", () => {
-    let element = this.push(this.createEnvironmentAttribute());
-
-    this.CONSUME_ASSIGN(tokens.ENVIRONMENT, (token) => {
-      this.tokenPayload(
-        token,
+    // Optional size in parentheses
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.EnvironmentAttribute_ENVIRONMENT,
-      );
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+        CstNodeKind.HandleAttribute_OpenParenSize,
+        tokens.OpenParen,
+      )
+    ) {
+      const sizeToken = state.consume(
         element,
-        CstNodeKind.EnvironmentAttribute_OpenParen,
+        CstNodeKind.HandleAttribute_SizeNumber,
+        tokens.NUMBER,
       );
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN(this.EnvironmentAttributeItem, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
+      if (sizeToken) {
+        element.size = sizeToken.image;
+      }
+      state.consume(
+        element,
+        CstNodeKind.HandleAttribute_CloseParenSize,
+        tokens.CloseParen,
+      );
+    }
+
+    // Required type reference
+    if (state.canConsume(tokens.ID)) {
+      // Simple type reference: HANDLE MYTYPE
+      const idToken = state.consume(
+        element,
+        CstNodeKind.HandleAttribute_TypeId0,
+        tokens.ID,
+      );
+      if (idToken) {
+        element.type = ast.createReference(
+          element,
+          idToken,
+          ast.ReferenceType.Type,
+        );
+      }
+    } else if (
+      state.tryConsume(
+        element,
+        CstNodeKind.HandleAttribute_OpenParenType,
+        tokens.OpenParen,
+      )
+    ) {
+      // Parenthesized type reference: HANDLE (MYTYPE)
+      const idToken = state.consume(
+        element,
+        CstNodeKind.HandleAttribute_TypeId1,
+        tokens.ID,
+      );
+      if (idToken) {
+        element.type = ast.createReference(
+          element,
+          idToken,
+          ast.ReferenceType.Type,
+        );
+      }
+      state.consume(
+        element,
+        CstNodeKind.HandleAttribute_CloseParenType,
+        tokens.CloseParen,
+      );
+    } else {
+      state.error(Severe.IBM3988I.message, state.token, Severity.S);
+      return element;
+    }
+
+    return element;
+  },
+);
+
+const dimensions = rule(
+  sequence(tokens.OpenParen),
+  (state: ParserState): ast.Dimensions => {
+    const element = ast.createDimensions();
+
+    const openToken = state.consume(
+      element,
+      CstNodeKind.Dimensions_OpenParen,
+      tokens.OpenParen,
+    );
+    element.token = openToken;
+
+    // Optional dimension bounds
+    if (state.canConsumeFirst(dimensionBound.first())) {
+      const lhs = dimensionBound.rule(state);
+      lhs && element.dimensions.push(lhs);
+      const { inc } = state.createLoopContext("Dimensions");
+      while (
+        state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+      ) {
+        inc();
+        const rhs = dimensionBound.rule(state);
+        rhs && element.dimensions.push(rhs);
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.Dimensions_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const dimensionBound = rule(
+  () => bound.first(),
+  (state: ParserState): ast.DimensionBound => {
+    const element = ast.createDimensionBound();
+
+    // First bound is the upper bound
+    element.upper = bound.rule(state);
+
+    // Optional colon followed by lower bound
+    if (
+      state.tryConsume(element, CstNodeKind.DimensionBound_Colon, tokens.Colon)
+    ) {
+      element.lower = element.upper; // Move upper to lower
+      element.upper = bound.rule(state); // Parse new upper
+    }
+
+    return element;
+  },
+);
+
+const bound = rule(
+  choice(sequence(tokens.Star), () => expression.first()),
+  (state: ParserState): ast.Bound => {
+    const element = ast.createBound();
+
+    if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
+      // Star bound (indicates variable size)
+      element.expression = "*";
+    } else {
+      // Expression bound
+      element.expression = expression.rule(state);
+
+      // Optional REFER clause
+      if (state.tryConsume(element, CstNodeKind.Bound_REFER, tokens.REFER)) {
+        state.consume(element, CstNodeKind.Bound_OpenParen, tokens.OpenParen);
+        element.refer = locatorCall.rule(state);
+        state.consume(element, CstNodeKind.Bound_CloseParen, tokens.CloseParen);
+      }
+    }
+
+    return element;
+  },
+);
+
+const environmentAttribute = rule(
+  sequence(tokens.ENVIRONMENT),
+  (state: ParserState): ast.EnvironmentAttribute => {
+    const element = ast.createEnvironmentAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentAttribute_ENVIRONMENT,
+      tokens.ENVIRONMENT,
+    );
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+
+    // Parse zero or more environment attribute items
+    const { inc } = state.createLoopContext("EnvironmentAttribute");
+    while (
+      !state.eof &&
+      state.canConsumeFirst(environmentAttributeItem.first())
+    ) {
+      inc();
+      const item = environmentAttributeItem.rule(state);
+      item && element.items.push(item);
+
       // TODO: research, This does not align to the language spec
-      this.OPTION(() => {
-        this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
+      // Optional comma between items
+      state.tryConsume(
+        element,
+        CstNodeKind.EnvironmentAttributeItem_Comma,
+        tokens.Comma,
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentAttribute_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const environmentAttributeItem = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.EnvironmentAttributeItem => {
+    const element = ast.createEnvironmentAttributeItem();
+
+    const envToken = state.consume(
+      element,
+      CstNodeKind.EnvironmentAttributeItem_Environment,
+      tokens.ID,
+    );
+    if (envToken) {
+      element.environment = envToken.image;
+    }
+
+    // Optional arguments in parentheses
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.EnvironmentAttributeItem_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      // Optional expression list
+      if (state.canConsumeFirst(expression.first())) {
+        const lhs = expression.rule(state);
+        lhs && element.args.push(lhs);
+        const { inc } = state.createLoopContext("EnvironmentAttributeItem");
+        while (
+          !state.eof &&
+          (state.canConsume(tokens.Comma) ||
+            state.canConsumeFirst(expression.first()))
+        ) {
+          inc();
+          // Optional comma before next expression
+          state.tryConsume(
             element,
             CstNodeKind.EnvironmentAttributeItem_Comma,
+            tokens.Comma,
           );
-        });
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
+
+          if (state.canConsumeFirst(expression.first())) {
+            const rhs = expression.rule(state);
+            rhs && element.args.push(rhs);
+          } else {
+            break; //TODO is this correct?! Very weird behavior
+          }
+        }
+      }
+
+      state.consume(
         element,
-        CstNodeKind.EnvironmentAttribute_CloseParen,
+        CstNodeKind.EnvironmentAttributeItem_CloseParen,
+        tokens.CloseParen,
       );
-    });
+    }
 
-    return this.pop<ast.EnvironmentAttribute>();
-  });
-  private createEnvironmentAttributeItem(): ast.EnvironmentAttributeItem {
-    return {
-      kind: ast.SyntaxKind.EnvironmentAttributeItem,
-      container: null,
-      environment: null,
-      args: [],
-    };
-  }
+    return element;
+  },
+);
 
-  EnvironmentAttributeItem = this.RULE("EnvironmentAttributeItem", () => {
-    let element = this.push(this.createEnvironmentAttributeItem());
+const entryAttribute = rule(
+  choice(sequence(tokens.LIMITED), sequence(tokens.ENTRY)),
+  (state: ParserState): ast.EntryAttribute => {
+    const element = ast.createEntryAttribute();
 
-    this.CONSUME_ASSIGN(tokens.ID, (token) => {
-      this.tokenPayload(
-        token,
+    // Parse zero or more LIMITED tokens at the beginning
+    const { inc } = state.createLoopContext("EntryAttribute 1");
+    while (
+      state.tryConsume(
         element,
-        CstNodeKind.EnvironmentAttributeItem_Environment,
+        CstNodeKind.EntryAttribute_Limited0,
+        tokens.LIMITED,
+      )
+    ) {
+      inc();
+      const limitedToken = state.last;
+      if (limitedToken) {
+        element.limited.push(limitedToken);
+      }
+    }
+
+    // Parse required ENTRY token
+    element.entryToken = state.consume(
+      element,
+      CstNodeKind.EntryAttribute_ENTRY,
+      tokens.ENTRY,
+    );
+
+    // Optional parameter list
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.EntryAttribute_OpenParenAttribute,
+        tokens.OpenParen,
+      )
+    ) {
+      const lhs = entryDescription.rule(state);
+      lhs && element.attributes.push(lhs);
+
+      const { inc } = state.createLoopContext("EntryAttribute 2");
+      while (
+        state.tryConsume(
+          element,
+          CstNodeKind.EntryAttribute_CommaAttribute,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        const rhs = entryDescription.rule(state);
+        rhs && element.attributes.push(rhs);
+      }
+
+      state.consume(
+        element,
+        CstNodeKind.EntryAttribute_CloseParenAttribute,
+        tokens.CloseParen,
       );
-      element.environment = token.image;
-    });
-    this.OPTION3(() => {
-      this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EnvironmentAttributeItem_OpenParen,
-        );
-      });
-      this.OPTION2(() => {
-        this.SUBRULE_ASSIGN1(this.Expression, {
-          assign: (result) => {
-            element.args.push(result);
-          },
-        });
-        this.MANY1(() => {
-          this.OPTION1(() => {
-            this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.EnvironmentAttributeItem_Comma,
-              );
-            });
-          });
-          this.SUBRULE_ASSIGN2(this.Expression, {
-            assign: (result) => {
-              element.args.push(result);
-            },
-          });
-        });
-      });
-      this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EnvironmentAttributeItem_CloseParen,
-        );
-      });
-    });
+    }
 
-    return this.pop<ast.EnvironmentAttributeItem>();
-  });
-
-  EntryAttribute = this.RULE("EntryAttribute", () => {
-    let element = this.push(ast.createEntryAttribute());
-
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.LIMITED, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.EntryAttribute_Limited0);
-        element.limited.push(token);
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.ENTRY, (token) => {
-      element.entryToken = token;
-      this.tokenPayload(token, element, CstNodeKind.EntryAttribute_ENTRY);
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-        this.tokenPayload(
-          token,
+    // Parse zero or more trailing options
+    const { inc: inc3 } = state.createLoopContext("EntryAttribute 3");
+    while (
+      !state.eof &&
+      (state.canConsumeFirst(options.first()) ||
+        state.canConsume(tokens.VARIABLE) ||
+        state.canConsume(tokens.LIMITED) ||
+        state.canConsumeFirst(returnsOption.first()) ||
+        state.canConsume(tokens.EXTERNAL))
+    ) {
+      inc3();
+      if (state.canConsumeFirst(options.first())) {
+        const opts = options.rule(state);
+        opts && element.options.push(opts);
+      } else if (
+        state.tryConsume(
           element,
-          CstNodeKind.EntryAttribute_OpenParenAttribute,
-        );
-      });
-      this.SUBRULE_ASSIGN1(this.EntryDescription, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-      this.MANY2(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
+          CstNodeKind.EntryAttribute_Variable,
+          tokens.VARIABLE,
+        )
+      ) {
+        const variableToken = state.last;
+        if (variableToken) {
+          element.variable.push(variableToken);
+        }
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.EntryAttribute_Limited1,
+          tokens.LIMITED,
+        )
+      ) {
+        const limitedToken = state.last;
+        if (limitedToken) {
+          element.limited.push(limitedToken);
+        }
+      } else if (state.canConsumeFirst(returnsOption.first())) {
+        const option = returnsOption.rule(state);
+        option && element.returns.push(option);
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.EntryAttribute_EXTERNAL,
+          tokens.EXTERNAL,
+        )
+      ) {
+        if (
+          state.tryConsume(
             element,
-            CstNodeKind.EntryAttribute_CommaAttribute,
+            CstNodeKind.EntryAttribute_OpenParenEnv,
+            tokens.OpenParen,
+          )
+        ) {
+          const envExpression = expression.rule(state);
+          envExpression && element.environmentName.push(envExpression);
+          state.consume(
+            element,
+            CstNodeKind.EntryAttribute_CloseParenEnv,
+            tokens.CloseParen,
           );
-        });
-        this.SUBRULE_ASSIGN2(this.EntryDescription, {
-          assign: (result) => {
-            element.attributes.push(result);
-          },
-        });
-      });
-      this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-        this.tokenPayload(
-          token,
-          element,
-          CstNodeKind.EntryAttribute_CloseParenAttribute,
-        );
-      });
-    });
-    this.MANY3(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.Options, {
-              assign: (result) => {
-                element.options.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.VARIABLE, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.EntryAttribute_Variable,
-              );
-              element.variable.push(token);
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN2(tokens.LIMITED, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.EntryAttribute_Limited1,
-              );
-              element.limited.push(token);
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.ReturnsOption, {
-              assign: (result) => {
-                element.returns.push(result);
-              },
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.EXTERNAL, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.EntryAttribute_EXTERNAL,
-              );
-            });
-            this.OPTION2(() => {
-              this.CONSUME_ASSIGN2(tokens.OpenParen, (token) => {
-                this.tokenPayload(
-                  token,
-                  element,
-                  CstNodeKind.EntryAttribute_OpenParenEnv,
-                );
-              });
-              this.SUBRULE_ASSIGN1(this.Expression, {
-                assign: (result) => {
-                  element.environmentName.push(result);
-                },
-              });
-              this.CONSUME_ASSIGN2(tokens.CloseParen, (token) => {
-                this.tokenPayload(
-                  token,
-                  element,
-                  CstNodeKind.EntryAttribute_CloseParenEnv,
-                );
-              });
-            });
-          },
-        },
-      ]);
-    });
+        }
+      }
+    }
 
-    return this.pop<ast.EntryAttribute>();
-  });
-  private createReturnsOption(): ast.ReturnsOption {
-    return {
-      kind: ast.SyntaxKind.ReturnsOption,
-      container: null,
-      returnAttributes: [],
-    };
-  }
+    return element;
+  },
+);
 
-  ReturnsOption = this.RULE("ReturnsOption", () => {
-    let element = this.push(this.createReturnsOption());
+const returnsOption = rule(
+  sequence(tokens.RETURNS),
+  (state: ParserState): ast.ReturnsOption => {
+    const element = ast.createReturnsOption();
 
-    this.CONSUME_ASSIGN(tokens.RETURNS, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnsOption_RETURNS);
-    });
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnsOption_OpenParen);
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.returnAttributes.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.CloseParen, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReturnsOption_CloseParen);
-    });
+    state.consume(element, CstNodeKind.ReturnsOption_RETURNS, tokens.RETURNS);
+    state.consume(
+      element,
+      CstNodeKind.ReturnsOption_OpenParen,
+      tokens.OpenParen,
+    );
 
-    return this.pop<ast.ReturnsOption>();
-  });
+    // Parse zero or more declaration attributes
+    const { inc } = state.createLoopContext("ReturnsOption");
+    while (!state.eof && state.canConsumeFirst(declarationAttribute.first())) {
+      inc();
+      const attr = declarationAttribute.rule(state);
+      attr && element.returnAttributes.push(attr);
+    }
 
-  EntryDescription = this.OR_RULE<ast.EntryDescription>(
-    "EntryDescription",
-    () => [this.EntryParameterDescription, this.EntryUnionDescription],
-  );
+    state.consume(
+      element,
+      CstNodeKind.ReturnsOption_CloseParen,
+      tokens.CloseParen,
+    );
 
-  private createEntryParameterDescription(): ast.EntryParameterDescription {
-    return {
-      kind: ast.SyntaxKind.EntryParameterDescription,
-      container: null,
-      attributes: [],
-      star: false,
-    };
-  }
+    return element;
+  },
+);
 
-  EntryParameterDescription = this.RULE("EntryParameterDescription", () => {
-    let element = this.push(this.createEntryParameterDescription());
+const entryDescription = orRule<ast.EntryDescription>(
+  () => entryParameterDescription,
+  () => entryUnionDescription,
+);
 
-    this.OR([
-      {
-        ALT: () => {
-          this.AT_LEAST_ONE(() => {
-            this.SUBRULE_ASSIGN1(this.DeclarationAttribute, {
-              assign: (result) => {
-                element.attributes.push(result);
-              },
-            });
-          });
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME_ASSIGN(tokens.Star, (token) => {
-            this.tokenPayload(
-              token,
-              element,
-              CstNodeKind.EntryParameterDescription_Star,
-            );
-            element.star = true;
-          });
-          this.MANY1(() => {
-            this.SUBRULE_ASSIGN2(this.DeclarationAttribute, {
-              assign: (result) => {
-                element.attributes.push(result);
-              },
-            });
-          });
-        },
-      },
-    ]);
+const entryParameterDescription = rule(
+  choice(sequence(tokens.Star), () => declarationAttribute.first()),
+  (state: ParserState): ast.EntryParameterDescription => {
+    const element = ast.createEntryParameterDescription();
 
-    return this.pop<ast.EntryParameterDescription>();
-  });
-  private createEntryUnionDescription(): ast.EntryUnionDescription {
-    return {
-      kind: ast.SyntaxKind.EntryUnionDescription,
-      container: null,
-      init: null,
-      attributes: [],
-      prefixedAttributes: [],
-    };
-  }
-
-  EntryUnionDescription = this.RULE("EntryUnionDescription", () => {
-    let element = this.push(this.createEntryUnionDescription());
-
-    this.CONSUME_ASSIGN(tokens.NUMBER, (token) => {
-      this.tokenPayload(
-        token,
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.EntryUnionDescription_InitNumber,
-      );
-      element.init = token.image;
-    });
-    this.MANY1(() => {
-      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
-    this.CONSUME_ASSIGN(tokens.Comma, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.EntryUnionDescription_Comma,
-      );
-    });
-    this.MANY2(() => {
-      this.SUBRULE_ASSIGN(this.PrefixedAttribute, {
-        assign: (result) => {
-          element.prefixedAttributes.push(result);
-        },
-      });
-    });
+        CstNodeKind.EntryParameterDescription_Star,
+        tokens.Star,
+      )
+    ) {
+      element.star = true;
+      // Parse optional attributes after the star
+      const { inc } = state.createLoopContext("EntryParameterDescription 1");
+      while (state.canConsumeFirst(declarationAttribute.first())) {
+        inc();
+        const attr = declarationAttribute.rule(state);
+        attr && element.attributes.push(attr);
+      }
+    } else {
+      // Parse at least one declaration attribute
+      const lhs = declarationAttribute.rule(state);
+      lhs && element.attributes.push(lhs);
 
-    return this.pop<ast.EntryUnionDescription>();
-  });
-  private createPrefixedAttribute(): ast.PrefixedAttribute {
-    return {
-      kind: ast.SyntaxKind.PrefixedAttribute,
-      container: null,
-      level: null,
-      attributes: [],
-    };
-  }
+      // Parse additional attributes
+      const { inc } = state.createLoopContext("EntryParameterDescription 2");
+      while (state.canConsumeFirst(declarationAttribute.first())) {
+        inc();
+        const rhs = declarationAttribute.rule(state);
+        rhs && element.attributes.push(rhs);
+      }
+    }
 
-  PrefixedAttribute = this.RULE("PrefixedAttribute", () => {
-    let element = this.push(this.createPrefixedAttribute());
+    return element;
+  },
+);
 
-    this.CONSUME_ASSIGN(tokens.NUMBER, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.PrefixedAttribute_LevelNumber,
-      );
-      element.level = token.image;
-    });
-    this.MANY(() => {
-      this.SUBRULE_ASSIGN(this.DeclarationAttribute, {
-        assign: (result) => {
-          element.attributes.push(result);
-        },
-      });
-    });
+const entryUnionDescription = rule(
+  sequence(tokens.NUMBER),
+  (state: ParserState): ast.EntryUnionDescription => {
+    const element = ast.createEntryUnionDescription();
 
-    return this.pop<ast.PrefixedAttribute>();
-  });
+    const initToken = state.consume(
+      element,
+      CstNodeKind.EntryUnionDescription_InitNumber,
+      tokens.NUMBER,
+    );
+    if (initToken) {
+      element.init = initToken.image;
+    }
 
-  ProcedureParameter = this.RULE("ProcedureParameter", () => {
-    let element = this.push(ast.createProcedureParameter());
+    // Parse zero or more declaration attributes
+    const { inc } = state.createLoopContext("EntryUnionDescription 1");
+    while (state.canConsumeFirst(declarationAttribute.first())) {
+      inc();
+      const attr = declarationAttribute.rule(state);
+      attr && element.attributes.push(attr);
+    }
 
-    this.CONSUME_ASSIGN(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ProcedureParameter_Id);
+    // Required comma
+    state.consume(
+      element,
+      CstNodeKind.EntryUnionDescription_Comma,
+      tokens.Comma,
+    );
+
+    // Parse zero or more prefixed attributes
+    const { inc: inc2 } = state.createLoopContext("EntryUnionDescription 2");
+    while (state.canConsumeFirst(prefixedAttribute.first())) {
+      inc2();
+      const attr = prefixedAttribute.rule(state);
+      attr && element.prefixedAttributes.push(attr);
+    }
+
+    return element;
+  },
+);
+
+const prefixedAttribute = rule(
+  sequence(tokens.NUMBER),
+  (state: ParserState): ast.PrefixedAttribute => {
+    const element = ast.createPrefixedAttribute();
+
+    const levelToken = state.consume(
+      element,
+      CstNodeKind.PrefixedAttribute_LevelNumber,
+      tokens.NUMBER,
+    );
+    if (levelToken) {
+      element.level = levelToken.image;
+    }
+
+    // Parse zero or more declaration attributes
+    const { inc } = state.createLoopContext("PrefixedAttribute");
+    while (state.canConsumeFirst(declarationAttribute.first())) {
+      inc();
+      const attr = declarationAttribute.rule(state);
+      attr && element.attributes.push(attr);
+    }
+
+    return element;
+  },
+);
+
+const procedureParameter = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.ProcedureParameter => {
+    const element = ast.createProcedureParameter();
+
+    const idToken = state.consume(
+      element,
+      CstNodeKind.ProcedureParameter_Id,
+      tokens.ID,
+    );
+    if (idToken) {
       element.ref = ast.createReference(
         element,
-        token,
+        idToken,
         ast.ReferenceType.Variable,
       );
-    });
+    }
 
-    return this.pop<ast.ProcedureParameter>();
-  });
-  private createReferenceItem(): ast.ReferenceItem {
-    return {
-      kind: ast.SyntaxKind.ReferenceItem,
-      container: null,
-      ref: null,
-      dimensions: null,
-    };
-  }
+    return element;
+  },
+);
 
-  ReferenceItem = this.RULE("ReferenceItem", () => {
-    let element = this.push(this.createReferenceItem());
+const referenceItem = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.ReferenceItem => {
+    const element = ast.createReferenceItem();
 
-    this.CONSUME_ASSIGN(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ReferenceItem_Ref);
+    const idToken = state.consume(
+      element,
+      CstNodeKind.ReferenceItem_Ref,
+      tokens.ID,
+    );
+    if (idToken) {
       element.ref = ast.createReference(
         element,
-        token,
+        idToken,
         ast.ReferenceType.Variable,
       );
-    });
-    this.OPTION(() => {
-      this.SUBRULE_ASSIGN(this.Dimensions, {
-        assign: (result) => {
-          element.dimensions = result;
-        },
-      });
-    });
+    }
 
-    return this.pop<ast.ReferenceItem>();
-  });
+    // Optional dimensions
+    if (state.canConsumeFirst(dimensions.first())) {
+      element.dimensions = dimensions.rule(state);
+    }
 
-  BinaryExpression = this.RULE("BinaryExpression", () => {
-    const element: IntermediateBinaryExpression = this.push({
+    return element;
+  },
+);
+
+const expression = rule(
+  () => primaryExpression.first(),
+  (state: ParserState): ast.Expression | null => {
+    const element: IntermediateBinaryExpression = {
       infix: true,
       items: [],
       operators: [],
       operatorTokens: [],
-    });
+    };
 
-    this.SUBRULE_ASSIGN1(this.PrimaryExpression, {
-      assign: (result) => {
-        element.items.push(result);
-      },
-    });
-    this.MANY(() => {
-      this.CONSUME_ASSIGN(tokens.BinaryOperator, (token) => {
-        this.tokenPayload(
-          token,
-          element as any,
-          CstNodeKind.BinaryExpression_Operator,
-        );
+    // Parse first primary expression
+    const lhs = primaryExpression.rule(state);
+    lhs && element.items.push(lhs);
+
+    // Parse zero or more operator-expression pairs
+    const { inc } = state.createLoopContext("BinaryExpression");
+    while (state.canConsume(tokens.BinaryOperator)) {
+      inc();
+      const operatorToken = state.consume(
+        element as any,
+        CstNodeKind.BinaryExpression_Operator,
+        tokens.BinaryOperator,
+      );
+      if (operatorToken) {
         element.operators.push(
-          tokens.BinaryOperator.mapToEnumLiteral(token.tokenTypeIdx),
+          tokens.BinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx),
         );
-        element.operatorTokens.push(token);
-      });
-      this.SUBRULE_ASSIGN2(this.PrimaryExpression, {
-        assign: (result) => {
-          element.items.push(result);
-        },
-      });
-    });
+        element.operatorTokens.push(operatorToken);
+      }
+      const rhs = primaryExpression.rule(state);
+      rhs && element.items.push(rhs);
+    }
 
-    return this.pop<ast.BinaryExpression>();
-  });
+    return element && element.items.length > 0
+      ? constructBinaryExpression(element)
+      : null;
+  },
+);
 
-  Expression = this.BinaryExpression;
+const primaryExpression = orRule<ast.Expression>(
+  () => literal,
+  () => parenthesizedExpression,
+  () => unaryExpression,
+  () => locatorCall,
+);
 
-  PrimaryExpression = this.OR_RULE<ast.Expression>("PrimaryExpression", () => [
-    this.Literal,
-    this.ParenthesizedExpression,
-    this.UnaryExpression,
-    this.LocatorCall,
-  ]);
+const parenthesizedExpression = rule(
+  sequence(tokens.OpenParen),
+  (state: ParserState): ast.Parenthesis | ast.Literal => {
+    const element = ast.createParenthesis();
 
-  private createParenthesizedExpression(): ast.Parenthesis {
-    return {
-      kind: ast.SyntaxKind.Parenthesis,
-      container: null,
-      value: null,
-      do: null,
-    };
-  }
+    state.consume(
+      element,
+      CstNodeKind.ParenthesizedExpression_OpenParen,
+      tokens.OpenParen,
+    );
+    element.value = expression.rule(state);
 
-  ParenthesizedExpression = this.RULE("ParenthesizedExpression", () => {
-    let element = this.push(this.createParenthesizedExpression());
-
-    this.CONSUME_ASSIGN(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
+    // Optional DO clause
+    if (
+      state.tryConsume(
         element,
-        CstNodeKind.ParenthesizedExpression_OpenParen,
-      );
-    });
-    this.SUBRULE_ASSIGN(this.Expression, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
-    this.OPTION1(() => {
-      this.CONSUME_ASSIGN(tokens.DO, (token) => {
-        this.tokenPayload(
-          token,
+        CstNodeKind.ParenthesizedExpression_DO,
+        tokens.DO,
+      )
+    ) {
+      element.do = doType3.rule(state);
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.ParenthesizedExpression_CloseParen,
+      tokens.CloseParen,
+    );
+
+    // Optional literal multiplication - this is a special case where parentheses can be followed by a literal
+    if (state.canConsumeFirst(literalValue.first())) {
+      // Replace the parenthesis with a literal that has the parenthesis as its multiplier
+      const literal: ast.Literal = {
+        kind: ast.SyntaxKind.Literal,
+        container: null,
+        multiplier: element,
+        value: null,
+      };
+      literal.value = literalValue.rule(state);
+      return literal;
+    }
+
+    return element;
+  },
+);
+
+const memberCall = rule(
+  () => referenceItem.first(),
+  (state: ParserState): ast.MemberCall => {
+    let element = ast.createMemberCall();
+
+    // Parse first reference item
+    element.element = referenceItem.rule(state);
+
+    // Parse zero or more dot-separated member accesses
+    const { inc } = state.createLoopContext("MemberCall");
+    while (state.canConsume(tokens.Dot)) {
+      inc();
+      // Create a new MemberCall for the chain
+      const previous = element;
+      element = {
+        kind: ast.SyntaxKind.MemberCall,
+        container: null,
+        element: null,
+        previous: previous,
+      };
+      state.consume(element, CstNodeKind.MemberCall_Dot, tokens.Dot);
+      element.element = referenceItem.rule(state);
+    }
+
+    return element;
+  },
+);
+
+const locatorCall = rule(
+  () => memberCall.first(),
+  (state: ParserState): ast.LocatorCall => {
+    let element = ast.createLocatorCall();
+
+    // Parse first member call
+    element.element = memberCall.rule(state);
+
+    // Parse zero or more pointer/handle chains
+    const { inc } = state.createLoopContext("LocatorCall");
+    while (
+      !state.eof &&
+      (state.canConsume(tokens.MinusGreaterThan) ||
+        state.canConsume(tokens.EqualsGreaterThan))
+    ) {
+      inc();
+      // Create a new LocatorCall for the chain
+      const previous = element;
+      element = {
+        kind: ast.SyntaxKind.LocatorCall,
+        container: null,
+        element: null,
+        previous: previous,
+        pointer: false,
+        handle: false,
+      };
+
+      if (
+        state.tryConsume(
           element,
-          CstNodeKind.ParenthesizedExpression_DO,
-        );
-      });
-      this.SUBRULE_ASSIGN(this.DoType3, {
-        assign: (result) => {
-          element.do = result;
-        },
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ParenthesizedExpression_CloseParen,
-      );
-    });
-    this.OPTION2(() => {
-      const multiplier = element;
-      const literal = this.replace(this.createLiteral());
-      this.ACTION(() => {
-        literal.multiplier = multiplier;
-      });
-      this.SUBRULE_ASSIGN(this.LiteralValue, {
-        assign: (result) => {
-          literal.value = result;
-        },
-      });
-    });
+          CstNodeKind.LocatorCall_Pointer,
+          tokens.MinusGreaterThan,
+        )
+      ) {
+        element.pointer = true;
+      } else if (
+        state.tryConsume(
+          element,
+          CstNodeKind.LocatorCall_Handle,
+          tokens.EqualsGreaterThan,
+        )
+      ) {
+        element.handle = true;
+      }
 
-    return this.pop<ast.Parenthesis>();
-  });
-  private createMemberCall(): ast.MemberCall {
-    return {
-      kind: ast.SyntaxKind.MemberCall,
-      container: null,
-      element: null,
-      previous: null,
-    };
-  }
+      element.element = memberCall.rule(state);
+    }
 
-  MemberCall = this.RULE("MemberCall", () => {
-    let element = this.push(this.createMemberCall());
+    return element;
+  },
+);
 
-    this.SUBRULE_ASSIGN1(this.ReferenceItem, {
-      assign: (result) => {
-        element.element = result;
-      },
-    });
-    this.MANY1(() => {
-      this.ACTION(() => {
-        const previous = element;
-        element = this.replace(this.createMemberCall());
-        element.previous = previous;
-      });
-      this.CONSUME_ASSIGN1(tokens.Dot, (token) => {
-        this.tokenPayload(token, element, CstNodeKind.MemberCall_Dot);
-      });
-      this.SUBRULE_ASSIGN2(this.ReferenceItem, {
-        assign: (result) => {
-          element.element = result;
-        },
-      });
-    });
+const procedureCall = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.ProcedureCall => {
+    const element = ast.createProcedureCall();
 
-    return this.pop<ast.MemberCall>();
-  });
-  private createLocatorCall(): ast.LocatorCall {
-    return {
-      kind: ast.SyntaxKind.LocatorCall,
-      container: null,
-      element: null,
-      previous: null,
-      pointer: false,
-      handle: false,
-    };
-  }
-
-  LocatorCall = this.RULE("LocatorCall", () => {
-    let element = this.push(this.createLocatorCall());
-
-    this.SUBRULE_ASSIGN1(this.MemberCall, {
-      assign: (result) => {
-        element.element = result;
-      },
-    });
-    this.MANY1(() => {
-      this.ACTION(() => {
-        const previous = element;
-        element = this.replace(this.createLocatorCall());
-        element.previous = previous;
-      });
-      this.OR1([
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.MinusGreaterThan, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.LocatorCall_Pointer,
-              );
-              element.pointer = true;
-            });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.EqualsGreaterThan, (token) => {
-              this.tokenPayload(token, element, CstNodeKind.LocatorCall_Handle);
-              element.handle = true;
-            });
-          },
-        },
-      ]);
-      this.SUBRULE_ASSIGN2(this.MemberCall, {
-        assign: (result) => {
-          element.element = result;
-        },
-      });
-    });
-
-    return this.pop<ast.LocatorCall>();
-  });
-  private createProcedureCall(): ast.ProcedureCall {
-    return {
-      kind: ast.SyntaxKind.ProcedureCall,
-      container: null,
-      procedure: null,
-      args1: null,
-      args2: null,
-    };
-  }
-
-  ProcedureCall = this.RULE("ProcedureCall", () => {
-    let element = this.push(this.createProcedureCall());
-
-    this.CONSUME_ASSIGN(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.ProcedureCall_ProcedureRef);
+    const idToken = state.consume(
+      element,
+      CstNodeKind.ProcedureCall_ProcedureRef,
+      tokens.ID,
+    );
+    if (idToken) {
       element.procedure = ast.createReference(
         element,
-        token,
+        idToken,
         ast.ReferenceType.Variable,
       );
-    });
-    let i = 0;
-    // Use MANY to prevent grammar ambiguity
-    this.MANY({
-      DEF: () => {
-        this.SUBRULE_ASSIGN(this.ProcedureCallArgs, {
-          assign: (result) => {
-            if (i === 0) {
-              element.args1 = result;
-            } else {
-              element.args2 = result;
-            }
-          },
-        });
-        i++;
-      },
-      // Use a gate to prevent parsing this more than twice
-      GATE: () => i < 2,
-    });
+    }
 
-    return this.pop<ast.ProcedureCall>();
-  });
-
-  private createProcedureCallArgs(): ast.ProcedureCallArgs {
-    return {
-      kind: ast.SyntaxKind.ProcedureCallArgs,
-      container: null,
-      list: [],
-    };
-  }
-
-  ProcedureCallArgs = this.RULE("ProcedureCallArgs", () => {
-    const element = this.push(this.createProcedureCallArgs());
-    this.CONSUME_ASSIGN1(tokens.OpenParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ProcedureCallArgs_OpenParen,
-      );
-    });
-    this.OPTION1(() => {
-      this.OR1([
-        {
-          ALT: () => {
-            this.SUBRULE_ASSIGN1(this.Expression, {
-              assign: (result) => {
-                element.list.push(result);
+    /* //TODO was this correctly translated?
+        
+        let i = 0;
+            // Use MANY to prevent grammar ambiguity
+            MANY({
+              DEF: () => {
+                SUBRULE_ASSIGN(ProcedureCallArgs, {
+                  assign: (result) => {
+                    if (i === 0) {
+                      element.args1 = result;
+                    } else {
+                      element.args2 = result;
+                    }
+                  },
+                });
+                i++;
               },
+              // Use a gate to prevent parsing this more than twice
+              GATE: () => i < 2,
             });
-          },
-        },
-        {
-          ALT: () => {
-            this.CONSUME_ASSIGN1(tokens.Star, (token) => {
-              this.tokenPayload(
-                token,
-                element,
-                CstNodeKind.ProcedureCallArgs_Star0,
-              );
-              element.list.push(token.image as "*");
-            });
-          },
-        },
-      ]);
-      this.MANY1(() => {
-        this.CONSUME_ASSIGN1(tokens.Comma, (token) => {
-          this.tokenPayload(
-            token,
+        
+        */
+
+    // Parse optional argument lists (up to 2)
+    let argCount = 0;
+    const { inc } = state.createLoopContext("ProcedureCall");
+    while (argCount < 2 && state.canConsumeFirst(procedureCallArgs.first())) {
+      inc();
+      const args = procedureCallArgs.rule(state);
+      if (argCount === 0) {
+        element.args1 = args;
+      } else {
+        element.args2 = args;
+      }
+      argCount++;
+    }
+
+    return element;
+  },
+);
+
+const procedureCallArgs = rule(
+  sequence(tokens.OpenParen),
+  (state: ParserState): ast.ProcedureCallArgs => {
+    const element = ast.createProcedureCallArgs();
+
+    state.consume(
+      element,
+      CstNodeKind.ProcedureCallArgs_OpenParen,
+      tokens.OpenParen,
+    );
+
+    // Optional argument list
+    if (!state.canConsume(tokens.CloseParen)) {
+      // Parse first argument (expression or star)
+      if (state.canConsume(tokens.Star)) {
+        state.consume(
+          element,
+          CstNodeKind.ProcedureCallArgs_Star0,
+          tokens.Star,
+        );
+        element.list.push("*");
+      } else {
+        const expr = expression.rule(state);
+        expr && element.list.push(expr);
+      }
+
+      // Parse additional comma-separated arguments
+      const { inc } = state.createLoopContext("ProcedureCallArgs");
+      while (
+        state.tryConsume(
+          element,
+          CstNodeKind.ProcedureCallArgs_Comma,
+          tokens.Comma,
+        )
+      ) {
+        inc();
+        if (state.canConsume(tokens.Star)) {
+          state.consume(
             element,
-            CstNodeKind.ProcedureCallArgs_Comma,
+            CstNodeKind.ProcedureCallArgs_Star1,
+            tokens.Star,
           );
-        });
-        this.OR2([
-          {
-            ALT: () => {
-              this.SUBRULE_ASSIGN2(this.Expression, {
-                assign: (result) => {
-                  element.list.push(result);
-                },
-              });
-            },
-          },
-          {
-            ALT: () => {
-              this.CONSUME_ASSIGN2(tokens.Star, (token) => {
-                this.tokenPayload(
-                  token,
-                  element,
-                  CstNodeKind.ProcedureCallArgs_Star1,
-                );
-                element.list.push(token.image as "*");
-              });
-            },
-          },
-        ]);
-      });
-    });
-    this.CONSUME_ASSIGN1(tokens.CloseParen, (token) => {
-      this.tokenPayload(
-        token,
-        element,
-        CstNodeKind.ProcedureCallArgs_CloseParen,
-      );
-    });
-    return this.pop<ast.ProcedureCallArgs>();
-  });
+          element.list.push("*");
+        } else {
+          const expr = expression.rule(state);
+          expr && element.list.push(expr);
+        }
+      }
+    }
 
-  LabelReference = this.RULE("LabelReference", () => {
-    let element = this.push(ast.createLabelReference());
+    state.consume(
+      element,
+      CstNodeKind.ProcedureCallArgs_CloseParen,
+      tokens.CloseParen,
+    );
 
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.LabelReference_LabelRef);
+    return element;
+  },
+);
+
+const labelReference = rule(
+  sequence(tokens.ID),
+  (state: ParserState): ast.LabelReference => {
+    const element = ast.createLabelReference();
+
+    const idToken = state.consume(
+      element,
+      CstNodeKind.LabelReference_LabelRef,
+      tokens.ID,
+    );
+    if (idToken) {
       element.label = ast.createReference(
         element,
-        token,
+        idToken,
         ast.ReferenceType.Variable,
       );
-    });
+    }
 
-    return this.pop<ast.LabelReference>();
-  });
-  private createUnaryExpression(): ast.UnaryExpression {
-    return {
-      kind: ast.SyntaxKind.UnaryExpression,
-      container: null,
-      op: null,
-      expr: null,
-    };
-  }
+    return element;
+  },
+);
 
-  UnaryExpression = this.RULE("UnaryExpression", () => {
-    let element = this.push(this.createUnaryExpression());
+const unaryExpression = rule(
+  sequence(tokens.UnaryOperator),
+  (state: ParserState): ast.UnaryExpression => {
+    const element = ast.createUnaryExpression();
 
-    this.CONSUME_ASSIGN1(tokens.UnaryOperator, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.UnaryExpression_Operator);
-      element.op = tokens.UnaryOperator.mapToEnumLiteral(token.tokenTypeIdx);
-    });
-    this.SUBRULE_ASSIGN1(this.Expression, {
-      assign: (result) => {
-        element.expr = result;
-      },
-    });
+    const operatorToken = state.consume(
+      element,
+      CstNodeKind.UnaryExpression_Operator,
+      tokens.UnaryOperator,
+    );
+    if (operatorToken) {
+      element.op = tokens.UnaryOperator.mapToEnumLiteral(
+        operatorToken.tokenTypeIdx,
+      );
+    }
 
-    return this.pop<ast.UnaryExpression>();
-  });
-  private createLiteral(): ast.Literal {
-    return {
-      kind: ast.SyntaxKind.Literal,
-      container: null,
-      multiplier: null,
-      value: null,
-    };
-  }
+    element.expr = expression.rule(state);
 
-  Literal = this.RULE("Literal", () => {
-    let element = this.push(this.createLiteral());
+    return element;
+  },
+);
 
-    this.SUBRULE_ASSIGN1(this.LiteralValue, {
-      assign: (result) => {
-        element.value = result;
-      },
-    });
+const literal = rule(
+  () => literalValue.first(),
+  (state: ParserState): ast.Literal => {
+    const element = ast.createLiteral();
+    element.value = literalValue.rule(state);
+    return element;
+  },
+);
 
-    return this.pop<ast.Literal>();
-  });
+const literalValue = orRule<ast.LiteralValue>(
+  () => stringLiteral,
+  () => numberLiteral,
+);
 
-  LiteralValue = this.OR_RULE<ast.LiteralValue>("LiteralValue", () => [
-    this.StringLiteral,
-    this.NumberLiteral,
-  ]);
+const stringLiteral = rule(
+  sequence(tokens.STRING_TERM),
+  (state: ParserState): ast.StringLiteral => {
+    const element = ast.createStringLiteral();
 
-  StringLiteral = this.RULE("StringLiteral", () => {
-    let element = this.push(ast.createStringLiteral());
+    const stringToken = state.consume(
+      element,
+      CstNodeKind.StringLiteral_ValueString,
+      tokens.STRING_TERM,
+    );
+    if (stringToken) {
+      element.value = stringToken.image;
+    }
 
-    this.CONSUME_ASSIGN1(tokens.STRING_TERM, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.StringLiteral_ValueString);
-      element.value = token.image;
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.StringLiteral>();
-  });
-  private createNumberLiteral(): ast.NumberLiteral {
-    return {
-      kind: ast.SyntaxKind.NumberLiteral,
-      container: null,
-      value: null,
-    };
-  }
+const numberLiteral = rule(
+  sequence(tokens.NUMBER),
+  (state: ParserState): ast.NumberLiteral => {
+    const element = ast.createNumberLiteral();
 
-  NumberLiteral = this.RULE("NumberLiteral", () => {
-    let element = this.push(this.createNumberLiteral());
+    const numberToken = state.consume(
+      element,
+      CstNodeKind.NumberLiteral_ValueNumber,
+      tokens.NUMBER,
+    );
+    if (numberToken) {
+      element.value = numberToken.image;
+    }
 
-    this.CONSUME_ASSIGN1(tokens.NUMBER, (token) => {
-      this.tokenPayload(token, element, CstNodeKind.NumberLiteral_ValueNumber);
-      element.value = token.image;
-    });
+    return element;
+  },
+);
 
-    return this.pop<ast.NumberLiteral>();
-  });
+export function performAssignmentLookahead(state: ParserState): boolean {
+  const expressionTokenTypes = [
+    tokens.ID,
+    tokens.BinaryOperator,
+    tokens.UnaryOperator,
+    tokens.AssignmentOperator,
+    tokens.STRING_TERM,
+    tokens.NUMBER,
+    tokens.Comma,
+    tokens.Dot,
+  ];
 
-  // TODO: Figure out whether we really need fully qualified names.
-  // This documentation snippet seems to indicate that they are required for ordinals:
-  // https://www.ibm.com/docs/en/epfz/6.2.0?topic=ordinals-define-ordinal-statement
-  // But there are no examples or mentions what to do in case a FQN is used.
-  private createFQN(): ast.FQN {
-    return "";
-  }
-
-  FQN = this.RULE("FQN", () => {
-    let fqn = this.push(this.createFQN());
-
-    this.CONSUME_ASSIGN1(tokens.ID, (token) => {
-      // this.tokenPayload(token, element, CstNodeKind.FQN_ID_0);
-      fqn += token.image;
-    });
-    this.MANY1(() => {
-      this.CONSUME_ASSIGN1(tokens.Dot, (token) => {
-        fqn += ".";
-        // this.tokenPayload(token, element, CstNodeKind.FQN_Dot_0);
-      });
-      this.CONSUME_ASSIGN2(tokens.ID, (token) => {
-        fqn += token.image;
-        // this.tokenPayload(token, element, CstNodeKind.FQN_ID_1);
-      });
-    });
-
-    return this.pop<string>();
-  });
-}
-
-export const PliParserInstance = new PliParser();
-
-const expressionTokenTypes = [
-  tokens.ID,
-  tokens.BinaryOperator,
-  tokens.UnaryOperator,
-  tokens.AssignmentOperator,
-  tokens.STRING_TERM,
-  tokens.NUMBER,
-  tokens.Comma,
-];
-
-export function performAssignmentLookahead(
-  lookahead: (la: number) => tokens.Token | undefined,
-): boolean {
+  let previousToken: tokens.Token | undefined = undefined;
+  const lookahead: (la: number) => tokens.Token | undefined = (la) => {
+    previousToken = state.peek(la - 1);
+    return state.peek(la);
+  };
   let i = 1;
   let token = lookahead(i++);
   // First token of an assigment needs to be an ID
   if (!token || !tokenMatcher(token, tokens.ID)) {
     return false;
+  } else if (token.tokenTypeIdx === tokens.ID.tokenTypeIdx) {
+    return true;
   }
-  token = lookahead(i++);
+  token = lookahead(i);
   // We have found a match immediately with the assignment operator
   if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
     return true;
   }
-  // Otherwise expect an opening parenthesis
-  if (!token || !tokenMatcher(token, tokens.OpenParen)) {
-    return false;
-  }
+
   // The compiler will not use more than 160 tokens to perform the lookahead
   const max = 160;
-  let parenthesis = 1;
+  let parenthesis = 0;
   while (i < max) {
     const token = lookahead(i++);
     if (!token) {
       return false;
     }
-    if (parenthesis === 0) {
-      // If we are outside of the parentheses, we always try to match the assignment operator
-      return tokenMatcher(token, tokens.AssignmentOperator);
+    if (parenthesis === 0 && tokenMatcher(token, tokens.AssignmentOperator)) {
+      return true;
     }
     if (tokenMatcher(token, tokens.OpenParen)) {
       parenthesis++;
@@ -8368,9 +6455,35 @@ export function performAssignmentLookahead(
       ) {
         return false;
       }
+      if (tokenMatcher(token, tokens.ID)) {
+        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
+          return false;
+        }
+      }
       // Continue with the next token, the current token is a valid expression token
     }
   }
   // If we reach this point, the lookahead was not successful
   return false;
+}
+
+function performEndStatementLookahead(state: ParserState): boolean {
+  const lookahead = (la: number) => state.peek(la);
+  let index: number = 1;
+  let token: tokens.Token | undefined = undefined;
+  while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
+    const idToken = lookahead(index);
+    const colonToken = lookahead(index + 1);
+    if (!idToken || !colonToken) {
+      return false;
+    }
+    if (
+      !tokenMatcher(idToken, tokens.ID) ||
+      !tokenMatcher(colonToken, tokens.Colon)
+    ) {
+      return false;
+    }
+    index += 2;
+  }
+  return token !== undefined && tokenMatcher(token, tokens.END);
 }
