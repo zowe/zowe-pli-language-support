@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.1% </span>
+                <span class="strong">83.85% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>173/192</span>
+                <span class='fraction'>161/192</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">24% </span>
+                <span class="strong">19.71% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>18/75</span>
+                <span class='fraction'>14/71</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">33.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/3</span>
+                <span class='fraction'>1/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.1% </span>
+                <span class="strong">83.85% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>173/192</span>
+                <span class='fraction'>161/192</span>
             </div>
         
             
@@ -382,20 +382,12 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -407,6 +399,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">21x</span>
@@ -414,10 +414,10 @@
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -500,11 +500,11 @@
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-yes">21x</span>
@@ -627,20 +627,20 @@ const binaryTokens = [
   tokens.Not,
 ].map((token) =&gt; token.name);
 &nbsp;
-function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
-  switch (token.tokenType.name) {
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >function getFollowElementsForUnknownToken(token: Token): FollowElement[] {</span></span>
+<span class="cstat-no" title="statement not covered" >  switch (token.tokenType.name) {</span>
     // We probably are in an assignment statement
-<span class="branch-0 cbranch-no" title="branch not covered" >    case "=":</span>
+<span class="cstat-no" title="statement not covered" >    case "=":</span>
     // We probably are in a parenthesis expression
-    case "(":
+<span class="cstat-no" title="statement not covered" >    case "(":</span>
     // We probably are in a parenthesis expression, after a comma
-    case ",":
-      return [
-        {
-          kind: FollowKind.LocalReference,
-        },
-      ];
-<span class="branch-0 cbranch-no" title="branch not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >    case ",":</span>
+<span class="cstat-no" title="statement not covered" >      return [</span>
+<span class="cstat-no" title="statement not covered" >        {</span>
+<span class="cstat-no" title="statement not covered" >          kind: FollowKind.LocalReference,</span>
+<span class="cstat-no" title="statement not covered" >        },</span>
+<span class="cstat-no" title="statement not covered" >      ];</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  if (binaryTokens.includes(token.tokenType.name)) {</span>
 <span class="cstat-no" title="statement not covered" >    return [</span>
@@ -659,8 +659,8 @@ export function getFollowElements(
 ): FollowElement[] {
   // TODO: add more entry points for the completion of expressions
   switch (token.kind) {
-    case undefined:
-      return getFollowElementsForUnknownToken(token);
+<span class="branch-0 cbranch-no" title="branch not covered" >    case undefined:</span>
+<span class="cstat-no" title="statement not covered" >      return getFollowElementsForUnknownToken(token);</span>
     case CstNodeKind.BinaryExpression_Operator:
       return [
         {
@@ -740,7 +740,7 @@ export function getFollowElements(
         },
       ];
     // Happens on '(' in `PUT()`
-    case CstNodeKind.Dimensions_OpenParen:
+<span class="branch-0 cbranch-no" title="branch not covered" >    case CstNodeKind.Dimensions_OpenParen:</span>
     // Happens on '(' in `PUT(f)`
     case CstNodeKind.DataSpecificationOptions_OpenParenList:
     // Happens on ',' in `PUT(A, )`
@@ -805,7 +805,7 @@ export <span class="fstat-no" title="function not covered" >function provideEntr
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-11T11:12:50.960Z
+                at 2025-12-11T12:52:14.199Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
