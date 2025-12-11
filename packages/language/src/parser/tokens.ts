@@ -9,10 +9,11 @@
  *
  */
 
-import { createToken, ITokenConfig, Lexer, TokenType } from "chevrotain";
+import { ITokenConfig, Lexer, TokenType } from "chevrotain";
 import { URI } from "../utils/uri";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as ast from "../syntax-tree/ast";
+import { createToken } from "./token-type-factory";
 
 export interface Token {
   /**
@@ -854,7 +855,6 @@ export const DECIMAL = registerKeyword({
 });
 export const GENERIC = registerKeyword({
   name: "GENERIC",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.GENERIC]],
 });
 export const HEXADEC = registerKeyword({
   name: "HEXADEC",

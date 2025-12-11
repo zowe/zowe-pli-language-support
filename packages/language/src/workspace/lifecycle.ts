@@ -11,14 +11,12 @@
 
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
-import { PliParserInstance } from "../parser/parser";
 import { CompilationUnit } from "./compilation-unit";
 import { Program } from "../syntax-tree/ast";
 import {
   generatePliValidationDiagnostics,
   generatePreprocessorValidationDiagnostics,
   linkingErrorsToDiagnostics,
-  parserErrorsToDiagnostics,
 } from "../validation/validator";
 import { LexerResult, PliLexer } from "../preprocessor/pli-lexer";
 import { assignDebugKinds } from "../utils/debug-kinds";
@@ -26,6 +24,8 @@ import { CancellationToken } from "vscode-languageserver";
 import { interruptAndCheck } from "../utils/promises";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { parsePli } from "../parser/parser";
+import * as environment from "../workspace/environment";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -80,19 +80,15 @@ export async function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): Program {
-  PliParserInstance.input = compilationUnit.tokens;
-  const ast = PliParserInstance.parse();
-  compilationUnit.ast = ast;
-  compilationUnit.diagnostics.addAll(
-    DiagnosticCategory.Parser,
-    parserErrorsToDiagnostics(PliParserInstance.errors),
-  );
+  const { tree, diagnostics } = parsePli(compilationUnit.tokens);
+  compilationUnit.ast = tree;
+  compilationUnit.diagnostics.addAll(DiagnosticCategory.Parser, diagnostics);
 
-  if (process.env.NODE_ENV === "development") {
-    assignDebugKinds(ast);
+  if (environment.IsDebugging) {
+    assignDebugKinds(tree);
   }
 
-  return ast;
+  return tree;
 }
 
 export function generateSymbolTable(compilationUnit: CompilationUnit) {
