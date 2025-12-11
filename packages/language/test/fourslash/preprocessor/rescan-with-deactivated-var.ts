@@ -17,4 +17,4 @@
 //// %DEACTIVATE B;
 //// X = A;
 
-preprocessor.expectTokens(" X = B + C;");
+preprocessor.expectTokens("X = B + C;");

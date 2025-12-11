@@ -17,4 +17,4 @@
 //// %C = 3;
 //// X = A;
 
-preprocessor.expectTokens(" X = 2 + 3;");
+preprocessor.expectTokens("X = 2 + 3;");

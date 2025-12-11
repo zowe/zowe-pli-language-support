@@ -16,6 +16,4 @@
 //// %B = 'World';
 //// A%;B = 123;
 
-preprocessor.expectTokens(`
-  HelloWorld = 123;
-`);
+preprocessor.expectTokens("HelloWorld = 123;");

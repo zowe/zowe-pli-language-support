@@ -11,9 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// %IF 1 %THEN
-////   dcl X fixed;
-//// %ELSE
-////   dcl Y fixed;
+//// %IF 1 <|THEN|> DO; %END;
+//// %IF 1 <|%|>THEN DO; %END;
 
-preprocessor.expectTokens(" dcl X fixed;");
+// Both "%THEN" and "THEN" are acceptable after an IF
+verify.noDiagnostics(["%", "THEN"]);
