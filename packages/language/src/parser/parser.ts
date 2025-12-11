@@ -670,25 +670,27 @@ const statement = rule(
       element.value = unit.rule(state);
     }
 
-    state.recover(() => {
-      const token = state.token;
-      if (!token) {
-        return RecoveryResult.Continue;
-      }
-      if (tokenMatcher(state.token, tokens.Semicolon)) {
-        return RecoveryResult.RecoverNext;
-      } else if (
-        state.canConsumeFirst(statement.first()) ||
-        performAssignmentLookahead(state)
-      ) {
-        return RecoveryResult.Recover;
-      }
-      return RecoveryResult.Continue;
-    });
+    state.recover(() => performRecovery(state));
 
     return element;
   },
 );
+
+function performRecovery(state: ParserState): RecoveryResult {
+  const token = state.token;
+  if (!token) {
+    return RecoveryResult.Continue;
+  }
+  if (tokenMatcher(state.token, tokens.Semicolon)) {
+    return RecoveryResult.RecoverNext;
+  } else if (
+    state.canConsumeFirst(statement.first()) ||
+    performAssignmentLookahead(state)
+  ) {
+    return RecoveryResult.Recover;
+  }
+  return RecoveryResult.Continue;
+}
 
 const unit = orRule<ast.Unit>(
   () => allocateStatement,
