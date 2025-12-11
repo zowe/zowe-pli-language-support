@@ -19,7 +19,7 @@ import {
 } from "./parser-types";
 import * as ast from "../syntax-tree/ast";
 import { tokenMatcher } from "chevrotain";
-import { finalParserState, ParserState } from "./parser-state";
+import { ParserState, RecoveryResult } from "./parser-state";
 import * as tokens from "./tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import {
@@ -27,13 +27,13 @@ import {
   IntermediateBinaryExpression,
 } from "./abstract-parser";
 import { Severe } from "../validation/pli-codes";
-import { Severity } from "../language-server/types";
+import { Diagnostic, Severity } from "../language-server/types";
 
 export function parsePli(input: tokens.Token[]): {
   tree: ast.Program;
-  diagnostics: any;
+  diagnostics: Diagnostic[];
 } {
-  const state = finalParserState(input);
+  const state = new ParserState(input);
   const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
@@ -670,39 +670,26 @@ const statement = rule(
       element.value = unit.rule(state);
     }
 
-    recover(
-      state,
-      () =>
-        state.canConsumeFirst(statement.first()) ||
-        performAssignmentLookahead(state),
-    );
+    state.recover(() => performRecovery(state));
 
     return element;
   },
 );
 
-//this logic is also used in the tests, so the break condition is generic
-export function recover(
-  state: ParserState,
-  breakCondition: () => boolean,
-): void {
-  if (!state.inError) {
-    // Prevent error recovery if not in error state.
-    return;
+function performRecovery(state: ParserState): RecoveryResult {
+  const token = state.token;
+  if (!token) {
+    return RecoveryResult.Continue;
   }
-  while (state.index < state.tokens.length) {
-    const token = state.tokens[state.index];
-    if (tokenMatcher(token, tokens.Semicolon)) {
-      state.index++;
-      break;
-    }
-    if (breakCondition()) {
-      break;
-    } else {
-      state.index++;
-    }
+  if (tokenMatcher(state.token, tokens.Semicolon)) {
+    return RecoveryResult.RecoverNext;
+  } else if (
+    state.canConsumeFirst(statement.first()) ||
+    performAssignmentLookahead(state)
+  ) {
+    return RecoveryResult.Recover;
   }
-  state.inError = false;
+  return RecoveryResult.Continue;
 }
 
 const unit = orRule<ast.Unit>(
@@ -6046,9 +6033,7 @@ const expression = rule(
       rhs && element.items.push(rhs);
     }
 
-    return element && element.items.length > 0
-      ? constructBinaryExpression(element)
-      : null;
+    return constructBinaryExpression(element);
   },
 );
 
