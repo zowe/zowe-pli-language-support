@@ -31,6 +31,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    goto: "LOOSE",
+    goto: constants.CompilerOptions.RulesGoto.LOOSE,
   },
 });

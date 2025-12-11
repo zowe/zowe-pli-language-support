@@ -28,6 +28,8 @@ import {
   PluginConfigurationProviderInstance,
 } from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
+import { CompilerOptions as MacroCompilerOptions } from "./compiler-options/options-macro";
+import { CompilerOptions as PliCompilerOptions } from "./compiler-options/options-pli";
 import {
   generateInstructions,
   InstructionGeneratorResult,
@@ -2045,7 +2047,8 @@ function replaceTokenWithValue(
 ): Token[] {
   const tokens = lex(
     value,
-    context.unit.compilerOptions.macroOptions?.rescan !== "ASIS",
+    context.unit.compilerOptions.macroOptions?.rescan !==
+      MacroCompilerOptions.Rescan.ASIS,
   );
   setImmediateFollowProperty(immediateFollow, tokens);
   return replaceTokensInText(tokens, context);
@@ -2793,7 +2796,7 @@ builtinImplementations.set("SYSDIMSIZE", (context) => {
   // * 4 under CMPAT(V2) and CMPAT(LE)
   // * 8 under CMPAT(V3)
   const cmpat = context.unit.compilerOptions.cmpat;
-  return numberToValue(cmpat === "V3" ? 8 : 4);
+  return numberToValue(cmpat === PliCompilerOptions.CMPat.V3 ? 8 : 4);
 });
 
 builtinImplementations.set("SYSOFFSETSIZE", () => {
@@ -2809,12 +2812,12 @@ builtinImplementations.set("SYSPARM", (context) => {
 
 builtinImplementations.set("SYSPOINTERSIZE", (context) => {
   const lp = context.unit.compilerOptions.LP;
-  return numberToValue(lp === "64" ? 8 : 4);
+  return numberToValue(lp === PliCompilerOptions.LP.LP64 ? 8 : 4);
 });
 
 builtinImplementations.set("SYSTEM", (context) => {
   const systemInfo = context.unit.compilerOptions.system;
-  return stringToValue(systemInfo);
+  return stringToValue(PliCompilerOptions.System[systemInfo]);
 });
 
 builtinImplementations.set("SYSVERSION", () => {

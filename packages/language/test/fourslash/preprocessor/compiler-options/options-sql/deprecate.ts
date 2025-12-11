@@ -31,6 +31,6 @@ verify.expectDiagnosticsAt(3, {
 
 verify.expectCompilerOptions({
   sqlOptions: {
-    deprecate: ["GRANT"],
+    deprecate: new Set(["GRANT"]),
   },
 });

@@ -33,8 +33,8 @@ verify.expectDiagnosticsAt(5, {
 verify.expectCompilerOptions({
   rules: {
     laxScale: {
-      source: "SOURCE",
-      strict: "STRICT",
+      source: constants.CompilerOptions.RulesSource.SOURCE,
+      strict: constants.CompilerOptions.RulesStrict.STRICT,
     },
   },
 });

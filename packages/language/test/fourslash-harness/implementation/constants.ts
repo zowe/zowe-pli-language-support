@@ -13,9 +13,16 @@ import { HarnessTesterInterface } from "../harness-interface";
 import { CompletionKeywords } from "../../../src/language-server/completion/keywords";
 import { Severity } from "../../../src/language-server/types";
 import { DefaultAttribute } from "../../../src/syntax-tree/ast";
+import { CompilerOptions as PliCompilerOptions } from "../../../src/preprocessor/compiler-options/options-pli";
+import { CompilerOptions as MacroCompilerOptions } from "../../../src/preprocessor/compiler-options/options-macro";
+import { CompilerOptions as SQLCompilerOptions } from "../../../src/preprocessor/compiler-options/options-sql";
 
 export const HarnessConstants: HarnessTesterInterface["constants"] = {
   CompletionKeywords,
   Severity,
   DefaultAttribute,
+  CompilerOptions: Object.assign(PliCompilerOptions, {
+    Macro: MacroCompilerOptions,
+    SQL: SQLCompilerOptions,
+  }),
 };

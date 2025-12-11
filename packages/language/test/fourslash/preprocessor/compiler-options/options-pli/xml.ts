@@ -43,7 +43,7 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   xml: {
-    case: "ASIS",
-    xmlAttr: "QUOTE",
+    case: constants.CompilerOptions.XMLCase.ASIS,
+    xmlAttr: constants.CompilerOptions.XMLAttr.QUOTE,
   },
 });

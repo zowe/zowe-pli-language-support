@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    complex: "SOURCE",
+    complex: constants.CompilerOptions.RulesSource.SOURCE,
   },
 });

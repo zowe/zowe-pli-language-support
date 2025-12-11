@@ -33,5 +33,5 @@ verify.expectDiagnosticsAt(6, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
 });
 verify.expectCompilerOptions({
-  header: "SOURCE",
+  header: constants.CompilerOptions.Header.SOURCE,
 });

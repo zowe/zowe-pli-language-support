@@ -21,6 +21,6 @@ verify.expectDiagnosticsAt(1, {
 
 verify.expectCompilerOptions({
   macroOptions: {
-    dbcs: "EXACT",
+    dbcs: constants.CompilerOptions.Macro.Dbcs.EXACT,
   },
 });

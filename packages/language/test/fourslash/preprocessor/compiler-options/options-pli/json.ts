@@ -45,9 +45,9 @@ verify.expectDiagnosticsAt([2, 4, 7, 9, 11, 13, 14], {
 });
 verify.expectCompilerOptions({
   json: {
-    case: "ASIS",
+    case: constants.CompilerOptions.JsonCase.ASIS,
     trimr: false,
-    get: "IGNORECASE",
-    parse: "V2",
+    get: constants.CompilerOptions.JsonGet.IGNORECASE,
+    parse: constants.CompilerOptions.JsonParse.V2,
   },
 });

@@ -44,5 +44,5 @@ verify.expectDiagnosticsAt(15, {
   message: code.CompilerOptions.DupeOptionIssue.message("CASERULES(KEYWORD)"),
 });
 verify.expectCompilerOptions({
-  caserules: "UPPER",
+  caserules: constants.CompilerOptions.CaseRules.UPPER,
 });

@@ -36,5 +36,5 @@ verify.expectDiagnosticsAt(8, {
   message: code.CompilerOptions.MutexOptionIssue.message("MSGSUMMARY"),
 });
 verify.expectCompilerOptions({
-  msgSummary: "XREF",
+  msgSummary: constants.CompilerOptions.MsgSummary.XREF,
 });
