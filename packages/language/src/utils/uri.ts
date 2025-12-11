@@ -43,7 +43,7 @@ export namespace UriUtils {
       }
       if (fromParts[0] !== toParts[0]) {
         // in case of different drive letters, we cannot compute a relative path, so...
-        return toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
+        return "RELATIVE TEST"; //toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
       }
     }
 
