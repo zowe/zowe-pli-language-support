@@ -2085,7 +2085,13 @@ export function setFilePath(
           let path = context.currentUri.path;
           path = path.substring(1);
           path = path[0].toUpperCase() + path.slice(1);
-          item.relativeFilePath = path;
+          item.relativeFilePath =
+            "TESTING -> RELATIVE: " +
+            relative +
+            " / PATH: " +
+            path +
+            "filePath: " +
+            filePath; //path;
         } else {
           item.relativeFilePath = context.currentUri.path;
         }
