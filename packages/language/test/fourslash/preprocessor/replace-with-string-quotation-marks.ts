@@ -15,4 +15,4 @@
 //// DCL A CHAR INIT(X);
 
 // Expect the string to be replaced, including quotation marks and escaping of internal quotes
-preprocessor.expectTokens(' DCL A CHAR INIT("HELLO "" WORLD""");');
+preprocessor.expectTokens('DCL A CHAR INIT("HELLO "" WORLD""");');
