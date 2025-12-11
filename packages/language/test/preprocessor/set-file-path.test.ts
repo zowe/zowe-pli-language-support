@@ -42,8 +42,7 @@ describe("setFilePath", () => {
       await pluginConfig.init("/workspace");
     } else if (process.platform === "win32") {
       await pluginConfig.init("\\workspace");
-            // await pluginConfig.init("C:\\workspace");
-
+      // await pluginConfig.init("C:\\workspace");
     }
     context = null;
   });
