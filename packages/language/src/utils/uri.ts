@@ -27,9 +27,11 @@ export namespace UriUtils {
   }
 
   export function relative(from: URI | string, to: URI | string): string {
-    const fromPath =
-      typeof from === "string" ? URI.parse(from).path : from.path;
-    const toPath = typeof to === "string" ? URI.parse(to).path : to.path;
+    let fromPath = typeof from === "string" ? URI.parse(from).path : from.path;
+    let toPath = typeof to === "string" ? URI.parse(to).path : to.path;
+    fromPath = fromPath.replace(/\\/g, "/");
+    toPath = toPath.replace(/\\/g, "/");
+
     const fromParts = fromPath.split("/").filter((e) => e.length > 0);
     const toParts = toPath.split("/").filter((e) => e.length > 0);
 
@@ -43,7 +45,7 @@ export namespace UriUtils {
       }
       if (fromParts[0] !== toParts[0]) {
         // in case of different drive letters, we cannot compute a relative path, so...
-        return "RELATIVE TEST"; //toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
+        return toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
       }
     }
 

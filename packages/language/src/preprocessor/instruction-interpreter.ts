@@ -2060,7 +2060,7 @@ export function setFilePath(
       const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
       let relative = UriUtils.relative(workspace, filePath);
       let isWindows = false;
-      if (context.currentUri.path.charAt(1) === "c") {
+      if (context.currentUri.path.charAt(1).toLowerCase() === "c") {
         isWindows = true;
       }
       if (
@@ -2085,14 +2085,7 @@ export function setFilePath(
           let path = context.currentUri.path;
           path = path.substring(1);
           path = path[0].toUpperCase() + path.slice(1);
-          item.relativeFilePath =
-            "TESTING -> RELATIVE: " +
-            relative +
-            " / PATH: " +
-            path +
-            "filePath: " +
-            filePath; //path;
-          // SER PATH AQUI TÁ CERTO E RESOLVE O PRO
+          item.relativeFilePath = path;
         } else {
           item.relativeFilePath = context.currentUri.path;
         }
