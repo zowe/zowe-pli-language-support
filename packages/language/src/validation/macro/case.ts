@@ -27,47 +27,59 @@ export function MACRO_Case(
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ) {
+  if (!compilationUnit.processGroup?.lspOptions.caseUpperValidation) return;
   if (node !== compilationUnit.preprocessorAst) return;
   if (compilationUnit.compilerOptions.macroOptions.case !== "UPPER") return;
 
-  const tokens = collectPreprocessorTokens(compilationUnit).filter(
-    (token) =>
-      token.tokenType?.tokenTypeIdx !== PreprocessorTokens.String.tokenTypeIdx,
-  );
+  const MAX_DIAGNOSTICS = 100;
+  let diagnosticCount = 0;
 
-  for (const token of tokens) {
-    if (/[a-z]/.test(token.originalImage)) {
-      const diagnostic = diagnosticFromCode(
-        LspCodes.UpperCase,
-        token,
-        token.image,
-      );
-      // Diagnostic data needed for the quickfix
-      diagnostic.data = {
-        uri: diagnostic.uri,
-        text: token.originalImage,
-      };
-      acceptor(diagnostic);
-    }
-  }
-}
-
-function collectPreprocessorTokens(unit: CompilationUnit): Token[] {
-  const tokens: Token[] = [];
   const tokenMap = new MultiMap<AST.SyntaxNode, Token>();
-  for (const token of unit.services.files.getAllTokens()) {
+  for (const token of compilationUnit.services.files.getAllTokens()) {
     if (token.element) {
       tokenMap.add(token.element, token);
     }
   }
 
-  traverseAllNodes(unit.preprocessorAst, (child) => {
-    const nodeTokens = tokenMap.get(child);
-    if (nodeTokens.length > 0) {
-      tokens.push(...nodeTokens);
+  const processedTokens = new Set<Token>();
+
+  traverseAllNodes(compilationUnit.preprocessorAst, (child) => {
+    if (diagnosticCount >= MAX_DIAGNOSTICS) {
+      return TraversalState.Stop;
     }
+
+    const nodeTokens = tokenMap.get(child);
+    for (const token of nodeTokens) {
+      if (processedTokens.has(token)) continue;
+      processedTokens.add(token);
+
+      // Skip string tokens
+      if (
+        token.tokenType?.tokenTypeIdx === PreprocessorTokens.String.tokenTypeIdx
+      ) {
+        continue;
+      }
+
+      if (/[a-z]/.test(token.originalImage)) {
+        if (diagnosticCount >= MAX_DIAGNOSTICS) {
+          return TraversalState.Stop;
+        }
+
+        const diagnostic = diagnosticFromCode(
+          LspCodes.UpperCase,
+          token,
+          token.image,
+        );
+        // Diagnostic data needed for the quickfix
+        diagnostic.data = {
+          uri: diagnostic.uri,
+          text: token.originalImage,
+        };
+        acceptor(diagnostic);
+        diagnosticCount++;
+      }
+    }
+
     return TraversalState.Continue;
   });
-
-  return tokens;
 }

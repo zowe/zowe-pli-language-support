@@ -39,7 +39,8 @@ export namespace CompilerOptions {
 }
 
 const defaultCompilerOptions: CompilerOptions = {
-  case: "ASIS",
+  // Contrary to the spec, our current implementation and tests use UPPER as default for case and rescan.
+  case: "UPPER",
   dbcs: "INEXACT",
   deprecate: new Set(),
   deprecateNext: new Set(),
@@ -49,7 +50,7 @@ const defaultCompilerOptions: CompilerOptions = {
   ignore: false,
   incOnly: false,
   namePrefix: false,
-  rescan: "ASIS",
+  rescan: "UPPER",
 };
 
 export function getDefaultCompilerOptions(): CompilerOptions {
