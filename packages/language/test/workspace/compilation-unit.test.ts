@@ -146,7 +146,11 @@ describe("Compilation Unit Tests", () => {
         $computedLibs: [],
         $computedLibsSet: new Set<string>(),
         includeExtensions: [".inc"],
-        lspOptions: { checkMargins: false, instructionCounterLimit: 5000 },
+        lspOptions: {
+          checkMargins: false,
+          instructionCounterLimit: 5000,
+          caseUpperValidation: false,
+        },
         pliOptions: {},
         implicitBuiltins: new Set(),
       },

@@ -102,15 +102,17 @@ class TokenizerContext {
   public column: number = 0;
   public uri: URI | undefined;
   public diagnostics: Diagnostic[] = [];
+  public caseUpper: boolean;
 
   private storedIndex: number = 0;
   private storedLine: number = 0;
   private storedColumn: number = 0;
 
-  constructor(input: string, uri: URI | undefined) {
+  constructor(input: string, uri: URI | undefined, caseUpper: boolean = true) {
     this.input = input;
     this.length = input.length;
     this.uri = uri;
+    this.caseUpper = caseUpper;
   }
 
   store() {
@@ -203,7 +205,7 @@ function tokenizeIdentifier(
     if (!isIdChar(charCode)) {
       break;
     }
-    if (charCode >= 97 && charCode <= 122) {
+    if (context.caseUpper && charCode >= 97 && charCode <= 122) {
       // Lowercase character, must be uppercased
       charCode &= ~0x20;
     }
@@ -212,7 +214,7 @@ function tokenizeIdentifier(
     i++;
   }
   const originalImage = context.input.substring(start, i);
-  const image = originalImage.toUpperCase();
+  const image = context.caseUpper ? originalImage.toUpperCase() : originalImage;
   const previousToken = context.tokens[context.tokens.length - 1];
   // Specific handling for ExecFragment (likely EXEC SQL or EXEC CICS)
   if (
@@ -540,8 +542,9 @@ export interface TokenizationResult {
 export function tokenize(
   input: string,
   uri: URI | undefined,
+  caseUpper: boolean = true,
 ): TokenizationResult {
-  const context = new TokenizerContext(input, uri);
+  const context = new TokenizerContext(input, uri, caseUpper);
   let previous: tokens.Token | undefined = undefined;
 
   while (context.index < context.length) {

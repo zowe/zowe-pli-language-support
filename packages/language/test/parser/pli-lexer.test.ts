@@ -130,7 +130,11 @@ describe("PL/1 Lexer", () => {
         libs: [],
         $computedLibs: [],
         $computedLibsSet: new Set<string>(),
-        lspOptions: { checkMargins: false, instructionCounterLimit: 5000 },
+        lspOptions: {
+          checkMargins: false,
+          instructionCounterLimit: 5000,
+          caseUpperValidation: false,
+        },
         pliOptions: {},
       };
 
@@ -203,6 +207,7 @@ describe("PL/1 Lexer", () => {
         lspOptions: {
           checkMargins: false,
           instructionCounterLimit: 5000,
+          caseUpperValidation: false,
         },
         pliOptions: {},
       };
