@@ -14,8 +14,8 @@
 //// %FAL = 0;
 //// %TRU = 1;
 //// %SELECT;
-//// %WHEN (FAL) X
-//// %WHEN (TRU) Y
+//// %WHEN (FAL) DO; X %END;
+//// %WHEN (TRU) DO; Y %END;
 //// %END;
 
 preprocessor.expectTokens("Y");

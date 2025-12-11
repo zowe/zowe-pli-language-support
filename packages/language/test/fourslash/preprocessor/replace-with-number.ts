@@ -14,4 +14,4 @@
 //// %REPLACE X WITH 5;
 //// dcl A fixed bin(X);
 
-preprocessor.expectTokens(" dcl A fixed bin(5);");
+preprocessor.expectTokens("dcl A fixed bin(5);");

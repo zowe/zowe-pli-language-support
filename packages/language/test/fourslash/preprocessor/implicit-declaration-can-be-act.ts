@@ -16,4 +16,4 @@
 //// %ACT A;
 //// DCL A CHARACTER;
 
-preprocessor.expectTokens(" DCL B CHARACTER;");
+preprocessor.expectTokens("DCL B CHARACTER;");

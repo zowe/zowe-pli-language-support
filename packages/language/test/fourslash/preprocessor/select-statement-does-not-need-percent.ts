@@ -11,9 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
+//// %FAL = 0;
+//// %TRU = 1;
 //// %SELECT;
-//// %WHEN (0, 1, 2) DO; X %END;
-//// %OTHERWISE DO; Y %END;
+//// %WHEN (FAL) <|%|>DO; X %END;
+//// %WHEN (TRU) <|DO|>; Y %END;
 //// %END;
 
-preprocessor.expectTokens("X");
+preprocessor.expectTokens("Y");
+verify.noDiagnostics(["%", "DO"]);
