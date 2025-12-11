@@ -41,7 +41,9 @@ describe("setFilePath", () => {
     if (["darwin", "linux"].includes(process.platform)) {
       await pluginConfig.init("/workspace");
     } else if (process.platform === "win32") {
-      await pluginConfig.init("C:\\workspace");
+      await pluginConfig.init("\\workspace");
+            // await pluginConfig.init("C:\\workspace");
+
     }
     context = null;
   });

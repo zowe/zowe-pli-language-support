@@ -2092,6 +2092,7 @@ export function setFilePath(
             path +
             "filePath: " +
             filePath; //path;
+            // SER PATH AQUI TÁ CERTO E RESOLVE O PRO
         } else {
           item.relativeFilePath = context.currentUri.path;
         }
