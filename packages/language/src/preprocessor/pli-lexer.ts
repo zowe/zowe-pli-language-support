@@ -26,7 +26,7 @@ import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { initLexer, tokenize } from "../parser/tokenizer";
-import { preprocessorParserState } from "../parser/parser-state";
+import { ParserState } from "../parser/parser-state";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { getDefaultCompilerOptions } from "./compiler-options/options";
 import { CompilerOptions } from "./compiler-options/options-pli";
@@ -73,7 +73,7 @@ export class PliLexer {
         uri,
       );
       const tokenizeResult = tokenize(textWithoutMargins, uri);
-      const state = preprocessorParserState(tokenizeResult.tokens);
+      const state = new ParserState(tokenizeResult.tokens);
       // Do a full parsing of the input text to extract all *local* statements
       const {
         statements,

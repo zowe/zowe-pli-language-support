@@ -13,13 +13,12 @@ import { TokenType } from "chevrotain";
 import { describe, expect, test } from "vitest";
 import { orRule, rule, sequence } from "../src/parser/parser-types";
 import { SyntaxNode } from "../src/syntax-tree/ast";
-import { ParserState, ParserStateMode } from "../src/parser/parser-state";
+import { ParserState, RecoveryResult } from "../src/parser/parser-state";
 import {
   createTokenInstance as originalCreateTokenInstance,
   Token,
 } from "../src/parser/tokens";
 import { createToken } from "../src/parser/token-type-factory";
-import { recover } from "../src/parser/parser";
 
 namespace Tokens {
   export const ID = createToken({
@@ -123,7 +122,11 @@ namespace Rules {
       while (!state.eof) {
         const stmt = statement.rule(state);
         stmt && program.push(stmt);
-        recover(state, () => state.canConsumeFirst(statement.first()));
+        state.recover(() => {
+          return state.canConsumeFirst(statement.first())
+            ? RecoveryResult.Recover
+            : RecoveryResult.Continue;
+        });
       }
       return program;
     },
@@ -132,16 +135,13 @@ namespace Rules {
 
 describe("Rule tests", () => {
   test("Simple rule set", () => {
-    const state = new ParserState(
-      [
-        TokenInstances.Person,
-        TokenInstances.IdBob,
-        TokenInstances.Hello,
-        TokenInstances.IdAlice,
-        TokenInstances.Exclamation,
-      ],
-      ParserStateMode.Final,
-    );
+    const state = new ParserState([
+      TokenInstances.Person,
+      TokenInstances.IdBob,
+      TokenInstances.Hello,
+      TokenInstances.IdAlice,
+      TokenInstances.Exclamation,
+    ]);
 
     const result = Rules.program.rule(state)!;
 
@@ -153,10 +153,10 @@ describe("Rule tests", () => {
   });
 
   test("Keyword IDs", () => {
-    const state = new ParserState(
-      [TokenInstances.Person, TokenInstances.IdPerson],
-      ParserStateMode.Final,
-    );
+    const state = new ParserState([
+      TokenInstances.Person,
+      TokenInstances.IdPerson,
+    ]);
 
     const result = Rules.program.rule(state)!;
 
@@ -166,10 +166,7 @@ describe("Rule tests", () => {
   });
 
   test("Error", () => {
-    const state = new ParserState(
-      [TokenInstances.IdBob],
-      ParserStateMode.Final,
-    );
+    const state = new ParserState([TokenInstances.IdBob]);
 
     Rules.program.rule(state)!;
 
