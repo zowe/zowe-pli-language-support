@@ -1952,7 +1952,10 @@ function replaceTokenWithValue(
   immediateFollow: boolean,
   context: InterpreterContext,
 ): Token[] {
-  const tokens = lex(value);
+  const tokens = lex(
+    value,
+    context.unit.compilerOptions.macroOptions?.rescan !== "ASIS",
+  );
   setImmediateFollowProperty(immediateFollow, tokens);
   return replaceTokensInText(tokens, context);
 }
@@ -1974,8 +1977,8 @@ function generateSyntheticRefItem(
   return refItem;
 }
 
-function lex(text: string): Token[] {
-  return tokenize(text, undefined).tokens;
+function lex(text: string, caseUpper: boolean = true): Token[] {
+  return tokenize(text, undefined, caseUpper).tokens;
 }
 
 function setImmediateFollowProperty(

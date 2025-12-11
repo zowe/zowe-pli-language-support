@@ -106,6 +106,7 @@ export interface ProcessGroup {
   lspOptions: {
     checkMargins: boolean;
     instructionCounterLimit: number;
+    caseUpperValidation: boolean;
   };
 
   /**
@@ -156,6 +157,9 @@ export function deserializeProcessGroup(
       instructionCounterLimit: isNumber(instructionCounterLimit)
         ? instructionCounterLimit
         : MAX_INSTRUCTION_COUNTER,
+      caseUpperValidation: isBoolean(lspOptions["case-upper-validation"])
+        ? lspOptions["case-upper-validation"]
+        : false,
     },
     memberNameValidation: isBoolean(memberNameValidation)
       ? memberNameValidation
@@ -197,6 +201,7 @@ interface SerializedProcessGroup {
   "lsp-options"?: {
     "check-margins"?: boolean;
     "instruction-counter-limit"?: number;
+    "case-upper-validation"?: boolean;
   };
 }
 
