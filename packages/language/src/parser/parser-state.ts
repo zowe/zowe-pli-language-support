@@ -19,6 +19,7 @@ import {
   diagnosticFromCode,
   Severity,
 } from "../language-server/types";
+import { RuleMap } from "./parser-types";
 import {
   isParametricPLICode,
   isSimplePLICode,
@@ -26,6 +27,8 @@ import {
   PLICodes,
   SimplePLICode,
 } from "../validation/pli-codes";
+import { tokenIdxToClass } from "./token-type-factory";
+import * as environment from "../workspace/environment";
 
 export function preprocessorParserState(tokens: t.Token[]): ParserState {
   return new ParserState(tokens, ParserStateMode.Preprocessor);
@@ -54,6 +57,27 @@ export class ParserState {
     this.mode = mode;
     this.diagnostics = [];
     this.index = 0;
+  }
+
+  createLoopContext(name: string) {
+    if (environment.IsDebugging) {
+      let lastIndex = -1;
+      return {
+        inc: () => {
+          if (lastIndex === this.index) {
+            throw new Error(
+              `Possible infinite loop detected in parser at rule ${name} after ${this.token?.image} token.`,
+            );
+          }
+          lastIndex = this.index;
+        },
+      };
+    }
+    return {
+      inc: () => {
+        /* nothing to do */
+      },
+    };
   }
 
   enterProcedure(): void {
@@ -166,7 +190,6 @@ export class ParserState {
     if (this.mode === ParserStateMode.Preprocessor) {
       this.performPreprocessorRecovery();
     } else if (this.mode === ParserStateMode.Final) {
-      // TODO: Implement error recovery for PLI parser
     }
     this.inError = false;
   }
@@ -314,6 +337,75 @@ export class ParserState {
       );
     }
     return this.consume(element, kind, tokenType);
+  }
+
+  private mapMatch(map: RuleMap, tokenType: TokenType): number | undefined {
+    const tokenTypeIdx = tokenType.tokenTypeIdx ?? -1;
+    if (map.has(tokenTypeIdx)) {
+      return tokenTypeIdx;
+    }
+    if (tokenType.CATEGORIES) {
+      for (const category of tokenType.CATEGORIES) {
+        const categoryIdx = category.tokenTypeIdx ?? -1;
+        if (map.has(categoryIdx)) {
+          return categoryIdx;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  private canConsumeFirstItem(map: RuleMap, index: number): boolean {
+    if (this.index + index >= this.tokens.length) {
+      return false;
+    }
+    const tokenType = this.tokens[this.index + index].tokenType;
+    const idx = this.mapMatch(map, tokenType);
+    if (idx === undefined) {
+      return false;
+    }
+    const next = map.get(idx)!;
+    if (next instanceof Function) {
+      return true;
+    } else {
+      return this.canConsumeFirstItem(next, index + 1);
+    }
+  }
+
+  canConsumeFirst(firstSet: RuleMap): boolean {
+    return this.canConsumeFirstItem(firstSet, 0);
+  }
+
+  private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T | null {
+    if (this.eof || this.inError) {
+      return null;
+    }
+    const token = this.tokens[this.index + index];
+    const lookahead = token.tokenType;
+    const idx = this.mapMatch(map, lookahead);
+    if (idx === undefined) {
+      const tokenTypeNames = [...map.keys()]
+        .map((idx) => tokenIdxToClass(idx))
+        .filter((k) => k !== undefined)
+        .map((tk) => tk!.name)
+        .join(", ");
+      this.error(
+        `Expected any of {${tokenTypeNames}}, but found ${generateTokenErrorName(token)}.`,
+        token,
+        Severity.S,
+      );
+      return null;
+    }
+    const next = map.get(idx)!;
+    if (next instanceof Function) {
+      return next(this);
+    } else {
+      return this.consumeAlternativesItem(next, index + 1);
+    }
+  }
+
+  consumeAlternatives<T>(map: RuleMap<T>): T | null {
+    return this.consumeAlternativesItem(map, 0);
   }
 }
 
