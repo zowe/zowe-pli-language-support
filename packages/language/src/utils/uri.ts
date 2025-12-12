@@ -44,6 +44,13 @@ export namespace UriUtils {
         toParts[0] = toParts[0].toLowerCase();
       }
       if (fromParts[0] !== toParts[0]) {
+        // Here is a check to see if we have the workspace folder somewhere in our path.
+        // The limitation is that, if somehow we have a folder with the same name of the workspace folder, within
+        // an absolute path outside the real workspace, it would be catch.
+        const indexExists = toParts.indexOf(fromParts[0]);
+        if (indexExists !== -1) {
+          return toParts.slice(indexExists + 1).join("/");
+        }
         // in case of different drive letters, we cannot compute a relative path, so...
         return toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
       }
