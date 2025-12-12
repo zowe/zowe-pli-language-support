@@ -85,6 +85,17 @@ export const BuiltinsSQLDA = `
  DECLARE SQLSINGLED CHAR(1)   INITIAL(' ');
 `;
 
+export const BuiltinsTypeFunctions = `
+ BIND: PROC (t, p); END;
+ CAST: PROC (t, x); END;
+ FIRST: PROC (t); END;
+ LAST: PROC (t); END;
+ NEW: PROC (t); END;
+ RESPEC: PROC (t, x); END;
+ SIZE: PROC (t); END;
+ VALUE: PROC (t); END;
+`;
+
 export const BuiltinsFile = "builtins.pli";
 export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
 export const Builtins =
@@ -820,6 +831,7 @@ export const Builtins =
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  ` +
   BuiltinsBoolean +
+  BuiltinsTypeFunctions +
   BuiltinsSQLCA +
   BuiltinsSQLDA;
 

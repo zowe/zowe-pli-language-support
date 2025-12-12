@@ -213,6 +213,7 @@ export enum SyntaxKind {
   SqlAttributeTableLocator,
   SqlAttributeResultSetLocator,
   TypeAttribute,
+  TypeReference,
   UnaryExpression,
   ValueAttribute,
   ValueListAttribute,
@@ -584,8 +585,7 @@ export interface AstNode {
 export function isSyntaxNode(node: unknown): node is SyntaxNode {
   return (
     isObject<AstNode>(node) &&
-    typeof node.kind === "number" &&
-    typeof node.container === "object"
+    typeof node.kind === "number"
   );
 }
 
@@ -851,6 +851,7 @@ export type SyntaxNode =
   | SqlAttributeTableLocator
   | SqlAttributeResultSetLocator
   | TypeAttribute
+  | TypeReference
   | UnaryExpression
   | ValueAttribute
   | ValueListAttribute
@@ -932,6 +933,7 @@ export type Expression =
   | BinaryExpression
   | Literal
   | LocatorCall
+  | TypeReference
   | Parenthesis
   | UnaryExpression;
 export type FormatItem =
@@ -2949,6 +2951,20 @@ export function createMemberCall(): MemberCall {
     previous: null,
   };
 }
+
+export interface TypeReference extends AstNode {
+  kind: SyntaxKind.TypeReference;
+  type: Reference<NamedType> | null;
+}
+
+export function createTypeReference(): TypeReference {
+  return {
+    kind: SyntaxKind.TypeReference,
+    container: null,
+    type: null,
+  };
+}
+
 export interface NamedCondition extends AstNode {
   kind: SyntaxKind.NamedCondition;
   name: string | null;
