@@ -436,7 +436,7 @@ export class PluginConfigurationProvider {
       const computedLibsMap: Map<string, LibsEntry> = new Map();
       const libsToProcess = [...processGroup.libs];
       while (libsToProcess.length > 0) {
-        const lib = libsToProcess.pop();
+        const lib = libsToProcess.shift();
         if (lib) {
           // read all files in this lib path
           // add any contained directories to the libs list, as well as the toProcess list
@@ -451,6 +451,10 @@ export class PluginConfigurationProvider {
 
           try {
             const entries = await FileSystemProviderInstance.readDir(libUri);
+            // add the lib itself first, since we know it exists now
+            computedLibsMap.set(`dir:${lib}`, {
+              dir: lib,
+            });
             if (entries.length) {
               for (const fileName of entries) {
                 // TODO @montymxb Nov. 7th, 2025: Handle stat checks in parallel to avoid blocking so long,
@@ -469,10 +473,6 @@ export class PluginConfigurationProvider {
                 }
               }
             }
-            // add the lib itself, now that we know it exists
-            computedLibsMap.set(`dir:${lib}`, {
-              dir: lib,
-            });
           } catch (e) {
             // could not read, try again to retrieve & read the parent directory
             // take its entries to see if our lib exists as a file or directory
@@ -515,7 +515,17 @@ export class PluginConfigurationProvider {
           }
         }
       }
-      const computedLibs = Array.from(computedLibsMap.values());
+      // get computed libs in sorted order, depth 1st, alpha 2nd
+      const computedLibs = Array.from(computedLibsMap.values()).sort((a, b) => {
+        const aKey = isLibsDir(a) ? a.dir : a.ddLib;
+        const bKey = isLibsDir(b) ? b.dir : b.ddLib;
+        const aDepth = (aKey.match(/\//g) || []).length;
+        const bDepth = (bKey.match(/\//g) || []).length;
+        if (aDepth - bDepth === 0) {
+          return aKey.localeCompare(bKey);
+        }
+        return aDepth - bDepth;
+      });
       processGroup.$computedLibs = computedLibs;
       // build a lookup set for dir entries only
       processGroup.$computedLibsSet = new Set(
