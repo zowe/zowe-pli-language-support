@@ -2253,7 +2253,7 @@ function getFileNameOrPartialName(item: IncludeItem): string | undefined {
  * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
  *
  * @param item Include item to resolve a URI for
- * @param state Current PP state, used to resolve relative paths, program configs, and report errors
+ * @param context Interpreter context used for resolution & diagnostic collection
  * @returns URI of the included file if found, otherwise undefined
  */
 async function resolveIncludeFileUri(
@@ -2269,6 +2269,11 @@ async function resolveIncludeFileUri(
       context.currentUri,
     );
 
+  if (!pgroup) {
+    // no process group to resolve libs from
+    return undefined;
+  }
+
   // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
   // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
   /*
@@ -2283,145 +2288,145 @@ async function resolveIncludeFileUri(
   } else ....
   */
 
-  if (pgroup) {
-    // lib file as either a string or a member from a known process group
-    const computedLibs = pgroup.$computedLibs;
+  // lib file as either a string or a member from a known process group
+  const computedLibs = pgroup.$computedLibs;
 
-    // construct the appropriate file name or partial name for members
-    const fileNameOrPartial = getFileNameOrPartialName(item);
-    if (!fileNameOrPartial) {
-      // no fileName or memberName to work with, abandon resolution
-      return undefined;
-    }
-
-    // whether the include item is a standalone member, no ddname specified
-    // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
-    // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
-    const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
-
-    /**
-     * Computes the URI for a lib file based on whether the path is absolute or relative
-     * Relative paths are combined w/ the workspace path
-     * @path Lib path from the process group
-     * @fileName Optional file name to append to the lib path (generally the include file name)
-     */
-    function resolveLibFileUri(path: string, fileName?: string): URI {
-      const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
-      if (!absPathRegex.test(path)) {
-        // relative lib path, combine w/ workspace
-        return UriUtils.joinPath(
-          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-          path,
-          fileName ?? "",
-        );
-      } else {
-        // use lib path over workspace
-        const libUri = URI.file(path).with({
-          scheme: context.entryUri.scheme,
-        });
-        return UriUtils.joinPath(libUri, fileName ?? "");
-      }
-    }
-
-    /**
-     * Helper to check & validate member names when member name validations are enabled.
-     * Pushes diagnostics to the context when validation fails.
-     * Effectively a noop when member name validation is disabled in the process group.
-     * @param memberName Member to validate, implied to be a member of an existing ddlib entry
-     */
-    function checkToValidateMember(memberName: string): void {
-      if (!pgroup?.memberNameValidation) {
-        return;
-      }
-      // apply additional validation to the member name
-      if (memberName.length > 8) {
-        // emit diagnostic for member names > 8 characters
-        context.diagnostics.push(
-          diagnosticFromCode(
-            LspCodes.MemberValidation.ExceedsMaxLength,
-            item.token,
-          ),
-        );
-      }
-
-      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
-      if (!memberNameRegex.test(memberName)) {
-        // emit a diagnostic for invalid member names
-        context.diagnostics.push(
-          diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
-        );
-      }
-    }
-
-    let libMatch: URI | undefined;
-    // whether a match was found for a member include
-    let needsMemberValidation = isMemberWithoutDDName;
-
-    for (const lib of computedLibs) {
-      if (isLibsDir(lib)) {
-        const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
-
-        if (isMemberWithoutDDName) {
-          // attempt to first resolve for any DDName that introduces this member
-          // This is done to ensure resolution order of libs is maintained as members > files
-          // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
-          // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
-          libMatch = await FileSystemProviderInstance.search({
-            dirPath: resolveLibFileUri(lib.dir),
-            member: fileNameOrPartial,
-          });
-          if (libMatch) {
-            break;
-          }
-        }
-
-        // perform standard search
-        libMatch = await FileSystemProviderInstance.search({
-          path: libFileUri,
-          extensions: pgroup.includeExtensions,
-        });
-        if (libMatch) {
-          // regular file match, no member to validate
-          needsMemberValidation = false;
-          break;
-        }
-      } else if (isMemberWithoutDDName) {
-        // standalone member w/out an explicit ddname, search within ddlib for a match
-        const ddLibUri = resolveLibFileUri(lib.ddLib);
-        libMatch = await FileSystemProviderInstance.search({
-          path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
-          extensions: [],
-        });
-        if (libMatch) {
-          break;
-        }
-      } else if (
-        isMemberIncludeItem(item) &&
-        item.ddname &&
-        lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
-      ) {
-        // member w/ ddname, search for an exact match using ddlib
-        const end = lib.ddLib.length - item.ddname.length;
-        const libPath = lib.ddLib.substring(0, end);
-        const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
-        libMatch = await FileSystemProviderInstance.search({
-          path: ddLibUri,
-          extensions: [],
-        });
-        if (libMatch) {
-          break;
-        }
-      }
-    }
-
-    // depending on whether we matched a member, check to apply validation on the name
-    if (needsMemberValidation) {
-      checkToValidateMember(fileNameOrPartial);
-    }
-    return libMatch;
+  // construct the appropriate file name or partial name for members
+  const fileNameOrPartial = getFileNameOrPartialName(item);
+  if (!fileNameOrPartial) {
+    // no fileName or memberName to work with, abandon resolution
+    return undefined;
   }
 
-  return undefined;
+  // whether the include item is a standalone member, no ddname specified
+  // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
+  // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
+  const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
+
+  /**
+   * Computes the URI for a lib file based on whether the path is absolute or relative.
+   * Relative paths are combined w/ the workspace path.
+   *
+   * @param path Lib path from the process group
+   * @param fileName Optional file name to append to the lib path (generally the include file name)
+   */
+  function resolveLibFileUri(path: string, fileName?: string): URI {
+    const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
+    if (!absPathRegex.test(path)) {
+      // relative lib path, combine w/ workspace
+      return UriUtils.joinPath(
+        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+        path,
+        fileName ?? "",
+      );
+    } else {
+      // use lib path over workspace
+      const libUri = URI.file(path).with({
+        scheme: context.entryUri.scheme,
+      });
+      return UriUtils.joinPath(libUri, fileName ?? "");
+    }
+  }
+
+  // what constitutes a valid member name, whether it's a member or file include
+  const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
+
+  /**
+   * Helper to check & validate member names when member name validations are enabled.
+   * Pushes diagnostics to the context when validation fails.
+   * Effectively a noop when member name validation is disabled in the process group.
+   * @param memberName Member to validate, implied to be a member of an existing ddlib entry
+   */
+  function checkToValidateMember(memberName: string): void {
+    if (!pgroup?.memberNameValidation) {
+      return;
+    }
+    // apply additional validation to the member name
+    if (memberName.length > 8) {
+      // emit diagnostic for member names > 8 characters
+      context.diagnostics.push(
+        diagnosticFromCode(
+          LspCodes.MemberValidation.ExceedsMaxLength,
+          item.token,
+        ),
+      );
+    }
+
+    if (!memberNameRegex.test(memberName)) {
+      // emit a diagnostic for invalid member names
+      context.diagnostics.push(
+        diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
+      );
+    }
+  }
+
+  let libMatch: URI | undefined;
+  // whether a match was found for a member include
+  let needsMemberValidation = isMemberWithoutDDName;
+
+  for (const lib of computedLibs) {
+    if (isLibsDir(lib)) {
+      const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
+
+      if (memberNameRegex.test(fileNameOrPartial)) {
+        // attempt to first resolve for any DDName that may introduce a member by this name
+        // This is done to ensure resolution order of libs is maintained as members > files
+        // Same applies for both member & file includes, to ensure behavior is consistent.
+        // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
+        // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
+        libMatch = await FileSystemProviderInstance.search({
+          dirPath: resolveLibFileUri(lib.dir),
+          member: fileNameOrPartial,
+        });
+        if (libMatch) {
+          break;
+        }
+      }
+
+      // perform standard search
+      libMatch = await FileSystemProviderInstance.search({
+        path: libFileUri,
+        extensions: pgroup.includeExtensions,
+      });
+      if (libMatch) {
+        // regular file match, no member to validate
+        needsMemberValidation = false;
+        break;
+      }
+    } else if (isMemberWithoutDDName) {
+      // standalone member w/out an explicit ddname, search within ddlib for a match
+      const ddLibUri = resolveLibFileUri(lib.ddLib);
+      libMatch = await FileSystemProviderInstance.search({
+        path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
+        extensions: [],
+      });
+      if (libMatch) {
+        break;
+      }
+    } else if (
+      isMemberIncludeItem(item) &&
+      item.ddname &&
+      lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
+    ) {
+      // member w/ ddname, search for an exact match using ddlib
+      const end = lib.ddLib.length - item.ddname.length;
+      const libPath = lib.ddLib.substring(0, end);
+      const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
+      libMatch = await FileSystemProviderInstance.search({
+        path: ddLibUri,
+        extensions: [],
+      });
+      if (libMatch) {
+        break;
+      }
+    }
+  }
+
+  // depending on whether we matched a member, check to apply validation on the name
+  if (needsMemberValidation) {
+    checkToValidateMember(fileNameOrPartial);
+  }
+  return libMatch;
 }
 
 type PreprocessorBuiltin = (

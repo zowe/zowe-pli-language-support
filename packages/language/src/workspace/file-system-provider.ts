@@ -136,10 +136,20 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   private readonly files: Map<string, string> = new Map<string, string>();
 
   /**
+   * Sorted list of files, ordered by depth 1st & alphabetically 2nd
+   * Used to ensure search returns the shallowest match regardless of insertion order
+   * Ex. /a/b/c/file.pli vs. /a/file.pli, where the latter should match first
+   * Lazily computed & set via `getSortedFiles`
+   */
+  private sortedFilesCache: string[] | undefined;
+
+  /**
    * Write a file to the virtualized file system
+   * Clears the sorted files cache
    */
   async writeFile(uri: URI, value: string): Promise<void> {
     this.files.set(uri.toString(true).toLowerCase(), value);
+    this.sortedFilesCache = undefined;
   }
 
   /**
@@ -167,22 +177,22 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     if (!path.endsWith("/")) {
       path += "/";
     }
-    const entries: string[] = [];
+    const entries: Set<string> = new Set<string>();
     for (const filePath of this.files.keys()) {
       if (filePath.startsWith(path)) {
         const relativePath = filePath.substring(path.length);
         const parts = relativePath.split("/").filter((p) => p.length > 0);
-        if (parts.length > 0) {
-          entries.push(parts[0]);
+        if (parts.length > 0 && !entries.has(parts[0])) {
+          entries.add(parts[0]);
         }
       }
     }
-    if (entries.length === 0) {
+    if (entries.size === 0) {
       // when no files are found, we assume the directory does not exist
       // as we don't currently support creating empty dirs in the vfs
       throw new Error(`Directory not found: ${uri.toString(true)}`);
     }
-    return entries;
+    return Array.from(entries);
   }
 
   /**
@@ -194,9 +204,32 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
 
   /**
    * Deletes a file from the virtualized file system
+   * Drops the associated sorted files cache entry as well
    */
   async deleteFile(uri: URI): Promise<void> {
     this.files.delete(uri.toString(true).toLowerCase());
+    this.sortedFilesCache?.splice(
+      this.sortedFilesCache.indexOf(uri.toString(true).toLowerCase()),
+      1,
+    );
+  }
+
+  /**
+   * Helper to get/compute sorted virtual files by depth 1st & alphabetically 2nd.
+   * Generates sorted list on request, if not already available.
+   */
+  private getSortedFiles(): string[] {
+    if (!this.sortedFilesCache) {
+      this.sortedFilesCache = Array.from(this.files.keys()).sort((a, b) => {
+        const aSlashes = (a.match(/\//g) || []).length;
+        const bSlashes = (b.match(/\//g) || []).length;
+        if (aSlashes === bSlashes) {
+          return a.localeCompare(b);
+        }
+        return aSlashes - bSlashes;
+      });
+    }
+    return this.sortedFilesCache;
   }
 
   /**
@@ -229,7 +262,8 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         const globalSearchPath = options.path.path
           .toLowerCase()
           .replace(/\\/g, "/");
-        for (const [filePath] of this.files) {
+        const sortedFiles = this.getSortedFiles();
+        for (const filePath of sortedFiles) {
           if (filePath.endsWith(globalSearchPath)) {
             return URI.parse(filePath);
           }
@@ -245,7 +279,8 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     } else {
       // perform a search by a member w/ candidate dir path
       const memberPart = `(${options.member})`.toLowerCase();
-      for (const [filePath] of this.files) {
+      const sortedFiles = this.getSortedFiles();
+      for (const filePath of sortedFiles) {
         const fpl = filePath.toLowerCase();
         if (
           fpl.endsWith(memberPart) &&
