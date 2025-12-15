@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
     getTelemetryReporter(context);
   sendTelemetryEvent("pli.language.support.activated", telemetryReporter);
   context.subscriptions.push(
-    registerOnDidOpenTextDocListener(telemetryReporter),
+    registerOnDidChangeActiveTextEditor(telemetryReporter),
   );
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -57,16 +57,6 @@ export function activate(context: vscode.ExtensionContext): void {
  * @returns Disposable listener
  */
 let shouldShowInfoMessage = true;
-namespace PopUpOptions {
-  export const CONFIG_CREATION = {
-    infoTitle: (relativePath: string) =>
-      `Create a '.pliplugin' folder in the project root using '${relativePath}' as the entry point in 'pgm_conf.json'?`,
-
-    userOptions: ["Yes", "No", "Don't show again"] as const,
-
-    successMessage: "'.pliplugin' folder and files created successfully.",
-  };
-}
 
 async function handleMissingConfig(
   textEditor: vscode.TextEditor | undefined,
@@ -99,18 +89,29 @@ async function handleMissingConfig(
 
   sendTelemetryEvent(telemetryEvent, telemetryReporter);
 
+  const CONFIG_CREATION = {
+    infoTitle: (relativePath: string) =>
+      `Create a '.pliplugin' folder in the project root using '${relativePath}' as the entry point in 'pgm_conf.json'?`,
+    OPTIONS: {
+      DONT_SHOW_AGAIN: "Don't show again",
+      YES: "Yes",
+      NO: "No",
+    },
+    SUCCESS_MESSAGE: "'.pliplugin' folder and files created successfully.",
+  };
+
   const userResponse = await vscode.window.showInformationMessage(
-    PopUpOptions.CONFIG_CREATION.infoTitle(currentFileRelativePath),
-    ...PopUpOptions.CONFIG_CREATION.userOptions,
+    CONFIG_CREATION.infoTitle(currentFileRelativePath),
+    CONFIG_CREATION.OPTIONS.YES,
+    CONFIG_CREATION.OPTIONS.NO,
+    CONFIG_CREATION.OPTIONS.DONT_SHOW_AGAIN,
   );
 
-  // If user clicks "Don't show again"
-  if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[2]) {
+  if (userResponse === CONFIG_CREATION.OPTIONS.DONT_SHOW_AGAIN) {
     shouldShowInfoMessage = false;
     return;
   }
-  // If user clicks "Yes"
-  if (userResponse === PopUpOptions.CONFIG_CREATION.userOptions[0]) {
+  if (userResponse === CONFIG_CREATION.OPTIONS.YES) {
     fs.mkdirSync(plipluginPath);
     fs.writeFileSync(
       path.join(plipluginPath, "pgm_conf.json"),
@@ -139,13 +140,11 @@ async function handleMissingConfig(
     );
 
     // confirmation message
-    vscode.window.showInformationMessage(
-      PopUpOptions.CONFIG_CREATION.successMessage,
-    );
+    vscode.window.showInformationMessage(CONFIG_CREATION.SUCCESS_MESSAGE);
   }
 }
 
-function registerOnDidOpenTextDocListener(
+function registerOnDidChangeActiveTextEditor(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
   const listener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
