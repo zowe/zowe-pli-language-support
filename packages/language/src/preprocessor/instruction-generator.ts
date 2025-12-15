@@ -12,6 +12,7 @@
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { assertType, getAttributes } from "./util";
+import { createCicsResponseInstruction } from "./instructions";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -187,6 +188,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.CicsResponseStatement:
       instruction = generateCicsResponseInstruction(value);
       break;
+    case ast.SyntaxKind.CicsExecStatement:
+      instruction = inst.createCicsExecInstruction();
+      break;
     default:
       return undefined;
   }
@@ -310,10 +314,7 @@ function generateCicsResponseInstruction(
   if (node.code === null) {
     return undefined;
   }
-  return {
-    kind: inst.InstructionKind.CicsResponseCode,
-    code: node.code,
-  };
+  return createCicsResponseInstruction(node.code);
 }
 
 function generateSqlAttributeInstruction(
