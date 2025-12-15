@@ -583,10 +583,7 @@ export interface AstNode {
 }
 
 export function isSyntaxNode(node: unknown): node is SyntaxNode {
-  return (
-    isObject<AstNode>(node) &&
-    typeof node.kind === "number"
-  );
+  return isObject<AstNode>(node) && typeof node.kind === "number";
 }
 
 export function getContainer<K extends SyntaxNode["kind"]>(
