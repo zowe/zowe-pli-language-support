@@ -9,21 +9,19 @@
  *
  */
 
-// Tests including a ddname(member) by its member directly & recursively
+// Tests that ddname(member) includes are preferred over file includes when both can match
 
 /// <reference path="../../framework.ts" />
 
-// @filename: cpy/MYLIB(m1)
-//// DECLARE LIB_VAR1 FIXED;
+// @filename: cpy/MYLIB(member)
+//// DECLARE LIB_VAR FIXED;
 
-// @filename: cpy/f2/A.B.C(m2)
-//// DECLARE LIB_VAR2 FIXED;
+// @filename: cpy/member.pli
+//// DECLARE OTHER_VAR FIXED;
 
 // @filename: main.pli
-//// %INCLUDE m1;
-//// %INCLUDE m2;
+//// %INCLUDE "member";
 
 preprocessor.expectTokens(`
-  DECLARE LIB_VAR1 FIXED;
-  DECLARE LIB_VAR2 FIXED;
+  DECLARE LIB_VAR FIXED;
 `);
