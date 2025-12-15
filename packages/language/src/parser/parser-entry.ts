@@ -20,7 +20,11 @@ import {
   statement,
 } from "./preprocessor-parser";
 import { isSqlAttributeStatement, sqlAttributeStatement } from "./sql-parser";
-import { cicsResponseStatement, isCicsResponseStatement } from "./cics-parser";
+import {
+  cicsResponseStatement,
+  isCicsExecStatement,
+  isCicsResponseStatement,
+} from "./cics-parser";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -71,6 +75,16 @@ export function preprocessorParse(
           stmt = cicsRespStatement;
         }
         break;
+      case t.EXEC.tokenTypeIdx:
+        if (isCicsExecStatement(state)) {
+          // Do not really parse the CICS EXEC statement yet
+          // Just create a placeholder AST node for now
+          isTokenStatement = true;
+          const cicsExecStatement = ast.createCicsExecStatement();
+          const stmtWrapper = ast.createStatement();
+          stmtWrapper.value = cicsExecStatement;
+          statements.push(stmtWrapper);
+        }
     }
     if (isTokenStatement) {
       // Otherwise construct a token statement

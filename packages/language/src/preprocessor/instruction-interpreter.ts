@@ -277,7 +277,7 @@ interface InterpreterContext {
   options: InterpreterOptions;
   returnValue: Value;
   counterValue: number;
-  sqlAttributeCache: SqlAttributeCache;
+  generationCache: GenerationCache;
   /**
    * MACNAME returns the name of the preprocessor procedure within which it is invoked.
    * It is invalid to invoke MACNAME outside of a preprocessor procedure.
@@ -286,14 +286,15 @@ interface InterpreterContext {
   instructionCounterLimit: number;
 }
 
-interface SqlAttributeCache {
+interface GenerationCache {
   lastProcedureTokenIndex: number;
-  entries: Map<number, SqlAttributeEntry>;
+  entries: Map<number, GenerationCacheEntry>;
 }
 
-interface SqlAttributeEntry {
-  hasFile: boolean;
-  lobSizes: Set<number>;
+interface GenerationCacheEntry {
+  hasSqlLobFile: boolean;
+  hasCicsExec: boolean;
+  sqlLobSizes: Set<number>;
 }
 
 interface DoType3Context {
@@ -350,7 +351,7 @@ export async function runInstructions(
     counter: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
-    sqlAttributeCache: {
+    generationCache: {
       lastProcedureTokenIndex: 0,
       entries: new Map(),
     },
@@ -526,6 +527,9 @@ function runInstructionSync(
     case inst.InstructionKind.CicsResponseCode:
       runCicsResponseInstruction(instruction, context);
       break;
+    case inst.InstructionKind.CicsExecStatement:
+      runCicsExecInstruction(instruction, context);
+      break;
   }
   return undefined;
 }
@@ -536,6 +540,22 @@ function runCicsResponseInstruction(
 ): void {
   const codeValue = instruction.code.toString();
   context.tokens.push(...lex(codeValue));
+}
+
+function getGenerationCacheEntry(
+  context: InterpreterContext,
+  offset: number,
+): GenerationCacheEntry {
+  let entry = context.generationCache.entries.get(offset);
+  if (!entry) {
+    entry = {
+      hasSqlLobFile: false,
+      hasCicsExec: false,
+      sqlLobSizes: new Set(),
+    };
+    context.generationCache.entries.set(offset, entry);
+  }
+  return entry;
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
@@ -574,23 +594,17 @@ function runSqlAttributeInstruction(
     if (procSemicolonIndex === undefined) {
       return;
     }
-    let entry = context.sqlAttributeCache.entries.get(procSemicolonIndex);
-    if (!entry) {
-      entry = {
-        hasFile: false,
-        lobSizes: new Set(),
-      };
-      context.sqlAttributeCache.entries.set(procSemicolonIndex, entry);
-    }
+    const entry = getGenerationCacheEntry(context, procSemicolonIndex);
     if (body.kind === ast.SyntaxKind.SqlAttributeLobFile) {
-      if (!entry.hasFile) {
+      if (!entry.hasSqlLobFile) {
+        entry.hasSqlLobFile = true;
         insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
       }
       context.tokens.push(...lex(LOB_FILE_TYPE));
     } else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
       const computedLength = computeLobLength(body);
-      if (!entry.lobSizes.has(computedLength)) {
-        entry.lobSizes.add(computedLength);
+      if (!entry.sqlLobSizes.has(computedLength)) {
+        entry.sqlLobSizes.add(computedLength);
         insertSqlAttributeLobTokens(
           context,
           procSemicolonIndex,
@@ -626,6 +640,8 @@ function insertSqlAttributeLobFileTokens(
   context: InterpreterContext,
   offset: number,
 ): void {
+  // These declarations aren't documented anywhere
+  // They are extracted from the PL/I code after running through the SQL preprocessor
   context.tokens.splice(
     offset,
     0,
@@ -642,6 +658,81 @@ function insertSqlAttributeLobFileTokens(
     DCL SQL_FILE_OVERWRITE FIXED BIN(31) VALUE(16);
     DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
   `),
+  );
+}
+
+function runCicsExecInstruction(
+  instruction: inst.CicsExecInstruction,
+  context: InterpreterContext,
+): void {
+  const procSemicolonIndex = findProcSemicolon(context);
+  if (procSemicolonIndex === undefined) {
+    return;
+  }
+  const entry = getGenerationCacheEntry(context, procSemicolonIndex);
+  if (!entry.hasCicsExec) {
+    entry.hasCicsExec = true;
+    insertCicsExecTokens(context, procSemicolonIndex);
+  }
+}
+
+function insertCicsExecTokens(
+  context: InterpreterContext,
+  offset: number,
+): void {
+  // These declarations aren't documented anywhere
+  // They are extracted from the PL/I code after running through the CICS preprocessor
+  context.tokens.splice(
+    offset,
+    0,
+    ...lex(`
+      DCL 
+        1 DFHCNSTS STATIC,
+          2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
+          2 DFHEIB0 FIXED BIN(15) INIT(0),
+          2 DFHEID0 FIXED DEC(7) INIT(0),
+          2 DFHEICB CHAR(8) INIT('        ');
+      DCL DFHEPI ENTRY, DFHEIPTR PTR;
+      DCL 
+        1 DFHEIBLK BASED (DFHEIPTR),
+          2 EIBTIME  FIXED DEC(7),
+          2 EIBDATE  FIXED DEC(7),
+          2 EIBTRNID CHAR(4),
+          2 EIBTASKN FIXED DEC(7),
+          2 EIBTRMID CHAR(4),
+          2 EIBFIL01 FIXED BIN(15),
+          2 EIBCPOSN FIXED BIN(15),
+          2 EIBCALEN FIXED BIN(15),
+          2 EIBAID   CHAR(1),
+          2 EIBFN    CHAR(2),
+          2 EIBRCODE CHAR(6),
+          2 EIBDS    CHAR(8),
+          2 EIBREQID CHAR(8),
+          2 EIBRSRCE CHAR(8),
+          2 EIBSYNC  CHAR(1),
+          2 EIBFREE  CHAR(1),
+          2 EIBRECV  CHAR(1),
+          2 EIBFIL02 CHAR(1),
+          2 EIBATT   CHAR(1),
+          2 EIBEOC   CHAR(1),
+          2 EIBFMH   CHAR(1),
+          2 EIBCOMPL CHAR(1),
+          2 EIBSIG   CHAR(1),
+          2 EIBCONF  CHAR(1),
+          2 EIBERR   CHAR(1),
+          2 EIBERRCD CHAR(4),
+          2 EIBSYNRB CHAR(1),
+          2 EIBNODAT CHAR(1),
+          2 EIBRESP  FIXED BIN(31),
+          2 EIBRESP2 FIXED BIN(31),
+          2 EIBRLDBK CHAR(1);
+      DCL 
+        1 DFHCNTBS  STATIC,
+          2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 730.');
+      DCL DFHDUMMY STATIC FIXED BIN(15) INIT(0);
+      DCL DFHEI0 ENTRY VARIABLE INIT(DFHEI01) AUTO OPTIONS(INTER ASSEMBLER);
+      DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
+    `),
   );
 }
 
@@ -666,12 +757,12 @@ function insertSqlAttributeLobTokens(
  * Searches for the nearest procedure semicolon token before the current position
  */
 function findProcSemicolon(context: InterpreterContext): number | undefined {
-  const min = context.sqlAttributeCache.lastProcedureTokenIndex;
+  const min = context.generationCache.lastProcedureTokenIndex;
   const max = context.tokens.length - 1;
   for (let i = max; i >= min; i--) {
     const token = context.tokens[i];
     if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
-      context.sqlAttributeCache.lastProcedureTokenIndex = i;
+      context.generationCache.lastProcedureTokenIndex = i;
       for (let j = i + 1; j <= max; j++) {
         const nextToken = context.tokens[j].tokenTypeIdx;
         if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
