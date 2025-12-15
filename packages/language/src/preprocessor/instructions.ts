@@ -87,6 +87,7 @@ export enum InstructionKind {
   Note,
   SqlAttribute,
   CicsResponseCode,
+  CicsExecStatement,
 
   // Expression types
   BinaryExpression,
@@ -113,11 +114,31 @@ export type Instruction =
   | NoteInstruction
   | CallInstruction
   | SqlAttributeInstruction
-  | CicsResponseInstruction;
+  | CicsResponseInstruction
+  | CicsExecInstruction;
 
 export interface CicsResponseInstruction {
   kind: InstructionKind.CicsResponseCode;
   code: ast.CicsResponseCode;
+}
+
+export function createCicsResponseInstruction(
+  code: ast.CicsResponseCode,
+): CicsResponseInstruction {
+  return {
+    kind: InstructionKind.CicsResponseCode,
+    code,
+  };
+}
+
+export interface CicsExecInstruction {
+  kind: InstructionKind.CicsExecStatement;
+}
+
+export function createCicsExecInstruction(): CicsExecInstruction {
+  return {
+    kind: InstructionKind.CicsExecStatement,
+  };
 }
 
 export interface SqlAttributeInstruction {
