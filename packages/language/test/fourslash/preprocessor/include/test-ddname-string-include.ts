@@ -9,7 +9,7 @@
  *
  */
 
-// Tests including a ddname(member) directly as a string literal.
+// Tests including a ddname(member) directly as a string literal, w/ ddname or without.
 // TODO @montymxb this feature may be dropped later on, potential issue since
 // ddname(member) shouldn't be importable directly as a file, not the intended use case.
 
@@ -20,7 +20,9 @@
 
 // @filename: main.pli
 //// %INCLUDE "MYLIB(member)";
+//// %INCLUDE "member";
 
 preprocessor.expectTokens(`
+  DECLARE LIB_VAR FIXED;
   DECLARE LIB_VAR FIXED;
 `);
