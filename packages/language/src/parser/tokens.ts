@@ -1882,7 +1882,7 @@ export const DISABLED = registerKeyword({
  * Characters which start a preprocessor directive.
  * Used as start/stop points for the token statement
  */
-export const PPSignifier = [Percent, INCLUDE_ALT, SQL, DFHRESP];
+export const PPSignifier = [Percent, INCLUDE_ALT, SQL, DFHRESP, EXEC];
 
 export const terminals = [
   WS,
