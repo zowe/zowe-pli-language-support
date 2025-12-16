@@ -2058,12 +2058,13 @@ export function setFilePath(
   item.filePath = filePath;
   if (!context.currentUri) return;
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+  /** Problem: .relative will return "../path" for absolute Linux paths.  */
   let relative = UriUtils.relative(workspace, filePath);
   if (UriUtils.isPathRelative(relative)) {
     relative = "./" + relative;
     item.relativeFilePath = relative;
     return;
-  } 
+  }
   // WINDOWS
   if (UriUtils.isWindows) {
     if (UriUtils.isWindowsAbsolutePath(context.currentUri.path)) {

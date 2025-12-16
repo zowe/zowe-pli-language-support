@@ -23,7 +23,9 @@ export namespace UriUtils {
     typeof process === "object" && process?.platform === "win32";
 
   export const isWindowsAbsolutePath = (path: string) =>
-    /^[a-zA-Z]:/.test(path);
+    path.charAt(1) === ":" &&
+    path.charAt(2) === "/" &&
+    /^[a-zA-Z]/.test(path.charAt(0));
   export const isUnixAbsolutePath = (path: string) => path.startsWith("/");
 
   export function equals(a?: URI | string, b?: URI | string): boolean {
@@ -37,9 +39,12 @@ export namespace UriUtils {
   }
 
   export function isPathRelative(path: string) {
-    let isPathRelative = path.startsWith("../") || path.startsWith("./");
-    isPathRelative = isWindowsAbsolutePath(path) || isUnixAbsolutePath(path);
-    return isPathRelative;
+    if (path.startsWith("../") || path.startsWith("./")) {
+      return true;
+    }
+    const startsWithLetter = /^[a-zA-Z]/.test(path.charAt(0));
+    const isAbsolute = isWindowsAbsolutePath(path) || isUnixAbsolutePath(path);
+    return startsWithLetter && !isAbsolute;
   }
 
   export function relative(from: URI | string, to: URI | string): string {
