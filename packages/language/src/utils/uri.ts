@@ -63,9 +63,11 @@ export namespace UriUtils {
         toParts[0] = toParts[0].toLowerCase();
       }
       if (fromParts[0] !== toParts[0]) {
+        // @REVIEWER
         // Here is a check to see if we have the workspace folder somewhere in our path.
         // The limitation is that, if somehow we have a folder with the same name of the workspace folder, within
-        // an absolute path outside the real workspace, it would be catch.
+        // an absolute path outside the real workspace, it would be catch. if we remove this next conditional check
+        // though, relative paths won't match on Windows.
         const indexExists = toParts.indexOf(fromParts[0]);
         if (indexExists !== -1) {
           return toParts.slice(indexExists + 1).join("/");
@@ -74,7 +76,9 @@ export namespace UriUtils {
         return toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
       }
     }
-
+    // @REVIEWER
+    // TODO: @wagner-laranjeiras 16.12.2025 -> Unix absolute paths are being returned as relative paths,
+    // ex. from: /workspace to: /Users/mockUser/Desktop/anotherfolder/absolute.pli returns: ../Users/mockUser/Desktop/anotherfolder/absolute.pli
     let i = 0;
     for (; i < fromParts.length; i++) {
       if (fromParts[i] !== toParts[i]) {
