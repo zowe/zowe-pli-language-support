@@ -38,6 +38,7 @@ export function activate(context: vscode.ExtensionContext): void {
   sendTelemetryEvent("pli.language.support.activated", telemetryReporter);
   context.subscriptions.push(
     registerOnDidChangeActiveTextEditor(telemetryReporter),
+    registerOnDidOpenTextDocListener(telemetryReporter),
   );
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -45,11 +46,7 @@ export function activate(context: vscode.ExtensionContext): void {
     watchPlipluginFolder(client, workspaceFolder, context, telemetryReporter);
   }
 
-  handleMissingConfig(
-    vscode.window.activeTextEditor,
-    telemetryReporter,
-    "pli.language.support.documentOpened",
-  );
+  handleMissingConfig(vscode.window.activeTextEditor);
 }
 
 /**
@@ -60,8 +57,8 @@ let shouldShowInfoMessage = true;
 
 async function handleMissingConfig(
   textEditor: vscode.TextEditor | undefined,
-  telemetryReporter: TelemetryReporter | undefined,
-  telemetryEvent: string | undefined,
+  telemetryReporter?: TelemetryReporter | undefined,
+  telemetryEvent?: string | undefined,
 ) {
   if (!textEditor || !shouldShowInfoMessage) {
     return;
@@ -83,11 +80,12 @@ async function handleMissingConfig(
   );
 
   // Not a Pli document or Config exists or Telemetry Event description not provided
-  if (!isPliDocument || fs.existsSync(plipluginPath) || !telemetryEvent) {
+  if (!isPliDocument || fs.existsSync(plipluginPath)) {
     return;
   }
-
-  sendTelemetryEvent(telemetryEvent, telemetryReporter);
+  if (telemetryEvent && telemetryReporter) {
+    sendTelemetryEvent(telemetryEvent, telemetryReporter);
+  }
 
   const CONFIG_CREATION = {
     infoTitle: (relativePath: string) =>
@@ -148,13 +146,21 @@ function registerOnDidChangeActiveTextEditor(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
   const listener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
-    await handleMissingConfig(
-      editor,
+    await handleMissingConfig(editor);
+  });
+  return listener;
+}
+
+function registerOnDidOpenTextDocListener(
+  telemetryReporter: TelemetryReporter | undefined,
+) {
+  const listener = vscode.workspace.onDidOpenTextDocument(async (document) => {
+    if (document.languageId !== "pli") return;
+    sendTelemetryEvent(
+      "pli.language.support.documentOpened",
       telemetryReporter,
-      "pli.language.support.documentAtivated",
     );
   });
-
   return listener;
 }
 
