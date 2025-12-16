@@ -2067,14 +2067,10 @@ export function setFilePath(
   }
   // WINDOWS
   if (UriUtils.isWindows) {
-    if (UriUtils.isWindowsAbsolutePath(context.currentUri.path)) {
-      let path = context.currentUri.path;
-      path = path.substring(1);
-      path = path[0].toUpperCase() + path.slice(1);
-      item.relativeFilePath = path;
-    } else {
-      item.relativeFilePath = context.currentUri.path;
-    }
+    let path = context.currentUri.path;
+    path = path.substring(1);
+    path = path[0].toUpperCase() + path.slice(1);
+    item.relativeFilePath = path;
     return;
   }
 

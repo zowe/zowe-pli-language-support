@@ -48,8 +48,8 @@ describe("setFilePath", () => {
 
   // UNIX TESTS
   // @REVIEWER
-  // This test is currently failing because of the conditional on instruction-interpreter, 
-  // line 2063 being evaluated to true. That said, IMO the problem relies not on the `UriUtils.isPathRelative`, 
+  // This test is currently failing because of the conditional on instruction-interpreter,
+  // line 2063 being evaluated to true. That said, IMO the problem relies not on the `UriUtils.isPathRelative`,
   // but on what `.relative` is returning.
   test.runIf(["darwin", "linux"].includes(process.platform))(
     "returns absolute path when target file resolves to absolute (outside workspace rules)",
