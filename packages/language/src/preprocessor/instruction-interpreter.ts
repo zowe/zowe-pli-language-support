@@ -2054,46 +2054,36 @@ export function setFilePath(
   filePath: string | null,
   context: InterpreterContext,
 ): void {
-  if (filePath) {
-    item.filePath = filePath;
-    if (context.currentUri) {
-      const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-      let relative = UriUtils.relative(workspace, filePath);
-      let isWindows = false;
-      if (context.currentUri.path.charAt(1).toLowerCase() === "c") {
-        isWindows = true;
-      }
-      if (
-        // If the path isn't already relative
-        !relative.startsWith("../") &&
-        !relative.startsWith("./") &&
-        // If the path isn't absolute (Unix & Windows)
-        !relative.startsWith("/") &&
-        !(relative.charAt(1) === ":" && relative.charAt(2) === "/")
-      ) {
-        // Make sure the path is explicitly relative
-        relative = "./" + relative;
-      } else if (
-        // Check if the path IS absolute
-        relative.startsWith("../") ||
-        relative.startsWith("/") ||
-        (relative.charAt(1) === ":" && relative.charAt(2) === "/")
-      ) {
-        // In this case, we are setting the absolute path as the relative path
-        // because it's the value showcased on the preview.
-        if (isWindows) {
-          let path = context.currentUri.path;
-          path = path.substring(1);
-          path = path[0].toUpperCase() + path.slice(1);
-          item.relativeFilePath = path;
-        } else {
-          item.relativeFilePath = context.currentUri.path;
-        }
-        return;
-      }
-      item.relativeFilePath = relative;
+  if (!filePath) return;
+  item.filePath = filePath;
+  if (!context.currentUri) return;
+  const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+  let relative = UriUtils.relative(workspace, filePath);
+  if (UriUtils.isPathRelative(relative)) {
+    relative = "./" + relative;
+    item.relativeFilePath = relative;
+    return;
+  } 
+  // WINDOWS
+  if (UriUtils.isWindows) {
+    if (UriUtils.isWindowsAbsolutePath(context.currentUri.path)) {
+      let path = context.currentUri.path;
+      path = path.substring(1);
+      path = path[0].toUpperCase() + path.slice(1);
+      item.relativeFilePath = path;
+    } else {
+      item.relativeFilePath = context.currentUri.path;
     }
+    return;
   }
+
+  // LINUX
+  if (UriUtils.isUnixAbsolutePath(relative)) {
+    item.relativeFilePath = context.currentUri.path;
+    return;
+  }
+
+  item.relativeFilePath = relative;
 }
 
 /**

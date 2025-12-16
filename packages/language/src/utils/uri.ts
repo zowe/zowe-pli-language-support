@@ -19,18 +19,32 @@ export namespace UriUtils {
   export const joinPath = Utils.joinPath;
   export const resolvePath = Utils.resolvePath;
 
-  const isWindows =
+  export const isWindows =
     typeof process === "object" && process?.platform === "win32";
+
+  export const isWindowsAbsolutePath = (path: string) =>
+    /^[a-zA-Z]:/.test(path);
+  export const isUnixAbsolutePath = (path: string) => path.startsWith("/");
 
   export function equals(a?: URI | string, b?: URI | string): boolean {
     return a?.toString() === b?.toString();
   }
 
+  export function stringPath(path: URI | string) {
+    let stringPath =
+      typeof path === "string" ? URI.parse(path).path : path.path;
+    return stringPath.replace(/\\/g, "/");
+  }
+
+  export function isPathRelative(path: string) {
+    let isPathRelative = path.startsWith("../") || path.startsWith("./");
+    isPathRelative = isWindowsAbsolutePath(path) || isUnixAbsolutePath(path);
+    return isPathRelative;
+  }
+
   export function relative(from: URI | string, to: URI | string): string {
-    let fromPath = typeof from === "string" ? URI.parse(from).path : from.path;
-    let toPath = typeof to === "string" ? URI.parse(to).path : to.path;
-    fromPath = fromPath.replace(/\\/g, "/");
-    toPath = toPath.replace(/\\/g, "/");
+    let fromPath = stringPath(from);
+    let toPath = stringPath(to);
 
     const fromParts = fromPath.split("/").filter((e) => e.length > 0);
     const toParts = toPath.split("/").filter((e) => e.length > 0);
