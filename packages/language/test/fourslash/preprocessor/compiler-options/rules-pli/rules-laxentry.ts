@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    laxEntry: "LOOSE",
+    laxEntry: constants.CompilerOptions.RulesEntry.LOOSE,
   },
 });

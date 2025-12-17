@@ -22,7 +22,7 @@ translator.flag("codepage", ["CODEPAGE"], ["NOCODEPAGE"]);
 
 translator.rule(["DEPRECATE"], (option, options) => {
   ensureArguments(option, 1);
-  options.deprecate = [];
+  options.deprecate = new Set<string>();
   for (const value of option.values) {
     ensureType(value, "option");
     if (value.name !== "STMT") {
@@ -48,7 +48,7 @@ translator.rule(["DEPRECATE"], (option, options) => {
           entry.value,
         );
       }
-      options.deprecate.push(entry.value as string);
+      options.deprecate.add(entry.value as string);
     }
   }
 });
@@ -63,12 +63,12 @@ translator.rule(
   ["LINEFILE"],
   (option, options) => {
     ensureArguments(option, 0, 0);
-    options.line = "LINEFILE";
+    options.line = CompilerOptions.Line.LINEFILE;
   },
   ["LINEONLY"],
   (option, options) => {
     ensureArguments(option, 0, 0);
-    options.line = "LINEONLY";
+    options.line = CompilerOptions.Line.LINEONLY;
   },
 );
 

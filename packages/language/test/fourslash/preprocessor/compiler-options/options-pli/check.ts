@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Check.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  check: { storage: "NOSTORAGE" },
+  check: { storage: constants.CompilerOptions.CheckStorage.NOSTORAGE },
 });

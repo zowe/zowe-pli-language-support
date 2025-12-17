@@ -28,6 +28,6 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.expectCompilerOptions({
   default: {
-    linkage: { type: "SYSTEM" },
+    linkage: { type: constants.CompilerOptions.DefaultLinkageType.SYSTEM },
   },
 });

@@ -32,7 +32,7 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   test: {
-    level: "ALL",
+    level: constants.CompilerOptions.TestLevel.ALL,
     hook: false,
     separate: false,
     sepName: true,

@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt([2, 4, 6], {
   message: code.CompilerOptions.DupeOptionIssue.message("LP"),
 });
 verify.expectCompilerOptions({
-  LP: "32",
+  LP: constants.CompilerOptions.LP.LP32,
 });

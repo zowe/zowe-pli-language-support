@@ -267,7 +267,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-lp
    */
-  LP?: "32" | "64";
+  LP?: CompilerOptions.LP;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-macro
    */
@@ -379,7 +379,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-options
    */
-  options?: CompilerOptions.Options;
+  options?: CompilerOptions.Options | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-
    */
@@ -399,7 +399,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-pplist
    */
-  ppList?: "KEEP" | "ERASE";
+  ppList?: CompilerOptions.PPList;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppmacro
    */
@@ -523,7 +523,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-widechar
    */
-  widechar?: "BIGENDIAN" | "LITTLEENDIAN";
+  widechar?: CompilerOptions.WideChar;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-window
    */
@@ -546,18 +546,378 @@ export interface CompilerOptions {
   xRef?: CompilerOptions.XRef;
 }
 
-export declare namespace CompilerOptions {
-  export type Length = "SHORT" | "FULL";
-  export type Aggregate = "DECIMAL" | "HEXADEC";
-  export type Assert = "ENTRY" | "CONDITION";
-  export type Case = "UPPER" | "ASIS";
-  export type CaseRules = "MIXED" | "UPPER" | "LOWER" | "START";
-  export interface Check {
-    storage?: "STORAGE" | "NOSTORAGE";
+export namespace CompilerOptions {
+  // Enums
+  export enum Length {
+    SHORT,
+    FULL,
   }
-  export type CMPat = "LE" | "V1" | "V2" | "V3";
+
+  export enum Aggregate {
+    DECIMAL,
+    HEXADEC,
+  }
+
+  export enum Assert {
+    ENTRY,
+    CONDITION,
+  }
+
+  export enum Case {
+    UPPER,
+    ASIS,
+  }
+
+  export enum CaseRules {
+    MIXED,
+    UPPER,
+    LOWER,
+    START,
+  }
+
+  export enum CheckStorage {
+    STORAGE,
+    NOSTORAGE,
+  }
+
+  export enum CMPat {
+    LE,
+    V1,
+    V2,
+    V3,
+  }
+
+  export enum Flag {
+    W,
+    I,
+    E,
+    S,
+  }
+
+  export enum FloatInMathType {
+    ASIS,
+    LONG,
+    EXTENDED,
+  }
+
+  export enum Header {
+    ALL,
+    FILE,
+    FIRST,
+    SOURCE,
+  }
+
+  export enum IgnoreItem {
+    ASSERT,
+    DISPLAY,
+    PUT,
+  }
+
+  export enum InitAuto {
+    SHORT,
+    FULL,
+  }
+
+  export enum InSourceType {
+    FULL,
+    SHORT,
+    ALL,
+    FIRST,
+  }
+
+  export enum JsonCase {
+    UPPER,
+    LOWER,
+    ASIS,
+  }
+
+  export enum JsonEncoding {
+    UTF8,
+    EBCDIC,
+    EBCDIC_37,
+    EBCDIC_1047,
+  }
+
+  export enum JsonGet {
+    HEEDCASE,
+    IGNORECASE,
+  }
+
+  export enum JsonParse {
+    V1,
+    V2,
+  }
+
+  export enum LangLvl {
+    OS,
+    NOEXT,
+  }
+
+  export enum ListView {
+    SOURCE,
+    AFTERALL,
+    AFTERCICS,
+    AFTERMACRO,
+    AFTERSQL,
+  }
+
+  export enum LP {
+    LP32,
+    LP64,
+  }
+
+  export enum MDeck {
+    AFTERALL,
+    AFTERMACRO,
+  }
+
+  export enum MsgSummary {
+    XREF,
+    NOXREF,
+  }
+
+  export enum NatLang {
+    ENU,
+    UEN,
+  }
+
+  export enum Options {
+    DOC,
+    ALL,
+  }
+
+  export enum PPItemName {
+    MACRO,
+    SQL,
+    CICS,
+    INCLUDE,
+  }
+
+  export enum PrecType {
+    ANS,
+    DECDIGIT,
+    DECRESULT,
+  }
+
+  export enum Process {
+    DELETE,
+    KEEP,
+  }
+
+  export enum RtCheck {
+    NONULLPTR,
+    NULLPTR,
+    NULL370,
+  }
+
+  export enum RulesIBM {
+    IBM,
+    ANS,
+  }
+
+  export enum RulesSource {
+    ALL,
+    SOURCE,
+  }
+
+  export enum RulesStrict {
+    STRICT,
+    LOOSE,
+  }
+
+  export enum RulesGoto {
+    STRICT,
+    LOOSE,
+    LOOSEFORWARD,
+  }
+
+  export enum RulesEntry {
+    STRICT,
+    LOOSE,
+  }
+
+  export enum RulesQualSource {
+    ALL,
+    FORCE,
+  }
+
+  export enum RulesQualStrict {
+    STRICT,
+    LOOSE,
+    FULL,
+  }
+
+  export enum RulesMargins {
+    STRICT,
+    XNUMERIC,
+  }
+
+  export enum DeprecateItemType {
+    BUILTIN,
+    ENTRY,
+    INCLUDE,
+    STMT,
+    VARIABLE,
+  }
+
+  export enum StringOfGraphic {
+    GRAPHIC,
+    CHARACTER,
+  }
+
+  export enum System {
+    MVS,
+    CICS,
+    IMS,
+    OS,
+    TSO,
+  }
+
+  export enum TestLevel {
+    ALL,
+    BLOCK,
+    NONE,
+    PATH,
+    STMT,
+  }
+
+  export enum Unroll {
+    AUTO,
+    NO,
+  }
+
+  export enum UsageHex {
+    SIZE,
+    CURRENTSIZE,
+  }
+
+  export enum UsageRound {
+    IBM,
+    ANS,
+  }
+
+  export enum UsageSubstr {
+    STRICT,
+    LOOSE,
+  }
+
+  export enum UsageUnspec {
+    IBM,
+    ANS,
+  }
+
+  export enum UsageUuid {
+    UPPER,
+    LOWER,
+  }
+
+  export enum UsageValidDate {
+    LOOSE,
+    STRICT,
+  }
+
+  export enum WritableNoWritable {
+    FWS,
+    PRV,
+  }
+
+  export enum XMLCase {
+    UPPER,
+    ASIS,
+  }
+
+  export enum XMLAttr {
+    APOSTROPHE,
+    QUOTE,
+  }
+
+  export enum XRefStructure {
+    EXPLICIT,
+    IMPLICIT,
+  }
+
+  export enum PPList {
+    KEEP,
+    ERASE,
+  }
+
+  export enum WideChar {
+    BIGENDIAN,
+    LITTLEENDIAN,
+  }
+
+  export enum DefaultArchitecture {
+    IBM,
+    ANS,
+  }
+
+  export enum DefaultEncoding {
+    EBCDIC,
+    ASCII,
+  }
+
+  export enum DefaultAllocator {
+    BYADDR,
+    BYVALUE,
+  }
+
+  export enum DefaultDesc {
+    LIST,
+    LOCATOR,
+  }
+
+  export enum DefaultFormat {
+    HEXADEC,
+    IEEE,
+  }
+
+  export enum DefaultLinkageType {
+    OPTLINK,
+    SYSTEM,
+  }
+
+  export enum DefaultInc {
+    LOWERINC,
+    UPPERINC,
+  }
+
+  export enum DefaultNullInitType {
+    NULL,
+    SYSNULL,
+  }
+
+  export enum DefaultNullSys {
+    NULL370,
+    NULLSYS,
+  }
+
+  export enum DefaultNullStrPtrType {
+    NULL,
+    STRICT,
+    SYSNULL,
+  }
+
+  export enum DefaultOrder {
+    ORDER,
+    REORDER,
+  }
+
+  export enum DefaultOrdinalType {
+    MIN,
+    MAX,
+  }
+
+  export enum DefaultReturnsType {
+    BYADDR,
+    BYVALUE,
+  }
+
+  // Interfaces and types
+  export interface Check {
+    storage?: CheckStorage;
+  }
   export interface Compile {
-    noCompile: true | "E" | "W" | "S";
+    noCompile: true | Flag;
   }
   export interface DD {
     sysprint?: string;
@@ -581,42 +941,42 @@ export declare namespace CompilerOptions {
   }
   export interface Default {
     aligned?: boolean;
-    architecture?: "IBM" | "ANS";
-    encoding?: "EBCDIC" | "ASCII";
+    architecture?: DefaultArchitecture;
+    encoding?: DefaultEncoding;
     assignable?: boolean;
     bin1arg?: boolean;
-    allocator?: "BYADDR" | "BYVALUE";
+    allocator?: DefaultAllocator;
     connected?: boolean;
-    desc?: "LIST" | "LOCATOR";
+    desc?: DefaultDesc;
     descriptor?: boolean;
     dummy?: {
       aligned?: boolean;
     };
     e?: {
-      format?: "HEXADEC" | "IEEE";
+      format?: DefaultFormat;
     };
     evendec?: boolean;
-    format?: "HEXADEC" | "IEEE";
+    format?: DefaultFormat;
     initfill?: string | false;
     inline?: boolean;
     laxqual?: boolean;
     linkage?: {
-      type?: "OPTLINK" | "SYSTEM";
+      type?: DefaultLinkageType;
     };
-    inc?: "LOWERINC" | "UPPERINC";
+    inc?: DefaultInc;
     native?: boolean;
     nativeAddr?: boolean;
     nullinit?: {
-      type?: "NULL" | "SYSNULL";
+      type?: DefaultNullInitType;
     };
-    nullsys?: "NULL370" | "NULLSYS";
+    nullsys?: DefaultNullSys;
     nullStrAddr?: boolean;
     nullStrPtr?: {
-      type?: "NULL" | "STRICT" | "SYSNULL";
+      type?: DefaultNullStrPtrType;
     };
-    order?: "ORDER" | "REORDER";
+    order?: DefaultOrder;
     ordinal?: {
-      type: "MIN" | "MAX";
+      type: DefaultOrdinalType;
     };
     overlap?: boolean;
     padding?: boolean;
@@ -624,10 +984,10 @@ export declare namespace CompilerOptions {
     recursive?: boolean;
     retcode?: boolean;
     returns?: {
-      type: "BYADDR" | "BYVALUE";
+      type: DefaultReturnsType;
     };
     short?: {
-      format?: "HEXADEC" | "IEEE";
+      format?: DefaultFormat;
     };
   }
   export interface Deprecate {
@@ -635,7 +995,7 @@ export declare namespace CompilerOptions {
     items: DeprecateItem[];
   }
   export interface DeprecateItem {
-    type: "BUILTIN" | "ENTRY" | "INCLUDE" | "STMT" | "VARIABLE";
+    type: DeprecateItemType;
     value: string;
   }
   export interface Display {
@@ -648,22 +1008,20 @@ export declare namespace CompilerOptions {
   export interface FileRef {
     hash: boolean;
   }
-  export type Flag = "W" | "I" | "E" | "S";
   export interface Float {
     dfp?: boolean;
   }
   export interface FloatInMath {
-    type: "ASIS" | "LONG" | "EXTENDED";
+    type: FloatInMathType;
   }
   export interface GoNumber {
     separate?: boolean;
   }
-  export type Header = "ALL" | "FILE" | "FIRST" | "SOURCE";
   export interface HGPR {
     preserve: boolean;
   }
   export interface Ignore {
-    items?: ("ASSERT" | "DISPLAY" | "PUT")[];
+    items?: IgnoreItem[];
   }
   export interface IncAfter {
     process?: string;
@@ -677,18 +1035,16 @@ export declare namespace CompilerOptions {
     pds: string[];
   }
 
-  export type InitAuto = "SHORT" | "FULL" | false;
   export interface InSource {
-    type?: "FULL" | "SHORT" | "ALL" | "FIRST";
+    type?: InSourceType;
   }
   export interface Json {
-    case?: "UPPER" | "LOWER" | "ASIS";
-    encoding?: "UTF8" | "EBCDIC" | "37" | "1047";
-    get?: "HEEDCASE" | "IGNORECASE";
+    case?: JsonCase;
+    encoding?: JsonEncoding;
+    get?: JsonGet;
     trimr?: boolean;
-    parse?: "V1" | "V2";
+    parse?: JsonParse;
   }
-  export type LangLvl = "OS" | "NOEXT";
   export interface Limits {
     extname?: number;
     fixedBin?: {
@@ -702,12 +1058,6 @@ export declare namespace CompilerOptions {
     name?: number;
     string?: number;
   }
-  export type ListView =
-    | "SOURCE"
-    | "AFTERALL"
-    | "AFTERCICS"
-    | "AFTERMACRO"
-    | "AFTERSQL";
   export interface Margini {
     character: string;
   }
@@ -765,8 +1115,6 @@ export declare namespace CompilerOptions {
      */
     n?: number;
   }
-  export type MDeck = "AFTERALL" | "AFTERMACRO";
-  export type MsgSummary = "XREF" | "NOXREF";
   export type Names = {
     extralingChar?: string;
     uppExtralingChar?: string;
@@ -776,7 +1124,6 @@ export declare namespace CompilerOptions {
    *
    * UEN: All compiler messages, headers, and so on will be in uppercase English.
    */
-  export type NatLang = "ENU" | "UEN";
   export type OnSnap =
     | {
         stringRange?: boolean;
@@ -784,7 +1131,6 @@ export declare namespace CompilerOptions {
       }
     | false;
   export type Optimize = 0 | 3;
-  export type Options = "DOC" | "ALL" | false;
   export type PPOption = PP | false;
 
   export type PP = {
@@ -801,98 +1147,95 @@ export declare namespace CompilerOptions {
   }
 
   export interface PPItem extends PPValue {
-    name: "MACRO" | "SQL" | "CICS" | "INCLUDE";
+    name: PPItemName;
   }
   export interface PPValue {
     value?: string;
     token?: Token;
   }
-  export type PrecType = "ANS" | "DECDIGIT" | "DECRESULT";
   export type Proceed = {
     // *PROCESS NOPROCEED; actually results in NOPROCEED( I ); which stops
     // compilation after the preprocessors.
     noProceed: Flag;
   };
-  export type Process = "DELETE" | "KEEP";
   export type Respect = {
     date?: boolean;
   };
-  export type RtCheck = "NONULLPTR" | "NULLPTR" | "NULL370";
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-rules
    */
   export type Rules = {
-    ibm?: "IBM" | "ANS";
+    ibm?: RulesIBM;
     byName?: boolean;
-    complex?: "ALL" | "SOURCE" | true;
+    complex?: RulesSource | true;
     controlled?: boolean;
     decSize?: boolean;
     elseIf?: boolean;
     evenDec?: boolean;
-    global?: "ALL" | "SOURCE" | true;
+    global?: RulesSource | true;
     globalDo?: boolean;
-    goto?: "STRICT" | "LOOSE" | "LOOSEFORWARD" | true;
+    goto?: RulesGoto | true;
     laxBIf?: boolean;
-    laxConv?: "ALL" | "SOURCE" | true;
+    laxConv?: RulesSource | true;
     laxCtl?: boolean;
     laxDcl?: boolean;
     laxDef?: boolean;
-    laxEntry?: "STRICT" | "LOOSE" | true;
+    laxEntry?: RulesEntry | true;
     laxExports?: boolean;
     laxFields?: boolean;
     laxIf?: boolean;
     laxInOut?:
       | {
-          source?: "ALL" | "SOURCE";
-          strict?: "STRICT" | "LOOSE";
+          source?: RulesSource;
+          strict?: RulesStrict;
         }
       | true;
     laxInterface?: boolean;
     laxLink?: boolean;
-    laxMargins?: "STRICT" | "XNUMERIC" | true;
-    laxNested?: "ALL" | "SOURCE" | true;
-    laxOptional?: "ALL" | "SOURCE" | true;
+    laxMargins?: RulesMargins | true;
+    laxNested?: RulesSource | true;
+    laxOptional?: RulesSource | true;
     laxPackage?: boolean;
-    laxParms?: "ALL" | "SOURCE" | true;
+    laxParms?: RulesSource | true;
     laxPunc?: boolean;
     laxQual?:
       | {
-          source?: "ALL" | "FORCE";
-          strict?: "STRICT" | "LOOSE" | "FULL";
+          source?: RulesQualSource;
+          strict?: RulesQualStrict;
         }
       | true;
     laxReturn?: boolean;
     laxScale?:
       | {
-          source?: "ALL" | "SOURCE";
-          strict?: "STRICT" | "LOOSE";
+          source?: RulesSource;
+          strict?: RulesStrict;
         }
       | true;
     laxSemi?: boolean;
     laxStg?: boolean;
-    laxStmt?: "ALL" | "SOURCE" | true;
+    laxStmt?: RulesSource | true;
     laxStrz?: boolean;
     multiClose?: boolean;
-    multiEntry?: "ALL" | "SOURCE" | true;
-    multiExit?: "ALL" | "SOURCE" | true;
-    multiSemi?: "ALL" | "SOURCE" | true;
+    multiEntry?: RulesSource | true;
+    multiExit?: RulesSource | true;
+    multiSemi?: RulesSource | true;
     padding?:
       | {
-          source?: "ALL" | "SOURCE";
-          strict?: "STRICT" | "LOOSE";
+          source?: RulesSource;
+          strict?: RulesStrict;
         }
       | true;
-    procEndOnly?: "ALL" | "SOURCE" | true;
+    procEndOnly?: RulesSource | true;
     recursive?: boolean;
     selfAssign?: boolean;
-    unref?: "ALL" | "SOURCE" | true;
-    unrefBased?: "ALL" | "SOURCE" | true;
-    unrefCtl?: "ALL" | "SOURCE" | true;
-    unrefDefined?: "ALL" | "SOURCE" | true;
-    unrefEntry?: "ALL" | "SOURCE" | true;
-    unrefFile?: "ALL" | "SOURCE" | true;
-    unrefStatic?: "ALL" | "SOURCE" | true;
-    unrefValue?: "ALL" | "SOURCE" | true;
+    unref?: RulesSource | true;
+    unrefBased?: RulesSource | true;
+    unrefCtl?: RulesSource | true;
+    unrefDefined?: RulesSource | true;
+    unrefEntry?: RulesSource | true;
+    unrefFile?: RulesSource | true;
+    unrefStatic?: RulesSource | true;
+    unrefValue?: RulesSource | true;
     unset?: boolean;
     yy?: boolean;
   };
@@ -900,13 +1243,10 @@ export declare namespace CompilerOptions {
     // *PROCESS NOSEMANTIC; actually results in NOSEMANTIC( I );
     noSemantic: Flag;
   };
-  export type StringOfGraphic = "GRAPHIC" | "CHARACTER";
   export type Syntax = {
     // *PROCESS NOSYNTAX; actually results in NOSYNTAX( I );
     noSyntax: Flag;
   };
-  export type System = "MVS" | "CICS" | "IMS" | "OS" | "TSO";
-  export type TestLevel = "ALL" | "BLOCK" | "NONE" | "PATH" | "STMT";
   export type Test =
     | {
         level?: TestLevel;
@@ -917,22 +1257,21 @@ export declare namespace CompilerOptions {
         sym?: boolean;
       }
     | false;
-  export type Unroll = "AUTO" | "NO";
   export type Usage = {
-    hex?: "SIZE" | "CURRENTSIZE";
+    hex?: UsageHex;
     regex?: {
       reset?: boolean;
     };
-    round?: "IBM" | "ANS";
-    substr?: "STRICT" | "LOOSE";
-    unspec?: "IBM" | "ANS";
-    uuid?: "UPPER" | "LOWER";
-    validDate?: "LOOSE" | "STRICT";
+    round?: UsageRound;
+    substr?: UsageSubstr;
+    unspec?: UsageUnspec;
+    uuid?: UsageUuid;
+    validDate?: UsageValidDate;
   };
   export type Writable =
     | true
     | {
-        noWritable?: "FWS" | "PRV";
+        noWritable?: WritableNoWritable;
       };
   export type XInfo = {
     def?: boolean;
@@ -946,13 +1285,13 @@ export declare namespace CompilerOptions {
         };
   };
   export type XML = {
-    case?: "UPPER" | "ASIS";
-    xmlAttr?: "APOSTROPHE" | "QUOTE";
+    case?: XMLCase;
+    xmlAttr?: XMLAttr;
   };
   export type XRef =
     | {
         length?: Length;
-        structure?: "EXPLICIT" | "IMPLICIT";
+        structure?: XRefStructure;
       }
     | false;
 }
@@ -1003,289 +1342,293 @@ export namespace CompilerConditions {
 const $1K = 1024;
 const $1M = 1024 * 1024;
 
-const defaultCompilerOptions: CompilerOptions = {
-  arch: 10,
-  assert: "ENTRY",
-  attributes: "FULL",
-  aggregate: false,
-  backreg: 5,
-  bifprec: 31,
-  blank: " ",
-  blkoff: true,
-  brackets: ["[", "]"],
-  case: "UPPER",
-  caserules: "MIXED",
-  check: { storage: "NOSTORAGE" },
-  cmpat: "V2",
-  common: false,
-  compile: { noCompile: "S" },
-  csect: true,
-  currency: "$",
-  dbcs: false,
-  dbrmlib: false,
-  deprecate: { items: [] },
-  deprecateNext: { items: [] },
-  ddsql: "",
-  decimal: {
-    checkfloat: false,
-    foflonadd: false,
-    foflonasgn: true,
-    foflondiv: false,
-    foflonmult: false,
-    forcedsign: false,
-    keepminus: false,
-    truncfloat: false,
-  },
-  decomp: false,
-  default: {
-    aligned: true,
-    architecture: "IBM",
-    encoding: "EBCDIC",
-    assignable: true,
-    bin1arg: true,
-    allocator: "BYADDR",
-    connected: false,
-    desc: "LOCATOR",
-    descriptor: true,
-    dummy: {
-      aligned: true,
-    },
-    e: {
-      format: "HEXADEC",
-    },
-    evendec: true,
-    format: "HEXADEC",
-    initfill: false,
-    inline: false,
-    laxqual: false,
-    linkage: {
-      type: "OPTLINK",
-    },
-    inc: "LOWERINC",
-    native: true,
-    nativeAddr: true,
-    nullinit: {
-      type: "NULL",
-    },
-    nullsys: "NULL370",
-    nullStrAddr: true,
-    nullStrPtr: {
-      type: "NULL",
-    },
-    order: "REORDER",
-    ordinal: {
-      type: "MIN",
-    },
-    overlap: false,
-    padding: false,
-    pseudodummy: true,
-    recursive: false,
-    retcode: false,
-    returns: {
-      type: "BYADDR",
-    },
-    short: {
-      format: "HEXADEC",
-    },
-  },
-  dll: false,
-  dllInit: false,
-  exit: false,
-  extrn: "FULL",
-  exportAll: true,
-  fileRef: { hash: false },
-  float: { dfp: false },
-  floatInMath: { type: "ASIS" },
-  goff: false,
-  goNumber: false,
-  json: {
-    case: "UPPER",
-    get: "HEEDCASE",
-    parse: "V1",
-    trimr: true,
-  },
-  limits: {
-    extname: 7,
-    fixedBin: {
-      min: 31,
-      max: 63,
-    },
-    fixedDec: {
-      min: 15,
-      max: 31,
-    },
-    name: 100,
-    string: 32 * $1K,
-  },
-  lineCount: 31415,
-  initAuto: "FULL",
-  margini: " ",
-  margins: {
-    m: 2,
-    n: 72,
-  },
-  maxbranch: 2000,
-  maxinit: 64 * $1K,
-  maxgen: 100000,
-  maxmem: $1M,
-  maxmsg: {
-    severity: "W",
-    n: 250,
-  },
-  maxnest: {
-    block: 17,
-    do: 17,
-    if: 17,
-  },
-  maxRunOnIf: 10,
-  maxStmt: {
-    m: 4 * $1K,
-    n: 8 * $1K,
-  },
-  maxTemp: 50000,
-  mDeck: false,
-  msgSummary: false,
-  name: false,
-  names: {
-    extralingChar: "@#$",
-    uppExtralingChar: "@#$",
-  },
-  natlang: "ENU",
-  nest: false,
-  nullDate: false,
-  object: true,
-  offset: false,
-  offsetSize: 4,
-  onSnap: false,
-  optimize: 0,
-  options: "DOC",
-  pp: {
-    items: [{ name: "MACRO" }, { name: "SQL" }],
-  },
-  precType: "ANS",
-  prefix: {
-    conformance: false,
-    conversion: true,
-    fixedoverflow: true,
-    invalidop: true,
-    overflow: true,
-    size: false,
-    stringrange: false,
-    stringsize: false,
-    subscriptrange: false,
-    underflow: true,
-    zerodivide: true,
-  },
-  proceed: { noProceed: "S" },
-  process: "DELETE",
-  quote: '"',
-  reduce: true,
-  rent: false,
-  resExp: true,
-  respect: { date: false },
-  rtCheck: "NONULLPTR",
-  rules: {
-    ibm: "IBM",
-    byName: true,
-    complex: true,
-    controlled: true,
-    decSize: false,
-    elseIf: true,
-    evenDec: true,
-    global: true,
-    globalDo: true,
-    goto: true,
-    laxBIf: false,
-    laxConv: true,
-    laxCtl: false,
-    laxDcl: false,
-    laxDef: false,
-    laxEntry: true,
-    laxExports: true,
-    laxFields: true,
-    laxIf: false,
-    laxInOut: true,
-    laxInterface: true,
-    laxLink: true,
-    laxMargins: true,
-    laxNested: true,
-    laxOptional: true,
-    laxPackage: true,
-    laxParms: true,
-    laxPunc: true,
-    laxQual: true,
-    laxReturn: true,
-    laxScale: { source: "ALL", strict: "LOOSE" },
-    laxSemi: true,
-    laxStg: true,
-    laxStmt: true,
-    laxStrz: false,
-    multiClose: false,
-    multiEntry: true,
-    multiExit: true,
-    multiSemi: true,
-    padding: true,
-    procEndOnly: true,
-    recursive: true,
-    selfAssign: true,
-    unref: true,
-    unrefBased: true,
-    unrefCtl: true,
-    unrefDefined: true,
-    unrefEntry: true,
-    unrefFile: true,
-    unrefStatic: true,
-    unrefValue: true,
-    unset: true,
-    yy: true,
-  },
-  service: "",
-  source: true,
-  spill: 512,
-  static: "SHORT",
-  stdsys: false,
-  stmt: false,
-  storage: false,
-  stringOfGraphic: "GRAPHIC",
-  syntax: { noSyntax: "S" },
-  sysParm: "",
-  system: "MVS",
-  terminal: true,
-  test: false,
-  unroll: "AUTO",
-  usage: {
-    hex: "SIZE",
-    regex: {
-      reset: true,
-    },
-    round: "IBM",
-    substr: "STRICT",
-    unspec: "IBM",
-    uuid: "UPPER",
-    validDate: "LOOSE",
-  },
-  widechar: "BIGENDIAN",
-  window: 1950,
-  writable: true,
-  xInfo: {
-    def: false,
-    msg: false,
-    sym: false,
-    syn: false,
-    xml: {
-      hash: false,
-    },
-  },
-  xml: {
-    case: "UPPER",
-    xmlAttr: "APOSTROPHE",
-  },
-  xRef: {
-    length: "FULL",
-    structure: "IMPLICIT",
-  },
-};
-
 export function getDefaultCompilerOptions(): CompilerOptions {
-  return { ...defaultCompilerOptions };
+  return {
+    arch: 10,
+    assert: CompilerOptions.Assert.ENTRY,
+    attributes: CompilerOptions.Length.FULL,
+    aggregate: false,
+    backreg: 5,
+    bifprec: 31,
+    blank: " ",
+    blkoff: true,
+    brackets: ["[", "]"],
+    case: CompilerOptions.Case.UPPER,
+    caserules: CompilerOptions.CaseRules.MIXED,
+    check: { storage: CompilerOptions.CheckStorage.NOSTORAGE },
+    cmpat: CompilerOptions.CMPat.V2,
+    common: false,
+    compile: { noCompile: CompilerOptions.Flag.S },
+    csect: true,
+    currency: "$",
+    dbcs: false,
+    dbrmlib: false,
+    deprecate: { items: [] },
+    deprecateNext: { items: [] },
+    ddsql: "",
+    decimal: {
+      checkfloat: false,
+      foflonadd: false,
+      foflonasgn: true,
+      foflondiv: false,
+      foflonmult: false,
+      forcedsign: false,
+      keepminus: false,
+      truncfloat: false,
+    },
+    decomp: false,
+    default: {
+      aligned: true,
+      architecture: CompilerOptions.DefaultArchitecture.IBM,
+      encoding: CompilerOptions.DefaultEncoding.EBCDIC,
+      assignable: true,
+      bin1arg: true,
+      allocator: CompilerOptions.DefaultAllocator.BYADDR,
+      connected: false,
+      desc: CompilerOptions.DefaultDesc.LOCATOR,
+      descriptor: true,
+      dummy: {
+        aligned: true,
+      },
+      e: {
+        format: CompilerOptions.DefaultFormat.HEXADEC,
+      },
+      evendec: true,
+      format: CompilerOptions.DefaultFormat.HEXADEC,
+      initfill: false,
+      inline: false,
+      laxqual: false,
+      linkage: {
+        type: CompilerOptions.DefaultLinkageType.OPTLINK,
+      },
+      inc: CompilerOptions.DefaultInc.LOWERINC,
+      native: true,
+      nativeAddr: true,
+      nullinit: {
+        type: CompilerOptions.DefaultNullInitType.NULL,
+      },
+      nullsys: CompilerOptions.DefaultNullSys.NULL370,
+      nullStrAddr: true,
+      nullStrPtr: {
+        type: CompilerOptions.DefaultNullStrPtrType.NULL,
+      },
+      order: CompilerOptions.DefaultOrder.REORDER,
+      ordinal: {
+        type: CompilerOptions.DefaultOrdinalType.MIN,
+      },
+      overlap: false,
+      padding: false,
+      pseudodummy: true,
+      recursive: false,
+      retcode: false,
+      returns: {
+        type: CompilerOptions.DefaultReturnsType.BYADDR,
+      },
+      short: {
+        format: CompilerOptions.DefaultFormat.HEXADEC,
+      },
+    },
+    dll: false,
+    dllInit: false,
+    exit: false,
+    extrn: CompilerOptions.Length.FULL,
+    exportAll: true,
+    fileRef: { hash: false },
+    float: { dfp: false },
+    floatInMath: { type: CompilerOptions.FloatInMathType.ASIS },
+    goff: false,
+    goNumber: false,
+    json: {
+      case: CompilerOptions.JsonCase.UPPER,
+      get: CompilerOptions.JsonGet.HEEDCASE,
+      parse: CompilerOptions.JsonParse.V1,
+      trimr: true,
+    },
+    limits: {
+      extname: 7,
+      fixedBin: {
+        min: 31,
+        max: 63,
+      },
+      fixedDec: {
+        min: 15,
+        max: 31,
+      },
+      name: 100,
+      string: 32 * $1K,
+    },
+    lineCount: 31415,
+    initAuto: CompilerOptions.InitAuto.FULL,
+    margini: " ",
+    margins: {
+      m: 2,
+      n: 72,
+    },
+    maxbranch: 2000,
+    maxinit: 64 * $1K,
+    maxgen: 100000,
+    maxmem: $1M,
+    maxmsg: {
+      severity: CompilerOptions.Flag.W,
+      n: 250,
+    },
+    maxnest: {
+      block: 17,
+      do: 17,
+      if: 17,
+    },
+    maxRunOnIf: 10,
+    maxStmt: {
+      m: 4 * $1K,
+      n: 8 * $1K,
+    },
+    maxTemp: 50000,
+    mDeck: false,
+    msgSummary: false,
+    name: false,
+    names: {
+      extralingChar: "@#$",
+      uppExtralingChar: "@#$",
+    },
+    natlang: CompilerOptions.NatLang.ENU,
+    nest: false,
+    nullDate: false,
+    object: true,
+    offset: false,
+    offsetSize: 4,
+    onSnap: false,
+    optimize: 0,
+    options: CompilerOptions.Options.DOC,
+    pp: {
+      items: [
+        { name: CompilerOptions.PPItemName.MACRO },
+        { name: CompilerOptions.PPItemName.SQL },
+      ],
+    },
+    precType: CompilerOptions.PrecType.ANS,
+    prefix: {
+      conformance: false,
+      conversion: true,
+      fixedoverflow: true,
+      invalidop: true,
+      overflow: true,
+      size: false,
+      stringrange: false,
+      stringsize: false,
+      subscriptrange: false,
+      underflow: true,
+      zerodivide: true,
+    },
+    proceed: { noProceed: CompilerOptions.Flag.S },
+    process: CompilerOptions.Process.DELETE,
+    quote: '"',
+    reduce: true,
+    rent: false,
+    resExp: true,
+    respect: { date: false },
+    rtCheck: CompilerOptions.RtCheck.NONULLPTR,
+    rules: {
+      ibm: CompilerOptions.RulesIBM.IBM,
+      byName: true,
+      complex: true,
+      controlled: true,
+      decSize: false,
+      elseIf: true,
+      evenDec: true,
+      global: true,
+      globalDo: true,
+      goto: true,
+      laxBIf: false,
+      laxConv: true,
+      laxCtl: false,
+      laxDcl: false,
+      laxDef: false,
+      laxEntry: true,
+      laxExports: true,
+      laxFields: true,
+      laxIf: false,
+      laxInOut: true,
+      laxInterface: true,
+      laxLink: true,
+      laxMargins: true,
+      laxNested: true,
+      laxOptional: true,
+      laxPackage: true,
+      laxParms: true,
+      laxPunc: true,
+      laxQual: true,
+      laxReturn: true,
+      laxScale: {
+        source: CompilerOptions.RulesSource.ALL,
+        strict: CompilerOptions.RulesStrict.LOOSE,
+      },
+      laxSemi: true,
+      laxStg: true,
+      laxStmt: true,
+      laxStrz: false,
+      multiClose: false,
+      multiEntry: true,
+      multiExit: true,
+      multiSemi: true,
+      padding: true,
+      procEndOnly: true,
+      recursive: true,
+      selfAssign: true,
+      unref: true,
+      unrefBased: true,
+      unrefCtl: true,
+      unrefDefined: true,
+      unrefEntry: true,
+      unrefFile: true,
+      unrefStatic: true,
+      unrefValue: true,
+      unset: true,
+      yy: true,
+    },
+    service: "",
+    source: true,
+    spill: 512,
+    static: CompilerOptions.Length.SHORT,
+    stdsys: false,
+    stmt: false,
+    storage: false,
+    stringOfGraphic: CompilerOptions.StringOfGraphic.GRAPHIC,
+    syntax: { noSyntax: CompilerOptions.Flag.S },
+    sysParm: "",
+    system: CompilerOptions.System.MVS,
+    terminal: true,
+    test: false,
+    unroll: CompilerOptions.Unroll.AUTO,
+    usage: {
+      hex: CompilerOptions.UsageHex.SIZE,
+      regex: {
+        reset: true,
+      },
+      round: CompilerOptions.UsageRound.IBM,
+      substr: CompilerOptions.UsageSubstr.STRICT,
+      unspec: CompilerOptions.UsageUnspec.IBM,
+      uuid: CompilerOptions.UsageUuid.UPPER,
+      validDate: CompilerOptions.UsageValidDate.LOOSE,
+    },
+    widechar: CompilerOptions.WideChar.BIGENDIAN,
+    window: 1950,
+    writable: true,
+    xInfo: {
+      def: false,
+      msg: false,
+      sym: false,
+      syn: false,
+      xml: {
+        hash: false,
+      },
+    },
+    xml: {
+      case: CompilerOptions.XMLCase.UPPER,
+      xmlAttr: CompilerOptions.XMLAttr.APOSTROPHE,
+    },
+    xRef: {
+      length: CompilerOptions.Length.FULL,
+      structure: CompilerOptions.XRefStructure.IMPLICIT,
+    },
+  };
 }

@@ -32,5 +32,5 @@ verify.expectDiagnosticsAt(8, {
   message: code.CompilerOptions.InvalidParameterCount.message(2, 0, 1),
 });
 verify.expectCompilerOptions({
-  process: "KEEP",
+  process: constants.CompilerOptions.Process.KEEP,
 });

@@ -65,14 +65,14 @@ verify.expectDiagnosticsAt(10, {
 });
 verify.expectCompilerOptions({
   usage: {
-    hex: "CURRENTSIZE",
+    hex: constants.CompilerOptions.UsageHex.CURRENTSIZE,
     regex: {
       reset: false,
     },
-    round: "ANS",
-    substr: "LOOSE",
-    unspec: "ANS",
-    uuid: "LOWER",
-    validDate: "STRICT",
+    round: constants.CompilerOptions.UsageRound.ANS,
+    substr: constants.CompilerOptions.UsageSubstr.LOOSE,
+    unspec: constants.CompilerOptions.UsageUnspec.ANS,
+    uuid: constants.CompilerOptions.UsageUuid.LOWER,
+    validDate: constants.CompilerOptions.UsageValidDate.STRICT,
   },
 });

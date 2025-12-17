@@ -47,9 +47,17 @@ export function translateCompilerOptions(
 
   // Handle nested compiler options that are not yet parsed.
   translatorMacro.clear();
-  parseNestedOptions(translatorMacro, "MACRO", translator.options.ppMacro);
+  parseNestedOptions(
+    translatorMacro,
+    CompilerOptions.PPItemName.MACRO,
+    translator.options.ppMacro,
+  );
   translatorSQL.clear();
-  parseNestedOptions(translatorSQL, "SQL", translator.options.ppSql);
+  parseNestedOptions(
+    translatorSQL,
+    CompilerOptions.PPItemName.SQL,
+    translator.options.ppSql,
+  );
 
   return {
     options: {
@@ -68,13 +76,15 @@ export function translateCompilerOptions(
 
 function parseNestedOptions<T extends CompilerOptionsPP>(
   ppTranslator: Translator<T>,
-  ppId: string,
+  ppItemName: CompilerOptions.PPItemName,
   ppDirectValue: CompilerOptions.PPValue | false | undefined,
 ): void {
   const items: CompilerOptions.PPValue[] = [
     ...(ppDirectValue ? [ppDirectValue] : []),
     ...(translator.options.pp?.items
-      .filter((item) => item.name === ppId && typeof item.value === "string")
+      .filter(
+        (item) => item.name === ppItemName && typeof item.value === "string",
+      )
       .map((item) => ({ value: item.value, token: item.token })) ?? []),
   ];
 

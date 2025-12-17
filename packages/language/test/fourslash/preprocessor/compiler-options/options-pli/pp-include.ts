@@ -19,7 +19,7 @@ verify.expectCompilerOptions({
   pp: {
     items: [
       {
-        name: "INCLUDE",
+        name: constants.CompilerOptions.PPItemName.INCLUDE,
         value: "ID(++INCLUDE)",
       },
     ],

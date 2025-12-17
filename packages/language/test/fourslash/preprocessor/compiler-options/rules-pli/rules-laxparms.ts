@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    laxParms: "SOURCE",
+    laxParms: constants.CompilerOptions.RulesSource.SOURCE,
   },
 });

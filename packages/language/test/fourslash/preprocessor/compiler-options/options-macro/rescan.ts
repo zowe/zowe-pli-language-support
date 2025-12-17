@@ -22,6 +22,6 @@ verify.expectDiagnosticsAt(1, {
 
 verify.expectCompilerOptions({
   macroOptions: {
-    rescan: "UPPER",
+    rescan: constants.CompilerOptions.Macro.Rescan.UPPER,
   },
 });
