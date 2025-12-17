@@ -17,9 +17,9 @@
 ////%PROCESS F(I) AG A(F); \r
 
 verify.expectCompilerOptions({
-  aggregate: "DECIMAL",
-  attributes: "FULL",
-  flag: "I",
+  aggregate: constants.CompilerOptions.Aggregate.DECIMAL,
+  attributes: constants.CompilerOptions.Length.FULL,
+  flag: constants.CompilerOptions.Flag.I,
   margins: {
     m: 2,
     n: 75,

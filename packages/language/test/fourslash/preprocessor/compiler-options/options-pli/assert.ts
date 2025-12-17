@@ -16,6 +16,8 @@
 ////*PROCESS <|4:ASSERT|>(<|5:)|>;
 ////*PROCESS <|6:ASSERT|>(<|7:INVALID|>);
 ////*PROCESS <|8:ASSERT|>(CONDITION);
+////*PROCESS ASSERT(<|9:0|>);
+////*PROCESS ASSERT(<|10:1|>);
 
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
@@ -29,6 +31,14 @@ verify.expectDiagnosticsAt(5, {
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Assert.InvalidParameter.message("INVALID"),
 });
+// Specifically testing enums reverse mapping
+verify.expectDiagnosticsAt(9, {
+  message: code.CompilerOptions.Assert.InvalidParameter.message("0"),
+});
+// Specifically testing enums reverse mapping
+verify.expectDiagnosticsAt(10, {
+  message: code.CompilerOptions.Assert.InvalidParameter.message("1"),
+});
 verify.expectCompilerOptions({
-  assert: "CONDITION",
+  assert: constants.CompilerOptions.Assert.CONDITION,
 });

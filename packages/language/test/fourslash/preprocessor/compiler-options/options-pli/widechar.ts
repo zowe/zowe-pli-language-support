@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.WideChar.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  widechar: "LITTLEENDIAN",
+  widechar: constants.CompilerOptions.WideChar.LITTLEENDIAN,
 });

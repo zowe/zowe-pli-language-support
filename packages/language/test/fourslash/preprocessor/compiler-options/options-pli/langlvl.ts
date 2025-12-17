@@ -34,5 +34,5 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.ExpectedPlain.message(),
 });
 verify.expectCompilerOptions({
-  langlvl: "NOEXT",
+  langlvl: constants.CompilerOptions.LangLvl.NOEXT,
 });

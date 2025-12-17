@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Static.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  static: "FULL",
+  static: constants.CompilerOptions.Length.FULL,
 });

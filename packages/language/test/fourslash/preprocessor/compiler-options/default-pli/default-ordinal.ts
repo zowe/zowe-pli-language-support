@@ -28,6 +28,6 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.expectCompilerOptions({
   default: {
-    ordinal: { type: "MAX" },
+    ordinal: { type: constants.CompilerOptions.DefaultOrdinalType.MAX },
   },
 });

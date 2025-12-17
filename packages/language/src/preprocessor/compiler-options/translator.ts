@@ -24,6 +24,7 @@ import {
 } from "../../syntax-tree/ast";
 import { ParametricPLICode } from "../../validation/pli-codes";
 import { CompilerOptionsCodes } from "./codes";
+import { getEnumKeys } from "../util";
 
 interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
   positive?: string[];
@@ -337,13 +338,6 @@ export function ensureNumberValue(
  *    - Always returns the canonical form (first element of matched sub-array)
  *    - Example: "S" input returns "SHORT", "F" input returns "FULL"
  */
-type ExtractCanonicalForms<T> = T extends readonly (readonly [
-  infer U extends string,
-  ...(readonly string[]),
-])[]
-  ? U
-  : never;
-
 export function ensureArgument<
   const T extends readonly (readonly [string, ...string[]])[],
 >(
@@ -356,11 +350,6 @@ export function ensureArgument<const T extends readonly string[]>(
   code: ParametricPLICode,
   args: T,
 ): T[number];
-export function ensureArgument<T extends string>(
-  optionValue: CompilerOptionValue,
-  code: ParametricPLICode,
-  args: readonly T[],
-): T;
 export function ensureArgument<T>(
   optionValue: CompilerOptionValue,
   code: ParametricPLICode,
@@ -398,10 +387,17 @@ export function ensureArgument<T>(
   throw diagnosticFromCode(
     code,
     optionValue.token,
-    optionValue.token.image,
+    originalImage(optionValue),
     ...simpleArgs,
   );
 }
+
+type ExtractCanonicalForms<T> = T extends readonly (readonly [
+  infer U extends string,
+  ...(readonly string[]),
+])[]
+  ? U
+  : never;
 
 export function ensureFlag(
   optionValue: CompilerOptionValue,
@@ -409,6 +405,63 @@ export function ensureFlag(
   args: readonly string[],
 ): boolean {
   return ensureArgument(optionValue, code, args) === args[0];
+}
+
+/**
+ * Ensures that a compiler option value matches one of the allowed enum values.
+ * Returns the matching enum value.
+ * Supports both string enums and numeric enums.
+ */
+export function ensureEnum<T extends Record<string, string | number>>(
+  optionValue: CompilerOptionValue,
+  code: ParametricPLICode,
+  enumObject: T,
+  aliases?: readonly (readonly [string, ...string[]])[],
+): T[keyof T] {
+  let value: string;
+  if (optionValue.kind === SyntaxKind.CompilerOptionText) {
+    value = optionValue.value.toUpperCase();
+  } else if (optionValue.kind === SyntaxKind.CompilerOptionString) {
+    value = optionValue.value.toUpperCase();
+  } else if (optionValue.kind === SyntaxKind.CompilerOption) {
+    value = optionValue.name.toUpperCase();
+  } else {
+    throw new Error("Compiler option value is not supported.");
+  }
+
+  // Check aliases first if provided
+  if (aliases) {
+    for (const group of aliases) {
+      for (const alias of group) {
+        if (value === alias.toUpperCase()) {
+          const canonical = group[0].toUpperCase();
+          // Find enum value matching canonical form
+          // Filter out numeric keys (reverse mappings in numeric enums)
+          for (const [enumKey, enumValue] of Object.entries(enumObject)) {
+            if (isNaN(Number(enumKey)) && enumKey.toUpperCase() === canonical) {
+              return enumValue as T[keyof T];
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Check direct enum values
+  // Filter out numeric keys (reverse mappings in numeric enums)
+  for (const [enumKey, enumValue] of Object.entries(enumObject)) {
+    if (isNaN(Number(enumKey)) && enumKey.toUpperCase() === value) {
+      return enumValue as T[keyof T];
+    }
+  }
+
+  // If not found, throw error with all possible values
+  throw diagnosticFromCode(
+    code,
+    optionValue.token,
+    originalImage(optionValue),
+    ...getEnumKeys(enumObject),
+  );
 }
 
 export function ensureToBeDefined<T>(value: T | undefined): asserts value is T {
@@ -457,30 +510,17 @@ export function isEmptyParameterList(option: CompilerOption): boolean {
   );
 }
 
-// If possible provide a custom code, so that the tests can be decoupled from the expected output.
-// Also supports aliases mode from ensureArgument.
-export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
+/**
+ * Helper for translating plain compiler option values that match enum values.
+ * Validates against enum object and supports aliases.
+ */
+export function plainTranslateEnum<
+  T extends CompilerOptionsPP = CompilerOptionsPP,
+>(
   callback: (options: T, value: CompilerOptionText) => void,
   code: ParametricPLICode,
-  ...values: string[]
-): Translate<T>;
-export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
-  callback: (options: T, value: CompilerOptionText) => void,
-  ...values: string[]
-): Translate<T>;
-export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
-  callback: (options: T, value: CompilerOptionText) => void,
-  code: ParametricPLICode,
-  ...aliases: readonly [string, ...string[]][]
-): Translate<T>;
-export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
-  callback: (options: T, value: CompilerOptionText) => void,
-  possibleCode:
-    | string
-    | ParametricPLICode
-    | readonly [string, ...string[]]
-    | undefined,
-  ...valuesOrAliases: (string | readonly [string, ...string[]])[]
+  enumObject: Record<string, string | number>,
+  aliases?: readonly (readonly [string, ...string[]])[],
 ): Translate<T> {
   return (option, options) => {
     ensureArguments(option, 1, 1);
@@ -488,38 +528,63 @@ export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
     ensureType(value, "plainNotEmpty");
     value.value = value.value.toUpperCase();
 
-    const inAliasesMode =
-      Array.isArray(possibleCode) ||
-      valuesOrAliases.some((v) => Array.isArray(v));
+    ensureEnum(value, code, enumObject, aliases);
 
-    const hasCustomCode =
-      possibleCode !== undefined &&
-      typeof possibleCode !== "string" &&
-      !Array.isArray(possibleCode);
-    const code = hasCustomCode
-      ? (possibleCode as ParametricPLICode)
-      : CompilerOptionsCodes.ExpectedPlainTranslate;
-
-    if (inAliasesMode) {
-      const aliases: [string, ...string[]][] = [];
-      if (Array.isArray(possibleCode)) {
-        aliases.push(possibleCode as [string, ...string[]]);
-      }
-      for (const item of valuesOrAliases) {
-        if (Array.isArray(item)) {
-          aliases.push(item as [string, ...string[]]);
+    if (aliases) {
+      // Canonicalize value.value to the enum key name for the callback
+      // This handles aliases: "S" -> "SHORT", "F" -> "FULL", etc.
+      const inputValue = value.value.toUpperCase();
+      for (const group of aliases) {
+        for (const alias of group) {
+          if (inputValue === alias.toUpperCase()) {
+            value.value = group[0].toUpperCase();
+            break;
+          }
         }
       }
+    }
 
-      const canonicalValue = ensureArgument(value, code, aliases);
+    // Ensure the final value matches an enum key (case-insensitive)
+    // Filter out numeric keys (reverse mappings in numeric enums)
+    for (const enumKey of Object.keys(enumObject)) {
+      if (
+        isNaN(Number(enumKey)) &&
+        enumKey.toUpperCase() === value.value.toUpperCase()
+      ) {
+        value.value = enumKey;
+        break;
+      }
+    }
+
+    callback(options, value);
+  };
+}
+
+/**
+ * Helper for translating plain compiler option values against a list of allowed values.
+ * Supports both simple lists and aliases mode.
+ */
+export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
+  callback: (options: T, value: CompilerOptionText) => void,
+  code: ParametricPLICode,
+  values: readonly string[] | readonly (readonly [string, ...string[]])[],
+): Translate<T> {
+  return (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    value.value = value.value.toUpperCase();
+
+    // Check if it's aliases mode (array of arrays)
+    const isAliasesMode = values.length > 0 && Array.isArray(values[0]);
+
+    if (isAliasesMode) {
+      const aliasGroups = values as readonly (readonly [string, ...string[]])[];
+      const canonicalValue = ensureArgument(value, code, aliasGroups);
       value.value = canonicalValue;
       callback(options, value);
     } else {
-      const stringValues = hasCustomCode
-        ? (valuesOrAliases as string[])
-        : possibleCode !== undefined
-          ? [possibleCode as string, ...(valuesOrAliases as string[])]
-          : [];
+      const stringValues = values as readonly string[];
       ensureArgument(value, code, stringValues);
       callback(options, value);
     }

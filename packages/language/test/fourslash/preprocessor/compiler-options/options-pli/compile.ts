@@ -41,5 +41,5 @@ verify.expectDiagnosticsAt(8, {
   message: code.CompilerOptions.MutexOptionIssue.message("NC"),
 });
 verify.expectCompilerOptions({
-  compile: { noCompile: "E" },
+  compile: { noCompile: constants.CompilerOptions.Flag.E },
 });

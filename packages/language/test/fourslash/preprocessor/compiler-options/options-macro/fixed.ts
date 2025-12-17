@@ -21,6 +21,6 @@ verify.expectDiagnosticsAt(1, {
 
 verify.expectCompilerOptions({
   macroOptions: {
-    fixed: "BINARY",
+    fixed: constants.CompilerOptions.Macro.Fixed.BINARY,
   },
 });

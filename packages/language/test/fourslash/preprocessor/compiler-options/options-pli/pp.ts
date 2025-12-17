@@ -30,7 +30,7 @@ verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1),
 });
 verify.expectDiagnosticsAt(3, {
-  message: code.CompilerOptions.PP.InvalidParameter.message(")"),
+  message: code.CompilerOptions.PP.InvalidParameter.message(""),
 });
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.PP.InvalidParameter.message("INVALID"),
@@ -50,13 +50,13 @@ verify.expectCompilerOptions({
   pp: {
     items: [
       {
-        name: "MACRO",
+        name: constants.CompilerOptions.PPItemName.MACRO,
       },
       {
-        name: "SQL",
+        name: constants.CompilerOptions.PPItemName.SQL,
       },
       {
-        name: "CICS",
+        name: constants.CompilerOptions.PPItemName.CICS,
       },
     ],
   },

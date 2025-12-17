@@ -36,7 +36,7 @@ verify.expectDiagnosticsAt(7, {
 verify.noDiagnostics([3, 9, 11, 13, 15]);
 verify.expectCompilerOptions({
   maxmsg: {
-    severity: "W",
+    severity: constants.CompilerOptions.Flag.W,
     n: 100,
   },
 });
