@@ -33,5 +33,5 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.CmPat.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  cmpat: "V3",
+  cmpat: constants.CompilerOptions.CMPat.V3,
 });

@@ -37,5 +37,5 @@ verify.expectDiagnosticsAt(5, {
     code.CompilerOptions.StringOfGraphic.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  stringOfGraphic: "CHARACTER",
+  stringOfGraphic: constants.CompilerOptions.StringOfGraphic.CHARACTER,
 });

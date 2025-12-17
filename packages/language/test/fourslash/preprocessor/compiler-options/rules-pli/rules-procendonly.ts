@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    procEndOnly: "SOURCE",
+    procEndOnly: constants.CompilerOptions.RulesSource.SOURCE,
   },
 });

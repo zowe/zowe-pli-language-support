@@ -61,7 +61,7 @@ verify.expectDiagnosticsAt(2, {
 verify.noDiagnostics([3, 4]);
 verify.expectCompilerOptions({
   rules: {
-    ibm: "ANS",
+    ibm: constants.CompilerOptions.RulesIBM.ANS,
     byName: false,
     controlled: false,
     decSize: true,

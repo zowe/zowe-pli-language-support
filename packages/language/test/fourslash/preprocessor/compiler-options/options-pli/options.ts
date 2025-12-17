@@ -35,5 +35,5 @@ verify.expectDiagnosticsAt([4, 6, 8], {
   message: code.CompilerOptions.MutexOptionIssue.message("OPTIONS"),
 });
 verify.expectCompilerOptions({
-  options: "ALL",
+  options: constants.CompilerOptions.Options.ALL,
 });

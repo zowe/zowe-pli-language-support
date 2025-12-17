@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    laxMargins: "XNUMERIC",
+    laxMargins: constants.CompilerOptions.RulesMargins.XNUMERIC,
   },
 });

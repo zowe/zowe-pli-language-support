@@ -42,5 +42,5 @@ verify.expectDiagnosticsAt(8, {
   message: code.CompilerOptions.InvalidParameterCount.message(2, 0, 1),
 });
 verify.expectCompilerOptions({
-  proceed: { noProceed: "I" },
+  proceed: { noProceed: constants.CompilerOptions.Flag.I },
 });

@@ -31,3 +31,9 @@ export function getAttributes(item: DeclaredVariable): string[] {
   }
   return attributes;
 }
+
+export function getEnumKeys<T extends Record<string, string | number>>(
+  enumObject: T,
+): string[] {
+  return Object.keys(enumObject).filter((k) => isNaN(Number(k)));
+}

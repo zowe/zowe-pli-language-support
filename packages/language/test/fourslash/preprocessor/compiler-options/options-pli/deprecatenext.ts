@@ -45,11 +45,26 @@ verify.expectDiagnosticsAt([4, 8, 10, 12, 14, 16, 18, 20, 22], {
 verify.expectCompilerOptions({
   deprecateNext: {
     items: [
-      { type: "STMT", value: "ALLOCATE" },
-      { type: "BUILTIN", value: "STRLEN" },
-      { type: "ENTRY", value: "MAIN" },
-      { type: "INCLUDE", value: "LIB" },
-      { type: "VARIABLE", value: "FOO" },
+      {
+        type: constants.CompilerOptions.DeprecateItemType.STMT,
+        value: "ALLOCATE",
+      },
+      {
+        type: constants.CompilerOptions.DeprecateItemType.BUILTIN,
+        value: "STRLEN",
+      },
+      {
+        type: constants.CompilerOptions.DeprecateItemType.ENTRY,
+        value: "MAIN",
+      },
+      {
+        type: constants.CompilerOptions.DeprecateItemType.INCLUDE,
+        value: "LIB",
+      },
+      {
+        type: constants.CompilerOptions.DeprecateItemType.VARIABLE,
+        value: "FOO",
+      },
     ],
   },
 });

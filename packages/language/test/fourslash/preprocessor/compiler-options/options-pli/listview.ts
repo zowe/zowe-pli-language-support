@@ -32,5 +32,5 @@ verify.expectDiagnosticsAt([2, 4, 6, 8], {
   message: code.CompilerOptions.DupeOptionIssue.message("LISTVIEW"),
 });
 verify.expectCompilerOptions({
-  listView: "AFTERALL",
+  listView: constants.CompilerOptions.ListView.AFTERALL,
 });

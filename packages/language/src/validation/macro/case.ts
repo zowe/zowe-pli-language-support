@@ -13,6 +13,7 @@ import { diagnosticFromCode } from "../../language-server/types";
 import * as AST from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
+import { CompilerOptions as MacroCompilerOptions } from "../../preprocessor/compiler-options/options-macro";
 import { Token } from "../../parser/tokens";
 import {
   TraversalState,
@@ -29,7 +30,11 @@ export function MACRO_Case(
 ) {
   if (!compilationUnit.processGroup?.lspOptions.caseUpperValidation) return;
   if (node !== compilationUnit.preprocessorAst) return;
-  if (compilationUnit.compilerOptions.macroOptions.case !== "UPPER") return;
+  if (
+    compilationUnit.compilerOptions.macroOptions.case !==
+    MacroCompilerOptions.Case.UPPER
+  )
+    return;
 
   const MAX_DIAGNOSTICS = 100;
   let diagnosticCount = 0;

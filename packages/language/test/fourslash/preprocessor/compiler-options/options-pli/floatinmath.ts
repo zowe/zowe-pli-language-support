@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.FloatInMath.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  floatInMath: { type: "EXTENDED" },
+  floatInMath: { type: constants.CompilerOptions.FloatInMathType.EXTENDED },
 });

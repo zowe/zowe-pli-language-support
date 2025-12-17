@@ -35,5 +35,5 @@ verify.expectDiagnosticsAt(6, {
 });
 verify.noDiagnostics(7);
 verify.expectCompilerOptions({
-  precType: "DECDIGIT",
+  precType: constants.CompilerOptions.PrecType.DECDIGIT,
 });

@@ -28,6 +28,6 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.expectCompilerOptions({
   default: {
-    short: { format: "IEEE" },
+    short: { format: constants.CompilerOptions.DefaultFormat.IEEE },
   },
 });

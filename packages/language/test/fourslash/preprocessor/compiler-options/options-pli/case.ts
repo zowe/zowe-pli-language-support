@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Case.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  case: "ASIS",
+  case: constants.CompilerOptions.Case.ASIS,
 });
