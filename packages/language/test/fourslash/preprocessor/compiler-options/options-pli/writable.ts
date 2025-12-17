@@ -44,5 +44,5 @@ verify.expectDiagnosticsAt(11, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectCompilerOptions({
-  writable: { noWritable: "PRV" },
+  writable: { noWritable: constants.CompilerOptions.WritableNoWritable.PRV },
 });

@@ -28,6 +28,6 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.expectCompilerOptions({
   default: {
-    returns: { type: "BYVALUE" },
+    returns: { type: constants.CompilerOptions.DefaultReturnsType.BYVALUE },
   },
 });

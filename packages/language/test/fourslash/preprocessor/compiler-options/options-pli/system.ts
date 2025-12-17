@@ -28,5 +28,5 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.System.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  system: "OS",
+  system: constants.CompilerOptions.System.OS,
 });

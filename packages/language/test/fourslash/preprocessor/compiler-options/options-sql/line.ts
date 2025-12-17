@@ -16,6 +16,6 @@
 
 verify.expectCompilerOptions({
   sqlOptions: {
-    line: "LINEFILE",
+    line: constants.CompilerOptions.SQL.Line.LINEFILE,
   },
 });

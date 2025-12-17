@@ -35,7 +35,7 @@ verify.expectDiagnosticsAt(10, {
 });
 verify.expectCompilerOptions({
   xRef: {
-    length: "SHORT",
-    structure: "EXPLICIT",
+    length: constants.CompilerOptions.Length.SHORT,
+    structure: constants.CompilerOptions.XRefStructure.EXPLICIT,
   },
 });

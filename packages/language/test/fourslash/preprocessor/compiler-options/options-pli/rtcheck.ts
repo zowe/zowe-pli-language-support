@@ -28,5 +28,5 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.noDiagnostics(5);
 verify.expectCompilerOptions({
-  rtCheck: "NULL370",
+  rtCheck: constants.CompilerOptions.RtCheck.NULL370,
 });

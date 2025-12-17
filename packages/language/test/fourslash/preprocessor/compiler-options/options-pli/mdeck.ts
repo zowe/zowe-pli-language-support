@@ -40,5 +40,5 @@ verify.expectDiagnosticsAt(9, {
   message: code.CompilerOptions.MutexOptionIssue.message("MD"),
 });
 verify.expectCompilerOptions({
-  mDeck: "AFTERALL",
+  mDeck: constants.CompilerOptions.MDeck.AFTERALL,
 });

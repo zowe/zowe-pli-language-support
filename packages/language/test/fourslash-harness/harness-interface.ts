@@ -13,7 +13,9 @@ import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { Diagnostic, type Severity } from "../../src/language-server/types";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
-import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
+import { CompilerOptions as PliCompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
+import { CompilerOptions as MacroCompilerOptions } from "../../src/preprocessor/compiler-options/options-macro";
+import { CompilerOptions as SQLCompilerOptions } from "../../src/preprocessor/compiler-options/options-sql";
 import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { DefaultAttribute, SyntaxKind } from "../../src/syntax-tree/ast";
 import {
@@ -50,6 +52,11 @@ import { PLICode, PLICodes } from "../../src/validation/pli-codes";
 import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
+
+export type CompilerOptions = PliCompilerOptions & {
+  macroOptions: MacroCompilerOptions;
+  sqlOptions: SQLCompilerOptions;
+};
 
 export type Not<T> = Omit<T, "not">;
 
@@ -334,5 +341,9 @@ export interface HarnessTesterInterface {
     CompletionKeywords: typeof CompletionKeywords;
     Severity: typeof Severity;
     DefaultAttribute: typeof DefaultAttribute;
+    CompilerOptions: typeof PliCompilerOptions & {
+      Macro: typeof MacroCompilerOptions;
+      SQL: typeof SQLCompilerOptions;
+    };
   };
 }

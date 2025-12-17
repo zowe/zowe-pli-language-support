@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    unrefStatic: "SOURCE",
+    unrefStatic: constants.CompilerOptions.RulesSource.SOURCE,
   },
 });

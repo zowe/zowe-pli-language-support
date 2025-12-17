@@ -22,6 +22,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { tokenize } from "../../src/parser/tokenizer";
 import { fullCode } from "../../src/language-server/types";
 import { PLICodes } from "../../src/validation/pli-codes";
+import { CompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
 
 type TokenizeFunction = (text: string) => Promise<string[]>;
 
@@ -157,7 +158,9 @@ describe("PL/1 Lexer", () => {
 
       expect(compilerOptions.result?.options.arch).toBeDefined();
       expect(compilerOptions.result?.options.assert).toBeDefined();
-      expect(compilerOptions.result?.options.assert).toBe("ENTRY");
+      expect(compilerOptions.result?.options.assert).toBe(
+        CompilerOptions.Assert.ENTRY,
+      );
     });
 
     test("Missing process group configuration is OK", async () => {
@@ -227,7 +230,9 @@ describe("PL/1 Lexer", () => {
       );
 
       expect(compilerOptions.result?.options.assert).toBeDefined();
-      expect(compilerOptions.result?.options.assert).toBe("ENTRY");
+      expect(compilerOptions.result?.options.assert).toBe(
+        CompilerOptions.Assert.ENTRY,
+      );
     });
   });
 });

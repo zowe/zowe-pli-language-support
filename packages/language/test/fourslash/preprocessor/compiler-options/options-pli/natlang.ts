@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt([2, 4, 6], {
   message: code.CompilerOptions.DupeOptionIssue.message("NATLANG"),
 });
 verify.expectCompilerOptions({
-  natlang: "UEN",
+  natlang: constants.CompilerOptions.NatLang.UEN,
 });

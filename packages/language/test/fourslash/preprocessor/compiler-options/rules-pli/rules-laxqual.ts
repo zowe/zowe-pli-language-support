@@ -33,8 +33,8 @@ verify.expectDiagnosticsAt(5, {
 verify.expectCompilerOptions({
   rules: {
     laxQual: {
-      source: "FORCE",
-      strict: "STRICT",
+      source: constants.CompilerOptions.RulesQualSource.FORCE,
+      strict: constants.CompilerOptions.RulesQualStrict.STRICT,
     },
   },
 });
