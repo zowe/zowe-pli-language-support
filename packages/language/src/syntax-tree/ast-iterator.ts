@@ -918,6 +918,8 @@ export function forEachNode(
       break;
     case SyntaxKind.TypeAttribute:
       break;
+    case SyntaxKind.TypeReference:
+      break;
     case SyntaxKind.UnaryExpression:
       if (node.expr) {
         action(node.expr);

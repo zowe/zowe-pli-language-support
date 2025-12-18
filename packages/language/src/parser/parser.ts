@@ -6042,6 +6042,29 @@ const primaryExpression = orRule<ast.Expression>(
   () => parenthesizedExpression,
   () => unaryExpression,
   () => locatorCall,
+  () => typeReference,
+);
+
+const typeReference = rule(
+  sequence(tokens.Colon),
+  (state: ParserState): ast.TypeReference => {
+    const element = ast.createTypeReference();
+    state.consume(element, CstNodeKind.TypeReference_StartColon, tokens.Colon);
+    const typeToken = state.consume(
+      element,
+      CstNodeKind.TypeReference_Ref,
+      tokens.ID,
+    );
+    if (typeToken) {
+      element.type = ast.createReference(
+        element,
+        typeToken,
+        ast.ReferenceType.Type,
+      );
+    }
+    state.consume(element, CstNodeKind.TypeReference_EndColon, tokens.Colon);
+    return element;
+  },
 );
 
 const parenthesizedExpression = rule(
