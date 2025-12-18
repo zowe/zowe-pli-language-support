@@ -95,7 +95,7 @@ export const Builtins =
  CEIL: PROC (value) RETURNS ();
  END;
 
- COMPLEX: PROC (real, imag) RETURNS (COMPLEX);
+ COMPLEX: CPLX:  PROC (real, imag) RETURNS (COMPLEX);
  END;
 
  CONJG: PROC (value) RETURNS (COMPLEX);
@@ -134,7 +134,8 @@ export const Builtins =
  ROUND: PROC (value) RETURNS ();
  END;
 
- ROUNDAWAYFROMZERO: PROC (value) RETURNS ();
+ // ROUNDDEC is a deprecated name for ROUNDAWAYFROMZERO
+ ROUNDAWAYFROMZERO: ROUNDDEC: PROC (value) RETURNS ();
  END;
 
  ROUNDTOEVEN: PROC (value) RETURNS ();
@@ -153,7 +154,7 @@ export const Builtins =
  ANY: PROC (array) RETURNS ();
  END;
 
- DIMENSION: PROC (array) RETURNS ();
+ DIMENSION: DIM: PROC (array) RETURNS ();
  END;
 
  HBOUND: PROC (array) RETURNS ();
@@ -319,7 +320,7 @@ export const Builtins =
  END;
  ONPACKAGE: PROC () RETURNS ();
  END;
- ONPROCEDURE: PROC () RETURNS ();
+ ONPROCEDURE: ONPROC: PROC () RETURNS ();
  END;
  ONSOURCE: PROC () RETURNS ();
  END;
@@ -451,21 +452,69 @@ export const Builtins =
  END;
  SHA1UPDATE: PROC (buffer) RETURNS ();
  END;
- SHA2DIGESTx: PROC (buffer) RETURNS ();
+ SHA2DIGEST224: PROC (buffer) RETURNS ();
  END;
- SHA2FINALx: PROC (buffer) RETURNS ();
+ SHA2DIGEST256: PROC (buffer) RETURNS ();
  END;
- SHA2INITx: PROC (buffer) RETURNS ();
+ SHA2DIGEST384: PROC (buffer) RETURNS ();
  END;
- SHA2UPDATEx: PROC (buffer) RETURNS ();
+ SHA2DIGEST512: PROC (buffer) RETURNS ();
  END;
- SHA3DIGESTx: PROC (buffer) RETURNS ();
+ SHA2FINAL224: PROC (buffer) RETURNS ();
  END;
- SHA3FINALx: PROC (buffer) RETURNS ();
+ SHA2FINAL256: PROC (buffer) RETURNS ();
  END;
- SHA3INITx: PROC (buffer) RETURNS ();
+ SHA2FINAL384: PROC (buffer) RETURNS ();
  END;
- SHA3UPDATEx: PROC (buffer) RETURNS ();
+ SHA2FINAL512: PROC (buffer) RETURNS ();
+ END;
+ SHA2INIT224: PROC (buffer) RETURNS ();
+ END;
+ SHA2INIT256: PROC (buffer) RETURNS ();
+ END;
+ SHA2INIT384: PROC (buffer) RETURNS ();
+ END;
+ SHA2INIT512: PROC (buffer) RETURNS ();
+ END;
+ SHA2UPDATE224: PROC (buffer) RETURNS ();
+ END;
+ SHA2UPDATE256: PROC (buffer) RETURNS ();
+ END;
+ SHA2UPDATE384: PROC (buffer) RETURNS ();
+ END;
+ SHA2UPDATE512: PROC (buffer) RETURNS ();
+ END;
+ SHA3DIGEST224: PROC (buffer) RETURNS ();
+ END;
+ SHA3DIGEST256: PROC (buffer) RETURNS ();
+ END;
+ SHA3DIGEST384: PROC (buffer) RETURNS ();
+ END;
+ SHA3DIGEST512: PROC (buffer) RETURNS ();
+ END;
+ SHA3FINAL224: PROC (buffer) RETURNS ();
+ END;
+ SHA3FINAL256: PROC (buffer) RETURNS ();
+ END;
+ SHA3FINAL384: PROC (buffer) RETURNS ();
+ END;
+ SHA3FINAL512: PROC (buffer) RETURNS ();
+ END;
+ SHA3INIT224: PROC (buffer) RETURNS ();
+ END;
+ SHA3INIT256: PROC (buffer) RETURNS ();
+ END;
+ SHA3INIT384: PROC (buffer) RETURNS ();
+ END;
+ SHA3INIT512: PROC (buffer) RETURNS ();
+ END;
+ SHA3UPDATE224: PROC (buffer) RETURNS ();
+ END;
+ SHA3UPDATE256: PROC (buffer) RETURNS ();
+ END;
+ SHA3UPDATE384: PROC (buffer) RETURNS ();
+ END;
+ SHA3UPDATE512: PROC (buffer) RETURNS ();
  END;
 
  /* Floating point inquiry functions */
@@ -587,10 +636,10 @@ export const Builtins =
  BETWEENRIGHTEXCLUSIVE: PROC (value) RETURNS (); END;
  BINSEARCH: PROC (value) RETURNS (); END;
  BINSEARCHX: PROC (value) RETURNS (); END;
- BYTE: PROC (value) RETURNS (); END;
  BYTELENGTH: PROC (value) RETURNS (); END;
  CDS: PROC (value) RETURNS (); END;
- CHARVAL: PROC (value) RETURNS (); END;
+ // BYTE is a synonym for CHARVAL
+ CHARVAL: BYTE: PROC (value) RETURNS (); END;
  CODEPAGE: PROC (value) RETURNS (); END;
  COLLATE: PROC (value) RETURNS (); END;
  CS: PROC (value) RETURNS (); END;
@@ -614,7 +663,7 @@ export const Builtins =
  PLIRETV: PROC (value) RETURNS (); END;
  POPCNT: PROC (value) RETURNS (); END;
  PRESENT: PROC (value) RETURNS (); END;
- PROCEDURENAME: PROC (value) RETURNS (); END;
+ PROCEDURENAME: PROCNAME: PROC (value) RETURNS (); END;
  PUTENV: PROC (value) RETURNS (); END;
  RANK: PROC (value) RETURNS (); END;
  SOURCEFILE: PROC (value) RETURNS (); END;
@@ -640,7 +689,8 @@ export const Builtins =
  /* Precision-handling built-in functions */
  ADD: PROC (value) RETURNS (); END;
  BINARY: PROC (value) RETURNS (); END;
- DECIMAL: PROC (value) RETURNS (); END;
+ BIN: PROC (value) RETURNS (); END;
+ DECIMAL: DEC: PROC (value) RETURNS (); END;
  DIVIDE: PROC (value) RETURNS (); END;
  FIXED: PROC (value) RETURNS (); END;
  FIXEDBIN: PROC (value) RETURNS (); END;
@@ -650,7 +700,7 @@ export const Builtins =
  FLOATDEC: PROC (value) RETURNS (); END;
  MULTIPLY: PROC (value) RETURNS (); END;
  PRECVAL: PROC (value) RETURNS (); END;
- PRECISION: PROC (value) RETURNS (); END;
+ PRECISION: PREC: PROC (value) RETURNS (); END;
  SCALEVAL: PROC (value) RETURNS (); END;
  SIGNED: PROC (value) RETURNS (); END;
  SUBTRACT: PROC (value) RETURNS (); END;
@@ -678,20 +728,26 @@ export const Builtins =
  ADDRDATA: PROC (value) RETURNS (); END;
  ALLOC31: PROC (value) RETURNS (); END;
  ALLOCATE: PROC (value) RETURNS (); END;
+ ALLOC: PROC (value) RETURNS (); END;
  ALLOCATION: PROC (value) RETURNS (); END;
+ ALLOCN: PROC (value) RETURNS (); END;
  ALLOCNEXT: PROC (value) RETURNS (); END;
  ALLOCSIZE: PROC (value) RETURNS (); END;
  AUTOMATIC: PROC (value) RETURNS (); END;
+ AUTO: PROC (value) RETURNS (); END;
  AVAILABLEAREA: PROC (value) RETURNS (); END;
  BINARYVALUE: PROC (value) RETURNS (); END;
+ BINVALUE: PROC (value) RETURNS (); END;
  BITLOCATION: PROC (value) RETURNS (); END;
+ BITLOC: PROC (value) RETURNS (); END;
  CHECKSTG: PROC (value) RETURNS (); END;
  CURRENTSIZE: PROC (value) RETURNS (); END;
- CURRENTSTORAGE: PROC (value) RETURNS (); END;
+ CURRENTSTORAGE: CSTG:  PROC (value) RETURNS (); END;
+ CSTG: PROC (value) RETURNS (); END;
  EMPTY: PROC (value) RETURNS (); END;
  ENTRYADDR: PROC (value) RETURNS (); END;
  HANDLE: PROC (value) RETURNS (); END;
- LOCATION: PROC (value) RETURNS (); END;
+ LOCATION: LOC: PROC (value) RETURNS (); END;
  LOCSTG: PROC (value) RETURNS (); END;
  LOCVAL: PROC (value) RETURNS (); END;
  NULL: PROC (value) RETURNS (); END;
@@ -701,13 +757,13 @@ export const Builtins =
  OFFSETDIFF: PROC (value) RETURNS (); END;
  OFFSETSUBTRACT: PROC (value) RETURNS (); END;
  OFFSETVALUE: PROC (value) RETURNS (); END;
- POINTER: PROC (value) RETURNS (); END;
- POINTERADD: PROC (value) RETURNS (); END;
- POINTERDIFF: PROC (value) RETURNS (); END;
- POINTERSUBTRACT: PROC (value) RETURNS (); END;
- POINTERVALUE: PROC (value) RETURNS (); END;
+ POINTER: PTR: PROC (value) RETURNS (); END;
+ POINTERADD: PTRADD: PROC (value) RETURNS (); END;
+ POINTERDIFF: PTRDIFF: PROC (value) RETURNS (); END;
+ POINTERSUBTRACT: PTRSUBTRACT: PROC (value) RETURNS (); END;
+ POINTERVALUE: PTRVALUE: PROC (value) RETURNS (); END;
  SIZE: PROC (value) RETURNS (); END;
- STORAGE: PROC (value) RETURNS (); END;
+ STORAGE: STG: PROC (value) RETURNS (); END;
  SYSNULL: PROC (value) RETURNS (); END; 
  TYPE: PROC (value) RETURNS (); END;
  UNALLOCATED: PROC (value) RETURNS (); END;
@@ -717,12 +773,10 @@ export const Builtins =
  /* String-handling built-in functions */
  BIT: PROC (value) RETURNS (); END;
  BOOL: PROC (value) RETURNS (); END;
- CENTERLEFT: PROC (value) RETURNS (); END;
- CENTERRIGHT: PROC (value) RETURNS (); END;
- CENTRELEFT: PROC (value) RETURNS (); END;
- CENTRERIGHT: PROC (value) RETURNS (); END;
- CHARACTER: PROC (value) RETURNS (); END;
- CHARGRAPHIC: PROC (value) RETURNS (); END;
+ CENTERLEFT: CENTRELEFT: CENTER: PROC (value) RETURNS (); END;
+ CENTERRIGHT: CENTRERIGHT:  PROC (value) RETURNS (); END;
+ CHARACTER: CHAR: PROC (value) RETURNS (); END;
+ CHARGRAPHIC: CHARG: PROC (value) RETURNS (); END;
  COLLAPSE: PROC (value) RETURNS (); END;
  COPY: PROC (value) RETURNS (); END;
  EDIT: PROC (value) RETURNS (); END;
@@ -774,7 +828,7 @@ export const Builtins =
  VERIFY: PROC (value) RETURNS (); END;
  VERIFYR: PROC (value) RETURNS (); END;
  WHIGH: PROC (value) RETURNS (); END;
- WIDECHAR: PROC (value) RETURNS (); END;
+ WIDECHAR: WCHAR: PROC (value) RETURNS (); END;
  WLOW: PROC (value) RETURNS (); END;
 
  /* Subroutines */
@@ -839,7 +893,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  COMPILETIME: PROC RETURNS(); END;
  COPY: PROC RETURNS(); END;
  COUNTER: PROC RETURNS(); END;
- DIMENSION: PROC RETURNS(); END;
+ DIMENSION: DIM: PROC RETURNS(); END;
  HBOUND: PROC RETURNS(); END;
  INDEX: PROC RETURNS(); END;
  LBOUND: PROC RETURNS(); END;
