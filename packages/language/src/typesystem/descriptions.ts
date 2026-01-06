@@ -126,6 +126,8 @@ export enum AttributeKind {
   StringLength,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes */
   TransmissionDirection,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=variables-type-attribute */
+  SetType,
   /**
    * TODO still needs to be handled by the type builder
    * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
@@ -168,6 +170,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.StringKind,
   AttributeKind.StringLength,
   AttributeKind.TransmissionDirection,
+  AttributeKind.SetType,
   AttributeKind.Variable,
   AttributeKind.Volatility,
 ];
@@ -217,6 +220,7 @@ export type AttributeTypes = {
   [AttributeKind.StringKind]: StringKind;
   [AttributeKind.StringLength]: number;
   [AttributeKind.TransmissionDirection]: TransmissionDirection;
+  [AttributeKind.SetType]: ast.NamedType|null;
   [AttributeKind.Variable]: boolean;
   [AttributeKind.Volatility]: Volatility;
 };
@@ -235,6 +239,8 @@ export const CommonAttributeKinds: AttributeKind[] = [
   AttributeKind.Storage,
   AttributeKind.Variable,
   AttributeKind.Volatility,
+
+  AttributeKind.SetType,
 ];
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
@@ -1013,6 +1019,17 @@ function isTaskTypeDescription(
   return description.type === TaskType;
 }
 
+//--- Type ---
+
+function copyFromTypeDescription(typeAttribute: ast.NamedType, from: TypeDescriptions.Any): TypeDescriptions.Any {
+  // switch (typeAttribute.kind) {
+  //   case ast.SyntaxKind.DeclaredVariable:
+  //   case ast.SyntaxKind.DefineAliasStatement:
+  //   case ast.SyntaxKind.DefineOrdinalStatement:
+  // }
+  return TypeDescriptions.Unknown();
+}
+
 //--- Unknown ---
 const UnknownType = DataType.Unknown;
 type UnknownType = typeof UnknownType;
@@ -1213,6 +1230,7 @@ export namespace TypeDescriptions {
     [AttributeKind.StringFormat]: StringFormat.Varying,
     [AttributeKind.StringLength]: 0,
     [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
+    [AttributeKind.SetType]: null,
   };
 
   export const Structure = createStructureTypeDescription;
@@ -1323,6 +1341,8 @@ export namespace TypeDescriptions {
       scanMode:
         attributes[AttributeKind.ScanMode]?.value ??
         DefaultValues[AttributeKind.ScanMode],
+      type: attributes[AttributeKind.SetType]?.value ??
+        DefaultValues[AttributeKind.SetType],
     };
     switch (type) {
       case DataType.Area:

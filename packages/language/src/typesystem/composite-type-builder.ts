@@ -35,7 +35,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
-    const builder = new DefaultPrimitiveTypeBuilder(declaredItem.nameToken);
+    const builder = new DefaultPrimitiveTypeBuilder(declaredItem.nameToken, compilationUnit);
     for (const attr of declaredItem.attributes) {
       builder.addAttribute(attr);
     }

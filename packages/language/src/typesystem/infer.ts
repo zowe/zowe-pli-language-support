@@ -15,6 +15,8 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
+import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -36,11 +38,75 @@ export class DefaultTypeInferer implements TypeInferer {
       } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
         const types = this.inferDeclaredItem(node, compilationUnit);
         return this.lookupByAstNode(types, node);
+      } else if (node.kind === ast.SyntaxKind.DefineAliasStatement) {
+        return this.inferAliasType(node, compilationUnit);
+      } else if (node.kind === ast.SyntaxKind.DefineOrdinalStatement) {
+        return this.inferOrdinalType(node, compilationUnit);
       } else {
         //TODO other kinds of nodes
       }
       return TypeDescriptions.Unknown();
     });
+  }
+
+  private inferOrdinalType(node: ast.DefineOrdinalStatement, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+    if (!node.nameToken) {
+      return TypeDescriptions.Unknown();
+    }
+    const builder = new DefaultPrimitiveTypeBuilder(node.nameToken, compilationUnit);
+    {
+      const fixedAttribute = ast.createComputationDataAttribute();
+      fixedAttribute.typeToken = node.nameToken;
+      fixedAttribute.type = ast.DefaultAttribute.FIXED;
+      builder.addAttribute(fixedAttribute);
+    }
+    {
+      const binaryAttribute = ast.createComputationDataAttribute();
+      binaryAttribute.typeToken = node.nameToken;
+      binaryAttribute.type = ast.DefaultAttribute.BINARY;
+      builder.addAttribute(binaryAttribute);
+    }
+    if(node.attributes.includes(ast.DefineOrdinalAttribute.SIGNED)) {
+      const attr = ast.createComputationDataAttribute();
+      attr.type = ast.DefaultAttribute.SIGNED;
+      builder.addAttribute(attr);
+    }
+    if(node.attributes.includes(ast.DefineOrdinalAttribute.UNSIGNED)) {
+      const attr = ast.createComputationDataAttribute();
+      attr.type = ast.DefaultAttribute.UNSIGNED;
+      builder.addAttribute(attr);
+    }
+    if(node.attributes.includes(ast.DefineOrdinalAttribute.PRECISION)) {
+      const attr = ast.createComputationDataAttribute();
+      attr.type = ast.DefaultAttribute.PRECISION;
+      attr.dimensions = ast.createDimensions();
+      const bound = ast.createDimensionBound();
+      bound.lower = ast.createBound();
+      bound.upper = ast.createBound();
+      const literal = ast.createLiteral();
+      const value = ast.createNumberLiteral()
+      literal.value = value;
+      value.value = node.precision;
+      bound.upper.expression = literal;
+      attr.dimensions.dimensions = [bound];
+      builder.addAttribute(attr);
+    }
+    const { type, diagnostics } = builder.build();
+    compilationUnit.diagnostics.addAll(DiagnosticCategory.TypeSystem, diagnostics);
+    return type;
+  }
+
+  private inferAliasType(node: ast.DefineAliasStatement, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+    if (!node.nameToken) {
+      return TypeDescriptions.Unknown();
+    }
+    const builder = new DefaultPrimitiveTypeBuilder(node.nameToken, compilationUnit);
+    node.attributes.forEach((attribute) => {
+      builder.addAttribute(attribute);
+    });
+    const { type, diagnostics } = builder.build();
+    compilationUnit.diagnostics.addAll(DiagnosticCategory.TypeSystem, diagnostics);
+    return type;
   }
 
   private lookupByAstNode(

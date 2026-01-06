@@ -15,6 +15,7 @@ import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 import { Error } from "../validation/pli-codes";
+import { CompilationUnit } from "../workspace/compilation-unit";
 import { computeDimensions } from "./computed-attributes";
 import {
   DataType,
@@ -75,7 +76,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(public elementName: Token) {}
+  constructor(public elementName: Token, private unit: CompilationUnit) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -121,6 +122,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.HandleAttribute:
       case ast.SyntaxKind.IndForAttribute:
       case ast.SyntaxKind.ReservedAttribute: // TODO: @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
+        break;
       case ast.SyntaxKind.LikeAttribute:
         break;
       case ast.SyntaxKind.PictureAttribute:
@@ -140,11 +142,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.ReturnsAttribute: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=organization-returns-option-attribute
         break;
       case ast.SyntaxKind.TypeAttribute:
-        //TODO handle type attribute
-        if (attribute.type) {
+        if (attribute.type && attribute.type.node) {
           this.addAttributeWitness(
-            AttributeKind.DataType,
-            DataType.Unknown,
+            AttributeKind.SetType,
+            attribute.type.node,
             attribute,
             attribute.type.token,
           );
@@ -777,6 +778,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 
   build() {
+    const namedElement = this.attributeWitnesses[AttributeKind.SetType];
+    if (namedElement && namedElement.value) {
+      const typeNode = this.unit.services.inferer.inferType(namedElement.value, this.unit);
+      return {
+        type: typeNode,
+        diagnostics: this.diagnostics,
+      };
+    }
     if (this.possibleDataTypes.size !== 1) {
       // TODO: Reenable once we ensure that we don't show any false positives
       // if (this.elementName) {
