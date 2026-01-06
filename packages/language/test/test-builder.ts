@@ -1108,6 +1108,21 @@ export class TestBuilder {
         );
       }
 
+      if (expectedType.dimension !== undefined) {
+        if (actualType.dimension === undefined) {
+          throw new Error(`Expected type to have dimension, but got undefined`);
+        } else {
+          this.expectTypeNoStructure(
+            expectedType.dimension,
+            actualType.dimension,
+          );
+        }
+      } else {
+        if (actualType.dimension !== undefined) {
+          throw new Error(`Expected type to not have dimension, but got one.`);
+        }
+      }
+
       //check: are expected members present?
       for (const [name, expectedMemberType] of Object.entries(
         expectedType.members ?? {},

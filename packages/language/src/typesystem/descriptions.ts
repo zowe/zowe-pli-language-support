@@ -1057,7 +1057,9 @@ interface WithMembers {
 const StructureType = DataType.Structure;
 type StructureType = typeof StructureType;
 
-interface StructureTypeDescriptionProps extends WithMembers {}
+interface StructureTypeDescriptionProps extends WithMembers {
+  dimension?: DimensionBound[];
+}
 
 interface StructureTypeDescription
   extends StructureTypeDescriptionProps,
@@ -1069,12 +1071,14 @@ function createStructureTypeDescription({
   level = 1,
   members = new Map(),
   membersMetadata = new Map(),
+  dimension,
 }: Partial<StructureTypeDescriptionProps>): StructureTypeDescription {
   return {
     type: StructureType,
     level,
     members,
     membersMetadata,
+    dimension,
   };
 }
 
@@ -1082,7 +1086,9 @@ function createStructureTypeDescription({
 const UnionType = DataType.Union;
 type UnionType = typeof UnionType;
 
-interface UnionTypeDescriptionProps extends WithMembers {}
+interface UnionTypeDescriptionProps extends WithMembers {
+  dimension?: DimensionBound[];
+}
 
 interface UnionTypeDescription
   extends UnionTypeDescriptionProps,
@@ -1094,12 +1100,14 @@ function createUnionTypeDescription({
   level = 1,
   members = new Map(),
   membersMetadata = new Map(),
+  dimension,
 }: Partial<UnionTypeDescriptionProps>): UnionTypeDescription {
   return {
     type: UnionType,
     level,
     members,
     membersMetadata,
+    dimension,
   };
 }
 

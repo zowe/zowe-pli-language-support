@@ -1,6 +1,7 @@
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { computeDimensions } from "./computed-attributes";
 import { BuilderDeclareItem, TypeDescriptions } from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
@@ -22,6 +23,13 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
   ): TypeDescriptions.Structure | TypeDescriptions.Union {
+    const dimensionsAttr = declaredItem.attributes.find(
+      (attr) => attr.kind === ast.SyntaxKind.DimensionsDataAttribute,
+    ) as ast.DimensionsDataAttribute | undefined;
+    const dimension =
+      dimensionsAttr && dimensionsAttr.dimensions
+        ? computeDimensions(dimensionsAttr.dimensions)
+        : undefined;
     if (
       declaredItem.attributes.some(
         (attr) =>
@@ -30,11 +38,13 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       )
     ) {
       return TypeDescriptions.Union({
-        level: declaredItem.level ?? 1,
+        level: declaredItem.level,
+        dimension,
       });
     }
     return TypeDescriptions.Structure({
-      level: declaredItem.level ?? 1,
+      level: declaredItem.level,
+      dimension,
     });
   }
   handlePrimitiveDeclaredItem(
@@ -69,7 +79,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       ) {
         return CompositeAttributeKinds.includes(attr.type);
       }
-      return false;
+      return attr.kind === ast.SyntaxKind.DimensionsDataAttribute;
     }
     return (
       declaredItem.level !== undefined &&
