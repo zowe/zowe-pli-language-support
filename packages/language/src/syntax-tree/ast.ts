@@ -2868,6 +2868,7 @@ export function createLFormatItem(): LFormatItem {
 export interface LikeAttribute extends AstNode {
   kind: SyntaxKind.LikeAttribute;
   reference: LocatorCall | null;
+  likeToken: Token | null;
 }
 
 export function createLikeAttribute(): LikeAttribute {
@@ -2875,6 +2876,7 @@ export function createLikeAttribute(): LikeAttribute {
     kind: SyntaxKind.LikeAttribute,
     container: null,
     reference: null,
+    likeToken: null,
   };
 }
 

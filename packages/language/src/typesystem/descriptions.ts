@@ -114,6 +114,10 @@ export enum AttributeKind {
   Scope,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-preprocessor-scan */
   ScanMode,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=unions-like-attribute */
+  SetLike,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=variables-type-attribute */
+  SetType,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
   Sign,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
@@ -126,8 +130,6 @@ export enum AttributeKind {
   StringLength,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes */
   TransmissionDirection,
-  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=variables-type-attribute */
-  SetType,
   /**
    * TODO still needs to be handled by the type builder
    * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
@@ -214,13 +216,14 @@ export type AttributeTypes = {
   [AttributeKind.Scale]: ScaleMode;
   [AttributeKind.ScanMode]: ast.ScanMode;
   [AttributeKind.Scope]: Scope;
+  [AttributeKind.SetLike]: ast.LocatorCall|null;
+  [AttributeKind.SetType]: ast.NamedType|null;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
   [AttributeKind.StringFormat]: StringFormat;
   [AttributeKind.StringKind]: StringKind;
   [AttributeKind.StringLength]: number;
   [AttributeKind.TransmissionDirection]: TransmissionDirection;
-  [AttributeKind.SetType]: ast.NamedType|null;
   [AttributeKind.Variable]: boolean;
   [AttributeKind.Volatility]: Volatility;
 };
@@ -240,6 +243,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
   AttributeKind.Variable,
   AttributeKind.Volatility,
 
+  AttributeKind.SetLike,
   AttributeKind.SetType,
 ];
 
@@ -1231,6 +1235,7 @@ export namespace TypeDescriptions {
     [AttributeKind.StringLength]: 0,
     [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
     [AttributeKind.SetType]: null,
+    [AttributeKind.SetLike]: null,
   };
 
   export const Structure = createStructureTypeDescription;
@@ -1341,8 +1346,6 @@ export namespace TypeDescriptions {
       scanMode:
         attributes[AttributeKind.ScanMode]?.value ??
         DefaultValues[AttributeKind.ScanMode],
-      type: attributes[AttributeKind.SetType]?.value ??
-        DefaultValues[AttributeKind.SetType],
     };
     switch (type) {
       case DataType.Area:

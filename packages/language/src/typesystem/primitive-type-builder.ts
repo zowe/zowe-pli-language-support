@@ -14,7 +14,7 @@ import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
-import { Error } from "../validation/pli-codes";
+import { Error, PLICodes } from "../validation/pli-codes";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { computeDimensions } from "./computed-attributes";
 import {
@@ -124,6 +124,14 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.ReservedAttribute: // TODO: @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
         break;
       case ast.SyntaxKind.LikeAttribute:
+        if (attribute.reference && attribute.likeToken) {
+          this.addAttributeWitness(
+            AttributeKind.SetLike,
+            attribute.reference,
+            attribute,
+            attribute.likeToken,
+          );
+        }
         break;
       case ast.SyntaxKind.PictureAttribute:
         /**
@@ -781,6 +789,21 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     const namedElement = this.attributeWitnesses[AttributeKind.SetType];
     if (namedElement && namedElement.value) {
       const typeNode = this.unit.services.inferer.inferType(namedElement.value, this.unit);
+      return {
+        type: typeNode,
+        diagnostics: this.diagnostics,
+      };
+    }
+    const locatorCall = this.attributeWitnesses[AttributeKind.SetLike];
+    if(locatorCall && locatorCall.value) {
+      if(!locatorCall.value.element || !locatorCall.value.element.element || !locatorCall.value.element.element.ref || !locatorCall.value.element.element.ref.node) {
+        this.diagnostics.push(diagnosticFromCode(PLICodes.Warning.IBM3330I, this.elementName));
+        return {
+          type: TypeDescriptions.Unknown(),
+          diagnostics: this.diagnostics,
+        };
+      }
+      const typeNode = this.unit.services.inferer.inferType(locatorCall.value.element!.element!.ref!.node!, this.unit);
       return {
         type: typeNode,
         diagnostics: this.diagnostics,
