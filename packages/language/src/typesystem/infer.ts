@@ -128,44 +128,44 @@ export class DefaultTypeInferer implements TypeInferer {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
-    const structureParents: TypeDescriptions.Structure[] = [];
+    const compositeParents: (TypeDescriptions.Structure|TypeDescriptions.Union)[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       if (builder.isCompositeDeclaredItem(item)) {
-        const structureType = builder.handleCompositeDeclaredItem(
+        const compositeType = builder.handleCompositeDeclaredItem(
           item,
           compilationUnit,
         );
-        compilationUnit.services.typeCache.set(item.node, structureType);
+        compilationUnit.services.typeCache.set(item.node, compositeType);
         if (previousLevel === undefined) {
-          topLevelMembers.set(item, structureType);
-          structureParents.push(structureType);
+          topLevelMembers.set(item, compositeType);
+          compositeParents.push(compositeType);
         } else {
-          while (previousLevel && structureType.level < previousLevel) {
-            structureParents.pop();
+          while (previousLevel && compositeType.level < previousLevel) {
+            compositeParents.pop();
             previousLevel =
-              structureParents.length > 0
-                ? structureParents[structureParents.length - 1].level
+              compositeParents.length > 0
+                ? compositeParents[compositeParents.length - 1].level
                 : undefined;
           }
-          if (previousLevel && structureType.level > previousLevel) {
-            const parent = structureParents[structureParents.length - 1];
-            structureAddMember(parent, item, structureType);
-            structureParents.push(structureType);
+          if (previousLevel && compositeType.level > previousLevel) {
+            const parent = compositeParents[compositeParents.length - 1];
+            compositeAddMember(parent, item, compositeType);
+            compositeParents.push(compositeType);
           } else {
-            if (structureParents.length > 0) {
-              structureParents.pop();
+            if (compositeParents.length > 0) {
+              compositeParents.pop();
             }
-            if (structureParents.length > 0) {
-              const parent = structureParents[structureParents.length - 1];
-              structureAddMember(parent, item, structureType);
+            if (compositeParents.length > 0) {
+              const parent = compositeParents[compositeParents.length - 1];
+              compositeAddMember(parent, item, compositeType);
             } else {
-              topLevelMembers.set(item, structureType);
+              topLevelMembers.set(item, compositeType);
             }
-            structureParents.push(structureType);
+            compositeParents.push(compositeType);
           }
         }
-        previousLevel = structureType.level;
+        previousLevel = compositeType.level;
       } else {
         const primitiveType = builder.handlePrimitiveDeclaredItem(
           item,
@@ -176,19 +176,19 @@ export class DefaultTypeInferer implements TypeInferer {
           topLevelMembers.set(item, primitiveType);
         } else {
           while (previousLevel && item.level < previousLevel) {
-            structureParents.pop();
+            compositeParents.pop();
             previousLevel =
-              structureParents.length > 0
-                ? structureParents[structureParents.length - 1].level
+              compositeParents.length > 0
+                ? compositeParents[compositeParents.length - 1].level
                 : undefined;
           }
           if (previousLevel && item.level > previousLevel) {
-            const parent = structureParents[structureParents.length - 1];
-            structureAddMember(parent, item, primitiveType);
+            const parent = compositeParents[compositeParents.length - 1];
+            compositeAddMember(parent, item, primitiveType);
           } else {
-            if (structureParents.length > 0) {
-              const parent = structureParents[structureParents.length - 1];
-              structureAddMember(parent, item, primitiveType);
+            if (compositeParents.length > 0) {
+              const parent = compositeParents[compositeParents.length - 1];
+              compositeAddMember(parent, item, primitiveType);
             } else {
               topLevelMembers.set(item, primitiveType);
             }
@@ -215,14 +215,14 @@ export class DefaultTypeInferer implements TypeInferer {
     // );
     return topLevelMembers;
 
-    function structureAddMember(
-      structureType: TypeDescriptions.Structure,
+    function compositeAddMember(
+      compositeType: TypeDescriptions.Structure|TypeDescriptions.Union,
       item: BuilderDeclareItem,
       memberType: TypeDescriptions.Any,
     ) {
-      structureType.members[item.name] = memberType;
-      structureType.membersMetadata[item.name] = item;
-      memberType.parentType = structureType;
+      compositeType.members[item.name] = memberType;
+      compositeType.membersMetadata[item.name] = item;
+      memberType.parentType = compositeType;
     }
   }
 

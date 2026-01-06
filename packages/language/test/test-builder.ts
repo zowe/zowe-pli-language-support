@@ -1079,29 +1079,29 @@ export class TestBuilder {
       if (
         actualType.type === DataType.Unknown ||
         actualType.type === DataType.Structure ||
+        actualType.type === DataType.Union ||
         !actualType.dimension
       ) {
-        this.expectTypeWithStructure(expectedType, actualType as any);
+        this.expectTypeWithComposite(expectedType, actualType as any);
       } else {
         this.expectTypeNoStructure(expectedType, actualType);
       }
     }
   }
 
-  private expectTypeWithStructure(
+  private expectTypeWithComposite(
     expectedType: TypeExpectation,
     actualType: TypeExpectation,
   ) {
-    if (expectedType.type === DataType.Structure) {
-      //check: is structure?
+    if (expectedType.type === DataType.Structure || expectedType.type === DataType.Union) {
       if (!actualType.type) {
         throw new Error(
           `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got undefined`,
         );
       }
-      if (actualType.type !== DataType.Structure) {
+      if (actualType.type !== expectedType.type) {
         throw new Error(
-          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
+          `Expected type to be a ${TypeDescriptions.Names[expectedType.type]}, but got ${TypeDescriptions.Names[actualType.type]}`,
         );
       }
 
@@ -1115,7 +1115,7 @@ export class TestBuilder {
             `Expected member "${name}" to be present, but got undefined`,
           );
         }
-        this.expectTypeWithStructure(expectedMemberType, actualMemberType);
+        this.expectTypeWithComposite(expectedMemberType, actualMemberType);
       }
 
       //check: are there any actual members missing in our expectation?

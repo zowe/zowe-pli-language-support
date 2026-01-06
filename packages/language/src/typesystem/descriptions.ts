@@ -37,6 +37,7 @@ export enum DataType {
   String,
   Structure,
   Task,
+  Union,
   Unknown = -1,
 }
 
@@ -53,6 +54,7 @@ export const DataTypesArray: DataType[] = [
   DataType.String,
   DataType.Structure,
   DataType.Task,
+  DataType.Union,
   DataType.Unknown,
 ];
 
@@ -250,6 +252,7 @@ export const CommonAttributeKinds: AttributeKind[] = [
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   [DataType.Unknown]: [...CommonAttributeKinds],
   [DataType.Structure]: [],
+  [DataType.Union]: [],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
@@ -339,7 +342,7 @@ interface WithTypeDescriminator {
 }
 
 interface WithParentType {
-  parentType?: TypeDescriptions.Structure; //TODO: TypeDescriptions.Union;
+  parentType?: TypeDescriptions.Structure|TypeDescriptions.Union; //TODO: TypeDescriptions.Union;
 }
 
 interface BaseTypeDescription
@@ -1028,17 +1031,6 @@ function isTaskTypeDescription(
   return description.type === TaskType;
 }
 
-//--- Type ---
-
-function copyFromTypeDescription(typeAttribute: ast.NamedType, from: TypeDescriptions.Any): TypeDescriptions.Any {
-  // switch (typeAttribute.kind) {
-  //   case ast.SyntaxKind.DeclaredVariable:
-  //   case ast.SyntaxKind.DefineAliasStatement:
-  //   case ast.SyntaxKind.DefineOrdinalStatement:
-  // }
-  return TypeDescriptions.Unknown();
-}
-
 //--- Unknown ---
 const UnknownType = DataType.Unknown;
 type UnknownType = typeof UnknownType;
@@ -1080,6 +1072,36 @@ function createStructureTypeDescription({
     membersMetadata,
   };
 }
+
+//--- Union ---
+const UnionType = DataType.Union;
+type UnionType = typeof UnionType;
+
+interface UnionTypeDescriptionProps {
+  level: number;
+  members: Record<string, TypeDescriptions.Any>;
+  membersMetadata: Record<string, BuilderDeclareItem>;
+}
+
+interface UnionTypeDescription extends UnionTypeDescriptionProps, WithParentType {
+  type: UnionType;
+}
+
+function createUnionTypeDescription({
+  level,
+  members = {},
+  membersMetadata = {},
+}: UnionTypeDescriptionProps): UnionTypeDescription {
+  return {
+    type: UnionType,
+    level,
+    members,
+    membersMetadata,
+  };
+}
+
+
+//--- Implications between attributes ---
 
 export type Implications = {
   [S in AttributeKind]: Partial<{
@@ -1171,6 +1193,7 @@ export namespace TypeDescriptions {
     [TaskType]: "Task",
     [UnknownType]: "Unknown",
     [StructureType]: "Structure",
+    [UnionType]: "Union",
   };
   export type Any =
     | Area
@@ -1185,7 +1208,8 @@ export namespace TypeDescriptions {
     | String
     | Task
     | Unknown
-    | Structure;
+    | Structure
+    | Union;
   export type TypeDescriptionType = Any["type"];
 
   //TODO check default values
@@ -1249,6 +1273,12 @@ export namespace TypeDescriptions {
     type: TypeDescriptions.Any,
   ): type is StructureTypeDescription => type.type === StructureType;
 
+  export const Union = createUnionTypeDescription;
+  export type Union = UnionTypeDescription;
+  export const isUnion = (
+    type: TypeDescriptions.Any,
+  ): type is UnionTypeDescription => type.type === UnionType;
+
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;
   export const isUnknown = (
@@ -1311,7 +1341,7 @@ export namespace TypeDescriptions {
     isString(type) && type.kind === StringKind.Bit && type.length === 1;
 
   export function createPrimitive(
-    type: Exclude<DataType, DataType.Structure>,
+    type: Exclude<DataType, DataType.Structure | DataType.Union>,
     attributes: AttributeWitnesses,
   ): Any {
     const common = {

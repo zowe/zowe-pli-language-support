@@ -12,7 +12,7 @@ export interface CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Structure;
+  ): TypeDescriptions.Structure | TypeDescriptions.Union;
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
@@ -23,8 +23,17 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Structure {
-    //TODO handle UNION and other composite types
+  ): TypeDescriptions.Structure | TypeDescriptions.Union {
+    if(declaredItem.attributes.some(attr => 
+      attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+      attr.type === ast.DefaultAttribute.UNION
+    )) {
+      return TypeDescriptions.Union({
+        level: declaredItem.level!,
+        members: {},
+        membersMetadata: {},
+      });      
+    }
     return TypeDescriptions.Structure({
       level: declaredItem.level!,
       members: {},
