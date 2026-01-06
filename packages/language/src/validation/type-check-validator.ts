@@ -14,7 +14,12 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { ValidationAcceptor } from "./validator";
 
 export function typeCheck(
-  stmt: ast.DeclareStatement|ast.DeclaredVariable|ast.DeclaredItem|ast.DefineAliasStatement|ast.DefineOrdinalStatement,
+  stmt:
+    | ast.DeclareStatement
+    | ast.DeclaredVariable
+    | ast.DeclaredItem
+    | ast.DefineAliasStatement
+    | ast.DefineOrdinalStatement,
   _acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ) {

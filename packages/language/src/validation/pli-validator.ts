@@ -35,10 +35,7 @@ export function registerPliValidationChecks(): ValidationChecks {
   return {
     CallStatement: [IBM3323I_IBM3324I_check_argument_count],
     DeclaredItem: [IBM1352IE_declared_item_pli_scan_repetition, typeCheck],
-    DeclareStatement: [
-      IBM1376IE_attributes_in_declaration_lists,
-      typeCheck,
-    ],
+    DeclareStatement: [IBM1376IE_attributes_in_declaration_lists, typeCheck],
     DeclaredVariable: [typeCheck],
     DefineAliasStatement: [typeCheck],
     DefineOrdinalStatement: [typeCheck],

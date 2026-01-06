@@ -19,16 +19,16 @@
 
 verify.noDiagnostics();
 types.expectTypeAt("same", {
-    type: types.dataTypes.Union,
-    members: {
-        MAILBOX: {
-            type: types.dataTypes.Arithmetic,
-            scale: types.scales.Fixed,
-            precision: { totalDigitsCount: 5 }
-        },
-        STREET: {
-            type: types.dataTypes.String,
-            length: 100
-        },
-    }
+  type: types.dataTypes.Union,
+  members: {
+    MAILBOX: {
+      type: types.dataTypes.Arithmetic,
+      scale: types.scales.Fixed,
+      precision: { totalDigitsCount: 5 },
+    },
+    STREET: {
+      type: types.dataTypes.String,
+      length: 100,
+    },
+  },
 });

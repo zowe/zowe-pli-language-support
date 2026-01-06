@@ -20,10 +20,10 @@
 
 verify.noDiagnostics();
 types.expectTypeAt("same", {
-    type: types.dataTypes.String,
-    length: 100,
+  type: types.dataTypes.String,
+  length: 100,
 });
 types.expectTypeAt("same2", {
-    type: types.dataTypes.String,
-    length: 100,
+  type: types.dataTypes.String,
+  length: 100,
 });

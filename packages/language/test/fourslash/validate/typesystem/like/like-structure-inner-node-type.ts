@@ -21,28 +21,28 @@
 
 verify.noDiagnostics();
 types.expectTypeAt("same", {
-    type: types.dataTypes.Structure,
-    members: {
-        STREET: {
-            type: types.dataTypes.String,
-            length: 100
-        },
-        CITY: {
-            type: types.dataTypes.String,
-            length: 50
-        }
-    }
+  type: types.dataTypes.Structure,
+  members: {
+    STREET: {
+      type: types.dataTypes.String,
+      length: 100,
+    },
+    CITY: {
+      type: types.dataTypes.String,
+      length: 50,
+    },
+  },
 });
 types.expectTypeAt("same2", {
-    type: types.dataTypes.Structure,
-    members: {
-        STREET: {
-            type: types.dataTypes.String,
-            length: 100
-        },
-        CITY: {
-            type: types.dataTypes.String,
-            length: 50
-        }
-    }
+  type: types.dataTypes.Structure,
+  members: {
+    STREET: {
+      type: types.dataTypes.String,
+      length: 100,
+    },
+    CITY: {
+      type: types.dataTypes.String,
+      length: 50,
+    },
+  },
 });

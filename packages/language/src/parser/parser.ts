@@ -5447,7 +5447,11 @@ const likeAttribute = rule(
   (state: ParserState): ast.LikeAttribute => {
     const element = ast.createLikeAttribute();
 
-    element.likeToken = state.consume(element, CstNodeKind.LikeAttribute_LIKE, tokens.LIKE);
+    element.likeToken = state.consume(
+      element,
+      CstNodeKind.LikeAttribute_LIKE,
+      tokens.LIKE,
+    );
     element.reference = locatorCall.rule(state);
 
     return element;

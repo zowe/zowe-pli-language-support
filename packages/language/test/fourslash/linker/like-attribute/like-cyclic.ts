@@ -20,8 +20,8 @@
 //    and not get stuck in an infinite loop
 linker.expectLinks();
 types.expectTypeAt("X", {
-    type: types.dataTypes.Unknown,
+  type: types.dataTypes.Unknown,
 });
 types.expectTypeAt("Y", {
-    type: types.dataTypes.Unknown,
+  type: types.dataTypes.Unknown,
 });

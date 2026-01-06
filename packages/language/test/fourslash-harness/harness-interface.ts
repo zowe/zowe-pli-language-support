@@ -65,11 +65,11 @@ type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<
   "dimension"
 > & {
   dimension:
-  | {
-    lowerBound: Partial<Bound>;
-    upperBound: Partial<Bound>;
-  }[]
-  | undefined;
+    | {
+        lowerBound: Partial<Bound>;
+        upperBound: Partial<Bound>;
+      }[]
+    | undefined;
 };
 export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Area>
@@ -87,13 +87,13 @@ export type TypeExpectation =
   | Partial<PrimitiveTypeExpectation>
   | Partial<TypeDescriptions.Unknown>
   | {
-    type: DataType.Structure;
-    members: Record<string, TypeExpectation>;
-  }
+      type: DataType.Structure;
+      members: Record<string, TypeExpectation>;
+    }
   | {
-    type: DataType.Union;
-    members: Record<string, TypeExpectation>;
-  };
+      type: DataType.Union;
+      members: Record<string, TypeExpectation>;
+    };
 
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;

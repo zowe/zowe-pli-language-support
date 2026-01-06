@@ -24,15 +24,18 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Structure | TypeDescriptions.Union {
-    if(declaredItem.attributes.some(attr => 
-      attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
-      attr.type === ast.DefaultAttribute.UNION
-    )) {
+    if (
+      declaredItem.attributes.some(
+        (attr) =>
+          attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+          attr.type === ast.DefaultAttribute.UNION,
+      )
+    ) {
       return TypeDescriptions.Union({
         level: declaredItem.level!,
         members: {},
         membersMetadata: {},
-      });      
+      });
     }
     return TypeDescriptions.Structure({
       level: declaredItem.level!,
@@ -44,7 +47,10 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
-    const builder = new DefaultPrimitiveTypeBuilder(declaredItem.nameToken, compilationUnit);
+    const builder = new DefaultPrimitiveTypeBuilder(
+      declaredItem.nameToken,
+      compilationUnit,
+    );
     for (const attr of declaredItem.attributes) {
       builder.addAttribute(attr);
     }

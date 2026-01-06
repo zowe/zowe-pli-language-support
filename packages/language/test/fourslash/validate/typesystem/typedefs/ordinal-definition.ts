@@ -16,7 +16,7 @@
 //// dcl <|col|> type Color;
 
 types.expectTypeAt("col", {
-    type: types.dataTypes.Arithmetic,
-    scale: types.scales.Fixed,
-    base: types.bases.Binary,
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Fixed,
+  base: types.bases.Binary,
 });

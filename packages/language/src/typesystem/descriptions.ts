@@ -219,8 +219,8 @@ export type AttributeTypes = {
   [AttributeKind.Scale]: ScaleMode;
   [AttributeKind.ScanMode]: ast.ScanMode;
   [AttributeKind.Scope]: Scope;
-  [AttributeKind.SetLike]: ast.LocatorCall|null;
-  [AttributeKind.SetType]: ast.NamedType|null;
+  [AttributeKind.SetLike]: ast.LocatorCall | null;
+  [AttributeKind.SetType]: ast.NamedType | null;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
   [AttributeKind.StringFormat]: StringFormat;
@@ -343,13 +343,13 @@ interface WithTypeDescriminator {
 }
 
 interface WithParentType {
-  parentType?: TypeDescriptions.Structure|TypeDescriptions.Union; //TODO: TypeDescriptions.Union;
+  parentType?: TypeDescriptions.Structure | TypeDescriptions.Union; //TODO: TypeDescriptions.Union;
 }
 
 interface BaseTypeDescription
   extends WithTypeDescriminator,
-    BaseTypeDescriptionProps, WithParentType {
-}
+    BaseTypeDescriptionProps,
+    WithParentType {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -1057,7 +1057,9 @@ interface StructureTypeDescriptionProps {
   membersMetadata: Record<string, BuilderDeclareItem>;
 }
 
-interface StructureTypeDescription extends StructureTypeDescriptionProps, WithParentType {
+interface StructureTypeDescription
+  extends StructureTypeDescriptionProps,
+    WithParentType {
   type: StructureType;
 }
 
@@ -1084,7 +1086,9 @@ interface UnionTypeDescriptionProps {
   membersMetadata: Record<string, BuilderDeclareItem>;
 }
 
-interface UnionTypeDescription extends UnionTypeDescriptionProps, WithParentType {
+interface UnionTypeDescription
+  extends UnionTypeDescriptionProps,
+    WithParentType {
   type: UnionType;
 }
 
@@ -1100,7 +1104,6 @@ function createUnionTypeDescription({
     membersMetadata,
   };
 }
-
 
 //--- Implications between attributes ---
 

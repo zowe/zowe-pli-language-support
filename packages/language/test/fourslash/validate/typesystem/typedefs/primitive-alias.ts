@@ -16,7 +16,7 @@
 //// dcl <|n|> type num;
 
 types.expectTypeAt("n", {
-    type: types.dataTypes.Arithmetic,
-    base: types.bases.Binary,
-    scale: types.scales.Fixed,
+  type: types.dataTypes.Arithmetic,
+  base: types.bases.Binary,
+  scale: types.scales.Fixed,
 });

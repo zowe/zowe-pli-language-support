@@ -1093,7 +1093,10 @@ export class TestBuilder {
     expectedType: TypeExpectation,
     actualType: TypeExpectation,
   ) {
-    if (expectedType.type === DataType.Structure || expectedType.type === DataType.Union) {
+    if (
+      expectedType.type === DataType.Structure ||
+      expectedType.type === DataType.Union
+    ) {
       if (!actualType.type) {
         throw new Error(
           `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got undefined`,

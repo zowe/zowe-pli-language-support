@@ -76,7 +76,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private possibleDataTypes = new Set<DataType>(DataTypesArray);
   private attributeWitnesses: AttributeWitnesses =
     createEmptyAttributeWitnesses();
-  constructor(public elementName: Token, private unit: CompilationUnit) {}
+  constructor(
+    public elementName: Token,
+    private unit: CompilationUnit,
+  ) {}
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
       case ast.SyntaxKind.ComputationDataAttribute:
@@ -788,24 +791,43 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   build() {
     const namedElement = this.attributeWitnesses[AttributeKind.SetType];
     if (namedElement && namedElement.value) {
-      const typeNode = this.unit.services.inferer.inferType(namedElement.value, this.unit);
+      const typeNode = this.unit.services.inferer.inferType(
+        namedElement.value,
+        this.unit,
+      );
       return {
         type: typeNode,
         diagnostics: this.diagnostics,
       };
     }
     const locatorCall = this.attributeWitnesses[AttributeKind.SetLike];
-    if(locatorCall && locatorCall.value) {
-      if(!locatorCall.value.element || !locatorCall.value.element.element || !locatorCall.value.element.element.ref || !locatorCall.value.element.element.ref.node) {
-        this.diagnostics.push(diagnosticFromCode(PLICodes.Warning.IBM3330I, this.elementName));
+    if (locatorCall && locatorCall.value) {
+      if (
+        !locatorCall.value.element ||
+        !locatorCall.value.element.element ||
+        !locatorCall.value.element.element.ref ||
+        !locatorCall.value.element.element.ref.node
+      ) {
+        this.diagnostics.push(
+          diagnosticFromCode(PLICodes.Warning.IBM3330I, this.elementName),
+        );
         return {
           type: TypeDescriptions.Unknown(),
           diagnostics: this.diagnostics,
         };
       }
-      const typeNode = this.unit.services.inferer.inferType(locatorCall.value.element!.element!.ref!.node!, this.unit);
-      if(!typeNode.parentType && !TypeDescriptions.isStructure(typeNode) && !TypeDescriptions.isUnion(typeNode)) {
-        this.diagnostics.push(diagnosticFromCode(PLICodes.Warning.IBM3329I, this.elementName));
+      const typeNode = this.unit.services.inferer.inferType(
+        locatorCall.value.element!.element!.ref!.node!,
+        this.unit,
+      );
+      if (
+        !typeNode.parentType &&
+        !TypeDescriptions.isStructure(typeNode) &&
+        !TypeDescriptions.isUnion(typeNode)
+      ) {
+        this.diagnostics.push(
+          diagnosticFromCode(PLICodes.Warning.IBM3329I, this.elementName),
+        );
         return {
           type: TypeDescriptions.Unknown(),
           diagnostics: this.diagnostics,
@@ -833,7 +855,9 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       };
     }
     let dataType = Array.from(this.possibleDataTypes)[0];
-    assertType<Exclude<DataType, DataType.Structure|DataType.Union>>(dataType);
+    assertType<Exclude<DataType, DataType.Structure | DataType.Union>>(
+      dataType,
+    );
     return {
       type: TypeDescriptions.createPrimitive(dataType, this.attributeWitnesses),
       diagnostics: this.diagnostics,

@@ -49,11 +49,17 @@ export class DefaultTypeInferer implements TypeInferer {
     });
   }
 
-  private inferOrdinalType(node: ast.DefineOrdinalStatement, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+  private inferOrdinalType(
+    node: ast.DefineOrdinalStatement,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const builder = new DefaultPrimitiveTypeBuilder(node.nameToken, compilationUnit);
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      compilationUnit,
+    );
     {
       const fixedAttribute = ast.createComputationDataAttribute();
       fixedAttribute.typeToken = node.nameToken;
@@ -66,17 +72,17 @@ export class DefaultTypeInferer implements TypeInferer {
       binaryAttribute.type = ast.DefaultAttribute.BINARY;
       builder.addAttribute(binaryAttribute);
     }
-    if(node.attributes.includes(ast.DefineOrdinalAttribute.SIGNED)) {
+    if (node.attributes.includes(ast.DefineOrdinalAttribute.SIGNED)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.SIGNED;
       builder.addAttribute(attr);
     }
-    if(node.attributes.includes(ast.DefineOrdinalAttribute.UNSIGNED)) {
+    if (node.attributes.includes(ast.DefineOrdinalAttribute.UNSIGNED)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.UNSIGNED;
       builder.addAttribute(attr);
     }
-    if(node.attributes.includes(ast.DefineOrdinalAttribute.PRECISION)) {
+    if (node.attributes.includes(ast.DefineOrdinalAttribute.PRECISION)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.PRECISION;
       attr.dimensions = ast.createDimensions();
@@ -84,7 +90,7 @@ export class DefaultTypeInferer implements TypeInferer {
       bound.lower = ast.createBound();
       bound.upper = ast.createBound();
       const literal = ast.createLiteral();
-      const value = ast.createNumberLiteral()
+      const value = ast.createNumberLiteral();
       literal.value = value;
       value.value = node.precision;
       bound.upper.expression = literal;
@@ -92,20 +98,32 @@ export class DefaultTypeInferer implements TypeInferer {
       builder.addAttribute(attr);
     }
     const { type, diagnostics } = builder.build();
-    compilationUnit.diagnostics.addAll(DiagnosticCategory.TypeSystem, diagnostics);
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      diagnostics,
+    );
     return type;
   }
 
-  private inferAliasType(node: ast.DefineAliasStatement, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+  private inferAliasType(
+    node: ast.DefineAliasStatement,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const builder = new DefaultPrimitiveTypeBuilder(node.nameToken, compilationUnit);
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      compilationUnit,
+    );
     node.attributes.forEach((attribute) => {
       builder.addAttribute(attribute);
     });
     const { type, diagnostics } = builder.build();
-    compilationUnit.diagnostics.addAll(DiagnosticCategory.TypeSystem, diagnostics);
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      diagnostics,
+    );
     return type;
   }
 
@@ -128,7 +146,10 @@ export class DefaultTypeInferer implements TypeInferer {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
-    const compositeParents: (TypeDescriptions.Structure|TypeDescriptions.Union)[] = [];
+    const compositeParents: (
+      | TypeDescriptions.Structure
+      | TypeDescriptions.Union
+    )[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       if (builder.isCompositeDeclaredItem(item)) {
@@ -216,7 +237,7 @@ export class DefaultTypeInferer implements TypeInferer {
     return topLevelMembers;
 
     function compositeAddMember(
-      compositeType: TypeDescriptions.Structure|TypeDescriptions.Union,
+      compositeType: TypeDescriptions.Structure | TypeDescriptions.Union,
       item: BuilderDeclareItem,
       memberType: TypeDescriptions.Any,
     ) {

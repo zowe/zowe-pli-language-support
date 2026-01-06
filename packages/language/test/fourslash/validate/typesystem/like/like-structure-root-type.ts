@@ -19,16 +19,16 @@
 
 verify.noDiagnostics();
 types.expectTypeAt("same", {
-    type: types.dataTypes.Structure,
-    members: {
-        NAME: {
-            type: types.dataTypes.String,
-            length: 100
-        },
-        AGE: {
-            type: types.dataTypes.Arithmetic,
-            scale: types.scales.Fixed,
-            precision: { totalDigitsCount: 3 }
-        }
-    }
+  type: types.dataTypes.Structure,
+  members: {
+    NAME: {
+      type: types.dataTypes.String,
+      length: 100,
+    },
+    AGE: {
+      type: types.dataTypes.Arithmetic,
+      scale: types.scales.Fixed,
+      precision: { totalDigitsCount: 3 },
+    },
+  },
 });

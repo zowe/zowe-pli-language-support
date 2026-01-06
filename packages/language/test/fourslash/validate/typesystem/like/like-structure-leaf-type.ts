@@ -20,12 +20,12 @@
 
 verify.noDiagnostics();
 types.expectTypeAt("same", {
-    type: types.dataTypes.Arithmetic,
-    scale: types.scales.Fixed,
-    precision: { totalDigitsCount: 3 }
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Fixed,
+  precision: { totalDigitsCount: 3 },
 });
 types.expectTypeAt("same2", {
-    type: types.dataTypes.Arithmetic,
-    scale: types.scales.Fixed,
-    precision: { totalDigitsCount: 3 }
+  type: types.dataTypes.Arithmetic,
+  scale: types.scales.Fixed,
+  precision: { totalDigitsCount: 3 },
 });
