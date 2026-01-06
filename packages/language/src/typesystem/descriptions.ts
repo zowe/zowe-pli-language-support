@@ -174,6 +174,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.StringKind,
   AttributeKind.StringLength,
   AttributeKind.TransmissionDirection,
+  AttributeKind.SetLike,
   AttributeKind.SetType,
   AttributeKind.Variable,
   AttributeKind.Volatility,
