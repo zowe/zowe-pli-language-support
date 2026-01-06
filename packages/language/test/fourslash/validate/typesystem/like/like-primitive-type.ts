@@ -15,8 +15,4 @@
 //// declare name char(100);
 //// declare <|same|> like name;
 
-//TODO should throw IBM3329I, because only structure member can be used as target of LIKE
-types.expectTypeAt("same", {
-    type: types.dataTypes.String,
-    length: 100,
-});
+verify.expectDiagnosticsAt("same", code.Warning.IBM3329I);

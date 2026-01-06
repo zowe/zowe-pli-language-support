@@ -338,9 +338,14 @@ interface WithTypeDescriminator {
   type: DataType;
 }
 
+interface WithParentType {
+  parentType?: TypeDescriptions.Structure; //TODO: TypeDescriptions.Union;
+}
+
 interface BaseTypeDescription
   extends WithTypeDescriminator,
-    BaseTypeDescriptionProps {}
+    BaseTypeDescriptionProps, WithParentType {
+}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -1059,7 +1064,7 @@ interface StructureTypeDescriptionProps {
   membersMetadata: Record<string, BuilderDeclareItem>;
 }
 
-interface StructureTypeDescription extends StructureTypeDescriptionProps {
+interface StructureTypeDescription extends StructureTypeDescriptionProps, WithParentType {
   type: StructureType;
 }
 

@@ -804,6 +804,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         };
       }
       const typeNode = this.unit.services.inferer.inferType(locatorCall.value.element!.element!.ref!.node!, this.unit);
+      if(!typeNode.parentType && !TypeDescriptions.isStructure(typeNode)) {
+        this.diagnostics.push(diagnosticFromCode(PLICodes.Warning.IBM3329I, this.elementName));
+        return {
+          type: TypeDescriptions.Unknown(),
+          diagnostics: this.diagnostics,
+        };
+      }
       return {
         type: typeNode,
         diagnostics: this.diagnostics,

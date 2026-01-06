@@ -222,6 +222,7 @@ export class DefaultTypeInferer implements TypeInferer {
     ) {
       structureType.members[item.name] = memberType;
       structureType.membersMetadata[item.name] = item;
+      memberType.parentType = structureType;
     }
   }
 
