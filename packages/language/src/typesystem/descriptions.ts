@@ -343,7 +343,7 @@ interface WithTypeDescriminator {
 }
 
 interface WithParentType {
-  parentType?: TypeDescriptions.Structure | TypeDescriptions.Union; //TODO: TypeDescriptions.Union;
+  parentType?: TypeDescriptions.Structure | TypeDescriptions.Union;
 }
 
 interface BaseTypeDescription

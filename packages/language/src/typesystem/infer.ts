@@ -256,10 +256,15 @@ export class DefaultTypeInferer implements TypeInferer {
       }
       if (TypeDescriptions.isStructure(type)) {
         const subMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>(
-          type.members.keys().map(key => [
-            type.membersMetadata.get(key)!,
-            type.members.get(key)!
-          ] as const)
+          type.members
+            .keys()
+            .map(
+              (key) =>
+                [
+                  type.membersMetadata.get(key)!,
+                  type.members.get(key)!,
+                ] as const,
+            ),
         );
         this.traverseMembers(subMembers, predicate, callback, false);
       }

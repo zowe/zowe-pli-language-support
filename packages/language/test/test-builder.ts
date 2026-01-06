@@ -1113,9 +1113,9 @@ export class TestBuilder {
         expectedType.members ?? {},
       )) {
         const node = [...actualType.membersMetadata.keys()].find(
-          k => actualType.membersMetadata.get(k)!.name === name
+          (k) => actualType.membersMetadata.get(k)!.name === name,
         );
-        if(!node) {
+        if (!node) {
           throw new Error(
             `Expected member "${name}" to be present, but got undefined`,
           );
