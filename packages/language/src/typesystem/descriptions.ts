@@ -1048,14 +1048,16 @@ function createUnknownTypeDescription(): UnknownTypeDescription {
 }
 
 //--- Structure ---
+interface WithMembers {
+  level: number;
+  members: Map<ast.DeclaredVariable, TypeDescriptions.Any>;
+  membersMetadata: Map<ast.DeclaredVariable, BuilderDeclareItem>;
+}
+
 const StructureType = DataType.Structure;
 type StructureType = typeof StructureType;
 
-interface StructureTypeDescriptionProps {
-  level: number;
-  members: Record<string, TypeDescriptions.Any>;
-  membersMetadata: Record<string, BuilderDeclareItem>;
-}
+interface StructureTypeDescriptionProps extends WithMembers {}
 
 interface StructureTypeDescription
   extends StructureTypeDescriptionProps,
@@ -1064,10 +1066,10 @@ interface StructureTypeDescription
 }
 
 function createStructureTypeDescription({
-  level,
-  members = {},
-  membersMetadata = {},
-}: StructureTypeDescriptionProps): StructureTypeDescription {
+  level = 1,
+  members = new Map(),
+  membersMetadata = new Map(),
+}: Partial<StructureTypeDescriptionProps>): StructureTypeDescription {
   return {
     type: StructureType,
     level,
@@ -1080,11 +1082,7 @@ function createStructureTypeDescription({
 const UnionType = DataType.Union;
 type UnionType = typeof UnionType;
 
-interface UnionTypeDescriptionProps {
-  level: number;
-  members: Record<string, TypeDescriptions.Any>;
-  membersMetadata: Record<string, BuilderDeclareItem>;
-}
+interface UnionTypeDescriptionProps extends WithMembers {}
 
 interface UnionTypeDescription
   extends UnionTypeDescriptionProps,
@@ -1093,10 +1091,10 @@ interface UnionTypeDescription
 }
 
 function createUnionTypeDescription({
-  level,
-  members = {},
-  membersMetadata = {},
-}: UnionTypeDescriptionProps): UnionTypeDescription {
+  level = 1,
+  members = new Map(),
+  membersMetadata = new Map(),
+}: Partial<UnionTypeDescriptionProps>): UnionTypeDescription {
   return {
     type: UnionType,
     level,
@@ -1491,7 +1489,7 @@ export namespace TypeDescriptions {
 export interface BuilderDeclareItem {
   name: string;
   nameToken: Token;
-  node: ast.SyntaxNode;
+  node: ast.DeclaredVariable;
   attributes: ast.DeclarationAttribute[];
-  level?: number;
+  level: number;
 }

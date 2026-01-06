@@ -153,10 +153,7 @@ export class DefaultTypeInferer implements TypeInferer {
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       if (builder.isCompositeDeclaredItem(item)) {
-        const compositeType = builder.handleCompositeDeclaredItem(
-          item,
-          compilationUnit,
-        );
+        const compositeType = builder.handleCompositeDeclaredItem(item);
         compilationUnit.services.typeCache.set(item.node, compositeType);
         if (previousLevel === undefined) {
           topLevelMembers.set(item, compositeType);
@@ -241,8 +238,8 @@ export class DefaultTypeInferer implements TypeInferer {
       item: BuilderDeclareItem,
       memberType: TypeDescriptions.Any,
     ) {
-      compositeType.members[item.name] = memberType;
-      compositeType.membersMetadata[item.name] = item;
+      compositeType.members.set(item.node, memberType);
+      compositeType.membersMetadata.set(item.node, item);
       memberType.parentType = compositeType;
     }
   }
@@ -259,10 +256,10 @@ export class DefaultTypeInferer implements TypeInferer {
       }
       if (TypeDescriptions.isStructure(type)) {
         const subMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>(
-          Object.entries(type.members).map(([name, subType]) => {
-            const subItem = type.membersMetadata[name];
-            return [subItem, subType] as const;
-          }),
+          type.members.keys().map(key => [
+            type.membersMetadata.get(key)!,
+            type.members.get(key)!
+          ] as const)
         );
         this.traverseMembers(subMembers, predicate, callback, false);
       }

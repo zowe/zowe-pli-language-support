@@ -11,7 +11,6 @@ export interface CompositeTypeBuilder {
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean;
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
   ): TypeDescriptions.Structure | TypeDescriptions.Union;
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
@@ -22,7 +21,6 @@ export interface CompositeTypeBuilder {
 export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
   ): TypeDescriptions.Structure | TypeDescriptions.Union {
     if (
       declaredItem.attributes.some(
@@ -32,15 +30,11 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       )
     ) {
       return TypeDescriptions.Union({
-        level: declaredItem.level!,
-        members: {},
-        membersMetadata: {},
+        level: declaredItem.level ?? 1,
       });
     }
     return TypeDescriptions.Structure({
-      level: declaredItem.level!,
-      members: {},
-      membersMetadata: {},
+      level: declaredItem.level ?? 1,
     });
   }
   handlePrimitiveDeclaredItem(
@@ -99,7 +93,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
         for (const item of this.flattenDeclaredItem(element)) {
           items.push({
             ...item,
-            level: declaredItem.level ?? undefined,
+            level: declaredItem.level ?? 1,
             attributes: [...item.attributes, ...declaredItem.attributes],
           });
         }
@@ -108,7 +102,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
           name: element.name!,
           nameToken: element.nameToken!,
           node: element,
-          level: declaredItem.level ?? undefined,
+          level: declaredItem.level ?? 1,
           attributes: [...declaredItem.attributes],
         });
       } else {

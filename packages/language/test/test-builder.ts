@@ -1091,7 +1091,7 @@ export class TestBuilder {
 
   private expectTypeWithComposite(
     expectedType: TypeExpectation,
-    actualType: TypeExpectation,
+    actualType: TypeDescriptions.Any,
   ) {
     if (
       expectedType.type === DataType.Structure ||
@@ -1112,7 +1112,15 @@ export class TestBuilder {
       for (const [name, expectedMemberType] of Object.entries(
         expectedType.members ?? {},
       )) {
-        const actualMemberType = actualType.members[name];
+        const node = [...actualType.membersMetadata.keys()].find(
+          k => actualType.membersMetadata.get(k)!.name === name
+        );
+        if(!node) {
+          throw new Error(
+            `Expected member "${name}" to be present, but got undefined`,
+          );
+        }
+        const actualMemberType = actualType.members.get(node);
         if (!actualMemberType) {
           throw new Error(
             `Expected member "${name}" to be present, but got undefined`,
