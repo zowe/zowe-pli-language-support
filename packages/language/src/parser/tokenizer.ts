@@ -463,7 +463,7 @@ function isWhitespace(char: number): boolean {
 }
 
 // Function map
-const funcs = new Map<string, TokenizeFunc>();
+let funcs: TokenizeFunc[] = [];
 const defaultOr = "|";
 const defaultNot = NOT_CHARACTER + "^";
 let orSymbols = defaultOr;
@@ -474,62 +474,76 @@ export function initLexer(compilerOptions: CompilerOptions): void {
   orSymbols = compilerOptions.or ?? defaultOr;
   notSymbols = compilerOptions.not ?? defaultNot;
   includeAlt = compilerOptions.pp?.ppInclude?.value;
-  funcs.clear();
-  funcs.set("/", tokenizeSlash);
-  funcs.set('"', tokenizeString);
-  funcs.set("'", tokenizeString);
-  funcs.set("*", tokenizeAsterisk);
-  funcs.set("=", generateDoubleCharFunc(tokens.Equals, TwoCharTokens["="]));
-  funcs.set("+", generateDoubleCharFunc(tokens.Plus, TwoCharTokens["+"]));
-  funcs.set("-", generateDoubleCharFunc(tokens.Minus, TwoCharTokens["-"]));
-  funcs.set("&", generateDoubleCharFunc(tokens.Ampersand, TwoCharTokens["&"]));
-  funcs.set("<", generateDoubleCharFunc(tokens.LessThan, TwoCharTokens["<"]));
-  funcs.set(
-    ">",
-    generateDoubleCharFunc(tokens.GreaterThan, TwoCharTokens[">"]),
+  funcs = new Array(256);
+  funcs["/".charCodeAt(0)] = tokenizeSlash;
+  funcs['"'.charCodeAt(0)] = tokenizeString;
+  funcs["'".charCodeAt(0)] = tokenizeString;
+  funcs["*".charCodeAt(0)] = tokenizeAsterisk;
+  funcs["=".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Equals,
+    TwoCharTokens["="],
   );
-  funcs.set("(", generateSingleCharFunc(tokens.OpenParen));
-  funcs.set(")", generateSingleCharFunc(tokens.CloseParen));
-  funcs.set(";", generateSingleCharFunc(tokens.Semicolon));
-  funcs.set(":", generateSingleCharFunc(tokens.Colon));
-  funcs.set(",", generateSingleCharFunc(tokens.Comma));
-  funcs.set("%", generateSingleCharFunc(tokens.Percent));
-  funcs.set(".", generateSingleCharFunc(tokens.Dot));
-
+  funcs["+".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Plus,
+    TwoCharTokens["+"],
+  );
+  funcs["-".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Minus,
+    TwoCharTokens["-"],
+  );
+  funcs["&".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Ampersand,
+    TwoCharTokens["&"],
+  );
+  funcs["<".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.LessThan,
+    TwoCharTokens["<"],
+  );
+  funcs[">".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.GreaterThan,
+    TwoCharTokens[">"],
+  );
+  funcs["(".charCodeAt(0)] = generateSingleCharFunc(tokens.OpenParen);
+  funcs[")".charCodeAt(0)] = generateSingleCharFunc(tokens.CloseParen);
+  funcs[";".charCodeAt(0)] = generateSingleCharFunc(tokens.Semicolon);
+  funcs[":".charCodeAt(0)] = generateSingleCharFunc(tokens.Colon);
+  funcs[",".charCodeAt(0)] = generateSingleCharFunc(tokens.Comma);
+  funcs["%".charCodeAt(0)] = generateSingleCharFunc(tokens.Percent);
+  funcs[".".charCodeAt(0)] = generateSingleCharFunc(tokens.Dot);
   // Whitespace characters
-  funcs.set(" ", tokenizeWhitespace);
-  funcs.set("\t", tokenizeWhitespace);
-  funcs.set("\r", tokenizeWhitespace);
-  funcs.set("\n", tokenizeWhitespace);
-  funcs.set("\f", tokenizeWhitespace);
-  funcs.set("\v", tokenizeWhitespace);
+  funcs[" ".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\t".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\r".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\n".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\f".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\v".charCodeAt(0)] = tokenizeWhitespace;
 
   // Numbers
   for (let i = 0; i <= 9; i++) {
-    funcs.set(i.toString(), tokenizeNumber);
+    funcs[i.toString().charCodeAt(0)] = tokenizeNumber;
   }
 
   // Letters
   for (let i = 97; i <= 122; i++) {
     // a-z
-    funcs.set(String.fromCharCode(i), tokenizeIdentifier);
+    funcs[i] = tokenizeIdentifier;
   }
   for (let i = 65; i <= 90; i++) {
     // A-Z
-    funcs.set(String.fromCharCode(i), tokenizeIdentifier);
+    funcs[i] = tokenizeIdentifier;
   }
-  funcs.set("_", tokenizeIdentifier);
-  funcs.set("@", tokenizeIdentifier);
-  funcs.set("$", tokenizeIdentifier);
-  funcs.set("#", tokenizeIdentifier);
+  funcs["_".charCodeAt(0)] = tokenizeIdentifier;
+  funcs["@".charCodeAt(0)] = tokenizeIdentifier;
+  funcs["$".charCodeAt(0)] = tokenizeIdentifier;
+  funcs["#".charCodeAt(0)] = tokenizeIdentifier;
 
   for (const orSymbolChar of orSymbols.split("")) {
-    funcs.set(orSymbolChar, tokenizeOrSymbol);
+    funcs[orSymbolChar.charCodeAt(0)] = tokenizeOrSymbol;
   }
   for (const notSymbolChar of notSymbols.split("")) {
-    funcs.set(
-      notSymbolChar,
-      generateDoubleCharFunc(tokens.Not, TwoCharTokens["^"]),
+    funcs[notSymbolChar.charCodeAt(0)] = generateDoubleCharFunc(
+      tokens.Not,
+      TwoCharTokens["^"],
     );
   }
 }
@@ -560,7 +574,7 @@ export function tokenize(
       continue;
     }
 
-    const fn = funcs.get(char);
+    const fn: TokenizeFunc | undefined = funcs[input.charCodeAt(context.index)];
     if (fn) {
       const index = context.index;
       const token = fn(context);
