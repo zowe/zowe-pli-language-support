@@ -489,14 +489,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         const precision = this.acceptDimensionsAsListOfNumbers(
           attribute.dimensions,
         );
-        if (precision) {
-          this.addAttributeWitness(
-            AttributeKind.StringLength,
-            precision[0],
-            attribute,
-            token,
-          );
-        }
         const mapTo = {
           [ast.DefaultAttribute.CHARACTER]: StringKind.Character,
           [ast.DefaultAttribute.BIT]: StringKind.Bit,
@@ -505,9 +497,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           [ast.DefaultAttribute.GRAPHIC]: StringKind.Graphic,
         };
         const kind = mapTo[type];
+        //TODO refers variable?
         this.addAttributeWitness(
-          AttributeKind.StringKind,
-          kind,
+          AttributeKind.StringBits,
+          {
+            kind,
+            length: precision && precision.length > 0 ? precision[0] : 0,
+          }, //TODO default length?
           attribute,
           token,
         );
@@ -564,6 +560,13 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
               token,
             );
           }
+        } else {
+          this.addAttributeWitness(
+            AttributeKind.LocatorKind,
+            { type: "pointer" },
+            attribute,
+            token,
+          );
         }
         break;
       }

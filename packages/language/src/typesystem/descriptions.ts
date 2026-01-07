@@ -127,9 +127,7 @@ export enum AttributeKind {
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying */
   StringFormat,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-bit-character-graphic-uchar-widechar */
-  StringKind,
-  /** TODO belongs to StringKind, maybe refactor later */
-  StringLength,
+  StringBits,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes */
   TransmissionDirection,
   /**
@@ -171,8 +169,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.Sign,
   AttributeKind.Storage,
   AttributeKind.StringFormat,
-  AttributeKind.StringKind,
-  AttributeKind.StringLength,
+  AttributeKind.StringBits,
   AttributeKind.TransmissionDirection,
   AttributeKind.SetLike,
   AttributeKind.SetType,
@@ -215,7 +212,7 @@ export type AttributeTypes = {
   [AttributeKind.ParameterPassMode]: ParameterPassMode | undefined;
   [AttributeKind.PictureKind]: PictureWideness;
   [AttributeKind.Position]: StoragePosition;
-  [AttributeKind.Precision]: Precision;
+  [AttributeKind.Precision]: Precision | undefined;
   [AttributeKind.Scale]: ScaleMode;
   [AttributeKind.ScanMode]: ast.ScanMode;
   [AttributeKind.Scope]: Scope;
@@ -224,11 +221,344 @@ export type AttributeTypes = {
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
   [AttributeKind.StringFormat]: StringFormat;
-  [AttributeKind.StringKind]: StringKind;
-  [AttributeKind.StringLength]: number;
+  [AttributeKind.StringBits]: StringBits;
   [AttributeKind.TransmissionDirection]: TransmissionDirection;
   [AttributeKind.Variable]: boolean;
   [AttributeKind.Volatility]: Volatility;
+};
+
+export type AttributeStringifier<K extends AttributeKind> = (
+  value: AttributeTypes[K],
+) => string | undefined;
+
+export const AttributeStringifiers: {
+  [K in AttributeKind]: AttributeStringifier<K>;
+} = {
+  [AttributeKind.AccessMode]: function (value: AccessMode): string {
+    switch (value) {
+      case AccessMode.Direct:
+        return "DIRECT";
+      case AccessMode.Sequential:
+        return "SEQUENTIAL";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Alignment]: function (value: Alignment): string {
+    switch (value.type) {
+      case AlignmentType.Aligned:
+        return `ALIGNED(${value.alignment})`;
+      case AlignmentType.Unaligned:
+        return "UNALIGNED";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.AreaSize]: function (_value: number): string {
+    //TODO implement
+    return `/* AREA(TODO) */`;
+  },
+  [AttributeKind.Assignability]: function (value: Assignability): string {
+    switch (value) {
+      case Assignability.Assignable:
+        return "ASSIGNABLE";
+      case Assignability.Nonassignable:
+        return "NONASSIGNABLE";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Base]: function (value: Base): string {
+    switch (value) {
+      case Base.Binary:
+        return "BINARY";
+      case Base.Decimal:
+        return "DECIMAL";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.BufferMode]: function (value: BufferMode): string {
+    switch (value) {
+      case BufferMode.Buffered:
+        return "BUFFERED";
+      case BufferMode.Unbuffered:
+        return "UNBUFFERED";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Connection]: function (value: StorageConnection): string {
+    switch (value) {
+      case StorageConnection.Connected:
+        return "CONNECTED";
+      case StorageConnection.Nonconnected:
+        return "NONCONNECTED";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.DataType]: function (value: DataType): string {
+    //TODO should not be printed as an attribute
+    return TypeDescriptions.Names[value];
+  },
+  [AttributeKind.Dimension]: function (
+    value: DimensionBound[] | undefined,
+  ): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+    return `DIMENSION(${value
+      .map((bound) => {
+        if (bound.upperBound.value !== undefined) {
+          if (bound.lowerBound.value !== undefined) {
+            return `${bound.lowerBound.value}:${bound.upperBound.value}`;
+          } else {
+            throw new Error(
+              "Cannot stringify dimension bound with no lower bound value",
+            );
+          }
+        } else {
+          if (bound.lowerBound.value !== undefined) {
+            return `${bound.lowerBound.value}`;
+          } else {
+            throw new Error("Cannot stringify dimension bound with no values");
+          }
+        }
+      })
+      .join(", ")})`;
+  },
+  [AttributeKind.Endianess]: function (value: Endianess): string {
+    switch (value) {
+      case Endianess.Big:
+        return "BIGENDIAN";
+      case Endianess.Little:
+        return "LITTLEENDIAN";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.FileUsage]: function (value: FileUsage): string {
+    switch (value) {
+      case FileUsage.Record:
+        return "RECORD";
+      case FileUsage.Stream:
+        return "STREAM";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.FloatFormat]: function (value: FloatFormat): string {
+    switch (value) {
+      case FloatFormat.IEEE:
+        return "IEEE";
+      case FloatFormat.HexaDec:
+        return "HEXADEC";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Initial]: function (
+    value: ast.InitialAttribute | undefined,
+  ): string | undefined {
+    if (!value) {
+      return "";
+    }
+    // TODO: Implement stringification of InitialAttribute
+    return "INITIAL(...)";
+  },
+  [AttributeKind.List]: function (value: boolean): string | undefined {
+    return value ? "LIST" : undefined;
+  },
+  [AttributeKind.LocatorKind]: function (value: LocatorKind): string {
+    switch (value.type) {
+      case "pointer":
+        return value.size ? `POINTER(${value.size})` : "POINTER";
+      //TODO struct type name
+      case "handle":
+        return `HANDLE${value.size ? `(${value.size})` : ""} /*(TODO structure name)*/`;
+      //TODO area variable name
+      case "offset":
+        return `OFFSET /*(TODO area variable name)*/`;
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.NumberMode]: function (value: NumberMode): string {
+    switch (value) {
+      case NumberMode.Complex:
+        return "COMPLEX";
+      case NumberMode.Real:
+        return "REAL";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Optional]: function (value: boolean): string | undefined {
+    return value ? "OPTIONAL" : undefined;
+  },
+  [AttributeKind.OrdinalNames]: function (value: string[]): string | undefined {
+    //TODO implement Ordinal names stringification
+    return undefined;
+  },
+  [AttributeKind.Parameter]: function (value: boolean): string | undefined {
+    return value ? "PARAMETER" : undefined;
+  },
+  [AttributeKind.ParameterPassDirection]: function (
+    value: ParameterPassDirection,
+  ): string {
+    switch (value) {
+      case ParameterPassDirection.InOnly:
+        return "INONLY";
+      case ParameterPassDirection.OutOnly:
+        return "OUTONLY";
+      case ParameterPassDirection.InOut:
+        return "INOUT";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.ParameterPassMode]: function (
+    value: ParameterPassMode | undefined,
+  ): string | undefined {
+    switch (value) {
+      case undefined:
+        return undefined;
+      case ParameterPassMode.ByAddr:
+        return "BYADDR";
+      case ParameterPassMode.ByValue:
+        return "BYVALUE";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.PictureKind]: function (value: PictureWideness): string {
+    //TODO picture-specification is missing
+    switch (value) {
+      case PictureWideness.Picture:
+        return "PICTURE";
+      case PictureWideness.WidePicture:
+        return "WIDEPIC";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Position]: function (_value: StoragePosition): string {
+    //TODO implement stringification of StoragePosition
+    return "/*POSITION(TODO)*/";
+  },
+  [AttributeKind.Precision]: function (
+    value: Precision | undefined,
+  ): string | undefined {
+    if (!value) {
+      return undefined;
+    } else if (value.fractionalDigitsCount !== undefined) {
+      return `PRECISION(${value.totalDigitsCount}, ${value.fractionalDigitsCount})`;
+    } else {
+      return `PRECISION(${value.totalDigitsCount})`;
+    }
+  },
+  [AttributeKind.Scale]: function (value: ScaleMode): string {
+    switch (value) {
+      case ScaleMode.Fixed:
+        return "FIXED";
+      case ScaleMode.Float:
+        return "FLOAT";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Scope]: function (value: Scope): string {
+    switch (value.type) {
+      case ScopeType.Internal:
+        return "INTERNAL";
+      case ScopeType.External:
+        return `EXTERNAL('${value.environment}')`;
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.ScanMode]: function (value: ast.ScanMode): string {
+    switch (value) {
+      case ast.ScanMode.NOSCAN:
+        return "NOSCAN";
+      case ast.ScanMode.SCAN:
+        return "SCAN";
+      case ast.ScanMode.RESCAN:
+        return "RESCAN";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Sign]: function (value: Sign): string {
+    switch (value) {
+      case Sign.Signed:
+        return "SIGNED";
+      case Sign.Unsigned:
+        return "UNSIGNED";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.Storage]: function (value: StorageClass): string {
+    switch (value) {
+      case StorageClass.Automatic:
+        return "AUTOMATIC";
+      case StorageClass.Static:
+        return "STATIC";
+      case StorageClass.Based:
+        return "BASED";
+      case StorageClass.Controlled:
+        return "CONTROLLED";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.StringFormat]: function (value: StringFormat): string {
+    switch (value) {
+      case StringFormat.NonVarying:
+        return "NONVARYING";
+      case StringFormat.Varying:
+        return "VARYING";
+      case StringFormat.Varying4:
+        return "VARYING4";
+      case StringFormat.VaryingZ:
+        return "VARYINGZ";
+      default:
+        assertUnreachable(value);
+    }
+  },
+  [AttributeKind.StringBits]: function (value: StringBits): string {
+    const length =
+      typeof value.length === "number"
+        ? `${value.length}${value.refers ? ` REFERS ${value.refers.name}` : ""}`
+        : "*";
+    switch (value.kind) {
+      case StringKind.Bit:
+        return `BIT(${length})`;
+      case StringKind.Character:
+        return `CHARACTER(${length})`;
+      case StringKind.Graphic:
+        return `GRAPHIC(${length})`;
+      case StringKind.UChar:
+        return `UCHAR(${length})`;
+      case StringKind.WideChar:
+        return `WIDECHAR(${length})`;
+      default:
+        assertUnreachable(value.kind);
+    }
+  },
+  [AttributeKind.TransmissionDirection]: function (
+    value: TransmissionDirection,
+  ): string {
+    throw new Error("Function not implemented.");
+  },
+  [AttributeKind.Variable]: function (value: boolean): string {
+    throw new Error("Function not implemented.");
+  },
+  [AttributeKind.Volatility]: function (value: Volatility): string {
+    throw new Error("Function not implemented.");
+  },
 };
 
 export const CommonAttributeKinds: AttributeKind[] = [
@@ -288,9 +618,8 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   ],
   [DataType.String]: [
     ...CommonAttributeKinds,
-    AttributeKind.StringKind,
+    AttributeKind.StringBits,
     AttributeKind.StringFormat,
-    AttributeKind.StringLength,
   ],
   [DataType.Task]: [...CommonAttributeKinds],
 };
@@ -810,9 +1139,9 @@ type LocatorType = typeof LocatorType;
  * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attribute-offset-data
  */
 export type LocatorKind =
-  | { type: "pointer"; size: 32 | 64 }
-  | { type: "handle"; size: 32 | 64; structTypeName: string }
-  | { type: "offset"; areaVariable: null };
+  | { type: "pointer"; size?: 32 | 64 }
+  | { type: "handle"; size?: 32 | 64; structTypeName?: null } //TODO structTypeName should be mandatory
+  | { type: "offset"; areaVariable?: null };
 
 interface LocatorTypeDescriptionProps extends BaseTypeDescriptionProps {
   kind: LocatorKind;
@@ -961,6 +1290,12 @@ export enum StringKind {
   WideChar,
 }
 
+export type StringBits = {
+  kind: StringKind;
+  length: number | "*";
+  refers?: ast.DeclaredVariable;
+};
+
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-varying-varying4-varyingz-nonvarying */
 export enum StringFormat {
   Varying,
@@ -970,9 +1305,8 @@ export enum StringFormat {
 }
 
 interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
-  kind: StringKind;
+  bits: StringBits;
   format: StringFormat;
-  length: number;
 }
 
 interface StringTypeDescription
@@ -982,19 +1316,17 @@ interface StringTypeDescription
 }
 
 function createStringTypeDescription({
-  kind,
+  bits,
   format,
-  length,
   ...base
 }: PartialPartial<
   StringTypeDescriptionProps,
-  "length" | "kind" | "format"
+  "bits" | "format"
 >): StringTypeDescription {
   return {
     type: StringType,
     ...createBaseTypeDescription(StringType, base),
-    kind,
-    length,
+    bits,
     format,
   };
 }
@@ -1157,7 +1489,7 @@ export const Implications: Partial<Implications> = {
   [AttributeKind.Position]: undefined,
   [AttributeKind.Precision]: {
     [AttributeKind.Scale]: (value) => {
-      if (typeof value.fractionalDigitsCount !== "undefined") {
+      if (value && typeof value.fractionalDigitsCount !== "undefined") {
         return ScaleMode.Fixed;
       }
       return undefined;
@@ -1175,10 +1507,7 @@ export const Implications: Partial<Implications> = {
   [AttributeKind.StringFormat]: {
     [AttributeKind.DataType]: () => DataType.String,
   },
-  [AttributeKind.StringKind]: {
-    [AttributeKind.DataType]: () => DataType.String,
-  },
-  [AttributeKind.StringLength]: {
+  [AttributeKind.StringBits]: {
     [AttributeKind.DataType]: () => DataType.String,
   },
   [AttributeKind.TransmissionDirection]: {
@@ -1269,9 +1598,8 @@ export namespace TypeDescriptions {
     [AttributeKind.ParameterPassMode]: ParameterPassMode.ByAddr,
     [AttributeKind.ParameterPassDirection]: ParameterPassDirection.InOut,
     [AttributeKind.PictureKind]: PictureWideness.Picture,
-    [AttributeKind.StringKind]: StringKind.Bit,
+    [AttributeKind.StringBits]: { kind: StringKind.Bit, length: 0 },
     [AttributeKind.StringFormat]: StringFormat.Varying,
-    [AttributeKind.StringLength]: 0,
     [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
     [AttributeKind.SetType]: null,
     [AttributeKind.SetLike]: null,
@@ -1341,14 +1669,18 @@ export namespace TypeDescriptions {
 
   /** fake type */
   export const Boolean = createStringTypeDescription({
-    kind: StringKind.Bit,
+    bits: {
+      kind: StringKind.Bit,
+      length: 1,
+    },
     format: StringFormat.NonVarying,
-    length: 1,
   });
   export const isBoolean = (
     type: TypeDescriptions.Any,
   ): type is StringTypeDescription =>
-    isString(type) && type.kind === StringKind.Bit && type.length === 1;
+    isString(type) &&
+    type.bits.kind === StringKind.Bit &&
+    type.bits.length === 1;
 
   export function createPrimitive(
     type: Exclude<DataType, DataType.Structure | DataType.Union>,
@@ -1474,15 +1806,12 @@ export namespace TypeDescriptions {
       case DataType.String:
         return TypeDescriptions.String({
           ...common,
-          kind:
-            attributes[AttributeKind.StringKind]?.value ??
-            DefaultValues[AttributeKind.StringKind],
+          bits:
+            attributes[AttributeKind.StringBits]?.value ??
+            DefaultValues[AttributeKind.StringBits],
           format:
             attributes[AttributeKind.StringFormat]?.value ??
             DefaultValues[AttributeKind.StringFormat],
-          length:
-            attributes[AttributeKind.StringLength]?.value ??
-            DefaultValues[AttributeKind.StringLength],
         });
       case DataType.Task:
         return TypeDescriptions.Task(common);

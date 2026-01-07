@@ -62,9 +62,8 @@ function getDeclaredVariableRepresentation(
   unit: CompilationUnit,
   node: DeclaredVariable,
 ): string {
-  const qualifiedNode = unit.scopeCaches.regular
-    .get(node)
-    ?.symbolTable.nodeLookup.get(node);
+  const scope = unit.scopeCaches.regular.get(node);
+  const qualifiedNode = scope?.symbolTable.nodeLookup.get(node);
 
   if (!qualifiedNode) {
     throw new Error("Qualified node not found");

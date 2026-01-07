@@ -27,8 +27,10 @@ types.expectTypeAt(1, {
       members: {
         NAME: {
           type: types.dataTypes.String,
-          kind: types.stringKinds.Character,
-          length: 10,
+          bits: {
+            kind: types.stringKinds.Character,
+            length: 10,
+          },
         },
         AGE: {
           type: types.dataTypes.Arithmetic,
@@ -41,13 +43,17 @@ types.expectTypeAt(1, {
       members: {
         KEY: {
           type: types.dataTypes.String,
-          kind: types.stringKinds.Character,
-          length: 100,
+          bits: {
+            kind: types.stringKinds.Character,
+            length: 100,
+          },
         },
         PARITY: {
           type: types.dataTypes.String,
-          kind: types.stringKinds.Bit,
-          length: 1,
+          bits: {
+            kind: types.stringKinds.Bit,
+            length: 1,
+          },
         },
       },
     },

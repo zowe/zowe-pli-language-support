@@ -9,16 +9,8 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> BIT(10) <|2:BIT|>(11);
+//// <|1>SQLDA = 1;
 
-verify.expectDiagnosticsAt(2, code.Error.IBM2462I);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  bits: {
-    kind: types.stringKinds.Bit,
-    length: 10,
-  },
-});
+hover.expectMarkdownAt(1, hover.codeBlock("DCL MYVAR FIXED DECIMAL;"));
