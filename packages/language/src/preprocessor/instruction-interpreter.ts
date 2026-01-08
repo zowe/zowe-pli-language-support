@@ -1195,7 +1195,7 @@ function runAssignmentInstruction(
   instruction: inst.AssignmentInstruction,
   context: InterpreterContext,
 ): void {
-  const value = evaluateExpression(instruction.value, context);
+  let value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
     let variable = getVariable(context, ref.variable);
     if (!variable) {
@@ -1214,6 +1214,14 @@ function runAssignmentInstruction(
       };
       setVariable(context, variable);
     } else {
+      const operator = ast.assignmentToBinaryOperator(instruction.operator);
+      if (operator !== null) {
+        // Update the value by applying the binary operator
+        const currentValue = variable.value;
+        if (isScalarValue(currentValue) && isScalarValue(value)) {
+          value = applyBinaryOperation(currentValue, value, operator);
+        }
+      }
       evaluateValueAccess(variable, ref.args, context).setter(value);
     }
   }
@@ -1343,7 +1351,15 @@ function evaluateBinaryExpression(
   if (!isScalarValue(left) || !isScalarValue(right)) {
     return defaultEmptyValue;
   }
-  switch (expression.operator) {
+  return applyBinaryOperation(left, right, expression.operator);
+}
+
+function applyBinaryOperation(
+  left: ScalarValue,
+  right: ScalarValue,
+  operator: ast.BinaryOperator | null,
+): ScalarValue {
+  switch (operator) {
     case ast.BinaryOperator.Plus:
       return plus(left, right);
     case ast.BinaryOperator.Minus:
@@ -1367,7 +1383,6 @@ function evaluateBinaryExpression(
     case ast.BinaryOperator.Equals:
       return equals(left, right);
     case ast.BinaryOperator.NotEquals:
-    case ast.BinaryOperator.LessThanGreaterThan:
       return notEquals(left, right);
     case ast.BinaryOperator.Ampersand:
       return and(left, right);

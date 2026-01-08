@@ -3924,6 +3924,39 @@ const qualifyStatement = rule(
   },
 );
 
+const reservedAttribute = rule(
+  sequence(tokens.RESERVED),
+  (state: ParserState): ast.ReservedAttribute => {
+    const element = ast.createReservedAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.ReservedAttribute_RESERVED,
+      tokens.RESERVED,
+    );
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.ReservedAttribute_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      const importedToken = state.consume(
+        element,
+        CstNodeKind.ReservedAttribute_Imported,
+        tokens.IMPORTED,
+      );
+      element.importedToken = importedToken;
+      state.consume(
+        element,
+        CstNodeKind.ReservedAttribute_CloseParen,
+        tokens.CloseParen,
+      );
+    }
+    return element;
+  },
+);
+
 const readStatement = rule(
   sequence(tokens.READ),
   (state: ParserState): ast.ReadStatement => {
@@ -4927,6 +4960,7 @@ const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAtt
     () => typeAttribute,
     () => genericAttribute,
     () => indForAttribute,
+    () => reservedAttribute,
   ];
 
 const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute>(
@@ -5428,13 +5462,12 @@ const handleAttribute = rule(
     state.consume(element, CstNodeKind.HandleAttribute_HANDLE, tokens.HANDLE);
 
     // Optional size in parentheses
-    if (
-      state.tryConsume(
+    if (state.canConsume(tokens.OpenParen, tokens.NUMBER)) {
+      state.consume(
         element,
         CstNodeKind.HandleAttribute_OpenParenSize,
         tokens.OpenParen,
-      )
-    ) {
+      );
       const sizeToken = state.consume(
         element,
         CstNodeKind.HandleAttribute_SizeNumber,
@@ -5720,22 +5753,25 @@ const entryAttribute = rule(
         tokens.OpenParen,
       )
     ) {
-      const lhs = entryDescription.rule(state);
-      lhs && element.attributes.push(lhs);
+      // DISCREPANCY: The language spec says that the parameter list cannot be empty
+      // But the compiler seems to allow it, so we do the same here
+      if (state.canConsumeFirst(entryDescription.first())) {
+        const lhs = entryDescription.rule(state);
+        lhs && element.attributes.push(lhs);
 
-      const { inc } = state.createLoopContext("EntryAttribute 2");
-      while (
-        state.tryConsume(
-          element,
-          CstNodeKind.EntryAttribute_CommaAttribute,
-          tokens.Comma,
-        )
-      ) {
-        inc();
-        const rhs = entryDescription.rule(state);
-        rhs && element.attributes.push(rhs);
+        const { inc } = state.createLoopContext("EntryAttribute 2");
+        while (
+          state.tryConsume(
+            element,
+            CstNodeKind.EntryAttribute_CommaAttribute,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const rhs = entryDescription.rule(state);
+          rhs && element.attributes.push(rhs);
+        }
       }
-
       state.consume(
         element,
         CstNodeKind.EntryAttribute_CloseParenAttribute,
@@ -5906,17 +5942,20 @@ const entryUnionDescription = rule(
       attr && element.attributes.push(attr);
     }
 
-    // Required comma
-    state.consume(
-      element,
-      CstNodeKind.EntryUnionDescription_Comma,
-      tokens.Comma,
-    );
+    // DISCREPANCY: The language spec says that there is a mandatory comma here
+    // And that the prefixed attributes aren't separated by commas
+    // However, this simply seems to be a documentation error in the syntax diagram
 
-    // Parse zero or more prefixed attributes
     const { inc: inc2 } = state.createLoopContext("EntryUnionDescription 2");
-    while (state.canConsumeFirst(prefixedAttribute.first())) {
+    // IMPORTANT NOTE: Since the comma can also indicate that the next element is a declaration attribute,
+    // we have to check for both comma AND number here to prevent parser errors
+    while (state.canConsume(tokens.Comma, tokens.NUMBER)) {
       inc2();
+      state.consume(
+        element,
+        CstNodeKind.EntryUnionDescription_Comma,
+        tokens.Comma,
+      );
       const attr = prefixedAttribute.rule(state);
       attr && element.prefixedAttributes.push(attr);
     }

@@ -682,7 +682,10 @@ export const POSITION = registerKeyword({
 });
 export const RESERVED = registerKeyword({
   name: "RESERVED",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.RESERVED]],
+});
+// Only used in the RESERVED attribute
+export const IMPORTED = registerKeyword({
+  name: "IMPORTED",
 });
 export const UNSIGNED = registerKeyword({
   name: "UNSIGNED",
@@ -1563,8 +1566,8 @@ export const NotEquals = registerOperator({
 export const LessThanGreaterThan = registerOperator({
   name: "<>",
   categories: [
-    [AssignmentOperator, ast.AssignmentOperator.LessThanGreaterThan],
-    [BinaryOperator, ast.BinaryOperator.LessThanGreaterThan],
+    [AssignmentOperator, ast.AssignmentOperator.NotEquals],
+    [BinaryOperator, ast.BinaryOperator.NotEquals],
   ],
 });
 export const OR = registerKeyword({

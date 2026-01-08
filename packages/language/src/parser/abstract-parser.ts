@@ -316,7 +316,6 @@ const binaryPrecedence = buildPrecendenceMap([
     BinaryOperator.LessThanEquals,
     BinaryOperator.Equals,
     BinaryOperator.NotEquals,
-    BinaryOperator.LessThanGreaterThan,
     BinaryOperator.GreaterThanEquals,
     BinaryOperator.GreaterThan,
     BinaryOperator.NotGreaterThan,
