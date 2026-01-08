@@ -15,6 +15,8 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
+import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -26,80 +28,149 @@ export class DefaultTypeInferer implements TypeInferer {
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
-      if (node.kind === ast.SyntaxKind.DeclareStatement) {
+      if (
+        node.kind === ast.SyntaxKind.DeclareStatement ||
+        node.kind === ast.SyntaxKind.DefineStructureStatement
+      ) {
         this.inferDeclareStatement(node, compilationUnit);
-        return TypeDescriptions.Unknown();
       } else if (node.kind === ast.SyntaxKind.DeclaredVariable) {
         assertType<ast.DeclaredItem>(node.container);
-        const types = this.inferDeclaredItem(node.container, compilationUnit);
-        return this.lookupByAstNode(types, node);
+        this.inferDeclaredItem(node.container, compilationUnit);
+        return compilationUnit.services.typeCache.get(node);
       } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
-        const types = this.inferDeclaredItem(node, compilationUnit);
-        return this.lookupByAstNode(types, node);
-      } else {
-        //TODO other kinds of nodes
+        this.inferDeclaredItem(node, compilationUnit);
+      } else if (node.kind === ast.SyntaxKind.DefineAliasStatement) {
+        return this.inferAliasType(node, compilationUnit);
+      } else if (node.kind === ast.SyntaxKind.DefineOrdinalStatement) {
+        return this.inferOrdinalType(node, compilationUnit);
       }
       return TypeDescriptions.Unknown();
     });
   }
 
-  private lookupByAstNode(
-    types: Map<BuilderDeclareItem, TypeDescriptions.Any>,
-    node: ast.SyntaxNode,
+  private inferOrdinalType(
+    node: ast.DefineOrdinalStatement,
+    compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
-    for (const [item, type] of types) {
-      if (item.node === node) {
-        return type;
-      }
+    if (!node.nameToken) {
+      return TypeDescriptions.Unknown();
     }
-    return TypeDescriptions.Unknown();
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      compilationUnit,
+    );
+    {
+      const fixedAttribute = ast.createComputationDataAttribute();
+      fixedAttribute.typeToken = node.nameToken;
+      fixedAttribute.type = ast.DefaultAttribute.FIXED;
+      builder.addAttribute(fixedAttribute);
+    }
+    {
+      const binaryAttribute = ast.createComputationDataAttribute();
+      binaryAttribute.typeToken = node.nameToken;
+      binaryAttribute.type = ast.DefaultAttribute.BINARY;
+      builder.addAttribute(binaryAttribute);
+    }
+    if (node.attributes.includes(ast.DefineOrdinalAttribute.SIGNED)) {
+      const attr = ast.createComputationDataAttribute();
+      attr.type = ast.DefaultAttribute.SIGNED;
+      builder.addAttribute(attr);
+    }
+    if (node.attributes.includes(ast.DefineOrdinalAttribute.UNSIGNED)) {
+      const attr = ast.createComputationDataAttribute();
+      attr.type = ast.DefaultAttribute.UNSIGNED;
+      builder.addAttribute(attr);
+    }
+    if (node.attributes.includes(ast.DefineOrdinalAttribute.PRECISION)) {
+      const attr = ast.createComputationDataAttribute();
+      attr.type = ast.DefaultAttribute.PRECISION;
+      attr.dimensions = ast.createDimensions();
+      const bound = ast.createDimensionBound();
+      bound.lower = ast.createBound();
+      bound.upper = ast.createBound();
+      const literal = ast.createLiteral();
+      const value = ast.createNumberLiteral();
+      literal.value = value;
+      value.value = node.precision;
+      bound.upper.expression = literal;
+      attr.dimensions.dimensions = [bound];
+      builder.addAttribute(attr);
+    }
+    const { type, diagnostics } = builder.build();
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      diagnostics,
+    );
+    return type;
+  }
+
+  private inferAliasType(
+    node: ast.DefineAliasStatement,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
+    if (!node.nameToken) {
+      return TypeDescriptions.Unknown();
+    }
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      compilationUnit,
+    );
+    node.attributes.forEach((attribute) => {
+      builder.addAttribute(attribute);
+    });
+    const { type, diagnostics } = builder.build();
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      diagnostics,
+    );
+    return type;
   }
 
   private inferDeclareStatement(
-    node: ast.DeclareStatement,
+    node: ast.DeclareStatement | ast.DefineStructureStatement,
     compilationUnit: CompilationUnit,
-  ): Map<BuilderDeclareItem, TypeDescriptions.Any> {
+  ): void {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
-    const structureParents: TypeDescriptions.Structure[] = [];
+    const compositeParents: (
+      | TypeDescriptions.Structure
+      | TypeDescriptions.Union
+    )[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       if (builder.isCompositeDeclaredItem(item)) {
-        const structureType = builder.handleCompositeDeclaredItem(
-          item,
-          compilationUnit,
-        );
-        compilationUnit.services.typeCache.set(item.node, structureType);
+        const compositeType = builder.handleCompositeDeclaredItem(item);
+        compilationUnit.services.typeCache.set(item.node, compositeType);
         if (previousLevel === undefined) {
-          topLevelMembers.set(item, structureType);
-          structureParents.push(structureType);
+          topLevelMembers.set(item, compositeType);
+          compositeParents.push(compositeType);
         } else {
-          while (previousLevel && structureType.level < previousLevel) {
-            structureParents.pop();
+          while (previousLevel && compositeType.level < previousLevel) {
+            compositeParents.pop();
             previousLevel =
-              structureParents.length > 0
-                ? structureParents[structureParents.length - 1].level
+              compositeParents.length > 0
+                ? compositeParents[compositeParents.length - 1].level
                 : undefined;
           }
-          if (previousLevel && structureType.level > previousLevel) {
-            const parent = structureParents[structureParents.length - 1];
-            structureAddMember(parent, item, structureType);
-            structureParents.push(structureType);
+          if (previousLevel && compositeType.level > previousLevel) {
+            const parent = compositeParents[compositeParents.length - 1];
+            compositeAddMember(parent, item, compositeType);
+            compositeParents.push(compositeType);
           } else {
-            if (structureParents.length > 0) {
-              structureParents.pop();
+            if (compositeParents.length > 0) {
+              compositeParents.pop();
             }
-            if (structureParents.length > 0) {
-              const parent = structureParents[structureParents.length - 1];
-              structureAddMember(parent, item, structureType);
+            if (compositeParents.length > 0) {
+              const parent = compositeParents[compositeParents.length - 1];
+              compositeAddMember(parent, item, compositeType);
             } else {
-              topLevelMembers.set(item, structureType);
+              topLevelMembers.set(item, compositeType);
             }
-            structureParents.push(structureType);
+            compositeParents.push(compositeType);
           }
         }
-        previousLevel = structureType.level;
+        previousLevel = compositeType.level;
       } else {
         const primitiveType = builder.handlePrimitiveDeclaredItem(
           item,
@@ -110,19 +181,19 @@ export class DefaultTypeInferer implements TypeInferer {
           topLevelMembers.set(item, primitiveType);
         } else {
           while (previousLevel && item.level < previousLevel) {
-            structureParents.pop();
+            compositeParents.pop();
             previousLevel =
-              structureParents.length > 0
-                ? structureParents[structureParents.length - 1].level
+              compositeParents.length > 0
+                ? compositeParents[compositeParents.length - 1].level
                 : undefined;
           }
           if (previousLevel && item.level > previousLevel) {
-            const parent = structureParents[structureParents.length - 1];
-            structureAddMember(parent, item, primitiveType);
+            const parent = compositeParents[compositeParents.length - 1];
+            compositeAddMember(parent, item, primitiveType);
           } else {
-            if (structureParents.length > 0) {
-              const parent = structureParents[structureParents.length - 1];
-              structureAddMember(parent, item, primitiveType);
+            if (compositeParents.length > 0) {
+              const parent = compositeParents[compositeParents.length - 1];
+              compositeAddMember(parent, item, primitiveType);
             } else {
               topLevelMembers.set(item, primitiveType);
             }
@@ -147,15 +218,15 @@ export class DefaultTypeInferer implements TypeInferer {
     //     }
     //   },
     // );
-    return topLevelMembers;
 
-    function structureAddMember(
-      structureType: TypeDescriptions.Structure,
+    function compositeAddMember(
+      compositeType: TypeDescriptions.Structure | TypeDescriptions.Union,
       item: BuilderDeclareItem,
       memberType: TypeDescriptions.Any,
     ) {
-      structureType.members[item.name] = memberType;
-      structureType.membersMetadata[item.name] = item;
+      compositeType.members.set(item.node, memberType);
+      compositeType.membersMetadata.set(item.node, item);
+      memberType.parentType = compositeType;
     }
   }
 
@@ -171,10 +242,15 @@ export class DefaultTypeInferer implements TypeInferer {
       }
       if (TypeDescriptions.isStructure(type)) {
         const subMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>(
-          Object.entries(type.members).map(([name, subType]) => {
-            const subItem = type.membersMetadata[name];
-            return [subItem, subType] as const;
-          }),
+          type.members
+            .keys()
+            .map(
+              (key) =>
+                [
+                  type.membersMetadata.get(key)!,
+                  type.members.get(key)!,
+                ] as const,
+            ),
         );
         this.traverseMembers(subMembers, predicate, callback, false);
       }
@@ -184,13 +260,20 @@ export class DefaultTypeInferer implements TypeInferer {
   private inferDeclaredItem(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): Map<BuilderDeclareItem, TypeDescriptions.Any> {
+  ): void {
     let parent: ast.SyntaxNode | null = node;
-    while (parent && parent.kind !== ast.SyntaxKind.DeclareStatement) {
+    while (
+      parent &&
+      ![
+        ast.SyntaxKind.DeclareStatement,
+        ast.SyntaxKind.DefineStructureStatement,
+      ].includes(parent.kind)
+    ) {
       parent = parent.container;
     }
-    return parent
-      ? this.inferDeclareStatement(parent, compilationUnit)
-      : new Map();
+    if (parent) {
+      assertType<ast.DeclareStatement | ast.DefineStructureStatement>(parent);
+      this.inferType(parent, compilationUnit);
+    }
   }
 }

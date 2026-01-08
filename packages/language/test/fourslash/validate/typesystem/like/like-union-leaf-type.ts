@@ -9,19 +9,20 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// DCL <|X|> LIKE <|Y>Y;
-//// DCL <|Y|> LIKE <|X>X;
+//// declare 1 address union,
+////           2 mailbox fixed(5),
+////           2 street char(100);
+//// declare <|same|> like address.street;
+//// declare <|same2|> like street;
 
-// 1. Expect that the links work
-// 2. This implicitly acts as test that the linker can handle cyclic references
-//    and not get stuck in an infinite loop
-linker.expectLinks();
-types.expectTypeAt("X", {
+verify.expectDiagnosticsAt("same", code.Severe.IBM1650I);
+verify.expectDiagnosticsAt("same2", code.Severe.IBM1650I);
+types.expectTypeAt("same", {
   type: types.dataTypes.Unknown,
 });
-types.expectTypeAt("Y", {
+types.expectTypeAt("same2", {
   type: types.dataTypes.Unknown,
 });
