@@ -848,6 +848,8 @@ export function forEachNode(
       break;
     case SyntaxKind.Reserves:
       break;
+    case SyntaxKind.ReservedAttribute:
+      break;
     case SyntaxKind.ResignalStatement:
       break;
     case SyntaxKind.ReturnsAttribute:
