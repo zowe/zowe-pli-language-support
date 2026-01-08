@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.94% </span>
+                <span class="strong">97.03% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>476/491</span>
+                <span class='fraction'>491/506</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.94% </span>
+                <span class="strong">97.03% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>476/491</span>
+                <span class='fraction'>491/506</span>
             </div>
         
             
@@ -664,7 +664,21 @@
 <a name='L599'></a><a href='#L599'>599</a>
 <a name='L600'></a><a href='#L600'>600</a>
 <a name='L601'></a><a href='#L601'>601</a>
-<a name='L602'></a><a href='#L602'>602</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L602'></a><a href='#L602'>602</a>
+<a name='L603'></a><a href='#L603'>603</a>
+<a name='L604'></a><a href='#L604'>604</a>
+<a name='L605'></a><a href='#L605'>605</a>
+<a name='L606'></a><a href='#L606'>606</a>
+<a name='L607'></a><a href='#L607'>607</a>
+<a name='L608'></a><a href='#L608'>608</a>
+<a name='L609'></a><a href='#L609'>609</a>
+<a name='L610'></a><a href='#L610'>610</a>
+<a name='L611'></a><a href='#L611'>611</a>
+<a name='L612'></a><a href='#L612'>612</a>
+<a name='L613'></a><a href='#L613'>613</a>
+<a name='L614'></a><a href='#L614'>614</a>
+<a name='L615'></a><a href='#L615'>615</a>
+<a name='L616'></a><a href='#L616'>616</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1161,7 +1175,21 @@
 <span class="cline-any cline-yes">1014x</span>
 <span class="cline-any cline-yes">1014x</span>
 <span class="cline-any cline-yes">1014x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">1014x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1014x</span>
 <span class="cline-any cline-yes">1014x</span>
@@ -1730,7 +1758,7 @@ function isWhitespace(char: number): boolean {
 }
 &nbsp;
 // Function map
-const funcs = new Map&lt;string, TokenizeFunc&gt;();
+let funcs: TokenizeFunc[] = [];
 const defaultOr = "|";
 const defaultNot = NOT_CHARACTER + "^";
 let orSymbols = defaultOr;
@@ -1741,62 +1769,76 @@ export function initLexer(compilerOptions: CompilerOptions): void {
   orSymbols = compilerOptions.or ?? defaultOr;
   notSymbols = compilerOptions.not ?? defaultNot;
   includeAlt = compilerOptions.pp?.ppInclude?.value;
-  funcs.clear();
-  funcs.set("/", tokenizeSlash);
-  funcs.set('"', tokenizeString);
-  funcs.set("'", tokenizeString);
-  funcs.set("*", tokenizeAsterisk);
-  funcs.set("=", generateDoubleCharFunc(tokens.Equals, TwoCharTokens["="]));
-  funcs.set("+", generateDoubleCharFunc(tokens.Plus, TwoCharTokens["+"]));
-  funcs.set("-", generateDoubleCharFunc(tokens.Minus, TwoCharTokens["-"]));
-  funcs.set("&amp;", generateDoubleCharFunc(tokens.Ampersand, TwoCharTokens["&amp;"]));
-  funcs.set("&lt;", generateDoubleCharFunc(tokens.LessThan, TwoCharTokens["&lt;"]));
-  funcs.set(
-    "&gt;",
-    generateDoubleCharFunc(tokens.GreaterThan, TwoCharTokens["&gt;"]),
+  funcs = new Array(256);
+  funcs["/".charCodeAt(0)] = tokenizeSlash;
+  funcs['"'.charCodeAt(0)] = tokenizeString;
+  funcs["'".charCodeAt(0)] = tokenizeString;
+  funcs["*".charCodeAt(0)] = tokenizeAsterisk;
+  funcs["=".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Equals,
+    TwoCharTokens["="],
   );
-  funcs.set("(", generateSingleCharFunc(tokens.OpenParen));
-  funcs.set(")", generateSingleCharFunc(tokens.CloseParen));
-  funcs.set(";", generateSingleCharFunc(tokens.Semicolon));
-  funcs.set(":", generateSingleCharFunc(tokens.Colon));
-  funcs.set(",", generateSingleCharFunc(tokens.Comma));
-  funcs.set("%", generateSingleCharFunc(tokens.Percent));
-  funcs.set(".", generateSingleCharFunc(tokens.Dot));
-&nbsp;
+  funcs["+".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Plus,
+    TwoCharTokens["+"],
+  );
+  funcs["-".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Minus,
+    TwoCharTokens["-"],
+  );
+  funcs["&amp;".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Ampersand,
+    TwoCharTokens["&amp;"],
+  );
+  funcs["&lt;".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.LessThan,
+    TwoCharTokens["&lt;"],
+  );
+  funcs["&gt;".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.GreaterThan,
+    TwoCharTokens["&gt;"],
+  );
+  funcs["(".charCodeAt(0)] = generateSingleCharFunc(tokens.OpenParen);
+  funcs[")".charCodeAt(0)] = generateSingleCharFunc(tokens.CloseParen);
+  funcs[";".charCodeAt(0)] = generateSingleCharFunc(tokens.Semicolon);
+  funcs[":".charCodeAt(0)] = generateSingleCharFunc(tokens.Colon);
+  funcs[",".charCodeAt(0)] = generateSingleCharFunc(tokens.Comma);
+  funcs["%".charCodeAt(0)] = generateSingleCharFunc(tokens.Percent);
+  funcs[".".charCodeAt(0)] = generateSingleCharFunc(tokens.Dot);
   // Whitespace characters
-  funcs.set(" ", tokenizeWhitespace);
-  funcs.set("\t", tokenizeWhitespace);
-  funcs.set("\r", tokenizeWhitespace);
-  funcs.set("\n", tokenizeWhitespace);
-  funcs.set("\f", tokenizeWhitespace);
-  funcs.set("\v", tokenizeWhitespace);
+  funcs[" ".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\t".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\r".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\n".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\f".charCodeAt(0)] = tokenizeWhitespace;
+  funcs["\v".charCodeAt(0)] = tokenizeWhitespace;
 &nbsp;
   // Numbers
   for (let i = 0; i &lt;= 9; i++) {
-    funcs.set(i.toString(), tokenizeNumber);
+    funcs[i.toString().charCodeAt(0)] = tokenizeNumber;
   }
 &nbsp;
   // Letters
   for (let i = 97; i &lt;= 122; i++) {
     // a-z
-    funcs.set(String.fromCharCode(i), tokenizeIdentifier);
+    funcs[i] = tokenizeIdentifier;
   }
   for (let i = 65; i &lt;= 90; i++) {
     // A-Z
-    funcs.set(String.fromCharCode(i), tokenizeIdentifier);
+    funcs[i] = tokenizeIdentifier;
   }
-  funcs.set("_", tokenizeIdentifier);
-  funcs.set("@", tokenizeIdentifier);
-  funcs.set("$", tokenizeIdentifier);
-  funcs.set("#", tokenizeIdentifier);
+  funcs["_".charCodeAt(0)] = tokenizeIdentifier;
+  funcs["@".charCodeAt(0)] = tokenizeIdentifier;
+  funcs["$".charCodeAt(0)] = tokenizeIdentifier;
+  funcs["#".charCodeAt(0)] = tokenizeIdentifier;
 &nbsp;
   for (const orSymbolChar of orSymbols.split("")) {
-    funcs.set(orSymbolChar, tokenizeOrSymbol);
+    funcs[orSymbolChar.charCodeAt(0)] = tokenizeOrSymbol;
   }
   for (const notSymbolChar of notSymbols.split("")) {
-    funcs.set(
-      notSymbolChar,
-      generateDoubleCharFunc(tokens.Not, TwoCharTokens["^"]),
+    funcs[notSymbolChar.charCodeAt(0)] = generateDoubleCharFunc(
+      tokens.Not,
+      TwoCharTokens["^"],
     );
   }
 }
@@ -1827,7 +1869,7 @@ export function tokenize(
       continue;
     }
 &nbsp;
-    const fn = funcs.get(char);
+    const fn: TokenizeFunc | undefined = funcs[input.charCodeAt(context.index)];
     if (fn) {
       const index = context.index;
       const token = fn(context);
@@ -1873,7 +1915,7 @@ initLexer(getDefaultCompilerOptions());
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-18T11:11:33.307Z
+                at 2026-01-08T10:18:30.961Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
