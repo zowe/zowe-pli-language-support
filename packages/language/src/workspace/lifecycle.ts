@@ -32,14 +32,10 @@ export async function lifecycle(
   document: TextDocument,
   cancellation: CancellationToken,
 ): Promise<void> {
-  compilationUnit.services.files.clear();
-  compilationUnit.services.typeCache.clear();
-  compilationUnit.statementOrderCache.clear();
-  compilationUnit.referencesCache.clear();
-  compilationUnit.scopeCaches.clear();
-  compilationUnit.diagnostics.clear();
+  compilationUnit.reset();
   await interruptAndCheck(cancellation);
   await tokenize(compilationUnit, document);
+  await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
   generateSymbolTable(compilationUnit);
