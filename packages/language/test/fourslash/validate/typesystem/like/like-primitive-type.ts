@@ -15,4 +15,4 @@
 //// declare name char(100);
 //// declare <|same|> like name;
 
-verify.expectDiagnosticsAt("same", code.Warning.IBM3329I);
+verify.expectDiagnosticsAt("same", code.Severe.IBM1650I);

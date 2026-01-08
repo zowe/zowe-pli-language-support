@@ -18,14 +18,11 @@
 //// declare <|same|> like person.age;
 //// declare <|same2|> like age;
 
-verify.noDiagnostics();
+verify.expectDiagnosticsAt("same", code.Severe.IBM1650I);
+verify.expectDiagnosticsAt("same2", code.Severe.IBM1650I);
 types.expectTypeAt("same", {
-  type: types.dataTypes.Arithmetic,
-  scale: types.scales.Fixed,
-  precision: { totalDigitsCount: 3 },
+  type: types.dataTypes.Unknown,
 });
 types.expectTypeAt("same2", {
-  type: types.dataTypes.Arithmetic,
-  scale: types.scales.Fixed,
-  precision: { totalDigitsCount: 3 },
+  type: types.dataTypes.Unknown,
 });

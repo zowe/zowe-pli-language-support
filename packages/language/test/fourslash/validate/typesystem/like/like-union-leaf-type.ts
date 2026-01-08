@@ -18,12 +18,11 @@
 //// declare <|same|> like address.street;
 //// declare <|same2|> like street;
 
-verify.noDiagnostics();
+verify.expectDiagnosticsAt("same", code.Severe.IBM1650I);
+verify.expectDiagnosticsAt("same2", code.Severe.IBM1650I);
 types.expectTypeAt("same", {
-  type: types.dataTypes.String,
-  length: 100,
+  type: types.dataTypes.Unknown,
 });
 types.expectTypeAt("same2", {
-  type: types.dataTypes.String,
-  length: 100,
+  type: types.dataTypes.Unknown,
 });

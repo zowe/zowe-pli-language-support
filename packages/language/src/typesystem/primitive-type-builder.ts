@@ -821,33 +821,23 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         this.unit,
       );
       if (
-        !typeNode.parentType &&
         !TypeDescriptions.isStructure(typeNode) &&
         !TypeDescriptions.isUnion(typeNode)
       ) {
         this.diagnostics.push(
-          diagnosticFromCode(PLICodes.Warning.IBM3329I, this.elementName),
+          diagnosticFromCode(PLICodes.Severe.IBM1650I, this.elementName),
         );
         return {
           type: TypeDescriptions.Unknown(),
           diagnostics: this.diagnostics,
         };
-      }
-      if (
-        TypeDescriptions.isStructure(typeNode) ||
-        TypeDescriptions.isUnion(typeNode)
-      ) {
+      } else {
         return {
           type: {
             ...typeNode,
             //TODO handle deletion of other attributes only for a root element
             dimension: undefined,
           },
-          diagnostics: this.diagnostics,
-        };
-      } else {
-        return {
-          type: typeNode,
           diagnostics: this.diagnostics,
         };
       }
