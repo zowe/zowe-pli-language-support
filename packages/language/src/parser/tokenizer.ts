@@ -310,6 +310,9 @@ function tokenizeAsterisk(context: TokenizerContext): tokens.Token | undefined {
     }
     context.advance(2, false);
     return context.createTokenInstance(tokens.StarStar);
+  } else if (nextChar === "=") {
+    context.advance(2, false);
+    return context.createTokenInstance(tokens.StarEquals);
   }
   context.advance(1, false);
   return context.createTokenInstance(tokens.Star);
