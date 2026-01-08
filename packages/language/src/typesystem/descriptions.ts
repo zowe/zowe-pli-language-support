@@ -9,6 +9,7 @@
  *
  */
 
+import { D } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
@@ -41,7 +42,7 @@ export enum DataType {
   Unknown = -1,
 }
 
-export const DataTypesArray: DataType[] = [
+export const DataTypesArray = [
   DataType.Area,
   DataType.Arithmetic,
   DataType.Entry,
@@ -56,7 +57,7 @@ export const DataTypesArray: DataType[] = [
   DataType.Task,
   DataType.Union,
   DataType.Unknown,
-];
+] as const satisfies DataType[];
 
 export enum AttributeKind {
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-sequential-direct-attributes */
@@ -230,6 +231,82 @@ export type AttributeTypes = {
 export type AttributeStringifier<K extends AttributeKind> = (
   value: AttributeTypes[K],
 ) => string | undefined;
+
+export const AttributePropertyNames = {
+  [AttributeKind.AccessMode]: "accessMode" as const,
+  [AttributeKind.Alignment]: "alignment" as const,
+  [AttributeKind.AreaSize]: "areaSize" as const,
+  [AttributeKind.Assignability]: "assignability" as const,
+  [AttributeKind.Base]: "base" as const,
+  [AttributeKind.BufferMode]: "bufferMode" as const,
+  [AttributeKind.Connection]: "connection" as const,
+  [AttributeKind.DataType]: "dataType" as const,
+  [AttributeKind.Dimension]: "dimension" as const,
+  [AttributeKind.Endianess]: "endianess" as const,
+  [AttributeKind.FileUsage]: "fileUsage" as const,
+  [AttributeKind.FloatFormat]: "floatFormat" as const,
+  [AttributeKind.Initial]: "initial" as const,
+  [AttributeKind.List]: "list" as const,
+  [AttributeKind.LocatorKind]: "locatorKind" as const,
+  [AttributeKind.NumberMode]: "numberMode" as const,
+  [AttributeKind.Optional]: "optional" as const,
+  [AttributeKind.OrdinalNames]: "ordinalNames" as const,
+  [AttributeKind.Parameter]: "parameter" as const,
+  [AttributeKind.ParameterPassDirection]: "parameterPassDirection" as const,
+  [AttributeKind.ParameterPassMode]: "parameterPassMode" as const,
+  [AttributeKind.PictureKind]: "pictureKind" as const,
+  [AttributeKind.Position]: "position" as const,
+  [AttributeKind.Precision]: "precision" as const,
+  [AttributeKind.Scale]: "scale" as const,
+  [AttributeKind.Scope]: "scope" as const,
+  [AttributeKind.ScanMode]: "scanMode" as const,
+  [AttributeKind.Sign]: "sign" as const,
+  [AttributeKind.Storage]: "storage" as const,
+  [AttributeKind.StringFormat]: "stringFormat" as const,
+  [AttributeKind.StringBits]: "stringBits" as const,
+  [AttributeKind.TransmissionDirection]: "transmissionDirection" as const,
+  [AttributeKind.Variable]: "variable" as const,
+  [AttributeKind.Volatility]: "volatility" as const
+} satisfies { [K in AttributeKind]: string };
+
+type PropertyByAttributeKind<AK extends AttributeKind> = typeof AttributePropertyNames[AK];
+const AttributeKindByPropertyConst = {
+  accessMode: AttributeKind.AccessMode,
+  alignment: AttributeKind.Alignment,
+  areaSize: AttributeKind.AreaSize,
+  assignability: AttributeKind.Assignability,
+  base: AttributeKind.Base,
+  bufferMode: AttributeKind.BufferMode,
+  connection: AttributeKind.Connection,
+  dataType: AttributeKind.DataType,
+  dimension: AttributeKind.Dimension,
+  endianess: AttributeKind.Endianess,
+  fileUsage: AttributeKind.FileUsage,
+  floatFormat: AttributeKind.FloatFormat,
+  initial: AttributeKind.Initial,
+  list: AttributeKind.List,
+  locatorKind: AttributeKind.LocatorKind,
+  numberMode: AttributeKind.NumberMode,
+  optional: AttributeKind.Optional,
+  ordinalNames: AttributeKind.OrdinalNames,
+  parameter: AttributeKind.Parameter,
+  parameterPassDirection: AttributeKind.ParameterPassDirection,
+  parameterPassMode: AttributeKind.ParameterPassMode,
+  pictureKind: AttributeKind.PictureKind,
+  position: AttributeKind.Position,
+  precision: AttributeKind.Precision,
+  scale: AttributeKind.Scale,
+  scope: AttributeKind.Scope,
+  scanMode: AttributeKind.ScanMode,
+  sign: AttributeKind.Sign,
+  storage: AttributeKind.Storage,
+  stringFormat: AttributeKind.StringFormat,
+  stringBits: AttributeKind.StringBits,
+  transmissionDirection: AttributeKind.TransmissionDirection,
+  variable: AttributeKind.Variable,
+  volatility: AttributeKind.Volatility,
+} satisfies Record<PropertyByAttributeKind<AttributeKind>, AttributeKind>;
+type AttributeKindByProperty = typeof AttributeKindByPropertyConst;
 
 export const AttributeStringifiers: {
   [K in AttributeKind]: AttributeStringifier<K>;
@@ -551,17 +628,33 @@ export const AttributeStringifiers: {
   [AttributeKind.TransmissionDirection]: function (
     value: TransmissionDirection,
   ): string {
-    throw new Error("Function not implemented.");
+    switch (value) {
+      case TransmissionDirection.Input:
+        return "INPUT";
+      case TransmissionDirection.Output:
+        return "OUTPUT";
+      case TransmissionDirection.Update:
+        return "UPDATE";
+      default:
+        assertUnreachable(value);
+    }
   },
-  [AttributeKind.Variable]: function (value: boolean): string {
-    throw new Error("Function not implemented.");
+  [AttributeKind.Variable]: function (value: boolean): string|undefined {
+    return value ? "VARIABLE" : undefined;
   },
   [AttributeKind.Volatility]: function (value: Volatility): string {
-    throw new Error("Function not implemented.");
+    switch (value) {
+      case Volatility.Normal:
+        return "NORMAL";
+      case Volatility.Abnormal:
+        return "ABNORMAL";
+      default:
+        assertUnreachable(value);
+    }
   },
 };
 
-export const CommonAttributeKinds: AttributeKind[] = [
+export const CommonAttributeKinds = [
   AttributeKind.DataType,
 
   AttributeKind.Alignment,
@@ -578,17 +671,17 @@ export const CommonAttributeKinds: AttributeKind[] = [
 
   AttributeKind.SetLike,
   AttributeKind.SetType,
-];
+] satisfies readonly AttributeKind[];
 
-export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
-  [DataType.Unknown]: [...CommonAttributeKinds],
+export const AttributeKindsByDataType = {
+  [DataType.Unknown]: [...CommonAttributeKinds] as const,
   [DataType.Structure]: [],
   [DataType.Union]: [],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
     AttributeKind.Endianess,
-  ],
+  ]  as const,
   [DataType.Arithmetic]: [
     ...CommonAttributeKinds,
     AttributeKind.Scale,
@@ -598,30 +691,38 @@ export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
     AttributeKind.NumberMode,
     AttributeKind.Endianess,
     AttributeKind.FloatFormat,
-  ],
+  ] as const,
   [DataType.File]: [
     ...CommonAttributeKinds,
     AttributeKind.AccessMode,
     AttributeKind.BufferMode,
     AttributeKind.FileUsage,
     AttributeKind.TransmissionDirection,
-  ],
-  [DataType.Format]: [...CommonAttributeKinds],
-  [DataType.Label]: [...CommonAttributeKinds],
-  [DataType.Locator]: [...CommonAttributeKinds, AttributeKind.LocatorKind],
-  [DataType.Entry]: [...CommonAttributeKinds],
-  [DataType.Ordinal]: [...CommonAttributeKinds, AttributeKind.OrdinalNames],
+  ] as const,
+  [DataType.Format]: [...CommonAttributeKinds] as const,
+  [DataType.Label]: [...CommonAttributeKinds] as const,
+  [DataType.Locator]: [...CommonAttributeKinds, AttributeKind.LocatorKind] as const,
+  [DataType.Entry]: [...CommonAttributeKinds] as const,
+  [DataType.Ordinal]: [...CommonAttributeKinds, AttributeKind.OrdinalNames] as const,
   [DataType.Picture]: [
     ...CommonAttributeKinds,
     AttributeKind.PictureKind,
     AttributeKind.NumberMode,
-  ],
+  ] as const,
   [DataType.String]: [
     ...CommonAttributeKinds,
     AttributeKind.StringBits,
     AttributeKind.StringFormat,
-  ],
-  [DataType.Task]: [...CommonAttributeKinds],
+  ] as const,
+  [DataType.Task]: [...CommonAttributeKinds] as const,
+} satisfies Record<DataType, AttributeKind[]>;
+
+
+type AttributeKindsByDataType2<DT extends DataType> = typeof AttributeKindsByDataType[DT][number]
+type DataTypesByDataTypeEnum = {
+  [DT in DataType]: { 
+    [P in PropertyByAttributeKind<AttributeKindsByDataType2<DT>>]: AttributeKindByProperty[P] 
+  }
 };
 
 export type AttributeWitness<K extends keyof AttributeTypes> = {
@@ -976,6 +1077,7 @@ export const MaximumPrecisions: Record<ScaleMode, Record<Base, number>> = {
 };
 
 //TODO endianness default value depends on platform (BIGENDIAN except on Intel where the default is LITTLEENDIAN)
+const xxx = AttributeKindsByDataType[DataType.Arithmetic]
 function createArithmeticTypeDescription({
   mode = NumberMode.Real,
   scale = ScaleMode.Float,
@@ -1030,6 +1132,7 @@ export enum FileUsage {
   Stream,
 }
 
+/** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-input-output-update-attributes */
 export enum TransmissionDirection {
   Input,
   Output,
@@ -1519,21 +1622,21 @@ export const Implications: Partial<Implications> = {
 
 export namespace TypeDescriptions {
   export const Names = {
-    [AreaType]: "Area",
-    [ArithmeticType]: "Arithmetic",
-    [FileType]: "File",
-    [FormatType]: "Format",
-    [LabelType]: "Label",
-    [LocatorType]: "Locator",
-    [EntryType]: "Entry",
-    [OrdinalType]: "Ordinal",
-    [PictureType]: "Picture",
-    [StringType]: "String",
-    [TaskType]: "Task",
-    [UnknownType]: "Unknown",
-    [StructureType]: "Structure",
-    [UnionType]: "Union",
-  };
+    [AreaType]: "Area" as const,
+    [ArithmeticType]: "Arithmetic" as const,
+    [FileType]: "File" as const,
+    [FormatType]: "Format" as const,
+    [LabelType]: "Label" as const,
+    [LocatorType]: "Locator" as const,
+    [EntryType]: "Entry" as const,
+    [OrdinalType]: "Ordinal" as const,
+    [PictureType]: "Picture" as const,
+    [StringType]: "String" as const,
+    [TaskType]: "Task" as const,
+    [UnknownType]: "Unknown" as const,
+    [StructureType]: "Structure" as const,
+	[UnionType]: "Union" as const,
+  } satisfies Record<DataType, string>;
   export type Any =
     | Area
     | Arithmetic
