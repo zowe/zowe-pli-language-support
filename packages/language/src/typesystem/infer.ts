@@ -260,7 +260,7 @@ export class DefaultTypeInferer implements TypeInferer {
   private inferDeclaredItem(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): void{
+  ): void {
     let parent: ast.SyntaxNode | null = node;
     while (
       parent &&

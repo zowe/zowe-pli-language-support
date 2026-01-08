@@ -41,7 +41,7 @@ export class DefaultTypeCache implements TypeCache {
     if (this.cache.has(node)) {
       return this.cache.get(node)!;
     }
-    if(!getter){
+    if (!getter) {
       return TypeDescriptions.Unknown();
     }
     if (this.blocked.has(node)) {

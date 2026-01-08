@@ -22,12 +22,6 @@
 verify.noDiagnostics(undefined, ...code.TypeSystem);
 types.expectTypeAt("bb", {
   type: types.dataTypes.Structure,
-  dimension: [
-    {
-      lowerBound: { value: 1 },
-      upperBound: { value: 30 },
-    },
-  ],
   members: {
     AA1: {
       type: types.dataTypes.Arithmetic,
@@ -56,12 +50,6 @@ types.expectTypeAt("bb", {
 });
 types.expectTypeAt("cc", {
   type: types.dataTypes.Structure,
-  dimension: [
-    {
-      lowerBound: { value: 1 },
-      upperBound: { value: 30 },
-    },
-  ],
   members: {
     AA2_1: {
       type: types.dataTypes.Arithmetic,

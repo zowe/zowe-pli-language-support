@@ -833,10 +833,24 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnostics: this.diagnostics,
         };
       }
-      return {
-        type: typeNode,
-        diagnostics: this.diagnostics,
-      };
+      if (
+        TypeDescriptions.isStructure(typeNode) ||
+        TypeDescriptions.isUnion(typeNode)
+      ) {
+        return {
+          type: {
+            ...typeNode,
+            //TODO handle deletion of other attributes only for a root element
+            dimension: undefined,
+          },
+          diagnostics: this.diagnostics,
+        };
+      } else {
+        return {
+          type: typeNode,
+          diagnostics: this.diagnostics,
+        };
+      }
     }
     if (this.possibleDataTypes.size !== 1) {
       // TODO: Reenable once we ensure that we don't show any false positives
