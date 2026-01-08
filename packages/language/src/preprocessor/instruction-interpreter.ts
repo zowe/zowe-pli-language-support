@@ -2319,7 +2319,7 @@ async function runInclude(
       uri,
     });
     context.diagnostics.push(...cachedResult.diagnostics);
-    for (const [key, value] of Object.entries(cachedResult.result.procedures)) {
+    for (const [key, value] of cachedResult.result.procedures.entries()) {
       context.procedures.set(key, value);
     }
     const newContext: InterpreterContext = {
