@@ -86,6 +86,10 @@ export interface CompilationUnit {
   readonly services: CompilationServices;
   readonly programConfig: ProgramConfig | undefined;
   readonly processGroup: ProcessGroup | undefined;
+  /**
+   * Resets all caches associated with this compilation unit.
+   */
+  reset(): void;
 }
 
 export interface CompilationServices {
@@ -138,6 +142,10 @@ export async function createCompilationUnit(
     }),
     inferer: new DefaultTypeInferer(),
   };
+  // Cache for programConfig and processGroup to avoid repeated lookups
+  // They cannot change during the lifetime of a compilation unit anyway
+  let cachedProgramConfig: ProgramConfig | undefined | null = null;
+  let cachedProcessGroup: ProcessGroup | undefined | null = null;
   const unit: CompilationUnit = {
     uri,
     services,
@@ -171,15 +179,36 @@ export async function createCompilationUnit(
     rootScope: await getBuiltinScope(uri),
     rootPreprocessorScope: await getRootPreprocessorScope(uri),
     get programConfig() {
-      return PluginConfigurationProviderInstance.getProgramConfig(uri);
+      if (cachedProgramConfig !== null) {
+        return cachedProgramConfig;
+      }
+      cachedProgramConfig =
+        PluginConfigurationProviderInstance.getProgramConfig(uri);
+      return cachedProgramConfig;
     },
     get processGroup() {
-      if (this.programConfig) {
-        return PluginConfigurationProviderInstance.getProcessGroupConfig(
-          this.programConfig.pgroup,
-        );
+      if (cachedProcessGroup !== null) {
+        return cachedProcessGroup;
       }
-      return undefined;
+      if (this.programConfig) {
+        cachedProcessGroup =
+          PluginConfigurationProviderInstance.getProcessGroupConfig(
+            this.programConfig.pgroup,
+          );
+      } else {
+        cachedProcessGroup = undefined;
+      }
+      return cachedProcessGroup;
+    },
+    reset() {
+      services.files.clear();
+      services.typeCache.clear();
+      unit.statementOrderCache.clear();
+      unit.referencesCache.clear();
+      unit.scopeCaches.clear();
+      unit.diagnostics.clear();
+      cachedProcessGroup = null;
+      cachedProgramConfig = null;
     },
   };
 
