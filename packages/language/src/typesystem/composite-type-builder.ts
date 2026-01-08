@@ -7,7 +7,7 @@ import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
 export interface CompositeTypeBuilder {
   flattenDeclareStatement(
-    declareStatement: ast.DeclareStatement,
+    declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean;
   handleCompositeDeclaredItem(
@@ -88,7 +88,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     );
   }
   flattenDeclareStatement(
-    declareStatement: ast.DeclareStatement,
+    declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[] {
     return declareStatement.items.flatMap((item) =>
       this.flattenDeclaredItem(item),

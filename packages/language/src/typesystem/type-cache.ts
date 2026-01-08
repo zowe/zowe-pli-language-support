@@ -9,37 +9,40 @@
  *
  */
 
-import { SyntaxNode } from "../syntax-tree/ast";
-import { TypeDescriptions } from "./descriptions";
+import * as ast from "../syntax-tree/ast";
+import { DataType, TypeDescriptions } from "./descriptions";
 
 export interface TypeCache {
   get(
-    node: SyntaxNode,
-    getter: () => TypeDescriptions.Any,
+    node: ast.SyntaxNode,
+    getter?: () => TypeDescriptions.Any,
   ): TypeDescriptions.Any;
-  set(node: SyntaxNode, description: TypeDescriptions.Any): void;
+  set(node: ast.SyntaxNode, description: TypeDescriptions.Any): void;
   clear(): void;
 }
 
 export class DefaultTypeCache implements TypeCache {
-  private blocked = new Set<SyntaxNode>();
-  private cache = new Map<SyntaxNode, TypeDescriptions.Any>();
+  private blocked = new Set<ast.SyntaxNode>();
+  private cache = new Map<ast.SyntaxNode, TypeDescriptions.Any>();
 
   clear() {
     this.cache.clear();
   }
 
-  set(node: SyntaxNode, description: TypeDescriptions.Any): void {
+  set(node: ast.SyntaxNode, description: TypeDescriptions.Any): void {
     this.cache.set(node, description);
     this.blocked.delete(node);
   }
 
   get(
-    node: SyntaxNode,
+    node: ast.SyntaxNode,
     getter: () => TypeDescriptions.Any,
   ): TypeDescriptions.Any {
     if (this.cache.has(node)) {
       return this.cache.get(node)!;
+    }
+    if(!getter){
+      return TypeDescriptions.Unknown();
     }
     if (this.blocked.has(node)) {
       // Cyclic dependency detected
@@ -50,8 +53,7 @@ export class DefaultTypeCache implements TypeCache {
     } else {
       this.blocked.add(node);
       const description = getter();
-      this.cache.set(node, description);
-      this.blocked.delete(node);
+      this.set(node, description);
       return description;
     }
   }

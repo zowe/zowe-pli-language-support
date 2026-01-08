@@ -28,22 +28,21 @@ export class DefaultTypeInferer implements TypeInferer {
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
-      if (node.kind === ast.SyntaxKind.DeclareStatement) {
+      if (
+        node.kind === ast.SyntaxKind.DeclareStatement ||
+        node.kind === ast.SyntaxKind.DefineStructureStatement
+      ) {
         this.inferDeclareStatement(node, compilationUnit);
-        return TypeDescriptions.Unknown();
       } else if (node.kind === ast.SyntaxKind.DeclaredVariable) {
         assertType<ast.DeclaredItem>(node.container);
-        const types = this.inferDeclaredItem(node.container, compilationUnit);
-        return this.lookupByAstNode(types, node);
+        this.inferDeclaredItem(node.container, compilationUnit);
+        return compilationUnit.services.typeCache.get(node);
       } else if (node.kind === ast.SyntaxKind.DeclaredItem) {
-        const types = this.inferDeclaredItem(node, compilationUnit);
-        return this.lookupByAstNode(types, node);
+        this.inferDeclaredItem(node, compilationUnit);
       } else if (node.kind === ast.SyntaxKind.DefineAliasStatement) {
         return this.inferAliasType(node, compilationUnit);
       } else if (node.kind === ast.SyntaxKind.DefineOrdinalStatement) {
         return this.inferOrdinalType(node, compilationUnit);
-      } else {
-        //TODO other kinds of nodes
       }
       return TypeDescriptions.Unknown();
     });
@@ -127,22 +126,10 @@ export class DefaultTypeInferer implements TypeInferer {
     return type;
   }
 
-  private lookupByAstNode(
-    types: Map<BuilderDeclareItem, TypeDescriptions.Any>,
-    node: ast.SyntaxNode,
-  ): TypeDescriptions.Any {
-    for (const [item, type] of types) {
-      if (item.node === node) {
-        return type;
-      }
-    }
-    return TypeDescriptions.Unknown();
-  }
-
   private inferDeclareStatement(
-    node: ast.DeclareStatement,
+    node: ast.DeclareStatement | ast.DefineStructureStatement,
     compilationUnit: CompilationUnit,
-  ): Map<BuilderDeclareItem, TypeDescriptions.Any> {
+  ): void {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
@@ -231,7 +218,6 @@ export class DefaultTypeInferer implements TypeInferer {
     //     }
     //   },
     // );
-    return topLevelMembers;
 
     function compositeAddMember(
       compositeType: TypeDescriptions.Structure | TypeDescriptions.Union,
@@ -274,13 +260,20 @@ export class DefaultTypeInferer implements TypeInferer {
   private inferDeclaredItem(
     node: ast.DeclaredItem,
     compilationUnit: CompilationUnit,
-  ): Map<BuilderDeclareItem, TypeDescriptions.Any> {
+  ): void{
     let parent: ast.SyntaxNode | null = node;
-    while (parent && parent.kind !== ast.SyntaxKind.DeclareStatement) {
+    while (
+      parent &&
+      ![
+        ast.SyntaxKind.DeclareStatement,
+        ast.SyntaxKind.DefineStructureStatement,
+      ].includes(parent.kind)
+    ) {
       parent = parent.container;
     }
-    return parent
-      ? this.inferDeclareStatement(parent, compilationUnit)
-      : new Map();
+    if (parent) {
+      assertType<ast.DeclareStatement | ast.DefineStructureStatement>(parent);
+      this.inferType(parent, compilationUnit);
+    }
   }
 }
