@@ -10,7 +10,7 @@
  */
 
 import * as ast from "../syntax-tree/ast";
-import { DataType, TypeDescriptions } from "./descriptions";
+import { TypeDescriptions } from "./descriptions";
 
 export interface TypeCache {
   get(
