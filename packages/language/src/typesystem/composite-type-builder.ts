@@ -1,18 +1,18 @@
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { computeDimensions } from "./computed-attributes";
 import { BuilderDeclareItem, TypeDescriptions } from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
 export interface CompositeTypeBuilder {
   flattenDeclareStatement(
-    declareStatement: ast.DeclareStatement,
+    declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean;
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Structure;
+  ): TypeDescriptions.Structure | TypeDescriptions.Union;
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
@@ -22,20 +22,39 @@ export interface CompositeTypeBuilder {
 export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Structure {
-    //TODO handle UNION and other composite types
+  ): TypeDescriptions.Structure | TypeDescriptions.Union {
+    const dimensionsAttr = declaredItem.attributes.find(
+      (attr) => attr.kind === ast.SyntaxKind.DimensionsDataAttribute,
+    ) as ast.DimensionsDataAttribute | undefined;
+    const dimension =
+      dimensionsAttr && dimensionsAttr.dimensions
+        ? computeDimensions(dimensionsAttr.dimensions)
+        : undefined;
+    if (
+      declaredItem.attributes.some(
+        (attr) =>
+          attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+          attr.type === ast.DefaultAttribute.UNION,
+      )
+    ) {
+      return TypeDescriptions.Union({
+        level: declaredItem.level,
+        dimension,
+      });
+    }
     return TypeDescriptions.Structure({
-      level: declaredItem.level!,
-      members: {},
-      membersMetadata: {},
+      level: declaredItem.level,
+      dimension,
     });
   }
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
-    const builder = new DefaultPrimitiveTypeBuilder(declaredItem.nameToken);
+    const builder = new DefaultPrimitiveTypeBuilder(
+      declaredItem.nameToken,
+      compilationUnit,
+    );
     for (const attr of declaredItem.attributes) {
       builder.addAttribute(attr);
     }
@@ -60,7 +79,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       ) {
         return CompositeAttributeKinds.includes(attr.type);
       }
-      return false;
+      return attr.kind === ast.SyntaxKind.DimensionsDataAttribute;
     }
     return (
       declaredItem.level !== undefined &&
@@ -69,7 +88,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     );
   }
   flattenDeclareStatement(
-    declareStatement: ast.DeclareStatement,
+    declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[] {
     return declareStatement.items.flatMap((item) =>
       this.flattenDeclaredItem(item),
@@ -84,7 +103,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
         for (const item of this.flattenDeclaredItem(element)) {
           items.push({
             ...item,
-            level: declaredItem.level ?? undefined,
+            level: declaredItem.level ?? 1,
             attributes: [...item.attributes, ...declaredItem.attributes],
           });
         }
@@ -93,7 +112,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
           name: element.name!,
           nameToken: element.nameToken!,
           node: element,
-          level: declaredItem.level ?? undefined,
+          level: declaredItem.level ?? 1,
           attributes: [...declaredItem.attributes],
         });
       } else {

@@ -37,6 +37,7 @@ export enum DataType {
   String,
   Structure,
   Task,
+  Union,
   Unknown = -1,
 }
 
@@ -53,6 +54,7 @@ export const DataTypesArray: DataType[] = [
   DataType.String,
   DataType.Structure,
   DataType.Task,
+  DataType.Union,
   DataType.Unknown,
 ];
 
@@ -114,6 +116,10 @@ export enum AttributeKind {
   Scope,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-preprocessor-scan */
   ScanMode,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=unions-like-attribute */
+  SetLike,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=variables-type-attribute */
+  SetType,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-signed-unsigned */
   Sign,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-storage-classes-allocation-deallocation */
@@ -168,6 +174,8 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.StringKind,
   AttributeKind.StringLength,
   AttributeKind.TransmissionDirection,
+  AttributeKind.SetLike,
+  AttributeKind.SetType,
   AttributeKind.Variable,
   AttributeKind.Volatility,
 ];
@@ -211,6 +219,8 @@ export type AttributeTypes = {
   [AttributeKind.Scale]: ScaleMode;
   [AttributeKind.ScanMode]: ast.ScanMode;
   [AttributeKind.Scope]: Scope;
+  [AttributeKind.SetLike]: ast.LocatorCall | null;
+  [AttributeKind.SetType]: ast.NamedType | null;
   [AttributeKind.Sign]: Sign;
   [AttributeKind.Storage]: StorageClass;
   [AttributeKind.StringFormat]: StringFormat;
@@ -235,11 +245,15 @@ export const CommonAttributeKinds: AttributeKind[] = [
   AttributeKind.Storage,
   AttributeKind.Variable,
   AttributeKind.Volatility,
+
+  AttributeKind.SetLike,
+  AttributeKind.SetType,
 ];
 
 export const AttributeKindsByDataType: Record<DataType, AttributeKind[]> = {
   [DataType.Unknown]: [...CommonAttributeKinds],
   [DataType.Structure]: [],
+  [DataType.Union]: [],
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
@@ -328,9 +342,14 @@ interface WithTypeDescriminator {
   type: DataType;
 }
 
+interface WithParentType {
+  parentType?: TypeDescriptions.Structure | TypeDescriptions.Union;
+}
+
 interface BaseTypeDescription
   extends WithTypeDescriminator,
-    BaseTypeDescriptionProps {}
+    BaseTypeDescriptionProps,
+    WithParentType {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -1029,31 +1048,70 @@ function createUnknownTypeDescription(): UnknownTypeDescription {
 }
 
 //--- Structure ---
+interface WithMembers {
+  level: number;
+  members: Map<ast.DeclaredVariable, TypeDescriptions.Any>;
+  membersMetadata: Map<ast.DeclaredVariable, BuilderDeclareItem>;
+}
+
 const StructureType = DataType.Structure;
 type StructureType = typeof StructureType;
 
-interface StructureTypeDescriptionProps {
-  level: number;
-  members: Record<string, TypeDescriptions.Any>;
-  membersMetadata: Record<string, BuilderDeclareItem>;
+interface StructureTypeDescriptionProps extends WithMembers {
+  dimension?: DimensionBound[];
 }
 
-interface StructureTypeDescription extends StructureTypeDescriptionProps {
+interface StructureTypeDescription
+  extends StructureTypeDescriptionProps,
+    WithParentType {
   type: StructureType;
 }
 
 function createStructureTypeDescription({
-  level,
-  members = {},
-  membersMetadata = {},
-}: StructureTypeDescriptionProps): StructureTypeDescription {
+  level = 1,
+  members = new Map(),
+  membersMetadata = new Map(),
+  dimension,
+}: Partial<StructureTypeDescriptionProps>): StructureTypeDescription {
   return {
     type: StructureType,
     level,
     members,
     membersMetadata,
+    dimension,
   };
 }
+
+//--- Union ---
+const UnionType = DataType.Union;
+type UnionType = typeof UnionType;
+
+interface UnionTypeDescriptionProps extends WithMembers {
+  dimension?: DimensionBound[];
+}
+
+interface UnionTypeDescription
+  extends UnionTypeDescriptionProps,
+    WithParentType {
+  type: UnionType;
+}
+
+function createUnionTypeDescription({
+  level = 1,
+  members = new Map(),
+  membersMetadata = new Map(),
+  dimension,
+}: Partial<UnionTypeDescriptionProps>): UnionTypeDescription {
+  return {
+    type: UnionType,
+    level,
+    members,
+    membersMetadata,
+    dimension,
+  };
+}
+
+//--- Implications between attributes ---
 
 export type Implications = {
   [S in AttributeKind]: Partial<{
@@ -1145,6 +1203,7 @@ export namespace TypeDescriptions {
     [TaskType]: "Task",
     [UnknownType]: "Unknown",
     [StructureType]: "Structure",
+    [UnionType]: "Union",
   };
   export type Any =
     | Area
@@ -1159,7 +1218,8 @@ export namespace TypeDescriptions {
     | String
     | Task
     | Unknown
-    | Structure;
+    | Structure
+    | Union;
   export type TypeDescriptionType = Any["type"];
 
   //TODO check default values
@@ -1213,6 +1273,8 @@ export namespace TypeDescriptions {
     [AttributeKind.StringFormat]: StringFormat.Varying,
     [AttributeKind.StringLength]: 0,
     [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
+    [AttributeKind.SetType]: null,
+    [AttributeKind.SetLike]: null,
   };
 
   export const Structure = createStructureTypeDescription;
@@ -1220,6 +1282,12 @@ export namespace TypeDescriptions {
   export const isStructure = (
     type: TypeDescriptions.Any,
   ): type is StructureTypeDescription => type.type === StructureType;
+
+  export const Union = createUnionTypeDescription;
+  export type Union = UnionTypeDescription;
+  export const isUnion = (
+    type: TypeDescriptions.Any,
+  ): type is UnionTypeDescription => type.type === UnionType;
 
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;
@@ -1283,7 +1351,7 @@ export namespace TypeDescriptions {
     isString(type) && type.kind === StringKind.Bit && type.length === 1;
 
   export function createPrimitive(
-    type: Exclude<DataType, DataType.Structure>,
+    type: Exclude<DataType, DataType.Structure | DataType.Union>,
     attributes: AttributeWitnesses,
   ): Any {
     const common = {
@@ -1429,7 +1497,7 @@ export namespace TypeDescriptions {
 export interface BuilderDeclareItem {
   name: string;
   nameToken: Token;
-  node: ast.SyntaxNode;
+  node: ast.DeclaredVariable;
   attributes: ast.DeclarationAttribute[];
-  level?: number;
+  level: number;
 }
