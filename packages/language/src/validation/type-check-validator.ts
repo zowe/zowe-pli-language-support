@@ -13,10 +13,15 @@ import * as ast from "../syntax-tree/ast";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ValidationAcceptor } from "./validator";
 
-export function typeCheckDeclareStatement(
-  declareStatement: ast.DeclareStatement,
+export function typeCheck(
+  stmt:
+    | ast.DeclareStatement
+    | ast.DeclaredVariable
+    | ast.DeclaredItem
+    | ast.DefineAliasStatement
+    | ast.DefineOrdinalStatement,
   _acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ) {
-  compilationUnit.services.inferer.inferType(declareStatement, compilationUnit);
+  compilationUnit.services.inferer.inferType(stmt, compilationUnit);
 }

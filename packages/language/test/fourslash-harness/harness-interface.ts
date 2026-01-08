@@ -60,17 +60,18 @@ export type CompilerOptions = PliCompilerOptions & {
 
 export type Not<T> = Omit<T, "not">;
 
+type ExpectedDimension = {
+  dimension?: {
+    lowerBound: Partial<Bound>;
+    upperBound: Partial<Bound>;
+  }[];
+};
+
 type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<
   T,
   "dimension"
-> & {
-  dimension:
-    | {
-        lowerBound: Partial<Bound>;
-        upperBound: Partial<Bound>;
-      }[]
-    | undefined;
-};
+> &
+  ExpectedDimension;
 export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Area>
   | EditComputedAttributes<TypeDescriptions.Arithmetic>
@@ -86,10 +87,14 @@ export type PrimitiveTypeExpectation =
 export type TypeExpectation =
   | Partial<PrimitiveTypeExpectation>
   | Partial<TypeDescriptions.Unknown>
-  | {
+  | ({
       type: DataType.Structure;
       members: Record<string, TypeExpectation>;
-    };
+    } & ExpectedDimension)
+  | ({
+      type: DataType.Union;
+      members: Record<string, TypeExpectation>;
+    } & ExpectedDimension);
 
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;

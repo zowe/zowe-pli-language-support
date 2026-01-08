@@ -1079,43 +1079,69 @@ export class TestBuilder {
       if (
         actualType.type === DataType.Unknown ||
         actualType.type === DataType.Structure ||
+        actualType.type === DataType.Union ||
         !actualType.dimension
       ) {
-        this.expectTypeWithStructure(expectedType, actualType as any);
+        this.expectTypeWithComposite(expectedType, actualType as any);
       } else {
         this.expectTypeNoStructure(expectedType, actualType);
       }
     }
   }
 
-  private expectTypeWithStructure(
+  private expectTypeWithComposite(
     expectedType: TypeExpectation,
-    actualType: TypeExpectation,
+    actualType: TypeDescriptions.Any,
   ) {
-    if (expectedType.type === DataType.Structure) {
-      //check: is structure?
+    if (
+      expectedType.type === DataType.Structure ||
+      expectedType.type === DataType.Union
+    ) {
       if (!actualType.type) {
         throw new Error(
           `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got undefined`,
         );
       }
-      if (actualType.type !== DataType.Structure) {
+      if (actualType.type !== expectedType.type) {
         throw new Error(
-          `Expected type to be a ${TypeDescriptions.Names[DataType.Structure]}, but got ${TypeDescriptions.Names[actualType.type]}`,
+          `Expected type to be a ${TypeDescriptions.Names[expectedType.type]}, but got ${TypeDescriptions.Names[actualType.type]}`,
         );
+      }
+
+      if (expectedType.dimension !== undefined) {
+        if (actualType.dimension === undefined) {
+          throw new Error(`Expected type to have dimension, but got undefined`);
+        } else {
+          this.expectTypeNoStructure(
+            expectedType.dimension,
+            actualType.dimension,
+          );
+        }
+      } else {
+        if (actualType.dimension !== undefined) {
+          throw new Error(`Expected type to not have dimension, but got one.`);
+        }
       }
 
       //check: are expected members present?
       for (const [name, expectedMemberType] of Object.entries(
         expectedType.members ?? {},
       )) {
-        const actualMemberType = actualType.members[name];
+        const node = [...actualType.membersMetadata.keys()].find(
+          (k) => actualType.membersMetadata.get(k)!.name === name,
+        );
+        if (!node) {
+          throw new Error(
+            `Expected member "${name}" to be present, but got undefined`,
+          );
+        }
+        const actualMemberType = actualType.members.get(node);
         if (!actualMemberType) {
           throw new Error(
             `Expected member "${name}" to be present, but got undefined`,
           );
         }
-        this.expectTypeWithStructure(expectedMemberType, actualMemberType);
+        this.expectTypeWithComposite(expectedMemberType, actualMemberType);
       }
 
       //check: are there any actual members missing in our expectation?
