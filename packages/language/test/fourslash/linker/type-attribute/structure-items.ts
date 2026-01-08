@@ -13,7 +13,7 @@
 
 // @wrap: main
 //// DEFINE STRUCTURE 1 A, 2 <|b:B|> FIXED(31);
-//// DCL <|MY_STRUCT|> TYPE A;
+//// DCL MY_STRUCT TYPE A;
 //// MY_STRUCT.<|b>B = 10;
 
 linker.expectLinks();
