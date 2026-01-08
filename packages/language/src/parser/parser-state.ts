@@ -344,7 +344,7 @@ export class ParserState {
   }
 
   private canConsumeFirstItem(map: RuleMap, index: number): boolean {
-    if (this.index + index >= this.tokens.length) {
+    if (this.inError || this.index + index >= this.tokens.length) {
       return false;
     }
     const tokenType = this.tokens[this.index + index].tokenType;

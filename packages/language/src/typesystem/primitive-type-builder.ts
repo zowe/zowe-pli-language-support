@@ -120,6 +120,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       case ast.SyntaxKind.GenericAttribute:
       case ast.SyntaxKind.HandleAttribute:
       case ast.SyntaxKind.IndForAttribute:
+      case ast.SyntaxKind.ReservedAttribute: // TODO: @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
       case ast.SyntaxKind.LikeAttribute:
         break;
       case ast.SyntaxKind.PictureAttribute:
@@ -738,7 +739,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
 
       case ast.DefaultAttribute.POSITION: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-defined-position-attributes
       case ast.DefaultAttribute.PRINT: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=transmission-print-attribute
-      case ast.DefaultAttribute.RESERVED: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=declarations-reserved-attribute
       case ast.DefaultAttribute.STRUCTURE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=definitions-defining-typed-structures-unions
       case ast.DefaultAttribute.VARIABLE: //@see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
       case ast.DefaultAttribute.CHARGRAPHIC:

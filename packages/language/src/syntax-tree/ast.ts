@@ -11,6 +11,7 @@
 
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
+import { assertUnreachable } from "../utils/common";
 import { isObject } from "../utils/types";
 
 export enum SyntaxKind {
@@ -181,6 +182,7 @@ export enum SyntaxKind {
   PutItem,
   PutStringStatement,
   QualifyStatement,
+  ReservedAttribute,
   ReplaceStatement,
   ReadStatement,
   ReadStatementOption,
@@ -338,7 +340,6 @@ export enum DefaultAttribute {
   INTERNAL,
   OPTIONAL,
   POSITION,
-  RESERVED,
   UNSIGNED,
   VARYING4,
   VARYINGZ,
@@ -523,15 +524,42 @@ export enum AssignmentOperator {
   AmpersandEquals,
   /** ¬= or ^= */
   NotEquals,
-  /** <> */
-  LessThanGreaterThan,
   /** = */
   Equals,
 }
 
+export function assignmentToBinaryOperator(
+  operator: AssignmentOperator,
+): BinaryOperator | null {
+  switch (operator) {
+    case AssignmentOperator.PipePipeEquals:
+      return BinaryOperator.PipePipe;
+    case AssignmentOperator.StarStarEquals:
+      return BinaryOperator.StarStar;
+    case AssignmentOperator.PlusEquals:
+      return BinaryOperator.Plus;
+    case AssignmentOperator.MinusEquals:
+      return BinaryOperator.Minus;
+    case AssignmentOperator.StarEquals:
+      return BinaryOperator.Star;
+    case AssignmentOperator.SlashEquals:
+      return BinaryOperator.Slash;
+    case AssignmentOperator.PipeEquals:
+      return BinaryOperator.Pipe;
+    case AssignmentOperator.AmpersandEquals:
+      return BinaryOperator.Ampersand;
+    case AssignmentOperator.NotEquals:
+      return BinaryOperator.Not;
+    case AssignmentOperator.Equals:
+      // No corresponding binary operator, simple assignment
+      return null;
+    default:
+      assertUnreachable(operator);
+  }
+}
+
 export enum BinaryOperator {
   NotEquals,
-  LessThanGreaterThan,
   NotLessThan,
   LessThanEquals,
   GreaterThanEquals,
@@ -834,6 +862,7 @@ export type SyntaxNode =
   | ReinitStatement
   | ReleaseStatement
   | Reserves
+  | ReservedAttribute
   | ResignalStatement
   | ReturnsAttribute
   | ReturnsOption
@@ -896,7 +925,8 @@ export type CommonDeclarationAttribute =
   | ValueListFromAttribute
   | ValueRangeAttribute
   | GenericAttribute
-  | IndForAttribute;
+  | IndForAttribute
+  | ReservedAttribute;
 /**
  * Type extending attributes are attributes that extend the type of a variable.
  */
@@ -3481,6 +3511,19 @@ export function createQualifyStatement(): QualifyStatement {
     container: null,
     statements: [],
     end: null,
+  };
+}
+
+export interface ReservedAttribute extends AstNode {
+  kind: SyntaxKind.ReservedAttribute;
+  importedToken: Token | null;
+}
+
+export function createReservedAttribute(): ReservedAttribute {
+  return {
+    kind: SyntaxKind.ReservedAttribute,
+    container: null,
+    importedToken: null,
   };
 }
 
