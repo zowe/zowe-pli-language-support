@@ -1088,8 +1088,10 @@ function selectStatement(state: ParserState): ast.SelectStatement {
   if (state.canPercentConsume(t.OTHERWISE)) {
     statement.cases.push(otherwiseStatement(state));
   }
-  // END statement is preceded by a percent
-  state.consume(statement, CstNodeKind.Percentage, t.Percent);
+  if (!state.isInProcedure()) {
+    // END statement is preceded by a percent
+    state.consume(statement, CstNodeKind.Percentage, t.Percent);
+  }
   statement.end = endStatement(state);
   return statement;
 }
@@ -1353,9 +1355,16 @@ function noprintDirective(state: ParserState): ast.NoPrintDirective {
 function assignmentStatement(state: ParserState): ast.AssignmentStatement {
   const assignment = ast.createAssignmentStatement();
   assignment.refs.push(locatorCall(state, true));
-  // TODO: add support for more assignment operators (+=, -=, etc)
-  state.consume(assignment, CstNodeKind.AssignmentStatement_Operator, t.Equals);
-  assignment.operator = ast.AssignmentOperator.Equals;
+  const operatorToken = state.consume(
+    assignment,
+    CstNodeKind.AssignmentStatement_Operator,
+    t.AssignmentOperator,
+  );
+  if (operatorToken) {
+    assignment.operator = t.AssignmentOperator.mapToEnumLiteral(
+      operatorToken.tokenTypeIdx,
+    );
+  }
   const right = expression(state);
   assignment.expression = right;
   state.consume(
@@ -1677,9 +1686,27 @@ function primary(state: ParserState): ast.Expression | null {
       t.CloseParen,
     );
     return expr;
+  } else if (state.canConsume(t.UnaryOperator)) {
+    return unaryExpression(state);
   }
   state.error();
   return null;
+}
+
+function unaryExpression(state: ParserState): ast.Expression | null {
+  const unaryExpression = ast.createUnaryExpression();
+  const operatorToken = state.consume(
+    unaryExpression,
+    CstNodeKind.UnaryExpression_Operator,
+    t.UnaryOperator,
+  );
+  if (operatorToken) {
+    unaryExpression.op = t.UnaryOperator.mapToEnumLiteral(
+      operatorToken.tokenTypeIdx,
+    );
+  }
+  unaryExpression.expr = primary(state);
+  return unaryExpression;
 }
 
 function numberLiteral(state: ParserState): ast.Literal {
