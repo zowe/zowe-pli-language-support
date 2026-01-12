@@ -9,7 +9,6 @@
  *
  */
 
-import { D } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
@@ -717,11 +716,9 @@ export const AttributeKindsByDataType = {
   [DataType.Task]: [...CommonAttributeKinds] as const,
 } satisfies Record<DataType, AttributeKind[]>;
 
-
-type AttributeKindsByDataType2<DT extends DataType> = typeof AttributeKindsByDataType[DT][number]
 type DataTypesByDataTypeEnum = {
   [DT in DataType]: { 
-    [P in PropertyByAttributeKind<AttributeKindsByDataType2<DT>>]: AttributeKindByProperty[P] 
+    [P in PropertyByAttributeKind<typeof AttributeKindsByDataType[DT][number]>]: AttributeKindByProperty[P] 
   }
 };
 
