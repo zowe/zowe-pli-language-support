@@ -265,7 +265,9 @@ export const AttributePropertyNames = {
   [AttributeKind.StringBits]: "stringBits" as const,
   [AttributeKind.TransmissionDirection]: "transmissionDirection" as const,
   [AttributeKind.Variable]: "variable" as const,
-  [AttributeKind.Volatility]: "volatility" as const
+  [AttributeKind.Volatility]: "volatility" as const,
+  [AttributeKind.SetLike]: "like" as const,
+  [AttributeKind.SetType]: "typeRef" as const,
 } satisfies { [K in AttributeKind]: string };
 
 type PropertyByAttributeKind<AK extends AttributeKind> = typeof AttributePropertyNames[AK];
@@ -304,6 +306,8 @@ const AttributeKindByPropertyConst = {
   transmissionDirection: AttributeKind.TransmissionDirection,
   variable: AttributeKind.Variable,
   volatility: AttributeKind.Volatility,
+  like: AttributeKind.SetLike,
+  typeRef: AttributeKind.SetType,
 } satisfies Record<PropertyByAttributeKind<AttributeKind>, AttributeKind>;
 type AttributeKindByProperty = typeof AttributeKindByPropertyConst;
 
@@ -650,6 +654,12 @@ export const AttributeStringifiers: {
       default:
         assertUnreachable(value);
     }
+  },
+  [AttributeKind.SetLike]: function (_value: ast.LocatorCall | null): string | undefined {
+    return "/* TODO LIKE */";
+  },
+  [AttributeKind.SetType]: function (_value: ast.NamedType | null): string | undefined {
+    return "/* TODO TYPE */";
   },
 };
 
