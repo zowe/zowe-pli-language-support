@@ -20,7 +20,7 @@ types.expectTypeAt(1, {
   members: {
     NAME: {
       type: types.dataTypes.String,
-      bits: {
+      stringBits: {
         kind: types.stringKinds.Character,
         length: 10,
       },
@@ -33,7 +33,7 @@ types.expectTypeAt(1, {
 });
 types.expectTypeAt(2, {
   type: types.dataTypes.String,
-  bits: {
+  stringBits: {
     kind: types.stringKinds.Character,
     length: 10,
   },

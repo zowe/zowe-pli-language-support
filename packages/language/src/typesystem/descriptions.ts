@@ -1415,7 +1415,7 @@ export enum StringFormat {
 }
 
 interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
-  bits: StringBits;
+  stringBits: StringBits;
   format: StringFormat;
 }
 
@@ -1426,17 +1426,17 @@ interface StringTypeDescription
 }
 
 function createStringTypeDescription({
-  bits,
+  stringBits,
   format,
   ...base
 }: PartialPartial<
   StringTypeDescriptionProps,
-  "bits" | "format"
+  "stringBits" | "format"
 >): StringTypeDescription {
   return {
     type: StringType,
     ...createBaseTypeDescription(StringType, base),
-    bits,
+    stringBits,
     format,
   };
 }
@@ -1779,7 +1779,7 @@ export namespace TypeDescriptions {
 
   /** fake type */
   export const Boolean = createStringTypeDescription({
-    bits: {
+    stringBits: {
       kind: StringKind.Bit,
       length: 1,
     },
@@ -1789,8 +1789,8 @@ export namespace TypeDescriptions {
     type: TypeDescriptions.Any,
   ): type is StringTypeDescription =>
     isString(type) &&
-    type.bits.kind === StringKind.Bit &&
-    type.bits.length === 1;
+    type.stringBits.kind === StringKind.Bit &&
+    type.stringBits.length === 1;
 
   export function createPrimitive(
     type: Exclude<DataType, DataType.Structure | DataType.Union>,
@@ -1916,7 +1916,7 @@ export namespace TypeDescriptions {
       case DataType.String:
         return TypeDescriptions.String({
           ...common,
-          bits:
+          stringBits:
             attributes[AttributeKind.StringBits]?.value ??
             DefaultValues[AttributeKind.StringBits],
           format:

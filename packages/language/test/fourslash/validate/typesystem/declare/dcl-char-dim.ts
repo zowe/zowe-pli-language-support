@@ -17,7 +17,7 @@
 verify.noDiagnostics(undefined, ...code.TypeSystem);
 types.expectTypeAt(1, {
   type: types.dataTypes.String,
-  bits: {
+  stringBits: {
     kind: types.stringKinds.Character,
     length: 10,
   },

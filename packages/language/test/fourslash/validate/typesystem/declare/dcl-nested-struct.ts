@@ -27,7 +27,7 @@ types.expectTypeAt(1, {
       members: {
         NAME: {
           type: types.dataTypes.String,
-          bits: {
+          stringBits: {
             kind: types.stringKinds.Character,
             length: 10,
           },
@@ -43,14 +43,14 @@ types.expectTypeAt(1, {
       members: {
         KEY: {
           type: types.dataTypes.String,
-          bits: {
+          stringBits: {
             kind: types.stringKinds.Character,
             length: 100,
           },
         },
         PARITY: {
           type: types.dataTypes.String,
-          bits: {
+          stringBits: {
             kind: types.stringKinds.Bit,
             length: 1,
           },

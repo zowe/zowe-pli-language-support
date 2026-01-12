@@ -29,7 +29,10 @@ types.expectTypeAt("same", {
     },
     STREET: {
       type: types.dataTypes.String,
-      length: 100,
+      stringBits: {
+        kind: types.stringKinds.Character,
+        length: 100,
+      }
     },
   },
 });

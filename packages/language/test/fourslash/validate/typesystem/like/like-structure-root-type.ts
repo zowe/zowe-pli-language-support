@@ -23,7 +23,10 @@ types.expectTypeAt("same", {
   members: {
     NAME: {
       type: types.dataTypes.String,
-      length: 100,
+      stringBits : {
+        kind: types.stringKinds.Character,
+        length: 100,
+      },
     },
     AGE: {
       type: types.dataTypes.Arithmetic,
