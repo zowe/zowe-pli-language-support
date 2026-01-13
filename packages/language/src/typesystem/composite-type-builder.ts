@@ -1,20 +1,23 @@
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { computeDimensions } from "./computed-attributes";
-import { BuilderDeclareItem, DataType, TypeDescriptions } from "./descriptions";
+import { AttributeCollectorResult, DefaultTypeAttributeCollector } from "./attribute-witnesses";
+import { AttributeKind, BuilderDeclareItem, DataType, TypeDescriptions } from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
 export interface CompositeTypeBuilder {
   flattenDeclareStatement(
     declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
-  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean;
+  collectAttributes(declaredItem: BuilderDeclareItem): AttributeCollectorResult;
+  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem, attributes: AttributeCollectorResult): boolean;
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult
   ): TypeDescriptions.Composite;
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any;
 }
@@ -22,36 +25,30 @@ export interface CompositeTypeBuilder {
 export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
   ): TypeDescriptions.Composite {
-    const dimensionsAttr = declaredItem.attributes.find(
-      (attr) => attr.kind === ast.SyntaxKind.DimensionsDataAttribute,
-    ) as ast.DimensionsDataAttribute | undefined;
-    const dimension =
-      dimensionsAttr && dimensionsAttr.dimensions
-        ? computeDimensions(dimensionsAttr.dimensions)
-        : undefined;
     const hasUnion = declaredItem.attributes.some(
       (attr) =>
         attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
         attr.type === ast.DefaultAttribute.UNION,
     );
-    return TypeDescriptions.Composite(hasUnion ? DataType.Union : DataType.Structure,{
+    return TypeDescriptions.createComposite({
+      type: hasUnion ? DataType.Union : DataType.Structure,
+      witnesses: attributes.witnesses,
       level: declaredItem.level,
-      dimension,
       variableNode: declaredItem.node,
     });
   }
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     const builder = new DefaultPrimitiveTypeBuilder(
       declaredItem.nameToken,
+      attributes,
       compilationUnit,
     );
-    for (const attr of declaredItem.attributes) {
-      builder.addAttribute(attr);
-    }
     const { type, diagnostics } = builder.build();
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -59,26 +56,22 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     );
     return type;
   }
-  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean {
-    const CompositeAttributeKinds: ast.DefaultAttribute[] = [
-      //TODO add more composite types if needed
-      ast.DefaultAttribute.UNION,
-      ast.DefaultAttribute.DIMACROSS,
-    ];
-    function isOnlyCompositeAttribute(attr: ast.DeclarationAttribute): boolean {
-      if (
-        attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
-        attr.type !== null &&
-        attr.typeToken !== null
-      ) {
-        return CompositeAttributeKinds.includes(attr.type);
-      }
-      return attr.kind === ast.SyntaxKind.DimensionsDataAttribute;
+  collectAttributes(declaredItem: BuilderDeclareItem): AttributeCollectorResult {
+    const collector = new DefaultTypeAttributeCollector(declaredItem.nameToken);
+    for (const attr of declaredItem.attributes) {
+      collector.addAttribute(attr);
     }
+    return collector.build();
+  }
+  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem, attributes: AttributeCollectorResult): boolean {
+    const validCompositeAttributeKinds: AttributeKind[] = [
+      AttributeKind.Dimension,
+      AttributeKind.Alignment,
+      AttributeKind.Storage,
+    ];
     return (
       declaredItem.level !== undefined &&
-      (declaredItem.attributes.length === 0 ||
-        declaredItem.attributes.every(isOnlyCompositeAttribute))
+      attributes.witnesses.order.every(kind => validCompositeAttributeKinds.includes(kind))
     );
   }
   flattenDeclareStatement(

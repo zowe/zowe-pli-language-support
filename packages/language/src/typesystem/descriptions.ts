@@ -604,7 +604,7 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.Variable]: function (value: boolean): string|undefined {
+  [AttributeKind.Variable]: function (value: boolean): string | undefined {
     return value ? "VARIABLE" : undefined;
   },
   [AttributeKind.Volatility]: function (value: Volatility): string {
@@ -647,15 +647,16 @@ export const CommonAttributeKinds = [
   AttributeKind.SetType,
 ] satisfies readonly AttributeKind[];
 
+const CompositeAttributeKinds = [AttributeKind.Dimension, AttributeKind.Alignment, AttributeKind.Storage] satisfies readonly AttributeKind[];
 export const AttributeKindsByDataType = {
   [DataType.Unknown]: [...CommonAttributeKinds] as const,
-  [DataType.Structure]: [],
-  [DataType.Union]: [],
+  [DataType.Structure]: CompositeAttributeKinds,
+  [DataType.Union]: CompositeAttributeKinds,
   [DataType.Area]: [
     ...CommonAttributeKinds,
     AttributeKind.AreaSize,
     AttributeKind.Endianess,
-  ]  as const,
+  ] as const,
   [DataType.Arithmetic]: [
     ...CommonAttributeKinds,
     AttributeKind.Scale,
@@ -749,8 +750,8 @@ interface WithParentType {
 
 interface BaseTypeDescription
   extends WithTypeDescriminator,
-    BaseTypeDescriptionProps,
-    WithParentType {}
+  BaseTypeDescriptionProps,
+  WithParentType { }
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -930,7 +931,7 @@ interface AreaTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface AreaTypeDescription
   extends BaseTypeDescription,
-    AreaTypeDescriptionProps {
+  AreaTypeDescriptionProps {
   type: AreaType;
 }
 
@@ -1019,7 +1020,7 @@ interface ArithmeticTypeDescriptionProps {
 
 interface ArithmeticTypeDescription
   extends BaseTypeDescription,
-    ArithmeticTypeDescriptionProps {
+  ArithmeticTypeDescriptionProps {
   type: ArithmeticType;
 }
 
@@ -1123,7 +1124,7 @@ interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface FileTypeDescription
   extends BaseTypeDescription,
-    FileTypeDescriptionProps {
+  FileTypeDescriptionProps {
   type: FileType;
 }
 
@@ -1156,11 +1157,11 @@ function isFileTypeDescription(
 const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
-interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface FormatTypeDescription
   extends BaseTypeDescription,
-    FormatTypeDescriptionProps {
+  FormatTypeDescriptionProps {
   type: FormatType;
 }
 
@@ -1183,11 +1184,11 @@ function isFormatTypeDescription(
 const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
-interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface LabelTypeDescription
   extends BaseTypeDescription,
-    LabelTypeDescriptionProps {
+  LabelTypeDescriptionProps {
   type: LabelType;
 }
 
@@ -1227,7 +1228,7 @@ interface LocatorTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface LocatorTypeDescription
   extends BaseTypeDescription,
-    LocatorTypeDescriptionProps {
+  LocatorTypeDescriptionProps {
   type: LocatorType;
 }
 
@@ -1255,11 +1256,11 @@ function isLocatorTypeDescription(
 const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
-interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface EntryTypeDescription
   extends BaseTypeDescription,
-    EntryTypeDescriptionProps {
+  EntryTypeDescriptionProps {
   type: EntryType;
 }
 
@@ -1288,7 +1289,7 @@ interface OrdinalTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface OrdinalTypeDescription
   extends BaseTypeDescription,
-    OrdinalTypeDescriptionProps {
+  OrdinalTypeDescriptionProps {
   type: OrdinalType;
 }
 
@@ -1329,7 +1330,7 @@ interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface PictureTypeDescription
   extends BaseTypeDescription,
-    PictureTypeDescriptionProps {
+  PictureTypeDescriptionProps {
   type: PictureType;
 }
 
@@ -1389,7 +1390,7 @@ interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface StringTypeDescription
   extends BaseTypeDescription,
-    StringTypeDescriptionProps {
+  StringTypeDescriptionProps {
   type: StringType;
 }
 
@@ -1419,11 +1420,11 @@ function isStringTypeDescription(
 const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
-interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface TaskTypeDescription
   extends BaseTypeDescription,
-    TaskTypeDescriptionProps {
+  TaskTypeDescriptionProps {
   type: TaskType;
 }
 
@@ -1476,9 +1477,10 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   dimension?: DimensionBound[];
   storage?: StorageClass;
   alignment?: Alignment;
+  toString(): string;
 }
 
-interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
+interface CompositeTypeDescription extends CompositeTypeDescriptionProps { }
 
 function createCompositeTypeDescription(type: DataType.Structure | DataType.Union, {
   level = 1,
@@ -1592,7 +1594,7 @@ export namespace TypeDescriptions {
     [TaskType]: "Task" as const,
     [UnknownType]: "Unknown" as const,
     [StructureType]: "Structure" as const,
-	[UnionType]: "Union" as const,
+    [UnionType]: "Union" as const,
   } satisfies Record<DataType, string>;
   export type Any =
     | Area
@@ -1669,7 +1671,6 @@ export namespace TypeDescriptions {
     [AttributeKind.SetLike]: null,
   };
 
-  export const Composite = createCompositeTypeDescription;
   export type Composite = CompositeTypeDescription;
   export const isComposite = (
     type: TypeDescriptions.Any,
@@ -1739,6 +1740,39 @@ export namespace TypeDescriptions {
     isString(type) &&
     type.stringBits.kind === StringKind.Bit &&
     type.stringBits.length === 1;
+
+  export function createComposite({
+    type,
+    level,
+    variableNode,
+    witnesses
+  }: {
+    type: DataType.Structure | DataType.Union,
+    witnesses: AttributeWitnesses,
+    level: number,
+    variableNode: ast.DeclaredVariable
+  }): Composite {
+    const attributes = witnesses.witnesses;
+    return {
+      type,
+      level,
+      members: new Map(),
+      membersMetadata: new Map(),
+      parentType: undefined,
+      storage: attributes[AttributeKind.Storage]?.value,
+      alignment: attributes[AttributeKind.Alignment]?.value,
+      dimension: attributes[AttributeKind.Dimension]?.value ??
+        DefaultValues[AttributeKind.Dimension],
+      variableNode,
+      toString: () => {
+        return witnesses.order.map(a => {
+          const stringify = AttributeStringifiers[a] as (value: any) => string;
+          const value = witnesses.witnesses[a]?.value;
+          return stringify(value);
+        }).join(" ");
+      }
+    }
+  }
 
   export function createPrimitive(
     type: Exclude<DataType, DataType.Structure | DataType.Union>,

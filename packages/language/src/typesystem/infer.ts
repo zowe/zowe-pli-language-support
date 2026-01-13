@@ -17,6 +17,7 @@ import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { DefaultTypeAttributeCollector } from "./attribute-witnesses";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -55,31 +56,28 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const builder = new DefaultPrimitiveTypeBuilder(
-      node.nameToken,
-      compilationUnit,
-    );
+    const collector = new DefaultTypeAttributeCollector(node.nameToken);
     {
       const fixedAttribute = ast.createComputationDataAttribute();
       fixedAttribute.typeToken = node.nameToken;
       fixedAttribute.type = ast.DefaultAttribute.FIXED;
-      builder.addAttribute(fixedAttribute);
+      collector.addAttribute(fixedAttribute);
     }
     {
       const binaryAttribute = ast.createComputationDataAttribute();
       binaryAttribute.typeToken = node.nameToken;
       binaryAttribute.type = ast.DefaultAttribute.BINARY;
-      builder.addAttribute(binaryAttribute);
+      collector.addAttribute(binaryAttribute);
     }
     if (node.attributes.includes(ast.DefineOrdinalAttribute.SIGNED)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.SIGNED;
-      builder.addAttribute(attr);
+      collector.addAttribute(attr);
     }
     if (node.attributes.includes(ast.DefineOrdinalAttribute.UNSIGNED)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.UNSIGNED;
-      builder.addAttribute(attr);
+      collector.addAttribute(attr);
     }
     if (node.attributes.includes(ast.DefineOrdinalAttribute.PRECISION)) {
       const attr = ast.createComputationDataAttribute();
@@ -94,8 +92,13 @@ export class DefaultTypeInferer implements TypeInferer {
       value.value = node.precision;
       bound.upper.expression = literal;
       attr.dimensions.dimensions = [bound];
-      builder.addAttribute(attr);
+      collector.addAttribute(attr);
     }
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      collector.build(),
+      compilationUnit,
+    );
     const { type, diagnostics } = builder.build();
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -111,13 +114,15 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
+    const collector = new DefaultTypeAttributeCollector(node.nameToken);
+    node.attributes.forEach((attribute) => {
+      collector.addAttribute(attribute);
+    });
     const builder = new DefaultPrimitiveTypeBuilder(
       node.nameToken,
+      collector.build(),
       compilationUnit,
     );
-    node.attributes.forEach((attribute) => {
-      builder.addAttribute(attribute);
-    });
     const { type, diagnostics } = builder.build();
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -136,8 +141,9 @@ export class DefaultTypeInferer implements TypeInferer {
     const compositeParents: (TypeDescriptions.Composite)[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
-      if (builder.isCompositeDeclaredItem(item)) {
-        const compositeType = builder.handleCompositeDeclaredItem(item);
+      const attributes = builder.collectAttributes(item);
+      if (builder.isCompositeDeclaredItem(item, attributes)) {
+        const compositeType = builder.handleCompositeDeclaredItem(item, attributes);
         compilationUnit.services.typeCache.set(item.node, compositeType);
         if (previousLevel === undefined) {
           topLevelMembers.set(item, compositeType);
@@ -171,6 +177,7 @@ export class DefaultTypeInferer implements TypeInferer {
       } else {
         const primitiveType = builder.handlePrimitiveDeclaredItem(
           item,
+          attributes,
           compilationUnit,
         );
         compilationUnit.services.typeCache.set(item.node, primitiveType);
