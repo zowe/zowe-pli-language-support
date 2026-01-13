@@ -38,6 +38,7 @@ import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
+import { TypeDescriptions } from "../typesystem/descriptions";
 
 type MarkupResponse = string | null;
 
@@ -48,6 +49,34 @@ interface MarkupGeneratorContext {
 
 interface MarkupGenerator {
   (context: MarkupGeneratorContext): MarkupResponse;
+}
+
+function compositeToString(typeProps: TypeDescriptions.Composite): [number, string] {
+  //returns [level, string representation]
+  const memberStrings: string[] = [];
+  for (const [member, { level }] of typeProps.membersMetadata) {
+    const type = typeProps.members.get(member)!;
+    if (TypeDescriptions.isComposite(type)) {
+      const [level, nestedStr] = compositeToString(type);
+      memberStrings.push(`${level} ${member.name} ${nestedStr}`);
+    } else {
+      memberStrings.push(`${level} ${member.name} ${type.toString()}`);
+    }
+  }
+  const [level, parentLine] = compositeParentLineToString(typeProps);
+  return [level, `${parentLine}${memberStrings.map(m => ",\n  " + m).join("")}`];
+}
+
+function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [number, string] {
+  let dimensionStr = "";
+  if (typeProps.dimension) {
+    const dims = typeProps.dimension.map(dim => {
+      return `${dim.lowerBound.value}:${dim.upperBound.value}`;
+    }).join(", ");
+    dimensionStr = ` DIMENSION (${dims})`;
+  }
+  let unionStr = TypeDescriptions.isUnion(typeProps) ? " UNION" : "";
+  return [typeProps.level, `${unionStr}${dimensionStr}`];
 }
 
 /**
@@ -62,7 +91,24 @@ function getDeclaredVariableRepresentation(
   unit: CompilationUnit,
   node: DeclaredVariable,
 ): string {
-  const scope = unit.scopeCaches.regular.get(node);
+  let typeDescription = unit.services.inferer.inferType(node, unit);
+  let str = ""
+  if (TypeDescriptions.isComposite(typeDescription)) {
+    const [level, compositeStr] = compositeToString(typeDescription);
+    str = `${level} ${node.name}${compositeStr ? ` ${compositeStr}` : ""};`;
+  } else {
+    str = `${node.name} ${typeDescription.toString()};`;
+  }
+  while (TypeDescriptions.isComposite(typeDescription) && typeDescription.parentType) {
+    typeDescription = typeDescription.parentType;
+    const memberNode = typeDescription.variableNode;
+    if(memberNode) {
+      const [level, parentLine] = compositeParentLineToString(typeDescription);
+      str = `${level} ${memberNode!.name}${parentLine!==""?' '+parentLine:""}\n${str.replaceAll(/\n/g, "\n  ")}`;
+    }
+  }
+  return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n      ")}`);
+  /*const scope = unit.scopeCaches.regular.get(node);
   const qualifiedNode = scope?.symbolTable.nodeLookup.get(node);
 
   if (!qualifiedNode) {
@@ -86,7 +132,7 @@ function getDeclaredVariableRepresentation(
       ? `DCL ${name} ${attrs.join(" ")};`
       : `DCL ${name};`;
     return formatPliCodeBlock(decl);
-  }
+  }*/
 }
 
 /**
@@ -157,7 +203,7 @@ function extractProcedureOptions(
             // type w/ dimens, need to be decoded
             attrArr.push(
               t.DefaultAttribute.mapFromEnumLiteral(attr.type) +
-                decodeDimensions(attr.dimensions),
+              decodeDimensions(attr.dimensions),
             );
           } else {
             // just the type

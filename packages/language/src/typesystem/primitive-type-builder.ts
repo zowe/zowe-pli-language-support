@@ -20,7 +20,6 @@ import { computeDimensions } from "./computed-attributes";
 import {
   DataType,
   DataTypesByAttributeKind,
-  AttributeKinds,
   AttributeTypes,
   TypeDescriptions,
   AttributeKind,
@@ -54,11 +53,10 @@ import {
 } from "./descriptions";
 
 function createEmptyAttributeWitnesses(): AttributeWitnesses {
-  const obj: Partial<AttributeWitnesses> = {};
-  for (const kind of AttributeKinds) {
-    obj[kind] = null;
-  }
-  return obj as AttributeWitnesses;
+  return {
+    order: [],
+    witnesses: {}
+  };
 }
 
 type BuiltType = {
@@ -792,7 +790,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 
   build() {
-    const namedElement = this.attributeWitnesses[AttributeKind.SetType];
+    const namedElement = this.attributeWitnesses.witnesses[AttributeKind.SetType];
     if (namedElement && namedElement.value) {
       const typeNode = this.unit.services.inferer.inferType(
         namedElement.value,
@@ -803,7 +801,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         diagnostics: this.diagnostics,
       };
     }
-    const locatorCall = this.attributeWitnesses[AttributeKind.SetLike];
+    const locatorCall = this.attributeWitnesses.witnesses[AttributeKind.SetLike];
     if (locatorCall && locatorCall.value) {
       if (
         !locatorCall.value.element ||
@@ -901,8 +899,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     attribute: ast.DeclarationAttribute,
     token: Token,
   ) {
-    if (this.attributeWitnesses[kind]) {
-      const witness = this.attributeWitnesses[kind];
+    if (this.attributeWitnesses.witnesses[kind]) {
+      const witness = this.attributeWitnesses.witnesses[kind];
       if (value !== witness.value) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM2462I, token, token.image, witness.image),
@@ -939,7 +937,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         token,
         implicit: false,
       };
-      this.attributeWitnesses[kind] = current as AttributeWitnesses[K];
+      this.attributeWitnesses.witnesses[kind] = current as AttributeWitnesses['witnesses'][K];
+      this.attributeWitnesses.order.push(kind);
       if (kind === AttributeKind.DataType) {
         this.possibleDataTypes = new Set([value as DataType]);
       }
@@ -959,7 +958,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       implications,
     )) {
       const targetKind = parseInt(targetKindString) as keyof AttributeTypes;
-      const targetWitness = this.attributeWitnesses[targetKind];
+      const targetWitness = this.attributeWitnesses.witnesses[targetKind];
       const impliedValue = implication(value);
       if (impliedValue === undefined) {
         continue;
@@ -981,7 +980,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           token: current.token,
           implicit: true,
         };
-        this.attributeWitnesses[targetKind] = newtargetWitness as any;
+        this.attributeWitnesses.witnesses[targetKind] = newtargetWitness as any;
+        //NO because implicit: this.attributeWitnesses.order.push(targetKind);
         if (targetKind === AttributeKind.DataType) {
           this.possibleDataTypes = new Set([impliedValue as DataType]);
         }

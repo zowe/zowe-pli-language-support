@@ -17,6 +17,7 @@ import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { it } from "node:test";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -227,6 +228,7 @@ export class DefaultTypeInferer implements TypeInferer {
       compositeType.members.set(item.node, memberType);
       compositeType.membersMetadata.set(item.node, item);
       memberType.parentType = compositeType;
+      memberType.variableNode = item.node;
     }
   }
 

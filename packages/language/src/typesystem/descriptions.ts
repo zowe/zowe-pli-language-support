@@ -67,6 +67,7 @@ export enum AttributeKind {
   AreaSize,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-assignable-nonassignable-attributes */
   Assignability,
+  AttributeWitnesses,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-coded-arithmetic-data */
   Base,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes */
@@ -193,6 +194,7 @@ export type AttributeTypes = {
   [AttributeKind.Alignment]: Alignment;
   [AttributeKind.AreaSize]: number;
   [AttributeKind.Assignability]: Assignability;
+  [AttributeKind.AttributeWitnesses]: AttributeWitnesses;
   [AttributeKind.Base]: Base;
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
@@ -268,6 +270,7 @@ export const AttributePropertyNames = {
   [AttributeKind.Volatility]: "volatility" as const,
   [AttributeKind.SetLike]: "like" as const,
   [AttributeKind.SetType]: "typeRef" as const,
+  [AttributeKind.AttributeWitnesses]: "attributeWitnesses" as const,
 } satisfies { [K in AttributeKind]: string };
 
 type PropertyByAttributeKind<AK extends AttributeKind> = typeof AttributePropertyNames[AK];
@@ -308,6 +311,7 @@ const AttributeKindByPropertyConst = {
   volatility: AttributeKind.Volatility,
   like: AttributeKind.SetLike,
   typeRef: AttributeKind.SetType,
+  attributeWitnesses: AttributeKind.AttributeWitnesses,
 } satisfies Record<PropertyByAttributeKind<AttributeKind>, AttributeKind>;
 type AttributeKindByProperty = typeof AttributeKindByPropertyConst;
 
@@ -661,6 +665,9 @@ export const AttributeStringifiers: {
   [AttributeKind.SetType]: function (_value: ast.NamedType | null): string | undefined {
     return "/* TODO TYPE */";
   },
+  [AttributeKind.AttributeWitnesses]: function (_value: AttributeWitnesses): string | undefined {
+    return undefined;
+  },
 };
 
 export const CommonAttributeKinds = [
@@ -741,7 +748,10 @@ export type AttributeWitness<K extends keyof AttributeTypes> = {
 };
 
 export type AttributeWitnesses = {
-  [K in keyof AttributeTypes]: AttributeWitness<K> | null;
+  order: AttributeKind[];
+  witnesses: Partial<{
+    [K in keyof AttributeTypes]: AttributeWitness<K> | null;
+  }>;
 };
 
 export const DataTypesByAttributeKind = Object.entries(
@@ -773,6 +783,7 @@ interface BaseTypeDescriptionProps {
   storage: StorageClass;
   variable?: boolean;
   volatility: Volatility;
+  toString(): string;
 }
 
 interface WithTypeDescriminator {
@@ -781,6 +792,7 @@ interface WithTypeDescriminator {
 
 interface WithParentType {
   parentType?: TypeDescriptions.Structure | TypeDescriptions.Union;
+  variableNode?: ast.DeclaredVariable;
 }
 
 interface BaseTypeDescription
@@ -897,6 +909,7 @@ function createBaseTypeDescription(
     initial,
     optional,
     parameter,
+    toString
   }: Partial<BaseTypeDescriptionProps>,
 ): BaseTypeDescriptionProps {
   if (!alignment) {
@@ -948,6 +961,10 @@ function createBaseTypeDescription(
     storage,
     variable,
     volatility,
+
+    toString() {
+      return toString!();
+    },
   };
 }
 
@@ -1485,7 +1502,11 @@ interface UnknownTypeDescription extends BaseTypeDescription {
 function createUnknownTypeDescription(): UnknownTypeDescription {
   return {
     type: UnknownType,
-    ...createBaseTypeDescription(UnknownType, {}),
+    ...createBaseTypeDescription(UnknownType, {
+      toString() {
+        return "<UNKNOWN>";
+      },
+    }),
   };
 }
 
@@ -1499,13 +1520,12 @@ interface WithMembers {
 const StructureType = DataType.Structure;
 type StructureType = typeof StructureType;
 
-interface StructureTypeDescriptionProps extends WithMembers {
+interface StructureTypeDescriptionProps extends WithMembers, WithParentType {
   dimension?: DimensionBound[];
 }
 
 interface StructureTypeDescription
-  extends StructureTypeDescriptionProps,
-    WithParentType {
+  extends StructureTypeDescriptionProps {
   type: StructureType;
 }
 
@@ -1514,6 +1534,8 @@ function createStructureTypeDescription({
   members = new Map(),
   membersMetadata = new Map(),
   dimension,
+  variableNode,
+  parentType
 }: Partial<StructureTypeDescriptionProps>): StructureTypeDescription {
   return {
     type: StructureType,
@@ -1521,6 +1543,8 @@ function createStructureTypeDescription({
     members,
     membersMetadata,
     dimension,
+    variableNode,
+    parentType
   };
 }
 
@@ -1528,13 +1552,12 @@ function createStructureTypeDescription({
 const UnionType = DataType.Union;
 type UnionType = typeof UnionType;
 
-interface UnionTypeDescriptionProps extends WithMembers {
+interface UnionTypeDescriptionProps extends WithMembers, WithParentType {
   dimension?: DimensionBound[];
 }
 
 interface UnionTypeDescription
-  extends UnionTypeDescriptionProps,
-    WithParentType {
+  extends UnionTypeDescriptionProps {
   type: UnionType;
 }
 
@@ -1543,6 +1566,8 @@ function createUnionTypeDescription({
   members = new Map(),
   membersMetadata = new Map(),
   dimension,
+  variableNode,
+  parentType
 }: Partial<UnionTypeDescriptionProps>): UnionTypeDescription {
   return {
     type: UnionType,
@@ -1550,6 +1575,8 @@ function createUnionTypeDescription({
     members,
     membersMetadata,
     dimension,
+    variableNode,
+    parentType
   };
 }
 
@@ -1663,6 +1690,10 @@ export namespace TypeDescriptions {
 
   //TODO check default values
   export const DefaultValues: AttributeTypes = {
+    [AttributeKind.AttributeWitnesses]: {
+      order: [],
+      witnesses: {}
+    },
     [AttributeKind.List]: false,
     [AttributeKind.Optional]: false,
     [AttributeKind.Parameter]: false,
@@ -1726,6 +1757,11 @@ export namespace TypeDescriptions {
   export const isUnion = (
     type: TypeDescriptions.Any,
   ): type is UnionTypeDescription => type.type === UnionType;
+
+  export type Composite = Union | Structure;
+  export const isComposite = (
+    type: TypeDescriptions.Any,
+  ): type is Composite => isUnion(type) || isStructure(type);
 
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;
@@ -1794,9 +1830,17 @@ export namespace TypeDescriptions {
 
   export function createPrimitive(
     type: Exclude<DataType, DataType.Structure | DataType.Union>,
-    attributes: AttributeWitnesses,
+    witnesses: AttributeWitnesses,
   ): Any {
+    const attributes = witnesses.witnesses;
     const common = {
+      toString: () => {
+        return witnesses.order.map(a => {
+          const stringify = AttributeStringifiers[a] as (value: any) => string;
+          const value = witnesses.witnesses[a]?.value;
+          return stringify(value);
+        }).join(" ");
+      },
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],

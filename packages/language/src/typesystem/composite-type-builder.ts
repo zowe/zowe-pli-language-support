@@ -40,11 +40,13 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       return TypeDescriptions.Union({
         level: declaredItem.level,
         dimension,
+        variableNode: declaredItem.node,
       });
     }
     return TypeDescriptions.Structure({
       level: declaredItem.level,
       dimension,
+      variableNode: declaredItem.node,
     });
   }
   handlePrimitiveDeclaredItem(
