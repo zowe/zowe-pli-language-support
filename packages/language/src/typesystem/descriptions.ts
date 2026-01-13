@@ -340,9 +340,8 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.DataType]: function (value: DataType): string {
-    //TODO should not be printed as an attribute
-    return TypeDescriptions.Names[value];
+  [AttributeKind.DataType]: function (value: DataType): string|undefined {
+    return undefined;
   },
   [AttributeKind.Dimension]: function (
     value: DimensionBound[] | undefined,
@@ -350,7 +349,9 @@ export const AttributeStringifiers: {
     if (!value) {
       return undefined;
     }
-    return `DIMENSION(${value
+    return `DIMENSION(/*TODO bounds*/)`;
+    /*
+    ${value
       .map((bound) => {
         if (bound.upperBound.value !== undefined) {
           if (bound.lowerBound.value !== undefined) {
@@ -368,7 +369,8 @@ export const AttributeStringifiers: {
           }
         }
       })
-      .join(", ")})`;
+      .join(", ")}
+    */
   },
   [AttributeKind.Endianess]: function (value: Endianess): string {
     switch (value) {
@@ -549,7 +551,8 @@ export const AttributeStringifiers: {
       case StorageClass.Static:
         return "STATIC";
       case StorageClass.Based:
-        return "BASED";
+        /* TODO add locator reference */
+        return "BASED(/*TODO locator*/)";
       case StorageClass.Controlled:
         return "CONTROLLED";
       default:
@@ -1482,25 +1485,6 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
 
 interface CompositeTypeDescription extends CompositeTypeDescriptionProps { }
 
-function createCompositeTypeDescription(type: DataType.Structure | DataType.Union, {
-  level = 1,
-  members = new Map(),
-  membersMetadata = new Map(),
-  dimension,
-  variableNode,
-  parentType
-}: Partial<CompositeTypeDescriptionProps>): CompositeTypeDescription {
-  return {
-    type,
-    level,
-    members,
-    membersMetadata,
-    dimension,
-    variableNode,
-    parentType
-  };
-}
-
 //--- Union ---
 const UnionType = DataType.Union;
 type UnionType = typeof UnionType;
@@ -1764,13 +1748,7 @@ export namespace TypeDescriptions {
       dimension: attributes[AttributeKind.Dimension]?.value ??
         DefaultValues[AttributeKind.Dimension],
       variableNode,
-      toString: () => {
-        return witnesses.order.map(a => {
-          const stringify = AttributeStringifiers[a] as (value: any) => string;
-          const value = witnesses.witnesses[a]?.value;
-          return stringify(value);
-        }).join(" ");
-      }
+      toString: makeToString(witnesses)
     }
   }
 
@@ -1780,13 +1758,7 @@ export namespace TypeDescriptions {
   ): Any {
     const attributes = witnesses.witnesses;
     const common = {
-      toString: () => {
-        return witnesses.order.map(a => {
-          const stringify = AttributeStringifiers[a] as (value: any) => string;
-          const value = witnesses.witnesses[a]?.value;
-          return stringify(value);
-        }).join(" ");
-      },
+      toString: makeToString(witnesses),
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],
@@ -1930,3 +1902,14 @@ export interface BuilderDeclareItem {
   attributes: ast.DeclarationAttribute[];
   level: number;
 }
+
+function makeToString(witnesses: AttributeWitnesses): () => string {
+  return () => {
+    return witnesses.order.filter(a => witnesses.witnesses[a]?.value).map(a => {
+      const stringify = AttributeStringifiers[a] as (value: any) => string;
+      const value = witnesses.witnesses[a]?.value;
+      return stringify(value);
+    }).filter(a => a).join(" ");
+  };
+}
+

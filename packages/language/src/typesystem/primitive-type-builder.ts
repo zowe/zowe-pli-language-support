@@ -91,8 +91,9 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
             ...typeNode,
             //TODO handle deletion of other attributes only for a root element
             dimension: undefined,
+            parentType: undefined,
           },
-          diagnostics: this.diagnostics,
+          diagnostics: this.diagnostics,          
         };
       }
     }

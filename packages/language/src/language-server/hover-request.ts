@@ -65,15 +65,9 @@ function compositeToString(typeProps: TypeDescriptions.Composite): [number, stri
 }
 
 function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [number, string] {
-  let dimensionStr = "";
-  if (typeProps.dimension) {
-    const dims = typeProps.dimension.map(dim => {
-      return `${dim.lowerBound.value}:${dim.upperBound.value}`;
-    }).join(", ");
-    dimensionStr = `DIMENSION(${dims})`;
-  }
-  let unionStr = typeProps.type === DataType.Union ? "UNION" : "";
-  return [typeProps.level, `${unionStr}${unionStr!=="" && dimensionStr!=="" ? " " : ""}${dimensionStr}`];
+  const attributeStr = typeProps.toString();
+  const unionStr = typeProps.type === DataType.Union ? "UNION" : "";
+  return [typeProps.level, `${unionStr}${unionStr!=="" && attributeStr!=="" ? " " : ""}${attributeStr}`];
 }
 
 /**
@@ -96,7 +90,8 @@ function getDeclaredVariableRepresentation(
   } else {
     const level = typeDescription.parentType ? typeDescription.parentType.membersMetadata.get(typeDescription.variableNode!)?.level : undefined;
     const levelStr = level !== undefined ? `${level} ` : "";
-    str = `${levelStr}${node.name} ${typeDescription.toString()};`;
+    const typeDescriptionStr = typeDescription.toString();
+    str = `${levelStr}${node.name} ${typeDescriptionStr};`;
   }
   while (typeDescription.parentType) {
     typeDescription = typeDescription.parentType;

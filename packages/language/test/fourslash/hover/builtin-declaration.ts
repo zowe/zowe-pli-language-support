@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// <|1>SQLDA = 1;
+//// SQLDA.SQLVAR.<|1>SQLIND = 1;
 
-hover.expectMarkdownAt(1, hover.codeBlock("DCL MYVAR FIXED DECIMAL;"));
+hover.expectMarkdownAt(1, hover.codeBlock(`DCL 1 SQLDA BASED(/*TODO locator*/),
+      2 SQLVAR DIMENSION(/*TODO bounds*/),
+        3 SQLIND POINTER;`));
