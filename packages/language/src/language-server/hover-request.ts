@@ -10,7 +10,6 @@
  */
 
 import { MarkupKind } from "vscode-languageserver-types";
-import { QualifiedSyntaxNode } from "../linking/qualified-syntax-node";
 import {
   getReference,
   isIncludeItemToken,
@@ -18,7 +17,6 @@ import {
   isReferenceToken,
 } from "../linking/tokens";
 import * as t from "../parser/tokens";
-import { getAttributes } from "../preprocessor/util";
 import {
   Bound,
   DeclaredVariable,
@@ -52,19 +50,18 @@ interface MarkupGenerator {
 }
 
 function compositeToString(typeProps: TypeDescriptions.Composite): [number, string] {
-  //returns [level, string representation]
   const memberStrings: string[] = [];
   for (const [member, { level }] of typeProps.membersMetadata) {
     const type = typeProps.members.get(member)!;
     if (TypeDescriptions.isComposite(type)) {
       const [level, nestedStr] = compositeToString(type);
-      memberStrings.push(`${level} ${member.name} ${nestedStr}`);
+      memberStrings.push(`${level} ${member.name}${nestedStr}`);
     } else {
       memberStrings.push(`${level} ${member.name} ${type.toString()}`);
     }
   }
   const [level, parentLine] = compositeParentLineToString(typeProps);
-  return [level, `${parentLine}${memberStrings.map(m => ",\n  " + m).join("")}`];
+  return [level, `${parentLine}${memberStrings.map(m => "\n  " + m.replaceAll(/\n/g, "\n  ")).join("")}`];
 }
 
 function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [number, string] {
@@ -73,10 +70,10 @@ function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [nu
     const dims = typeProps.dimension.map(dim => {
       return `${dim.lowerBound.value}:${dim.upperBound.value}`;
     }).join(", ");
-    dimensionStr = ` DIMENSION (${dims})`;
+    dimensionStr = `DIMENSION(${dims})`;
   }
-  let unionStr = TypeDescriptions.isUnion(typeProps) ? " UNION" : "";
-  return [typeProps.level, `${unionStr}${dimensionStr}`];
+  let unionStr = TypeDescriptions.isUnion(typeProps) ? "UNION" : "";
+  return [typeProps.level, `${unionStr}${unionStr!=="" && dimensionStr!=="" ? " " : ""}${dimensionStr}`];
 }
 
 /**
@@ -95,20 +92,23 @@ function getDeclaredVariableRepresentation(
   let str = ""
   if (TypeDescriptions.isComposite(typeDescription)) {
     const [level, compositeStr] = compositeToString(typeDescription);
-    str = `${level} ${node.name}${compositeStr ? ` ${compositeStr}` : ""};`;
+    str = `${level} ${node.name}${compositeStr !== "" ? `${compositeStr.startsWith("\n")?'':' '}${compositeStr}` : ""};`;
   } else {
-    str = `${node.name} ${typeDescription.toString()};`;
+    const level = typeDescription.parentType ? typeDescription.parentType.membersMetadata.get(typeDescription.variableNode!)?.level : undefined;
+    const levelStr = level !== undefined ? `${level} ` : "";
+    str = `${levelStr}${node.name} ${typeDescription.toString()};`;
   }
-  while (TypeDescriptions.isComposite(typeDescription) && typeDescription.parentType) {
+  while (typeDescription.parentType) {
     typeDescription = typeDescription.parentType;
     const memberNode = typeDescription.variableNode;
     if(memberNode) {
       const [level, parentLine] = compositeParentLineToString(typeDescription);
-      str = `${level} ${memberNode!.name}${parentLine!==""?' '+parentLine:""}\n${str.replaceAll(/\n/g, "\n  ")}`;
+      str = `${level} ${memberNode!.name}${parentLine!==""?' '+parentLine:""}\n  ${str.replaceAll(/\n/g, "\n  ")}`;
     }
   }
-  return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n      ")}`);
-  /*const scope = unit.scopeCaches.regular.get(node);
+  return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n    ")}`);
+  /*//TODO erase
+  const scope = unit.scopeCaches.regular.get(node);
   const qualifiedNode = scope?.symbolTable.nodeLookup.get(node);
 
   if (!qualifiedNode) {

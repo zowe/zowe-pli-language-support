@@ -264,10 +264,10 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
        */
       case ast.DefaultAttribute.BINARY:
       case ast.DefaultAttribute.DECIMAL: {
-        this.addPrecision(attribute, token);
         const base =
-          type === ast.DefaultAttribute.BINARY ? Base.Binary : Base.Decimal;
+        type === ast.DefaultAttribute.BINARY ? Base.Binary : Base.Decimal;
         this.addAttributeWitness(AttributeKind.Base, base, attribute, token);
+        this.addPrecision(attribute, token);
         break;
       }
 
