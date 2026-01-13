@@ -35,7 +35,7 @@ types.expectTypeAt("c", {
     },
     Y: {
       type: types.dataTypes.String,
-      bits: {
+      stringBits: {
         kind: types.stringKinds.Character,
         length: 10,
       },

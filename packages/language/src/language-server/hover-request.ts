@@ -36,7 +36,7 @@ import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
-import { TypeDescriptions } from "../typesystem/descriptions";
+import { DataType, TypeDescriptions } from "../typesystem/descriptions";
 
 type MarkupResponse = string | null;
 
@@ -72,7 +72,7 @@ function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [nu
     }).join(", ");
     dimensionStr = `DIMENSION(${dims})`;
   }
-  let unionStr = TypeDescriptions.isUnion(typeProps) ? "UNION" : "";
+  let unionStr = typeProps.type === DataType.Union ? "UNION" : "";
   return [typeProps.level, `${unionStr}${unionStr!=="" && dimensionStr!=="" ? " " : ""}${dimensionStr}`];
 }
 
@@ -107,32 +107,6 @@ function getDeclaredVariableRepresentation(
     }
   }
   return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n    ")}`);
-  /*//TODO erase
-  const scope = unit.scopeCaches.regular.get(node);
-  const qualifiedNode = scope?.symbolTable.nodeLookup.get(node);
-
-  if (!qualifiedNode) {
-    throw new Error("Qualified node not found");
-  }
-
-  if (qualifiedNode.level > 1) {
-    // structure member
-    const hierarchy: string[] = [];
-    let current: QualifiedSyntaxNode | null = qualifiedNode;
-    while (current) {
-      hierarchy.unshift(`${current.level} ${current.name}`);
-      current = current.getParent();
-    }
-    return formatPliCodeBlock(`DCL ${hierarchy.join(", ")};`);
-  } else {
-    // regular declaration
-    const name = node.name;
-    const attrs = getAttributes(node);
-    const decl = attrs.length
-      ? `DCL ${name} ${attrs.join(" ")};`
-      : `DCL ${name};`;
-    return formatPliCodeBlock(decl);
-  }*/
 }
 
 /**

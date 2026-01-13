@@ -273,48 +273,6 @@ export const AttributePropertyNames = {
   [AttributeKind.AttributeWitnesses]: "attributeWitnesses" as const,
 } satisfies { [K in AttributeKind]: string };
 
-type PropertyByAttributeKind<AK extends AttributeKind> = typeof AttributePropertyNames[AK];
-const AttributeKindByPropertyConst = {
-  accessMode: AttributeKind.AccessMode,
-  alignment: AttributeKind.Alignment,
-  areaSize: AttributeKind.AreaSize,
-  assignability: AttributeKind.Assignability,
-  base: AttributeKind.Base,
-  bufferMode: AttributeKind.BufferMode,
-  connection: AttributeKind.Connection,
-  dataType: AttributeKind.DataType,
-  dimension: AttributeKind.Dimension,
-  endianess: AttributeKind.Endianess,
-  fileUsage: AttributeKind.FileUsage,
-  floatFormat: AttributeKind.FloatFormat,
-  initial: AttributeKind.Initial,
-  list: AttributeKind.List,
-  locatorKind: AttributeKind.LocatorKind,
-  numberMode: AttributeKind.NumberMode,
-  optional: AttributeKind.Optional,
-  ordinalNames: AttributeKind.OrdinalNames,
-  parameter: AttributeKind.Parameter,
-  parameterPassDirection: AttributeKind.ParameterPassDirection,
-  parameterPassMode: AttributeKind.ParameterPassMode,
-  pictureKind: AttributeKind.PictureKind,
-  position: AttributeKind.Position,
-  precision: AttributeKind.Precision,
-  scale: AttributeKind.Scale,
-  scope: AttributeKind.Scope,
-  scanMode: AttributeKind.ScanMode,
-  sign: AttributeKind.Sign,
-  storage: AttributeKind.Storage,
-  stringFormat: AttributeKind.StringFormat,
-  stringBits: AttributeKind.StringBits,
-  transmissionDirection: AttributeKind.TransmissionDirection,
-  variable: AttributeKind.Variable,
-  volatility: AttributeKind.Volatility,
-  like: AttributeKind.SetLike,
-  typeRef: AttributeKind.SetType,
-  attributeWitnesses: AttributeKind.AttributeWitnesses,
-} satisfies Record<PropertyByAttributeKind<AttributeKind>, AttributeKind>;
-type AttributeKindByProperty = typeof AttributeKindByPropertyConst;
-
 export const AttributeStringifiers: {
   [K in AttributeKind]: AttributeStringifier<K>;
 } = {
@@ -733,12 +691,6 @@ export const AttributeKindsByDataType = {
   [DataType.Task]: [...CommonAttributeKinds] as const,
 } satisfies Record<DataType, AttributeKind[]>;
 
-type DataTypesByDataTypeEnum = {
-  [DT in DataType]: { 
-    [P in PropertyByAttributeKind<typeof AttributeKindsByDataType[DT][number]>]: AttributeKindByProperty[P] 
-  }
-};
-
 export type AttributeWitness<K extends keyof AttributeTypes> = {
   value: AttributeTypes[K];
   witness: ast.DeclarationAttribute;
@@ -791,7 +743,7 @@ interface WithTypeDescriminator {
 }
 
 interface WithParentType {
-  parentType?: TypeDescriptions.Structure | TypeDescriptions.Union;
+  parentType?: TypeDescriptions.Composite;
   variableNode?: ast.DeclaredVariable;
 }
 
@@ -1101,7 +1053,6 @@ export const MaximumPrecisions: Record<ScaleMode, Record<Base, number>> = {
 };
 
 //TODO endianness default value depends on platform (BIGENDIAN except on Intel where the default is LITTLEENDIAN)
-const xxx = AttributeKindsByDataType[DataType.Arithmetic]
 function createArithmeticTypeDescription({
   mode = NumberMode.Real,
   scale = ScaleMode.Float,
@@ -1520,25 +1471,25 @@ interface WithMembers {
 const StructureType = DataType.Structure;
 type StructureType = typeof StructureType;
 
-interface StructureTypeDescriptionProps extends WithMembers, WithParentType {
+interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
+  type: DataType.Structure | DataType.Union;
   dimension?: DimensionBound[];
+  storage?: StorageClass;
+  alignment?: Alignment;
 }
 
-interface StructureTypeDescription
-  extends StructureTypeDescriptionProps {
-  type: StructureType;
-}
+interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
 
-function createStructureTypeDescription({
+function createCompositeTypeDescription(type: DataType.Structure | DataType.Union, {
   level = 1,
   members = new Map(),
   membersMetadata = new Map(),
   dimension,
   variableNode,
   parentType
-}: Partial<StructureTypeDescriptionProps>): StructureTypeDescription {
+}: Partial<CompositeTypeDescriptionProps>): CompositeTypeDescription {
   return {
-    type: StructureType,
+    type,
     level,
     members,
     membersMetadata,
@@ -1551,34 +1502,6 @@ function createStructureTypeDescription({
 //--- Union ---
 const UnionType = DataType.Union;
 type UnionType = typeof UnionType;
-
-interface UnionTypeDescriptionProps extends WithMembers, WithParentType {
-  dimension?: DimensionBound[];
-}
-
-interface UnionTypeDescription
-  extends UnionTypeDescriptionProps {
-  type: UnionType;
-}
-
-function createUnionTypeDescription({
-  level = 1,
-  members = new Map(),
-  membersMetadata = new Map(),
-  dimension,
-  variableNode,
-  parentType
-}: Partial<UnionTypeDescriptionProps>): UnionTypeDescription {
-  return {
-    type: UnionType,
-    level,
-    members,
-    membersMetadata,
-    dimension,
-    variableNode,
-    parentType
-  };
-}
 
 //--- Implications between attributes ---
 
@@ -1684,8 +1607,8 @@ export namespace TypeDescriptions {
     | String
     | Task
     | Unknown
-    | Structure
-    | Union;
+    | Composite
+    ;
   export type TypeDescriptionType = Any["type"];
 
   //TODO check default values
@@ -1746,22 +1669,11 @@ export namespace TypeDescriptions {
     [AttributeKind.SetLike]: null,
   };
 
-  export const Structure = createStructureTypeDescription;
-  export type Structure = StructureTypeDescription;
-  export const isStructure = (
-    type: TypeDescriptions.Any,
-  ): type is StructureTypeDescription => type.type === StructureType;
-
-  export const Union = createUnionTypeDescription;
-  export type Union = UnionTypeDescription;
-  export const isUnion = (
-    type: TypeDescriptions.Any,
-  ): type is UnionTypeDescription => type.type === UnionType;
-
-  export type Composite = Union | Structure;
+  export const Composite = createCompositeTypeDescription;
+  export type Composite = CompositeTypeDescription;
   export const isComposite = (
     type: TypeDescriptions.Any,
-  ): type is Composite => isUnion(type) || isStructure(type);
+  ): type is Composite => type.type === DataType.Structure || type.type === DataType.Union;
 
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;

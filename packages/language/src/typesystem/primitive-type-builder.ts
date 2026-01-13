@@ -822,8 +822,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         this.unit,
       );
       if (
-        !TypeDescriptions.isStructure(typeNode) &&
-        !TypeDescriptions.isUnion(typeNode)
+        !TypeDescriptions.isComposite(typeNode)
       ) {
         this.diagnostics.push(
           diagnosticFromCode(PLICodes.Severe.IBM1650I, this.elementName),

@@ -2,7 +2,7 @@ import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { computeDimensions } from "./computed-attributes";
-import { BuilderDeclareItem, TypeDescriptions } from "./descriptions";
+import { BuilderDeclareItem, DataType, TypeDescriptions } from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
 export interface CompositeTypeBuilder {
@@ -12,7 +12,7 @@ export interface CompositeTypeBuilder {
   isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean;
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-  ): TypeDescriptions.Structure | TypeDescriptions.Union;
+  ): TypeDescriptions.Composite;
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
     compilationUnit: CompilationUnit,
@@ -22,7 +22,7 @@ export interface CompositeTypeBuilder {
 export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-  ): TypeDescriptions.Structure | TypeDescriptions.Union {
+  ): TypeDescriptions.Composite {
     const dimensionsAttr = declaredItem.attributes.find(
       (attr) => attr.kind === ast.SyntaxKind.DimensionsDataAttribute,
     ) as ast.DimensionsDataAttribute | undefined;
@@ -30,20 +30,12 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       dimensionsAttr && dimensionsAttr.dimensions
         ? computeDimensions(dimensionsAttr.dimensions)
         : undefined;
-    if (
-      declaredItem.attributes.some(
-        (attr) =>
-          attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
-          attr.type === ast.DefaultAttribute.UNION,
-      )
-    ) {
-      return TypeDescriptions.Union({
-        level: declaredItem.level,
-        dimension,
-        variableNode: declaredItem.node,
-      });
-    }
-    return TypeDescriptions.Structure({
+    const hasUnion = declaredItem.attributes.some(
+      (attr) =>
+        attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+        attr.type === ast.DefaultAttribute.UNION,
+    );
+    return TypeDescriptions.Composite(hasUnion ? DataType.Union : DataType.Structure,{
       level: declaredItem.level,
       dimension,
       variableNode: declaredItem.node,

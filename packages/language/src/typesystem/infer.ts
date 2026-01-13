@@ -17,7 +17,6 @@ import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
-import { it } from "node:test";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -134,10 +133,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
-    const compositeParents: (
-      | TypeDescriptions.Structure
-      | TypeDescriptions.Union
-    )[] = [];
+    const compositeParents: (TypeDescriptions.Composite)[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       if (builder.isCompositeDeclaredItem(item)) {
@@ -221,7 +217,7 @@ export class DefaultTypeInferer implements TypeInferer {
     // );
 
     function compositeAddMember(
-      compositeType: TypeDescriptions.Structure | TypeDescriptions.Union,
+      compositeType: TypeDescriptions.Composite,
       item: BuilderDeclareItem,
       memberType: TypeDescriptions.Any,
     ) {
@@ -242,7 +238,7 @@ export class DefaultTypeInferer implements TypeInferer {
       if (predicate(type)) {
         callback(type, item, isTopLevel);
       }
-      if (TypeDescriptions.isStructure(type)) {
+      if (TypeDescriptions.isComposite(type)) {
         const subMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>(
           type.members
             .keys()

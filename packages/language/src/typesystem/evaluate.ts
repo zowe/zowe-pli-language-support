@@ -41,7 +41,7 @@ export function evaluateExpression(expression: Expression): Value {
           case SyntaxKind.StringLiteral:
             return {
               type: TypeDescriptions.String({
-                bits: {
+                stringBits: {
                   kind: StringKind.Character,
                   length: literal.value.length,
                 },
