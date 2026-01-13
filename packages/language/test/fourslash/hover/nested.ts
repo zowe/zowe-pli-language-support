@@ -21,6 +21,8 @@
 //// PUT(<|3>ZIP);
 //// PUT(<|4>MAILBOX);
 
+hover.expectMarkdownAt(4, hover.codeBlock(`DCL 1 ADDRESS UNION,
+      2 MAILBOX FIXED DECIMAL PRECISION(4);`));
 hover.expectMarkdownAt(3, hover.codeBlock(`DCL 1 ADDRESS UNION,
       2 LOCATION,
         3 ZIP FIXED DECIMAL PRECISION(5);`));
