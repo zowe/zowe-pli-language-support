@@ -122,13 +122,15 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     if(TypeDescriptions.isComposite(type)) {
       const newComposite = {
         ...type,
-        //TODO handle deletion of other attributes only for a root element
-        dimension: undefined,
-        //</TODO>
         level,
         parentType,
         variableNode: variable,
       } as TypeDescriptions.Composite;
+      if(parentType === undefined) {
+        //TODO handle deletion of other attributes only for a root element
+        newComposite.dimension = undefined;
+        //</TODO>
+      }
       newComposite.members = new Map([...type.members.entries()].map(([name, member]) => [
         name,
         this.cloneTypeUsingDifferentVariable(member, name, level+1, newComposite),
