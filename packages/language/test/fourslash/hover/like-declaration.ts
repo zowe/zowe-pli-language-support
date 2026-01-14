@@ -20,9 +20,8 @@
 //// DCL WHERE CHAR(15);
 //// WHERE = LOC.<|2>CITY;
 
-hover.expectMarkdownAt(2, hover.codeBlock(`DCL 2 LOC,
-      3 STREET CHARACTER(20),
-      3 CITY CHARACTER(15);`));
-hover.expectMarkdownAt(1, hover.codeBlock(`DCL 2 LOC,
-      3 STREET CHARACTER(20),
-      3 CITY CHARACTER(15);`));
+hover.expectMarkdownAt(2, hover.codeBlock(`DCL 1 LOC,
+      2 CITY CHARACTER(15);`));
+hover.expectMarkdownAt(1, hover.codeBlock(`DCL 1 LOC,
+      2 STREET CHARACTER(20),
+      2 CITY CHARACTER(15);`));

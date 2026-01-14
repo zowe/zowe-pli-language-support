@@ -78,20 +78,19 @@ function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [nu
  * @returns A string representation of the declared variable.
  * @throws An error if the qualified node is not found.
  */
-function getDeclaredVariableRepresentation(
-  unit: CompilationUnit,
-  node: DeclaredVariable,
+function renderDeclarationFromType(
+  nodeName: string,
+  typeDescription: TypeDescriptions.Any,
 ): string {
-  let typeDescription = unit.services.inferer.inferType(node, unit);
   let str = ""
   if (TypeDescriptions.isComposite(typeDescription)) {
     const [level, compositeStr] = compositeToString(typeDescription);
-    str = `${level} ${node.name}${compositeStr !== "" ? `${compositeStr.startsWith("\n")?'':' '}${compositeStr}` : ""};`;
+    str = `${level} ${nodeName}${compositeStr !== "" ? `${compositeStr.startsWith("\n")?'':' '}${compositeStr}` : ""};`;
   } else {
     const level = typeDescription.parentType ? typeDescription.parentType.membersMetadata.get(typeDescription.variableNode!)?.level : undefined;
     const levelStr = level !== undefined ? `${level} ` : "";
     const typeDescriptionStr = typeDescription.toString();
-    str = `${levelStr}${node.name} ${typeDescriptionStr};`;
+    str = `${levelStr}${nodeName} ${typeDescriptionStr};`;
   }
   while (typeDescription.parentType) {
     typeDescription = typeDescription.parentType;
@@ -295,7 +294,7 @@ function getNodeRepresentation(
 ): string | null {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
-      return getDeclaredVariableRepresentation(unit, node);
+      return renderDeclarationFromType(node.name!, unit.services.inferer.inferType(node, unit));
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItemFile:
@@ -335,6 +334,16 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
   const ref = getReference(token.element);
   if (!ref?.node) {
     return null;
+  }
+  
+  //TODO is this always correct??
+  if(token.element.container && token.element.container.kind === SyntaxKind.MemberCall) {
+    const memberCall = token.element.container;
+    if(memberCall.previous && memberCall.previous.element && memberCall.previous.element.ref && memberCall.previous.element.ref.node) {
+      const compositeType = unit.services.inferer.inferType(memberCall.previous.element.ref.node!, unit) as TypeDescriptions.Composite;
+      const actualType = compositeType.members.get(ref.node as DeclaredVariable);
+      return renderDeclarationFromType(token.image, actualType!);
+    }
   }
 
   return getNodeRepresentation(unit, ref.node);

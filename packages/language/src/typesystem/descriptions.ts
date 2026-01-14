@@ -1905,11 +1905,11 @@ export interface BuilderDeclareItem {
 
 function makeToString(witnesses: AttributeWitnesses): () => string {
   return () => {
-    return witnesses.order.filter(a => witnesses.witnesses[a]?.value).map(a => {
+    return witnesses.order.filter(a => typeof witnesses.witnesses[a]?.value !== "undefined").map(a => {
       const stringify = AttributeStringifiers[a] as (value: any) => string;
       const value = witnesses.witnesses[a]?.value;
       return stringify(value);
-    }).filter(a => a).join(" ");
+    }).filter(a => typeof a !== "undefined").join(" ");
   };
 }
 

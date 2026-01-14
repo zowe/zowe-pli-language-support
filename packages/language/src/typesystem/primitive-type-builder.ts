@@ -12,6 +12,7 @@
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
+import { DeclaredVariable, NamedElement } from "../syntax-tree/ast";
 import { PLICodes } from "../validation/pli-codes";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { AttributeCollectorResult } from "./attribute-witnesses";
@@ -87,12 +88,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         };
       } else {
         return {
-          type: {
-            ...typeNode,
-            //TODO handle deletion of other attributes only for a root element
-            dimension: undefined,
-            parentType: undefined,
-          },
+          type: this.cloneTypeUsingDifferentVariable(typeNode, this.elementName.element as DeclaredVariable, 1),
           diagnostics: this.diagnostics,          
         };
       }
@@ -121,5 +117,36 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       type: TypeDescriptions.createPrimitive(dataType, this.attributeWitnesses),
       diagnostics: this.diagnostics,
     };
+  }
+  cloneTypeUsingDifferentVariable(type: TypeDescriptions.Any, variable: DeclaredVariable, level: number, parentType?: TypeDescriptions.Composite): TypeDescriptions.Any {
+    if(TypeDescriptions.isComposite(type)) {
+      const newComposite = {
+        ...type,
+        //TODO handle deletion of other attributes only for a root element
+        dimension: undefined,
+        //</TODO>
+        level,
+        parentType,
+        variableNode: variable,
+      } as TypeDescriptions.Composite;
+      newComposite.members = new Map([...type.members.entries()].map(([name, member]) => [
+        name,
+        this.cloneTypeUsingDifferentVariable(member, name, level+1, newComposite),
+      ] as const));
+      newComposite.membersMetadata = new Map([...type.membersMetadata.entries()].map(([name, metadata]) => [
+        name,
+        {
+          ...metadata,
+          level: level + 1,
+        },
+      ] as const));
+      return newComposite;
+    } else {
+      return {
+        ...type,
+        variableNode: variable,
+        parentType,
+      } as Exclude<TypeDescriptions.Any, TypeDescriptions.Composite>;
+    }
   }
 }
