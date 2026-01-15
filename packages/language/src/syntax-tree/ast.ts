@@ -2086,7 +2086,8 @@ export interface EntryAttribute extends AstNode {
   options: Options[];
   variable: Token[];
   returns: ReturnsOption[];
-  environmentName: Expression[];
+  hasExternal: boolean;
+  environmentName: Expression | null;
   entryToken: Token | null;
 }
 export function createEntryAttribute(): EntryAttribute {
@@ -2098,8 +2099,9 @@ export function createEntryAttribute(): EntryAttribute {
     options: [],
     variable: [],
     returns: [],
-    environmentName: [],
+    environmentName: null,
     entryToken: null,
+    hasExternal: false,
   };
 }
 export interface EntryParameterDescription extends AstNode {

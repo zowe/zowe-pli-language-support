@@ -391,7 +391,15 @@ export const AttributeStringifiers: {
       return undefined;
     }
     //TODO: Implement stringification of EntryAttribute
-    return "ENTRY(...)";
+    let external = "";
+    if(value.hasExternal) {
+      external = " EXTERNAL";
+      if(value.environmentName) {
+        //TODO: implement environment name expression stringification
+        external += `(...)`;
+      }
+    }
+    return `ENTRY(...)${external}`;
   },
   [AttributeKind.FileUsage]: function (value: FileUsage): string {
     switch (value) {

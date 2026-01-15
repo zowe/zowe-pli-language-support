@@ -5829,6 +5829,7 @@ const entryAttribute = rule(
           tokens.EXTERNAL,
         )
       ) {
+        element.hasExternal = true;
         if (
           state.tryConsume(
             element,
@@ -5837,7 +5838,7 @@ const entryAttribute = rule(
           )
         ) {
           const envExpression = expression.rule(state);
-          envExpression && element.environmentName.push(envExpression);
+          envExpression && (element.environmentName = envExpression);
           state.consume(
             element,
             CstNodeKind.EntryAttribute_CloseParenEnv,

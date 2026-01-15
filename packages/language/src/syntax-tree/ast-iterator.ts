@@ -404,7 +404,7 @@ export function forEachNode(
       node.attributes.forEach(action);
       node.options.forEach(action);
       node.returns.forEach(action);
-      node.environmentName.forEach(action);
+      node.environmentName && action(node.environmentName);
       break;
     case SyntaxKind.EntryParameterDescription:
       node.attributes.forEach(action);
