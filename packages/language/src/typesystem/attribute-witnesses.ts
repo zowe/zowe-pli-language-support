@@ -97,6 +97,12 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
             attribute,
             attribute.entryToken,
           );
+          this.addAttributeWitness(
+            AttributeKind.Entry,
+            attribute,
+            attribute,
+            attribute.entryToken,
+          );
         }
         break;
       case ast.SyntaxKind.EnvironmentAttribute:

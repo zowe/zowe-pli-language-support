@@ -80,6 +80,8 @@ export enum AttributeKind {
   Dimension,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
   Endianess,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-entry-attribute */
+  Entry,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-record-stream-attributes */
   FileUsage,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
@@ -201,6 +203,7 @@ export type AttributeTypes = {
   [AttributeKind.DataType]: DataType;
   [AttributeKind.Dimension]: DimensionBound[] | undefined;
   [AttributeKind.Endianess]: Endianess;
+  [AttributeKind.Entry]: ast.EntryAttribute | undefined;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
   [AttributeKind.Initial]: ast.InitialAttribute | undefined;
@@ -247,6 +250,7 @@ export const AttributePropertyNames = {
   [AttributeKind.FileUsage]: "fileUsage" as const,
   [AttributeKind.FloatFormat]: "floatFormat" as const,
   [AttributeKind.Initial]: "initial" as const,
+  [AttributeKind.Entry]: "entry" as const,
   [AttributeKind.List]: "list" as const,
   [AttributeKind.LocatorKind]: "locatorKind" as const,
   [AttributeKind.NumberMode]: "numberMode" as const,
@@ -381,6 +385,13 @@ export const AttributeStringifiers: {
       default:
         assertUnreachable(value);
     }
+  },
+  [AttributeKind.Entry]: function (value: ast.EntryAttribute | undefined): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+    //TODO: Implement stringification of EntryAttribute
+    return "ENTRY(...)";
   },
   [AttributeKind.FileUsage]: function (value: FileUsage): string {
     switch (value) {
@@ -693,7 +704,7 @@ export const AttributeKindsByDataType = {
     ...CommonAttributeKinds,
     AttributeKind.LocatorKind,
   ] as const,
-  [DataType.Entry]: [...CommonAttributeKinds] as const,
+  [DataType.Entry]: [...CommonAttributeKinds, AttributeKind.Entry] as const,
   [DataType.Ordinal]: [
     ...CommonAttributeKinds,
     AttributeKind.OrdinalNames,
@@ -1626,6 +1637,7 @@ export namespace TypeDescriptions {
     [AttributeKind.AccessMode]: AccessMode.Sequential,
     [AttributeKind.FloatFormat]: FloatFormat.IEEE,
     [AttributeKind.Endianess]: Endianess.Big,
+    [AttributeKind.Entry]: undefined,
     [AttributeKind.DataType]: DataType.Area,
     [AttributeKind.Dimension]: undefined,
     [AttributeKind.Initial]: undefined,
