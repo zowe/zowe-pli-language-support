@@ -315,7 +315,7 @@ export function parseAbstractCompilerOptions(
       uri: uri?.toString(),
       message: parserError.message,
       range: tokenToRange(errorToken),
-      severity: 1,
+      severity: Severity.E,
     });
   }
   return {
