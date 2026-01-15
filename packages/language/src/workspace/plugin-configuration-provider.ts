@@ -10,8 +10,8 @@
  */
 
 import { minimatch } from "minimatch";
-import { Diagnostic } from "vscode-languageserver-types";
-import { Diagnostic as CompilationUnitDiagnostic } from "../language-server/types";
+import { Diagnostic as LspDiagnostic } from "vscode-languageserver-types";
+import { Diagnostic } from "../language-server/types";
 import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import {
   AbstractCompilerOptions,
@@ -54,7 +54,7 @@ export interface ProgramConfig {
    * Number of issues found in the pli-options for this program config (which generate compiler options)
    * Used to avoid duplicate issue reporting later on when running translation in a program context
    */
-  issues?: CompilationUnitDiagnostic[];
+  issues?: Diagnostic[];
 }
 
 interface SerializedProgramConfig {
@@ -268,7 +268,7 @@ export class PluginConfigurationProvider {
    * @param workspacePath The full path to the workspace to load plugin configurations from
    * @returns List of diagnostics encountered during loading & processing
    */
-  public async init(workspacePath: string): Promise<Diagnostic[]> {
+  public async init(workspacePath: string): Promise<LspDiagnostic[]> {
     this.workspacePath = workspacePath;
     return this.loadConfigurations();
   }
@@ -326,7 +326,7 @@ export class PluginConfigurationProvider {
    *
    * @returns List of diagnostics encountered during loading & processing
    */
-  public async reloadConfigurations(): Promise<Diagnostic[]> {
+  public async reloadConfigurations(): Promise<LspDiagnostic[]> {
     console.log("Reloading .pliplugin configurations...");
     return this.loadConfigurations();
   }
@@ -336,7 +336,7 @@ export class PluginConfigurationProvider {
    *
    * @returns List of diagnostics encountered during loading & processing
    */
-  private async loadConfigurations(): Promise<Diagnostic[]> {
+  private async loadConfigurations(): Promise<LspDiagnostic[]> {
     const workspaceUri = URI.parse(this.workspacePath);
 
     // load configs
@@ -393,7 +393,7 @@ export class PluginConfigurationProvider {
    */
   private async loadProcessGroupConfig(
     processGroupConfigUri: URI,
-  ): Promise<Diagnostic[]> {
+  ): Promise<LspDiagnostic[]> {
     if (await FileSystemProviderInstance.fileExists(processGroupConfigUri)) {
       const processGrpConfig = await FileSystemProviderInstance.readFile(
         processGroupConfigUri,
@@ -427,8 +427,8 @@ export class PluginConfigurationProvider {
    * Populates the $computedLibs property of each process group, which is used to resolve includes
    * @returns List of diagnostics encountered during processing
    */
-  private async postProcessProcessGroups(): Promise<Diagnostic[]> {
-    const diagnostics: Diagnostic[] = [];
+  private async postProcessProcessGroups(): Promise<LspDiagnostic[]> {
+    const diagnostics: LspDiagnostic[] = [];
     for (const processGroup of this.processGroupConfigs.values()) {
       // all computed libs for this group, dirs + ddnames
       // @montymxb Using a map here to avoid duplicates over a set, since our entries are objects.
@@ -632,7 +632,9 @@ export class PluginConfigurationProvider {
    * @param text Raw text content of .pliplugin/proc_grps.json to parse
    * @returns List of diagnostics encountered during loading & processing
    */
-  public async parseProcessGroupConfigs(text: string): Promise<Diagnostic[]> {
+  public async parseProcessGroupConfigs(
+    text: string,
+  ): Promise<LspDiagnostic[]> {
     try {
       const serializedData: SerializedProcessGroup[] = JSON.parse(text).pgroups;
       const groupConfigs = serializedData.map(deserializeProcessGroup);
@@ -653,7 +655,7 @@ export class PluginConfigurationProvider {
    */
   public async setProcessGroupConfigs(
     processGroupConfigs: ProcessGroup[],
-  ): Promise<Diagnostic[]> {
+  ): Promise<LspDiagnostic[]> {
     this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
