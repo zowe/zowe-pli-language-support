@@ -12,7 +12,7 @@
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
-import { DeclaredVariable, NamedElement } from "../syntax-tree/ast";
+import { DeclaredVariable } from "../syntax-tree/ast";
 import { PLICodes } from "../validation/pli-codes";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { AttributeCollectorResult } from "./attribute-witnesses";
@@ -22,8 +22,6 @@ import {
   AttributeKind,
   AttributeWitnesses,
 } from "./descriptions";
-
-
 
 type BuiltType = {
   type: TypeDescriptions.Any | undefined;
@@ -41,7 +39,6 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   constructor(private elementName: Token, collected: AttributeCollectorResult, private unit: CompilationUnit) {
     this.attributeWitnesses = collected.witnesses;
     this.possibleDataTypes = collected.dataTypeGuess;
-    this.diagnostics = collected.diagnostics;
   }
 
   build() {

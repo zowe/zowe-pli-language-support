@@ -142,6 +142,7 @@ export class DefaultTypeInferer implements TypeInferer {
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       const attributes = builder.collectAttributes(item);
+      compilationUnit.diagnostics.addAll(DiagnosticCategory.TypeSystem, attributes.diagnostics);
       if (builder.isCompositeDeclaredItem(item, attributes)) {
         const compositeType = builder.handleCompositeDeclaredItem(item, attributes);
         compilationUnit.services.typeCache.set(item.node, compositeType);
