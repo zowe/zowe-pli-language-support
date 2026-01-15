@@ -67,7 +67,9 @@ export class CompilerOptionsProcessor {
       mergedAbstractOptions = {
         options: [...programConfig.abstractOptions.options],
         tokens: [],
-        issues: [],
+        issues: programConfig.issues
+          ? programConfig.issues.map((diag) => ({ ...diag }))
+          : [],
       };
     }
 
@@ -81,7 +83,7 @@ export class CompilerOptionsProcessor {
       if (mergedAbstractOptions) {
         mergedAbstractOptions.options.push(...srcAbstractOptions.options);
         mergedAbstractOptions.tokens.push(...srcAbstractOptions.tokens);
-        mergedAbstractOptions.issues = srcAbstractOptions.issues;
+        mergedAbstractOptions.issues.push(...srcAbstractOptions.issues);
       } else {
         mergedAbstractOptions = srcAbstractOptions;
       }
@@ -99,7 +101,7 @@ export class CompilerOptionsProcessor {
       //  this should be removed once we break up the translation process to avoid this issue
 
       //  shave off the issues that are already present in the process group config
-      const issueCount = programConfig?.issueCount;
+      const issueCount = programConfig?.issues?.length;
       if (issueCount) {
         if (ranges.length === 0) {
           // no *PROCESS to attach to, slice them off instead
@@ -107,6 +109,9 @@ export class CompilerOptionsProcessor {
             compilerOptionResult.issues.slice(issueCount);
         } else {
           const range = ranges[0];
+          const sourceCompilerOptionsUri = compilerOptionResult.issues.find(
+            (issue) => issue.uri !== undefined,
+          )?.uri;
           // update just these first 'issueCount' issues to report on *PROCESS
           for (let i = 0; i < issueCount; i++) {
             if (i < compilerOptionResult.issues.length) {
@@ -117,6 +122,7 @@ export class CompilerOptionsProcessor {
                   range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
               };
               issue.message = `PLI Plugin Config: ${issue.message}`;
+              issue.uri = sourceCompilerOptionsUri;
             } else {
               // leave the rest alone
               break;

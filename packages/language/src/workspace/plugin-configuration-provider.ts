@@ -11,6 +11,7 @@
 
 import { minimatch } from "minimatch";
 import { Diagnostic } from "vscode-languageserver-types";
+import { Diagnostic as CompilationUnitDiagnostic } from "../language-server/types";
 import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import {
   AbstractCompilerOptions,
@@ -53,7 +54,7 @@ export interface ProgramConfig {
    * Number of issues found in the pli-options for this program config (which generate compiler options)
    * Used to avoid duplicate issue reporting later on when running translation in a program context
    */
-  issueCount?: number;
+  issues?: CompilationUnitDiagnostic[];
 }
 
 interface SerializedProgramConfig {
@@ -564,7 +565,7 @@ export class PluginConfigurationProvider {
         );
       }
       programConfig.abstractOptions = abstractOptions;
-      programConfig.issueCount = translatedOptions.issues.length;
+      programConfig.issues = translatedOptions.issues;
     }
   }
 
