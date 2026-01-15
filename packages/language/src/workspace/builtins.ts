@@ -897,7 +897,7 @@ export const BuiltinsTextDocument = TextDocument.create(
 );
 
 export const BuiltinsMacroFile = "builtins-macro.pli";
-export const BuiltinsMacroUri = `${BuiltinsUriSchema}:/${BuiltinsMacroFile}.pli`;
+export const BuiltinsMacroUri = `${BuiltinsUriSchema}:/${BuiltinsMacroFile}`;
 export const BuiltinsMacro = ` /* Preprocessor built-ins */
  COLLATE: PROC RETURNS(); END;
  COMMENT: PROC RETURNS(); END;
