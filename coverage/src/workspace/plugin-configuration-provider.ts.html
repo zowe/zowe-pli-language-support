@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.95% </span>
+                <span class="strong">88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>365/415</span>
+                <span class='fraction'>367/417</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.95% </span>
+                <span class="strong">88% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>365/415</span>
+                <span class='fraction'>367/417</span>
             </div>
         
             
@@ -844,7 +844,9 @@
 <a name='L779'></a><a href='#L779'>779</a>
 <a name='L780'></a><a href='#L780'>780</a>
 <a name='L781'></a><a href='#L781'>781</a>
-<a name='L782'></a><a href='#L782'>782</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L782'></a><a href='#L782'>782</a>
+<a name='L783'></a><a href='#L783'>783</a>
+<a name='L784'></a><a href='#L784'>784</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1486,6 +1488,8 @@
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">28x</span>
@@ -1637,8 +1641,8 @@
  */
 &nbsp;
 import { minimatch } from "minimatch";
-import { Diagnostic } from "vscode-languageserver-types";
-import { Diagnostic as CompilationUnitDiagnostic } from "../language-server/types";
+import { Diagnostic as LspDiagnostic } from "vscode-languageserver-types";
+import { Diagnostic } from "../language-server/types";
 import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import {
   AbstractCompilerOptions,
@@ -1681,7 +1685,7 @@ export interface ProgramConfig {
    * Number of issues found in the pli-options for this program config (which generate compiler options)
    * Used to avoid duplicate issue reporting later on when running translation in a program context
    */
-  issues?: CompilationUnitDiagnostic[];
+  issues?: Diagnostic[];
 }
 &nbsp;
 interface SerializedProgramConfig {
@@ -1895,7 +1899,7 @@ export class PluginConfigurationProvider {
    * @param workspacePath The full path to the workspace to load plugin configurations from
    * @returns List of diagnostics encountered during loading &amp; processing
    */
-  public async init(workspacePath: string): Promise&lt;Diagnostic[]&gt; {
+  public async init(workspacePath: string): Promise&lt;LspDiagnostic[]&gt; {
     this.workspacePath = workspacePath;
     return this.loadConfigurations();
   }
@@ -1953,7 +1957,7 @@ export class PluginConfigurationProvider {
    *
    * @returns List of diagnostics encountered during loading &amp; processing
    */
-<span class="fstat-no" title="function not covered" >  public async reloadConfigurations(): Promise&lt;Diagnostic[]&gt; {</span>
+<span class="fstat-no" title="function not covered" >  public async reloadConfigurations(): Promise&lt;LspDiagnostic[]&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    console.log("Reloading .pliplugin configurations...");</span>
 <span class="cstat-no" title="statement not covered" >    return this.loadConfigurations();</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
@@ -1963,7 +1967,7 @@ export class PluginConfigurationProvider {
    *
    * @returns List of diagnostics encountered during loading &amp; processing
    */
-  private async loadConfigurations(): Promise&lt;Diagnostic[]&gt; {
+  private async loadConfigurations(): Promise&lt;LspDiagnostic[]&gt; {
     const workspaceUri = URI.parse(this.workspacePath);
 &nbsp;
     // load configs
@@ -2020,7 +2024,7 @@ export class PluginConfigurationProvider {
    */
   private async loadProcessGroupConfig(
     processGroupConfigUri: URI,
-  ): Promise&lt;Diagnostic[]&gt; {
+  ): Promise&lt;LspDiagnostic[]&gt; {
     if (await FileSystemProviderInstance.fileExists(processGroupConfigUri)) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
 <span class="cstat-no" title="statement not covered" >      const processGrpConfig = await FileSystemProviderInstance.readFile(</span>
 <span class="cstat-no" title="statement not covered" >        processGroupConfigUri,</span>
@@ -2054,8 +2058,8 @@ export class PluginConfigurationProvider {
    * Populates the $computedLibs property of each process group, which is used to resolve includes
    * @returns List of diagnostics encountered during processing
    */
-  private async postProcessProcessGroups(): Promise&lt;Diagnostic[]&gt; {
-    const diagnostics: Diagnostic[] = [];
+  private async postProcessProcessGroups(): Promise&lt;LspDiagnostic[]&gt; {
+    const diagnostics: LspDiagnostic[] = [];
     for (const processGroup of this.processGroupConfigs.values()) {
       // all computed libs for this group, dirs + ddnames
       // @montymxb Using a map here to avoid duplicates over a set, since our entries are objects.
@@ -2259,7 +2263,9 @@ export class PluginConfigurationProvider {
    * @param text Raw text content of .pliplugin/proc_grps.json to parse
    * @returns List of diagnostics encountered during loading &amp; processing
    */
-  public async parseProcessGroupConfigs(text: string): Promise&lt;Diagnostic[]&gt; {
+  public async parseProcessGroupConfigs(
+    text: string,
+  ): Promise&lt;LspDiagnostic[]&gt; {
     try {
       const serializedData: SerializedProcessGroup[] = JSON.parse(text).pgroups;
       const groupConfigs = serializedData.map(deserializeProcessGroup);
@@ -2280,7 +2286,7 @@ export class PluginConfigurationProvider {
    */
   public async setProcessGroupConfigs(
     processGroupConfigs: ProcessGroup[],
-  ): Promise&lt;Diagnostic[]&gt; {
+  ): Promise&lt;LspDiagnostic[]&gt; {
     this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
       this.processGroupConfigs.set(config.name, config);
@@ -2413,7 +2419,7 @@ export function setPluginConfigurationProvider(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-15T10:14:02.523Z
+                at 2026-01-15T11:10:46.925Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
