@@ -870,7 +870,7 @@ ${JSON.stringify(A,null,4)}`);const J=A;if(n.string(J.id)||n.number(J.id)){const
 
  define alias __SIGNED_INT signed fixed bin(31,0);
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
- `+nO+sO+rO+iO;const TT=ga.create(_e.parse(oO).toString(),"pli",0,cO);const uO="builtins-macro.pli";const lO=`${Xl}:/${uO}.pli`;const mO=` /* Preprocessor built-ins */
+ `+nO+sO+rO+iO;const TT=ga.create(_e.parse(oO).toString(),"pli",0,cO);const uO="builtins-macro.pli";const lO=`${Xl}:/${uO}`;const mO=` /* Preprocessor built-ins */
  COLLATE: PROC RETURNS(); END;
  COMMENT: PROC RETURNS(); END;
  COMPILEDATE: PROC RETURNS(); END;
