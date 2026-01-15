@@ -98,8 +98,9 @@ export namespace SkippedCodeDecorator {
 export namespace MarginIndicatorDecorator {
   const marginIndicatorRangesByUri = new Map<
     string,
-    { m: number; n: number }
+    { m: number; n: number; active: boolean }
   >();
+  let revalidate = false;
 
   export function register(client: LanguageClient, settings: Settings): void {
     client.onNotification(
@@ -108,13 +109,24 @@ export namespace MarginIndicatorDecorator {
         marginIndicatorRangesByUri.set(params.uri, {
           m: params.m,
           n: params.n,
+          active: true,
         });
         updateRulers(settings);
       },
     );
 
     vscode.workspace.onDidCloseTextDocument((doc) => {
-      marginIndicatorRangesByUri.delete(doc.uri.toString());
+      const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
+      if (!margins) return;
+      margins.active = false;
+      revalidate = true; // Force subsequent update
+      updateRulers(settings);
+    });
+
+    vscode.workspace.onDidOpenTextDocument((doc) => {
+      const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
+      if (!margins) return;
+      margins.active = true;
       updateRulers(settings);
     });
   }
@@ -137,7 +149,10 @@ export namespace MarginIndicatorDecorator {
     // The left ruler should be left of the column number (-1), whereas
     // the right ruler should be right of the column number.
     if (settings.marginIndicatorRulers === "automatic") {
-      for (const margins of marginIndicatorRangesByUri.values()) {
+      const activeMargins = Array.from(
+        marginIndicatorRangesByUri.values(),
+      ).filter((m) => m.active);
+      for (const margins of activeMargins) {
         if (!rulers.includes(margins.m - 1)) {
           rulers.push(margins.m - 1);
         }
@@ -149,12 +164,13 @@ export namespace MarginIndicatorDecorator {
       rulers = [1, 72];
     }
 
-    if (rulers.length === existingRulers.length) {
+    if (rulers.length === existingRulers.length && !revalidate) {
       // If the rulers are the same, no need to update
       if (rulers.every((r, i) => r === existingRulers[i])) {
         return;
       }
     }
+    revalidate = false;
     config.update("rulers", rulers, vscode.ConfigurationTarget.Global, true);
   }
 }
