@@ -1648,7 +1648,7 @@ export namespace TypeDescriptions {
     [AttributeKind.ParameterPassMode]: ParameterPassMode.ByAddr,
     [AttributeKind.ParameterPassDirection]: ParameterPassDirection.InOut,
     [AttributeKind.PictureKind]: PictureWideness.Picture,
-    [AttributeKind.StringBits]: { kind: StringKind.Bit, length: 0 },
+    [AttributeKind.StringBits]: { kind: StringKind.Bit, length: 1 },
     [AttributeKind.StringFormat]: StringFormat.Varying,
     [AttributeKind.TransmissionDirection]: TransmissionDirection.Input,
     [AttributeKind.SetType]: null,

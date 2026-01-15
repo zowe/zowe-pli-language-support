@@ -451,7 +451,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
                     AttributeKind.StringBits,
                     {
                         kind,
-                        length: precision && precision.length > 0 ? precision[0] : 0,
+                        length: precision && precision.length > 0 ? precision[0] : 1,
                     }, //TODO default length?
                     attribute,
                     token,
