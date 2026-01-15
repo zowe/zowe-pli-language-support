@@ -340,7 +340,7 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.DataType]: function (value: DataType): string|undefined {
+  [AttributeKind.DataType]: function (value: DataType): string | undefined {
     return undefined;
   },
   [AttributeKind.Dimension]: function (
@@ -620,13 +620,19 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.SetLike]: function (_value: ast.LocatorCall | null): string | undefined {
+  [AttributeKind.SetLike]: function (
+    _value: ast.LocatorCall | null,
+  ): string | undefined {
     return "/* TODO LIKE */";
   },
-  [AttributeKind.SetType]: function (_value: ast.NamedType | null): string | undefined {
+  [AttributeKind.SetType]: function (
+    _value: ast.NamedType | null,
+  ): string | undefined {
     return "/* TODO TYPE */";
   },
-  [AttributeKind.AttributeWitnesses]: function (_value: AttributeWitnesses): string | undefined {
+  [AttributeKind.AttributeWitnesses]: function (
+    _value: AttributeWitnesses,
+  ): string | undefined {
     return undefined;
   },
 };
@@ -650,7 +656,11 @@ export const CommonAttributeKinds = [
   AttributeKind.SetType,
 ] satisfies readonly AttributeKind[];
 
-const CompositeAttributeKinds = [AttributeKind.Dimension, AttributeKind.Alignment, AttributeKind.Storage] satisfies readonly AttributeKind[];
+const CompositeAttributeKinds = [
+  AttributeKind.Dimension,
+  AttributeKind.Alignment,
+  AttributeKind.Storage,
+] satisfies readonly AttributeKind[];
 export const AttributeKindsByDataType = {
   [DataType.Unknown]: [...CommonAttributeKinds] as const,
   [DataType.Structure]: CompositeAttributeKinds,
@@ -679,9 +689,15 @@ export const AttributeKindsByDataType = {
   ] as const,
   [DataType.Format]: [...CommonAttributeKinds] as const,
   [DataType.Label]: [...CommonAttributeKinds] as const,
-  [DataType.Locator]: [...CommonAttributeKinds, AttributeKind.LocatorKind] as const,
+  [DataType.Locator]: [
+    ...CommonAttributeKinds,
+    AttributeKind.LocatorKind,
+  ] as const,
   [DataType.Entry]: [...CommonAttributeKinds] as const,
-  [DataType.Ordinal]: [...CommonAttributeKinds, AttributeKind.OrdinalNames] as const,
+  [DataType.Ordinal]: [
+    ...CommonAttributeKinds,
+    AttributeKind.OrdinalNames,
+  ] as const,
   [DataType.Picture]: [
     ...CommonAttributeKinds,
     AttributeKind.PictureKind,
@@ -753,8 +769,8 @@ interface WithParentType {
 
 interface BaseTypeDescription
   extends WithTypeDescriminator,
-  BaseTypeDescriptionProps,
-  WithParentType { }
+    BaseTypeDescriptionProps,
+    WithParentType {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -865,7 +881,7 @@ function createBaseTypeDescription(
     initial,
     optional,
     parameter,
-    toString
+    toString,
   }: Partial<BaseTypeDescriptionProps>,
 ): BaseTypeDescriptionProps {
   if (!alignment) {
@@ -934,7 +950,7 @@ interface AreaTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface AreaTypeDescription
   extends BaseTypeDescription,
-  AreaTypeDescriptionProps {
+    AreaTypeDescriptionProps {
   type: AreaType;
 }
 
@@ -1023,7 +1039,7 @@ interface ArithmeticTypeDescriptionProps {
 
 interface ArithmeticTypeDescription
   extends BaseTypeDescription,
-  ArithmeticTypeDescriptionProps {
+    ArithmeticTypeDescriptionProps {
   type: ArithmeticType;
 }
 
@@ -1127,7 +1143,7 @@ interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface FileTypeDescription
   extends BaseTypeDescription,
-  FileTypeDescriptionProps {
+    FileTypeDescriptionProps {
   type: FileType;
 }
 
@@ -1160,11 +1176,11 @@ function isFileTypeDescription(
 const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
-interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface FormatTypeDescription
   extends BaseTypeDescription,
-  FormatTypeDescriptionProps {
+    FormatTypeDescriptionProps {
   type: FormatType;
 }
 
@@ -1187,11 +1203,11 @@ function isFormatTypeDescription(
 const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
-interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface LabelTypeDescription
   extends BaseTypeDescription,
-  LabelTypeDescriptionProps {
+    LabelTypeDescriptionProps {
   type: LabelType;
 }
 
@@ -1231,7 +1247,7 @@ interface LocatorTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface LocatorTypeDescription
   extends BaseTypeDescription,
-  LocatorTypeDescriptionProps {
+    LocatorTypeDescriptionProps {
   type: LocatorType;
 }
 
@@ -1259,11 +1275,11 @@ function isLocatorTypeDescription(
 const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
-interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface EntryTypeDescription
   extends BaseTypeDescription,
-  EntryTypeDescriptionProps {
+    EntryTypeDescriptionProps {
   type: EntryType;
 }
 
@@ -1292,7 +1308,7 @@ interface OrdinalTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface OrdinalTypeDescription
   extends BaseTypeDescription,
-  OrdinalTypeDescriptionProps {
+    OrdinalTypeDescriptionProps {
   type: OrdinalType;
 }
 
@@ -1333,7 +1349,7 @@ interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface PictureTypeDescription
   extends BaseTypeDescription,
-  PictureTypeDescriptionProps {
+    PictureTypeDescriptionProps {
   type: PictureType;
 }
 
@@ -1393,7 +1409,7 @@ interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
 
 interface StringTypeDescription
   extends BaseTypeDescription,
-  StringTypeDescriptionProps {
+    StringTypeDescriptionProps {
   type: StringType;
 }
 
@@ -1423,11 +1439,11 @@ function isStringTypeDescription(
 const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
-interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface TaskTypeDescription
   extends BaseTypeDescription,
-  TaskTypeDescriptionProps {
+    TaskTypeDescriptionProps {
   type: TaskType;
 }
 
@@ -1483,7 +1499,7 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   toString(): string;
 }
 
-interface CompositeTypeDescription extends CompositeTypeDescriptionProps { }
+interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
 
 //--- Union ---
 const UnionType = DataType.Union;
@@ -1593,15 +1609,14 @@ export namespace TypeDescriptions {
     | String
     | Task
     | Unknown
-    | Composite
-    ;
+    | Composite;
   export type TypeDescriptionType = Any["type"];
 
   //TODO check default values
   export const DefaultValues: AttributeTypes = {
     [AttributeKind.AttributeWitnesses]: {
       order: [],
-      witnesses: {}
+      witnesses: {},
     },
     [AttributeKind.List]: false,
     [AttributeKind.Optional]: false,
@@ -1656,9 +1671,8 @@ export namespace TypeDescriptions {
   };
 
   export type Composite = CompositeTypeDescription;
-  export const isComposite = (
-    type: TypeDescriptions.Any,
-  ): type is Composite => type.type === DataType.Structure || type.type === DataType.Union;
+  export const isComposite = (type: TypeDescriptions.Any): type is Composite =>
+    type.type === DataType.Structure || type.type === DataType.Union;
 
   export const Unknown = createUnknownTypeDescription;
   export type Unknown = UnknownTypeDescription;
@@ -1729,12 +1743,12 @@ export namespace TypeDescriptions {
     type,
     level,
     variableNode,
-    witnesses
+    witnesses,
   }: {
-    type: DataType.Structure | DataType.Union,
-    witnesses: AttributeWitnesses,
-    level: number,
-    variableNode: ast.DeclaredVariable
+    type: DataType.Structure | DataType.Union;
+    witnesses: AttributeWitnesses;
+    level: number;
+    variableNode: ast.DeclaredVariable;
   }): Composite {
     const attributes = witnesses.witnesses;
     return {
@@ -1745,11 +1759,12 @@ export namespace TypeDescriptions {
       parentType: undefined,
       storage: attributes[AttributeKind.Storage]?.value,
       alignment: attributes[AttributeKind.Alignment]?.value,
-      dimension: attributes[AttributeKind.Dimension]?.value ??
+      dimension:
+        attributes[AttributeKind.Dimension]?.value ??
         DefaultValues[AttributeKind.Dimension],
       variableNode,
-      toString: makeToString(witnesses)
-    }
+      toString: makeToString(witnesses),
+    };
   }
 
   export function createPrimitive(
@@ -1905,11 +1920,14 @@ export interface BuilderDeclareItem {
 
 function makeToString(witnesses: AttributeWitnesses): () => string {
   return () => {
-    return witnesses.order.filter(a => typeof witnesses.witnesses[a]?.value !== "undefined").map(a => {
-      const stringify = AttributeStringifiers[a] as (value: any) => string;
-      const value = witnesses.witnesses[a]?.value;
-      return stringify(value);
-    }).filter(a => typeof a !== "undefined").join(" ");
+    return witnesses.order
+      .filter((a) => typeof witnesses.witnesses[a]?.value !== "undefined")
+      .map((a) => {
+        const stringify = AttributeStringifiers[a] as (value: any) => string;
+        const value = witnesses.witnesses[a]?.value;
+        return stringify(value);
+      })
+      .filter((a) => typeof a !== "undefined")
+      .join(" ");
   };
 }
-

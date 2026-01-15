@@ -1,8 +1,16 @@
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { AttributeCollectorResult, DefaultTypeAttributeCollector } from "./attribute-witnesses";
-import { AttributeKind, BuilderDeclareItem, DataType, TypeDescriptions } from "./descriptions";
+import {
+  AttributeCollectorResult,
+  DefaultTypeAttributeCollector,
+} from "./attribute-witnesses";
+import {
+  AttributeKind,
+  BuilderDeclareItem,
+  DataType,
+  TypeDescriptions,
+} from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
 export interface CompositeTypeBuilder {
@@ -10,10 +18,13 @@ export interface CompositeTypeBuilder {
     declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
   collectAttributes(declaredItem: BuilderDeclareItem): AttributeCollectorResult;
-  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem, attributes: AttributeCollectorResult): boolean;
+  isCompositeDeclaredItem(
+    declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
+  ): boolean;
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    attributes: AttributeCollectorResult
+    attributes: AttributeCollectorResult,
   ): TypeDescriptions.Composite;
   handlePrimitiveDeclaredItem(
     declaredItem: BuilderDeclareItem,
@@ -56,14 +67,19 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     );
     return type;
   }
-  collectAttributes(declaredItem: BuilderDeclareItem): AttributeCollectorResult {
+  collectAttributes(
+    declaredItem: BuilderDeclareItem,
+  ): AttributeCollectorResult {
     const collector = new DefaultTypeAttributeCollector(declaredItem.nameToken);
     for (const attr of declaredItem.attributes) {
       collector.addAttribute(attr);
     }
     return collector.build();
   }
-  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem, attributes: AttributeCollectorResult): boolean {
+  isCompositeDeclaredItem(
+    declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
+  ): boolean {
     const validCompositeAttributeKinds: AttributeKind[] = [
       AttributeKind.Dimension,
       AttributeKind.Alignment,
@@ -71,7 +87,9 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     ];
     return (
       declaredItem.level !== undefined &&
-      attributes.witnesses.order.every(kind => validCompositeAttributeKinds.includes(kind))
+      attributes.witnesses.order.every((kind) =>
+        validCompositeAttributeKinds.includes(kind),
+      )
     );
   }
   flattenDeclareStatement(

@@ -13,6 +13,9 @@
 
 //// SQLDA.SQLVAR.<|1>SQLIND = 1;
 
-hover.expectMarkdownAt(1, hover.codeBlock(`DCL 1 SQLDA BASED(/*TODO locator*/),
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`DCL 1 SQLDA BASED(/*TODO locator*/),
       2 SQLVAR DIMENSION(/*TODO bounds*/),
-        3 SQLIND POINTER;`));
+        3 SQLIND POINTER;`),
+);

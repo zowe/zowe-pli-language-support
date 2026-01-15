@@ -29,7 +29,7 @@ types.expectTypeAt("MY_UNION", {
       stringBits: {
         kind: types.stringKinds.Character,
         length: 10,
-      } 
+      },
     },
   },
 });

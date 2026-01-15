@@ -49,7 +49,9 @@ interface MarkupGenerator {
   (context: MarkupGeneratorContext): MarkupResponse;
 }
 
-function compositeToString(typeProps: TypeDescriptions.Composite): [number, string] {
+function compositeToString(
+  typeProps: TypeDescriptions.Composite,
+): [number, string] {
   const memberStrings: string[] = [];
   for (const [member, { level }] of typeProps.membersMetadata) {
     const type = typeProps.members.get(member)!;
@@ -61,13 +63,21 @@ function compositeToString(typeProps: TypeDescriptions.Composite): [number, stri
     }
   }
   const [level, parentLine] = compositeParentLineToString(typeProps);
-  return [level, `${parentLine}${memberStrings.map(m => "\n  " + m.replaceAll(/\n/g, "\n  ")).join("")}`];
+  return [
+    level,
+    `${parentLine}${memberStrings.map((m) => "\n  " + m.replaceAll(/\n/g, "\n  ")).join("")}`,
+  ];
 }
 
-function compositeParentLineToString(typeProps: TypeDescriptions.Composite): [number, string] {
+function compositeParentLineToString(
+  typeProps: TypeDescriptions.Composite,
+): [number, string] {
   const attributeStr = typeProps.toString();
   const unionStr = typeProps.type === DataType.Union ? "UNION" : "";
-  return [typeProps.level, `${unionStr}${unionStr!=="" && attributeStr!=="" ? " " : ""}${attributeStr}`];
+  return [
+    typeProps.level,
+    `${unionStr}${unionStr !== "" && attributeStr !== "" ? " " : ""}${attributeStr}`,
+  ];
 }
 
 /**
@@ -82,12 +92,16 @@ function renderDeclarationFromType(
   nodeName: string,
   typeDescription: TypeDescriptions.Any,
 ): string {
-  let str = ""
+  let str = "";
   if (TypeDescriptions.isComposite(typeDescription)) {
     const [level, compositeStr] = compositeToString(typeDescription);
-    str = `${level} ${nodeName}${compositeStr !== "" ? `${compositeStr.startsWith("\n")?'':' '}${compositeStr}` : ""};`;
+    str = `${level} ${nodeName}${compositeStr !== "" ? `${compositeStr.startsWith("\n") ? "" : " "}${compositeStr}` : ""};`;
   } else {
-    const level = typeDescription.parentType ? typeDescription.parentType.membersMetadata.get(typeDescription.variableNode!)?.level : undefined;
+    const level = typeDescription.parentType
+      ? typeDescription.parentType.membersMetadata.get(
+          typeDescription.variableNode!,
+        )?.level
+      : undefined;
     const levelStr = level !== undefined ? `${level} ` : "";
     const typeDescriptionStr = typeDescription.toString();
     str = `${levelStr}${nodeName} ${typeDescriptionStr};`;
@@ -95,9 +109,9 @@ function renderDeclarationFromType(
   while (typeDescription.parentType) {
     typeDescription = typeDescription.parentType;
     const memberNode = typeDescription.variableNode;
-    if(memberNode) {
+    if (memberNode) {
       const [level, parentLine] = compositeParentLineToString(typeDescription);
-      str = `${level} ${memberNode!.name}${parentLine!==""?' '+parentLine:""}\n  ${str.replaceAll(/\n/g, "\n  ")}`;
+      str = `${level} ${memberNode!.name}${parentLine !== "" ? " " + parentLine : ""}\n  ${str.replaceAll(/\n/g, "\n  ")}`;
     }
   }
   return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n    ")}`);
@@ -171,7 +185,7 @@ function extractProcedureOptions(
             // type w/ dimens, need to be decoded
             attrArr.push(
               t.DefaultAttribute.mapFromEnumLiteral(attr.type) +
-              decodeDimensions(attr.dimensions),
+                decodeDimensions(attr.dimensions),
             );
           } else {
             // just the type
@@ -294,7 +308,10 @@ function getNodeRepresentation(
 ): string | null {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
-      return renderDeclarationFromType(node.name!, unit.services.inferer.inferType(node, unit));
+      return renderDeclarationFromType(
+        node.name!,
+        unit.services.inferer.inferType(node, unit),
+      );
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItemFile:
@@ -335,13 +352,26 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
   if (!ref?.node) {
     return null;
   }
-  
+
   //TODO is this always correct??
-  if(token.element.container && token.element.container.kind === SyntaxKind.MemberCall) {
+  if (
+    token.element.container &&
+    token.element.container.kind === SyntaxKind.MemberCall
+  ) {
     const memberCall = token.element.container;
-    if(memberCall.previous && memberCall.previous.element && memberCall.previous.element.ref && memberCall.previous.element.ref.node) {
-      const compositeType = unit.services.inferer.inferType(memberCall.previous.element.ref.node!, unit) as TypeDescriptions.Composite;
-      const actualType = compositeType.members.get(ref.node as DeclaredVariable);
+    if (
+      memberCall.previous &&
+      memberCall.previous.element &&
+      memberCall.previous.element.ref &&
+      memberCall.previous.element.ref.node
+    ) {
+      const compositeType = unit.services.inferer.inferType(
+        memberCall.previous.element.ref.node!,
+        unit,
+      ) as TypeDescriptions.Composite;
+      const actualType = compositeType.members.get(
+        ref.node as DeclaredVariable,
+      );
       return renderDeclarationFromType(token.image, actualType!);
     }
   }

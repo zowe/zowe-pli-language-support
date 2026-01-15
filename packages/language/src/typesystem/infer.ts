@@ -138,13 +138,19 @@ export class DefaultTypeInferer implements TypeInferer {
     const builder = new DefaultCompositeTypeBuilder();
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
-    const compositeParents: (TypeDescriptions.Composite)[] = [];
+    const compositeParents: TypeDescriptions.Composite[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
       const attributes = builder.collectAttributes(item);
-      compilationUnit.diagnostics.addAll(DiagnosticCategory.TypeSystem, attributes.diagnostics);
+      compilationUnit.diagnostics.addAll(
+        DiagnosticCategory.TypeSystem,
+        attributes.diagnostics,
+      );
       if (builder.isCompositeDeclaredItem(item, attributes)) {
-        const compositeType = builder.handleCompositeDeclaredItem(item, attributes);
+        const compositeType = builder.handleCompositeDeclaredItem(
+          item,
+          attributes,
+        );
         compilationUnit.services.typeCache.set(item.node, compositeType);
         if (previousLevel === undefined) {
           topLevelMembers.set(item, compositeType);

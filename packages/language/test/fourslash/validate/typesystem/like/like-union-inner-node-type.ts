@@ -32,7 +32,7 @@ types.expectTypeAt("same", {
       stringBits: {
         kind: types.stringKinds.Character,
         length: 100,
-      }
+      },
     },
   },
 });

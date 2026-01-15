@@ -36,13 +36,18 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   private attributeWitnesses: AttributeWitnesses;
   private possibleDataTypes: Set<DataType>;
   private diagnostics: Diagnostic[] = [];
-  constructor(private elementName: Token, collected: AttributeCollectorResult, private unit: CompilationUnit) {
+  constructor(
+    private elementName: Token,
+    collected: AttributeCollectorResult,
+    private unit: CompilationUnit,
+  ) {
     this.attributeWitnesses = collected.witnesses;
     this.possibleDataTypes = collected.dataTypeGuess;
   }
 
   build() {
-    const namedElement = this.attributeWitnesses.witnesses[AttributeKind.SetType];
+    const namedElement =
+      this.attributeWitnesses.witnesses[AttributeKind.SetType];
     if (namedElement && namedElement.value) {
       const typeNode = this.unit.services.inferer.inferType(
         namedElement.value,
@@ -53,7 +58,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         diagnostics: this.diagnostics,
       };
     }
-    const locatorCall = this.attributeWitnesses.witnesses[AttributeKind.SetLike];
+    const locatorCall =
+      this.attributeWitnesses.witnesses[AttributeKind.SetLike];
     if (locatorCall && locatorCall.value) {
       if (
         !locatorCall.value.element ||
@@ -73,9 +79,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         locatorCall.value.element!.element!.ref!.node!,
         this.unit,
       );
-      if (
-        !TypeDescriptions.isComposite(typeNode)
-      ) {
+      if (!TypeDescriptions.isComposite(typeNode)) {
         this.diagnostics.push(
           diagnosticFromCode(PLICodes.Severe.IBM1650I, this.elementName),
         );
@@ -85,8 +89,12 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         };
       } else {
         return {
-          type: this.cloneTypeUsingDifferentVariable(typeNode, this.elementName.element as DeclaredVariable, 1),
-          diagnostics: this.diagnostics,          
+          type: this.cloneTypeUsingDifferentVariable(
+            typeNode,
+            this.elementName.element as DeclaredVariable,
+            1,
+          ),
+          diagnostics: this.diagnostics,
         };
       }
     }
@@ -115,30 +123,50 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       diagnostics: this.diagnostics,
     };
   }
-  cloneTypeUsingDifferentVariable(type: TypeDescriptions.Any, variable: DeclaredVariable, level: number, parentType?: TypeDescriptions.Composite): TypeDescriptions.Any {
-    if(TypeDescriptions.isComposite(type)) {
+  cloneTypeUsingDifferentVariable(
+    type: TypeDescriptions.Any,
+    variable: DeclaredVariable,
+    level: number,
+    parentType?: TypeDescriptions.Composite,
+  ): TypeDescriptions.Any {
+    if (TypeDescriptions.isComposite(type)) {
       const newComposite = {
         ...type,
         level,
         parentType,
         variableNode: variable,
       } as TypeDescriptions.Composite;
-      if(parentType === undefined) {
+      if (parentType === undefined) {
         //TODO handle deletion of other attributes only for a root element
         newComposite.dimension = undefined;
         //</TODO>
       }
-      newComposite.members = new Map([...type.members.entries()].map(([name, member]) => [
-        name,
-        this.cloneTypeUsingDifferentVariable(member, name, level+1, newComposite),
-      ] as const));
-      newComposite.membersMetadata = new Map([...type.membersMetadata.entries()].map(([name, metadata]) => [
-        name,
-        {
-          ...metadata,
-          level: level + 1,
-        },
-      ] as const));
+      newComposite.members = new Map(
+        [...type.members.entries()].map(
+          ([name, member]) =>
+            [
+              name,
+              this.cloneTypeUsingDifferentVariable(
+                member,
+                name,
+                level + 1,
+                newComposite,
+              ),
+            ] as const,
+        ),
+      );
+      newComposite.membersMetadata = new Map(
+        [...type.membersMetadata.entries()].map(
+          ([name, metadata]) =>
+            [
+              name,
+              {
+                ...metadata,
+                level: level + 1,
+              },
+            ] as const,
+        ),
+      );
       return newComposite;
     } else {
       return {
