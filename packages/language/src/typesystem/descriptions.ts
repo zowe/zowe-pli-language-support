@@ -399,7 +399,7 @@ export const AttributeStringifiers: {
     //TODO: Implement stringification of EntryAttribute
     const value = data.sourceAttribute;
 
-    let parameters = "()";
+    let parameters = "";
     if(data.parameters.length > 0) {
       parameters = data.parameters.map(param => param.toString()).join(", ");
       parameters = `(${parameters})`;
