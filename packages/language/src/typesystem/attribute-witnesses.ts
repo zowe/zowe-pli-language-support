@@ -31,7 +31,6 @@ import {
   StringFormat,
   StringKind,
   TransmissionDirection,
-  TypeDescriptions,
   Volatility,
 } from "./descriptions";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";

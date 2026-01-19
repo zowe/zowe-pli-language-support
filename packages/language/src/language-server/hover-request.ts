@@ -97,11 +97,12 @@ function renderDeclarationFromType(
     const [level, compositeStr] = compositeToString(typeDescription);
     str = `${level} ${nodeName}${compositeStr !== "" ? `${compositeStr.startsWith("\n") ? "" : " "}${compositeStr}` : ""};`;
   } else {
-    const level = typeDescription.parentType && typeDescription.variableNode
-      ? typeDescription.parentType.membersMetadata.get(
-          typeDescription.variableNode,
-        )?.level
-      : undefined;
+    const level =
+      typeDescription.parentType && typeDescription.variableNode
+        ? typeDescription.parentType.membersMetadata.get(
+            typeDescription.variableNode,
+          )?.level
+        : undefined;
     const levelStr = level !== undefined ? `${level} ` : "";
     const typeDescriptionStr = typeDescription.toString();
     str = `${levelStr}${nodeName} ${typeDescriptionStr};`;
@@ -308,10 +309,12 @@ function getNodeRepresentation(
 ): string | null {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
-      return node.name ? renderDeclarationFromType(
-        node.name,
-        unit.services.inferer.inferType(node, unit),
-      ) : null;
+      return node.name
+        ? renderDeclarationFromType(
+            node.name,
+            unit.services.inferer.inferType(node, unit),
+          )
+        : null;
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItemFile:
