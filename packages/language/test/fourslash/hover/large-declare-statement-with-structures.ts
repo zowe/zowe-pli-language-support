@@ -39,7 +39,4 @@ hover.expectMarkdownAt(
       2 STREET CHARACTER(30),
       2 CITY CHARACTER(20);`),
 );
-hover.expectMarkdownAt(
-  3,
-  hover.codeBlock(`DCL INDEPENDENT2 FLOAT DECIMAL;`),
-);
+hover.expectMarkdownAt(3, hover.codeBlock(`DCL INDEPENDENT2 FLOAT DECIMAL;`));

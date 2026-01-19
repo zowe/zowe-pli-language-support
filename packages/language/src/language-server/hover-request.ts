@@ -92,8 +92,8 @@ function compositeParentLineToString(
 function renderDeclarationFromType(
   nodeName: string,
   typeDescription: TypeDescriptions.Any,
-): string|undefined {
-  if(TypeDescriptions.isUnknown(typeDescription)){
+): string | undefined {
+  if (TypeDescriptions.isUnknown(typeDescription)) {
     return undefined;
   }
 
@@ -315,10 +315,10 @@ function getNodeRepresentation(
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
       return node.name
-        ? renderDeclarationFromType(
+        ? (renderDeclarationFromType(
             node.name,
             unit.services.inferer.inferType(node, unit),
-          ) ?? renderOriginalDeclaration(node, unit)
+          ) ?? renderOriginalDeclaration(node, unit))
         : null;
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
@@ -383,8 +383,10 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
       if (!actualType) {
         return null;
       }
-      return renderDeclarationFromType(token.image, actualType)
-        ?? renderOriginalDeclaration(ref.node as DeclaredVariable, unit);
+      return (
+        renderDeclarationFromType(token.image, actualType) ??
+        renderOriginalDeclaration(ref.node as DeclaredVariable, unit)
+      );
     }
   }
 
@@ -480,27 +482,36 @@ export function hoverRequest(
   };
 }
 
-function renderOriginalDeclaration(node: DeclaredVariable, unit: CompilationUnit): string | null {
+function renderOriginalDeclaration(
+  node: DeclaredVariable,
+  unit: CompilationUnit,
+): string | null {
   let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
   do {
     const container = getContainer(declaredItem!, SyntaxKind.DeclaredItem);
-    if(container) {
+    if (container) {
       declaredItem = container;
     } else {
       break;
-    } 
-  } while(declaredItem);
-  if(!declaredItem || !declaredItem.startToken || !declaredItem.endToken) {
+    }
+  } while (declaredItem);
+  if (!declaredItem || !declaredItem.startToken || !declaredItem.endToken) {
     return null;
   }
-  if(!declaredItem.startToken.uri || declaredItem.startToken.uri !== declaredItem.endToken.uri) {
+  if (
+    !declaredItem.startToken.uri ||
+    declaredItem.startToken.uri !== declaredItem.endToken.uri
+  ) {
     return null;
   }
   const doc = unit.services.files.getDocument(declaredItem.startToken.uri);
   const text = doc?.getText();
-  if(!text) {
+  if (!text) {
     return null;
   }
-  const snippet = text.substring(declaredItem.startToken.startOffset, declaredItem.endToken.endOffset+1);
+  const snippet = text.substring(
+    declaredItem.startToken.startOffset,
+    declaredItem.endToken.endOffset + 1,
+  );
   return formatPliCodeBlock(snippet);
 }

@@ -4871,7 +4871,7 @@ const declaredItem = rule(
 
     // Main content: variable, wildcard, or nested items
     if (state.canConsumeFirst(declaredVariable.first())) {
-      if(element.startToken == null) {
+      if (element.startToken == null) {
         element.startToken = state.token!;
       }
       const variable = declaredVariable.rule(state);
@@ -4879,7 +4879,7 @@ const declaredItem = rule(
     } else if (
       state.tryConsume(element, CstNodeKind.WildcardItem_Asterisk, tokens.Star)
     ) {
-      if(element.startToken == null) {
+      if (element.startToken == null) {
         element.startToken = state.last!;
       }
       const wildcard: ast.WildcardItem = {
@@ -4895,7 +4895,7 @@ const declaredItem = rule(
         tokens.OpenParen,
       )
     ) {
-      if(element.startToken == null) {
+      if (element.startToken == null) {
         element.startToken = state.last!;
       }
       // Nested items in parentheses
