@@ -70,6 +70,17 @@ export function generateCompletionItems(
         });
       }
     }
+  } else if (followElement.kind === FollowKind.TypeReference) {
+    const symbols = scope.allDistinctTypeSymbols([]);
+    for (const symbol of symbols) {
+      if (symbol.rawName) {
+        items.push({
+          label: symbol.rawName,
+          kind: getCompletionKind(symbol.node),
+          text: symbol.rawName,
+        });
+      }
+    }
   }
   return items;
 }
@@ -84,6 +95,12 @@ function getCompletionKind(node: SyntaxNode): CompletionItemKind {
       }
       return CompletionItemKind.Variable;
     }
+    case SyntaxKind.DefineOrdinalStatement:
+      return CompletionItemKind.Enum;
+    case SyntaxKind.DefineStructureStatement:
+      return CompletionItemKind.Class;
+    case SyntaxKind.DefineAliasStatement:
+      return CompletionItemKind.Struct;
   }
   return CompletionItemKind.Variable;
 }
