@@ -1619,6 +1619,8 @@ export interface DeclaredItem extends AstNode {
   elements: DeclaredItemElement[];
   levelToken: Token | null;
   attributes: DeclarationAttribute[];
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createDeclaredItem(): DeclaredItem {
   return {
@@ -1628,6 +1630,8 @@ export function createDeclaredItem(): DeclaredItem {
     levelToken: null,
     elements: [],
     attributes: [],
+    startToken: null,
+    endToken: null,
   };
 }
 export interface DeclaredVariable extends AstNode {
@@ -1647,6 +1651,8 @@ export interface DeclareStatement extends AstNode {
   kind: SyntaxKind.DeclareStatement;
   items: DeclaredItem[];
   xDeclare: boolean;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createDeclareStatement(): DeclareStatement {
   return {
@@ -1654,6 +1660,8 @@ export function createDeclareStatement(): DeclareStatement {
     container: null,
     items: [],
     xDeclare: false,
+    startToken: null,
+    endToken: null,
   };
 }
 export interface DefaultAttributeExpression extends AstNode {

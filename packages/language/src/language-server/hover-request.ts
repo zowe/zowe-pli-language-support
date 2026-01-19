@@ -23,6 +23,7 @@ import {
   DimensionBound,
   Dimensions,
   Expression,
+  getContainer,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -91,7 +92,11 @@ function compositeParentLineToString(
 function renderDeclarationFromType(
   nodeName: string,
   typeDescription: TypeDescriptions.Any,
-): string {
+): string|undefined {
+  if(TypeDescriptions.isUnknown(typeDescription)){
+    return undefined;
+  }
+
   let str = "";
   if (TypeDescriptions.isComposite(typeDescription)) {
     const [level, compositeStr] = compositeToString(typeDescription);
@@ -313,7 +318,7 @@ function getNodeRepresentation(
         ? renderDeclarationFromType(
             node.name,
             unit.services.inferer.inferType(node, unit),
-          )
+          ) ?? renderOriginalDeclaration(node, unit)
         : null;
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
@@ -472,4 +477,13 @@ export function hoverRequest(
     },
     range: tokenToRange(token),
   };
+}
+
+function renderOriginalDeclaration(node: DeclaredVariable, unit: CompilationUnit): string | null {
+  const declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
+  if(!declaredItem || !declaredItem.startToken || !declaredItem.endToken) {
+    return null;
+  }
+  //TODO handle multi-line declarations
+  return null;
 }

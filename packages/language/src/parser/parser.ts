@@ -4813,6 +4813,7 @@ const declareStatement = rule(
       CstNodeKind.DeclareStatement_DECLARE,
       tokens.DECLARE,
     );
+    element.startToken = declareToken;
     if (declareToken?.image.charAt(0).toUpperCase() === "X") {
       element.xDeclare = true;
     }
@@ -4832,7 +4833,7 @@ const declareStatement = rule(
       rhs && element.items.push(rhs);
     }
 
-    state.consume(
+    element.endToken = state.consume(
       element,
       CstNodeKind.DeclareStatement_Semicolon,
       tokens.Semicolon,
@@ -4862,6 +4863,7 @@ const declaredItem = rule(
     ) {
       const levelToken = state.last;
       if (levelToken) {
+        element.startToken = levelToken;
         element.levelToken = levelToken;
         element.level = parseInt(levelToken.image, 10);
       }
@@ -4869,11 +4871,17 @@ const declaredItem = rule(
 
     // Main content: variable, wildcard, or nested items
     if (state.canConsumeFirst(declaredVariable.first())) {
+      if(element.startToken == null) {
+        element.startToken = state.token!;
+      }
       const variable = declaredVariable.rule(state);
       variable && element.elements.push(variable);
     } else if (
       state.tryConsume(element, CstNodeKind.WildcardItem_Asterisk, tokens.Star)
     ) {
+      if(element.startToken == null) {
+        element.startToken = state.last!;
+      }
       const wildcard: ast.WildcardItem = {
         kind: ast.SyntaxKind.WildcardItem,
         container: null,
@@ -4887,6 +4895,9 @@ const declaredItem = rule(
         tokens.OpenParen,
       )
     ) {
+      if(element.startToken == null) {
+        element.startToken = state.last!;
+      }
       // Nested items in parentheses
       const lhs = declaredItem.rule(state);
       lhs && element.elements.push(lhs);
@@ -4917,6 +4928,8 @@ const declaredItem = rule(
       const attr = declarationAttribute.rule(state);
       attr && element.attributes.push(attr);
     }
+
+    element.endToken = state.last || null;
 
     return element;
   },
