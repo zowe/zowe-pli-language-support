@@ -61,6 +61,9 @@ export async function tokenize(
   );
   compilationUnit.tokens = result.all;
   compilationUnit.preprocessorAst.statements = result.statements;
+  result.statements.forEach((stmt) => {
+    stmt.container = compilationUnit.preprocessorAst;
+  });
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
   const uri = compilationUnit.uri.toString();
