@@ -97,9 +97,9 @@ function renderDeclarationFromType(
     const [level, compositeStr] = compositeToString(typeDescription);
     str = `${level} ${nodeName}${compositeStr !== "" ? `${compositeStr.startsWith("\n") ? "" : " "}${compositeStr}` : ""};`;
   } else {
-    const level = typeDescription.parentType
+    const level = typeDescription.parentType && typeDescription.variableNode
       ? typeDescription.parentType.membersMetadata.get(
-          typeDescription.variableNode!,
+          typeDescription.variableNode,
         )?.level
       : undefined;
     const levelStr = level !== undefined ? `${level} ` : "";
@@ -111,7 +111,7 @@ function renderDeclarationFromType(
     const memberNode = typeDescription.variableNode;
     if (memberNode) {
       const [level, parentLine] = compositeParentLineToString(typeDescription);
-      str = `${level} ${memberNode!.name}${parentLine !== "" ? " " + parentLine : ""}\n  ${str.replaceAll(/\n/g, "\n  ")}`;
+      str = `${level} ${memberNode.name}${parentLine !== "" ? " " + parentLine : ""}\n  ${str.replaceAll(/\n/g, "\n  ")}`;
     }
   }
   return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n    ")}`);
@@ -308,10 +308,10 @@ function getNodeRepresentation(
 ): string | null {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
-      return renderDeclarationFromType(
-        node.name!,
+      return node.name ? renderDeclarationFromType(
+        node.name,
         unit.services.inferer.inferType(node, unit),
-      );
+      ) : null;
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItemFile:
@@ -366,13 +366,16 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
       memberCall.previous.element.ref.node
     ) {
       const compositeType = unit.services.inferer.inferType(
-        memberCall.previous.element.ref.node!,
+        memberCall.previous.element.ref.node,
         unit,
       ) as TypeDescriptions.Composite;
       const actualType = compositeType.members.get(
         ref.node as DeclaredVariable,
       );
-      return renderDeclarationFromType(token.image, actualType!);
+      if (!actualType) {
+        return null;
+      }
+      return renderDeclarationFromType(token.image, actualType);
     }
   }
 
