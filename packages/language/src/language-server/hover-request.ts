@@ -383,7 +383,8 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
       if (!actualType) {
         return null;
       }
-      return renderDeclarationFromType(token.image, actualType);
+      return renderDeclarationFromType(token.image, actualType)
+        ?? renderOriginalDeclaration(ref.node as DeclaredVariable, unit);
     }
   }
 
@@ -480,10 +481,26 @@ export function hoverRequest(
 }
 
 function renderOriginalDeclaration(node: DeclaredVariable, unit: CompilationUnit): string | null {
-  const declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
+  let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
+  do {
+    const container = getContainer(declaredItem!, SyntaxKind.DeclaredItem);
+    if(container) {
+      declaredItem = container;
+    } else {
+      break;
+    } 
+  } while(declaredItem);
   if(!declaredItem || !declaredItem.startToken || !declaredItem.endToken) {
     return null;
   }
-  //TODO handle multi-line declarations
-  return null;
+  if(!declaredItem.startToken.uri || declaredItem.startToken.uri !== declaredItem.endToken.uri) {
+    return null;
+  }
+  const doc = unit.services.files.getDocument(declaredItem.startToken.uri);
+  const text = doc?.getText();
+  if(!text) {
+    return null;
+  }
+  const snippet = text.substring(declaredItem.startToken.startOffset, declaredItem.endToken.endOffset+1);
+  return formatPliCodeBlock(snippet);
 }
