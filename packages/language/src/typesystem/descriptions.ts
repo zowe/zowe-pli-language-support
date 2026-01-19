@@ -1957,7 +1957,7 @@ export interface BuilderDeclareItem {
   nameToken: Token;
   node: ast.DeclaredVariable;
   attributes: ast.DeclarationAttribute[];
-  level: number;
+  level: number|undefined;
 }
 
 function makeToString(witnesses: AttributeWitnesses): () => string {

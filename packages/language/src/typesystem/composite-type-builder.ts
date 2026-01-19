@@ -51,7 +51,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     return TypeDescriptions.createComposite({
       type: hasUnion ? DataType.Union : DataType.Structure,
       witnesses: attributes.witnesses,
-      level: declaredItem.level,
+      level: declaredItem.level ?? 1,
       variableNode: declaredItem.node,
     });
   }
@@ -114,7 +114,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
         for (const item of this.flattenDeclaredItem(element)) {
           items.push({
             ...item,
-            level: declaredItem.level ?? 1,
+            level: declaredItem.level ?? undefined,
             attributes: [...item.attributes, ...declaredItem.attributes],
           });
         }
@@ -123,7 +123,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
           name: element.name!,
           nameToken: element.nameToken!,
           node: element,
-          level: declaredItem.level ?? 1,
+          level: declaredItem.level ?? undefined,
           attributes: [...declaredItem.attributes],
         });
       } else {
