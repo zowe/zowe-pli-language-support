@@ -44,9 +44,21 @@ export class DefaultTypeInferer implements TypeInferer {
         return this.inferAliasType(node, compilationUnit);
       } else if (node.kind === ast.SyntaxKind.DefineOrdinalStatement) {
         return this.inferOrdinalType(node, compilationUnit);
+      } else if(node.kind === ast.SyntaxKind.ReturnsOption) {
+        return this.inferReturnsOptionType(node, compilationUnit);
+      } else if(node.kind === ast.SyntaxKind.EntryParameterDescription || node.kind === ast.SyntaxKind.EntryUnionDescription) {
+        return this.inferEntryParameterType(node, compilationUnit);
       }
       return TypeDescriptions.Unknown();
     });
+  }
+  
+  private inferReturnsOptionType(node: ast.ReturnsOption, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+    return TypeDescriptions.Unknown();
+  }
+
+  private inferEntryParameterType(node: ast.EntryParameterDescription | ast.EntryUnionDescription, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+    return TypeDescriptions.Unknown();
   }
 
   private inferOrdinalType(
@@ -56,7 +68,7 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const collector = new DefaultTypeAttributeCollector(node.nameToken);
+    const collector = new DefaultTypeAttributeCollector(node.nameToken, compilationUnit);
     {
       const fixedAttribute = ast.createComputationDataAttribute();
       fixedAttribute.typeToken = node.nameToken;
@@ -114,7 +126,7 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const collector = new DefaultTypeAttributeCollector(node.nameToken);
+    const collector = new DefaultTypeAttributeCollector(node.nameToken, compilationUnit);
     node.attributes.forEach((attribute) => {
       collector.addAttribute(attribute);
     });
@@ -135,7 +147,7 @@ export class DefaultTypeInferer implements TypeInferer {
     node: ast.DeclareStatement | ast.DefineStructureStatement,
     compilationUnit: CompilationUnit,
   ): void {
-    const builder = new DefaultCompositeTypeBuilder();
+    const builder = new DefaultCompositeTypeBuilder(compilationUnit);
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
     const compositeParents: TypeDescriptions.Composite[] = [];

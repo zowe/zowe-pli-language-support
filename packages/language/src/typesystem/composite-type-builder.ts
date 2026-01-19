@@ -34,6 +34,7 @@ export interface CompositeTypeBuilder {
 }
 
 export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
+  constructor(private unit: CompilationUnit) {}
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
     attributes: AttributeCollectorResult,
@@ -70,7 +71,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   collectAttributes(
     declaredItem: BuilderDeclareItem,
   ): AttributeCollectorResult {
-    const collector = new DefaultTypeAttributeCollector(declaredItem.nameToken);
+    const collector = new DefaultTypeAttributeCollector(declaredItem.nameToken, this.unit);
     for (const attr of declaredItem.attributes) {
       collector.addAttribute(attr);
     }

@@ -14,6 +14,7 @@ import {
   DataTypesArray,
   DataTypesByAttributeKind,
   Endianess,
+  EntryData,
   FileUsage,
   FloatFormat,
   Implications,
@@ -30,6 +31,7 @@ import {
   StringFormat,
   StringKind,
   TransmissionDirection,
+  TypeDescriptions,
   Volatility,
 } from "./descriptions";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
@@ -37,6 +39,7 @@ import { Token } from "../parser/tokens";
 import { assertUnreachable } from "../utils/common";
 import { computeDimensions } from "./computed-attributes";
 import { Error } from "../validation/pli-codes";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 export type AttributeCollectorResult = {
   witnesses: AttributeWitnesses;
@@ -57,7 +60,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
     witnesses: {},
   };
 
-  constructor(public elementName: Token) {}
+  constructor(public elementName: Token, private unit: CompilationUnit) {}
 
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
@@ -97,9 +100,21 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
             attribute,
             attribute.entryToken,
           );
+          const data: EntryData = {
+            sourceAttribute: attribute,
+            returns: undefined,
+            parameters: [],
+          };
+          if(attribute.returns.length > 0) {
+            const returns = attribute.returns[0];
+            data.returns = this.unit.services.inferer.inferType(returns, this.unit);
+          }
+          for (const param of attribute.attributes) {
+            data.parameters.push(this.unit.services.inferer.inferType(param, this.unit));
+          }
           this.addAttributeWitness(
             AttributeKind.Entry,
-            attribute,
+            data,
             attribute,
             attribute.entryToken,
           );

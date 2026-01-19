@@ -191,6 +191,12 @@ export type DimensionBound = {
   upperBound: Bound;
 };
 
+export type EntryData = {
+  sourceAttribute: ast.EntryAttribute;
+  returns: TypeDescriptions.Any | undefined;
+  parameters: TypeDescriptions.Any[];
+}
+
 export type AttributeTypes = {
   [AttributeKind.AccessMode]: AccessMode;
   [AttributeKind.Alignment]: Alignment;
@@ -203,7 +209,7 @@ export type AttributeTypes = {
   [AttributeKind.DataType]: DataType;
   [AttributeKind.Dimension]: DimensionBound[] | undefined;
   [AttributeKind.Endianess]: Endianess;
-  [AttributeKind.Entry]: ast.EntryAttribute | undefined;
+  [AttributeKind.Entry]: EntryData | undefined;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
   [AttributeKind.Initial]: ast.InitialAttribute | undefined;
@@ -386,11 +392,24 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.Entry]: function (value: ast.EntryAttribute | undefined): string | undefined {
-    if (!value) {
+  [AttributeKind.Entry]: function (data: EntryData | undefined): string | undefined {
+    if (!data) {
       return undefined;
     }
     //TODO: Implement stringification of EntryAttribute
+    const value = data.sourceAttribute;
+
+    let parameters = "()";
+    if(data.parameters.length > 0) {
+      parameters = data.parameters.map(param => param.toString()).join(", ");
+      parameters = `(${parameters})`;
+    }
+
+    let returns = "";
+    if(data.returns) {
+      returns = ` RETURNS(${data.returns.toString()})`;
+    }
+
     let external = "";
     if(value.hasExternal) {
       external = " EXTERNAL";
@@ -399,7 +418,8 @@ export const AttributeStringifiers: {
         external += `(...)`;
       }
     }
-    return `ENTRY(...)${external}`;
+
+    return `ENTRY${parameters}${returns}${external}`;
   },
   [AttributeKind.FileUsage]: function (value: FileUsage): string {
     switch (value) {
