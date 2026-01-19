@@ -45,39 +45,64 @@ export class DefaultTypeInferer implements TypeInferer {
         return this.inferAliasType(node, compilationUnit);
       } else if (node.kind === ast.SyntaxKind.DefineOrdinalStatement) {
         return this.inferOrdinalType(node, compilationUnit);
-      } else if(node.kind === ast.SyntaxKind.ReturnsOption) {
+      } else if (node.kind === ast.SyntaxKind.ReturnsOption) {
         return this.inferReturnsOptionType(node, compilationUnit);
-      } else if(node.kind === ast.SyntaxKind.EntryParameterDescription || node.kind === ast.SyntaxKind.EntryUnionDescription) {
+      } else if (
+        node.kind === ast.SyntaxKind.EntryParameterDescription ||
+        node.kind === ast.SyntaxKind.EntryUnionDescription
+      ) {
         const parentNode = node.container as ast.EntryAttribute;
-        if(parentNode?.entryToken) {
-          return this.inferEntryParameterType(parentNode.entryToken, node, compilationUnit);
+        if (parentNode?.entryToken) {
+          return this.inferEntryParameterType(
+            parentNode.entryToken,
+            node,
+            compilationUnit,
+          );
         }
       }
       return TypeDescriptions.Unknown();
     });
   }
-  
-  private inferReturnsOptionType(node: ast.ReturnsOption, compilationUnit: CompilationUnit): TypeDescriptions.Any {
-    if( !node.returnsToken) {
+
+  private inferReturnsOptionType(
+    node: ast.ReturnsOption,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
+    if (!node.returnsToken) {
       return TypeDescriptions.Unknown();
     }
     const builder = new DefaultCompositeTypeBuilder(compilationUnit);
-    const attributes = builder.collectAttributes(node.returnsToken, node.returnAttributes);
+    const attributes = builder.collectAttributes(
+      node.returnsToken,
+      node.returnAttributes,
+    );
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
       attributes.diagnostics,
     );
-    return builder.handlePrimitiveDeclaredItem(node.returnsToken, attributes, compilationUnit);
+    return builder.handlePrimitiveDeclaredItem(
+      node.returnsToken,
+      attributes,
+      compilationUnit,
+    );
   }
 
-  private inferEntryParameterType(nameToken: Token, node: ast.EntryParameterDescription | ast.EntryUnionDescription, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+  private inferEntryParameterType(
+    nameToken: Token,
+    node: ast.EntryParameterDescription | ast.EntryUnionDescription,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
     const builder = new DefaultCompositeTypeBuilder(compilationUnit);
     const attributes = builder.collectAttributes(nameToken, node.attributes);
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
       attributes.diagnostics,
     );
-    return builder.handlePrimitiveDeclaredItem(nameToken, attributes, compilationUnit); 
+    return builder.handlePrimitiveDeclaredItem(
+      nameToken,
+      attributes,
+      compilationUnit,
+    );
   }
 
   private inferOrdinalType(
@@ -87,7 +112,10 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const collector = new DefaultTypeAttributeCollector(node.nameToken, compilationUnit);
+    const collector = new DefaultTypeAttributeCollector(
+      node.nameToken,
+      compilationUnit,
+    );
     {
       const fixedAttribute = ast.createComputationDataAttribute();
       fixedAttribute.typeToken = node.nameToken;
@@ -145,7 +173,10 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const collector = new DefaultTypeAttributeCollector(node.nameToken, compilationUnit);
+    const collector = new DefaultTypeAttributeCollector(
+      node.nameToken,
+      compilationUnit,
+    );
     node.attributes.forEach((attribute) => {
       collector.addAttribute(attribute);
     });
@@ -172,7 +203,10 @@ export class DefaultTypeInferer implements TypeInferer {
     const compositeParents: TypeDescriptions.Composite[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
-      const attributes = builder.collectAttributes(item.nameToken, item.attributes);
+      const attributes = builder.collectAttributes(
+        item.nameToken,
+        item.attributes,
+      );
       compilationUnit.diagnostics.addAll(
         DiagnosticCategory.TypeSystem,
         attributes.diagnostics,

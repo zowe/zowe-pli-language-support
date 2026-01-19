@@ -5857,7 +5857,11 @@ const returnsOption = rule(
   (state: ParserState): ast.ReturnsOption => {
     const element = ast.createReturnsOption();
 
-    element.returnsToken = state.consume(element, CstNodeKind.ReturnsOption_RETURNS, tokens.RETURNS);
+    element.returnsToken = state.consume(
+      element,
+      CstNodeKind.ReturnsOption_RETURNS,
+      tokens.RETURNS,
+    );
     state.consume(
       element,
       CstNodeKind.ReturnsOption_OpenParen,

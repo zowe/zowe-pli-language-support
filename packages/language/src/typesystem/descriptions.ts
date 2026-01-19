@@ -195,7 +195,7 @@ export type EntryData = {
   sourceAttribute: ast.EntryAttribute;
   returns: TypeDescriptions.Any | undefined;
   parameters: TypeDescriptions.Any[];
-}
+};
 
 export type AttributeTypes = {
   [AttributeKind.AccessMode]: AccessMode;
@@ -392,7 +392,9 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.Entry]: function (data: EntryData | undefined): string | undefined {
+  [AttributeKind.Entry]: function (
+    data: EntryData | undefined,
+  ): string | undefined {
     if (!data) {
       return undefined;
     }
@@ -400,20 +402,20 @@ export const AttributeStringifiers: {
     const value = data.sourceAttribute;
 
     let parameters = "";
-    if(data.parameters.length > 0) {
-      parameters = data.parameters.map(param => param.toString()).join(", ");
+    if (data.parameters.length > 0) {
+      parameters = data.parameters.map((param) => param.toString()).join(", ");
       parameters = `(${parameters})`;
     }
 
     let returns = "";
-    if(data.returns) {
+    if (data.returns) {
       returns = ` RETURNS(${data.returns.toString()})`;
     }
 
     let external = "";
-    if(value.hasExternal) {
+    if (value.hasExternal) {
       external = " EXTERNAL";
-      if(value.environmentName) {
+      if (value.environmentName) {
         //TODO: implement environment name expression stringification
         external += `(...)`;
       }

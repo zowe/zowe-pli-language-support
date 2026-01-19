@@ -60,7 +60,10 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
     witnesses: {},
   };
 
-  constructor(public elementName: Token, private unit: CompilationUnit) {}
+  constructor(
+    public elementName: Token,
+    private unit: CompilationUnit,
+  ) {}
 
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
@@ -105,12 +108,17 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
             returns: undefined,
             parameters: [],
           };
-          if(attribute.returns.length > 0) {
+          if (attribute.returns.length > 0) {
             const returns = attribute.returns[0];
-            data.returns = this.unit.services.inferer.inferType(returns, this.unit);
+            data.returns = this.unit.services.inferer.inferType(
+              returns,
+              this.unit,
+            );
           }
           for (const param of attribute.attributes) {
-            data.parameters.push(this.unit.services.inferer.inferType(param, this.unit));
+            data.parameters.push(
+              this.unit.services.inferer.inferType(param, this.unit),
+            );
           }
           this.addAttributeWitness(
             AttributeKind.Entry,

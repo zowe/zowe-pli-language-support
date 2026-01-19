@@ -16,7 +16,4 @@
 ////                    2 AGE FIXED DECIMAL(3);
 //// DCL <|1>HEX ENTRY RETURNS(TYPE PERSON) EXTERNAL;
 
-hover.expectMarkdownAt(
-  1,
-  hover.codeBlock("DCL HEX ENTRY RETURNS() EXTERNAL;"),
-);
+hover.expectMarkdownAt(1, hover.codeBlock("DCL HEX ENTRY RETURNS() EXTERNAL;"));

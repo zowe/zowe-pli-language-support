@@ -18,7 +18,10 @@ export interface CompositeTypeBuilder {
   flattenDeclareStatement(
     declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
-  collectAttributes(nameToken: Token, attributes: ast.DeclarationAttribute[]): AttributeCollectorResult;
+  collectAttributes(
+    nameToken: Token,
+    attributes: ast.DeclarationAttribute[],
+  ): AttributeCollectorResult;
   isCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
     attributes: AttributeCollectorResult,

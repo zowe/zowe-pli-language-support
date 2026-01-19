@@ -19,7 +19,6 @@ hover.expectMarkdownAt(
   1,
   hover.codeBlock(`DCL 1 PERSON STATIC,
       2 NAME CHARACTER(20),
-      2 AGE FIXED DECIMAL PRECISION(3);`
-  )
+      2 AGE FIXED DECIMAL PRECISION(3);`),
 );
 verify.expectDiagnosticsAt("AUTO", code.Error.IBM2462I);
