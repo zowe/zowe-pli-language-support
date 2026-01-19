@@ -1,3 +1,4 @@
+import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -17,7 +18,7 @@ export interface CompositeTypeBuilder {
   flattenDeclareStatement(
     declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
-  collectAttributes(declaredItem: BuilderDeclareItem): AttributeCollectorResult;
+  collectAttributes(nameToken: Token, attributes: ast.DeclarationAttribute[]): AttributeCollectorResult;
   isCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
     attributes: AttributeCollectorResult,
@@ -27,7 +28,7 @@ export interface CompositeTypeBuilder {
     attributes: AttributeCollectorResult,
   ): TypeDescriptions.Composite;
   handlePrimitiveDeclaredItem(
-    declaredItem: BuilderDeclareItem,
+    nameToken: Token,
     attributes: AttributeCollectorResult,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any;
@@ -52,12 +53,12 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     });
   }
   handlePrimitiveDeclaredItem(
-    declaredItem: BuilderDeclareItem,
+    nameToken: Token,
     attributes: AttributeCollectorResult,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     const builder = new DefaultPrimitiveTypeBuilder(
-      declaredItem.nameToken,
+      nameToken,
       attributes,
       compilationUnit,
     );
@@ -69,10 +70,11 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     return type;
   }
   collectAttributes(
-    declaredItem: BuilderDeclareItem,
+    nameToken: Token,
+    attributes: ast.DeclarationAttribute[],
   ): AttributeCollectorResult {
-    const collector = new DefaultTypeAttributeCollector(declaredItem.nameToken, this.unit);
-    for (const attr of declaredItem.attributes) {
+    const collector = new DefaultTypeAttributeCollector(nameToken, this.unit);
+    for (const attr of attributes) {
       collector.addAttribute(attr);
     }
     return collector.build();

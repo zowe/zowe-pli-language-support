@@ -3662,12 +3662,14 @@ export function createReturnsAttribute(): ReturnsAttribute {
 export interface ReturnsOption extends AstNode {
   kind: SyntaxKind.ReturnsOption;
   returnAttributes: DeclarationAttribute[];
+  returnsToken: Token | null;
 }
 export function createReturnsOption(): ReturnsOption {
   return {
     kind: SyntaxKind.ReturnsOption,
     container: null,
     returnAttributes: [],
+    returnsToken: null,
   };
 }
 export interface ReturnStatement extends AstNode {

@@ -15,5 +15,5 @@
 
 hover.expectMarkdownAt(
   1,
-  hover.codeBlock("DCL HEX ENTRY(<UNKNOWN>) RETURNS(<UNKNOWN>) EXTERNAL;"),
+  hover.codeBlock("DCL HEX ENTRY(FIXED BINARY PRECISION(31)) RETURNS(CHARACTER(8)) EXTERNAL;"),
 );

@@ -18,6 +18,7 @@ import { assertType } from "../preprocessor/util";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { DefaultTypeAttributeCollector } from "./attribute-witnesses";
+import { Token } from "../parser/tokens";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -47,18 +48,36 @@ export class DefaultTypeInferer implements TypeInferer {
       } else if(node.kind === ast.SyntaxKind.ReturnsOption) {
         return this.inferReturnsOptionType(node, compilationUnit);
       } else if(node.kind === ast.SyntaxKind.EntryParameterDescription || node.kind === ast.SyntaxKind.EntryUnionDescription) {
-        return this.inferEntryParameterType(node, compilationUnit);
+        const parentNode = node.container as ast.EntryAttribute;
+        if(parentNode?.entryToken) {
+          return this.inferEntryParameterType(parentNode.entryToken, node, compilationUnit);
+        }
       }
       return TypeDescriptions.Unknown();
     });
   }
   
   private inferReturnsOptionType(node: ast.ReturnsOption, compilationUnit: CompilationUnit): TypeDescriptions.Any {
-    return TypeDescriptions.Unknown();
+    if( !node.returnsToken) {
+      return TypeDescriptions.Unknown();
+    }
+    const builder = new DefaultCompositeTypeBuilder(compilationUnit);
+    const attributes = builder.collectAttributes(node.returnsToken, node.returnAttributes);
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      attributes.diagnostics,
+    );
+    return builder.handlePrimitiveDeclaredItem(node.returnsToken, attributes, compilationUnit);
   }
 
-  private inferEntryParameterType(node: ast.EntryParameterDescription | ast.EntryUnionDescription, compilationUnit: CompilationUnit): TypeDescriptions.Any {
-    return TypeDescriptions.Unknown();
+  private inferEntryParameterType(nameToken: Token, node: ast.EntryParameterDescription | ast.EntryUnionDescription, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+    const builder = new DefaultCompositeTypeBuilder(compilationUnit);
+    const attributes = builder.collectAttributes(nameToken, node.attributes);
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      attributes.diagnostics,
+    );
+    return builder.handlePrimitiveDeclaredItem(nameToken, attributes, compilationUnit); 
   }
 
   private inferOrdinalType(
@@ -153,7 +172,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const compositeParents: TypeDescriptions.Composite[] = [];
     let previousLevel: number | undefined = undefined;
     for (const item of items) {
-      const attributes = builder.collectAttributes(item);
+      const attributes = builder.collectAttributes(item.nameToken, item.attributes);
       compilationUnit.diagnostics.addAll(
         DiagnosticCategory.TypeSystem,
         attributes.diagnostics,
@@ -195,7 +214,7 @@ export class DefaultTypeInferer implements TypeInferer {
         previousLevel = compositeType.level;
       } else {
         const primitiveType = builder.handlePrimitiveDeclaredItem(
-          item,
+          item.nameToken,
           attributes,
           compilationUnit,
         );
