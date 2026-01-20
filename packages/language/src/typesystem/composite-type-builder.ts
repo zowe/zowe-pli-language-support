@@ -33,7 +33,6 @@ export interface CompositeTypeBuilder {
   handlePrimitiveDeclaredItem(
     nameToken: Token,
     attributes: AttributeCollectorResult,
-    compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any;
 }
 
@@ -58,15 +57,14 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   handlePrimitiveDeclaredItem(
     nameToken: Token,
     attributes: AttributeCollectorResult,
-    compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     const builder = new DefaultPrimitiveTypeBuilder(
       nameToken,
       attributes,
-      compilationUnit,
+      this.unit,
     );
     const { type, diagnostics } = builder.build();
-    compilationUnit.diagnostics.addAll(
+    this.unit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
       diagnostics,
     );

@@ -83,7 +83,6 @@ export class DefaultTypeInferer implements TypeInferer {
     return builder.handlePrimitiveDeclaredItem(
       node.returnsToken,
       attributes,
-      compilationUnit,
     );
   }
 
@@ -101,7 +100,6 @@ export class DefaultTypeInferer implements TypeInferer {
     return builder.handlePrimitiveDeclaredItem(
       nameToken,
       attributes,
-      compilationUnit,
     );
   }
 
@@ -201,7 +199,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
     const compositeParents: TypeDescriptions.Composite[] = [];
-    let previousLevel: number | undefined = undefined;
+    let previousItemLevel: number | undefined = undefined;
     for (const item of items) {
       const attributes = builder.collectAttributes(
         item.nameToken,
@@ -211,72 +209,28 @@ export class DefaultTypeInferer implements TypeInferer {
         DiagnosticCategory.TypeSystem,
         attributes.diagnostics,
       );
-      if (builder.isCompositeDeclaredItem(item, attributes)) {
-        const compositeType = builder.handleCompositeDeclaredItem(
-          item,
-          attributes,
-        );
-        compilationUnit.services.typeCache.set(item.node, compositeType);
-        if (previousLevel === undefined) {
-          topLevelMembers.set(item, compositeType);
-          compositeParents.push(compositeType);
-        } else {
-          while (previousLevel && compositeType.level < previousLevel) {
-            compositeParents.pop();
-            previousLevel =
-              compositeParents.length > 0
-                ? compositeParents[compositeParents.length - 1].level
-                : undefined;
-          }
-          if (previousLevel && compositeType.level > previousLevel) {
-            const parent = compositeParents[compositeParents.length - 1];
-            compositeAddMember(parent, item, compositeType);
-            compositeParents.push(compositeType);
-          } else {
-            if (compositeParents.length > 0) {
-              compositeParents.pop();
-            }
-            if (compositeParents.length > 0) {
-              const parent = compositeParents[compositeParents.length - 1];
-              compositeAddMember(parent, item, compositeType);
-            } else {
-              topLevelMembers.set(item, compositeType);
-            }
-            compositeParents.push(compositeType);
-          }
-        }
-        previousLevel = compositeType.level;
+      const type = builder.isCompositeDeclaredItem(item, attributes)
+        ? builder.handleCompositeDeclaredItem(item, attributes)
+        : builder.handlePrimitiveDeclaredItem(item.nameToken, attributes);
+      compilationUnit.services.typeCache.set(item.node, type);
+      if (previousItemLevel === undefined || item.level === undefined) {
+        topLevelMembers.set(item, type);
       } else {
-        const primitiveType = builder.handlePrimitiveDeclaredItem(
-          item.nameToken,
-          attributes,
-          compilationUnit,
-        );
-        compilationUnit.services.typeCache.set(item.node, primitiveType);
-        if (item.level === undefined) {
-          topLevelMembers.set(item, primitiveType);
+        while (compositeParents.length > 0 && compositeParents[compositeParents.length - 1].level > item.level) {
+          compositeParents.pop();
+        }
+        if(compositeParents.length > 0) {
+          compositeAddMember(compositeParents[compositeParents.length - 1], item, type);
         } else {
-          while (previousLevel && item.level < previousLevel) {
-            compositeParents.pop();
-            previousLevel =
-              compositeParents.length > 0
-                ? compositeParents[compositeParents.length - 1].level
-                : undefined;
-          }
-          if (previousLevel && item.level > previousLevel) {
-            const parent = compositeParents[compositeParents.length - 1];
-            compositeAddMember(parent, item, primitiveType);
-          } else {
-            if (compositeParents.length > 0) {
-              const parent = compositeParents[compositeParents.length - 1];
-              compositeAddMember(parent, item, primitiveType);
-            } else {
-              topLevelMembers.set(item, primitiveType);
-            }
-          }
+          topLevelMembers.set(item, type);
         }
       }
+      if(TypeDescriptions.isComposite(type)) {
+          compositeParents.push(type);
+        }
+      previousItemLevel = item.level;
     }
+
     // TODO: Reenable once we ensure that we don't show any false positives
     // this.traverseMembers(
     //   topLevelMembers,
