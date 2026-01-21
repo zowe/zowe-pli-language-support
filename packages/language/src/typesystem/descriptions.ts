@@ -359,7 +359,7 @@ export const AttributeStringifiers: {
     if (!value) {
       return undefined;
     }
-    return `DIMENSION(/*TODO bounds*/)`;
+    return `DIMENSION(...)`;
     /*
     ${value
       .map((bound) => {
@@ -593,7 +593,7 @@ export const AttributeStringifiers: {
         return "STATIC";
       case StorageClass.Based:
         /* TODO add locator reference */
-        return "BASED(/*TODO locator*/)";
+        return "BASED(...)";
       case StorageClass.Controlled:
         return "CONTROLLED";
       default:
@@ -664,12 +664,12 @@ export const AttributeStringifiers: {
   [AttributeKind.SetLike]: function (
     _value: ast.LocatorCall | null,
   ): string | undefined {
-    return "/* TODO LIKE */";
+    return undefined;
   },
   [AttributeKind.SetType]: function (
     _value: ast.NamedType | null,
   ): string | undefined {
-    return "/* TODO TYPE */";
+    return undefined;
   },
   [AttributeKind.AttributeWitnesses]: function (
     _value: AttributeWitnesses,
