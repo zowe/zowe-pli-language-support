@@ -2411,6 +2411,9 @@ async function resolveIncludeFileUri(
   // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
   // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
   const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
+  // Check if it's member wish specified ddname
+  const isMemberWithDDName =
+    !!(isMemberIncludeItem(item) && item.ddname && item.memberName);
 
   /**
    * Computes the URI for a lib file based on whether the path is absolute or relative.
@@ -2471,7 +2474,7 @@ async function resolveIncludeFileUri(
 
   let libMatch: URI | undefined;
   // whether a match was found for a member include
-  let needsMemberValidation = isMemberWithoutDDName;
+  let needsMemberValidation = isMemberWithoutDDName || isMemberWithDDName;
 
   for (const lib of computedLibs) {
     if (isLibsDir(lib)) {
@@ -2497,7 +2500,7 @@ async function resolveIncludeFileUri(
         path: libFileUri,
         extensions: pgroup.includeExtensions,
       });
-      if (libMatch) {
+      if (libMatch && !isMemberWithDDName) {
         // regular file match, no member to validate
         needsMemberValidation = false;
         break;
@@ -2513,12 +2516,11 @@ async function resolveIncludeFileUri(
         break;
       }
     } else if (
-      isMemberIncludeItem(item) &&
-      item.ddname &&
-      lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
+      isMemberWithDDName &&
+      lib.ddLib.toLowerCase().endsWith(item.ddname!.toLowerCase())
     ) {
       // member w/ ddname, search for an exact match using ddlib
-      const end = lib.ddLib.length - item.ddname.length;
+      const end = lib.ddLib.length - item.ddname!.length;
       const libPath = lib.ddLib.substring(0, end);
       const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
       libMatch = await FileSystemProviderInstance.search({
@@ -2533,7 +2535,12 @@ async function resolveIncludeFileUri(
 
   // depending on whether we matched a member, check to apply validation on the name
   if (needsMemberValidation) {
-    checkToValidateMember(fileNameOrPartial);
+    const memberToValidate = 
+    isMemberWithDDName
+      ? fileNameOrPartial.split("(")[1].split(")")[0]
+      : fileNameOrPartial;
+
+    checkToValidateMember(memberToValidate);
   }
   return libMatch;
 }

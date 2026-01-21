@@ -26,6 +26,7 @@ export namespace PluginConfiguration {
         name: "default",
         "compiler-options": [],
         libs: ["cpy", "inc"],
+        "member-name-validation": false,
         "include-extensions": [".pli", ".pl1", ".inc"],
         "implicit-builtins": ["SUBSTR"],
         "lsp-options": {
