@@ -12,6 +12,7 @@
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
+import { stringifyAttributeWitnesses } from "./stringify";
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=attributes-nondata#ndatts__vari */
 
@@ -1962,14 +1963,6 @@ export interface BuilderDeclareItem {
 
 function makeToString(witnesses: AttributeWitnesses): () => string {
   return () => {
-    return witnesses.order
-      .filter((a) => typeof witnesses.witnesses[a]?.value !== "undefined")
-      .map((a) => {
-        const stringify = AttributeStringifiers[a] as (value: any) => string;
-        const value = witnesses.witnesses[a]?.value;
-        return stringify(value);
-      })
-      .filter((a) => typeof a !== "undefined")
-      .join(" ");
+    return stringifyAttributeWitnesses(witnesses);
   };
 }

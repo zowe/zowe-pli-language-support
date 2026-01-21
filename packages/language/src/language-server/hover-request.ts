@@ -23,7 +23,6 @@ import {
   DimensionBound,
   Dimensions,
   Expression,
-  getContainer,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -37,7 +36,11 @@ import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
-import { DataType, TypeDescriptions } from "../typesystem/descriptions";
+import { TypeDescriptions } from "../typesystem/descriptions";
+import {
+  stringifyDeclaration,
+  stringifyTypeDescription,
+} from "../typesystem/stringify";
 
 type MarkupResponse = string | null;
 
@@ -48,79 +51,6 @@ interface MarkupGeneratorContext {
 
 interface MarkupGenerator {
   (context: MarkupGeneratorContext): MarkupResponse;
-}
-
-function compositeToString(
-  typeProps: TypeDescriptions.Composite,
-): [number, string] {
-  const memberStrings: string[] = [];
-  for (const [member, { level }] of typeProps.membersMetadata) {
-    const type = typeProps.members.get(member)!;
-    if (TypeDescriptions.isComposite(type)) {
-      const [level, nestedStr] = compositeToString(type);
-      memberStrings.push(`${level} ${member.name}${nestedStr}`);
-    } else {
-      memberStrings.push(`${level} ${member.name} ${type.toString()}`);
-    }
-  }
-  const [level, parentLine] = compositeParentLineToString(typeProps);
-  return [
-    level,
-    `${parentLine}${memberStrings.map((m) => "\n  " + m.replaceAll(/\n/g, "\n  ")).join("")}`,
-  ];
-}
-
-function compositeParentLineToString(
-  typeProps: TypeDescriptions.Composite,
-): [number, string] {
-  const attributeStr = typeProps.toString();
-  const unionStr = typeProps.type === DataType.Union ? "UNION" : "";
-  return [
-    typeProps.level,
-    `${unionStr}${unionStr !== "" && attributeStr !== "" ? " " : ""}${attributeStr}`,
-  ];
-}
-
-/**
- * Generates a string representation of a declared variable.
- *
- * @param unit - The compilation unit containing the declared variable.
- * @param node - The declared variable node to generate a representation for.
- * @returns A string representation of the declared variable.
- * @throws An error if the qualified node is not found.
- */
-function renderDeclarationFromType(
-  nodeName: string,
-  typeDescription: TypeDescriptions.Any,
-): string | undefined {
-  if (TypeDescriptions.isUnknown(typeDescription)) {
-    return undefined;
-  }
-
-  let str = "";
-  if (TypeDescriptions.isComposite(typeDescription)) {
-    const [level, compositeStr] = compositeToString(typeDescription);
-    str = `${level} ${nodeName}${compositeStr !== "" ? `${compositeStr.startsWith("\n") ? "" : " "}${compositeStr}` : ""};`;
-  } else {
-    const level =
-      typeDescription.parentType && typeDescription.variableNode
-        ? typeDescription.parentType.membersMetadata.get(
-            typeDescription.variableNode,
-          )?.level
-        : undefined;
-    const levelStr = level !== undefined ? `${level} ` : "";
-    const typeDescriptionStr = typeDescription.toString();
-    str = `${levelStr}${nodeName} ${typeDescriptionStr};`;
-  }
-  while (typeDescription.parentType) {
-    typeDescription = typeDescription.parentType;
-    const memberNode = typeDescription.variableNode;
-    if (memberNode) {
-      const [level, parentLine] = compositeParentLineToString(typeDescription);
-      str = `${level} ${memberNode.name}${parentLine !== "" ? " " + parentLine : ""}\n  ${str.replaceAll(/\n/g, "\n  ")}`;
-    }
-  }
-  return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n    ")}`);
 }
 
 /**
@@ -315,10 +245,10 @@ function getNodeRepresentation(
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
       return node.name
-        ? (renderDeclarationFromType(
+        ? (stringifyTypeDescription(
             node.name,
             unit.services.inferer.inferType(node, unit),
-          ) ?? renderOriginalDeclaration(node, unit))
+          ) ?? stringifyDeclaration(node, unit))
         : null;
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
@@ -384,8 +314,8 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
         return null;
       }
       return (
-        renderDeclarationFromType(token.image, actualType) ??
-        renderOriginalDeclaration(ref.node as DeclaredVariable, unit)
+        stringifyTypeDescription(token.image, actualType) ??
+        stringifyDeclaration(ref.node as DeclaredVariable, unit)
       );
     }
   }
@@ -480,38 +410,4 @@ export function hoverRequest(
     },
     range: tokenToRange(token),
   };
-}
-
-function renderOriginalDeclaration(
-  node: DeclaredVariable,
-  unit: CompilationUnit,
-): string | null {
-  let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
-  do {
-    const container = getContainer(declaredItem!, SyntaxKind.DeclaredItem);
-    if (container) {
-      declaredItem = container;
-    } else {
-      break;
-    }
-  } while (declaredItem);
-  if (!declaredItem || !declaredItem.startToken || !declaredItem.endToken) {
-    return null;
-  }
-  if (
-    !declaredItem.startToken.uri ||
-    declaredItem.startToken.uri !== declaredItem.endToken.uri
-  ) {
-    return null;
-  }
-  const doc = unit.services.files.getDocument(declaredItem.startToken.uri);
-  const text = doc?.getText();
-  if (!text) {
-    return null;
-  }
-  const snippet = text.substring(
-    declaredItem.startToken.startOffset,
-    declaredItem.endToken.endOffset + 1,
-  );
-  return formatPliCodeBlock(snippet);
 }
