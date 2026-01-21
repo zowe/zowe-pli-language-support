@@ -6499,7 +6499,21 @@ const numberLiteral = rule(
   },
 );
 
+function indicatesAssignment(token: tokens.Token): boolean {
+  return (
+    tokenMatcher(token, tokens.AssignmentOperator) ||
+    tokenMatcher(token, tokens.Dot) ||
+    tokenMatcher(token, tokens.Comma)
+  );
+}
+
 export function performAssignmentLookahead(state: ParserState): boolean {
+  if (performIfLookahead(state)) {
+    // IF ... THEN detected, not an assignment
+    // We need this check first since IF can be followed by an expression that makes it look like an assignment
+    // e.g. IF (2 + 3) = 5 THEN; ...
+    return false;
+  }
   const expressionTokenTypes = [
     tokens.ID,
     tokens.BinaryOperator,
@@ -6510,36 +6524,32 @@ export function performAssignmentLookahead(state: ParserState): boolean {
     tokens.Comma,
     tokens.Dot,
   ];
-
-  let previousToken: tokens.Token | undefined = undefined;
-  const lookahead: (la: number) => tokens.Token | undefined = (la) => {
-    previousToken = state.peek(la - 1);
-    return state.peek(la);
-  };
   let i = 1;
-  let token = lookahead(i++);
+  let token = state.peek(i++);
   // First token of an assigment needs to be an ID
   if (!token || !tokenMatcher(token, tokens.ID)) {
     return false;
-  } else if (token.tokenTypeIdx === tokens.ID.tokenTypeIdx) {
-    return true;
   }
-  token = lookahead(i);
-  // We have found a match immediately with the assignment operator
-  if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
+  token = state.peek(i++);
+  if (token && indicatesAssignment(token)) {
+    // We have found a match immediately with the assignment operator (or a dot for member assignment, or a comma for multiple assignment)
     return true;
+  } else if (!token || !tokenMatcher(token, tokens.OpenParen)) {
+    // Otherwise expect an open parenthesis next
+    return false;
   }
 
   // The compiler will not use more than 160 tokens to perform the lookahead
   const max = 160;
-  let parenthesis = 0;
+  let parenthesis = 1;
   while (i < max) {
-    const token = lookahead(i++);
+    const token = state.peek(i++);
     if (!token) {
       return false;
     }
-    if (parenthesis === 0 && tokenMatcher(token, tokens.AssignmentOperator)) {
-      return true;
+    if (parenthesis === 0) {
+      // If we close the outermost parenthesis, expect an assignment indicator next
+      return indicatesAssignment(token);
     }
     if (tokenMatcher(token, tokens.OpenParen)) {
       parenthesis++;
@@ -6554,14 +6564,41 @@ export function performAssignmentLookahead(state: ParserState): boolean {
           tokenMatcher(token, tokenType),
         )
       ) {
+        // Non-expression token found, stop lookahead
         return false;
       }
-      if (tokenMatcher(token, tokens.ID)) {
-        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
-          return false;
-        }
-      }
       // Continue with the next token, the current token is a valid expression token
+    }
+  }
+  // If we reach this point, the lookahead was not successful
+  return false;
+}
+
+function performIfLookahead(state: ParserState): boolean {
+  let i = 1;
+  let token = state.peek(i++);
+  // First token needs to be IF
+  if (!token || !tokenMatcher(token, tokens.IF)) {
+    return false;
+  }
+  // Then we need to search for THEN before reaching the end of the statement
+  let parenthesis = 0;
+  const max = 160;
+  while (i < max) {
+    token = state.peek(i++);
+    if (!token) {
+      return false;
+    }
+    // THEN found outside of parentheses after IF and another token
+    if (i > 2 && parenthesis === 0 && tokenMatcher(token, tokens.THEN)) {
+      return true;
+    } else if (tokenMatcher(token, tokens.OpenParen)) {
+      parenthesis++;
+    } else if (tokenMatcher(token, tokens.CloseParen)) {
+      parenthesis--;
+    } else if (tokenMatcher(token, tokens.Semicolon)) {
+      // Semicolon indicates the end of the statement
+      return false;
     }
   }
   // If we reach this point, the lookahead was not successful
