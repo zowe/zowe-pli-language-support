@@ -43,6 +43,26 @@
 // @filename: cpy/__legitimatefile.pli
 //// DECLARE V4 FIXED;
 
+// @filename: cpy/ABC.DEF(GHI)
+//// // expecting to be valid
+//// DECLARE V5 FIXED;
+
+// @filename: cpy/ABC.DEF(GH@#_$I)
+//// // expecting to be valid
+//// DECLARE V6 FIXED;
+
+// @filename: cpy/ABC.DEF(GHIJKLMNO)
+//// // expecting to be invalid
+//// DECLARE V7 FIXED;
+
+// @filename: cpy/ABC.DEF(#GH@#_$I)
+//// // expecting to be invalid
+//// DECLARE V8 FIXED;
+
+// @filename: cpy/ABC.DEF(_GH@#_$IJKLM)
+//// // expecting to be invalid
+//// DECLARE V9 FIXED;
+
 // @filename: main.pli
 //// %INCLUDE <|1:m12345678|>;
 //// %INCLUDE <|2:m1234567|>;
@@ -51,6 +71,11 @@
 //// %INCLUDE <|4:_A1@#|>;
 //// // legitimate file include
 //// %INCLUDE <|5:__legitimatefile|>;
+//// %INCLUDE ABC.DEF(<|6:GHI|>);
+//// %INCLUDE ABC.DEF(<|7:GH@#_$I|>);
+//// %INCLUDE ABC.DEF(<|8:GHIJKLMNO|>);
+//// %INCLUDE ABC.DEF(<|9:#GH@#_$I|>);
+//// %INCLUDE ABC.DEF(<|10:_GH@#_$IJKLM|>);
 
 // verify 1 diagnostic on the first include only
 verify.expectExclusiveDiagnosticsAt(1, [
@@ -68,8 +93,22 @@ verify.expectExclusiveDiagnosticsAt(4, [
   code.Severe.IBM1848I,
 ]);
 
-// lastly verify no diagnostics on the legitimate file include
+// verify no diagnostics on the legitimate file include
 verify.expectExclusiveDiagnosticsAt(5, []);
+
+// verify no diagnostic on the member with valid ddnames.
+verify.expectExclusiveDiagnosticsAt(6, []);
+verify.expectExclusiveDiagnosticsAt(7, []);
+
+// verify diagnostics for members with ddnames: exceeding lenght (8), invalid name (9), both (10)
+verify.expectExclusiveDiagnosticsAt(8, [
+  code.LSP.MemberValidation.ExceedsMaxLength,
+]);
+verify.expectExclusiveDiagnosticsAt(9, [code.LSP.MemberValidation.InvalidName]);
+verify.expectExclusiveDiagnosticsAt(10, [
+  code.LSP.MemberValidation.ExceedsMaxLength,
+  code.LSP.MemberValidation.InvalidName,
+]);
 
 // still expecting the same tokens as before
 preprocessor.expectTokens(`
@@ -77,4 +116,9 @@ preprocessor.expectTokens(`
   DECLARE V2 FIXED;
   DECLARE V3 FIXED;
   DECLARE V4 FIXED;
+  DECLARE V5 FIXED;
+  DECLARE V6 FIXED;
+  DECLARE V7 FIXED;
+  DECLARE V8 FIXED;
+  DECLARE V9 FIXED;
 `);

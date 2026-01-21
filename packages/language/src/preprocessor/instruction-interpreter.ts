@@ -2412,8 +2412,11 @@ async function resolveIncludeFileUri(
   // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
   const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
   // Check if it's member wish specified ddname
-  const isMemberWithDDName =
-    !!(isMemberIncludeItem(item) && item.ddname && item.memberName);
+  const isMemberWithDDName = !!(
+    isMemberIncludeItem(item) &&
+    item.ddname &&
+    item.memberName
+  );
 
   /**
    * Computes the URI for a lib file based on whether the path is absolute or relative.
@@ -2535,8 +2538,7 @@ async function resolveIncludeFileUri(
 
   // depending on whether we matched a member, check to apply validation on the name
   if (needsMemberValidation) {
-    const memberToValidate = 
-    isMemberWithDDName
+    const memberToValidate = isMemberWithDDName
       ? fileNameOrPartial.split("(")[1].split(")")[0]
       : fileNameOrPartial;
 
