@@ -49,6 +49,8 @@ const TwoCharTokens: Record<string, TwoCharToken[]> = {
     { char: "=", tokenType: tokens.MinusEquals },
     { char: ">", tokenType: tokens.MinusGreaterThan },
   ],
+  "(": [{ char: ":", tokenType: tokens.OpenParenColon }],
+  ":": [{ char: ")", tokenType: tokens.CloseParenColon }],
 };
 
 interface KeywordToken {
@@ -506,10 +508,16 @@ export function initLexer(compilerOptions: CompilerOptions): void {
     tokens.GreaterThan,
     TwoCharTokens[">"],
   );
-  funcs["(".charCodeAt(0)] = generateSingleCharFunc(tokens.OpenParen);
+  funcs["(".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.OpenParen,
+    TwoCharTokens["("],
+  );
   funcs[")".charCodeAt(0)] = generateSingleCharFunc(tokens.CloseParen);
   funcs[";".charCodeAt(0)] = generateSingleCharFunc(tokens.Semicolon);
-  funcs[":".charCodeAt(0)] = generateSingleCharFunc(tokens.Colon);
+  funcs[":".charCodeAt(0)] = generateDoubleCharFunc(
+    tokens.Colon,
+    TwoCharTokens[":"],
+  );
   funcs[",".charCodeAt(0)] = generateSingleCharFunc(tokens.Comma);
   funcs["%".charCodeAt(0)] = generateSingleCharFunc(tokens.Percent);
   funcs[".".charCodeAt(0)] = generateSingleCharFunc(tokens.Dot);

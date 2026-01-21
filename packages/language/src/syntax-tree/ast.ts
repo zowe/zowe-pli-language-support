@@ -215,7 +215,6 @@ export enum SyntaxKind {
   SqlAttributeTableLocator,
   SqlAttributeResultSetLocator,
   TypeAttribute,
-  TypeReference,
   UnaryExpression,
   ValueAttribute,
   ValueListAttribute,
@@ -641,6 +640,13 @@ export enum ReferenceType {
    * A type reference in the PL/I code. Only valid for normal PL/I code.
    */
   Type,
+  /**
+   * References a type OR variable, but will prefer type if both exist.
+   *
+   * This is a rather exotic case that only exists to support the limited amount of type functions.
+   * These look like `BIND(:type, pointer:)`, and require to be able to reference either a type or variable.
+   */
+  TypeOrVariable,
 }
 
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
@@ -880,7 +886,6 @@ export type SyntaxNode =
   | StopStatement
   | StringLiteral
   | TypeAttribute
-  | TypeReference
   | UnaryExpression
   | ValueAttribute
   | ValueListAttribute
@@ -963,7 +968,6 @@ export type Expression =
   | BinaryExpression
   | Literal
   | LocatorCall
-  | TypeReference
   | Parenthesis
   | UnaryExpression;
 export type FormatItem =
@@ -991,12 +995,13 @@ export type InitialAttributeSpecificationIteration =
   | InitialAttributeItemStar
   | InitialAttributeSpecificationIterationValue;
 export type LiteralValue = NumberLiteral | StringLiteral;
-export type NamedElement = DeclaredVariable | OrdinalValue | LabelPrefix;
+export type NamedVariable = DeclaredVariable | OrdinalValue | LabelPrefix;
 export type NamedType =
   | DefineAliasStatement
   | DefineOrdinalStatement
   // Only if part of a define struct statement
   | DeclaredVariable;
+export type NamedElement = NamedVariable | NamedType;
 export type OptionsItem =
   | CMPATOptionsItem
   | LinkageOptionsItem
@@ -2985,19 +2990,6 @@ export function createMemberCall(): MemberCall {
   };
 }
 
-export interface TypeReference extends AstNode {
-  kind: SyntaxKind.TypeReference;
-  type: Reference<NamedType> | null;
-}
-
-export function createTypeReference(): TypeReference {
-  return {
-    kind: SyntaxKind.TypeReference,
-    container: null,
-    type: null,
-  };
-}
-
 export interface NamedCondition extends AstNode {
   kind: SyntaxKind.NamedCondition;
   name: string | null;
@@ -3319,7 +3311,7 @@ export interface ProcedureCall extends AstNode {
   /**
    * Call to a known procedure or external declaration (via a named element), does not necessarily require an arg list
    */
-  procedure: Reference<NamedElement> | null;
+  procedure: Reference<NamedVariable> | null;
   /**
    * First argument list of the CALL statement.
    * In case of a procedure array, this is the index!
@@ -3358,7 +3350,7 @@ export function createProcedureCallArgs(): ProcedureCallArgs {
 
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;
-  ref: Reference<NamedElement> | null;
+  ref: Reference<NamedVariable> | null;
 }
 export function createProcedureParameter(): ProcedureParameter {
   return {

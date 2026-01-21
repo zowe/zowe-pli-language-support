@@ -2075,12 +2075,12 @@ function generateSyntheticRefItem(
   context: InterpreterContext,
 ): ast.ReferenceItem {
   const refItem = ast.createReferenceItem();
-  const ref = ast.createReference<ast.NamedElement>(
+  const ref = ast.createReference<ast.NamedVariable>(
     refItem,
     token,
     ast.ReferenceType.Variable,
   );
-  ref.node = targetNode as ast.NamedElement;
+  ref.node = targetNode as ast.NamedVariable;
   refItem.ref = ref;
   context.references.push(ref);
   return refItem;

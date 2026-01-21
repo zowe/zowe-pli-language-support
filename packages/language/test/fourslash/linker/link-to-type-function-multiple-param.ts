@@ -11,13 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
-//// DEFINE ORDINAL <|1:T|>(A, B);
+//// DEFINE STRUCT 1 <|A|>, 2 B FIXED;
 //// TEST: PROC;
-////   VAR = <|FIRST|>(:<|1>T:);
+////   DCL <|H|> POINTER;
+////   VAR = BIND(:<|A>A, <|H>H:);
 //// END TEST;
 
 linker.expectLinks();
-// Colons should not generate parser errors
 verify.noParserDiagnostics();
-// Also, "FIRST" should link to the built-in type function
-verify.noDiagnostics("FIRST");

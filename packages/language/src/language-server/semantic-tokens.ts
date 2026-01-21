@@ -149,11 +149,6 @@ function getReferenceTarget(token: Token): SyntaxNode | undefined {
     token.element?.kind === SyntaxKind.HandleAttribute
   ) {
     return token.element.type?.node ?? undefined;
-  } else if (
-    token.kind === CstNodeKind.TypeReference_Ref &&
-    token.element?.kind === SyntaxKind.TypeReference
-  ) {
-    return token.element.type?.node ?? undefined;
   }
   return undefined;
 }
