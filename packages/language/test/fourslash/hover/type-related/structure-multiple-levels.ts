@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 //// DCL 1 ADDRESS UNION,
 ////       2 MAILBOX FIXED DECIMAL(4),

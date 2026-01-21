@@ -9,25 +9,20 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 //// DCL 1 ADDRESS UNION,
 ////       2 MAILBOX FIXED DECIMAL(5),
 ////       2 LOCATION,
 ////         3 STREET CHAR(20),
 ////         3 CITY CHAR(15);
-//// DCL <|1>LOC LIKE ADDRESS.LOCATION;
-//// DCL WHERE CHAR(15);
-//// WHERE = LOC.<|2>CITY;
+//// DCL <|1>ADDR LIKE ADDRESS;
 
 hover.expectMarkdownAt(
-  2,
-  hover.codeBlock(`DCL 1 LOC,
-      2 CITY CHARACTER(15);`),
-);
-hover.expectMarkdownAt(
   1,
-  hover.codeBlock(`DCL 1 LOC,
-      2 STREET CHARACTER(20),
-      2 CITY CHARACTER(15);`),
+  hover.codeBlock(`DCL 1 ADDR UNION,
+      2 MAILBOX FIXED DECIMAL PRECISION(5),
+      2 LOCATION,
+        3 STREET CHARACTER(20),
+        3 CITY CHARACTER(15);`),
 );

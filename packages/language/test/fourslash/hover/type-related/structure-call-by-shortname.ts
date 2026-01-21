@@ -9,10 +9,18 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// DCL STR CHAR(300);
-//// STR = <|1>SUBSTR('Hello, World!', 1, 5);
+/**
+ * Strip away irrelevant nested nodes in the hover response to show the structure of the declaration.
+ */
 
-//TODO fix the substring builtin. signature
-hover.expectMarkdownAt(1, hover.codeBlock(`SUBSTR: PROC(VALUE) RETURNS();`));
+//// DCL 1 A, 2 A2, 3 A3, 2 B, 3 B3, 2 C2, 3 C3;
+//// PUT(<|1>C3);
+
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`DCL 1 A,
+      2 C2,
+        3 C3;`),
+);

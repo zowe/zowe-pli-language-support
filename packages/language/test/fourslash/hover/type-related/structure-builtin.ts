@@ -9,14 +9,13 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// DCL MyVar FIXED <|2:FLOAT|>;
-//// <|1>MyVar = 12.1234;
+//// SQLDA.SQLVAR.<|1>SQLIND = 1;
 
 hover.expectMarkdownAt(
   1,
-  //will not show FLOAT attribute due to conflict
-  hover.codeBlock("DCL MYVAR FIXED;"),
+  hover.codeBlock(`DCL 1 SQLDA BASED(...),
+      2 SQLVAR DIMENSION(...),
+        3 SQLIND POINTER;`),
 );
-verify.expectDiagnosticsAt(2, code.Error.IBM2462I);

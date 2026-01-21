@@ -9,9 +9,10 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// DEFINE ORDINAL COLOR (RED, GREEN, BLUE);
-//// DCL <|1>BACKGROUND ORDINAL COLOR;
+//// DEFINE ALIAS NAME CHAR(15);
+//// DCL ID TYPE NAME;
+//// PUT(<|1>ID);
 
-hover.expectMarkdownAt(1, hover.codeBlock("DCL BACKGROUND ORDINAL COLOR;"));
+hover.expectMarkdownAt(1, hover.codeBlock(`DCL ID CHARACTER(15);`));

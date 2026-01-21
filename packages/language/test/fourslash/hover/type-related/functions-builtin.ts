@@ -9,13 +9,10 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// DCL <|1>HEX ENTRY(FIXED BINARY(31)) RETURNS(CHAR(8)) EXTERNAL;
+//// DCL STR CHAR(300);
+//// STR = <|1>SUBSTR('Hello, World!', 1, 5);
 
-hover.expectMarkdownAt(
-  1,
-  hover.codeBlock(
-    "DCL HEX ENTRY(FIXED BINARY PRECISION(31)) RETURNS(CHARACTER(8)) EXTERNAL;",
-  ),
-);
+//TODO fix the SUBSTR builtin signature, it is actually just a forward declaration
+hover.expectMarkdownAt(1, hover.codeBlock(`SUBSTR: PROC(VALUE) RETURNS();`));

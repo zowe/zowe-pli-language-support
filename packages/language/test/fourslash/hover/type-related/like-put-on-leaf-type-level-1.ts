@@ -9,13 +9,14 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// SQLDA.SQLVAR.<|1>SQLIND = 1;
+//// DCL 1 A, 2 B FIXED;
+//// DCL X LIKE A;
+//// PUT(X.<|1>B);
 
 hover.expectMarkdownAt(
   1,
-  hover.codeBlock(`DCL 1 SQLDA BASED(...),
-      2 SQLVAR DIMENSION(...),
-        3 SQLIND POINTER;`),
+  hover.codeBlock(`DCL 1 X,
+      2 B FIXED;`),
 );

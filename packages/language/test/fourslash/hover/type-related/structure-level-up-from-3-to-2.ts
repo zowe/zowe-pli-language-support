@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 //// DCL 1 OUT_RECORD,
 ////       2 EMPLOYEE,

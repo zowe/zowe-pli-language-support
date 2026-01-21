@@ -9,16 +9,15 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// DCL 1 <|1>PERSON STATIC <|AUTO|>,
-////       2 NAME CHAR(20),
-////       2 AGE FIXED DEC(3);
+//// DCL 1 A, 2 B FIXED;
+//// DCL 1 X, 2 Y LIKE A;
+//// PUT(X.Y.<|1>B);
 
 hover.expectMarkdownAt(
   1,
-  hover.codeBlock(`DCL 1 PERSON STATIC,
-      2 NAME CHARACTER(20),
-      2 AGE FIXED DECIMAL PRECISION(3);`),
+  hover.codeBlock(`DCL 1 X,
+      2 Y,
+        3 B FIXED;`),
 );
-verify.expectDiagnosticsAt("AUTO", code.Error.IBM2462I);

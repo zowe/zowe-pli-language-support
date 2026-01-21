@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 /**
  * Failing test for hover on regular variable declaration

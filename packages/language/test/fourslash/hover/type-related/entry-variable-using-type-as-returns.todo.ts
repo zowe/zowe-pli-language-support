@@ -9,14 +9,11 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 //// DEFINE STRUCTURE 1 PERSON,
 ////                    2 NAME CHAR(20),
 ////                    2 AGE FIXED DECIMAL(3);
-//// DCL <|1>HEX ENTRY(TYPE PERSON) RETURNS(FIXED) EXTERNAL;
+//// DCL <|1>HEX ENTRY RETURNS(TYPE PERSON) EXTERNAL;
 
-hover.expectMarkdownAt(
-  1,
-  hover.codeBlock("DCL HEX ENTRY(...) RETURNS(FIXED) EXTERNAL;"),
-);
+hover.expectMarkdownAt(1, hover.codeBlock("DCL HEX ENTRY RETURNS() EXTERNAL;"));
