@@ -1806,7 +1806,7 @@ export namespace TypeDescriptions {
         attributes[AttributeKind.Dimension]?.value ??
         DefaultValues[AttributeKind.Dimension],
       variableNode,
-      toString: makeToString(witnesses),
+      toString: () => stringifyAttributeWitnesses(witnesses),
     };
   }
 
@@ -1816,7 +1816,7 @@ export namespace TypeDescriptions {
   ): Any {
     const attributes = witnesses.witnesses;
     const common = {
-      toString: makeToString(witnesses),
+      toString: () => stringifyAttributeWitnesses(witnesses),
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],
@@ -1959,10 +1959,4 @@ export interface BuilderDeclareItem {
   node: ast.DeclaredVariable;
   attributes: ast.DeclarationAttribute[];
   level: number | undefined;
-}
-
-function makeToString(witnesses: AttributeWitnesses): () => string {
-  return () => {
-    return stringifyAttributeWitnesses(witnesses);
-  };
 }
