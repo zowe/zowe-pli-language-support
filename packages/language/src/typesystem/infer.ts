@@ -80,10 +80,7 @@ export class DefaultTypeInferer implements TypeInferer {
       DiagnosticCategory.TypeSystem,
       attributes.diagnostics,
     );
-    return builder.handlePrimitiveDeclaredItem(
-      node.returnsToken,
-      attributes,
-    );
+    return builder.handlePrimitiveDeclaredItem(node.returnsToken, attributes);
   }
 
   private inferEntryParameterType(
@@ -97,10 +94,7 @@ export class DefaultTypeInferer implements TypeInferer {
       DiagnosticCategory.TypeSystem,
       attributes.diagnostics,
     );
-    return builder.handlePrimitiveDeclaredItem(
-      nameToken,
-      attributes,
-    );
+    return builder.handlePrimitiveDeclaredItem(nameToken, attributes);
   }
 
   private inferOrdinalType(
@@ -216,18 +210,25 @@ export class DefaultTypeInferer implements TypeInferer {
       if (previousItemLevel === undefined || item.level === undefined) {
         topLevelMembers.set(item, type);
       } else {
-        while (compositeParents.length > 0 && compositeParents[compositeParents.length - 1].level > item.level) {
+        while (
+          compositeParents.length > 0 &&
+          compositeParents[compositeParents.length - 1].level >= item.level
+        ) {
           compositeParents.pop();
         }
-        if(compositeParents.length > 0) {
-          compositeAddMember(compositeParents[compositeParents.length - 1], item, type);
+        if (compositeParents.length > 0) {
+          compositeAddMember(
+            compositeParents[compositeParents.length - 1],
+            item,
+            type,
+          );
         } else {
           topLevelMembers.set(item, type);
         }
       }
-      if(TypeDescriptions.isComposite(type)) {
-          compositeParents.push(type);
-        }
+      if (TypeDescriptions.isComposite(type)) {
+        compositeParents.push(type);
+      }
       previousItemLevel = item.level;
     }
 

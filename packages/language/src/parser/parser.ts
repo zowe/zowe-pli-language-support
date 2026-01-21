@@ -4813,7 +4813,6 @@ const declareStatement = rule(
       CstNodeKind.DeclareStatement_DECLARE,
       tokens.DECLARE,
     );
-    element.startToken = declareToken;
     if (declareToken?.image.charAt(0).toUpperCase() === "X") {
       element.xDeclare = true;
     }
@@ -4833,7 +4832,7 @@ const declareStatement = rule(
       rhs && element.items.push(rhs);
     }
 
-    element.endToken = state.consume(
+    state.consume(
       element,
       CstNodeKind.DeclareStatement_Semicolon,
       tokens.Semicolon,

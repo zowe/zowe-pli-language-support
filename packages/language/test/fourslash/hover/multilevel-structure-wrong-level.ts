@@ -22,12 +22,10 @@ types.expectTypeAt("SECTOR", {
   stringBits: {
     kind: types.stringKinds.Character,
     length: 8,
-  }
+  },
 });
 hover.expectMarkdownAt(
   1,
   hover.codeBlock(`DCL 1 OUT_RECORD,
       2 SECTOR CHARACTER(8);`),
 );
-
-

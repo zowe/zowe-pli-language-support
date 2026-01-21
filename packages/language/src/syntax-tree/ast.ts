@@ -1651,8 +1651,6 @@ export interface DeclareStatement extends AstNode {
   kind: SyntaxKind.DeclareStatement;
   items: DeclaredItem[];
   xDeclare: boolean;
-  startToken: Token | null;
-  endToken: Token | null;
 }
 export function createDeclareStatement(): DeclareStatement {
   return {
@@ -1660,8 +1658,6 @@ export function createDeclareStatement(): DeclareStatement {
     container: null,
     items: [],
     xDeclare: false,
-    startToken: null,
-    endToken: null,
   };
 }
 export interface DefaultAttributeExpression extends AstNode {

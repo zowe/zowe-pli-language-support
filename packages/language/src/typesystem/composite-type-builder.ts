@@ -64,10 +64,7 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
       this.unit,
     );
     const { type, diagnostics } = builder.build();
-    this.unit.diagnostics.addAll(
-      DiagnosticCategory.TypeSystem,
-      diagnostics,
-    );
+    this.unit.diagnostics.addAll(DiagnosticCategory.TypeSystem, diagnostics);
     return type;
   }
   collectAttributes(
