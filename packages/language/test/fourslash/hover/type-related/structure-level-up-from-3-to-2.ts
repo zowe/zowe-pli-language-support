@@ -9,16 +9,23 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DCL 1 OUT_RECORD,
+////       2 EMPLOYEE,
+////         3 SURNAME CHAR(14),
+////         3 NAME CHAR(11),
+////       2 <|1><|SECTOR|> CHAR(8);
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
+types.expectTypeAt("SECTOR", {
   type: types.dataTypes.String,
   stringBits: {
     kind: types.stringKinds.Character,
-    length: 10,
+    length: 8,
   },
 });
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`DCL 1 OUT_RECORD,
+      2 SECTOR CHARACTER(8);`),
+);

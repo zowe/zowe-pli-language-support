@@ -9,16 +9,16 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DCL 1 A, 2 B, 3 C FIXED;
+//// DCL 1 X, 2 Y LIKE A;
+//// PUT(X.Y.B.<|1>C);
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`DCL 1 X,
+      2 Y,
+        3 B,
+          4 C FIXED;`),
+);
