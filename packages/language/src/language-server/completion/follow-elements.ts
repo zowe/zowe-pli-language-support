@@ -10,20 +10,30 @@
  */
 
 import { Token } from "../../parser/tokens";
-import { MemberCall, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
+import {
+  getContainer,
+  isPreprocessorNode,
+  MemberCall,
+  SyntaxKind,
+  SyntaxNode,
+} from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
-import { CompletionKeywords } from "./keywords";
+import { CompletionKeywords, kw } from "./keywords";
 import * as tokens from "../../parser/tokens";
+import { SimpleCompletionItem } from "../types";
+import { CompilationUnit } from "../../workspace/compilation-unit";
 
 const DataSpecificationCompletionKeywordsArray =
-  CompletionKeywords.DeclarationKeyword.keysArray();
+  CompletionKeywords.DeclarationKeyword.values();
 const StatementStartCompletionKeywordsArray =
-  CompletionKeywords.StatementStart.keysArray();
+  CompletionKeywords.StatementStart.values();
 const StatementStartPreprocessorCompletionKeywordsArray =
-  CompletionKeywords.StatementStartPreprocessor.keysArray();
+  CompletionKeywords.StatementStartPreprocessor.values();
+const StatementStartPreprocessorWithPercentCompletionKeywordsArray =
+  CompletionKeywords.StatementStartPreprocessorWithPercent.values();
 const AllStatementStartKeywordsArray = [
   ...StatementStartCompletionKeywordsArray,
-  ...StatementStartPreprocessorCompletionKeywordsArray,
+  ...StatementStartPreprocessorWithPercentCompletionKeywordsArray,
 ];
 
 export enum FollowKind {
@@ -34,7 +44,7 @@ export enum FollowKind {
 
 export interface FollowCstNode {
   kind: FollowKind.CstNode;
-  types: CstNodeKind[];
+  items: SimpleCompletionItem[];
 }
 
 export interface FollowLocalReference {
@@ -98,7 +108,95 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
   return [];
 }
 
+const expressionFollowKinds = new Set([
+  // Within expressions
+  CstNodeKind.BinaryExpression_Operator,
+  CstNodeKind.UnaryExpression_Operator,
+  CstNodeKind.AssignmentStatement_Operator,
+
+  // After '(' in various places
+  CstNodeKind.Dimensions_OpenParen,
+  CstNodeKind.PutStatement_OpenParen,
+  CstNodeKind.InitialAttribute_OpenParenDirect,
+  CstNodeKind.ReturnStatement_OpenParen,
+  CstNodeKind.DoWhile_OpenParenWhile,
+  CstNodeKind.DoWhile_OpenParenUntil,
+  CstNodeKind.DoUntil_OpenParenUntil,
+  CstNodeKind.DoUntil_OpenParenWhile,
+  CstNodeKind.EntryStatement_OpenParenEnv,
+  CstNodeKind.AssertStatement_OpenParen0,
+  CstNodeKind.AssertStatement_OpenParen1,
+  CstNodeKind.AttachStatement_OpenParenTStack,
+  CstNodeKind.OrdinalValue_OpenParen,
+  CstNodeKind.DelayStatement_OpenParen,
+  CstNodeKind.DeleteStatement_OpenParenKey,
+  CstNodeKind.DisplayStatement_OpenParenExpression,
+  CstNodeKind.FetchEntry_OpenParenTitle,
+  CstNodeKind.FormatListItemLevel_OpenParen,
+  CstNodeKind.AFormatItem_OpenParen,
+  CstNodeKind.BFormatItem_OpenParen,
+  CstNodeKind.FFormatItem_OpenParen,
+  CstNodeKind.EFormatItem_OpenParen,
+  CstNodeKind.ColumnFormatItem_OpenParen,
+  CstNodeKind.GFormatItem_OpenParen,
+  CstNodeKind.LineFormatItem_OpenParen,
+  CstNodeKind.SkipFormatItem_OpenParen,
+  CstNodeKind.XFormatItem_OpenParen,
+  CstNodeKind.GetStatement_OpenParen,
+  CstNodeKind.GetFile_OpenParen,
+  CstNodeKind.GetSkip_OpenParen,
+  CstNodeKind.LocateStatementOption_OpenParen,
+  CstNodeKind.OpenOption_OpenParen,
+  CstNodeKind.PutItem_OpenParen,
+  CstNodeKind.ReadStatementFile_OpenParen,
+  CstNodeKind.RewriteStatementFile_OpenParen,
+  CstNodeKind.SelectStatement_OpenParen,
+  CstNodeKind.WhenStatement_OpenParen,
+  CstNodeKind.WriteStatementFile_OpenParen,
+  CstNodeKind.InitialAttribute_OpenParenInitAcross,
+  CstNodeKind.InitAcrossExpression_OpenParen,
+  CstNodeKind.DefinedAttribute_OpenParenPos,
+  CstNodeKind.ValueAttribute_OpenParen,
+  CstNodeKind.ValueListAttribute_OpenParen,
+  CstNodeKind.ValueRangeAttribute_OpenParen,
+  CstNodeKind.EnvironmentAttributeItem_OpenParen,
+  CstNodeKind.EntryAttribute_OpenParenEnv,
+  CstNodeKind.ParenthesizedExpression_OpenParen,
+  CstNodeKind.ProcedureCallArgs_OpenParen,
+  CstNodeKind.DataSpecificationOptions_OpenParenList,
+
+  // After ',' in various places
+  CstNodeKind.AssertStatement_Comma0,
+  CstNodeKind.DefaultStatement_Comma,
+  CstNodeKind.FFormatItem_CommaFractional,
+  CstNodeKind.FFormatItem_CommaScalingFactor,
+  CstNodeKind.EFormatItem_Comma0,
+  CstNodeKind.EFormatItem_Comma1,
+  CstNodeKind.WhenStatement_Comma,
+  CstNodeKind.InitialAttribute_CommaInitAcross,
+  CstNodeKind.InitAcrossExpression_Comma,
+  CstNodeKind.EnvironmentAttributeItem_Comma,
+  CstNodeKind.DataSpecificationDataList_Comma,
+
+  // After specific keywords
+  CstNodeKind.ActivateStatement_ACTIVATE,
+  CstNodeKind.DeactivateStatement_DEACTIVATE,
+  CstNodeKind.InscanDirective_INSCAN,
+  CstNodeKind.AssertStatement_TEXT,
+  CstNodeKind.AssignmentStatement_DIMACROSS,
+  CstNodeKind.DefaultStatement_DEFAULT,
+  CstNodeKind.DoSpecification_TO0,
+  CstNodeKind.DoSpecification_BY0,
+  CstNodeKind.DoSpecification_BY1,
+  CstNodeKind.DoSpecification_TO1,
+  CstNodeKind.DoSpecification_UPTHRU,
+  CstNodeKind.DoSpecification_DOWNTHRU,
+  CstNodeKind.DoSpecification_REPEAT,
+  CstNodeKind.IfStatement_IF,
+]);
+
 export function getFollowElements(
+  unit: CompilationUnit,
   context: SyntaxNode | undefined,
   token: Token,
 ): FollowElement[] {
@@ -118,7 +216,7 @@ export function getFollowElements(
       return [
         {
           kind: FollowKind.CstNode,
-          types: DataSpecificationCompletionKeywordsArray,
+          items: DataSpecificationCompletionKeywordsArray,
         },
       ];
     case CstNodeKind.DeactivateStatement_Semicolon:
@@ -175,26 +273,9 @@ export function getFollowElements(
     case CstNodeKind.WaitStatement_Semicolon:
     case CstNodeKind.WriteStatement_Semicolon:
     case CstNodeKind.DeclareStatement_Semicolon:
-      return [
-        {
-          kind: FollowKind.CstNode,
-          types: AllStatementStartKeywordsArray,
-        },
-        {
-          kind: FollowKind.LocalReference,
-        },
-      ];
-    // Happens on '(' in `PUT()`
-    case CstNodeKind.Dimensions_OpenParen:
-    // Happens on '(' in `PUT(f)`
-    case CstNodeKind.DataSpecificationOptions_OpenParenList:
-    // Happens on ',' in `PUT(A, )`
-    case CstNodeKind.DataSpecificationDataList_Comma:
-      return [
-        {
-          kind: FollowKind.LocalReference,
-        },
-      ];
+    // We are at the start of a new statement
+    case CstNodeKind.LabelPrefix_Colon:
+      return provideEntryPointFollowElements(unit, context);
     case CstNodeKind.AssignmentStatement_Operator:
     case CstNodeKind.BinaryExpression_Operator:
     case CstNodeKind.UnaryExpression_Operator:
@@ -211,7 +292,7 @@ export function getFollowElements(
         },
         {
           kind: FollowKind.CstNode,
-          types: StatementStartPreprocessorCompletionKeywordsArray,
+          items: StatementStartPreprocessorCompletionKeywordsArray,
         },
       ];
     case CstNodeKind.MemberCall_Dot:
@@ -227,19 +308,70 @@ export function getFollowElements(
         }
       }
       break;
+    case CstNodeKind.PutStatement_PUT:
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items: [kw("STRING")],
+        },
+      ];
+  }
+
+  if (expressionFollowKinds.has(token.kind)) {
+    return [
+      {
+        kind: FollowKind.LocalReference,
+      },
+    ];
   }
 
   return [];
 }
 
-export function provideEntryPointFollowElements(): FollowElement[] {
-  /**
-   * TODO @didrikmunther: What follow elements are available for an empty program?
-   */
-  return [
-    {
-      kind: FollowKind.CstNode,
-      types: AllStatementStartKeywordsArray,
-    },
-  ];
+export function provideEntryPointFollowElements(
+  unit: CompilationUnit,
+  context?: SyntaxNode,
+): FollowElement[] {
+  const allKeywords: FollowElement = {
+    kind: FollowKind.CstNode,
+    items: AllStatementStartKeywordsArray,
+  };
+  if (!context) {
+    return [allKeywords];
+  }
+  if (isPreprocessorNode(unit, context)) {
+    const isProc = context.kind === SyntaxKind.ProcedureStatement;
+    const procItem = isProc
+      ? context
+      : getContainer(context, SyntaxKind.ProcedureStatement);
+    if (procItem) {
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items:
+            CompletionKeywords.StatementStartPreprocessorInProcedure.values(),
+        },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    } else {
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items: CompletionKeywords.StatementStartPreprocessor.values(),
+        },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    }
+  } else {
+    return [
+      allKeywords,
+      {
+        kind: FollowKind.LocalReference,
+      },
+    ];
+  }
 }

@@ -11,20 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL 1 A, 2 B, 3 C, 4 D char(10);
-//// <|1>
+//// DCL A FIXED BIN INIT(10);
+//// DCL B(<|1>);
 
 completion.expectAt(1, {
-  includes: [
-    "A",
-    "B",
-    "C",
-    "D",
-    ...constants.CompletionKeywords.StatementStart.values().map(
-      (keyword) => keyword.label,
-    ),
-    ...constants.CompletionKeywords.StatementStartPreprocessorWithPercent.values().map(
-      (keyword) => keyword.label,
-    ),
-  ],
+  includes: ["A"],
 });

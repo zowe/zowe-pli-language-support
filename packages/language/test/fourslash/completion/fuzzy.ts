@@ -11,7 +11,13 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL 1 ROOT, 2 firstCompletionValue;
+//// DCL 1 ROOT,
+////   2 firstCompletionValue,
+////   2 secondCompletionValue;
 //// PUT(ROOT.fcv<|1>);
 
-completion.expectAt(1, { includes: ["firstCompletionValue"] });
+completion.expectAt(1, {
+  includes: ["firstCompletionValue"],
+  // Fuzzy matching should remove this entry
+  excludes: ["secondCompletionValue"],
+});
