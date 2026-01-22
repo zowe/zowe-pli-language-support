@@ -2219,7 +2219,7 @@ function isFileIncludeItem(obj: any): obj is FileIncludeItem {
   );
 }
 
-function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
+export function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
   return (
     obj &&
     typeof obj === "object" &&
@@ -2287,7 +2287,7 @@ async function runInclude(
   }
 
   try {
-    const document = await TextDocuments.get(uri);
+    const document = await TextDocuments.get(uri.path);
     if (!document) {
       throw new Error("Document not found after URI resolution.");
     }
@@ -2539,7 +2539,8 @@ async function resolveIncludeFileUri(
   // depending on whether we matched a member, check to apply validation on the name
   if (needsMemberValidation) {
     const memberToValidate = isMemberWithDDName
-      ? fileNameOrPartial.split("(")[1].split(")")[0]
+      ? // Extract the member name from the parenthesis
+        fileNameOrPartial.split("(")[1].split(")")[0]
       : fileNameOrPartial;
 
     checkToValidateMember(memberToValidate);

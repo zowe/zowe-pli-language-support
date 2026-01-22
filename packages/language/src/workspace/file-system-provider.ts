@@ -52,6 +52,25 @@ export function isPathSearch(obj: any): obj is PathSearch {
 }
 
 /**
+ * Converts a filesystem path into a valid `file://` URI.
+ *
+ * This function safely encodes the path so it can be parsed as a URI
+ * without changing its structure. Each path segment is encoded
+ * individually using `encodeURIComponent`, while path separators (`/`)
+ * are preserved.
+ *
+ * This avoids common URI parsing issues, such as:
+ * - Unencoded `#` characters being interpreted as fragment delimiters
+ * - Over-encoding `/` and `:` (which would break the URI structure)
+ * - Using `encodeURIComponent` on the entire path, which is incorrect
+ */
+function filePathToFileURI(path: string): URI {
+  return URI.parse(
+    "file://" + path.split("/").map(encodeURIComponent).join("/"),
+  );
+}
+
+/**
  * File or directory stats
  */
 export interface Stats {
@@ -240,9 +259,10 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   async search(options: SearchOptions): Promise<URI | undefined> {
     if (isPathSearch(options)) {
+      // const hasParenthesis = options.path.toString(true).includes("(") && options.path.toString(true).includes(")");
+      // const searchString = hasParenthesis ? "file://"+options.path.path : options.path.toString(true)
       // perform a search with a uri
-      const searchPath = options.path
-        .toString(true)
+      let searchPath = decodeURIComponent(options.path.toString(true))
         .toLowerCase()
         .replace(/\\/g, "/");
       const extensions = options.extensions ?? [];
@@ -286,7 +306,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
           fpl.endsWith(memberPart) &&
           fpl.startsWith(options.dirPath.toString(true).toLowerCase())
         ) {
-          return URI.parse(filePath);
+          return filePathToFileURI(filePath);
         }
       }
     }
