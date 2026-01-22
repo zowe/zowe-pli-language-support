@@ -30,9 +30,7 @@ The generated tokens are stored on the `SourceFile` object.
 
 ### Parsing
 
-The generated tokens are fed into the `PliParser` ([Chevrotain](https://chevrotain.io/docs/) based parser for PL/I) which produces an AST on the fly.
-Due to the complexity of the PL/I grammar, the parser implementation is quite large.
-To get a better overview of the grammar/parser, use the `scripts/generate-railroad-diagram.mts` file to generate a syntax diagram.
+The parser is handwritten and produces an AST and a list of parser errors as its output.
 
 The parser has a minor side effect: While consuming the token stream, each token is annotated with its use case.
 Specifically what `SyntaxNode` the specific token belongs to and what it was parsed for (i.e. is this `ID` a name of a variable, or a reference to a variable).
