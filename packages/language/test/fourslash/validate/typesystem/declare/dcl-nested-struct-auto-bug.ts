@@ -11,26 +11,30 @@
 
 /// <reference path="../../../framework.ts" />
 
+//Bug: The AUTO attribute was causing issues: Could not decide that HEADER_OVLY is a structure.
+
 // @wrap: main
-//// declare 1 address union,
-////           2 mailbox fixed(5),
-////           2 street char(100);
-//// declare <|same|> like address;
+//// DECLARE  1  LOC_HEADER AUTO,
+////             2  STMT   CHAR(8)       INIT(' '),
+////             2  HEADER CHAR(4)       INIT(' ');
+//// DECLARE <|HEADER_OVLY|> LIKE LOC_HEADER;
 
 verify.noDiagnostics();
-types.expectTypeAt("same", {
-  type: types.dataTypes.Union,
+types.expectTypeAt("HEADER_OVLY", {
+  type: types.dataTypes.Structure,
   members: {
-    MAILBOX: {
-      type: types.dataTypes.Arithmetic,
-      scale: types.scales.Fixed,
-      precision: { totalDigitsCount: 5 },
-    },
-    STREET: {
+    STMT: {
       type: types.dataTypes.String,
       stringBits: {
         kind: types.stringKinds.Character,
-        length: 100,
+        length: 8,
+      },
+    },
+    HEADER: {
+      type: types.dataTypes.String,
+      stringBits: {
+        kind: types.stringKinds.Character,
+        length: 4,
       },
     },
   },

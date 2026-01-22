@@ -1631,6 +1631,8 @@ export interface DeclaredItem extends AstNode {
   elements: DeclaredItemElement[];
   levelToken: Token | null;
   attributes: DeclarationAttribute[];
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createDeclaredItem(): DeclaredItem {
   return {
@@ -1640,6 +1642,8 @@ export function createDeclaredItem(): DeclaredItem {
     levelToken: null,
     elements: [],
     attributes: [],
+    startToken: null,
+    endToken: null,
   };
 }
 export interface DeclaredVariable extends AstNode {
@@ -1836,6 +1840,8 @@ export interface DefineOrdinalStatement extends AstNode {
   xDefine: boolean;
   attributes: DefineOrdinalAttribute[];
   precision: string | null;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 
 export function createDefineOrdinalStatement(): DefineOrdinalStatement {
@@ -1848,6 +1854,8 @@ export function createDefineOrdinalStatement(): DefineOrdinalStatement {
     xDefine: false,
     attributes: [],
     precision: null,
+    startToken: null,
+    endToken: null,
   };
 }
 
@@ -2098,7 +2106,8 @@ export interface EntryAttribute extends AstNode {
   options: Options[];
   variable: Token[];
   returns: ReturnsOption[];
-  environmentName: Expression[];
+  hasExternal: boolean;
+  environmentName: Expression | null;
   entryToken: Token | null;
 }
 export function createEntryAttribute(): EntryAttribute {
@@ -2110,8 +2119,9 @@ export function createEntryAttribute(): EntryAttribute {
     options: [],
     variable: [],
     returns: [],
-    environmentName: [],
+    environmentName: null,
     entryToken: null,
+    hasExternal: false,
   };
 }
 export interface EntryParameterDescription extends AstNode {
@@ -3672,12 +3682,14 @@ export function createReturnsAttribute(): ReturnsAttribute {
 export interface ReturnsOption extends AstNode {
   kind: SyntaxKind.ReturnsOption;
   returnAttributes: DeclarationAttribute[];
+  returnsToken: Token | null;
 }
 export function createReturnsOption(): ReturnsOption {
   return {
     kind: SyntaxKind.ReturnsOption,
     container: null,
     returnAttributes: [],
+    returnsToken: null,
   };
 }
 export interface ReturnStatement extends AstNode {
@@ -3824,6 +3836,8 @@ export interface Statement extends AstNode {
   condition: ConditionPrefix | null;
   labels: LabelPrefix[];
   value: Unit | null;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createStatement(): Statement {
   return {
@@ -3832,6 +3846,8 @@ export function createStatement(): Statement {
     condition: null,
     labels: [],
     value: null,
+    startToken: null,
+    endToken: null,
   };
 }
 export interface StopStatement extends AstNode {

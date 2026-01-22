@@ -653,6 +653,8 @@ const statement = rule(
   (state: ParserState): ast.Statement => {
     const element = ast.createStatement();
 
+    element.startToken = state.token ?? null;
+
     if (state.canConsumeFirst(conditionPrefix.first())) {
       element.condition = conditionPrefix.rule(state);
     }
@@ -669,6 +671,8 @@ const statement = rule(
     } else {
       element.value = unit.rule(state);
     }
+
+    element.endToken = state.last ?? null;
 
     state.recover(() => performRecovery(state));
 
@@ -1674,6 +1678,7 @@ const defineOrdinalStatement = rule(
       CstNodeKind.DefineOrdinalStatement_DEFINE,
       tokens.DEFINE,
     );
+    element.startToken = defineToken ?? null;
     if (defineToken?.image.charAt(0).toUpperCase() === "X") {
       element.xDefine = true;
     }
@@ -1757,7 +1762,7 @@ const defineOrdinalStatement = rule(
       }
     }
 
-    state.consume(
+    element.endToken = state.consume(
       element,
       CstNodeKind.DefineOrdinalStatement_Semicolon,
       tokens.Semicolon,
@@ -4862,6 +4867,7 @@ const declaredItem = rule(
     ) {
       const levelToken = state.last;
       if (levelToken) {
+        element.startToken = levelToken;
         element.levelToken = levelToken;
         element.level = parseInt(levelToken.image, 10);
       }
@@ -4869,11 +4875,17 @@ const declaredItem = rule(
 
     // Main content: variable, wildcard, or nested items
     if (state.canConsumeFirst(declaredVariable.first())) {
+      if (element.startToken == null) {
+        element.startToken = state.token!;
+      }
       const variable = declaredVariable.rule(state);
       variable && element.elements.push(variable);
     } else if (
       state.tryConsume(element, CstNodeKind.WildcardItem_Asterisk, tokens.Star)
     ) {
+      if (element.startToken == null) {
+        element.startToken = state.last!;
+      }
       const wildcard: ast.WildcardItem = {
         kind: ast.SyntaxKind.WildcardItem,
         container: null,
@@ -4887,6 +4899,9 @@ const declaredItem = rule(
         tokens.OpenParen,
       )
     ) {
+      if (element.startToken == null) {
+        element.startToken = state.last!;
+      }
       // Nested items in parentheses
       const lhs = declaredItem.rule(state);
       lhs && element.elements.push(lhs);
@@ -4917,6 +4932,8 @@ const declaredItem = rule(
       const attr = declarationAttribute.rule(state);
       attr && element.attributes.push(attr);
     }
+
+    element.endToken = state.last || null;
 
     return element;
   },
@@ -5829,6 +5846,7 @@ const entryAttribute = rule(
           tokens.EXTERNAL,
         )
       ) {
+        element.hasExternal = true;
         if (
           state.tryConsume(
             element,
@@ -5837,7 +5855,7 @@ const entryAttribute = rule(
           )
         ) {
           const envExpression = expression.rule(state);
-          envExpression && element.environmentName.push(envExpression);
+          envExpression && (element.environmentName = envExpression);
           state.consume(
             element,
             CstNodeKind.EntryAttribute_CloseParenEnv,
@@ -5856,7 +5874,11 @@ const returnsOption = rule(
   (state: ParserState): ast.ReturnsOption => {
     const element = ast.createReturnsOption();
 
-    state.consume(element, CstNodeKind.ReturnsOption_RETURNS, tokens.RETURNS);
+    element.returnsToken = state.consume(
+      element,
+      CstNodeKind.ReturnsOption_RETURNS,
+      tokens.RETURNS,
+    );
     state.consume(
       element,
       CstNodeKind.ReturnsOption_OpenParen,

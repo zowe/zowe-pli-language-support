@@ -25,11 +25,17 @@ types.expectTypeAt("same", {
   members: {
     STREET: {
       type: types.dataTypes.String,
-      length: 100,
+      stringBits: {
+        kind: types.stringKinds.Character,
+        length: 100,
+      },
     },
     CITY: {
       type: types.dataTypes.String,
-      length: 50,
+      stringBits: {
+        kind: types.stringKinds.Character,
+        length: 50,
+      },
     },
   },
 });
@@ -38,11 +44,17 @@ types.expectTypeAt("same2", {
   members: {
     STREET: {
       type: types.dataTypes.String,
-      length: 100,
+      stringBits: {
+        kind: types.stringKinds.Character,
+        length: 100,
+      },
     },
     CITY: {
       type: types.dataTypes.String,
-      length: 50,
+      stringBits: {
+        kind: types.stringKinds.Character,
+        length: 50,
+      },
     },
   },
 });

@@ -30,13 +30,17 @@ types.expectTypeAt(1, {
       members: {
         LAST: {
           type: types.dataTypes.String,
-          kind: types.stringKinds.Character,
-          length: 20,
+          stringBits: {
+            kind: types.stringKinds.Character,
+            length: 20,
+          },
         },
         FIRST: {
           type: types.dataTypes.String,
-          kind: types.stringKinds.Character,
-          length: 15,
+          stringBits: {
+            kind: types.stringKinds.Character,
+            length: 15,
+          },
         },
       },
     },

@@ -14,8 +14,11 @@
 // @wrap: main
 //// DCL <|1:ANYTHING|> BIT(10) <|2:BIT|>(11);
 
-verify.expectDiagnosticsAt(2, code.Error.IBM1309I);
+verify.expectDiagnosticsAt(2, code.Error.IBM2462I);
 types.expectTypeAt(1, {
   type: types.dataTypes.String,
-  length: 10,
+  stringBits: {
+    kind: types.stringKinds.Bit,
+    length: 10,
+  },
 });
