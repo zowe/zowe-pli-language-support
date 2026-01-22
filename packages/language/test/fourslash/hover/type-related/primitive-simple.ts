@@ -9,7 +9,7 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 /**
  * Failing test for hover on regular variable declaration
@@ -18,4 +18,7 @@
 //// DCL MyVar FIXED DECIMAL(2,5);
 //// <|1>MyVar = 12.1234;
 
-hover.expectMarkdownAt(1, hover.codeBlock("DCL MYVAR FIXED DECIMAL;"));
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock("DCL MYVAR FIXED DECIMAL PRECISION(2, 5);"),
+);

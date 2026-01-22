@@ -17,6 +17,8 @@ import { BuilderDeclareItem } from "./descriptions";
 import { assertType } from "../preprocessor/util";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { DefaultTypeAttributeCollector } from "./attribute-witnesses";
+import { Token } from "../parser/tokens";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -28,7 +30,21 @@ export class DefaultTypeInferer implements TypeInferer {
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
-      if (
+      const expressionKinds = [
+        ast.SyntaxKind.BinaryExpression,
+        ast.SyntaxKind.UnaryExpression,
+        ast.SyntaxKind.Parenthesis,
+        ast.SyntaxKind.Literal,
+        ast.SyntaxKind.LocatorCall,
+        ast.SyntaxKind.TypeReference,
+        ast.SyntaxKind.MemberCall,
+      ];
+      if (expressionKinds.includes(node.kind)) {
+        return this.inferExpressionType(
+          node as ast.Expression,
+          compilationUnit,
+        );
+      } else if (
         node.kind === ast.SyntaxKind.DeclareStatement ||
         node.kind === ast.SyntaxKind.DefineStructureStatement
       ) {
@@ -43,9 +59,207 @@ export class DefaultTypeInferer implements TypeInferer {
         return this.inferAliasType(node, compilationUnit);
       } else if (node.kind === ast.SyntaxKind.DefineOrdinalStatement) {
         return this.inferOrdinalType(node, compilationUnit);
+      } else if (node.kind === ast.SyntaxKind.ReturnsOption) {
+        return this.inferReturnsOptionType(node, compilationUnit);
+      } else if (
+        node.kind === ast.SyntaxKind.EntryParameterDescription ||
+        node.kind === ast.SyntaxKind.EntryUnionDescription
+      ) {
+        const parentNode = node.container as ast.EntryAttribute;
+        if (parentNode?.entryToken) {
+          return this.inferEntryParameterType(
+            parentNode.entryToken,
+            node,
+            compilationUnit,
+          );
+        }
       }
       return TypeDescriptions.Unknown();
     });
+  }
+
+  private inferExpressionType(
+    expression: ast.Expression | ast.MemberCall,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
+    switch (expression.kind) {
+      case ast.SyntaxKind.MemberCall: {
+        //collect chain of members (from bottom to top)
+        const chainOfMembers: ast.DeclaredVariable[] = [];
+        let topMostLocatorCall = expression;
+        while (topMostLocatorCall.previous) {
+          if (
+            !topMostLocatorCall.element ||
+            !topMostLocatorCall.element.ref ||
+            !topMostLocatorCall.element.ref.node
+          ) {
+            return TypeDescriptions.Unknown();
+          }
+          if (
+            topMostLocatorCall.element.ref.node.kind !==
+            ast.SyntaxKind.DeclaredVariable
+          ) {
+            return TypeDescriptions.Unknown();
+          }
+          chainOfMembers.unshift(topMostLocatorCall.element.ref.node);
+          topMostLocatorCall = topMostLocatorCall.previous;
+        }
+        if (
+          !topMostLocatorCall.element?.ref?.node ||
+          topMostLocatorCall.element.ref.node.kind !==
+            ast.SyntaxKind.DeclaredVariable
+        ) {
+          return TypeDescriptions.Unknown();
+        }
+        //get member types (from top to bottom)
+        let lastLevel = 1;
+        const topMostType = this.inferType(
+          topMostLocatorCall.element.ref.node,
+          compilationUnit,
+        );
+        const outerTypes: [
+          ast.DeclaredVariable,
+          TypeDescriptions.Any,
+          number,
+        ][] = [[topMostLocatorCall.element.ref.node, topMostType, 1]];
+        let currentComposite = topMostType;
+        let levelIsGenerated = false;
+        for (const member of chainOfMembers) {
+          if (!TypeDescriptions.isComposite(currentComposite)) {
+            return TypeDescriptions.Unknown();
+          }
+          if (member.kind !== ast.SyntaxKind.DeclaredVariable) {
+            return TypeDescriptions.Unknown();
+          }
+          const memberType = currentComposite.members.get(member);
+          if (!memberType) {
+            return TypeDescriptions.Unknown();
+          }
+          const metadata = currentComposite.membersMetadata.get(member)!;
+          levelIsGenerated ||= metadata.attributes.some(
+            (attr) =>
+              attr.kind === ast.SyntaxKind.LikeAttribute ||
+              attr.kind === ast.SyntaxKind.TypeAttribute,
+          );
+          const level = levelIsGenerated ? lastLevel + 1 : metadata.level!;
+          outerTypes.unshift([member, memberType, level]);
+          currentComposite = memberType;
+          lastLevel = level;
+        }
+        if (
+          !expression.element?.ref?.node ||
+          expression.element.ref.node.kind !== ast.SyntaxKind.DeclaredVariable
+        ) {
+          return TypeDescriptions.Unknown();
+        }
+        const [_, bottomMostType, bottomMostLevel] = outerTypes[0];
+        const outerComposites = outerTypes.slice(1) as [
+          ast.DeclaredVariable,
+          TypeDescriptions.Composite,
+          number,
+        ][];
+
+        //construct final type (bottom to top)
+        let lastMemberLevel = bottomMostLevel;
+        let resultType: TypeDescriptions.Any = bottomMostType;
+        for (const [variableNode, compositeType, level] of outerComposites) {
+          const members = new Map<ast.DeclaredVariable, TypeDescriptions.Any>();
+          const membersMetadata = new Map<
+            ast.DeclaredVariable,
+            BuilderDeclareItem
+          >();
+          compositeType.members.forEach((memberType, memberVar) => {
+            let metadata = compositeType.membersMetadata.get(memberVar);
+            if (memberVar === resultType.variableNode) {
+              memberType = resultType;
+              metadata = {
+                ...metadata,
+                level: lastMemberLevel,
+                node: memberVar,
+              } as BuilderDeclareItem;
+            }
+            members.set(memberVar, memberType);
+            if (metadata) {
+              membersMetadata.set(memberVar, metadata);
+            }
+          });
+          const outerType = {
+            ...compositeType,
+            parentType: undefined,
+            variableNode,
+            level,
+            members,
+            membersMetadata,
+          };
+          resultType.parentType = outerType;
+          resultType = outerType;
+          lastMemberLevel = level;
+        }
+        return bottomMostType;
+      }
+      case ast.SyntaxKind.LocatorCall:
+        //TODO implement
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.Parenthesis: {
+        if (!expression.value) {
+          return TypeDescriptions.Unknown();
+        }
+        return this.inferType(expression.value, compilationUnit);
+      }
+      case ast.SyntaxKind.Literal: {
+        if (!expression.value) {
+          return TypeDescriptions.Unknown();
+        }
+        switch (expression.value.kind) {
+          case ast.SyntaxKind.StringLiteral:
+          //TODO implement
+          case ast.SyntaxKind.NumberLiteral:
+            //TODO implement
+            return TypeDescriptions.Unknown();
+        }
+      }
+      case ast.SyntaxKind.TypeReference:
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.UnaryExpression:
+        //TODO implement
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.BinaryExpression:
+        //TODO implement
+        return TypeDescriptions.Unknown();
+    }
+  }
+
+  private inferReturnsOptionType(
+    node: ast.ReturnsOption,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
+    if (!node.returnsToken) {
+      return TypeDescriptions.Unknown();
+    }
+    const builder = new DefaultCompositeTypeBuilder(compilationUnit);
+    const attributes = builder.collectAttributes(
+      node.returnsToken,
+      node.returnAttributes,
+    );
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      attributes.diagnostics,
+    );
+    return builder.handlePrimitiveDeclaredItem(node.returnsToken, attributes);
+  }
+
+  private inferEntryParameterType(
+    nameToken: Token,
+    node: ast.EntryParameterDescription | ast.EntryUnionDescription,
+    compilationUnit: CompilationUnit,
+  ): TypeDescriptions.Any {
+    const builder = new DefaultCompositeTypeBuilder(compilationUnit);
+    const attributes = builder.collectAttributes(nameToken, node.attributes);
+    compilationUnit.diagnostics.addAll(
+      DiagnosticCategory.TypeSystem,
+      attributes.diagnostics,
+    );
+    return builder.handlePrimitiveDeclaredItem(nameToken, attributes);
   }
 
   private inferOrdinalType(
@@ -55,7 +269,7 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const builder = new DefaultPrimitiveTypeBuilder(
+    const collector = new DefaultTypeAttributeCollector(
       node.nameToken,
       compilationUnit,
     );
@@ -63,23 +277,23 @@ export class DefaultTypeInferer implements TypeInferer {
       const fixedAttribute = ast.createComputationDataAttribute();
       fixedAttribute.typeToken = node.nameToken;
       fixedAttribute.type = ast.DefaultAttribute.FIXED;
-      builder.addAttribute(fixedAttribute);
+      collector.addAttribute(fixedAttribute);
     }
     {
       const binaryAttribute = ast.createComputationDataAttribute();
       binaryAttribute.typeToken = node.nameToken;
       binaryAttribute.type = ast.DefaultAttribute.BINARY;
-      builder.addAttribute(binaryAttribute);
+      collector.addAttribute(binaryAttribute);
     }
     if (node.attributes.includes(ast.DefineOrdinalAttribute.SIGNED)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.SIGNED;
-      builder.addAttribute(attr);
+      collector.addAttribute(attr);
     }
     if (node.attributes.includes(ast.DefineOrdinalAttribute.UNSIGNED)) {
       const attr = ast.createComputationDataAttribute();
       attr.type = ast.DefaultAttribute.UNSIGNED;
-      builder.addAttribute(attr);
+      collector.addAttribute(attr);
     }
     if (node.attributes.includes(ast.DefineOrdinalAttribute.PRECISION)) {
       const attr = ast.createComputationDataAttribute();
@@ -94,8 +308,13 @@ export class DefaultTypeInferer implements TypeInferer {
       value.value = node.precision;
       bound.upper.expression = literal;
       attr.dimensions.dimensions = [bound];
-      builder.addAttribute(attr);
+      collector.addAttribute(attr);
     }
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      collector.build(),
+      compilationUnit,
+    );
     const { type, diagnostics } = builder.build();
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -111,13 +330,18 @@ export class DefaultTypeInferer implements TypeInferer {
     if (!node.nameToken) {
       return TypeDescriptions.Unknown();
     }
-    const builder = new DefaultPrimitiveTypeBuilder(
+    const collector = new DefaultTypeAttributeCollector(
       node.nameToken,
       compilationUnit,
     );
     node.attributes.forEach((attribute) => {
-      builder.addAttribute(attribute);
+      collector.addAttribute(attribute);
     });
+    const builder = new DefaultPrimitiveTypeBuilder(
+      node.nameToken,
+      collector.build(),
+      compilationUnit,
+    );
     const { type, diagnostics } = builder.build();
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -130,77 +354,49 @@ export class DefaultTypeInferer implements TypeInferer {
     node: ast.DeclareStatement | ast.DefineStructureStatement,
     compilationUnit: CompilationUnit,
   ): void {
-    const builder = new DefaultCompositeTypeBuilder();
+    const builder = new DefaultCompositeTypeBuilder(compilationUnit);
     const items = builder.flattenDeclareStatement(node);
     const topLevelMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>();
-    const compositeParents: (
-      | TypeDescriptions.Structure
-      | TypeDescriptions.Union
-    )[] = [];
-    let previousLevel: number | undefined = undefined;
+    const compositeParents: TypeDescriptions.Composite[] = [];
+    let previousItemLevel: number | undefined = undefined;
     for (const item of items) {
-      if (builder.isCompositeDeclaredItem(item)) {
-        const compositeType = builder.handleCompositeDeclaredItem(item);
-        compilationUnit.services.typeCache.set(item.node, compositeType);
-        if (previousLevel === undefined) {
-          topLevelMembers.set(item, compositeType);
-          compositeParents.push(compositeType);
-        } else {
-          while (previousLevel && compositeType.level < previousLevel) {
-            compositeParents.pop();
-            previousLevel =
-              compositeParents.length > 0
-                ? compositeParents[compositeParents.length - 1].level
-                : undefined;
-          }
-          if (previousLevel && compositeType.level > previousLevel) {
-            const parent = compositeParents[compositeParents.length - 1];
-            compositeAddMember(parent, item, compositeType);
-            compositeParents.push(compositeType);
-          } else {
-            if (compositeParents.length > 0) {
-              compositeParents.pop();
-            }
-            if (compositeParents.length > 0) {
-              const parent = compositeParents[compositeParents.length - 1];
-              compositeAddMember(parent, item, compositeType);
-            } else {
-              topLevelMembers.set(item, compositeType);
-            }
-            compositeParents.push(compositeType);
-          }
-        }
-        previousLevel = compositeType.level;
+      const attributes = builder.collectAttributes(
+        item.nameToken,
+        item.attributes,
+      );
+      compilationUnit.diagnostics.addAll(
+        DiagnosticCategory.TypeSystem,
+        attributes.diagnostics,
+      );
+      const type = builder.isCompositeDeclaredItem(item, attributes)
+        ? builder.handleCompositeDeclaredItem(item, attributes)
+        : builder.handlePrimitiveDeclaredItem(item.nameToken, attributes);
+      compilationUnit.services.typeCache.set(item.node, type);
+      if (previousItemLevel === undefined || item.level === undefined) {
+        topLevelMembers.set(item, type);
       } else {
-        const primitiveType = builder.handlePrimitiveDeclaredItem(
-          item,
-          compilationUnit,
-        );
-        compilationUnit.services.typeCache.set(item.node, primitiveType);
-        if (item.level === undefined) {
-          topLevelMembers.set(item, primitiveType);
+        while (
+          compositeParents.length > 0 &&
+          compositeParents[compositeParents.length - 1].level >= item.level
+        ) {
+          compositeParents.pop();
+        }
+        if (compositeParents.length > 0) {
+          compositeAddMember(
+            compositeParents[compositeParents.length - 1],
+            item,
+            type,
+          );
         } else {
-          while (previousLevel && item.level < previousLevel) {
-            compositeParents.pop();
-            previousLevel =
-              compositeParents.length > 0
-                ? compositeParents[compositeParents.length - 1].level
-                : undefined;
-          }
-          if (previousLevel && item.level > previousLevel) {
-            const parent = compositeParents[compositeParents.length - 1];
-            compositeAddMember(parent, item, primitiveType);
-          } else {
-            if (compositeParents.length > 0) {
-              const parent = compositeParents[compositeParents.length - 1];
-              compositeAddMember(parent, item, primitiveType);
-            } else {
-              topLevelMembers.set(item, primitiveType);
-            }
-          }
+          topLevelMembers.set(item, type);
         }
       }
+      if (TypeDescriptions.isComposite(type)) {
+        compositeParents.push(type);
+      }
+      previousItemLevel = item.level;
     }
+
     // TODO: Reenable once we ensure that we don't show any false positives
     // this.traverseMembers(
     //   topLevelMembers,
@@ -220,13 +416,14 @@ export class DefaultTypeInferer implements TypeInferer {
     // );
 
     function compositeAddMember(
-      compositeType: TypeDescriptions.Structure | TypeDescriptions.Union,
+      compositeType: TypeDescriptions.Composite,
       item: BuilderDeclareItem,
       memberType: TypeDescriptions.Any,
     ) {
       compositeType.members.set(item.node, memberType);
       compositeType.membersMetadata.set(item.node, item);
       memberType.parentType = compositeType;
+      memberType.variableNode = item.node;
     }
   }
 
@@ -240,7 +437,7 @@ export class DefaultTypeInferer implements TypeInferer {
       if (predicate(type)) {
         callback(type, item, isTopLevel);
       }
-      if (TypeDescriptions.isStructure(type)) {
+      if (TypeDescriptions.isComposite(type)) {
         const subMembers = new Map<BuilderDeclareItem, TypeDescriptions.Any>(
           type.members
             .keys()

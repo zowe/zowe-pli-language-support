@@ -9,16 +9,10 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DEFINE ALIAS NAME CHAR(15);
+//// DCL ID TYPE NAME;
+//// PUT(<|1>ID);
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+hover.expectMarkdownAt(1, hover.codeBlock(`DCL ID CHARACTER(15);`));

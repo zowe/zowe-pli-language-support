@@ -17,6 +17,8 @@
 verify.expectDiagnosticsAt(2, code.Error.IBM2462I);
 types.expectTypeAt(1, {
   type: types.dataTypes.String,
-  kind: types.stringKinds.Character,
-  length: 10,
+  stringBits: {
+    kind: types.stringKinds.Character,
+    length: 10,
+  },
 });

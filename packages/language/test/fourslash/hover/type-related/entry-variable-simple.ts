@@ -9,16 +9,13 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DCL <|1>HEX ENTRY(FIXED BINARY(31)) RETURNS(CHAR(8)) EXTERNAL;
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(
+    "DCL HEX ENTRY(FIXED BINARY PRECISION(31)) RETURNS(CHARACTER(8)) EXTERNAL;",
+  ),
+);

@@ -9,16 +9,13 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DCL STR CHAR(300);
+//// STR = <|1>SUBSTR('Hello, World!', 1, 5);
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+//TODO fix the SUBSTR builtin signature, it is actually just a forward declaration
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`SUBSTR: PROC (value) RETURNS (); END;`),
+);
