@@ -10,7 +10,6 @@
  */
 
 import { MarkupKind } from "vscode-languageserver-types";
-import { QualifiedSyntaxNode } from "../linking/qualified-syntax-node";
 import {
   getReference,
   isIncludeItemToken,
@@ -18,7 +17,6 @@ import {
   isReferenceToken,
 } from "../linking/tokens";
 import * as t from "../parser/tokens";
-import { getAttributes } from "../preprocessor/util";
 import {
   Bound,
   DeclaredVariable,
@@ -38,6 +36,10 @@ import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
+import {
+  stringifyDeclaration,
+  stringifyTypeDescription,
+} from "../typesystem/stringify";
 
 type MarkupResponse = string | null;
 
@@ -48,46 +50,6 @@ interface MarkupGeneratorContext {
 
 interface MarkupGenerator {
   (context: MarkupGeneratorContext): MarkupResponse;
-}
-
-/**
- * Generates a string representation of a declared variable.
- *
- * @param unit - The compilation unit containing the declared variable.
- * @param node - The declared variable node to generate a representation for.
- * @returns A string representation of the declared variable.
- * @throws An error if the qualified node is not found.
- */
-function getDeclaredVariableRepresentation(
-  unit: CompilationUnit,
-  node: DeclaredVariable,
-): string {
-  const qualifiedNode = unit.scopeCaches.regular
-    .get(node)
-    ?.symbolTable.nodeLookup.get(node);
-
-  if (!qualifiedNode) {
-    throw new Error("Qualified node not found");
-  }
-
-  if (qualifiedNode.level > 1) {
-    // structure member
-    const hierarchy: string[] = [];
-    let current: QualifiedSyntaxNode | null = qualifiedNode;
-    while (current) {
-      hierarchy.unshift(`${current.level} ${current.name}`);
-      current = current.getParent();
-    }
-    return formatPliCodeBlock(`DCL ${hierarchy.join(", ")};`);
-  } else {
-    // regular declaration
-    const name = node.name;
-    const attrs = getAttributes(node);
-    const decl = attrs.length
-      ? `DCL ${name} ${attrs.join(" ")};`
-      : `DCL ${name};`;
-    return formatPliCodeBlock(decl);
-  }
 }
 
 /**
@@ -281,7 +243,12 @@ function getNodeRepresentation(
 ): string | null {
   switch (node.kind) {
     case SyntaxKind.DeclaredVariable:
-      return getDeclaredVariableRepresentation(unit, node);
+      return node.name
+        ? (stringifyTypeDescription(
+            node.name,
+            unit.services.inferer.inferType(node, unit),
+          ) ?? stringifyDeclaration(node, unit))
+        : null;
     case SyntaxKind.LabelPrefix:
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItemFile:
@@ -321,6 +288,21 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
   const ref = getReference(token.element);
   if (!ref?.node) {
     return null;
+  }
+
+  if (
+    token.element.container &&
+    token.element.container.kind === SyntaxKind.MemberCall
+  ) {
+    const outerCall = token.element.container;
+    if (!outerCall) {
+      return null;
+    }
+    const type = unit.services.inferer.inferType(outerCall, unit);
+    return (
+      stringifyTypeDescription(token.image, type) ??
+      stringifyDeclaration(ref.node as DeclaredVariable, unit)
+    );
   }
 
   return getNodeRepresentation(unit, ref.node);

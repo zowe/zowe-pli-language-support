@@ -9,16 +9,11 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DEFINE STRUCTURE 1 PERSON,
+////                    2 NAME CHAR(20),
+////                    2 AGE FIXED DECIMAL(3);
+//// DCL <|1>HEX ENTRY RETURNS(TYPE PERSON) EXTERNAL;
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+hover.expectMarkdownAt(1, hover.codeBlock("DCL HEX ENTRY RETURNS() EXTERNAL;"));

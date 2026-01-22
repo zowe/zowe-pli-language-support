@@ -9,16 +9,13 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// SQLDA.SQLVAR.<|1>SQLIND = 1;
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`DCL 1 SQLDA BASED(...),
+      2 SQLVAR DIMENSION(...),
+        3 SQLIND POINTER;`),
+);

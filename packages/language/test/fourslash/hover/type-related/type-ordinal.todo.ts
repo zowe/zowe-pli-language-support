@@ -9,16 +9,10 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// DCL <|1:ANYTHING|> CHARACTER(10);
+//// DEFINE ORDINAL COLOR (RED, GREEN, BLUE);
+//// DCL <|1>BACKGROUND ORDINAL COLOR;
 
-verify.noDiagnostics(undefined, ...code.TypeSystem);
-types.expectTypeAt(1, {
-  type: types.dataTypes.String,
-  stringBits: {
-    kind: types.stringKinds.Character,
-    length: 10,
-  },
-});
+//TODO make ordinals work by presenting members of the enum
+hover.expectMarkdownAt(1, hover.codeBlock("DCL BACKGROUND ORDINAL COLOR;"));
