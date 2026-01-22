@@ -1,4 +1,5 @@
-import { DeclaredVariable, getContainer, SyntaxKind } from "../syntax-tree/ast";
+import { Token } from "../parser/tokens";
+import { getContainer, NamedElement, SyntaxKind } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import {
@@ -88,35 +89,46 @@ export function stringifyTypeDescription(
 }
 
 export function stringifyDeclaration(
-  node: DeclaredVariable,
+  node: NamedElement,
   unit: CompilationUnit,
 ): string | null {
-  let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
-  do {
-    const container = getContainer(declaredItem!, SyntaxKind.DeclaredItem);
-    if (container) {
-      declaredItem = container;
-    } else {
-      break;
-    }
-  } while (declaredItem);
-  if (!declaredItem || !declaredItem.startToken || !declaredItem.endToken) {
+  if (node.kind === SyntaxKind.DeclaredVariable) {
+    let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
+    do {
+      const container = getContainer(declaredItem!, SyntaxKind.DeclaredItem);
+      if (container) {
+        declaredItem = container;
+      } else {
+        break;
+      }
+    } while (declaredItem);
+    return stringifyStartEndToken(declaredItem, unit);
+  } else if (node.kind === SyntaxKind.LabelPrefix) {
+    const statement = getContainer(node, SyntaxKind.Statement);
+    return stringifyStartEndToken(statement, unit);
+  } else {
+    return formatPliCodeBlock("...Ordinal value...");
+  }
+}
+
+function stringifyStartEndToken(
+  item: { startToken: Token | null; endToken: Token | null } | null,
+  unit: CompilationUnit,
+): string | null {
+  if (!item || !item.startToken || !item.endToken) {
     return null;
   }
-  if (
-    !declaredItem.startToken.uri ||
-    declaredItem.startToken.uri !== declaredItem.endToken.uri
-  ) {
+  if (!item.startToken.uri || item.startToken.uri !== item.endToken.uri) {
     return null;
   }
-  const doc = unit.services.files.getDocument(declaredItem.startToken.uri);
+  const doc = unit.services.files.getDocument(item.startToken.uri);
   const text = doc?.getText();
   if (!text) {
     return null;
   }
   const snippet = text.substring(
-    declaredItem.startToken.startOffset,
-    declaredItem.endToken.endOffset + 1,
+    item.startToken.startOffset,
+    item.endToken.endOffset + 1,
   );
   return formatPliCodeBlock(snippet);
 }

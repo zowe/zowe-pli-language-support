@@ -10,7 +10,7 @@
  */
 
 import * as ast from "../syntax-tree/ast";
-import { AttributeKind, TypeDescriptions } from "./descriptions";
+import { TypeDescriptions } from "./descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
@@ -18,7 +18,7 @@ import { assertType } from "../preprocessor/util";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { DefaultTypeAttributeCollector } from "./attribute-witnesses";
-import { DefaultAttribute, Token } from "../parser/tokens";
+import { Token } from "../parser/tokens";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;

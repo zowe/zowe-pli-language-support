@@ -653,6 +653,8 @@ const statement = rule(
   (state: ParserState): ast.Statement => {
     const element = ast.createStatement();
 
+    element.startToken = state.token ?? null;
+
     if (state.canConsumeFirst(conditionPrefix.first())) {
       element.condition = conditionPrefix.rule(state);
     }
@@ -669,6 +671,8 @@ const statement = rule(
     } else {
       element.value = unit.rule(state);
     }
+
+    element.endToken = state.last ?? null;
 
     state.recover(() => performRecovery(state));
 

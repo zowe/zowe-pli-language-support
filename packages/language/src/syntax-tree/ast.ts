@@ -3820,6 +3820,8 @@ export interface Statement extends AstNode {
   condition: ConditionPrefix | null;
   labels: LabelPrefix[];
   value: Unit | null;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createStatement(): Statement {
   return {
@@ -3828,6 +3830,8 @@ export function createStatement(): Statement {
     condition: null,
     labels: [],
     value: null,
+    startToken: null,
+    endToken: null,
   };
 }
 export interface StopStatement extends AstNode {
