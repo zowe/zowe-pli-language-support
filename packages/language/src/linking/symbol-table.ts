@@ -446,6 +446,11 @@ function iterateSymbolTable(
 ): void {
   const ref = getReference(node);
   if (ref) {
+    // Reset the reference node to undefined to allow re-resolution.
+    // This is necessary because cached AST nodes may have references
+    // that were resolved in a previous lifecycle run.
+    ref.node = undefined;
+
     if (getPriorityReferenceElement(ref) !== null) {
       context.referencesCache.priorityAdd(ref);
     } else {
