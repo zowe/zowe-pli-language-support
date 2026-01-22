@@ -295,7 +295,7 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     token.element.container.kind === SyntaxKind.MemberCall
   ) {
     const outerCall = token.element.container;
-    if(!outerCall) {
+    if (!outerCall) {
       return null;
     }
     const type = unit.services.inferer.inferType(outerCall, unit);
