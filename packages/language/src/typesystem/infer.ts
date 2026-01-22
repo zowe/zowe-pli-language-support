@@ -30,7 +30,18 @@ export class DefaultTypeInferer implements TypeInferer {
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
-      if (
+      const expressionKinds = [
+        ast.SyntaxKind.BinaryExpression,
+        ast.SyntaxKind.UnaryExpression,
+        ast.SyntaxKind.Parenthesis,
+        ast.SyntaxKind.Literal,
+        ast.SyntaxKind.LocatorCall,
+        ast.SyntaxKind.TypeReference,
+        ast.SyntaxKind.MemberCall,
+      ];
+      if (expressionKinds.includes(node.kind)) {
+        return this.inferExpressionType(node as ast.Expression, compilationUnit);
+      } else if (
         node.kind === ast.SyntaxKind.DeclareStatement ||
         node.kind === ast.SyntaxKind.DefineStructureStatement
       ) {
@@ -62,6 +73,114 @@ export class DefaultTypeInferer implements TypeInferer {
       }
       return TypeDescriptions.Unknown();
     });
+  }
+
+  private inferExpressionType(expression: ast.Expression|ast.MemberCall, compilationUnit: CompilationUnit): TypeDescriptions.Any {
+    switch (expression.kind) {
+      case ast.SyntaxKind.MemberCall: {
+        //collect chain of members (from bottom to top)
+        const chainOfMembers: ast.DeclaredVariable[] = [];
+        let topMostLocatorCall = expression;
+        while (topMostLocatorCall.previous) {
+          if(!topMostLocatorCall.element || !topMostLocatorCall.element.ref || !topMostLocatorCall.element.ref.node) {
+            return TypeDescriptions.Unknown();
+          }
+          if(topMostLocatorCall.element.ref.node.kind !== ast.SyntaxKind.DeclaredVariable) {
+            return TypeDescriptions.Unknown();
+          }
+          chainOfMembers.unshift(topMostLocatorCall.element.ref.node);
+          topMostLocatorCall = topMostLocatorCall.previous;
+        }
+        if(!topMostLocatorCall.element?.ref?.node || topMostLocatorCall.element.ref.node.kind !== ast.SyntaxKind.DeclaredVariable) {
+          return TypeDescriptions.Unknown();
+        }
+        //get member types (from top to bottom)
+        const topMostType = this.inferType(topMostLocatorCall.element.ref.node, compilationUnit);
+        const outerTypes: [ast.DeclaredVariable, TypeDescriptions.Any][] = [[topMostLocatorCall.element.ref.node, topMostType]];
+        let currentComposite = topMostType;
+        for (const member of chainOfMembers) {
+          if(!TypeDescriptions.isComposite(currentComposite)) {
+            return TypeDescriptions.Unknown();
+          }
+          if(member.kind !== ast.SyntaxKind.DeclaredVariable) {
+            return TypeDescriptions.Unknown();
+          }
+          const memberType = currentComposite.members.get(member);
+          if(!memberType) {
+            return TypeDescriptions.Unknown();
+          }
+          currentComposite = memberType;
+          outerTypes.unshift([member, memberType]);
+        }
+        if(!expression.element?.ref?.node || expression.element.ref.node.kind !== ast.SyntaxKind.DeclaredVariable) {
+          return TypeDescriptions.Unknown();
+        }
+        const [_, bottomMostType] = outerTypes[0];
+        const outerComposites = outerTypes.slice(1) as [ast.DeclaredVariable, TypeDescriptions.Composite][];
+        
+        //construct final type (bottom to top)
+        let resultType: TypeDescriptions.Any = bottomMostType;
+        for (const [variableNode, compositeType] of outerComposites) {
+          const members = new Map<ast.DeclaredVariable, TypeDescriptions.Any>();
+          const membersMetadata = new Map<ast.DeclaredVariable, BuilderDeclareItem>();
+          compositeType.members.forEach((memberType, memberVar) => {
+            let metadata = compositeType.membersMetadata.get(memberVar);
+            if(memberVar === resultType.variableNode) {
+              memberType = resultType;
+              metadata = {
+                ...metadata,
+                node: memberVar,
+                //level: type.level + 1, //TODO verify if level needs to be updated
+              } as BuilderDeclareItem;
+            }
+            members.set(memberVar, memberType);
+            if(metadata) {
+              membersMetadata.set(memberVar, metadata);
+            }
+          });
+          const outerType = {
+            ...compositeType,
+            parentType: undefined,
+            variableNode,
+            members,
+            membersMetadata,
+          };
+          resultType.parentType = outerType;
+          resultType = outerType;
+        }
+        return bottomMostType;
+      }
+      case ast.SyntaxKind.LocatorCall:
+        //TODO implement
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.Parenthesis: {
+        if (!expression.value) {
+          return TypeDescriptions.Unknown();
+        }
+        return this.inferType(expression.value, compilationUnit);
+      }
+      case ast.SyntaxKind.Literal: {
+        if (!expression.value) {
+          return TypeDescriptions.Unknown();
+        }
+        switch (expression.value.kind) {
+          case ast.SyntaxKind.StringLiteral:
+            //TODO implement
+          case ast.SyntaxKind.NumberLiteral:
+            //TODO implement
+            return TypeDescriptions.Unknown();
+        }
+      }
+      case ast.SyntaxKind.TypeReference:
+
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.UnaryExpression:
+        //TODO implement
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.BinaryExpression:
+        //TODO implement
+        return TypeDescriptions.Unknown();
+    }
   }
 
   private inferReturnsOptionType(

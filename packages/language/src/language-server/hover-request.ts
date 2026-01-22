@@ -36,7 +36,6 @@ import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
-import { TypeDescriptions } from "../typesystem/descriptions";
 import {
   stringifyDeclaration,
   stringifyTypeDescription,
@@ -291,33 +290,19 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     return null;
   }
 
-  //TODO is this always correct??
   if (
     token.element.container &&
     token.element.container.kind === SyntaxKind.MemberCall
   ) {
-    const memberCall = token.element.container;
-    if (
-      memberCall.previous &&
-      memberCall.previous.element &&
-      memberCall.previous.element.ref &&
-      memberCall.previous.element.ref.node
-    ) {
-      const compositeType = unit.services.inferer.inferType(
-        memberCall.previous.element.ref.node,
-        unit,
-      ) as TypeDescriptions.Composite;
-      const actualType = compositeType.members.get(
-        ref.node as DeclaredVariable,
-      );
-      if (!actualType) {
-        return null;
-      }
-      return (
-        stringifyTypeDescription(token.image, actualType) ??
-        stringifyDeclaration(ref.node as DeclaredVariable, unit)
-      );
+    const outerCall = token.element.container;
+    if(!outerCall) {
+      return null;
     }
+    const type = unit.services.inferer.inferType(outerCall, unit);
+    return (
+      stringifyTypeDescription(token.image, type) ??
+      stringifyDeclaration(ref.node as DeclaredVariable, unit)
+    );
   }
 
   return getNodeRepresentation(unit, ref.node);
