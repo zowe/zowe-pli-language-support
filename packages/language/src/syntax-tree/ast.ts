@@ -13,6 +13,7 @@ import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { assertUnreachable } from "../utils/common";
 import { isObject } from "../utils/types";
+import type { CompilationUnit } from "../workspace/compilation-unit";
 
 export enum SyntaxKind {
   // Preprocessor AST
@@ -676,6 +677,17 @@ export function createReference<T extends SyntaxNode>(
     node: undefined,
     type,
   };
+}
+
+export function isPreprocessorNode(
+  unit: CompilationUnit,
+  node: SyntaxNode,
+): boolean {
+  let parent = node;
+  while (parent.container) {
+    parent = parent.container;
+  }
+  return unit.preprocessorAst === parent;
 }
 
 export type Wildcard<T> = T | "*";

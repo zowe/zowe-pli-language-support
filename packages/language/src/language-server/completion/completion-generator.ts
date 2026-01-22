@@ -10,11 +10,15 @@
  */
 
 import { CompletionItemKind } from "vscode-languageserver-types";
-import { Statement, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
+import {
+  isPreprocessorNode,
+  Statement,
+  SyntaxKind,
+  SyntaxNode,
+} from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { FollowElement, FollowKind } from "./follow-elements";
 import { getQualifiedName } from "../../linking/resolver";
-import { getCompletionKeywords } from "./keywords";
 import { SimpleCompletionItem } from "../types";
 
 export function generateCompletionItems(
@@ -25,15 +29,14 @@ export function generateCompletionItems(
   const items: SimpleCompletionItem[] = [];
 
   if (followElement.kind === FollowKind.CstNode) {
-    const keywords = followElement.types.flatMap(getCompletionKeywords);
-    items.push(...keywords);
+    items.push(...followElement.items);
   }
   if (followElement.kind === FollowKind.QualifiedReference) {
     context = followElement.previous;
   } else if (!context) {
     return items;
   }
-  const scopeCache = isPreprocessorNode(context, unit)
+  const scopeCache = isPreprocessorNode(unit, context)
     ? unit.scopeCaches.preprocessor
     : unit.scopeCaches.regular;
   const scope = scopeCache.get(context);
@@ -83,12 +86,4 @@ function getCompletionKind(node: SyntaxNode): CompletionItemKind {
     }
   }
   return CompletionItemKind.Variable;
-}
-
-function isPreprocessorNode(node: SyntaxNode, unit: CompilationUnit): boolean {
-  let parent = node;
-  while (parent.container) {
-    parent = parent.container;
-  }
-  return unit.preprocessorAst === parent;
 }
