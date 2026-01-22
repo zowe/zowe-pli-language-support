@@ -1678,6 +1678,7 @@ const defineOrdinalStatement = rule(
       CstNodeKind.DefineOrdinalStatement_DEFINE,
       tokens.DEFINE,
     );
+    element.startToken = defineToken ?? null;
     if (defineToken?.image.charAt(0).toUpperCase() === "X") {
       element.xDefine = true;
     }
@@ -1761,7 +1762,7 @@ const defineOrdinalStatement = rule(
       }
     }
 
-    state.consume(
+    element.endToken = state.consume(
       element,
       CstNodeKind.DefineOrdinalStatement_Semicolon,
       tokens.Semicolon,

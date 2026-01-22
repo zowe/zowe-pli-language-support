@@ -309,7 +309,7 @@ export const AttributeStringifiers: {
   },
   [AttributeKind.AreaSize]: function (_value: number): string {
     //TODO implement
-    return `/* AREA(TODO) */`;
+    return `AREA(...)`;
   },
   [AttributeKind.Assignability]: function (value: Assignability): string {
     switch (value) {
@@ -462,10 +462,12 @@ export const AttributeStringifiers: {
         return value.size ? `POINTER(${value.size})` : "POINTER";
       //TODO struct type name
       case "handle":
-        return `HANDLE${value.size ? `(${value.size})` : ""} /*(TODO structure name)*/`;
+        // TODO structure name
+        return `HANDLE${value.size ? `(${value.size})` : ""} (...)`;
       //TODO area variable name
       case "offset":
-        return `OFFSET /*(TODO area variable name)*/`;
+        //TODO area variable name
+        return `OFFSET (...)`;
       default:
         assertUnreachable(value);
     }
@@ -531,7 +533,7 @@ export const AttributeStringifiers: {
   },
   [AttributeKind.Position]: function (_value: StoragePosition): string {
     //TODO implement stringification of StoragePosition
-    return "/*POSITION(TODO)*/";
+    return "/*POSITION(...)*/";
   },
   [AttributeKind.Precision]: function (
     value: Precision | undefined,

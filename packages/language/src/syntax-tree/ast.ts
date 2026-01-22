@@ -1828,6 +1828,8 @@ export interface DefineOrdinalStatement extends AstNode {
   xDefine: boolean;
   attributes: DefineOrdinalAttribute[];
   precision: string | null;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 
 export function createDefineOrdinalStatement(): DefineOrdinalStatement {
@@ -1840,6 +1842,8 @@ export function createDefineOrdinalStatement(): DefineOrdinalStatement {
     xDefine: false,
     attributes: [],
     precision: null,
+    startToken: null,
+    endToken: null,
   };
 }
 

@@ -107,7 +107,8 @@ export function stringifyDeclaration(
     const statement = getContainer(node, SyntaxKind.Statement);
     return stringifyStartEndToken(statement, unit);
   } else {
-    return formatPliCodeBlock("...Ordinal value...");
+    const statement = getContainer(node, SyntaxKind.DefineOrdinalStatement);
+    return stringifyStartEndToken(statement, unit);
   }
 }
 
