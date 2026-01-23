@@ -34,12 +34,9 @@ describe("PL/1 Lexer", () => {
     tokenizeWithErrors = async (text: string) => {
       const uri = URI.file("/test/test.pli");
       const document = TextDocument.create(uri.toString(), "pli", 0, text);
-      const { diagnostics } = await lexer.tokenize(
-        await createCompilationUnit(uri),
-        document,
-        uri,
-      );
-      return diagnostics.map((e) => e.message);
+      const unit = await createCompilationUnit(uri);
+      await lexer.tokenize(unit, document, uri);
+      return unit.diagnostics.getAll().map((e) => e.message);
     };
   });
 

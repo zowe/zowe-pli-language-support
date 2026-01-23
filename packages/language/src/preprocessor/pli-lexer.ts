@@ -19,7 +19,6 @@ import {
 } from "./compiler-options-processor";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
-import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
@@ -30,10 +29,10 @@ import { ParserState } from "../parser/parser-state";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { getDefaultCompilerOptions } from "./compiler-options/options";
 import { CompilerOptions } from "./compiler-options/options-pli";
+import { DiagnosticCategory } from "../validation/diagnostics-store";
 
 export interface LexerResult {
   all: Token[];
-  diagnostics: Diagnostic[];
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
   evaluationResults: EvaluationResults;
@@ -66,7 +65,6 @@ export class PliLexer {
     unit.compilerOptions = opts;
     initLexer(opts);
     unit.instructionCache.update(opts);
-    const allDiagnostics: Diagnostic[] = [];
     const instruction = unit.instructionCache.get(uri, inputText, () => {
       const textWithoutMargins = this.marginsProcessor.processMargins(
         compilerOptionsResult,
@@ -89,8 +87,11 @@ export class PliLexer {
         result,
       };
     });
-    allDiagnostics.push(...instruction.diagnostics);
-    allDiagnostics.push(...this.marginsProcessor.issues);
+    unit.diagnostics.addAll(DiagnosticCategory.Lexer, instruction.diagnostics);
+    unit.diagnostics.addAll(
+      DiagnosticCategory.Lexer,
+      this.marginsProcessor.issues,
+    );
 
     const incAfter = compilerOptionsResult.result?.options.incAfter;
     if (incAfter?.process) {
@@ -114,11 +115,18 @@ export class PliLexer {
     if (compilerOptionsResult.result) {
       instruction.tokens.unshift(...compilerOptionsResult.result.tokens);
     }
-    allDiagnostics.push(...output.errors);
+    const uriString = uri.toString();
+    unit.diagnostics.addAll(DiagnosticCategory.Lexer, output.errors);
+    unit.diagnostics.addAll(
+      DiagnosticCategory.CompilerOptions,
+      (compilerOptionsResult.result?.issues ?? []).filter(
+        (e) => e.uri === uriString,
+      ),
+    );
+
     return {
       all: output.all,
       compilerOptions: compilerOptionsResult,
-      diagnostics: allDiagnostics,
       statements: [...instruction.statements, ...output.statements],
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,

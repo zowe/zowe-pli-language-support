@@ -66,15 +66,6 @@ export async function tokenize(
   });
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
-  const uri = compilationUnit.uri.toString();
-  compilationUnit.diagnostics.addAll(
-    DiagnosticCategory.Lexer,
-    result.diagnostics,
-  );
-  compilationUnit.diagnostics.addAll(
-    DiagnosticCategory.CompilerOptions,
-    (result.compilerOptions.result?.issues ?? []).filter((e) => e.uri === uri),
-  );
   return result;
 }
 
