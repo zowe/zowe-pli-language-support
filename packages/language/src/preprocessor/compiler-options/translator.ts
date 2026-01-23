@@ -31,6 +31,11 @@ interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
   negative?: string[];
   positiveTranslate?: Translate<T>;
   negativeTranslate?: Translate<T>;
+  options?: TranslatorRuleOptions;
+}
+
+interface TranslatorRuleOptions {
+  allowDuplicates?: boolean;
 }
 
 type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
@@ -51,12 +56,10 @@ enum RuleAlignment {
 
 export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   options: T;
-  defaults: T;
   diagnostics: Diagnostic[] = [];
 
-  constructor(defaults: T) {
-    this.defaults = defaults;
-    this.options = defaults;
+  constructor(private defaultsFactory: () => T) {
+    this.options = defaultsFactory();
   }
 
   /**
@@ -72,12 +75,14 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     positiveTranslate: Translate<T>,
     negative?: string[],
     negativeTranslate?: Translate<T>,
+    options?: TranslatorRuleOptions,
   ) {
     this.rules.push({
       positive,
       negative,
       positiveTranslate,
       negativeTranslate,
+      options,
     });
   }
 
@@ -106,7 +111,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   clear() {
     this.appliedRules.clear();
     this.diagnostics = [];
-    this.options = { ...this.defaults };
+    this.options = this.defaultsFactory();
   }
 
   /**
@@ -157,7 +162,9 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       if (!this.isRuleApplied(rule)) {
         this.appliedRules.set(rule, alignment);
       } else if (this.isRuleAlignedWith(rule, alignment)) {
-        this.reportDupeOptIssue(option, name);
+        if (!rule.options?.allowDuplicates) {
+          this.reportDupeOptIssue(option, name);
+        }
       } else {
         this.reportMutexOptIssue(option, name);
       }

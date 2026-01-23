@@ -11,6 +11,9 @@
 
 import {
   CallStatement,
+  DeclarationAttribute,
+  DeclaredVariable,
+  DefaultAttribute,
   LabelPrefix,
   ProcedureStatement,
   SimpleOptions,
@@ -89,5 +92,27 @@ export function labelPrefixPointsToPackage(labelPrefix: LabelPrefix) {
   return (
     labelPrefix.container?.kind === SyntaxKind.Statement &&
     labelPrefix.container.value?.kind === SyntaxKind.Package
+  );
+}
+
+export function isBuiltinDeclaration(variable: DeclaredVariable): boolean {
+  const item = variable.container;
+  if (!item || item.kind !== SyntaxKind.DeclaredItem) {
+    return false;
+  }
+  return item.attributes.some(
+    (attr: DeclarationAttribute) =>
+      attr.kind === SyntaxKind.ComputationDataAttribute &&
+      attr.type === DefaultAttribute.BUILTIN,
+  );
+}
+
+export function isEntryDeclaration(variable: DeclaredVariable): boolean {
+  const item = variable.container;
+  if (!item || item.kind !== SyntaxKind.DeclaredItem) {
+    return false;
+  }
+  return item.attributes.some(
+    (attr: DeclarationAttribute) => attr.kind === SyntaxKind.EntryAttribute,
   );
 }
