@@ -20,7 +20,9 @@ import {
   Translator,
 } from "./translator";
 
-const translator = new Translator<CompilerOptions>(getDefaultCompilerOptions());
+const translator = new Translator<CompilerOptions>(() =>
+  getDefaultCompilerOptions(),
+);
 
 translator.rule(["CASE"], (option, options) => {
   ensureArguments(option, 1, 1);

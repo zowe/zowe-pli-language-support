@@ -23,6 +23,10 @@ import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
 import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
 import { IBM1352IE_declared_item_pli_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
+import {
+  DeprecateStatements,
+  DeprecateVariables,
+} from "./compiler/IBM2444Iff-deprecate";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -36,7 +40,7 @@ export function registerPliValidationChecks(): ValidationChecks {
     CallStatement: [IBM3323I_IBM3324I_check_argument_count],
     DeclaredItem: [IBM1352IE_declared_item_pli_scan_repetition, typeCheck],
     DeclareStatement: [IBM1376IE_attributes_in_declaration_lists, typeCheck],
-    DeclaredVariable: [typeCheck],
+    DeclaredVariable: [DeprecateVariables, typeCheck],
     DefineAliasStatement: [typeCheck],
     DefineOrdinalStatement: [typeCheck],
     DoStatement: [IBM2615I_do_loops_execute_once],
@@ -50,6 +54,7 @@ export function registerPliValidationChecks(): ValidationChecks {
     ],
     ReferenceItem: [checkImplicitBuiltins],
     SelectStatement: [IBM1059I_select_without_otherwise],
+    Statement: [DeprecateStatements],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
   };
 }

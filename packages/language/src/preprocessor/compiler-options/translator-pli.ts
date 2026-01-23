@@ -41,7 +41,9 @@ import {
   Translator,
 } from "./translator";
 
-const translator = new Translator<CompilerOptions>(getDefaultCompilerOptions());
+const translator = new Translator<CompilerOptions>(() =>
+  getDefaultCompilerOptions(),
+);
 
 const $1K = 1024;
 const $1M = 1024 * 1024;
@@ -874,41 +876,70 @@ translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
 
 /** {@link CompilerOptions.deprecate} */
 /** {@link CompilerOptions.deprecateNext} */
-translator.rule(["DEPRECATE", "DEPRECATENEXT"], (option, options, acceptor) => {
-  ensureArguments(option, 1);
-  let items: CompilerOptions.DeprecateItem[] = [];
-  if (option.name === "DEPRECATE") {
-    ensureToBeDefined(options.deprecate);
-    items = options.deprecate.items;
-  } else {
-    ensureToBeDefined(options.deprecateNext);
-    items = options.deprecateNext.items;
-  }
-  for (const opt of option.values) {
-    ensureType(opt, "option");
-    const type = ensureEnum(
-      opt,
-      CompilerOptionsCodes.Deprecate.InvalidParameter,
-      CompilerOptions.DeprecateItemType,
-    );
-    ensureArguments(opt, 0, 1);
-    const optionValue = opt.values[0];
-    ensureType(optionValue, "plain");
-    const value =
-      type === CompilerOptions.DeprecateItemType.STMT
-        ? ensureArgument(
-            optionValue,
-            CompilerOptionsCodes.Deprecate.InvalidStatementParameter,
-            Options.PLI_STATEMENT_NAMES,
-          )
-        : optionValue.value;
-    items.push({
-      type: type,
-      value: value,
-    });
-  }
-  reportDuplicateSubOptions(option, acceptor);
-});
+translator.rule(
+  ["DEPRECATE", "DEPRECATENEXT"],
+  (option, options, acceptor) => {
+    ensureArguments(option, 1);
+    let deprecateOptions =
+      option.name === "DEPRECATE" ? options.deprecate : options.deprecateNext;
+    if (!deprecateOptions) {
+      if (option.name === "DEPRECATE") {
+        options.deprecate = {
+          BUILTIN: new Set<string>(),
+          ENTRY: new Set<string>(),
+          INCLUDE: new Set<string>(),
+          STMT: new Set<string>(),
+          VARIABLE: new Set<string>(),
+        };
+        deprecateOptions = options.deprecate;
+      } else {
+        options.deprecateNext = {
+          BUILTIN: new Set<string>(),
+          ENTRY: new Set<string>(),
+          INCLUDE: new Set<string>(),
+          STMT: new Set<string>(),
+          VARIABLE: new Set<string>(),
+        };
+        deprecateOptions = options.deprecateNext;
+      }
+    }
+
+    for (const opt of option.values) {
+      ensureType(opt, "option");
+      const type = ensureEnum(
+        opt,
+        CompilerOptionsCodes.Deprecate.InvalidParameter,
+        CompilerOptions.DeprecateItemType,
+      );
+
+      const typeKey = CompilerOptions.DeprecateItemType[
+        type
+      ] as keyof CompilerOptions.Deprecate;
+      deprecateOptions[typeKey].clear();
+      for (const optionValue of opt.values) {
+        ensureType(optionValue, "plain");
+        if (optionValue.value.length === 0) {
+          // Just clear the list if the parameter is empty.
+          continue;
+        }
+        const value =
+          type === CompilerOptions.DeprecateItemType.STMT
+            ? ensureArgument(
+                optionValue,
+                CompilerOptionsCodes.Deprecate.InvalidStatementParameter,
+                Options.PLI_STATEMENT_NAMES,
+              )
+            : optionValue.value;
+
+        deprecateOptions[typeKey].add(value);
+      }
+    }
+    reportDuplicateSubOptions(option, acceptor);
+  },
+  undefined,
+  undefined,
+  { allowDuplicates: true },
+);
 
 /** {@link CompilerOptions.display} */
 translator.rule(["DISPLAY"], (option, options) => {
