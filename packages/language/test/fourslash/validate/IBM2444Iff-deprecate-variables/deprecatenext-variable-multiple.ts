@@ -1,0 +1,25 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../../framework.ts" />
+
+////*PROCESS DEPRECATENEXT(VARIABLE(VARB, VARC));
+//// TEST: PROC OPTIONS(MAIN);
+////   DCL <|1:VARB|> FIXED BIN(31);
+////   DCL <|2:VARC|> FIXED BIN(31);
+////   DCL VARD FIXED BIN(31);
+////   VARB = 2;
+////   VARC = 3;
+////   VARD = 4;
+//// END TEST;
+
+verify.expectDiagnosticsAt(1, code.Warning.IBM2646I);
+verify.expectDiagnosticsAt(2, code.Warning.IBM2646I);
