@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">79.66% </span>
+                <span class="strong">81.35% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>47/59</span>
+                <span class='fraction'>48/59</span>
             </div>
         
             
@@ -214,18 +214,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18648x</span>
-<span class="cline-any cline-yes">18640x</span>
-<span class="cline-any cline-yes">18648x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18713x</span>
+<span class="cline-any cline-yes">18705x</span>
+<span class="cline-any cline-yes">18713x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -261,28 +261,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">168622x</span>
-<span class="cline-any cline-yes">168622x</span>
+<span class="cline-any cline-yes">170448x</span>
+<span class="cline-any cline-yes">170448x</span>
 <span class="cline-any cline-yes">6870x</span>
-<span class="cline-any cline-yes">168622x</span>
+<span class="cline-any cline-yes">170448x</span>
 <span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">168622x</span>
-<span class="cline-any cline-yes">936x</span>
-<span class="cline-any cline-yes">168622x</span>
-<span class="cline-any cline-yes">141x</span>
-<span class="cline-any cline-yes">168622x</span>
-<span class="cline-any cline-yes">1806x</span>
-<span class="cline-any cline-yes">168622x</span>
+<span class="cline-any cline-yes">170448x</span>
+<span class="cline-any cline-yes">1014x</span>
+<span class="cline-any cline-yes">170448x</span>
+<span class="cline-any cline-yes">145x</span>
+<span class="cline-any cline-yes">170448x</span>
+<span class="cline-any cline-yes">1867x</span>
+<span class="cline-any cline-yes">170448x</span>
 <span class="cline-any cline-yes">45x</span>
-<span class="cline-any cline-yes">168622x</span>
+<span class="cline-any cline-yes">170448x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">168622x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">168622x</span>
+<span class="cline-any cline-yes">170448x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">170448x</span>
 <span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">168622x</span>
-<span class="cline-any cline-yes">158792x</span>
-<span class="cline-any cline-yes">158792x</span>
+<span class="cline-any cline-yes">170448x</span>
+<span class="cline-any cline-yes">160473x</span>
+<span class="cline-any cline-yes">160473x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -381,7 +381,7 @@ export function getReference(node: SyntaxNode): Reference | undefined {
     case SyntaxKind.ProcedureCall:
       return node.<span class="branch-0 cbranch-no" title="branch not covered" >procedure ?? undefined;</span>
     case SyntaxKind.ReferenceItem:
-      return node.<span class="branch-0 cbranch-no" title="branch not covered" >ref ?? undefined;</span>
+      return node.ref ?? undefined;
     case SyntaxKind.TypeAttribute:
       return node.<span class="branch-0 cbranch-no" title="branch not covered" >type ?? undefined;</span>
     case SyntaxKind.TypeReference:
@@ -400,7 +400,7 @@ export function getReference(node: SyntaxNode): Reference | undefined {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-23T09:08:48.330Z
+                at 2026-01-23T13:38:10.123Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
