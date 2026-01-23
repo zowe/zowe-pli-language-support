@@ -990,14 +990,9 @@ export namespace CompilerOptions {
       format?: DefaultFormat;
     };
   }
-  export interface Deprecate {
-    // TODO ssmifi: check if these should really be accumulated or be overwritten per type.
-    items: DeprecateItem[];
-  }
-  export interface DeprecateItem {
-    type: DeprecateItemType;
-    value: string;
-  }
+  export type Deprecate = {
+    [K in keyof typeof DeprecateItemType]: Set<string>;
+  };
   export interface Display {
     std?: boolean;
     wto?: boolean;
@@ -1363,8 +1358,8 @@ export function getDefaultCompilerOptions(): CompilerOptions {
     currency: "$",
     dbcs: false,
     dbrmlib: false,
-    deprecate: { items: [] },
-    deprecateNext: { items: [] },
+    deprecate: undefined, // undef to quickly exit diagnostics by default
+    deprecateNext: undefined,
     ddsql: "",
     decimal: {
       checkfloat: false,

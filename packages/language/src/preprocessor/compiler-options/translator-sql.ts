@@ -14,7 +14,9 @@ import { CompilerOptionsCodes } from "./codes";
 import { CompilerOptions, getDefaultCompilerOptions } from "./options-sql";
 import { ensureArguments, ensureType, Translator } from "./translator";
 
-const translator = new Translator<CompilerOptions>(getDefaultCompilerOptions());
+const translator = new Translator<CompilerOptions>(() =>
+  getDefaultCompilerOptions(),
+);
 
 translator.flag("ccsid0", ["CCSID0"], ["NOCCSID0"]);
 
