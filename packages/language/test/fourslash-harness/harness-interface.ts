@@ -48,7 +48,7 @@ import {
   TypeSystemCodes,
 } from "../../src/validation/internal-codes";
 import { LspCodes } from "../../src/validation/lsp-codes";
-import { PLICode, PLICodes } from "../../src/validation/pli-codes";
+import { CustomCodes, PLICode, PLICodes } from "../../src/validation/pli-codes";
 import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
@@ -330,6 +330,7 @@ export interface HarnessTesterInterface {
   };
 
   code: {
+    Custom: typeof CustomCodes;
     Severe: typeof PLICodes.Severe;
     Warning: typeof PLICodes.Warning;
     Information: typeof PLICodes.Info;

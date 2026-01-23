@@ -20,7 +20,7 @@ import {
 } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
-import { PLICodes } from "../validation/pli-codes";
+import { CustomCodes, PLICodes } from "../validation/pli-codes";
 import { ValidationAcceptor } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
@@ -118,7 +118,7 @@ export class LinkerErrorReporter {
    * Synthetic error for when we cannot find a symbol.
    */
   reportCannotFindSymbol(token: Token, name: string) {
-    this.accept(diagnostic(Severity.E, `Unknown identifier '${name}'`, token));
+    this.accept(diagnosticFromCode(CustomCodes.UnknownIdentifier, token, name));
   }
 
   /**
