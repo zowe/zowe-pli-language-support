@@ -2228,6 +2228,15 @@ function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
   );
 }
 
+function handleUri(input: string | URI): string {
+  const uri = typeof input === "string" ? URI.parse(input) : input;
+  const key = URI.parse(
+    uri.path.split("/").map(encodeURIComponent).join("/"),
+  ).toString();
+
+  return key;
+}
+
 async function runInclude(
   item: IncludeItem,
   context: InterpreterContext,
@@ -2287,15 +2296,7 @@ async function runInclude(
   }
 
   try {
-    function toDocumentKey(input: string | URI): string {
-      const uri = typeof input === "string" ? URI.parse(input) : input;
-      const key = URI.parse(
-        uri.path.split("/").map(encodeURIComponent).join("/"),
-      ).toString();
-
-      return key;
-    }
-    const document = await TextDocuments.get(toDocumentKey(uri));
+    const document = await TextDocuments.get(handleUri(uri));
 
     if (!document) {
       throw new Error("Document not found after URI resolution.");
