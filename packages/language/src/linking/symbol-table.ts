@@ -486,6 +486,14 @@ function handleNode(
       handleProcedureStatement(node, parentScope, context);
       // handleProcedureStatement contains its own iteration logic, so we stop further processing here.
       return false;
+    case SyntaxKind.ReplaceStatement:
+      if (node.name && node.nameToken) {
+        parentScope.symbolTable.addSymbolDeclaration(
+          node.name,
+          QualifiedSyntaxNode.createExplicit(node.nameToken, node),
+        );
+      }
+      break;
     // E.g. `DEFINE STRUCTURE 1 A, 2 B, 3 C;`
     case SyntaxKind.DefineStructureStatement:
       parentScope.symbolTable.addStructureDefinition(node, context.reporter);
