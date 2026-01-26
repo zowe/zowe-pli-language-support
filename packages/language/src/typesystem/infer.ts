@@ -36,7 +36,6 @@ export class DefaultTypeInferer implements TypeInferer {
         ast.SyntaxKind.Parenthesis,
         ast.SyntaxKind.Literal,
         ast.SyntaxKind.LocatorCall,
-        ast.SyntaxKind.TypeReference,
         ast.SyntaxKind.MemberCall,
       ];
       if (expressionKinds.includes(node.kind)) {
@@ -218,8 +217,6 @@ export class DefaultTypeInferer implements TypeInferer {
             return TypeDescriptions.Unknown();
         }
       }
-      case ast.SyntaxKind.TypeReference:
-        return TypeDescriptions.Unknown();
       case ast.SyntaxKind.UnaryExpression:
         //TODO implement
         return TypeDescriptions.Unknown();

@@ -10,7 +10,6 @@
  */
 
 import {
-  diagnostic,
   diagnosticFromCode,
   fullCode,
   Range,
@@ -20,6 +19,7 @@ import {
 } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { InternalCodes } from "../validation/internal-codes";
 import { PLICodes } from "../validation/pli-codes";
 import { ValidationAcceptor } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -118,7 +118,9 @@ export class LinkerErrorReporter {
    * Synthetic error for when we cannot find a symbol.
    */
   reportCannotFindSymbol(token: Token, name: string) {
-    this.accept(diagnostic(Severity.E, `Unknown identifier '${name}'`, token));
+    this.accept(
+      diagnosticFromCode(InternalCodes.UnknownIdentifier, token, name),
+    );
   }
 
   /**

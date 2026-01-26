@@ -1,0 +1,16 @@
+ REPL: PROC;
+   %REPLACE A BY 67;
+   %REPLACE B BY 34;
+
+   /*
+   page 623 - Lang.Ref
+   If code has a value other than those listed above, a diagnostic 
+   message is produced and a default
+  value is taken. If the value is less than 0 or greater than 16, severity
+   U is the default. Otherwise, the next lower severity is the default.
+   */
+   %NOTE('A+B = ', (A+B));
+
+   %REPLACE NAME WITH 'ENE';
+   %NOTE('aHOJ ', NAME);
+ END;
