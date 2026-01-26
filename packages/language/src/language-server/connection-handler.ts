@@ -9,14 +9,17 @@
  *
  */
 
-import { CompilationUnitHandler } from "../workspace/compilation-unit";
+import {
+  CompilationUnit,
+  CompilationUnitHandler,
+} from "../workspace/compilation-unit";
 import {
   CancellationToken,
   Connection,
   DocumentHighlight,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
-import { URI, UriUtils } from "../utils/uri";
+import { URI } from "../utils/uri";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
@@ -41,7 +44,6 @@ import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
-import { Mutex } from "../workspace/mutex";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
@@ -58,6 +60,21 @@ export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
+
+  function withReadMutex<T>(
+    uri: string,
+    cb: (uri: URI, unit?: CompilationUnit) => Promise<T>,
+  ) {
+    const parsedUri = URI.parse(uri);
+    const compilationUnit =
+      compilationUnitHandler.getCompilationUnit(parsedUri);
+    if (!compilationUnit) {
+      return cb(parsedUri, undefined);
+    }
+    return compilationUnit.mutex.read(async () => {
+      return cb(parsedUri, compilationUnit);
+    });
+  }
 
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
@@ -125,62 +142,58 @@ export function startLanguageServer(connection: Connection): void {
     compilationUnitHandler.finalize();
   });
   connection.onHover(async (params) => {
-    return Mutex.read(async () => {
-      const uri = params.textDocument.uri;
-      const position = params.position;
-      const parsedUri = URI.parse(uri);
-      const compilationUnit =
-        compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = compilationUnit?.services.files.getDocument(uri);
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
 
-      if (!textDocument || !compilationUnit) {
-        return null;
-      }
+        if (!textDocument || !compilationUnit) {
+          return null;
+        }
 
-      const offset = textDocument.offsetAt(position);
-      const response = hoverRequest(compilationUnit, parsedUri, offset);
-      if (!response) {
-        return null;
-      }
+        const offset = textDocument.offsetAt(position);
+        const response = hoverRequest(compilationUnit, uri, offset);
+        if (!response) {
+          return null;
+        }
 
-      return hoverResponseToLSP(textDocument, response);
-    });
+        return hoverResponseToLSP(textDocument, response);
+      },
+    );
   });
   connection.onCompletion(async (params) => {
-    return Mutex.read(async () => {
-      const uri = params.textDocument.uri;
-      const position = params.position;
-      const parsedUri = URI.parse(uri);
-      const compilationUnit =
-        compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = compilationUnit?.services.files.getDocument(uri);
-      if (textDocument && compilationUnit) {
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
-        const result = completionRequest(
-          compilationUnit,
-          parsedUri,
-          offset,
-        ).map((completionItem) =>
-          completionItemToLSP(textDocument, completionItem),
+        const result = completionRequest(compilationUnit, uri, offset).map(
+          (completionItem) => completionItemToLSP(textDocument, completionItem),
         );
 
         return result;
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onDefinition(async (params) => {
-    return Mutex.read(async () => {
-      const position = params.position;
-      const uri = URI.parse(params.textDocument.uri);
-      const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-      const textDocument = compilationUnit?.services.files.getDocument(uri);
-      if (textDocument && compilationUnit) {
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!compilationUnit || !textDocument) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
         const definition = definitionRequest(compilationUnit, uri, offset);
         const lspDefinitions: LocationLink[] = [];
         for (const def of definition) {
-          const doc = compilationUnit?.services.files.getDocument(def.uri);
+          const doc = compilationUnit.services.files.getDocument(def.uri);
           if (doc) {
             const range = rangeToLSP(doc, def.range);
             const sourceRange = def.source
@@ -195,28 +208,23 @@ export function startLanguageServer(connection: Connection): void {
           }
         }
         return lspDefinitions;
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onReferences(async (params) => {
-    return Mutex.read(async () => {
-      const uri = params.textDocument.uri;
-      const position = params.position;
-      const parsedUri = URI.parse(uri);
-      const compilationUnit =
-        compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = compilationUnit?.services.files.getDocument(uri);
-      if (textDocument && compilationUnit) {
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
-        const definition = referencesRequest(
-          compilationUnit,
-          parsedUri,
-          offset,
-        );
+        const definition = referencesRequest(compilationUnit, uri, offset);
         const lspDefinitions: Location[] = [];
         for (const def of definition) {
-          const doc = compilationUnit?.services.files.getDocument(def.uri);
+          const doc = compilationUnit.services.files.getDocument(def.uri);
           if (doc) {
             const range = rangeToLSP(doc, def.range);
             lspDefinitions.push({
@@ -226,59 +234,58 @@ export function startLanguageServer(connection: Connection): void {
           }
         }
         return lspDefinitions;
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.languages.semanticTokens.on(async (params) => {
-    return Mutex.read(async () => {
-      const uri = params.textDocument.uri;
-      const compilationUnit = compilationUnitHandler.getCompilationUnit(
-        URI.parse(uri),
-      );
-      const textDocument = compilationUnit?.services.files.getDocument(uri);
-      if (textDocument && compilationUnit) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!compilationUnit || !textDocument) {
+          return {
+            data: [],
+          };
+        }
         return {
           data: semanticTokens(textDocument, compilationUnit),
         };
-      }
-      return {
-        data: [],
-      };
-    });
+      },
+    );
   });
   connection.onDocumentHighlight(async (params) => {
-    return Mutex.read(async () => {
-      const uri = UriUtils.normalize(params.textDocument.uri);
-      const position = params.position;
-      const parsedUri = URI.parse(uri);
-      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = unit?.services.files.getDocument(uri);
-      if (textDocument && unit) {
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
-        const definitions = getReferenceLocations(unit, parsedUri, offset);
+        const definitions = getReferenceLocations(compilationUnit, uri, offset);
         return definitions
-          .filter((e) => e.uri === uri)
+          .filter((e) => e.uri === uri.toString())
           .map((def) =>
             DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
           );
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onRenameRequest(async (params) => {
-    return Mutex.read(async () => {
-      const uri = params.textDocument.uri;
-      const position = params.position;
-      const parsedUri = URI.parse(uri);
-      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = unit?.services.files.getDocument(uri);
-      if (textDocument && unit) {
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return null;
+        }
         const offset = textDocument.offsetAt(position);
-        const renameLocations = renameRequest(unit, parsedUri, offset);
+        const renameLocations = renameRequest(compilationUnit, uri, offset);
         const changes: Record<string, TextEdit[]> = {};
         for (const [key, locations] of Object.entries(renameLocations)) {
-          const textDocument = unit.services.files.getDocument(key);
+          const textDocument = compilationUnit.services.files.getDocument(key);
           if (textDocument) {
             changes[key] = locations.map(
               (location) =>
@@ -289,82 +296,68 @@ export function startLanguageServer(connection: Connection): void {
             );
           }
         }
-
-        return {
-          changes,
-        };
-      }
-
-      return null;
-    });
+        return { changes };
+      },
+    );
   });
   connection.onDocumentSymbol(async (params) => {
-    return Mutex.read(async () => {
-      const uri = params.textDocument.uri;
-      const parsedUri = URI.parse(uri);
-      const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-      const textDocument = unit?.services.files.getDocument(uri);
-      if (textDocument && unit) {
-        const requestResult = documentSymbolRequest(parsedUri, unit);
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
+        const requestResult = documentSymbolRequest(uri, compilationUnit);
         return requestResult.map((symbol) =>
           documentSymbolToLSP(textDocument, symbol),
         );
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onWorkspaceSymbol(async (params) => {
-    return Mutex.read(async () => {
-      return workspaceSymbolRequest(
-        params.query,
-        compilationUnitHandler.getAllCompilationUnits(),
-      );
-    });
+    return workspaceSymbolRequest(
+      params.query,
+      compilationUnitHandler.getAllCompilationUnits(),
+    );
   });
   connection.onNotification(
     WorkspaceDidChangePlipluginConfigNotification,
-    () => {
-      Mutex.run(async () => {
-        // handle changes to the .pliplugin config folder's contents
-        const diagnostics =
-          await PluginConfigurationProviderInstance.reloadConfigurations();
-        const ws = PluginConfigurationProviderInstance.getWorkspacePath();
-        const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
-        connection.sendDiagnostics({
-          uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-          diagnostics,
-        });
-
-        // reindex reachable compilation units
-        await compilationUnitHandler.reindex(
-          connection,
-          CancellationToken.None,
-        );
+    async () => {
+      // handle changes to the .pliplugin config folder's contents
+      const diagnostics =
+        await PluginConfigurationProviderInstance.reloadConfigurations();
+      const ws = PluginConfigurationProviderInstance.getWorkspacePath();
+      const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
+      connection.sendDiagnostics({
+        uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
+        diagnostics,
       });
+
+      // reindex reachable compilation units
+      await compilationUnitHandler.reindex(connection, CancellationToken.None);
     },
   );
 
   connection.onCodeAction(async (params) => {
-    return Mutex.read(async () => {
-      const requestedKinds = params.context.only;
-      const isSourceActionRequest =
-        requestedKinds?.includes(CodeActionKind.SourceFixAll) ||
-        requestedKinds?.includes(CodeActionKind.Source);
+    const requestedKinds = params.context.only;
+    const isSourceActionRequest =
+      requestedKinds?.includes(CodeActionKind.SourceFixAll) ||
+      requestedKinds?.includes(CodeActionKind.Source);
 
-      if (isSourceActionRequest) {
-        const sourceActions = await applySourceActions(
-          params.textDocument.uri,
-          compilationUnitHandler,
-        );
-        return sourceActions || [];
-      } else {
-        const diagnostics = params.context.diagnostics as Diagnostic[];
-        if (!diagnostics || !diagnostics.length) return [];
+    if (isSourceActionRequest) {
+      const sourceActions = await applySourceActions(
+        params.textDocument.uri,
+        compilationUnitHandler,
+      );
+      return sourceActions || [];
+    } else {
+      const diagnostics = params.context.diagnostics as Diagnostic[];
+      if (!diagnostics || !diagnostics.length) return [];
 
-        const actions = await applyQuickFixes(diagnostics);
-        return actions || [];
-      }
-    });
+      const actions = await applyQuickFixes(diagnostics);
+      return actions || [];
+    }
   });
 
   connection.onExecuteCommand(async (params) => {
