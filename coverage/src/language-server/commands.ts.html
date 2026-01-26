@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.83% </span>
+                <span class="strong">8.92% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/61</span>
+                <span class='fraction'>5/56</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.83% </span>
+                <span class="strong">8.92% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/61</span>
+                <span class='fraction'>5/56</span>
             </div>
         
             
@@ -133,12 +133,7 @@
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a>
 <a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a>
-<a name='L72'></a><a href='#L72'>72</a>
-<a name='L73'></a><a href='#L73'>73</a>
-<a name='L74'></a><a href='#L74'>74</a>
-<a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L71'></a><a href='#L71'>71</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -149,7 +144,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -165,11 +159,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -226,67 +216,62 @@
 &nbsp;
 import { URI } from "vscode-uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { Mutex } from "../workspace/mutex";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { ExecuteCommandParams } from "vscode-languageserver";
 import { UriUtils } from "../utils/uri";
 import { PluginConfiguration } from "./constants";
 &nbsp;
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function commandResolveInclude(params: ExecuteCommandParams) {</span></span>
-<span class="cstat-no" title="statement not covered" >  return Mutex.run(async () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const [uri, content] = params.arguments as string[];</span>
-<span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      await FileSystemProviderInstance.writeFile(URI.parse(uri), content);</span>
-<span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to write proc_grps.json:", err);</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >  const [uri, content] = params.arguments as string[];</span>
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    await FileSystemProviderInstance.writeFile(URI.parse(uri), content);</span>
+<span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
+<span class="cstat-no" title="statement not covered" >    console.error("Failed to write proc_grps.json:", err);</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function commandCreateConfig(params: ExecuteCommandParams) {</span></span>
-<span class="cstat-no" title="statement not covered" >  return Mutex.run(async () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const workspaceFolderUri = URI.parse(</span>
-<span class="cstat-no" title="statement not covered" >      PluginConfigurationProviderInstance.getWorkspacePath(),</span>
+<span class="cstat-no" title="statement not covered" >  const workspaceFolderUri = URI.parse(</span>
+<span class="cstat-no" title="statement not covered" >    PluginConfigurationProviderInstance.getWorkspacePath(),</span>
+<span class="cstat-no" title="statement not covered" >  );</span>
+<span class="cstat-no" title="statement not covered" >  if (!workspaceFolderUri || !params.arguments) {</span>
+<span class="cstat-no" title="statement not covered" >    return;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    const entryUri = params.arguments[0];</span>
+<span class="cstat-no" title="statement not covered" >    await FileSystemProviderInstance.writeFile(</span>
+<span class="cstat-no" title="statement not covered" >      UriUtils.joinPath(</span>
+<span class="cstat-no" title="statement not covered" >        workspaceFolderUri,</span>
+<span class="cstat-no" title="statement not covered" >        PluginConfiguration.PROGRAM_FILE_PATH,</span>
+<span class="cstat-no" title="statement not covered" >      ),</span>
+<span class="cstat-no" title="statement not covered" >      JSON.stringify(</span>
+<span class="cstat-no" title="statement not covered" >        {</span>
+<span class="cstat-no" title="statement not covered" >          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,</span>
+<span class="cstat-no" title="statement not covered" >          pgms: [</span>
+<span class="cstat-no" title="statement not covered" >            {</span>
+<span class="cstat-no" title="statement not covered" >              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],</span>
+<span class="cstat-no" title="statement not covered" >              program: entryUri,</span>
+<span class="cstat-no" title="statement not covered" >            },</span>
+<span class="cstat-no" title="statement not covered" >          ],</span>
+<span class="cstat-no" title="statement not covered" >        },</span>
+<span class="cstat-no" title="statement not covered" >        null,</span>
+<span class="cstat-no" title="statement not covered" >        2,</span>
+<span class="cstat-no" title="statement not covered" >      ),</span>
 <span class="cstat-no" title="statement not covered" >    );</span>
-<span class="cstat-no" title="statement not covered" >    if (!workspaceFolderUri || !params.arguments) {</span>
-<span class="cstat-no" title="statement not covered" >      return;</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      const entryUri = params.arguments[0];</span>
-<span class="cstat-no" title="statement not covered" >      await FileSystemProviderInstance.writeFile(</span>
-<span class="cstat-no" title="statement not covered" >        UriUtils.joinPath(</span>
-<span class="cstat-no" title="statement not covered" >          workspaceFolderUri,</span>
-<span class="cstat-no" title="statement not covered" >          PluginConfiguration.PROGRAM_FILE_PATH,</span>
-<span class="cstat-no" title="statement not covered" >        ),</span>
-<span class="cstat-no" title="statement not covered" >        JSON.stringify(</span>
-<span class="cstat-no" title="statement not covered" >          {</span>
-<span class="cstat-no" title="statement not covered" >            ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,</span>
-<span class="cstat-no" title="statement not covered" >            pgms: [</span>
-<span class="cstat-no" title="statement not covered" >              {</span>
-<span class="cstat-no" title="statement not covered" >                ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],</span>
-<span class="cstat-no" title="statement not covered" >                program: entryUri,</span>
-<span class="cstat-no" title="statement not covered" >              },</span>
-<span class="cstat-no" title="statement not covered" >            ],</span>
-<span class="cstat-no" title="statement not covered" >          },</span>
-<span class="cstat-no" title="statement not covered" >          null,</span>
-<span class="cstat-no" title="statement not covered" >          2,</span>
-<span class="cstat-no" title="statement not covered" >        ),</span>
-<span class="cstat-no" title="statement not covered" >      );</span>
-<span class="cstat-no" title="statement not covered" >      await FileSystemProviderInstance.writeFile(</span>
-<span class="cstat-no" title="statement not covered" >        UriUtils.joinPath(</span>
-<span class="cstat-no" title="statement not covered" >          workspaceFolderUri,</span>
-<span class="cstat-no" title="statement not covered" >          PluginConfiguration.PROCESS_GROUP_FILE_PATH,</span>
-<span class="cstat-no" title="statement not covered" >        ),</span>
-<span class="cstat-no" title="statement not covered" >        JSON.stringify(</span>
-<span class="cstat-no" title="statement not covered" >          PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,</span>
-<span class="cstat-no" title="statement not covered" >          null,</span>
-<span class="cstat-no" title="statement not covered" >          2,</span>
-<span class="cstat-no" title="statement not covered" >        ),</span>
-<span class="cstat-no" title="statement not covered" >      );</span>
-<span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
-<span class="cstat-no" title="statement not covered" >      console.error("Failed to create configuration: ", err);</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >    await FileSystemProviderInstance.writeFile(</span>
+<span class="cstat-no" title="statement not covered" >      UriUtils.joinPath(</span>
+<span class="cstat-no" title="statement not covered" >        workspaceFolderUri,</span>
+<span class="cstat-no" title="statement not covered" >        PluginConfiguration.PROCESS_GROUP_FILE_PATH,</span>
+<span class="cstat-no" title="statement not covered" >      ),</span>
+<span class="cstat-no" title="statement not covered" >      JSON.stringify(</span>
+<span class="cstat-no" title="statement not covered" >        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,</span>
+<span class="cstat-no" title="statement not covered" >        null,</span>
+<span class="cstat-no" title="statement not covered" >        2,</span>
+<span class="cstat-no" title="statement not covered" >      ),</span>
+<span class="cstat-no" title="statement not covered" >    );</span>
+<span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
+<span class="cstat-no" title="statement not covered" >    console.error("Failed to create configuration: ", err);</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
@@ -295,7 +280,7 @@ import { PluginConfiguration } from "./constants";
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-26T15:01:44.815Z
+                at 2026-01-26T23:20:51.464Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

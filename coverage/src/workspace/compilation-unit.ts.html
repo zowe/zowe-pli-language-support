@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">67.06% </span>
+                <span class="strong">67.74% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>167/249</span>
+                <span class='fraction'>168/248</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">67.06% </span>
+                <span class="strong">67.74% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>167/249</span>
+                <span class='fraction'>168/248</span>
             </div>
         
             
@@ -438,9 +438,7 @@
 <a name='L373'></a><a href='#L373'>373</a>
 <a name='L374'></a><a href='#L374'>374</a>
 <a name='L375'></a><a href='#L375'>375</a>
-<a name='L376'></a><a href='#L376'>376</a>
-<a name='L377'></a><a href='#L377'>377</a>
-<a name='L378'></a><a href='#L378'>378</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L376'></a><a href='#L376'>376</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -496,6 +494,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -643,6 +642,7 @@
 <span class="cline-any cline-yes">1118x</span>
 <span class="cline-any cline-yes">2618x</span>
 <span class="cline-any cline-yes">1126x</span>
+<span class="cline-any cline-yes">1126x</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">26x</span>
@@ -720,12 +720,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -745,8 +739,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -755,7 +747,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -803,6 +797,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -860,7 +856,7 @@ import {
   ProgramConfig,
 } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
-import { Mutex } from "./mutex.js";
+import { createMutex, Mutex } from "./mutex.js";
 import { Deferred, isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -905,6 +901,7 @@ export interface CompilationUnit {
   readonly services: CompilationServices;
   readonly programConfig: ProgramConfig | undefined;
   readonly processGroup: ProcessGroup | undefined;
+  readonly mutex: Mutex;
   /**
    * Resets all caches associated with this compilation unit.
    */
@@ -1019,6 +1016,7 @@ export async function createCompilationUnit(
       }
       return cachedProcessGroup;
     },
+    mutex: createMutex(),
     reset() {
       services.files.clear();
       services.typeCache.clear();
@@ -1097,18 +1095,12 @@ export class CompilationUnitHandler {
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  listen(connection: Connection): void {</span>
-    // Before we start listening, we need to set up the mutex
-    // to prevent compilation unit updates before we're ready.
-<span class="cstat-no" title="statement not covered" >    Mutex.run(async () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      await this.ready.promise;</span>
-<span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" >    this.connection = connection;</span>
 <span class="cstat-no" title="statement not covered" >    const textDocuments = EditorDocuments;</span>
 <span class="cstat-no" title="statement not covered" >    textDocuments.listen(connection);</span>
 <span class="cstat-no" title="statement not covered" >    textDocuments.onDidChangeContent((event) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      Mutex.cancel();</span>
 <span class="cstat-no" title="statement not covered" >      const uri = URI.parse(event.document.uri);</span>
-<span class="cstat-no" title="statement not covered" >      Mutex.run((token) =&gt; this.updateUri(uri, token));</span>
+<span class="cstat-no" title="statement not covered" >      this.updateUri(uri);</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" >    textDocuments.onDidClose((event) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      connection.sendDiagnostics({</span>
@@ -1118,23 +1110,23 @@ export class CompilationUnitHandler {
 <span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
-<span class="fstat-no" title="function not covered" >  async updateUri(</span>
-<span class="cstat-no" title="statement not covered" >    uri: URI,</span>
-<span class="cstat-no" title="statement not covered" >    cancellationToken: CancellationToken,</span>
-<span class="cstat-no" title="statement not covered" >  ): Promise&lt;void&gt; {</span>
+<span class="fstat-no" title="function not covered" >  async updateUri(uri: URI): Promise&lt;void&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    await this.ready.promise;</span>
 <span class="cstat-no" title="statement not covered" >    const unit = await this.getOrCreateCompilationUnit(uri);</span>
 <span class="cstat-no" title="statement not covered" >    if (!unit) {</span>
       // standalone library files do not synthesize new compilation units
 <span class="cstat-no" title="statement not covered" >      return;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    const document = await EditorDocuments.get(unit.uri);</span>
-<span class="cstat-no" title="statement not covered" >    if (!document) {</span>
-<span class="cstat-no" title="statement not covered" >      return;</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    await this.process(unit, document, this.connection, cancellationToken);</span>
-    // TODO: Wagner Laranjeiras -&gt; includeCache based on changes of a specific file.
-<span class="cstat-no" title="statement not covered" >    unit.services.includeCache.clear();</span>
-<span class="cstat-no" title="statement not covered" >    unit.requestCaches.revalidateAll({ connection: this.connection, unit });</span>
+<span class="cstat-no" title="statement not covered" >    unit.mutex.run(async (cancellationToken) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >      const document = await EditorDocuments.get(unit.uri);</span>
+<span class="cstat-no" title="statement not covered" >      if (!document) {</span>
+<span class="cstat-no" title="statement not covered" >        return;</span>
+<span class="cstat-no" title="statement not covered" >      }</span>
+<span class="cstat-no" title="statement not covered" >      await this.process(unit, document, this.connection, cancellationToken);</span>
+      // TODO: Wagner Laranjeiras -&gt; includeCache based on changes of a specific file.
+<span class="cstat-no" title="statement not covered" >      unit.services.includeCache.clear();</span>
+<span class="cstat-no" title="statement not covered" >      unit.requestCaches.revalidateAll({ connection: this.connection, unit });</span>
+<span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
   /**
@@ -1187,10 +1179,12 @@ export class CompilationUnitHandler {
 <span class="cstat-no" title="statement not covered" >      if (cancellationToken.isCancellationRequested) {</span>
 <span class="cstat-no" title="statement not covered" >        return;</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
-<span class="cstat-no" title="statement not covered" >      const textDocument = await TextDocuments.get(unit.uri.toString());</span>
-<span class="cstat-no" title="statement not covered" >      if (textDocument) {</span>
-<span class="cstat-no" title="statement not covered" >        this.process(unit, textDocument, connection, cancellationToken);</span>
-<span class="cstat-no" title="statement not covered" >      }</span>
+<span class="cstat-no" title="statement not covered" >      unit.mutex.run(async (cancellationToken) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        const textDocument = await TextDocuments.get(unit.uri.toString());</span>
+<span class="cstat-no" title="statement not covered" >        if (textDocument) {</span>
+<span class="cstat-no" title="statement not covered" >          this.process(unit, textDocument, connection, cancellationToken);</span>
+<span class="cstat-no" title="statement not covered" >        }</span>
+<span class="cstat-no" title="statement not covered" >      });</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 }
@@ -1201,7 +1195,7 @@ export class CompilationUnitHandler {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-26T15:01:44.815Z
+                at 2026-01-26T23:20:51.464Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
