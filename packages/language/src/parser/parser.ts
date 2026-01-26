@@ -28,6 +28,10 @@ import {
 } from "./abstract-parser";
 import { Severe } from "../validation/pli-codes";
 import { Diagnostic, Severity } from "../language-server/types";
+import {
+  performAssignmentLookahead,
+  performEndStatementLookahead,
+} from "./parser-lookahead";
 
 export function parsePli(input: tokens.Token[]): {
   tree: ast.Program;
@@ -6498,93 +6502,3 @@ const numberLiteral = rule(
     return element;
   },
 );
-
-export function performAssignmentLookahead(state: ParserState): boolean {
-  const expressionTokenTypes = [
-    tokens.ID,
-    tokens.BinaryOperator,
-    tokens.UnaryOperator,
-    tokens.AssignmentOperator,
-    tokens.STRING_TERM,
-    tokens.NUMBER,
-    tokens.Comma,
-    tokens.Dot,
-  ];
-
-  let previousToken: tokens.Token | undefined = undefined;
-  const lookahead: (la: number) => tokens.Token | undefined = (la) => {
-    previousToken = state.peek(la - 1);
-    return state.peek(la);
-  };
-  let i = 1;
-  let token = lookahead(i++);
-  // First token of an assigment needs to be an ID
-  if (!token || !tokenMatcher(token, tokens.ID)) {
-    return false;
-  } else if (token.tokenTypeIdx === tokens.ID.tokenTypeIdx) {
-    return true;
-  }
-  token = lookahead(i);
-  // We have found a match immediately with the assignment operator
-  if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
-    return true;
-  }
-
-  // The compiler will not use more than 160 tokens to perform the lookahead
-  const max = 160;
-  let parenthesis = 0;
-  while (i < max) {
-    const token = lookahead(i++);
-    if (!token) {
-      return false;
-    }
-    if (parenthesis === 0 && tokenMatcher(token, tokens.AssignmentOperator)) {
-      return true;
-    }
-    if (tokenMatcher(token, tokens.OpenParen)) {
-      parenthesis++;
-    } else if (tokenMatcher(token, tokens.CloseParen)) {
-      parenthesis--;
-    } else if (tokenMatcher(token, tokens.Semicolon)) {
-      // Semicolon indicates the end of the statement
-      return false;
-    } else {
-      if (
-        !expressionTokenTypes.some((tokenType) =>
-          tokenMatcher(token, tokenType),
-        )
-      ) {
-        return false;
-      }
-      if (tokenMatcher(token, tokens.ID)) {
-        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
-          return false;
-        }
-      }
-      // Continue with the next token, the current token is a valid expression token
-    }
-  }
-  // If we reach this point, the lookahead was not successful
-  return false;
-}
-
-function performEndStatementLookahead(state: ParserState): boolean {
-  const lookahead = (la: number) => state.peek(la);
-  let index: number = 1;
-  let token: tokens.Token | undefined = undefined;
-  while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
-    const idToken = lookahead(index);
-    const colonToken = lookahead(index + 1);
-    if (!idToken || !colonToken) {
-      return false;
-    }
-    if (
-      !tokenMatcher(idToken, tokens.ID) ||
-      !tokenMatcher(colonToken, tokens.Colon)
-    ) {
-      return false;
-    }
-    index += 2;
-  }
-  return token !== undefined && tokenMatcher(token, tokens.END);
-}
