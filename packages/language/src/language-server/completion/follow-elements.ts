@@ -24,13 +24,13 @@ import { SimpleCompletionItem } from "../types";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 
 const DataSpecificationCompletionKeywordsArray =
-  CompletionKeywords.DeclarationKeyword.values();
+  CompletionKeywords.DeclarationKeyword.valuesArray();
 const StatementStartCompletionKeywordsArray =
-  CompletionKeywords.StatementStart.values();
+  CompletionKeywords.StatementStart.valuesArray();
 const StatementStartPreprocessorCompletionKeywordsArray =
-  CompletionKeywords.StatementStartPreprocessor.values();
+  CompletionKeywords.StatementStartPreprocessor.valuesArray();
 const StatementStartPreprocessorWithPercentCompletionKeywordsArray =
-  CompletionKeywords.StatementStartPreprocessorWithPercent.values();
+  CompletionKeywords.StatementStartPreprocessorWithPercent.valuesArray();
 const AllStatementStartKeywordsArray = [
   ...StatementStartCompletionKeywordsArray,
   ...StatementStartPreprocessorWithPercentCompletionKeywordsArray,
@@ -349,7 +349,7 @@ export function provideEntryPointFollowElements(
         {
           kind: FollowKind.CstNode,
           items:
-            CompletionKeywords.StatementStartPreprocessorInProcedure.values(),
+            CompletionKeywords.StatementStartPreprocessorInProcedure.valuesArray(),
         },
         {
           kind: FollowKind.LocalReference,
@@ -359,7 +359,7 @@ export function provideEntryPointFollowElements(
       return [
         {
           kind: FollowKind.CstNode,
-          items: CompletionKeywords.StatementStartPreprocessor.values(),
+          items: CompletionKeywords.StatementStartPreprocessor.valuesArray(),
         },
         {
           kind: FollowKind.LocalReference,

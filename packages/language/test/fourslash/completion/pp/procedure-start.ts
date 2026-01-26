@@ -25,7 +25,7 @@ completion.expectAt("inside", {
     "CALL",
     "RETURN",
     // Include all other statement-starting preprocessor keywords
-    ...constants.CompletionKeywords.StatementStartPreprocessorInProcedure.values().map(
+    ...constants.CompletionKeywords.StatementStartPreprocessorInProcedure.valuesArray().map(
       (keyword) => keyword.label,
     ),
   ],

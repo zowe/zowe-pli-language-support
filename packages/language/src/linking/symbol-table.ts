@@ -39,10 +39,6 @@ import { LinkerErrorReporter } from "./error";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
 
-function nonNull<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined;
-}
-
 /**
  * Terminology:
  * - Redeclaration: A symbol that is declared with the same name in the same scope.
@@ -290,7 +286,13 @@ function getQualifiedSymbols(
   }
 }
 
-const RedeclarationPriority = [SyntaxKind.LabelPrefix];
+function redeclarationPriority(kind: SyntaxKind): number {
+  if (kind === SyntaxKind.LabelPrefix) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
 
 /**
  * Assigns the `isRedeclared` property to all symbols that are redeclared.
@@ -299,19 +301,17 @@ const RedeclarationPriority = [SyntaxKind.LabelPrefix];
  */
 function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   for (const scope of scopeCache.values()) {
-    const symbolsGroups = Array.from(
-      scope.symbolTable.symbols.entriesGroupedByKey(),
-      ([, symbols]) =>
-        symbols
-          .filter((symbol) => !symbol.isImplicit) // We don't want to check implicit declarations for redeclarations.
-          .filter((symbol) => symbol.level === 1) // Get the symbols that are at the first level of scope.
-          .filter((symbol) => symbol.node.kind !== SyntaxKind.WildcardItem), // Wildcard items are not checked for redeclarations.
-    );
+    for (const [, symbols] of scope.symbolTable.symbols.entriesGroupedByKey()) {
+      const filteredSymbols = symbols.filter(
+        (symbol) =>
+          !symbol.isImplicit && // We don't want to check implicit declarations for redeclarations.
+          symbol.level === 1 && // Get the symbols that are at the first level of scope.
+          symbol.node.kind !== SyntaxKind.WildcardItem, // Wildcard items are not checked for redeclarations.
+      );
 
-    for (const symbols of symbolsGroups) {
       // A group of symbols is colliding if it contains more than one symbol.
-      const isColliding = symbols.length > 1;
-      for (const symbol of symbols) {
+      const isColliding = filteredSymbols.length > 1;
+      for (const symbol of filteredSymbols) {
         symbol.isRedeclared = isColliding;
       }
 
@@ -320,13 +320,17 @@ function assignRedeclaredSymbols(scopeCache: ScopeCache) {
       // and variable declaration, the label prefix should always
       // take precedence (i.e, be marked as not redeclared).
       if (isColliding) {
-        const [first] = symbols.toSorted(
-          (a, b) =>
-            RedeclarationPriority.indexOf(b.node.kind) -
-            RedeclarationPriority.indexOf(a.node.kind),
-        );
-
-        first.isRedeclared = false;
+        let item = filteredSymbols[0];
+        let itemPrio = redeclarationPriority(item.node.kind);
+        for (let i = 1; i < filteredSymbols.length; i++) {
+          const symbol = filteredSymbols[i];
+          const prio = redeclarationPriority(symbol.node.kind);
+          if (prio > itemPrio) {
+            item = symbol;
+            itemPrio = prio;
+          }
+        }
+        item.isRedeclared = false;
       }
     }
   }
@@ -377,28 +381,40 @@ export function iterateSymbols(unit: CompilationUnit): void {
   );
 
   const preprocessorScope = Scope.createChild(unit.rootPreprocessorScope);
+  scopeCaches.preprocessor.add(unit.preprocessorAst, preprocessorScope);
 
-  iterateSymbolTable(unit.preprocessorAst, preprocessorScope, {
-    unit,
-    reporter,
-    scopeCache: scopeCaches.preprocessor,
-    referencesCache,
-    statementOrderCache,
-  });
+  iterateSymbolTable(
+    unit.preprocessorAst,
+    preprocessorScope,
+    {
+      unit,
+      reporter,
+      scopeCache: scopeCaches.preprocessor,
+      referencesCache,
+      statementOrderCache,
+    },
+    false,
+  );
   // TODO: Active this when we have some tests
   // assignRedeclaredSymbols(scopeCaches.preprocessor);
 
   // Generate a new scope
   // Otherwise we will add symbols to the root scope (which contains builtins)
   const regularScope = Scope.createChild(unit.rootScope);
+  scopeCaches.regular.add(unit.ast, regularScope);
 
-  iterateSymbolTable(unit.ast, regularScope, {
-    unit,
-    reporter,
-    scopeCache: scopeCaches.regular,
-    referencesCache,
-    statementOrderCache,
-  });
+  iterateSymbolTable(
+    unit.ast,
+    regularScope,
+    {
+      unit,
+      reporter,
+      scopeCache: scopeCaches.regular,
+      referencesCache,
+      statementOrderCache,
+    },
+    false,
+  );
   assignRedeclaredSymbols(scopeCaches.regular);
 }
 
@@ -425,9 +441,16 @@ function handleProcedureStatement(
     end: null,
   };
 
-  forEachNode(newNode, (child) => iterateSymbolTable(child, scope, context));
+  context.scopeCache.add(node, scope);
+
+  forEachNode(newNode, (child) =>
+    iterateSymbolTable(child, scope, context, false),
+  );
   if (node.end) {
-    iterateSymbolTable(node.end, parentScope, context);
+    // Iterate the end node with a separate scope
+    iterateSymbolTable(node.end, parentScope, context, false);
+    // Also add the parent scope to the end node
+    context.scopeCache.add(node.end, parentScope);
   }
 }
 
@@ -443,28 +466,34 @@ function iterateSymbolTable(
   node: SyntaxNode,
   parentScope: Scope,
   context: IterateSymbolTableContext,
+  prioRef: boolean,
 ): void {
+  if (
+    !prioRef &&
+    (node.kind === SyntaxKind.LikeAttribute ||
+      node.kind === SyntaxKind.TypeAttribute)
+  ) {
+    prioRef = true;
+  }
   const ref = getReference(node);
-  if (ref) {
+
+  if (ref !== undefined) {
     // Reset the reference node to undefined to allow re-resolution.
     // This is necessary because cached AST nodes may have references
     // that were resolved in a previous lifecycle run.
     ref.node = undefined;
 
-    if (getPriorityReferenceElement(ref) !== null) {
+    if (prioRef) {
       context.referencesCache.priorityAdd(ref);
     } else {
       context.referencesCache.add(ref);
     }
   }
 
-  // We connect the current node to its scope for usage in the linking phase.
-  context.scopeCache.add(node, parentScope);
-
   const continueRunning = handleNode(node, parentScope, context);
   if (continueRunning) {
     forEachNode(node, (child) =>
-      iterateSymbolTable(child, parentScope, context),
+      iterateSymbolTable(child, parentScope, context, prioRef),
     );
   }
 }
@@ -536,14 +565,14 @@ function handleNode(
       break;
     // E.g. `A, B = 1;`
     case SyntaxKind.AssignmentStatement:
-      const refs = node.refs
-        .map((ref) => ref.element?.element?.ref)
-        .filter(nonNull);
-      for (const ref of refs) {
-        parentScope.symbolTable.addImplicitDeclarationByReference(
-          ref,
-          context.reporter,
-        );
+      for (const nodeRef of node.refs) {
+        const ref = nodeRef.element?.element?.ref;
+        if (ref) {
+          parentScope.symbolTable.addImplicitDeclarationByReference(
+            ref,
+            context.reporter,
+          );
+        }
       }
       break;
     // Any statement is added to the statement order cache
