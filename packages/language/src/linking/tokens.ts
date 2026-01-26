@@ -99,8 +99,6 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.ref ?? undefined;
     case SyntaxKind.TypeAttribute:
       return node.type ?? undefined;
-    case SyntaxKind.TypeReference:
-      return node.type ?? undefined;
     case SyntaxKind.FetchEntry:
       return node.entry?.ref ?? undefined;
     case SyntaxKind.ExportsItem:

@@ -364,7 +364,11 @@ export class ParserState {
     return this.canConsumeFirstItem(firstSet, 0);
   }
 
-  private consumeAlternativesItem<T>(map: RuleMap<T>, index: number): T | null {
+  private consumeAlternativesItem<T>(
+    map: RuleMap<T>,
+    index: number,
+    args: any[],
+  ): T | null {
     if (this.eof || this.inError) {
       return null;
     }
@@ -386,14 +390,17 @@ export class ParserState {
     }
     const next = map.get(idx)!;
     if (next instanceof Function) {
-      return next(this);
+      return next(this, ...args);
     } else {
-      return this.consumeAlternativesItem(next, index + 1);
+      return this.consumeAlternativesItem(next, index + 1, args);
     }
   }
 
-  consumeAlternatives<T>(map: RuleMap<T>): T | null {
-    return this.consumeAlternativesItem(map, 0);
+  consumeAlternatives<T, Args extends any[]>(
+    map: RuleMap<T>,
+    args: Args,
+  ): T | null {
+    return this.consumeAlternativesItem(map, 0, args);
   }
 }
 

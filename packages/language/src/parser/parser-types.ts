@@ -13,7 +13,10 @@ import { TokenType } from "chevrotain";
 import { ParserState } from "./parser-state";
 import { memoize } from "lodash-es";
 
-export type Rule<T> = (state: ParserState) => T;
+export type Rule<T, Args extends any[] = any[]> = (
+  state: ParserState,
+  ...args: Args
+) => T;
 
 export type TokenTypeSequence = {
   type: "sequence";
@@ -87,9 +90,9 @@ function compileToMap<T>(map: RuleMap<T>, firstSet: FirstSet, action: Rule<T>) {
   }
 }
 
-export type RuleFirstPair<T> = {
+export type RuleFirstPair<T, Args extends any[] = any[]> = {
   first: () => RuleMap<any>;
-  rule: Rule<T | null>;
+  rule: Rule<T | null, Args>;
 };
 
 function mergeMaps<T>(
@@ -113,13 +116,13 @@ function mergeMaps<T>(
   }
 }
 
-export function orRule<T>(
-  ...rules: (() => RuleFirstPair<T>)[]
-): RuleFirstPair<T> {
-  class RuleFirstPairWrapper implements RuleFirstPair<T> {
+export function orRule<T, Args extends any[]>(
+  ...rules: (() => RuleFirstPair<T, Args>)[]
+): RuleFirstPair<T, Args> {
+  class RuleFirstPairWrapper implements RuleFirstPair<T, Args> {
     first: () => RuleMap<any>;
-    rule: Rule<T | null>;
-    constructor(...rules: (() => RuleFirstPair<T>)[]) {
+    rule: Rule<T | null, Args>;
+    constructor(...rules: (() => RuleFirstPair<T, Args>)[]) {
       this.first = memoize(() => {
         const map: RuleMap<T> = new Map();
         for (const rule of rules) {
@@ -127,23 +130,23 @@ export function orRule<T>(
         }
         return map;
       });
-      this.rule = (state: ParserState) => {
-        return state.consumeAlternatives<T>(this.first());
+      this.rule = (state: ParserState, ...args: Args) => {
+        return state.consumeAlternatives<T, Args>(this.first(), args);
       };
     }
   }
   return new RuleFirstPairWrapper(...rules);
 }
 
-export function rule<T>(
+export function rule<T, Args extends any[]>(
   set: FirstSet | (() => RuleMap<any>),
-  originalAction: Rule<T>,
-): RuleFirstPair<T> {
-  const action = (state: ParserState) => {
+  originalAction: Rule<T, Args>,
+): RuleFirstPair<T, Args> {
+  const action = (state: ParserState, ...args: Args) => {
     if (state.eof) {
       return null;
     }
-    return originalAction(state);
+    return originalAction(state, ...args);
   };
   if (typeof set === "function") {
     return {
