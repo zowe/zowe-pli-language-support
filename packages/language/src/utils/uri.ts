@@ -77,13 +77,19 @@ export namespace UriUtils {
       }
     }
     // @REVIEWER
-    // TODO: @wagner-laranjeiras 16.12.2025 -> Unix absolute paths are being returned as relative paths,
+    // TODO: @wagner-laranjeiras 16.12.2025 -> Unix absolute paths were being returned as relative paths,
     // ex. from: /workspace to: /Users/mockUser/Desktop/anotherfolder/absolute.pli returns: ../Users/mockUser/Desktop/anotherfolder/absolute.pli
     let i = 0;
     for (; i < fromParts.length; i++) {
       if (fromParts[i] !== toParts[i]) {
         break;
       }
+    }
+    // So what I did was to add this conditional, which check if we have a root workspace
+    // and if the parts didn't from the beginning. It solves, but it smells, IMO.
+    if (i === 0 && fromParts.length) {
+      const returnValue = typeof to === "string" ? toPath : to.path;
+      return returnValue;
     }
     const backPart = "../".repeat(fromParts.length - i);
     const toPart = toParts.slice(i).join("/");
