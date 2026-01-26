@@ -9,14 +9,17 @@
  *
  */
 
-import { CompilationUnitHandler } from "../workspace/compilation-unit";
+import {
+  CompilationUnit,
+  CompilationUnitHandler,
+} from "../workspace/compilation-unit";
 import {
   CancellationToken,
   Connection,
   DocumentHighlight,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
-import { URI, UriUtils } from "../utils/uri";
+import { URI } from "../utils/uri";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
@@ -57,6 +60,21 @@ export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
+
+  function withReadMutex<T>(
+    uri: string,
+    cb: (uri: URI, unit?: CompilationUnit) => Promise<T>,
+  ) {
+    const parsedUri = URI.parse(uri);
+    const compilationUnit =
+      compilationUnitHandler.getCompilationUnit(parsedUri);
+    if (!compilationUnit) {
+      return cb(parsedUri, undefined);
+    }
+    return compilationUnit.mutex.read(async () => {
+      return cb(parsedUri, compilationUnit);
+    });
+  }
 
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
@@ -124,66 +142,53 @@ export function startLanguageServer(connection: Connection): void {
     compilationUnitHandler.finalize();
   });
   connection.onHover(async (params) => {
-    const uri = params.textDocument.uri;
     const position = params.position;
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!compilationUnit) {
-      return null;
-    }
-    return compilationUnit.mutex.read(async () => {
-      const textDocument = compilationUnit.services.files.getDocument(uri);
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
 
-      if (!textDocument) {
-        return null;
-      }
+        if (!textDocument || !compilationUnit) {
+          return null;
+        }
 
-      const offset = textDocument.offsetAt(position);
-      const response = hoverRequest(compilationUnit, parsedUri, offset);
-      if (!response) {
-        return null;
-      }
+        const offset = textDocument.offsetAt(position);
+        const response = hoverRequest(compilationUnit, uri, offset);
+        if (!response) {
+          return null;
+        }
 
-      return hoverResponseToLSP(textDocument, response);
-    });
+        return hoverResponseToLSP(textDocument, response);
+      },
+    );
   });
   connection.onCompletion(async (params) => {
-    const uri = params.textDocument.uri;
     const position = params.position;
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!compilationUnit) {
-      return [];
-    }
-    return compilationUnit.mutex.read(async () => {
-      const textDocument = compilationUnit.services.files.getDocument(uri);
-      if (textDocument) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
-        const result = completionRequest(
-          compilationUnit,
-          parsedUri,
-          offset,
-        ).map((completionItem) =>
-          completionItemToLSP(textDocument, completionItem),
+        const result = completionRequest(compilationUnit, uri, offset).map(
+          (completionItem) => completionItemToLSP(textDocument, completionItem),
         );
 
         return result;
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onDefinition(async (params) => {
     const position = params.position;
-    const uri = URI.parse(params.textDocument.uri);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-    if (!compilationUnit) {
-      return [];
-    }
-    return compilationUnit.mutex.read(async () => {
-      const textDocument = compilationUnit.services.files.getDocument(uri);
-      if (textDocument) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!compilationUnit || !textDocument) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
         const definition = definitionRequest(compilationUnit, uri, offset);
         const lspDefinitions: LocationLink[] = [];
@@ -203,28 +208,20 @@ export function startLanguageServer(connection: Connection): void {
           }
         }
         return lspDefinitions;
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onReferences(async (params) => {
-    const uri = params.textDocument.uri;
     const position = params.position;
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!compilationUnit) {
-      return [];
-    }
-    return compilationUnit.mutex.read(async () => {
-      const textDocument = compilationUnit.services.files.getDocument(uri);
-      if (textDocument) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
-        const definition = referencesRequest(
-          compilationUnit,
-          parsedUri,
-          offset,
-        );
+        const definition = referencesRequest(compilationUnit, uri, offset);
         const lspDefinitions: Location[] = [];
         for (const def of definition) {
           const doc = compilationUnit.services.files.getDocument(def.uri);
@@ -237,70 +234,58 @@ export function startLanguageServer(connection: Connection): void {
           }
         }
         return lspDefinitions;
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.languages.semanticTokens.on(async (params) => {
-    const uri = params.textDocument.uri;
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(
-      URI.parse(uri),
-    );
-    if (!compilationUnit) {
-      return {
-        data: [],
-      };
-    }
-    return compilationUnit.mutex.read(async () => {
-      const textDocument = compilationUnit.services.files.getDocument(uri);
-      if (textDocument) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!compilationUnit || !textDocument) {
+          return {
+            data: [],
+          };
+        }
         return {
           data: semanticTokens(textDocument, compilationUnit),
         };
-      }
-      return {
-        data: [],
-      };
-    });
+      },
+    );
   });
   connection.onDocumentHighlight(async (params) => {
-    const uri = UriUtils.normalize(params.textDocument.uri);
     const position = params.position;
-    const parsedUri = URI.parse(uri);
-    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!unit) {
-      return [];
-    }
-    return unit.mutex.read(async () => {
-      const textDocument = unit.services.files.getDocument(uri);
-      if (textDocument) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
         const offset = textDocument.offsetAt(position);
-        const definitions = getReferenceLocations(unit, parsedUri, offset);
+        const definitions = getReferenceLocations(compilationUnit, uri, offset);
         return definitions
-          .filter((e) => e.uri === uri)
+          .filter((e) => e.uri === uri.toString())
           .map((def) =>
             DocumentHighlight.create(rangeToLSP(textDocument, def.range)),
           );
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onRenameRequest(async (params) => {
-    const uri = params.textDocument.uri;
     const position = params.position;
-    const parsedUri = URI.parse(uri);
-    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!unit) {
-      return null;
-    }
-    return unit.mutex.read(async () => {
-      const textDocument = unit.services.files.getDocument(uri);
-      if (textDocument) {
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return null;
+        }
         const offset = textDocument.offsetAt(position);
-        const renameLocations = renameRequest(unit, parsedUri, offset);
+        const renameLocations = renameRequest(compilationUnit, uri, offset);
         const changes: Record<string, TextEdit[]> = {};
         for (const [key, locations] of Object.entries(renameLocations)) {
-          const textDocument = unit.services.files.getDocument(key);
+          const textDocument = compilationUnit.services.files.getDocument(key);
           if (textDocument) {
             changes[key] = locations.map(
               (location) =>
@@ -311,32 +296,24 @@ export function startLanguageServer(connection: Connection): void {
             );
           }
         }
-
-        return {
-          changes,
-        };
-      }
-
-      return null;
-    });
+        return { changes };
+      },
+    );
   });
   connection.onDocumentSymbol(async (params) => {
-    const uri = params.textDocument.uri;
-    const parsedUri = URI.parse(uri);
-    const unit = compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!unit) {
-      return [];
-    }
-    return unit.mutex.read(async () => {
-      const textDocument = unit.services.files.getDocument(uri);
-      if (textDocument) {
-        const requestResult = documentSymbolRequest(parsedUri, unit);
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return [];
+        }
+        const requestResult = documentSymbolRequest(uri, compilationUnit);
         return requestResult.map((symbol) =>
           documentSymbolToLSP(textDocument, symbol),
         );
-      }
-      return [];
-    });
+      },
+    );
   });
   connection.onWorkspaceSymbol(async (params) => {
     return workspaceSymbolRequest(
