@@ -16,4 +16,4 @@
 //// %NOTE('A+B = ', (A+B));
 
 preprocessor.expectTokens("");
-verify.noDiagnostics(undefined, code.Custom.UnknownIdentifier);
+verify.noDiagnostics(undefined, code.Internal.UnknownIdentifier);

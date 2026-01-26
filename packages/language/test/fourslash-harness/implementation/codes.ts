@@ -16,11 +16,10 @@ import {
   TypeSystemCodes,
 } from "../../../src/validation/internal-codes";
 import { LspCodes } from "../../../src/validation/lsp-codes";
-import { CustomCodes, PLICodes } from "../../../src/validation/pli-codes";
+import { PLICodes } from "../../../src/validation/pli-codes";
 import { HarnessTesterInterface } from "../harness-interface";
 
 export const HarnessCodes: HarnessTesterInterface["code"] = {
-  Custom: CustomCodes,
   Severe: PLICodes.Severe,
   Warning: PLICodes.Warning,
   Information: PLICodes.Info,

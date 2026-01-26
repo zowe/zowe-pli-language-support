@@ -77,14 +77,6 @@ export function isSimplePLICode(code: unknown): code is SimplePLICode {
   return isPLICode(code) && typeof code.message === "string";
 }
 
-export const CustomCodes = {
-  UnknownIdentifier: {
-    code: "UNKNOWN_IDENTIFIER",
-    severity: Severity.E,
-    message: (name: string) => `Unknown identifier '${name}'`,
-  },
-};
-
 export const Info = {
   /**
    * This message is used in building the options listing.
