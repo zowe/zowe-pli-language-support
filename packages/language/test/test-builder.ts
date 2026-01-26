@@ -49,6 +49,7 @@ import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
 import { PluginConfiguration } from "../src/language-server/constants";
+import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 
 export type Label = string | number | string[] | number[];
 
@@ -785,6 +786,18 @@ export class TestBuilder {
         `Expected no diagnostics apart from ${regex.map((r) => r.source).join(", ")}, but received:\n- ${message}`,
       );
     }
+    return this;
+  }
+
+  expectNoParserDiagnostics(): TestBuilder {
+    const diagnostics = this.unit.diagnostics.get(DiagnosticCategory.Parser);
+    if (diagnostics.length > 0) {
+      const message = diagnostics
+        .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
+        .join("\n- ");
+      fail(`Expected no diagnostics but received:\n- ${message}`);
+    }
+
     return this;
   }
 
