@@ -29,6 +29,12 @@ completion.expectAt("inside", {
       (keyword) => keyword.label,
     ),
   ],
-  // Procedures cannot be nested in the preprocessor
-  excludes: ["PROCEDURE"],
+  excludes: [
+    // Procedures cannot be nested in the preprocessor
+    "PROCEDURE",
+    // It also cannot use some of the "normal" PLI statements
+    "ATTACH",
+    "STOP",
+    "WAIT",
+  ],
 });

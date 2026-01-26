@@ -188,8 +188,19 @@ export class SymbolTable {
   }
 
   allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
+    return this.distinctMapSymbols(this.symbols, qualifiedName);
+  }
+
+  allDistinctTypeSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
+    return this.distinctMapSymbols(this.typeSymbols, qualifiedName);
+  }
+
+  private distinctMapSymbols(
+    symbolMap: MultiMap<string, QualifiedSyntaxNode>,
+    qualifiedName: string[],
+  ): QualifiedSyntaxNode[] {
     const map = new Map<string, QualifiedSyntaxNode[]>();
-    for (const [name, symbols] of this.symbols.entriesGroupedByKey()) {
+    for (const [name, symbols] of symbolMap.entriesGroupedByKey()) {
       if (qualifiedName.length > 0) {
         for (const symbol of symbols) {
           const symbolName = symbol.name;
