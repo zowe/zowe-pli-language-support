@@ -480,6 +480,14 @@ function handleNode(
 ): boolean {
   // This switch statement handles special cases for certain syntax nodes.
   switch (node.kind) {
+    case SyntaxKind.ReplaceStatement:
+      if (node.name && node.nameToken) {
+        parentScope.symbolTable.addSymbolDeclaration(
+          node.name,
+          QualifiedSyntaxNode.createExplicit(node.nameToken, node),
+        );
+      }
+      break;
     // We handle procedure and package statements separately, to properly scope the end node.
     case SyntaxKind.ProcedureStatement:
     case SyntaxKind.Package:

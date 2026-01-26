@@ -10,7 +10,6 @@
  */
 
 import {
-  diagnostic,
   diagnosticFromCode,
   fullCode,
   Range,
