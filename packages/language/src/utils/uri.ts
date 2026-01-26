@@ -91,6 +91,10 @@ export namespace UriUtils {
       const returnValue = typeof to === "string" ? toPath : to.path;
       return returnValue;
     }
+    // This avoids the "../../../../file.pli" kind of path.
+    if (fromParts.length - i > 1) {
+      return typeof to === "string" ? toPath : to.path;
+    }
     const backPart = "../".repeat(fromParts.length - i);
     const toPart = toParts.slice(i).join("/");
     return backPart + toPart;
