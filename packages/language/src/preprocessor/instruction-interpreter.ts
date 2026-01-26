@@ -2509,10 +2509,8 @@ async function resolveIncludeFileUri(
 
   let libMatch: URI | undefined;
   // whether a match was found for a member include
-  const TEST1 = isMemberWithoutDDName(item);
-  const TEST2 = isMemberWithDDName(item);
   let needsMemberValidation =
-    TEST1 || TEST2;
+    isMemberWithoutDDName(item) || isMemberWithDDName(item);
 
   for (const lib of computedLibs) {
     if (isLibsDir(lib)) {
@@ -2538,7 +2536,7 @@ async function resolveIncludeFileUri(
         path: libFileUri,
         extensions: pgroup.includeExtensions,
       });
-      if (libMatch && !isMemberWithDDName) {
+      if (libMatch && !isMemberWithDDName(item)) {
         // regular file match, no member to validate
         needsMemberValidation = false;
         break;
