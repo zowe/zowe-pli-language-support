@@ -30,7 +30,7 @@ import {
   tokenToRange,
 } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
-import { performAssignmentLookahead } from "./parser";
+import { performAssignmentLookahead } from "./parser-lookahead";
 
 const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
 
