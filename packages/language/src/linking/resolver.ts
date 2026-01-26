@@ -255,6 +255,13 @@ function getMatchingSymbols(
 ): readonly QualifiedSyntaxNode[] {
   if (reference.type === ReferenceType.Type) {
     return scope.getTypeSymbols(qualifiedName);
+  } else if (reference.type === ReferenceType.TypeOrVariable) {
+    // First try to get type symbols
+    const typeSymbols = scope.getTypeSymbols(qualifiedName);
+    if (typeSymbols.length > 0) {
+      return typeSymbols;
+    }
+    // Else continue to variable symbols
   }
 
   const getFullName = () => qualifiedName.toReversed().join(".");

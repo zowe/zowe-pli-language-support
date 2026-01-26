@@ -1631,8 +1631,16 @@ export const OpenParen = createToken({
   name: "(",
   pattern: Lexer.NA,
 });
+export const OpenParenColon = createToken({
+  name: "(:",
+  pattern: Lexer.NA,
+});
 export const CloseParen = createToken({
   name: ")",
+  pattern: Lexer.NA,
+});
+export const CloseParenColon = createToken({
+  name: ":)",
   pattern: Lexer.NA,
 });
 export const Colon = createToken({
