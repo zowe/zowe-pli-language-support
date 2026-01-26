@@ -86,7 +86,7 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
       return [
         {
           kind: FollowKind.CstNode,
-          types: AllStatementStartKeywordsArray,
+          items: AllStatementStartKeywordsArray,
         },
         {
           kind: FollowKind.LocalReference,
@@ -194,6 +194,64 @@ const expressionFollowKinds = new Set([
   CstNodeKind.DoSpecification_DOWNTHRU,
   CstNodeKind.DoSpecification_REPEAT,
   CstNodeKind.IfStatement_IF,
+  CstNodeKind.LikeAttribute_LIKE,
+]);
+
+const semicolonFollowKinds = new Set([
+  CstNodeKind.DeactivateStatement_Semicolon,
+  CstNodeKind.ActivateStatement_Semicolon,
+  CstNodeKind.ProcedureStatement_Semicolon0,
+  CstNodeKind.ProcedureStatement_Semicolon1,
+  CstNodeKind.EntryStatement_Semicolon,
+  CstNodeKind.AllocateStatement_Semicolon,
+  CstNodeKind.AssignmentStatement_Semicolon,
+  CstNodeKind.AttachStatement_Semicolon,
+  CstNodeKind.BeginStatement_Semicolon0,
+  CstNodeKind.BeginStatement_Semicolon1,
+  CstNodeKind.CallStatement_Semicolon,
+  CstNodeKind.CancelThreadStatement_Semicolon,
+  CstNodeKind.CloseStatement_Semicolon,
+  CstNodeKind.DefaultStatement_Semicolon,
+  CstNodeKind.DefineAliasStatement_Semicolon,
+  CstNodeKind.DefineOrdinalStatement_Semicolon,
+  CstNodeKind.DefineStructureStatement_Semicolon,
+  CstNodeKind.DelayStatement_Semicolon,
+  CstNodeKind.DeleteStatement_Semicolon,
+  CstNodeKind.DetachStatement_Semicolon,
+  CstNodeKind.DisplayStatement_Semicolon,
+  CstNodeKind.DoStatement_Semicolon0,
+  CstNodeKind.DoStatement_Semicolon1,
+  CstNodeKind.ExecStatement_Semicolon,
+  CstNodeKind.ExitStatement_Semicolon,
+  CstNodeKind.FetchStatement_Semicolon,
+  CstNodeKind.FlushStatement_Semicolon,
+  CstNodeKind.FormatStatement_Semicolon,
+  CstNodeKind.FreeStatement_Semicolon,
+  CstNodeKind.GetStatement_Semicolon,
+  CstNodeKind.GoToStatement_Semicolon,
+  CstNodeKind.IterateStatement_Semicolon,
+  CstNodeKind.LeaveStatement_Semicolon,
+  CstNodeKind.LocateStatement_Semicolon,
+  CstNodeKind.NullStatement_Semicolon,
+  CstNodeKind.OnStatement_Semicolon,
+  CstNodeKind.OpenStatement_Semicolon,
+  CstNodeKind.PutStatement_Semicolon,
+  CstNodeKind.QualifyStatement_Semicolon0,
+  CstNodeKind.QualifyStatement_Semicolon1,
+  CstNodeKind.ReadStatement_Semicolon,
+  CstNodeKind.ReinitStatement_Semicolon,
+  CstNodeKind.ReleaseStatement_Semicolon,
+  CstNodeKind.ResignalStatement_Semicolon,
+  CstNodeKind.ReturnStatement_Semicolon,
+  CstNodeKind.RevertStatement_Semicolon,
+  CstNodeKind.RewriteStatement_Semicolon,
+  CstNodeKind.SelectStatement_Semicolon0,
+  CstNodeKind.SelectStatement_Semicolon1,
+  CstNodeKind.SignalStatement_Semicolon,
+  CstNodeKind.StopStatement_Semicolon,
+  CstNodeKind.WaitStatement_Semicolon,
+  CstNodeKind.WriteStatement_Semicolon,
+  CstNodeKind.DeclareStatement_Semicolon,
 ]);
 
 export function getFollowElements(
@@ -203,6 +261,8 @@ export function getFollowElements(
 ): FollowElement[] {
   // TODO: add more entry points for the completion of expressions
   switch (token.kind) {
+    case CstNodeKind.LabelPrefix_Colon:
+      return provideEntryPointFollowElements(unit, context);
     case CstNodeKind.BinaryExpression_Operator:
     case CstNodeKind.UnaryExpression_Operator:
       return [
@@ -223,26 +283,6 @@ export function getFollowElements(
         {
           kind: FollowKind.CstNode,
           items: DataSpecificationCompletionKeywordsArray,
-        },
-      ];
-    // Happens on '(' in `PUT()`
-    case CstNodeKind.Dimensions_OpenParen:
-    // Happens on '(' in `PUT(f)`
-    case CstNodeKind.DataSpecificationOptions_OpenParenList:
-    // Happens on ',' in `PUT(A, )`
-    case CstNodeKind.DataSpecificationDataList_Comma:
-      return [
-        {
-          kind: FollowKind.LocalReference,
-        },
-      ];
-    case CstNodeKind.AssignmentStatement_Operator:
-    case CstNodeKind.BinaryExpression_Operator:
-    case CstNodeKind.UnaryExpression_Operator:
-    case CstNodeKind.InitialAttribute_OpenParenDirect:
-      return [
-        {
-          kind: FollowKind.LocalReference,
         },
       ];
     case CstNodeKind.Percentage:
@@ -268,17 +308,14 @@ export function getFollowElements(
         }
       }
       break;
+    // After the 'TYPE' or 'TYPE(' in a type attribute
     case CstNodeKind.TypeAttribute_TYPE:
     case CstNodeKind.TypeAttribute_OpenParen:
+    // After '(:' in a type function call
+    case CstNodeKind.Dimensions_OpenParenColon:
       return [
         {
           kind: FollowKind.TypeReference,
-        },
-      ];
-    case CstNodeKind.LikeAttribute_LIKE:
-      return [
-        {
-          kind: FollowKind.LocalReference,
         },
       ];
     case CstNodeKind.PutStatement_PUT:
@@ -290,12 +327,19 @@ export function getFollowElements(
       ];
   }
 
-  if (expressionFollowKinds.has(token.kind)) {
-    return [
-      {
-        kind: FollowKind.LocalReference,
-      },
-    ];
+  if (token.kind !== undefined) {
+    if (expressionFollowKinds.has(token.kind)) {
+      return [
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    } else if (semicolonFollowKinds.has(token.kind)) {
+      // After a semicolon, we usually can start a new statement
+      // However, the exact keywords proposed are dependent on the context
+      // e.g. whether we are in a preprocessor procedure or not.
+      return provideEntryPointFollowElements(unit, context);
+    }
   }
 
   return getFollowElementsForUnknownToken(token);

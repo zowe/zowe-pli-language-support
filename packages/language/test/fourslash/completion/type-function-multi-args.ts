@@ -11,11 +11,18 @@
 
 /// <reference path="../framework.ts" />
 
-//// DEFINE ORDINAL TEST(A, B);
-//// DCL A TYPE <|1>TEST;
-//// A = LAST(:<|1>TEST:);
+//// DEFINE STRUCT 1 X, 2 Y FIXED BIN(31);
+//// DCL A TYPE X;
+//// DCL P POINTER;
+//// A = BIND(:<|1>X, <|2>P:);
 
+// Expect only types after the '(:' token
 completion.expectAt(1, {
-  includes: ["TEST"],
-  excludes: ["A", "B"],
+  includes: ["X"],
+  excludes: ["A", "P", "Y"],
+});
+// Expect a variable after the ',' token, not a type
+completion.expectAt(2, {
+  includes: ["P"],
+  excludes: ["X"],
 });
