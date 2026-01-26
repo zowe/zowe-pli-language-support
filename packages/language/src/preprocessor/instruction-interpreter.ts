@@ -2417,9 +2417,6 @@ async function resolveIncludeFileUri(
     return undefined;
   }
 
-  const isMemberWithoutDDName2 = isMemberIncludeItem(item) && !item.ddname;
-  console.log(isMemberWithoutDDName2);
-
   /**
    * Computes the URI for a lib file based on whether the path is absolute or relative.
    * Relative paths are combined w/ the workspace path.
