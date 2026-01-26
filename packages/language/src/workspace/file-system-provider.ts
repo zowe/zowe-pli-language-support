@@ -176,8 +176,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Ensures proper file:// protocol prefix and includes fragment if present.
    * Returns lowercase normalized path for case-insensitive comparison.
    */
-  buildUri(uri: URI): string {
+  reconstructFileUri(uri: URI): string {
     const prefix = uri.path.startsWith("/") ? "file://" : "file:///";
+    // In some cases, filenames containing `#` (e.g. `A1@#_$`) are split by URI parsing:
+    // everything after `#` is interpreted as a URI fragment. As a result, the path
+    // becomes `A1@` and `_$` is treated as the fragment, causing part of the filename
+    // to be lost if not handled explicitly.
     const fragment = uri.fragment ? `#${uri.fragment}` : "";
     return `${prefix}${uri.path}${fragment}`.toLowerCase();
   }
@@ -187,7 +191,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(this.buildUri(uri));
+    return this.files.get(this.reconstructFileUri(uri));
   }
 
   /**
@@ -270,9 +274,6 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   async search(options: SearchOptions): Promise<URI | undefined> {
     if (isPathSearch(options)) {
-      // const hasParenthesis = options.path.toString(true).includes("(") && options.path.toString(true).includes(")");
-      // const searchString = hasParenthesis ? "file://"+options.path.path : options.path.toString(true)
-      // perform a search with a uri
       let searchPath = decodeURIComponent(options.path.toString(true))
         .toLowerCase()
         .replace(/\\/g, "/");

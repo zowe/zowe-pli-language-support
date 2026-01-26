@@ -2228,13 +2228,14 @@ function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
   );
 }
 
-function handleUri(input: string | URI): string {
+/**
+ * Encodes each segment of a URI path to ensure special characters are properly escaped.
+ * Accepts either a string or URI object and returns the encoded URI as a string.
+ */
+function encodeUri(input: string | URI): string {
   const uri = typeof input === "string" ? URI.parse(input) : input;
-  const key = URI.parse(
-    uri.path.split("/").map(encodeURIComponent).join("/"),
-  ).toString();
-
-  return key;
+  const encodedPath = uri.path.split("/").map(encodeURIComponent).join("/");
+  return URI.parse(encodedPath).toString();
 }
 
 async function runInclude(
@@ -2296,7 +2297,7 @@ async function runInclude(
   }
 
   try {
-    const document = await TextDocuments.get(handleUri(uri));
+    const document = await TextDocuments.get(encodeUri(uri));
 
     if (!document) {
       throw new Error("Document not found after URI resolution.");
@@ -2416,16 +2417,8 @@ async function resolveIncludeFileUri(
     return undefined;
   }
 
-  // whether the include item is a standalone member, no ddname specified
-  // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
-  // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
-  const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
-  // Check if it's member wish specified ddname
-  const isMemberWithDDName = !!(
-    isMemberIncludeItem(item) &&
-    item.ddname &&
-    item.memberName
-  );
+  const isMemberWithoutDDName2 = isMemberIncludeItem(item) && !item.ddname;
+  console.log(isMemberWithoutDDName2);
 
   /**
    * Computes the URI for a lib file based on whether the path is absolute or relative.
@@ -2484,9 +2477,42 @@ async function resolveIncludeFileUri(
     }
   }
 
+  /**
+   * Type guard to check if an include item is a standalone member without a DDName specified.
+   * In such cases, this member may be the suffix of a DDName entry in the libs (e.g., `A.B.C(member)`).
+   * Following mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`.
+   *
+   * @param item - The include item to check
+   * @returns True if the item is a member include without a ddname
+   */
+  function isMemberWithoutDDName(
+    item: IncludeItem,
+  ): item is MemberIncludeItem & { ddname: undefined } {
+    return isMemberIncludeItem(item) && !item.ddname;
+  }
+
+  /**
+   * Type guard to check if an include item is a member with an explicitly specified DDName (ex. `ABC.DEF(MEMBER)`).
+   *
+   * @param item - The include item to check
+   * @returns True if the item is a member include with both ddname and memberName populated
+   */
+  function isMemberWithDDName(
+    item: IncludeItem,
+  ): item is MemberIncludeItem & { ddname: string; memberName: string } {
+    return (
+      isMemberIncludeItem(item) &&
+      Boolean(item.ddname) &&
+      Boolean(item.memberName)
+    );
+  }
+
   let libMatch: URI | undefined;
   // whether a match was found for a member include
-  let needsMemberValidation = isMemberWithoutDDName || isMemberWithDDName;
+  const TEST1 = isMemberWithoutDDName(item);
+  const TEST2 = isMemberWithDDName(item);
+  let needsMemberValidation =
+    TEST1 || TEST2;
 
   for (const lib of computedLibs) {
     if (isLibsDir(lib)) {
@@ -2517,7 +2543,7 @@ async function resolveIncludeFileUri(
         needsMemberValidation = false;
         break;
       }
-    } else if (isMemberWithoutDDName) {
+    } else if (isMemberWithoutDDName(item)) {
       // standalone member w/out an explicit ddname, search within ddlib for a match
       const ddLibUri = resolveLibFileUri(lib.ddLib);
       libMatch = await FileSystemProviderInstance.search({
@@ -2528,11 +2554,11 @@ async function resolveIncludeFileUri(
         break;
       }
     } else if (
-      isMemberWithDDName &&
-      lib.ddLib.toLowerCase().endsWith(item.ddname!.toLowerCase())
+      isMemberWithDDName(item) &&
+      lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
     ) {
       // member w/ ddname, search for an exact match using ddlib
-      const end = lib.ddLib.length - item.ddname!.length;
+      const end = lib.ddLib.length - item.ddname.length;
       const libPath = lib.ddLib.substring(0, end);
       const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
       libMatch = await FileSystemProviderInstance.search({
@@ -2547,9 +2573,8 @@ async function resolveIncludeFileUri(
 
   // depending on whether we matched a member, check to apply validation on the name
   if (needsMemberValidation) {
-    const memberToValidate = isMemberWithDDName
-      ? // Extract the member name from the parenthesis
-        fileNameOrPartial.split("(")[1].split(")")[0]
+    const memberToValidate = isMemberWithDDName(item)
+      ? item.memberName
       : fileNameOrPartial;
 
     checkToValidateMember(memberToValidate);
