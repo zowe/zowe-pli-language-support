@@ -19,7 +19,13 @@ export type MutexFunc<T = void> = (
   cancellation: CancellationToken,
 ) => Promise<T>;
 
-class MutexImpl {
+export interface Mutex {
+  cancel(): void;
+  run<T = void>(func: MutexFunc<T>, cancel?: boolean): Promise<T>;
+  read<T = void>(func: MutexFunc<T>): Promise<T>;
+}
+
+class MutexImpl implements Mutex {
   private current: Promise<unknown> = Promise.resolve();
   private source = new CancellationTokenSource();
 
@@ -60,15 +66,8 @@ class MutexImpl {
   read<T = void>(func: MutexFunc<T>): Promise<T> {
     return this.run(func, false);
   }
-
-  /**
-   * Returns a promise that indicates when the mutex is done and ready for the next operation.
-   *
-   * Note that this will prevent cancellation of the current operation!
-   */
-  ready(): Promise<void> {
-    return this.read(() => Promise.resolve());
-  }
 }
 
-export const Mutex = new MutexImpl();
+export function createMutex(): Mutex {
+  return new MutexImpl();
+}
