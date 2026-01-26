@@ -172,11 +172,22 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   }
 
   /**
+   * Converts a URI object to a normalized file:// URL string.
+   * Ensures proper file:// protocol prefix and includes fragment if present.
+   * Returns lowercase normalized path for case-insensitive comparison.
+   */
+  buildUri(uri: URI): string {
+    const prefix = uri.path.startsWith("/") ? "file://" : "file:///";
+    const fragment = uri.fragment ? `#${uri.fragment}` : "";
+    return `${prefix}${uri.path}${fragment}`.toLowerCase();
+  }
+
+  /**
    * Attempts to read a file synchronously from the virtualized file system.
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(uri.toString(true).toLowerCase());
+    return this.files.get(this.buildUri(uri));
   }
 
   /**

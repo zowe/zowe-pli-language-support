@@ -223,7 +223,7 @@ export class NormalizedTextDocuments<T extends { uri: string }>
     let syncedDocument = this._syncedDocuments.get(UriUtils.normalize(uri));
     if (syncedDocument === undefined && this._loadFromURI) {
       try {
-        const uriName = UriUtils.normalize(uri);
+        let uriName = UriUtils.normalize(uri);
         const content = await FileSystemProviderInstance.readFile(
           URI.parse(uriName),
         );

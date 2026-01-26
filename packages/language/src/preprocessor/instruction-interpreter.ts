@@ -2219,7 +2219,7 @@ function isFileIncludeItem(obj: any): obj is FileIncludeItem {
   );
 }
 
-export function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
+function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
   return (
     obj &&
     typeof obj === "object" &&
@@ -2287,7 +2287,16 @@ async function runInclude(
   }
 
   try {
-    const document = await TextDocuments.get(uri.path);
+    function toDocumentKey(input: string | URI): string {
+      const uri = typeof input === "string" ? URI.parse(input) : input;
+      const key = URI.parse(
+        uri.path.split("/").map(encodeURIComponent).join("/"),
+      ).toString();
+
+      return key;
+    }
+    const document = await TextDocuments.get(toDocumentKey(uri));
+
     if (!document) {
       throw new Error("Document not found after URI resolution.");
     }
@@ -2331,7 +2340,6 @@ async function runInclude(
   } catch (err) {
     failToResolve(err);
   }
-
   return uri.toString();
 }
 
