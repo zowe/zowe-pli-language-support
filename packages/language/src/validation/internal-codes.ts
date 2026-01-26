@@ -19,6 +19,11 @@ export const InternalCodes = {
     message: (label: string, file: string, uri: string) =>
       `Expected diagnostic at label "${label}" to be in file "${file}" but received: ${uri}`,
   },
+  UnknownIdentifier: {
+    code: "UNKNOWN_IDENTIFIER",
+    severity: Severity.E,
+    message: (name: string) => `Unknown identifier '${name}'`,
+  },
 };
 
 export const TypeSystemCodes: PLICode[] = [
