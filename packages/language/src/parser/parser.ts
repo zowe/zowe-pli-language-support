@@ -243,7 +243,7 @@ const options = rule(
   },
 );
 
-const optionsItem = orRule<ast.OptionsItem>(
+const optionsItem = orRule<ast.OptionsItem, []>(
   () => simpleOptionsItem,
   () => linkageOptionsItem,
   () => CMPATOptionsItem,
@@ -696,7 +696,7 @@ function performRecovery(state: ParserState): RecoveryResult {
   return RecoveryResult.Continue;
 }
 
-const unit = orRule<ast.Unit>(
+const unit = orRule<ast.Unit, []>(
   () => allocateStatement,
   () => assertStatement,
   () => attachStatement,
@@ -796,7 +796,7 @@ const allocatedVariable = rule(
       element.level = levelToken!.image;
     }
 
-    element.var = referenceItem.rule(state);
+    element.var = referenceItem.rule(state, ast.ReferenceType.Variable);
 
     if (state.canConsumeFirst(allocateAttribute.first())) {
       element.attribute = allocateAttribute.rule(state);
@@ -806,7 +806,7 @@ const allocatedVariable = rule(
   },
 );
 
-const allocateAttribute = orRule<ast.AllocateAttribute>(
+const allocateAttribute = orRule<ast.AllocateAttribute, []>(
   () => allocateDimension,
   () => allocateType,
   () => allocateLocationReferenceIn,
@@ -2183,7 +2183,7 @@ const doStatement = rule(
   },
 );
 
-const doType2 = orRule<ast.DoType2>(
+const doType2 = orRule<ast.DoType2, []>(
   () => doWhile,
   () => doUntil,
 );
@@ -2629,7 +2629,7 @@ const formatListItemLevel = rule(
   },
 );
 
-const formatItem = orRule<ast.FormatItem>(
+const formatItem = orRule<ast.FormatItem, []>(
   () => AFormatItem,
   () => BFormatItem,
   () => CFormatItem,
@@ -3467,7 +3467,7 @@ const onStatement = rule(
   },
 );
 
-const condition = orRule<ast.Condition>(
+const condition = orRule<ast.Condition, []>(
   () => keywordCondition,
   () => namedCondition,
   () => fileReferenceCondition,
@@ -4705,7 +4705,7 @@ const initAcrossExpression = rule(
   },
 );
 
-const initialAttributeItem = orRule<ast.InitialAttributeItem>(
+const initialAttributeItem = orRule<ast.InitialAttributeItem, []>(
   () => initialAttributeItemStar,
   () => initialAttributeSpecification,
 );
@@ -4764,11 +4764,13 @@ const initialAttributeSpecification = rule(
   },
 );
 
-const initialAttributeSpecificationIteration =
-  orRule<ast.InitialAttributeSpecificationIteration>(
-    () => initialAttributeItemStar,
-    () => initialAttributeSpecificationIterationValue,
-  );
+const initialAttributeSpecificationIteration = orRule<
+  ast.InitialAttributeSpecificationIteration,
+  []
+>(
+  () => initialAttributeItemStar,
+  () => initialAttributeSpecificationIterationValue,
+);
 
 const initialAttributeSpecificationIterationValue = rule(
   sequence(tokens.OpenParen),
@@ -4980,12 +4982,12 @@ const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAtt
     () => reservedAttribute,
   ];
 
-const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute>(
+const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute, []>(
   ...commonDeclarationAttributes,
   () => defaultValueAttribute,
 );
 
-const declarationAttribute = orRule<ast.DeclarationAttribute>(
+const declarationAttribute = orRule<ast.DeclarationAttribute, []>(
   ...commonDeclarationAttributes,
   () => valueAttribute,
 );
@@ -5567,14 +5569,14 @@ const dimensions = rule(
 
     // Optional dimension bounds
     if (state.canConsumeFirst(dimensionBound.first())) {
-      const lhs = dimensionBound.rule(state);
+      const lhs = dimensionBound.rule(state, ast.ReferenceType.Variable);
       lhs && element.dimensions.push(lhs);
       const { inc } = state.createLoopContext("Dimensions");
       while (
         state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
       ) {
         inc();
-        const rhs = dimensionBound.rule(state);
+        const rhs = dimensionBound.rule(state, ast.ReferenceType.Variable);
         rhs && element.dimensions.push(rhs);
       }
     }
@@ -5589,20 +5591,59 @@ const dimensions = rule(
   },
 );
 
+const dimensionsWithTypes = rule(
+  sequence(tokens.OpenParenColon),
+  (state: ParserState): ast.Dimensions => {
+    const element = ast.createDimensions();
+
+    const openToken = state.consume(
+      element,
+      CstNodeKind.Dimensions_OpenParenColon,
+      tokens.OpenParenColon,
+    );
+    element.token = openToken;
+
+    // Optional dimension bounds
+    if (state.canConsumeFirst(dimensionBound.first())) {
+      const lhs = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
+      lhs && element.dimensions.push(lhs);
+      const { inc } = state.createLoopContext("DimensionsWithTypes");
+      while (
+        state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+      ) {
+        inc();
+        const rhs = dimensionBound.rule(
+          state,
+          ast.ReferenceType.TypeOrVariable,
+        );
+        rhs && element.dimensions.push(rhs);
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.Dimensions_CloseParenColon,
+      tokens.CloseParenColon,
+    );
+
+    return element;
+  },
+);
+
 const dimensionBound = rule(
   () => bound.first(),
-  (state: ParserState): ast.DimensionBound => {
+  (state: ParserState, refType: ast.ReferenceType): ast.DimensionBound => {
     const element = ast.createDimensionBound();
 
     // First bound is the upper bound
-    element.upper = bound.rule(state);
+    element.upper = bound.rule(state, refType);
 
     // Optional colon followed by lower bound
     if (
       state.tryConsume(element, CstNodeKind.DimensionBound_Colon, tokens.Colon)
     ) {
       element.lower = element.upper; // Move upper to lower
-      element.upper = bound.rule(state); // Parse new upper
+      element.upper = bound.rule(state, refType); // Parse new upper
     }
 
     return element;
@@ -5611,7 +5652,7 @@ const dimensionBound = rule(
 
 const bound = rule(
   choice(sequence(tokens.Star), () => expression.first()),
-  (state: ParserState): ast.Bound => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.Bound => {
     const element = ast.createBound();
 
     if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
@@ -5619,7 +5660,7 @@ const bound = rule(
       element.expression = "*";
     } else {
       // Expression bound
-      element.expression = expression.rule(state);
+      element.expression = expression.rule(state, refType);
 
       // Optional REFER clause
       if (state.tryConsume(element, CstNodeKind.Bound_REFER, tokens.REFER)) {
@@ -5903,7 +5944,7 @@ const returnsOption = rule(
   },
 );
 
-const entryDescription = orRule<ast.EntryDescription>(
+const entryDescription = orRule<ast.EntryDescription, []>(
   () => entryParameterDescription,
   () => entryUnionDescription,
 );
@@ -6040,7 +6081,7 @@ const procedureParameter = rule(
 
 const referenceItem = rule(
   sequence(tokens.ID),
-  (state: ParserState): ast.ReferenceItem => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.ReferenceItem => {
     const element = ast.createReferenceItem();
 
     const idToken = state.consume(
@@ -6052,13 +6093,17 @@ const referenceItem = rule(
       element.ref = ast.createReference(
         element,
         idToken,
-        ast.ReferenceType.Variable,
+        refType ?? ast.ReferenceType.Variable,
       );
     }
 
     // Optional dimensions
     if (state.canConsumeFirst(dimensions.first())) {
+      // "Normal" dimensions, that simply target variables in their references
       element.dimensions = dimensions.rule(state);
+    } else if (state.canConsumeFirst(dimensionsWithTypes.first())) {
+      // Dimensions that can also target types in their references
+      element.dimensions = dimensionsWithTypes.rule(state);
     }
 
     return element;
@@ -6067,7 +6112,7 @@ const referenceItem = rule(
 
 const expression = rule(
   () => primaryExpression.first(),
-  (state: ParserState): ast.Expression | null => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.Expression | null => {
     const element: IntermediateBinaryExpression = {
       infix: true,
       items: [],
@@ -6076,7 +6121,7 @@ const expression = rule(
     };
 
     // Parse first primary expression
-    const lhs = primaryExpression.rule(state);
+    const lhs = primaryExpression.rule(state, refType);
     lhs && element.items.push(lhs);
 
     // Parse zero or more operator-expression pairs
@@ -6094,7 +6139,7 @@ const expression = rule(
         );
         element.operatorTokens.push(operatorToken);
       }
-      const rhs = primaryExpression.rule(state);
+      const rhs = primaryExpression.rule(state, refType);
       rhs && element.items.push(rhs);
     }
 
@@ -6102,39 +6147,22 @@ const expression = rule(
   },
 );
 
-const primaryExpression = orRule<ast.Expression>(
+const primaryExpression = orRule<
+  ast.Expression,
+  [ast.ReferenceType | undefined]
+>(
   () => literal,
   () => parenthesizedExpression,
   () => unaryExpression,
   () => locatorCall,
-  () => typeReference,
-);
-
-const typeReference = rule(
-  sequence(tokens.Colon),
-  (state: ParserState): ast.TypeReference => {
-    const element = ast.createTypeReference();
-    state.consume(element, CstNodeKind.TypeReference_StartColon, tokens.Colon);
-    const typeToken = state.consume(
-      element,
-      CstNodeKind.TypeReference_Ref,
-      tokens.ID,
-    );
-    if (typeToken) {
-      element.type = ast.createReference(
-        element,
-        typeToken,
-        ast.ReferenceType.Type,
-      );
-    }
-    state.consume(element, CstNodeKind.TypeReference_EndColon, tokens.Colon);
-    return element;
-  },
 );
 
 const parenthesizedExpression = rule(
   sequence(tokens.OpenParen),
-  (state: ParserState): ast.Parenthesis | ast.Literal => {
+  (
+    state: ParserState,
+    refType?: ast.ReferenceType,
+  ): ast.Parenthesis | ast.Literal => {
     const element = ast.createParenthesis();
 
     state.consume(
@@ -6142,7 +6170,7 @@ const parenthesizedExpression = rule(
       CstNodeKind.ParenthesizedExpression_OpenParen,
       tokens.OpenParen,
     );
-    element.value = expression.rule(state);
+    element.value = expression.rule(state, refType);
 
     // Optional DO clause
     if (
@@ -6180,11 +6208,11 @@ const parenthesizedExpression = rule(
 
 const memberCall = rule(
   () => referenceItem.first(),
-  (state: ParserState): ast.MemberCall => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.MemberCall => {
     let element = ast.createMemberCall();
 
     // Parse first reference item
-    element.element = referenceItem.rule(state);
+    element.element = referenceItem.rule(state, refType);
 
     // Parse zero or more dot-separated member accesses
     const { inc } = state.createLoopContext("MemberCall");
@@ -6199,7 +6227,7 @@ const memberCall = rule(
         previous: previous,
       };
       state.consume(element, CstNodeKind.MemberCall_Dot, tokens.Dot);
-      element.element = referenceItem.rule(state);
+      element.element = referenceItem.rule(state, refType);
     }
 
     return element;
@@ -6208,11 +6236,11 @@ const memberCall = rule(
 
 const locatorCall = rule(
   () => memberCall.first(),
-  (state: ParserState): ast.LocatorCall => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.LocatorCall => {
     let element = ast.createLocatorCall();
 
     // Parse first member call
-    element.element = memberCall.rule(state);
+    element.element = memberCall.rule(state, refType);
 
     // Parse zero or more pointer/handle chains
     const { inc } = state.createLoopContext("LocatorCall");
@@ -6251,7 +6279,7 @@ const locatorCall = rule(
         element.handle = true;
       }
 
-      element.element = memberCall.rule(state);
+      element.element = memberCall.rule(state, refType);
     }
 
     return element;
@@ -6401,7 +6429,7 @@ const labelReference = rule(
 
 const unaryExpression = rule(
   sequence(tokens.UnaryOperator),
-  (state: ParserState): ast.UnaryExpression => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.UnaryExpression => {
     const element = ast.createUnaryExpression();
 
     const operatorToken = state.consume(
@@ -6415,7 +6443,7 @@ const unaryExpression = rule(
       );
     }
 
-    element.expr = expression.rule(state);
+    element.expr = expression.rule(state, refType);
 
     return element;
   },
@@ -6430,7 +6458,7 @@ const literal = rule(
   },
 );
 
-const literalValue = orRule<ast.LiteralValue>(
+const literalValue = orRule<ast.LiteralValue, []>(
   () => stringLiteral,
   () => numberLiteral,
 );
