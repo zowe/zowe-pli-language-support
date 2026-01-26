@@ -89,6 +89,19 @@ export class Scope {
     );
   }
 
+  allDistinctTypeSymbols(
+    qualifiedName: string[],
+    symbols: QualifiedSyntaxNode[] = [],
+  ): QualifiedSyntaxNode[] {
+    if (this.symbolTable) {
+      symbols.push(...this.symbolTable.allDistinctTypeSymbols(qualifiedName));
+    }
+    if (this.parent) {
+      this.parent.allDistinctTypeSymbols(qualifiedName, symbols);
+    }
+    return symbols;
+  }
+
   allDistinctSymbols(
     qualifiedName: string[],
     symbols: QualifiedSyntaxNode[] = [],
