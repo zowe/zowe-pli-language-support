@@ -8,7 +8,6 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
-
 import { describe, test, expect, beforeEach } from "vitest";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { setFilePath } from "../../src/preprocessor/instruction-interpreter";
@@ -21,153 +20,78 @@ import {
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
 import { URI } from "../../src/utils/uri";
+import path from "path";
 
 describe("setFilePath", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
-
   let context: any;
   let item: { filePath: string | null; relativeFilePath: string | null };
+  let workspaceRoot: string;
 
   beforeEach(async () => {
     item = { filePath: null, relativeFilePath: null };
-
     vfs = new VirtualFileSystemProvider();
     pluginConfig = new PluginConfigurationProvider();
-
     setFileSystemProvider(vfs);
     setPluginConfigurationProvider(pluginConfig);
 
-    if (["darwin", "linux"].includes(process.platform)) {
-      await pluginConfig.init("/workspace");
-    } else if (process.platform === "win32") {
-      await pluginConfig.init("C:\\workspace");
-    }
+    workspaceRoot = path.resolve("/workspace");
+    await pluginConfig.init(workspaceRoot);
+
     context = null;
   });
 
-  // UNIX TESTS
-  // @REVIEWER
-  // This test is currently failing because of the conditional on instruction-interpreter,
-  // line 2063 being evaluated to true. That said, IMO the problem relies not on the `UriUtils.isPathRelative`,
-  // but on what `.relative` is returning.
-  test.runIf(["darwin", "linux"].includes(process.platform))(
-    "returns absolute path when target file resolves to absolute (outside workspace rules)",
-    async () => {
-      const absolutePath = "/Users/mockUser/Desktop/anotherfolder/absolute.pli";
-      await vfs.writeFile(URI.parse(absolutePath), " DECLARE VARC FIXED;");
+  test("returns absolute path when target file resolves to absolute (outside workspace rules)", async () => {
+    const absolutePath = path.resolve("/absolute-folder/absolute.pli");
+    await vfs.writeFile(URI.file(absolutePath), "DECLARE VARC FIXED;");
+    const doc = TextDocument.create(
+      URI.file(absolutePath).toString(),
+      "pli",
+      1,
+      "DECLARE VARC FIXED;",
+    );
+    context = { currentUri: URI.parse(doc.uri) };
 
-      const doc = TextDocument.create(
-        URI.file(absolutePath).toString(),
-        "pli",
-        1,
-        " DECLARE VARC FIXED;",
-      );
-      context = { currentUri: URI.parse(doc.uri) };
-      setFilePath(item, doc.uri, context);
+    setFilePath(item, doc.uri, context);
 
-      expect(item.relativeFilePath).toBe(
-        "/Users/mockUser/Desktop/anotherfolder/absolute.pli",
-      );
-    },
-  );
+    const expected = URI.file(absolutePath).path;
+    expect(item.relativeFilePath).toBe(expected);
+  });
 
-  test.runIf(["darwin", "linux"].includes(process.platform))(
-    "returns './file.pli' when file is directly under workspace root",
-    async () => {
-      const relPath = "/workspace/relative.pli";
-      await vfs.writeFile(URI.parse(relPath), " DECLARE VARC FIXED;");
+  test("returns './file.pli' when file is directly under workspace root", async () => {
+    const relPath = path.join(workspaceRoot, "relative.pli");
+    await vfs.writeFile(URI.file(relPath), "DECLARE VARC FIXED;");
+    const doc = TextDocument.create(
+      URI.file(relPath).toString(),
+      "pli",
+      1,
+      "DECLARE VARC FIXED;",
+    );
+    context = { currentUri: URI.parse(doc.uri) };
 
-      const doc = TextDocument.create(
-        URI.file(relPath).toString(),
-        "pli",
-        1,
-        " DECLARE VARC FIXED;",
-      );
-      context = { currentUri: URI.parse(doc.uri) };
-      setFilePath(item, doc.uri, context);
+    setFilePath(item, doc.uri, context);
 
-      expect(item.relativeFilePath).toBe("./relative.pli");
-    },
-  );
+    expect(item.relativeFilePath).toBe("./relative.pli");
+  });
 
-  test.runIf(["darwin", "linux"].includes(process.platform))(
-    "returns './nested/file.pli' for a nested file in workspace",
-    async () => {
-      const nestedPath = "/workspace/nested/relative-nested.pli";
-      await vfs.writeFile(URI.parse(nestedPath), " DECLARE VARC FIXED;");
+  test("returns './nested/file.pli' for a nested file in workspace", async () => {
+    const nestedPath = path.join(
+      workspaceRoot,
+      "nested",
+      "relative-nested.pli",
+    );
+    await vfs.writeFile(URI.file(nestedPath), "DECLARE VARC FIXED;");
+    const doc = TextDocument.create(
+      URI.file(nestedPath).toString(),
+      "pli",
+      1,
+      "DECLARE VARC FIXED;",
+    );
+    context = { currentUri: URI.parse(doc.uri) };
 
-      const doc = TextDocument.create(
-        URI.file(nestedPath).toString(),
-        "pli",
-        1,
-        " DECLARE VARC FIXED;",
-      );
-      context = { currentUri: URI.parse(doc.uri) };
-      setFilePath(item, doc.uri, context);
+    setFilePath(item, doc.uri, context);
 
-      expect(item.relativeFilePath).toBe("./nested/relative-nested.pli");
-    },
-  );
-
-  // WINDOWS TESTS
-  test.runIf(process.platform === "win32")(
-    "returns absolute path when target file resolves to absolute (outside workspace rules)",
-    async () => {
-      const absolutePath =
-        "C:\\Users\\mockUser\\Desktop\\anotherfolder\\absolute.pli";
-      await vfs.writeFile(URI.parse(absolutePath), " DECLARE VARC FIXED;");
-
-      const doc = TextDocument.create(
-        URI.file(absolutePath).toString(),
-        "pli",
-        1,
-        " DECLARE VARC FIXED;",
-      );
-      context = { currentUri: URI.parse(doc.uri) };
-      setFilePath(item, doc.uri, context);
-
-      expect(item.relativeFilePath).toBe(
-        "C:/Users/mockUser/Desktop/anotherfolder/absolute.pli",
-      );
-    },
-  );
-
-  test.runIf(process.platform === "win32")(
-    "returns './file.pli' when file is directly under workspace root",
-    async () => {
-      const relPath = "C:\\workspace\\relative.pli";
-      await vfs.writeFile(URI.parse(relPath), " DECLARE VARC FIXED;");
-
-      const doc = TextDocument.create(
-        URI.file(relPath).toString(),
-        "pli",
-        1,
-        " DECLARE VARC FIXED;",
-      );
-      context = { currentUri: URI.parse(doc.uri) };
-      setFilePath(item, doc.uri, context);
-
-      expect(item.relativeFilePath).toBe("./relative.pli");
-    },
-  );
-
-  test.runIf(process.platform === "win32")(
-    "returns './nested/file.pli' for a nested file in workspace",
-    async () => {
-      const nestedPath = "C:\\workspace\\nested\\relative-nested.pli";
-      await vfs.writeFile(URI.parse(nestedPath), " DECLARE VARC FIXED;");
-
-      const doc = TextDocument.create(
-        URI.file(nestedPath).toString(),
-        "pli",
-        1,
-        " DECLARE VARC FIXED;",
-      );
-      context = { currentUri: URI.parse(doc.uri) };
-      setFilePath(item, doc.uri, context);
-
-      expect(item.relativeFilePath).toBe("./nested/relative-nested.pli");
-    },
-  );
+    expect(item.relativeFilePath).toBe("./nested/relative-nested.pli");
+  });
 });
