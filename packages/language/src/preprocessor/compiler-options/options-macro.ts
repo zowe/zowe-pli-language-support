@@ -10,7 +10,10 @@
  */
 
 export interface CompilerOptions {
-  case?: CompilerOptions.Case;
+  case?: {
+    case: CompilerOptions.Case;
+    explicitlySet: boolean;
+  };
   dbcs?: CompilerOptions.Dbcs;
   deprecate?: Set<string>;
   deprecateNext?: Set<string>;
@@ -56,7 +59,10 @@ export namespace CompilerOptions {
 export function getDefaultCompilerOptions(): CompilerOptions {
   // Contrary to the spec, our current implementation and tests use UPPER as default for case and rescan.
   return {
-    case: CompilerOptions.Case.UPPER,
+    case: {
+      case: CompilerOptions.Case.UPPER,
+      explicitlySet: false,
+    },
     dbcs: CompilerOptions.Dbcs.INEXACT,
     deprecate: new Set(),
     deprecateNext: new Set(),

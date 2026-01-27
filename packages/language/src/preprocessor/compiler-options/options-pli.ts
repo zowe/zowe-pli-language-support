@@ -1147,6 +1147,11 @@ export namespace CompilerOptions {
   export interface PPValue {
     value?: string;
     token?: Token;
+    // PP values are accumulated, e.g., by multiple directives or configurations.
+    // However, they should be processed only once. This has to be done during the processing phase
+    // and cannot be postponed to a later stage, because the options might depend on the concrete configuration.
+    // Therefore, we keep track whether they have already been processed.
+    processed?: boolean;
   }
   export type Proceed = {
     // *PROCESS NOPROCEED; actually results in NOPROCEED( I ); which stops

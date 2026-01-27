@@ -31,10 +31,19 @@ interface TranslatorRule<T extends CompilerOptionsPP = CompilerOptionsPP> {
   negative?: string[];
   positiveTranslate?: Translate<T>;
   negativeTranslate?: Translate<T>;
-  options?: TranslatorRuleOptions;
+  settings?: RuleSettings;
 }
 
-interface TranslatorRuleOptions {
+export enum CompilerOptionSource {
+  SOURCE_FILE,
+  PLUGIN_CONFIG,
+}
+
+export interface RuleConfiguration {
+  source?: CompilerOptionSource;
+}
+
+export interface RuleSettings {
   allowDuplicates?: boolean;
 }
 
@@ -44,6 +53,7 @@ type Translate<T extends CompilerOptionsPP> = (
   option: CompilerOption,
   options: T,
   acceptor: TranslationDiagnosticAcceptor,
+  configuration?: RuleConfiguration,
 ) => void;
 
 /**
@@ -75,14 +85,14 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     positiveTranslate: Translate<T>,
     negative?: string[],
     negativeTranslate?: Translate<T>,
-    options?: TranslatorRuleOptions,
+    settings?: RuleSettings,
   ) {
     this.rules.push({
       positive,
       negative,
       positiveTranslate,
       negativeTranslate,
-      options,
+      settings,
     });
   }
 
@@ -114,6 +124,10 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     this.options = this.defaultsFactory();
   }
 
+  clearIssues() {
+    this.diagnostics = [];
+  }
+
   /**
    * Indicates whether a translator rule has been applied to a given option on this run
    */
@@ -131,7 +145,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     return this.appliedRules.get(rule) === alignment;
   }
 
-  translate(option: CompilerOption) {
+  translate(option: CompilerOption, configuration?: RuleConfiguration): void {
     const name = option.name.toUpperCase();
 
     const reportError = (error: unknown) => {
@@ -162,7 +176,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
       if (!this.isRuleApplied(rule)) {
         this.appliedRules.set(rule, alignment);
       } else if (this.isRuleAlignedWith(rule, alignment)) {
-        if (!rule.options?.allowDuplicates) {
+        if (!rule.settings?.allowDuplicates) {
           this.reportDupeOptIssue(option, name);
         }
       } else {
@@ -176,7 +190,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
         ) => {
           localDiagnostics.push(diagnostic);
         };
-        translate?.(option, this.options, diagnosticsAcceptor);
+        translate?.(option, this.options, diagnosticsAcceptor, configuration);
         this.diagnostics.push(...localDiagnostics); // Only add diagnostics if no exception was thrown.
       } catch (err) {
         reportError(err);

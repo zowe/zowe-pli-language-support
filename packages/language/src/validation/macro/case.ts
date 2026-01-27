@@ -14,14 +14,9 @@ import * as AST from "../../syntax-tree/ast";
 import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { CompilerOptions as MacroCompilerOptions } from "../../preprocessor/compiler-options/options-macro";
-import { Token } from "../../parser/tokens";
-import {
-  TraversalState,
-  traverseAllNodes,
-} from "../../syntax-tree/ast-iterator";
-import { PreprocessorTokens } from "../../preprocessor/pli-preprocessor-tokens";
-import { MultiMap } from "../../utils/collections";
 import { LspCodes } from "../lsp-codes";
+import { PreprocessorTokens } from "../../preprocessor/pli-preprocessor-tokens";
+import { stringToken } from "../../preprocessor/compiler-options/parser";
 
 export function MACRO_Case(
   node: AST.Program,
@@ -29,62 +24,49 @@ export function MACRO_Case(
   compilationUnit: CompilationUnit,
 ) {
   if (!compilationUnit.processGroup?.lspOptions.caseUpperValidation) return;
-  if (node !== compilationUnit.preprocessorAst) return;
   if (
-    compilationUnit.compilerOptions.macroOptions.case !==
-    MacroCompilerOptions.Case.UPPER
-  )
+    compilationUnit.compilerOptions.macroOptions.case === undefined ||
+    !compilationUnit.compilerOptions.macroOptions.case.explicitlySet ||
+    compilationUnit.compilerOptions.macroOptions.case?.case !==
+      MacroCompilerOptions.Case.UPPER
+  ) {
     return;
+  }
 
   const MAX_DIAGNOSTICS = 100;
   let diagnosticCount = 0;
 
-  const tokenMap = new MultiMap<AST.SyntaxNode, Token>();
   for (const token of compilationUnit.services.files.getAllTokens()) {
-    if (token.element) {
-      tokenMap.add(token.element, token);
-    }
-  }
+    // Tokens of the compiler options parser use the original token from chevrotain and do not set the originalImage field.
+    // However, their image field contains the original text.
+    const isCompilerOptionToken = token.originalImage === undefined;
+    const image = token.originalImage ?? token.image;
 
-  const processedTokens = new Set<Token>();
-
-  traverseAllNodes(compilationUnit.preprocessorAst, (child) => {
-    if (diagnosticCount >= MAX_DIAGNOSTICS) {
-      return TraversalState.Stop;
-    }
-
-    const nodeTokens = tokenMap.get(child);
-    for (const token of nodeTokens) {
-      if (processedTokens.has(token)) continue;
-      processedTokens.add(token);
-
-      // Skip string tokens
-      if (
-        token.tokenType?.tokenTypeIdx === PreprocessorTokens.String.tokenTypeIdx
-      ) {
+    // Skip string tokens
+    if (isCompilerOptionToken) {
+      if (token.tokenType.tokenTypeIdx === stringToken.tokenTypeIdx) {
         continue;
       }
-
-      if (/[a-z]/.test(token.originalImage)) {
-        if (diagnosticCount >= MAX_DIAGNOSTICS) {
-          return TraversalState.Stop;
-        }
-
-        const diagnostic = diagnosticFromCode(
-          LspCodes.UpperCase,
-          token,
-          token.image,
-        );
-        // Diagnostic data needed for the quickfix
-        diagnostic.data = {
-          uri: diagnostic.uri,
-          text: token.originalImage,
-        };
-        acceptor(diagnostic);
-        diagnosticCount++;
+    } else {
+      if (token.tokenTypeIdx === PreprocessorTokens.String.tokenTypeIdx) {
+        continue;
       }
     }
 
-    return TraversalState.Continue;
-  });
+    if (/[a-z]/.test(image)) {
+      const diagnostic = diagnosticFromCode(LspCodes.UpperCase, token, image);
+
+      // Diagnostic data needed for the quickfix
+      diagnostic.data = {
+        uri: diagnostic.uri,
+        text: token.originalImage,
+      };
+      acceptor(diagnostic);
+
+      diagnosticCount++;
+      if (diagnosticCount >= MAX_DIAGNOSTICS) {
+        break;
+      }
+    }
+  }
 }
