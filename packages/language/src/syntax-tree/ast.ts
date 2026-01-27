@@ -2206,15 +2206,14 @@ export type EnvironmentOptionItem =
   | EnvironmentOptionOrganization
   | EnvironmentOptionRecordFormat
   | EnvironmentOptionSymbol
-  | EnvironmentOptionValue
-  ;
+  | EnvironmentOptionValue;
 
 export enum Organization {
   Consecutive,
   Indexed,
   Relative,
 }
-  
+
 export interface EnvironmentOptionOrganization extends AstNode {
   kind: SyntaxKind.EnvironmentOptionOrganization;
   organization: Organization | null;
@@ -2281,7 +2280,7 @@ export enum EnvironmentOptionValueName {
   RECSIZE,
   PASSWORD,
   KEYLOC,
-  REGIONAL
+  REGIONAL,
 }
 
 export interface EnvironmentOptionSymbol extends AstNode {
@@ -2315,7 +2314,6 @@ export function createEnvironmentOptionValue(): EnvironmentOptionValue {
     token: null,
   };
 }
-
 
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;

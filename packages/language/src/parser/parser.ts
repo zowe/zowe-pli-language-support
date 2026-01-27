@@ -5692,10 +5692,7 @@ const environmentAttribute = rule(
 
     // Parse zero or more environment attribute items
     const { inc } = state.createLoopContext("EnvironmentAttribute");
-    while (
-      !state.eof &&
-      state.canConsumeFirst(environmentOptionItem.first())
-    ) {
+    while (!state.eof && state.canConsumeFirst(environmentOptionItem.first())) {
       inc();
       const item = environmentOptionItem.rule(state);
       item && element.items.push(item);
@@ -5730,20 +5727,20 @@ const environmentOptionSymbol = rule(
   sequence(tokens.EnvironmentOptionSymbolName),
   (state: ParserState): ast.EnvironmentOptionSymbol => {
     const element = ast.createEnvironmentOptionSymbol();
-    
+
     element.token = state.consume(
       element,
       CstNodeKind.EnvironmentOptionSymbol_Name,
       tokens.EnvironmentOptionSymbolName,
     );
-    if(element.token) {
+    if (element.token) {
       element.name = tokens.EnvironmentOptionSymbolName.mapToEnumLiteral(
         element.token.tokenTypeIdx,
       );
     }
 
     return element;
-  }
+  },
 );
 
 const environmentOptionValue = rule(
@@ -5756,7 +5753,7 @@ const environmentOptionValue = rule(
       CstNodeKind.EnvironmentOptionValue_Name,
       tokens.EnvironmentOptionValueName,
     );
-    if(element.token) {
+    if (element.token) {
       element.name = tokens.EnvironmentOptionValueName.mapToEnumLiteral(
         element.token.tokenTypeIdx,
       );
@@ -5777,7 +5774,7 @@ const environmentOptionValue = rule(
     );
 
     return element;
-  }
+  },
 );
 
 const environmentOptionRecordFormat = rule(
@@ -5792,9 +5789,7 @@ const environmentOptionRecordFormat = rule(
     );
     if (token) {
       element.token = token;
-      element.format = tokens.RecordFormat.mapToEnumLiteral(
-        token.tokenTypeIdx,
-      );
+      element.format = tokens.RecordFormat.mapToEnumLiteral(token.tokenTypeIdx);
     }
 
     return element;

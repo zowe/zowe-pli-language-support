@@ -734,8 +734,5 @@ export enum CstNodeKind {
   EnvironmentOptionValue_Name,
   EnvironmentOptionValue_OpenParen,
   EnvironmentOptionValue_CloseParen,
-  EnvironmentOptionBlockSize_BLKSIZE,
-  EnvironmentOptionBlockSize_OpenParen,
-  EnvironmentOptionBlockSize_CloseParen,
   EnvironmentOptionSymbol_Name,
 }

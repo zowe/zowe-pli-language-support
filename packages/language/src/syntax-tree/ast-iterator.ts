@@ -972,7 +972,7 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.EnvironmentOptionValue:
-      if(node.value) {
+      if (node.value) {
         action(node.value);
       }
       break;
