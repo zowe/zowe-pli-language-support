@@ -278,7 +278,11 @@ function getMatchingSymbols(
 
   const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
   if (isAmbiguous) {
-    reporter.reportAmbiguousReference(reference, getFullName(), explicitlyDeclaredSymbols);
+    reporter.reportAmbiguousReference(
+      reference,
+      getFullName(),
+      explicitlyDeclaredSymbols,
+    );
   }
 
   if (explicitlyDeclaredSymbols.length > 0) {

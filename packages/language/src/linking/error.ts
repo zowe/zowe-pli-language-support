@@ -135,11 +135,15 @@ export class LinkerErrorReporter {
   /**
    * S IBM1881I
    */
-  reportAmbiguousReference(reference: Reference, name: string, symbols: QualifiedSyntaxNode[]) {
+  reportAmbiguousReference(
+    reference: Reference,
+    name: string,
+    symbols: QualifiedSyntaxNode[],
+  ) {
     function fullName(symbol: QualifiedSyntaxNode): string[] {
       let current: QualifiedSyntaxNode | null = symbol;
       const parts: string[] = [];
-      while(current) {
+      while (current) {
         parts.unshift(current.name);
         current = current.parent;
       }

@@ -141,44 +141,59 @@ export function quickFixUppercaseText(
   return action;
 }
 
+export type AmbiguousReferenceData = {
+  symbols: string[][];
+  uri: string;
+};
+
 export function quickFixResolveAmbiguousReference(
-  diagnostic: Diagnostic
+  diagnostic: Diagnostic,
 ): CodeAction[] {
-  const { symbols, uri } = diagnostic.data as {
-    symbols: string[][];
-    uri: string;
-  };
-  let current = symbols.map(sym => [sym.slice(0, -1), sym[sym.length - 1]] as const);
+  const { symbols, uri } = diagnostic.data as AmbiguousReferenceData;
+  let current = symbols.map(
+    (sym) => [sym.slice(0, -1), sym[sym.length - 1]] as const,
+  );
   const names = new Set<string>();
   do {
     names.clear();
     for (const [, name] of current) {
       names.add(name);
     }
-    if (names.size === current.length || current.every(([parent]) => parent.length === 0)) {
+    if (
+      names.size === current.length ||
+      current.every(([parent]) => parent.length === 0)
+    ) {
       break;
     }
     current = current.map(([parent, name]) => {
       if (parent.length === 0) {
         return [[], name] as const;
       }
-      return [parent.slice(0, -1), `${parent[parent.length - 1]}.${name}`] as const;
+      return [
+        parent.slice(0, -1),
+        `${parent[parent.length - 1]}.${name}`,
+      ] as const;
     });
   } while (true);
-  if(names.size !== current.length) {
+  if (names.size !== current.length) {
     return [];
   } else {
     const actions: CodeAction[] = [];
-    for (const [, fullName] of current) {
+    for (const [, fullName] of current.filter(
+      ([, name], index) =>
+        !current.some(
+          ([_, n], i) => i !== index && (n.endsWith("." + name) || n === name),
+        ),
+    )) {
       const action: CodeAction = {
-        title: `Change to "${fullName}"`,
+        title: `Change "${fullName}"`,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
         edit: {
           changes: {
             [uri]: [TextEdit.replace(diagnostic.range, fullName)],
-          }
-        }
+          },
+        },
       };
       actions.push(action);
     }
