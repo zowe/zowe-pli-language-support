@@ -571,7 +571,7 @@ export const NONVARYING = registerKeyword({
   ],
 });
 export const SEQUENTIAL = registerKeyword({
-  name: ["SEQUENTIAL", "SEQ"],
+  name: ["SEQUENTIAL", "SEQL"],
   categories: [
     [DefaultAttribute, ast.DefaultAttribute.SEQUENTIAL],
     [OpenOptionType, ast.OpenOptionType.SEQUENTIAL],
