@@ -2297,7 +2297,7 @@ async function runInclude(
   }
 
   try {
-    const document = await TextDocuments.get(encodeUri(uri));
+    const document = await TextDocuments.get(encodeUri(uri.path));
 
     if (!document) {
       throw new Error("Document not found after URI resolution.");
@@ -2510,6 +2510,9 @@ async function resolveIncludeFileUri(
     isMemberWithoutDDName(item) || isMemberWithDDName(item);
 
   for (const lib of computedLibs) {
+    if (libMatch) {
+      break;
+    }
     if (isLibsDir(lib)) {
       const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
 
