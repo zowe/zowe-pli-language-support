@@ -55,7 +55,7 @@ describe("setFilePath", () => {
 
     setFilePath(item, doc.uri, context);
 
-    const expected = URI.file(absolutePath).path;
+    const expected = path.normalize(URI.file(absolutePath).fsPath);
     expect(item.relativeFilePath).toBe(expected);
   });
 
