@@ -91,8 +91,11 @@ export enum SyntaxKind {
   EntryUnionDescription,
   EnvironmentAttribute,
   EnvironmentAttributeItem,
+  EnvironmentOptionSymbol,
+  EnvironmentOptionValue,
   EnvironmentOptionOrganization,
   EnvironmentOptionRecordFormat,
+  EnvironmentOptionRecordSize,
   ExecStatement,
   ExitStatement,
   Exports,
@@ -2202,6 +2205,8 @@ export function createEnvironmentAttribute(): EnvironmentAttribute {
 export type EnvironmentOptionItem =
   | EnvironmentOptionOrganization
   | EnvironmentOptionRecordFormat
+  | EnvironmentOptionSymbol
+  | EnvironmentOptionValue
   ;
 
 export enum Organization {
@@ -2252,7 +2257,64 @@ export function createEnvironmentOptionRecordFormat(): EnvironmentOptionRecordFo
   };
 }
 
+export enum EnvironmentOptionSymbolName {
+  BKWD,
+  GENKEY,
+  REUSE,
+  SKIP,
+  VSAM,
+  SCALARVARYING,
+  CONSECUTIVE,
+  LEAVE,
+  REREAD,
+  CTLASA,
+  CTL360,
+  GRAPHIC,
+  INDEXED,
+}
 
+export enum EnvironmentOptionValueName {
+  BUFND,
+  BUFNI,
+  BUFSP,
+  BLKSIZE,
+  RECSIZE,
+  PASSWORD,
+  KEYLOC,
+  REGIONAL
+}
+
+export interface EnvironmentOptionSymbol extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionSymbol;
+  name: EnvironmentOptionSymbolName | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionSymbol(): EnvironmentOptionSymbol {
+  return {
+    kind: SyntaxKind.EnvironmentOptionSymbol,
+    container: null,
+    name: null,
+    token: null,
+  };
+}
+
+export interface EnvironmentOptionValue extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionValue;
+  name: EnvironmentOptionValueName | null;
+  value: Expression | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionValue(): EnvironmentOptionValue {
+  return {
+    kind: SyntaxKind.EnvironmentOptionValue,
+    container: null,
+    name: null,
+    value: null,
+    token: null,
+  };
+}
 
 
 export interface ExecStatement extends AstNode {

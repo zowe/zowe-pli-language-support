@@ -971,6 +971,12 @@ export function forEachNode(
         action(node.body);
       }
       break;
+    case SyntaxKind.EnvironmentOptionValue:
+      if(node.value) {
+        action(node.value);
+      }
+      break;
+    case SyntaxKind.EnvironmentOptionSymbol:
     case SyntaxKind.EnvironmentOptionOrganization:
     case SyntaxKind.EnvironmentOptionRecordFormat:
     case SyntaxKind.SqlAttributeBinary:

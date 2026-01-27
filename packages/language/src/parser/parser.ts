@@ -5722,6 +5722,62 @@ const environmentAttribute = rule(
 const environmentOptionItem = orRule<ast.EnvironmentOptionItem, []>(
   () => environmentOptionOrganization,
   () => environmentOptionRecordFormat,
+  () => environmentOptionSymbol,
+  () => environmentOptionValue,
+);
+
+const environmentOptionSymbol = rule(
+  sequence(tokens.EnvironmentOptionSymbolName),
+  (state: ParserState): ast.EnvironmentOptionSymbol => {
+    const element = ast.createEnvironmentOptionSymbol();
+    
+    element.token = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionSymbol_Name,
+      tokens.EnvironmentOptionSymbolName,
+    );
+    if(element.token) {
+      element.name = tokens.EnvironmentOptionSymbolName.mapToEnumLiteral(
+        element.token.tokenTypeIdx,
+      );
+    }
+
+    return element;
+  }
+);
+
+const environmentOptionValue = rule(
+  sequence(tokens.EnvironmentOptionValueName),
+  (state: ParserState): ast.EnvironmentOptionValue => {
+    const element = ast.createEnvironmentOptionValue();
+
+    element.token = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_Name,
+      tokens.EnvironmentOptionValueName,
+    );
+    if(element.token) {
+      element.name = tokens.EnvironmentOptionValueName.mapToEnumLiteral(
+        element.token.tokenTypeIdx,
+      );
+    }
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const expr = expression.rule(state);
+    expr && (element.value = expr);
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  }
 );
 
 const environmentOptionRecordFormat = rule(
@@ -5729,7 +5785,7 @@ const environmentOptionRecordFormat = rule(
   (state: ParserState): ast.EnvironmentOptionRecordFormat => {
     const element = ast.createEnvironmentOptionRecordFormat();
 
-    const token =state.consume(
+    const token = state.consume(
       element,
       CstNodeKind.EnvironmentOptionRecordFormat_RECORDFORMAT,
       tokens.RecordFormat,
@@ -5740,7 +5796,7 @@ const environmentOptionRecordFormat = rule(
         token.tokenTypeIdx,
       );
     }
-    
+
     return element;
   },
 );

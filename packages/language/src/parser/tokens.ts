@@ -291,7 +291,8 @@ export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
 export const CicsResponseCode =
   registerCombination<ast.CicsResponseCode>("CicsResponseCode");
 export const RecordFormat = registerCombination<ast.RecordFormat>("RecordFormat");
-
+export const EnvironmentOptionSymbolName = registerCombination<ast.EnvironmentOptionSymbolName>("EnvironmentOptionSymbolName");
+export const EnvironmentOptionValueName = registerCombination<ast.EnvironmentOptionValueName>("EnvironmentOptionValueName");
 // Custom functions
 
 export function escapeRegExp(value: string): string {
@@ -404,16 +405,86 @@ export const UNREACHABLE = registerKeyword({
 export const ENVIRONMENT = registerKeyword({
   name: ["ENVIRONMENT", "ENV"],
 });
+export const BUFND = registerKeyword({
+  name: "BUFND",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFND]],
+});
+export const BUFNI = registerKeyword({
+  name: "BUFNI",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFNI]],
+});
+export const BUFSP = registerKeyword({
+  name: "BUFSP",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFSP]],
+});
+export const BLKSIZE = registerKeyword({
+  name: "BLKSIZE",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BLKSIZE]],
+});
+export const RECSIZE = registerKeyword({
+  name: "RECSIZE",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.RECSIZE]],
+});
+export const KEYLOC = registerKeyword({
+  name: "KEYLOC",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.KEYLOC]],
+});
+export const PASSWORD = registerKeyword({
+  name: "PASSWORD",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.PASSWORD]],
+});
+export const REGIONAL = registerKeyword({
+  name: "REGIONAL",
+  categories: [[EnvironmentOptionValueName, ast.EnvironmentOptionValueName.REGIONAL]],
+});
 export const ORGANIZATION = registerKeyword({
   name: "ORGANIZATION",
 });
+export const BKWD = registerKeyword({
+  name: "BKWD",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.BKWD]],
+});
+export const GENKEY = registerKeyword({
+  name: "GENKEY",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.GENKEY]],
+});
+export const REUSE = registerKeyword({
+  name: "REUSE",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.REUSE]],
+});
+export const VSAM = registerKeyword({
+  name: "VSAM",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.VSAM]],
+});
+export const SCALARVARYING = registerKeyword({
+  name: "SCALARVARYING",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.SCALARVARYING]],
+});
+export const REREAD = registerKeyword({
+  name: "REREAD",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.REREAD]],
+});
+export const CTLASA = registerKeyword({
+  name: "CTLASA",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.CTLASA]],
+});
+export const CTL360 = registerKeyword({
+  name: "CTL360",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.CTL360]],
+});
 export const CONSECUTIVE = registerKeyword({
   name: "CONSECUTIVE",
-  categories: [[Organization, ast.Organization.Consecutive]],
+  categories: [
+    [Organization, ast.Organization.Consecutive],
+    [Organization, ast.EnvironmentOptionSymbolName.CONSECUTIVE]
+  ],
 });
 export const INDEXED = registerKeyword({
   name: "INDEXED",
-  categories: [[Organization, ast.Organization.Indexed]],
+  categories: [
+    [Organization, ast.Organization.Indexed],
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.INDEXED]
+  ],
 });
 export const RELATIVE = registerKeyword({
   name: "RELATIVE",
@@ -850,6 +921,7 @@ export const GRAPHIC = registerKeyword({
   categories: [
     [DefaultAttribute, ast.DefaultAttribute.GRAPHIC],
     [AllocateAttributeType, ast.AllocateAttributeType.GRAPHIC],
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.GRAPHIC],
   ],
 });
 export const COMPARE = registerKeyword({
@@ -1294,6 +1366,7 @@ export const FLUSH = registerKeyword({
 });
 export const LEAVE = registerKeyword({
   name: "LEAVE",
+  categories: [[EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.LEAVE]],
 });
 export const ERROR = registerKeyword({
   name: "ERROR",
@@ -1398,7 +1471,10 @@ export const PAGE = registerKeyword({
 });
 export const SKIP = registerKeyword({
   name: "SKIP",
-  categories: [[PutAttribute, ast.PutAttribute.SKIP]],
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.SKIP], 
+    [PutAttribute, ast.PutAttribute.SKIP]
+  ],
 });
 export const SCAN = registerKeyword({
   name: "SCAN",
