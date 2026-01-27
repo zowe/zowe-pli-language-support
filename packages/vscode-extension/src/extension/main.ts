@@ -22,7 +22,7 @@ import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
 import TelemetryReporter from "@vscode/extension-telemetry";
-import { PluginConfiguration } from "pli-language";
+import { handleMissingConfig } from "../common/handle-missing-config";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -49,17 +49,21 @@ export function activate(context: vscode.ExtensionContext): void {
   void handleMissingConfig(vscode.window.activeTextEditor);
 }
 
+/**
+ * Listen for changes on file activation, and prompt if we can create a .pliplugin folder
+ * @returns Disposable listener
+ */
 function registerOnDidChangeActiveTextEditor() {
-  const listener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+  const listener = async (editor: vscode.TextEditor | undefined) => {
     await handleMissingConfig(editor);
-  });
-  return listener;
+  };
+  return vscode.window.onDidChangeActiveTextEditor(listener);
 }
 
 function registerOnDidOpenTextDocListener(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
-  const listener = vscode.workspace.onDidOpenTextDocument(async (document) => {
+  const listener = async (document: vscode.TextDocument) => {
     // settle on the 1st workspace folder available
     // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -79,94 +83,8 @@ function registerOnDidOpenTextDocListener(
       "pli.language.support.documentOpened",
       telemetryReporter,
     );
-  });
-  return listener;
-}
-
-/**
- * Listen for changes on file activation, and prompt if we can create a .pliplugin folder
- * @returns Disposable listener
- */
-let shouldShowInfoMessage = true;
-
-async function handleMissingConfig(textEditor: vscode.TextEditor | undefined) {
-  if (!textEditor || !shouldShowInfoMessage) {
-    return;
-  }
-
-  // settle on the 1st workspace folder available
-  // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!workspaceFolder) {
-    return;
-  }
-
-  // check if we can create a .pliplugin folder
-  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
-  const isPliDocument = textEditor.document.languageId === "pli";
-  if (!isPliDocument || fs.existsSync(plipluginPath)) {
-    return;
-  }
-
-  const currentFileRelativePath = path.relative(
-    workspaceFolder,
-    textEditor.document.fileName,
-  );
-
-  const options = {
-    DONT_SHOW_AGAIN: "Don't show again",
-    YES: "Yes",
-    NO: "No",
-  } as const;
-
-  const userResponse = await vscode.window.showInformationMessage(
-    `Create a '.pliplugin' folder in the project root using '${currentFileRelativePath}' as the entry point in 'pgm_conf.json'?`,
-    options.YES,
-    options.NO,
-    options.DONT_SHOW_AGAIN,
-  );
-
-  if (userResponse !== options.YES) {
-    shouldShowInfoMessage = userResponse !== options.DONT_SHOW_AGAIN;
-    return;
-  }
-
-  try {
-    fs.mkdirSync(plipluginPath);
-    fs.writeFileSync(
-      path.join(plipluginPath, "pgm_conf.json"),
-      JSON.stringify(
-        {
-          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-          pgms: [
-            {
-              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-              program: currentFileRelativePath,
-            },
-          ],
-        },
-        null,
-        2,
-      ),
-    );
-
-    fs.writeFileSync(
-      path.join(plipluginPath, "proc_grps.json"),
-      JSON.stringify(
-        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-        null,
-        2,
-      ),
-    );
-
-    vscode.window.showInformationMessage(
-      "'.pliplugin' folder and files created successfully.",
-    );
-  } catch (error) {
-    vscode.window.showErrorMessage(
-      `Failed to create '.pliplugin' folder: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+  };
+  return vscode.workspace.onDidOpenTextDocument(listener);
 }
 
 function getTelemetryReporter(
