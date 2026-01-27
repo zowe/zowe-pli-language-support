@@ -653,7 +653,7 @@ export enum CstNodeKind {
   EnvironmentAttribute_CloseParen,
   EnvironmentAttributeItem_Environment,
   EnvironmentAttributeItem_OpenParen,
-  EnvironmentAttributeItem_Comma,
+  EnvironmentOptionItem_Comma,
   EnvironmentAttributeItem_CloseParen,
   EntryAttribute_Limited0,
   EntryAttribute_ENTRY,
@@ -726,4 +726,9 @@ export enum CstNodeKind {
   CicsResponseStatement_OpenParen,
   CicsResponseStatement_CicsResponseCode,
   CicsResponseStatement_CloseParen,
+  EnvironmentOptionOrganization_ORGANIZATION,
+  EnvironmentOptionOrganization_OpenParen,
+  EnvironmentOptionOrganization_Organization,
+  EnvironmentOptionOrganization_CloseParen,
+  EnvironmentOptionRecordFormat_RECORDFORMAT,
 }

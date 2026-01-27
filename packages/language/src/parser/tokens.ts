@@ -243,6 +243,8 @@ export const LinkageOption =
 export const NoMapOption = registerCombination<ast.NoMapOption>("NoMapOption");
 export const SimpleOptions =
   registerCombination<ast.SimpleOptions>("SimpleOptions");
+export const Organization =
+  registerCombination<ast.Organization>("Organization");
 export const DefaultAttribute =
   registerCombination<ast.DefaultAttribute>("DefaultAttribute");
 export const DefaultAttributeBinaryOperator =
@@ -288,6 +290,7 @@ export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
 export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
 export const CicsResponseCode =
   registerCombination<ast.CicsResponseCode>("CicsResponseCode");
+export const RecordFormat = registerCombination<ast.RecordFormat>("RecordFormat");
 
 // Custom functions
 
@@ -400,6 +403,21 @@ export const UNREACHABLE = registerKeyword({
 });
 export const ENVIRONMENT = registerKeyword({
   name: ["ENVIRONMENT", "ENV"],
+});
+export const ORGANIZATION = registerKeyword({
+  name: "ORGANIZATION",
+});
+export const CONSECUTIVE = registerKeyword({
+  name: "CONSECUTIVE",
+  categories: [[Organization, ast.Organization.Consecutive]],
+});
+export const INDEXED = registerKeyword({
+  name: "INDEXED",
+  categories: [[Organization, ast.Organization.Indexed]],
+});
+export const RELATIVE = registerKeyword({
+  name: "RELATIVE",
+  categories: [[Organization, ast.Organization.Relative]],
 });
 export const DESCRIPTORS = registerKeyword({
   name: "DESCRIPTORS",
@@ -1662,6 +1680,30 @@ export const Equals = registerOperator({
     [AssignmentOperator, ast.AssignmentOperator.Equals],
   ],
 });
+export const FB = registerKeyword({
+  name: "FB",
+  categories: [[RecordFormat, ast.RecordFormat.FB]],
+});
+export const FS = registerKeyword({
+  name: "UFS",
+  categories: [[RecordFormat, ast.RecordFormat.FS]],
+});
+export const FBS = registerKeyword({
+  name: "FBS",
+  categories: [[RecordFormat, ast.RecordFormat.FBS]],
+});
+export const VB = registerKeyword({
+  name: "VB",
+  categories: [[RecordFormat, ast.RecordFormat.VB]],
+});
+export const VS = registerKeyword({
+  name: "VS",
+  categories: [[RecordFormat, ast.RecordFormat.VS]],
+});
+export const VBS = registerKeyword({
+  name: "VBS",
+  categories: [[RecordFormat, ast.RecordFormat.VBS]],
+});
 export const A = registerKeyword({
   name: "A",
 });
@@ -1673,6 +1715,7 @@ export const C = registerKeyword({
 });
 export const F = registerKeyword({
   name: "F",
+  categories: [[RecordFormat, ast.RecordFormat.F]],
 });
 export const E = registerKeyword({
   name: "E",
@@ -1698,8 +1741,13 @@ export const L = registerKeyword({
 export const R = registerKeyword({
   name: "R",
 });
+export const U = registerKeyword({
+  name: "U",
+  categories: [[RecordFormat, ast.RecordFormat.U]],
+});
 export const V = registerKeyword({
   name: "V",
+  categories: [[RecordFormat, ast.RecordFormat.V]],
 });
 export const X = registerKeyword({
   name: "X",

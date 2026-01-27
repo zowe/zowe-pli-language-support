@@ -5694,17 +5694,17 @@ const environmentAttribute = rule(
     const { inc } = state.createLoopContext("EnvironmentAttribute");
     while (
       !state.eof &&
-      state.canConsumeFirst(environmentAttributeItem.first())
+      state.canConsumeFirst(environmentOptionItem.first())
     ) {
       inc();
-      const item = environmentAttributeItem.rule(state);
+      const item = environmentOptionItem.rule(state);
       item && element.items.push(item);
 
       // TODO: research, This does not align to the language spec
       // Optional comma between items
       state.tryConsume(
         element,
-        CstNodeKind.EnvironmentAttributeItem_Comma,
+        CstNodeKind.EnvironmentOptionItem_Comma,
         tokens.Comma,
       );
     }
@@ -5719,61 +5719,65 @@ const environmentAttribute = rule(
   },
 );
 
-const environmentAttributeItem = rule(
-  sequence(tokens.ID),
-  (state: ParserState): ast.EnvironmentAttributeItem => {
-    const element = ast.createEnvironmentAttributeItem();
+const environmentOptionItem = orRule<ast.EnvironmentOptionItem, []>(
+  () => environmentOptionOrganization,
+  () => environmentOptionRecordFormat,
+);
 
-    const envToken = state.consume(
+const environmentOptionRecordFormat = rule(
+  sequence(tokens.RecordFormat),
+  (state: ParserState): ast.EnvironmentOptionRecordFormat => {
+    const element = ast.createEnvironmentOptionRecordFormat();
+
+    const token =state.consume(
       element,
-      CstNodeKind.EnvironmentAttributeItem_Environment,
-      tokens.ID,
+      CstNodeKind.EnvironmentOptionRecordFormat_RECORDFORMAT,
+      tokens.RecordFormat,
     );
-    if (envToken) {
-      element.environment = envToken.image;
-    }
-
-    // Optional arguments in parentheses
-    if (
-      state.tryConsume(
-        element,
-        CstNodeKind.EnvironmentAttributeItem_OpenParen,
-        tokens.OpenParen,
-      )
-    ) {
-      // Optional expression list
-      if (state.canConsumeFirst(expression.first())) {
-        const lhs = expression.rule(state);
-        lhs && element.args.push(lhs);
-        const { inc } = state.createLoopContext("EnvironmentAttributeItem");
-        while (
-          !state.eof &&
-          (state.canConsume(tokens.Comma) ||
-            state.canConsumeFirst(expression.first()))
-        ) {
-          inc();
-          // Optional comma before next expression
-          state.tryConsume(
-            element,
-            CstNodeKind.EnvironmentAttributeItem_Comma,
-            tokens.Comma,
-          );
-
-          if (state.canConsumeFirst(expression.first())) {
-            const rhs = expression.rule(state);
-            rhs && element.args.push(rhs);
-          } else {
-            break; //TODO is this correct?! Very weird behavior
-          }
-        }
-      }
-
-      state.consume(
-        element,
-        CstNodeKind.EnvironmentAttributeItem_CloseParen,
-        tokens.CloseParen,
+    if (token) {
+      element.token = token;
+      element.format = tokens.RecordFormat.mapToEnumLiteral(
+        token.tokenTypeIdx,
       );
     }
+    
+    return element;
+  },
+);
+
+const environmentOptionOrganization = rule(
+  sequence(tokens.ORGANIZATION),
+  (state: ParserState): ast.EnvironmentOptionOrganization => {
+    const element = ast.createEnvironmentOptionOrganization();
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_ORGANIZATION,
+      tokens.ORGANIZATION,
+    );
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const orgToken = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_Organization,
+      tokens.Organization,
+    );
+    if (orgToken) {
+      element.token = orgToken;
+      element.organization = tokens.Organization.mapToEnumLiteral(
+        orgToken.tokenTypeIdx,
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_CloseParen,
+      tokens.CloseParen,
+    );
 
     return element;
   },

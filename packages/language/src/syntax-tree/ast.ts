@@ -91,6 +91,8 @@ export enum SyntaxKind {
   EntryUnionDescription,
   EnvironmentAttribute,
   EnvironmentAttributeItem,
+  EnvironmentOptionOrganization,
+  EnvironmentOptionRecordFormat,
   ExecStatement,
   ExitStatement,
   Exports,
@@ -784,7 +786,7 @@ export type SyntaxNode =
   | EntryStatement
   | EntryUnionDescription
   | EnvironmentAttribute
-  | EnvironmentAttributeItem
+  | EnvironmentOptionItem
   | ExecStatement
   | ExitStatement
   | Exports
@@ -2186,7 +2188,7 @@ export function createEntryUnionDescription(): EntryUnionDescription {
 
 export interface EnvironmentAttribute extends AstNode {
   kind: SyntaxKind.EnvironmentAttribute;
-  items: EnvironmentAttributeItem[];
+  items: EnvironmentOptionItem[];
 }
 
 export function createEnvironmentAttribute(): EnvironmentAttribute {
@@ -2197,20 +2199,61 @@ export function createEnvironmentAttribute(): EnvironmentAttribute {
   };
 }
 
-export interface EnvironmentAttributeItem extends AstNode {
-  kind: SyntaxKind.EnvironmentAttributeItem;
-  environment: string | null;
-  args: Expression[];
+export type EnvironmentOptionItem =
+  | EnvironmentOptionOrganization
+  | EnvironmentOptionRecordFormat
+  ;
+
+export enum Organization {
+  Consecutive,
+  Indexed,
+  Relative,
+}
+  
+export interface EnvironmentOptionOrganization extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionOrganization;
+  organization: Organization | null;
+  token: Token | null;
 }
 
-export function createEnvironmentAttributeItem(): EnvironmentAttributeItem {
+export function createEnvironmentOptionOrganization(): EnvironmentOptionOrganization {
   return {
-    kind: SyntaxKind.EnvironmentAttributeItem,
+    kind: SyntaxKind.EnvironmentOptionOrganization,
     container: null,
-    environment: null,
-    args: [],
+    organization: null,
+    token: null,
   };
 }
+
+export enum RecordFormat {
+  F,
+  FB,
+  FS,
+  FBS,
+  V,
+  VB,
+  VS,
+  VBS,
+  U,
+}
+
+export interface EnvironmentOptionRecordFormat extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionRecordFormat;
+  format: RecordFormat | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionRecordFormat(): EnvironmentOptionRecordFormat {
+  return {
+    kind: SyntaxKind.EnvironmentOptionRecordFormat,
+    container: null,
+    format: null,
+    token: null,
+  };
+}
+
+
+
 
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
