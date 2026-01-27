@@ -2042,6 +2042,15 @@ async function runIncludeInstruction(
 }
 
 /**
+ * Removes leading character and capitalizes the first letter of the resulting string.
+ * Typically used to normalize Windows drive letters (e.g., "/c/path" → "C/path").
+ */
+function handleDriveLetter(path: string): string {
+  path = path.substring(1);
+  return path[0].toUpperCase() + path.slice(1);
+}
+
+/**
  * Sets the filePath & relativeFilePath of the given item, if a filePath is provided
  * The relativeFilePath is calculated based on the currentUri in the context
  *
@@ -2058,7 +2067,6 @@ export function setFilePath(
   item.filePath = filePath;
   if (!context.currentUri) return;
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-  /** Problem: .relative will return "../path" for absolute Linux paths.  */
   let relative = UriUtils.relative(workspace, filePath);
   if (UriUtils.isPathRelative(relative)) {
     relative = "./" + relative;
@@ -2067,14 +2075,10 @@ export function setFilePath(
   }
   // WINDOWS
   if (UriUtils.isWindows) {
-    let path = context.currentUri.path;
-    path = path.substring(1);
-    path = path[0].toUpperCase() + path.slice(1);
-    item.relativeFilePath = path;
+    item.relativeFilePath = handleDriveLetter(context.currentUri.path);
     return;
   }
-
-  // LINUX
+  // UNIX
   if (UriUtils.isUnixAbsolutePath(relative)) {
     item.relativeFilePath = context.currentUri.path;
     return;

@@ -48,8 +48,8 @@ export namespace UriUtils {
   }
 
   export function relative(from: URI | string, to: URI | string): string {
-    let fromPath = stringPath(from);
-    let toPath = stringPath(to);
+    const fromPath = stringPath(from);
+    const toPath = stringPath(to);
 
     const fromParts = fromPath.split("/").filter((e) => e.length > 0);
     const toParts = toPath.split("/").filter((e) => e.length > 0);
