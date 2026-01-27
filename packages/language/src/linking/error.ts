@@ -135,7 +135,17 @@ export class LinkerErrorReporter {
   /**
    * S IBM1881I
    */
-  reportAmbiguousReference(reference: Reference, name: string) {
+  reportAmbiguousReference(reference: Reference, name: string, symbols: QualifiedSyntaxNode[]) {
+    function fullName(symbol: QualifiedSyntaxNode): string[] {
+      let current: QualifiedSyntaxNode | null = symbol;
+      const parts: string[] = [];
+      while(current) {
+        parts.unshift(current.name);
+        current = current.parent;
+      }
+      return parts;
+    }
+
     const range =
       getQualifiedReferenceRange(reference.owner) ??
       tokenToRange(reference.token);
@@ -147,6 +157,7 @@ export class LinkerErrorReporter {
       range,
       uri,
       code: fullCode(PLICodes.Severe.IBM1881I),
+      data: { symbols: symbols.map(fullName), uri },
     });
   }
 
