@@ -12,6 +12,7 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DCL SYSIS FILE RECORD ENV(BLKSIZE(10), RECSIZE(10), PASSWORD("PW123"));
+//// DCL SYSIS FILE RECORD ENV(
+////           REGIONAL(1), BLKSIZE(10), RECSIZE(10), PASSWORD("PW123"));
 
 verify.noDiagnostics();
