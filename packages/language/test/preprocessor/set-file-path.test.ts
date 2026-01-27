@@ -22,6 +22,15 @@ import {
 import { URI } from "../../src/utils/uri";
 import path from "path";
 
+function toCanonicalPath(filePath: string): string {
+  let normalized = path.normalize(filePath).replace(/\\/g, "/");
+  // Windows: ensure capital drive letter
+  if (/^[a-z]:\//.test(normalized)) {
+    normalized = normalized[0].toUpperCase() + normalized.slice(1);
+  }
+  return normalized;
+}
+
 describe("setFilePath", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
@@ -55,7 +64,7 @@ describe("setFilePath", () => {
 
     setFilePath(item, doc.uri, context);
 
-    const expected = path.normalize(URI.file(absolutePath).fsPath);
+    const expected = toCanonicalPath(URI.file(absolutePath).fsPath);
     expect(item.relativeFilePath).toBe(expected);
   });
 
