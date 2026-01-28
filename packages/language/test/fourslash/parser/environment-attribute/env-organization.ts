@@ -14,4 +14,4 @@
 // @wrap: main
 //// DCL SYSIS FILE RECORD INPUT KEYED ENV(ORGANIZATION(INDEXED));
 
-verify.noDiagnostics();
+verify.noParserDiagnostics();

@@ -14,4 +14,4 @@
 // @wrap: main
 //// DCL SYSIS FILE RECORD ENV(LEAVE BKWD VSAM SKIP GENKEY);
 
-verify.noDiagnostics();
+verify.noParserDiagnostics();

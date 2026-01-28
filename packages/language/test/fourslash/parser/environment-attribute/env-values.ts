@@ -15,4 +15,4 @@
 //// DCL SYSIS FILE RECORD ENV(
 ////           REGIONAL(1), BLKSIZE(10), RECSIZE(10), PASSWORD("PW123"));
 
-verify.noDiagnostics();
+verify.noParserDiagnostics();

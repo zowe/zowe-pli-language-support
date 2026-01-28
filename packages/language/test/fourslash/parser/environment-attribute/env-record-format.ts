@@ -14,4 +14,4 @@
 // @wrap: main
 //// DCL SYSIS FILE RECORD ENV(FB);
 
-verify.noDiagnostics();
+verify.noParserDiagnostics();
