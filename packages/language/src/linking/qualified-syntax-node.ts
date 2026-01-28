@@ -35,6 +35,8 @@ export class QualifiedSyntaxNode {
    */
   public isRedeclared: boolean | undefined = undefined;
 
+  private _id: string | null = null;
+
   private constructor(
     public readonly token: Token,
     public readonly node: SyntaxNode,
@@ -92,6 +94,10 @@ export class QualifiedSyntaxNode {
   }
 
   getId(): string {
+    // Computing the ID is somewhat expensive, cache the result
+    if (this._id !== null) {
+      return this._id;
+    }
     const parts: string[] = [];
     // Ensure that implicit and explicit declarations get different IDs
     // Some declarations (mainly parameters) are first implicitly declared
@@ -106,7 +112,8 @@ export class QualifiedSyntaxNode {
       parts.push(current.token.id?.toString() || "NaN");
       current = current.parent;
     }
-    return parts.join("_");
+    this._id = parts.join("_");
+    return this._id;
   }
 
   /**
