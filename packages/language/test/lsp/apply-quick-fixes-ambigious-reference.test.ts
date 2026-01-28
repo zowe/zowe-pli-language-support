@@ -22,9 +22,9 @@ describe("quickFixResolveAmbiguousReference", () => {
     const result = quickFixResolveAmbiguousReference(diagnostic);
     expect(result).toBeDefined();
     expect(result.length).toBe(2);
-    expect(result[0].title).toBe('Change "A.B.C"');
+    expect(result[0].title).toBe('Change to "A.B.C"');
     expect(result[0].edit?.changes?.[data.uri]?.[0].newText).toBe("A.B.C");
-    expect(result[1].title).toBe('Change "AA.B.C"');
+    expect(result[1].title).toBe('Change to "AA.B.C"');
     expect(result[1].edit?.changes?.[data.uri]?.[0].newText).toBe("AA.B.C");
   });
 
@@ -43,7 +43,7 @@ describe("quickFixResolveAmbiguousReference", () => {
     const result = quickFixResolveAmbiguousReference(diagnostic);
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
-    expect(result[0].title).toBe('Change "AA.B.C"');
+    expect(result[0].title).toBe('Change to "AA.B.C"');
     expect(result[0].edit?.changes?.[data.uri]?.[0].newText).toBe("AA.B.C");
   });
 
