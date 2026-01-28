@@ -179,11 +179,15 @@ export function quickFixResolveAmbiguousReference(
     return [];
   } else {
     const actions: CodeAction[] = [];
-    for (const [, fullName] of current.filter(
-      ([, name], index) =>
-        !current.some(
-          ([_, n], i) => i !== index && (n.endsWith("." + name) || n === name),
-        ),
+    //Example for a `current` list containing suffixes(*): "AA.BB.CC", *"BB.CC", *"CC"
+    //Here "CC" is suffix of "BB.CC", which is suffix of "AA.BB.CC". Here it is only save to suggest "AA.BB.CC".
+    //We filter out all real suffixes. If all members are suffixes of each other, there are no suggestions.
+    const isSuffixOf = (suffix: string, str: string) =>
+      str.endsWith("." + suffix) || str === suffix;
+    const whereNameIsNotASuffix = (name: string, index: number): boolean =>
+      !current.some(([_, n], i) => i !== index && isSuffixOf(name, n));
+    for (const [, fullName] of current.filter(([, name], index) =>
+      whereNameIsNotASuffix(name, index),
     )) {
       const action: CodeAction = {
         title: `Change "${fullName}"`,

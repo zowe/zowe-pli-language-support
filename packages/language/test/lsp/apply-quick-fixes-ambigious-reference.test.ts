@@ -46,4 +46,21 @@ describe("quickFixResolveAmbiguousReference", () => {
     expect(result[0].title).toBe('Change "AA.B.C"');
     expect(result[0].edit?.changes?.[data.uri]?.[0].newText).toBe("AA.B.C");
   });
+
+  test("same alternatives", async () => {
+    const data: AmbiguousReferenceData = {
+      symbols: [
+        ["B", "C"],
+        ["B", "C"],
+      ],
+      uri: "file:///path/to/file.pli",
+    };
+    const diagnostic = {
+      data,
+      code: PLICodes.Severe.IBM1881I.code,
+    } as Diagnostic;
+    const result = quickFixResolveAmbiguousReference(diagnostic);
+    expect(result).toBeDefined();
+    expect(result.length).toBe(0);
+  });
 });

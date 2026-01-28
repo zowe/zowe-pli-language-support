@@ -9,6 +9,7 @@
  *
  */
 
+import { AmbiguousReferenceData } from "../language-server/code-actions/apply-quick-fixes";
 import {
   diagnosticFromCode,
   fullCode,
@@ -144,10 +145,10 @@ export class LinkerErrorReporter {
       let current: QualifiedSyntaxNode | null = symbol;
       const parts: string[] = [];
       while (current) {
-        parts.unshift(current.name);
+        parts.push(current.name);
         current = current.parent;
       }
-      return parts;
+      return parts.reverse();
     }
 
     const range =
@@ -155,13 +156,19 @@ export class LinkerErrorReporter {
       tokenToRange(reference.token);
     const uri = tokenToUri(reference.token);
 
+    const data: AmbiguousReferenceData | undefined = uri
+      ? {
+          symbols: symbols.map(fullName),
+          uri: uri,
+        }
+      : undefined;
     this.accept({
       message: PLICodes.Severe.IBM1881I.message(name),
       severity: Severity.S,
       range,
       uri,
       code: fullCode(PLICodes.Severe.IBM1881I),
-      data: { symbols: symbols.map(fullName), uri },
+      data,
     });
   }
 
