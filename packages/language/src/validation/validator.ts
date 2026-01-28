@@ -137,29 +137,24 @@ function linkingRedeclarationErrorsToDiagnostics(
   regularScopeCache: ScopeCache,
   reporter: LinkerErrorReporter,
 ) {
-  const symbols = new Set(
-    regularScopeCache
-      .values()
-      .flatMap((scope) => scope.symbolTable.symbols.values())
-      .filter((symbol) => symbol.isRedeclared),
-  );
+  for (const scope of regularScopeCache.values()) {
+    for (const symbol of scope.symbolTable.symbols.values()) {
+      const nameToken = symbol.token;
+      if (!symbol.isRedeclared || !nameToken) {
+        continue;
+      }
 
-  for (const symbol of symbols) {
-    const nameToken = symbol.token;
-    if (!nameToken) {
-      continue;
-    }
-
-    /**
-     * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
-     *
-     * TODO @didrikmunther: A LabelPrefix without a procedure option should throw a IBM1911I error instead.
-     * Currently, we don't have a way to know if a label is a statement label or a procedure label.
-     */
-    if (symbol.node.kind === SyntaxKind.LabelPrefix) {
-      reporter.reportAlreadyDeclared(nameToken, symbol.name);
-    } else {
-      reporter.reportRepeatedDeclaration(nameToken, symbol.name);
+      /**
+       * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
+       *
+       * TODO @didrikmunther: A LabelPrefix without a procedure option should throw a IBM1911I error instead.
+       * Currently, we don't have a way to know if a label is a statement label or a procedure label.
+       */
+      if (symbol.node.kind === SyntaxKind.LabelPrefix) {
+        reporter.reportAlreadyDeclared(nameToken, symbol.name);
+      } else {
+        reporter.reportRepeatedDeclaration(nameToken, symbol.name);
+      }
     }
   }
 }
