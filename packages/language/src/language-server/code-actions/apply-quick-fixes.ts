@@ -190,7 +190,7 @@ export function quickFixResolveAmbiguousReference(
       whereNameIsNotASuffix(name, index),
     )) {
       const action: CodeAction = {
-        title: `Change "${fullName}"`,
+        title: `Change to "${fullName}"`,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
         edit: {
