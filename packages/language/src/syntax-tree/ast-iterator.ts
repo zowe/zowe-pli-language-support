@@ -422,9 +422,6 @@ export function forEachNode(
     case SyntaxKind.EnvironmentAttribute:
       node.items.forEach(action);
       break;
-    case SyntaxKind.EnvironmentAttributeItem:
-      node.args.forEach(action);
-      break;
     case SyntaxKind.ExecStatement:
       break;
     case SyntaxKind.ExitStatement:
@@ -974,6 +971,14 @@ export function forEachNode(
         action(node.body);
       }
       break;
+    case SyntaxKind.EnvironmentOptionValue:
+      if (node.value) {
+        action(node.value);
+      }
+      break;
+    case SyntaxKind.EnvironmentOptionSymbol:
+    case SyntaxKind.EnvironmentOptionOrganization:
+    case SyntaxKind.EnvironmentOptionRecordFormat:
     case SyntaxKind.SqlAttributeBinary:
     case SyntaxKind.SqlAttributeLob:
     case SyntaxKind.SqlAttributeLobFile:

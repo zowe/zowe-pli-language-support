@@ -243,6 +243,8 @@ export const LinkageOption =
 export const NoMapOption = registerCombination<ast.NoMapOption>("NoMapOption");
 export const SimpleOptions =
   registerCombination<ast.SimpleOptions>("SimpleOptions");
+export const Organization =
+  registerCombination<ast.Organization>("Organization");
 export const DefaultAttribute =
   registerCombination<ast.DefaultAttribute>("DefaultAttribute");
 export const DefaultAttributeBinaryOperator =
@@ -288,7 +290,16 @@ export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
 export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
 export const CicsResponseCode =
   registerCombination<ast.CicsResponseCode>("CicsResponseCode");
-
+export const RecordFormat =
+  registerCombination<ast.RecordFormat>("RecordFormat");
+export const EnvironmentOptionSymbolName =
+  registerCombination<ast.EnvironmentOptionSymbolName>(
+    "EnvironmentOptionSymbolName",
+  );
+export const EnvironmentOptionValueName =
+  registerCombination<ast.EnvironmentOptionValueName>(
+    "EnvironmentOptionValueName",
+  );
 // Custom functions
 
 export function escapeRegExp(value: string): string {
@@ -401,6 +412,126 @@ export const UNREACHABLE = registerKeyword({
 export const ENVIRONMENT = registerKeyword({
   name: ["ENVIRONMENT", "ENV"],
 });
+export const BUFND = registerKeyword({
+  name: "BUFND",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFND],
+  ],
+});
+export const BUFNI = registerKeyword({
+  name: "BUFNI",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFNI],
+  ],
+});
+export const BUFSP = registerKeyword({
+  name: "BUFSP",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFSP],
+  ],
+});
+export const BLKSIZE = registerKeyword({
+  name: "BLKSIZE",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BLKSIZE],
+  ],
+});
+export const RECSIZE = registerKeyword({
+  name: "RECSIZE",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.RECSIZE],
+  ],
+});
+export const KEYLOC = registerKeyword({
+  name: "KEYLOC",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.KEYLOC],
+  ],
+});
+export const PASSWORD = registerKeyword({
+  name: "PASSWORD",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.PASSWORD],
+  ],
+});
+export const REGIONAL = registerKeyword({
+  name: "REGIONAL",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.REGIONAL],
+  ],
+});
+export const ORGANIZATION = registerKeyword({
+  name: "ORGANIZATION",
+});
+export const BKWD = registerKeyword({
+  name: "BKWD",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.BKWD],
+  ],
+});
+export const GENKEY = registerKeyword({
+  name: "GENKEY",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.GENKEY],
+  ],
+});
+export const REUSE = registerKeyword({
+  name: "REUSE",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.REUSE],
+  ],
+});
+export const VSAM = registerKeyword({
+  name: "VSAM",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.VSAM],
+  ],
+});
+export const SCALARVARYING = registerKeyword({
+  name: "SCALARVARYING",
+  categories: [
+    [
+      EnvironmentOptionSymbolName,
+      ast.EnvironmentOptionSymbolName.SCALARVARYING,
+    ],
+  ],
+});
+export const REREAD = registerKeyword({
+  name: "REREAD",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.REREAD],
+  ],
+});
+export const CTLASA = registerKeyword({
+  name: "CTLASA",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.CTLASA],
+  ],
+});
+export const CTL360 = registerKeyword({
+  name: "CTL360",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.CTL360],
+  ],
+});
+export const CONSECUTIVE = registerKeyword({
+  name: "CONSECUTIVE",
+  categories: [
+    [Organization, ast.Organization.Consecutive],
+    [Organization, ast.EnvironmentOptionSymbolName.CONSECUTIVE],
+  ],
+});
+export const INDEXED = registerKeyword({
+  name: "INDEXED",
+  categories: [
+    [Organization, ast.Organization.Indexed],
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.INDEXED],
+  ],
+});
+export const RELATIVE = registerKeyword({
+  name: "RELATIVE",
+  categories: [[Organization, ast.Organization.Relative]],
+});
 export const DESCRIPTORS = registerKeyword({
   name: "DESCRIPTORS",
 });
@@ -440,7 +571,7 @@ export const NONVARYING = registerKeyword({
   ],
 });
 export const SEQUENTIAL = registerKeyword({
-  name: ["SEQUENTIAL", "SEQ"],
+  name: ["SEQUENTIAL", "SEQL"],
   categories: [
     [DefaultAttribute, ast.DefaultAttribute.SEQUENTIAL],
     [OpenOptionType, ast.OpenOptionType.SEQUENTIAL],
@@ -832,6 +963,7 @@ export const GRAPHIC = registerKeyword({
   categories: [
     [DefaultAttribute, ast.DefaultAttribute.GRAPHIC],
     [AllocateAttributeType, ast.AllocateAttributeType.GRAPHIC],
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.GRAPHIC],
   ],
 });
 export const COMPARE = registerKeyword({
@@ -1276,6 +1408,9 @@ export const FLUSH = registerKeyword({
 });
 export const LEAVE = registerKeyword({
   name: "LEAVE",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.LEAVE],
+  ],
 });
 export const ERROR = registerKeyword({
   name: "ERROR",
@@ -1380,7 +1515,10 @@ export const PAGE = registerKeyword({
 });
 export const SKIP = registerKeyword({
   name: "SKIP",
-  categories: [[PutAttribute, ast.PutAttribute.SKIP]],
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.SKIP],
+    [PutAttribute, ast.PutAttribute.SKIP],
+  ],
 });
 export const SCAN = registerKeyword({
   name: "SCAN",
@@ -1662,6 +1800,30 @@ export const Equals = registerOperator({
     [AssignmentOperator, ast.AssignmentOperator.Equals],
   ],
 });
+export const FB = registerKeyword({
+  name: "FB",
+  categories: [[RecordFormat, ast.RecordFormat.FB]],
+});
+export const FS = registerKeyword({
+  name: "UFS",
+  categories: [[RecordFormat, ast.RecordFormat.FS]],
+});
+export const FBS = registerKeyword({
+  name: "FBS",
+  categories: [[RecordFormat, ast.RecordFormat.FBS]],
+});
+export const VB = registerKeyword({
+  name: "VB",
+  categories: [[RecordFormat, ast.RecordFormat.VB]],
+});
+export const VS = registerKeyword({
+  name: "VS",
+  categories: [[RecordFormat, ast.RecordFormat.VS]],
+});
+export const VBS = registerKeyword({
+  name: "VBS",
+  categories: [[RecordFormat, ast.RecordFormat.VBS]],
+});
 export const A = registerKeyword({
   name: "A",
 });
@@ -1673,6 +1835,7 @@ export const C = registerKeyword({
 });
 export const F = registerKeyword({
   name: "F",
+  categories: [[RecordFormat, ast.RecordFormat.F]],
 });
 export const E = registerKeyword({
   name: "E",
@@ -1698,8 +1861,13 @@ export const L = registerKeyword({
 export const R = registerKeyword({
   name: "R",
 });
+export const U = registerKeyword({
+  name: "U",
+  categories: [[RecordFormat, ast.RecordFormat.U]],
+});
 export const V = registerKeyword({
   name: "V",
+  categories: [[RecordFormat, ast.RecordFormat.V]],
 });
 export const X = registerKeyword({
   name: "X",
