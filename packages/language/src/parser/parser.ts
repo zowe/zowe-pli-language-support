@@ -5696,19 +5696,16 @@ const environmentAttribute = rule(
 
     // Parse zero or more environment attribute items
     const { inc } = state.createLoopContext("EnvironmentAttribute");
-    while (
-      !state.eof &&
-      state.canConsumeFirst(environmentAttributeItem.first())
-    ) {
+    while (!state.eof && state.canConsumeFirst(environmentOptionItem.first())) {
       inc();
-      const item = environmentAttributeItem.rule(state);
+      const item = environmentOptionItem.rule(state);
       item && element.items.push(item);
 
       // TODO: research, This does not align to the language spec
       // Optional comma between items
       state.tryConsume(
         element,
-        CstNodeKind.EnvironmentAttributeItem_Comma,
+        CstNodeKind.EnvironmentOptionItem_Comma,
         tokens.Comma,
       );
     }
@@ -5723,61 +5720,119 @@ const environmentAttribute = rule(
   },
 );
 
-const environmentAttributeItem = rule(
-  sequence(tokens.ID),
-  (state: ParserState): ast.EnvironmentAttributeItem => {
-    const element = ast.createEnvironmentAttributeItem();
+const environmentOptionItem = orRule<ast.EnvironmentOptionItem, []>(
+  () => environmentOptionOrganization,
+  () => environmentOptionRecordFormat,
+  () => environmentOptionSymbol,
+  () => environmentOptionValue,
+);
 
-    const envToken = state.consume(
+const environmentOptionSymbol = rule(
+  sequence(tokens.EnvironmentOptionSymbolName),
+  (state: ParserState): ast.EnvironmentOptionSymbol => {
+    const element = ast.createEnvironmentOptionSymbol();
+
+    element.token = state.consume(
       element,
-      CstNodeKind.EnvironmentAttributeItem_Environment,
-      tokens.ID,
+      CstNodeKind.EnvironmentOptionSymbol_Name,
+      tokens.EnvironmentOptionSymbolName,
     );
-    if (envToken) {
-      element.environment = envToken.image;
-    }
-
-    // Optional arguments in parentheses
-    if (
-      state.tryConsume(
-        element,
-        CstNodeKind.EnvironmentAttributeItem_OpenParen,
-        tokens.OpenParen,
-      )
-    ) {
-      // Optional expression list
-      if (state.canConsumeFirst(expression.first())) {
-        const lhs = expression.rule(state);
-        lhs && element.args.push(lhs);
-        const { inc } = state.createLoopContext("EnvironmentAttributeItem");
-        while (
-          !state.eof &&
-          (state.canConsume(tokens.Comma) ||
-            state.canConsumeFirst(expression.first()))
-        ) {
-          inc();
-          // Optional comma before next expression
-          state.tryConsume(
-            element,
-            CstNodeKind.EnvironmentAttributeItem_Comma,
-            tokens.Comma,
-          );
-
-          if (state.canConsumeFirst(expression.first())) {
-            const rhs = expression.rule(state);
-            rhs && element.args.push(rhs);
-          } else {
-            break; //TODO is this correct?! Very weird behavior
-          }
-        }
-      }
-
-      state.consume(
-        element,
-        CstNodeKind.EnvironmentAttributeItem_CloseParen,
-        tokens.CloseParen,
+    if (element.token) {
+      element.name = tokens.EnvironmentOptionSymbolName.mapToEnumLiteral(
+        element.token.tokenTypeIdx,
       );
     }
+
+    return element;
+  },
+);
+
+const environmentOptionValue = rule(
+  sequence(tokens.EnvironmentOptionValueName),
+  (state: ParserState): ast.EnvironmentOptionValue => {
+    const element = ast.createEnvironmentOptionValue();
+
+    element.token = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_Name,
+      tokens.EnvironmentOptionValueName,
+    );
+    if (element.token) {
+      element.name = tokens.EnvironmentOptionValueName.mapToEnumLiteral(
+        element.token.tokenTypeIdx,
+      );
+    }
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const expr = expression.rule(state);
+    expr && (element.value = expr);
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const environmentOptionRecordFormat = rule(
+  sequence(tokens.RecordFormat),
+  (state: ParserState): ast.EnvironmentOptionRecordFormat => {
+    const element = ast.createEnvironmentOptionRecordFormat();
+
+    const token = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionRecordFormat_RECORDFORMAT,
+      tokens.RecordFormat,
+    );
+    if (token) {
+      element.token = token;
+      element.format = tokens.RecordFormat.mapToEnumLiteral(token.tokenTypeIdx);
+    }
+
+    return element;
+  },
+);
+
+const environmentOptionOrganization = rule(
+  sequence(tokens.ORGANIZATION),
+  (state: ParserState): ast.EnvironmentOptionOrganization => {
+    const element = ast.createEnvironmentOptionOrganization();
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_ORGANIZATION,
+      tokens.ORGANIZATION,
+    );
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const orgToken = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_Organization,
+      tokens.Organization,
+    );
+    if (orgToken) {
+      element.token = orgToken;
+      element.organization = tokens.Organization.mapToEnumLiteral(
+        orgToken.tokenTypeIdx,
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_CloseParen,
+      tokens.CloseParen,
+    );
 
     return element;
   },
