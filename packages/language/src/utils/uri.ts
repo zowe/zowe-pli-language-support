@@ -107,6 +107,7 @@ export namespace UriUtils {
     const toParts = toPath.split("/").filter((e) => e.length > 0);
 
     const shareWorkspace = fromParts[0] === toParts[0];
+    // const shareWorkspace = fromParts.length - commonFolders > 1;
     if (isWindows && !shareWorkspace) {
       return driveLetter + toPath;
     }
@@ -116,6 +117,10 @@ export namespace UriUtils {
         break;
       }
     }
+    if (fromParts.length - commonFolders > 1) {
+      return typeof to === "string" ? toPath : to.path;
+    }
+
     let toPart = toParts.slice(commonFolders).join("/");
     if (commonFolders === 0) {
       toPart = "/" + toPart;
@@ -123,7 +128,7 @@ export namespace UriUtils {
     if (fromPath === "/") {
       toPart = toPart.replace("/", "");
     }
-    return toPart; 
+    return toPart;
   }
 
   export function normalize(uri: URI | string): string {
