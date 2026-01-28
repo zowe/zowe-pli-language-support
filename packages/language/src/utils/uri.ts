@@ -32,10 +32,62 @@ export namespace UriUtils {
     return a?.toString() === b?.toString();
   }
 
-  export function stringPath(path: URI | string) {
-    let stringPath =
-      typeof path === "string" ? URI.parse(path).path : path.path;
-    return stringPath.replace(/\\/g, "/");
+  /**
+   * Processes Windows drive letters in a path.
+   * - Removes leading slash before drive letter (e.g., "/C:/" → "C:/")
+   * - Extracts and returns the drive letter if present
+   *
+   * @returns Object with normalized path and extracted drive letter
+   */
+  function processDriveLetter(path: string): {
+    path: string;
+    drive: string | null;
+  } {
+    // Check for leading slash before drive: /C:/ or /c:/
+    if (/^\/[a-zA-Z]:\//.test(path)) {
+      const drive = path.substring(1, 3).toLowerCase(); // Extract "C:" and lowercase
+      return {
+        path: path.substring(1), // Remove leading slash
+        drive: drive,
+      };
+    }
+
+    // Check for drive letter without leading slash: C:\ or C:/
+    const match = path.match(/^([a-zA-Z]:)[\\\/]/);
+    if (match) {
+      return {
+        path: path,
+        drive: match[1].toLowerCase(),
+      };
+    }
+
+    // No drive letter found
+    return {
+      path: path,
+      drive: null,
+    };
+  }
+
+  export function stringPath(path: URI | string): {
+    result: string;
+    driveLetter: string | null;
+  } {
+    let result = typeof path === "string" ? URI.parse(path).path : path.path;
+
+    // Normalize possible leading slash before Windows drive and isolate windows drive letter if present
+    const { path: normalizedPath, drive: driveLetter } =
+      processDriveLetter(result);
+    result = normalizedPath;
+
+    // Remove drive letter if present
+    if (driveLetter) {
+      result = result.replace(driveLetter, "");
+    }
+
+    // Normalize slashes
+    result = result.replace(/\\/g, "/");
+
+    return { result, driveLetter };
   }
 
   export function isPathRelative(path: string) {
@@ -48,56 +100,30 @@ export namespace UriUtils {
   }
 
   export function relative(from: URI | string, to: URI | string): string {
-    const fromPath = stringPath(from);
-    const toPath = stringPath(to);
+    const { result: fromPath } = stringPath(from);
+    const { result: toPath, driveLetter } = stringPath(to);
 
     const fromParts = fromPath.split("/").filter((e) => e.length > 0);
     const toParts = toPath.split("/").filter((e) => e.length > 0);
 
-    if (isWindows) {
-      const upperCaseDriveLetter = /^[A-Z]:$/;
-      if (fromParts[0] && upperCaseDriveLetter.test(fromParts[0])) {
-        fromParts[0] = fromParts[0].toLowerCase();
-      }
-      if (toParts[0] && upperCaseDriveLetter.test(toParts[0])) {
-        toParts[0] = toParts[0].toLowerCase();
-      }
-      if (fromParts[0] !== toParts[0]) {
-        // @REVIEWER
-        // Here is a check to see if we have the workspace folder somewhere in our path.
-        // The limitation is that, if somehow we have a folder with the same name of the workspace folder, within
-        // an absolute path outside the real workspace, it would be catch. if we remove this next conditional check
-        // though, relative paths won't match on Windows.
-        const indexExists = toParts.indexOf(fromParts[0]);
-        if (indexExists !== -1) {
-          return toParts.slice(indexExists + 1).join("/");
-        }
-        // in case of different drive letters, we cannot compute a relative path, so...
-        return toPath.substring(1); // fall back to full 'to' path, drop the leading '/', keep everything else as is for good comparability
-      }
+    const shareWorkspace = fromParts[0] === toParts[0];
+    if (isWindows && !shareWorkspace) {
+      return driveLetter + toPath;
     }
-    // @REVIEWER
-    // TODO: @wagner-laranjeiras 16.12.2025 -> Unix absolute paths were being returned as relative paths,
-    // ex. from: /workspace to: /Users/mockUser/Desktop/anotherfolder/absolute.pli returns: ../Users/mockUser/Desktop/anotherfolder/absolute.pli
-    let i = 0;
-    for (; i < fromParts.length; i++) {
-      if (fromParts[i] !== toParts[i]) {
+    let commonFolders = 0;
+    for (; commonFolders < fromParts.length; commonFolders++) {
+      if (fromParts[commonFolders] !== toParts[commonFolders]) {
         break;
       }
     }
-    // So what I did was to add this conditional, which check if we have a root workspace
-    // and if the parts didn't from the beginning. It solves, but it smells, IMO.
-    if (i === 0 && fromParts.length) {
-      const returnValue = typeof to === "string" ? toPath : to.path;
-      return returnValue;
+    let toPart = toParts.slice(commonFolders).join("/");
+    if (commonFolders === 0) {
+      toPart = "/" + toPart;
     }
-    // This avoids the "../../../../file.pli" kind of path.
-    if (fromParts.length - i > 1) {
-      return typeof to === "string" ? toPath : to.path;
+    if (fromPath === "/") {
+      toPart = toPart.replace("/", "");
     }
-    const backPart = "../".repeat(fromParts.length - i);
-    const toPart = toParts.slice(i).join("/");
-    return backPart + toPart;
+    return toPart; 
   }
 
   export function normalize(uri: URI | string): string {
