@@ -90,7 +90,10 @@ export enum SyntaxKind {
   EntryStatement,
   EntryUnionDescription,
   EnvironmentAttribute,
-  EnvironmentAttributeItem,
+  EnvironmentOptionSymbol,
+  EnvironmentOptionValue,
+  EnvironmentOptionOrganization,
+  EnvironmentOptionRecordFormat,
   ExecStatement,
   ExitStatement,
   Exports,
@@ -784,7 +787,7 @@ export type SyntaxNode =
   | EntryStatement
   | EntryUnionDescription
   | EnvironmentAttribute
-  | EnvironmentAttributeItem
+  | EnvironmentOptionItem
   | ExecStatement
   | ExitStatement
   | Exports
@@ -2186,7 +2189,7 @@ export function createEntryUnionDescription(): EntryUnionDescription {
 
 export interface EnvironmentAttribute extends AstNode {
   kind: SyntaxKind.EnvironmentAttribute;
-  items: EnvironmentAttributeItem[];
+  items: EnvironmentOptionItem[];
 }
 
 export function createEnvironmentAttribute(): EnvironmentAttribute {
@@ -2197,18 +2200,116 @@ export function createEnvironmentAttribute(): EnvironmentAttribute {
   };
 }
 
-export interface EnvironmentAttributeItem extends AstNode {
-  kind: SyntaxKind.EnvironmentAttributeItem;
-  environment: string | null;
-  args: Expression[];
+export type EnvironmentOptionItem =
+  | EnvironmentOptionOrganization
+  | EnvironmentOptionRecordFormat
+  | EnvironmentOptionSymbol
+  | EnvironmentOptionValue;
+
+export enum Organization {
+  Consecutive,
+  Indexed,
+  Relative,
 }
 
-export function createEnvironmentAttributeItem(): EnvironmentAttributeItem {
+export interface EnvironmentOptionOrganization extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionOrganization;
+  organization: Organization | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionOrganization(): EnvironmentOptionOrganization {
   return {
-    kind: SyntaxKind.EnvironmentAttributeItem,
+    kind: SyntaxKind.EnvironmentOptionOrganization,
     container: null,
-    environment: null,
-    args: [],
+    organization: null,
+    token: null,
+  };
+}
+
+export enum RecordFormat {
+  F,
+  FB,
+  FS,
+  FBS,
+  V,
+  VB,
+  VS,
+  VBS,
+  U,
+}
+
+export interface EnvironmentOptionRecordFormat extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionRecordFormat;
+  format: RecordFormat | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionRecordFormat(): EnvironmentOptionRecordFormat {
+  return {
+    kind: SyntaxKind.EnvironmentOptionRecordFormat,
+    container: null,
+    format: null,
+    token: null,
+  };
+}
+
+export enum EnvironmentOptionSymbolName {
+  BKWD,
+  GENKEY,
+  REUSE,
+  SKIP,
+  VSAM,
+  SCALARVARYING,
+  CONSECUTIVE,
+  LEAVE,
+  REREAD,
+  CTLASA,
+  CTL360,
+  GRAPHIC,
+  INDEXED,
+}
+
+export enum EnvironmentOptionValueName {
+  BUFND,
+  BUFNI,
+  BUFSP,
+  BLKSIZE,
+  RECSIZE,
+  PASSWORD,
+  KEYLOC,
+  REGIONAL,
+}
+
+export interface EnvironmentOptionSymbol extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionSymbol;
+  name: EnvironmentOptionSymbolName | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionSymbol(): EnvironmentOptionSymbol {
+  return {
+    kind: SyntaxKind.EnvironmentOptionSymbol,
+    container: null,
+    name: null,
+    token: null,
+  };
+}
+
+export interface EnvironmentOptionValue extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionValue;
+  name: EnvironmentOptionValueName | null;
+  value: Expression | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionValue(): EnvironmentOptionValue {
+  return {
+    kind: SyntaxKind.EnvironmentOptionValue,
+    container: null,
+    name: null,
+    value: null,
+    token: null,
   };
 }
 
