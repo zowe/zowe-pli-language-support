@@ -15,7 +15,7 @@
 
 completion.expectAt(1, {
   includes:
-    constants.CompletionKeywords.StatementStartPreprocessor.values().map(
+    constants.CompletionKeywords.StatementStartPreprocessor.valuesArray().map(
       (keyword) => keyword.label,
     ),
 });

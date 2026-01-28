@@ -125,10 +125,12 @@ export class MultiMap<K, V> {
   /**
    * Returns a stream of key, value pairs for every entry in the map.
    */
-  entries(): [K, V][] {
-    return Array.from(this.map.entries(), ([key, array]) =>
-      array.map((value) => [key, value] as [K, V]),
-    ).flat();
+  *entries(): IterableIterator<[K, V]> {
+    for (const [key, values] of this.map.entries()) {
+      for (const value of values) {
+        yield [key, value];
+      }
+    }
   }
 
   /**
@@ -145,8 +147,20 @@ export class MultiMap<K, V> {
   /**
    * Returns a stream of values in the map.
    */
-  values(): V[] {
-    return Array.from(this.map.values()).flatMap((a) => a);
+  *values(): IterableIterator<V> {
+    for (const values of this.map.values()) {
+      for (const value of values) {
+        yield value;
+      }
+    }
+  }
+
+  valuesArray(): V[] {
+    const result: V[] = [];
+    for (const values of this.map.values()) {
+      result.push(...values);
+    }
+    return result;
   }
 
   /**
