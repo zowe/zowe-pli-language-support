@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">67.85% </span>
+                <span class="strong">68.38% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>95/140</span>
+                <span class='fraction'>93/136</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.75% </span>
+                <span class="strong">97.05% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>30/32</span>
+                <span class='fraction'>33/34</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">67.85% </span>
+                <span class="strong">68.38% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>95/140</span>
+                <span class='fraction'>93/136</span>
             </div>
         
             
@@ -279,12 +279,7 @@
 <a name='L214'></a><a href='#L214'>214</a>
 <a name='L215'></a><a href='#L215'>215</a>
 <a name='L216'></a><a href='#L216'>216</a>
-<a name='L217'></a><a href='#L217'>217</a>
-<a name='L218'></a><a href='#L218'>218</a>
-<a name='L219'></a><a href='#L219'>219</a>
-<a name='L220'></a><a href='#L220'>220</a>
-<a name='L221'></a><a href='#L221'>221</a>
-<a name='L222'></a><a href='#L222'>222</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L217'></a><a href='#L217'>217</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -424,17 +419,11 @@
 <span class="cline-any cline-yes">860x</span>
 <span class="cline-any cline-yes">860x</span>
 <span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">860x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1488x</span>
+<span class="cline-any cline-yes">17734x</span>
+<span class="cline-any cline-yes">17734x</span>
+<span class="cline-any cline-yes">17721x</span>
+<span class="cline-any cline-yes">17721x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -442,12 +431,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">17657x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">17657x</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">17734x</span>
+<span class="cline-any cline-yes">1488x</span>
 <span class="cline-any cline-yes">860x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -644,29 +634,24 @@ function linkingRedeclarationErrorsToDiagnostics(
   regularScopeCache: ScopeCache,
   reporter: LinkerErrorReporter,
 ) {
-  const symbols = new Set(
-    regularScopeCache
-      .values()
-      .flatMap((scope) =&gt; scope.symbolTable.symbols.values())
-      .filter((symbol) =&gt; symbol.isRedeclared),
-  );
+  for (const scope of regularScopeCache.values()) {
+    for (const symbol of scope.symbolTable.symbols.values()) {
+      const nameToken = symbol.token;
+      if (!symbol.isRedeclared || !nameToken) {
+        continue;
+      }
 &nbsp;
-  for (const symbol of symbols) {
-    const nameToken = symbol.token;
-    if (!nameToken) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >      continue;</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-&nbsp;
-    /**
-     * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
-     *
-     * TODO @didrikmunther: A LabelPrefix without a procedure option should throw a IBM1911I error instead.
-     * Currently, we don't have a way to know if a label is a statement label or a procedure label.
-     */
-    if (symbol.node.kind === SyntaxKind.LabelPrefix) {
-      reporter.reportAlreadyDeclared(nameToken, symbol.name);
-    } else {
-      reporter.reportRepeatedDeclaration(nameToken, symbol.name);
+      /**
+       * Throw different errors depending on if the declaration is a label for a procedure or a declaration statement.
+       *
+       * TODO @didrikmunther: A LabelPrefix without a procedure option should throw a IBM1911I error instead.
+       * Currently, we don't have a way to know if a label is a statement label or a procedure label.
+       */
+      if (symbol.node.kind === SyntaxKind.LabelPrefix) {
+        reporter.reportAlreadyDeclared(nameToken, symbol.name);
+      } else {
+        reporter.reportRepeatedDeclaration(nameToken, symbol.name);
+      }
     }
   }
 }
@@ -733,7 +718,7 @@ export function linkingErrorsToDiagnostics(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-26T23:22:07.210Z
+                at 2026-01-28T13:11:28.856Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
