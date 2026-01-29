@@ -99,6 +99,15 @@ export namespace UriUtils {
     return startsWithLetter && !isAbsolute;
   }
 
+  // In our test environment, sometimes the toPath is evaluated as a single slash ("/"),
+  // which can break the logic and return a relative path when an absolute should be given.
+  function normalizeForWindowsTests(path: string) {
+    if (path.startsWith("/")) {
+      path = path.substring(1);
+    }
+    return path;
+  }
+
   export function relative(from: URI | string, to: URI | string): string {
     const { result: fromPath } = stringPath(from);
     const { result: toPath, driveLetter } = stringPath(to);
@@ -106,10 +115,12 @@ export namespace UriUtils {
     const fromParts = fromPath.split("/").filter((e) => e.length > 0);
     const toParts = toPath.split("/").filter((e) => e.length > 0);
 
-    const shareWorkspace = fromParts[0] === toParts[0];
-    // const shareWorkspace = fromParts.length - commonFolders > 1;
+    const shareWorkspace = Boolean(
+      fromParts.length && fromParts[0] === toParts[0],
+    );
     if (isWindows && !shareWorkspace) {
-      return driveLetter + toPath;
+      const windowsPath = driveLetter ? driveLetter + toPath : toPath;
+      return normalizeForWindowsTests(windowsPath);
     }
     let commonFolders = 0;
     for (; commonFolders < fromParts.length; commonFolders++) {
