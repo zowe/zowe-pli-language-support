@@ -82,7 +82,6 @@ export namespace UriUtils {
 
     // Remove drive letter if present
     if (driveLetter) {
-      // result = result.replace(new RegExp(driveLetter, "i"), "");
       result = result.replace(driveLetter, "");
     }
 
