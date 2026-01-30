@@ -104,7 +104,9 @@ verify.expectExclusiveDiagnosticsAt("GH@#_$I", []);
 verify.expectExclusiveDiagnosticsAt("GHIJKLMNO", [
   code.LSP.MemberValidation.ExceedsMaxLength,
 ]);
-verify.expectExclusiveDiagnosticsAt("#GH@#_$I", [code.LSP.MemberValidation.InvalidName]);
+verify.expectExclusiveDiagnosticsAt("#GH@#_$I", [
+  code.LSP.MemberValidation.InvalidName,
+]);
 verify.expectExclusiveDiagnosticsAt("_GH@#_$IJKLM", [
   code.LSP.MemberValidation.ExceedsMaxLength,
   code.LSP.MemberValidation.InvalidName,
