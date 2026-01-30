@@ -65,9 +65,10 @@ export function isPathSearch(obj: any): obj is PathSearch {
  * - Using `encodeURIComponent` on the entire path, which is incorrect
  */
 function filePathToFileURI(path: string): URI {
-  return URI.parse(
-    "file://" + path.split("/").map(encodeURIComponent).join("/"),
-  );
+  const stringPath = path.toLowerCase().includes("file:")
+    ? path.replace("file:", "")
+    : path;
+  return URI.file(stringPath);
 }
 
 /**
