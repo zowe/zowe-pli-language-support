@@ -10,6 +10,7 @@
  */
 
 import { URI, Utils } from "vscode-uri";
+import { capitalize } from "../preprocessor/util";
 export { URI };
 
 export namespace UriUtils {
@@ -140,6 +141,42 @@ export namespace UriUtils {
       toPart = toPart.replace("/", "");
     }
     return toPart;
+  }
+
+  /**
+   * Removes leading character and capitalizes the first letter of the resulting string.
+   * Typically used to normalize Windows drive letters (e.g., "/c:/path" → "C:/path").
+   */
+  export function handleDriveLetter(path: string): string {
+    path = path.substring(1);
+    return capitalize(path);
+  }
+
+  /**
+   * Computes a relative path from one location to another.
+   * Ensures the result is prefixed with `./` for relative paths or returns
+   * an absolute fallback when paths cannot be related (e.g., different drives on Windows).
+   */
+  export function relativeDisplayPath(
+    from: string,
+    to: string,
+    fallback = to,
+    isWindows = UriUtils.isWindows,
+  ): string {
+    let relative = UriUtils.relative(from, to);
+    if (UriUtils.isPathRelative(relative)) {
+      relative = "./" + relative;
+      return relative;
+    }
+    // WINDOWS
+    if (isWindows) {
+      return handleDriveLetter(fallback);
+    }
+    // UNIX
+    if (UriUtils.isUnixAbsolutePath(relative)) {
+      return fallback;
+    }
+    return relative;
   }
 
   export function normalize(uri: URI | string): string {

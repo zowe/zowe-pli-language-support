@@ -35,7 +35,6 @@ import {
 import * as inst from "./instructions";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import { capitalize } from "./util";
 
 interface Variable {
   name: string;
@@ -2042,8 +2041,6 @@ async function runIncludeInstruction(
   }
 }
 
-
-
 /**
  * Sets the filePath & relativeFilePath of the given item, if a filePath is provided
  * The relativeFilePath is calculated based on the currentUri in the context
@@ -2052,7 +2049,7 @@ async function runIncludeInstruction(
  * @param filePath File path to set, if null, no changes are made
  * @param context Used for currentUri to calculate relative paths
  */
-export function setFilePath(
+function setFilePath(
   item: { filePath: string | null; relativeFilePath: string | null },
   filePath: string | null,
   context: InterpreterContext,
@@ -2061,24 +2058,13 @@ export function setFilePath(
   item.filePath = filePath;
   if (!context.currentUri) return;
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-  let relative = UriUtils.relative(workspace, filePath);
-  if (UriUtils.isPathRelative(relative)) {
-    relative = "./" + relative;
-    item.relativeFilePath = relative;
-    return;
-  }
-  // WINDOWS
-  if (UriUtils.isWindows) {
-    item.relativeFilePath = handleDriveLetter(context.currentUri.path);
-    return;
-  }
-  // UNIX
-  if (UriUtils.isUnixAbsolutePath(relative)) {
-    item.relativeFilePath = context.currentUri.path;
-    return;
-  }
-
-  item.relativeFilePath = relative;
+  const isWindows = UriUtils.isWindows;
+  item.relativeFilePath = UriUtils.relativeDisplayPath(
+    workspace,
+    filePath,
+    context.currentUri.path,
+    isWindows,
+  );
 }
 
 /**
@@ -2123,15 +2109,6 @@ function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
     "memberName" in obj &&
     typeof obj.memberName === "string"
   );
-}
-
-/**
- * Removes leading character and capitalizes the first letter of the resulting string.
- * Typically used to normalize Windows drive letters (e.g., "/c:/path" → "C:/path").
- */
-export function handleDriveLetter(path: string): string {
-  path = path.substring(1);
-  return capitalize(path);
 }
 
 async function runInclude(
