@@ -21,12 +21,13 @@ import {
 } from "../../src/workspace/plugin-configuration-provider";
 import { URI } from "../../src/utils/uri";
 import path from "path";
+import { capitalize } from "../../src/preprocessor/util";
 
 function toCanonicalPath(filePath: string): string {
   let normalized = path.normalize(filePath).replace(/\\/g, "/");
   // Windows: ensure capital drive letter
   if (/^[a-z]:\//.test(normalized)) {
-    normalized = normalized[0].toUpperCase() + normalized.slice(1);
+    normalized = capitalize(normalized);
   }
   return normalized;
 }

@@ -35,6 +35,7 @@ import {
 import * as inst from "./instructions";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { capitalize } from "./util";
 
 interface Variable {
   name: string;
@@ -2041,14 +2042,7 @@ async function runIncludeInstruction(
   }
 }
 
-/**
- * Removes leading character and capitalizes the first letter of the resulting string.
- * Typically used to normalize Windows drive letters (e.g., "/c/path" → "C/path").
- */
-function handleDriveLetter(path: string): string {
-  path = path.substring(1);
-  return path[0].toUpperCase() + path.slice(1);
-}
+
 
 /**
  * Sets the filePath & relativeFilePath of the given item, if a filePath is provided
@@ -2129,6 +2123,15 @@ function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
     "memberName" in obj &&
     typeof obj.memberName === "string"
   );
+}
+
+/**
+ * Removes leading character and capitalizes the first letter of the resulting string.
+ * Typically used to normalize Windows drive letters (e.g., "/c:/path" → "C:/path").
+ */
+export function handleDriveLetter(path: string): string {
+  path = path.substring(1);
+  return capitalize(path);
 }
 
 async function runInclude(
