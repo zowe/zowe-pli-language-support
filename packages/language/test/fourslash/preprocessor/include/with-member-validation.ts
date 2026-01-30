@@ -64,48 +64,48 @@
 //// DECLARE V9 FIXED;
 
 // @filename: main.pli
-//// %INCLUDE <|1:m12345678|>;
-//// %INCLUDE <|2:m1234567|>;
-//// %INCLUDE <|3:A1@#_$|>;
+//// %INCLUDE <|m12345678|>;
+//// %INCLUDE <|m1234567|>;
+//// %INCLUDE <|A1@#_$|>;
 //// // bad include
-//// %INCLUDE <|4:_A1@#|>;
+//// %INCLUDE <|_A1@#|>;
 //// // legitimate file include
-//// %INCLUDE <|5:__legitimatefile|>;
-//// %INCLUDE ABC.DEF(<|6:GHI|>);
-//// %INCLUDE ABC.DEF(<|7:GH@#_$I|>);
-//// %INCLUDE ABC.DEF(<|8:GHIJKLMNO|>);
-//// %INCLUDE ABC.DEF(<|9:#GH@#_$I|>);
-//// %INCLUDE ABC.DEF(<|10:_GH@#_$IJKLM|>);
+//// %INCLUDE <|__legitimatefile|>;
+//// %INCLUDE ABC.DEF(<|GHI|>);
+//// %INCLUDE ABC.DEF(<|GH@#_$I|>);
+//// %INCLUDE ABC.DEF(<|GHIJKLMNO|>);
+//// %INCLUDE ABC.DEF(<|#GH@#_$I|>);
+//// %INCLUDE ABC.DEF(<|_GH@#_$IJKLM|>);
 
 // verify 1 diagnostic on the first include only
-verify.expectExclusiveDiagnosticsAt(1, [
+verify.expectExclusiveDiagnosticsAt("m12345678", [
   code.LSP.MemberValidation.ExceedsMaxLength,
 ]);
 // no diagnostics on the second include
-verify.expectExclusiveDiagnosticsAt(2, []);
+verify.expectExclusiveDiagnosticsAt("m1234567", []);
 // no diagnostics on the 3rd include
-verify.expectExclusiveDiagnosticsAt(3, []);
+verify.expectExclusiveDiagnosticsAt("A1@#_$", []);
 
 // verify 2 diagnostics on the 4th include
 // one for invalid starting char, and another for unresolved include
-verify.expectExclusiveDiagnosticsAt(4, [
+verify.expectExclusiveDiagnosticsAt("_A1@#", [
   code.LSP.MemberValidation.InvalidName,
   code.Severe.IBM1848I,
 ]);
 
 // verify no diagnostics on the legitimate file include
-verify.expectExclusiveDiagnosticsAt(5, []);
+verify.expectExclusiveDiagnosticsAt("__legitimatefile", []);
 
 // verify no diagnostic on the member with valid ddnames.
-verify.expectExclusiveDiagnosticsAt(6, []);
-verify.expectExclusiveDiagnosticsAt(7, []);
+verify.expectExclusiveDiagnosticsAt("GHI", []);
+verify.expectExclusiveDiagnosticsAt("GH@#_$I", []);
 
 // verify diagnostics for members with ddnames: exceeding lenght (8), invalid name (9), both (10)
-verify.expectExclusiveDiagnosticsAt(8, [
+verify.expectExclusiveDiagnosticsAt("GHIJKLMNO", [
   code.LSP.MemberValidation.ExceedsMaxLength,
 ]);
-verify.expectExclusiveDiagnosticsAt(9, [code.LSP.MemberValidation.InvalidName]);
-verify.expectExclusiveDiagnosticsAt(10, [
+verify.expectExclusiveDiagnosticsAt("#GH@#_$I", [code.LSP.MemberValidation.InvalidName]);
+verify.expectExclusiveDiagnosticsAt("_GH@#_$IJKLM", [
   code.LSP.MemberValidation.ExceedsMaxLength,
   code.LSP.MemberValidation.InvalidName,
 ]);
