@@ -40,10 +40,7 @@ export namespace UriUtils {
    *
    * @returns Object with normalized path and extracted drive letter
    */
-  function processDriveLetter(
-    path: string,
-    returnLowerCase = false,
-  ): {
+  function processDriveLetter(path: string): {
     path: string;
     drive: string | null;
   } {
@@ -51,10 +48,8 @@ export namespace UriUtils {
     if (/^\/[a-zA-Z]:\//.test(path)) {
       const drive = path.substring(1, 3); // Extract "C:" and lowercase
       return {
-        path: returnLowerCase
-          ? path.substring(1).toLowerCase()
-          : path.substring(1), // Remove leading slash
-        drive: returnLowerCase ? drive.toLowerCase() : drive,
+        path: path.substring(1), // Remove leading slash
+        drive: drive,
       };
     }
 
@@ -81,14 +76,13 @@ export namespace UriUtils {
     let result = typeof path === "string" ? URI.parse(path).path : path.path;
 
     // Normalize possible leading slash before Windows drive and isolate windows drive letter if present
-    const { path: normalizedPath, drive: driveLetter } = processDriveLetter(
-      result,
-      true,
-    );
+    const { path: normalizedPath, drive: driveLetter } =
+      processDriveLetter(result);
     result = normalizedPath;
 
     // Remove drive letter if present
     if (driveLetter) {
+      // result = result.replace(new RegExp(driveLetter, "i"), "");
       result = result.replace(driveLetter, "");
     }
 
