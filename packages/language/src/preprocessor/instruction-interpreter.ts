@@ -2228,14 +2228,6 @@ function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
   );
 }
 
-/**
- * Encodes each segment of a URI path to ensure special characters are properly escaped.
- */
-function encodeUri(input: URI): string {
-  const encodedPath = input.path.split("/").map(encodeURIComponent).join("/");
-  return URI.parse(encodedPath).toString();
-}
-
 async function runInclude(
   item: IncludeItem,
   context: InterpreterContext,
@@ -2295,7 +2287,7 @@ async function runInclude(
   }
 
   try {
-    const document = await TextDocuments.get(encodeUri(uri));
+    const document = await TextDocuments.get(uri);
 
     if (!document) {
       throw new Error("Document not found after URI resolution.");
