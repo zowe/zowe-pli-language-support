@@ -53,16 +53,8 @@ export function isPathSearch(obj: any): obj is PathSearch {
 
 /**
  * Converts a filesystem path into a valid `file://` URI.
- *
- * This function safely encodes the path so it can be parsed as a URI
- * without changing its structure. Each path segment is encoded
- * individually using `encodeURIComponent`, while path separators (`/`)
- * are preserved.
- *
- * This avoids common URI parsing issues, such as:
- * - Unencoded `#` characters being interpreted as fragment delimiters
- * - Over-encoding `/` and `:` (which would break the URI structure)
- * - Using `encodeURIComponent` on the entire path, which is incorrect
+ * Strips any existing `file:` prefix before conversion.
+ * The resulting URI properly encodes special characters while preserving path structure.
  */
 function filePathToFileURI(path: string): URI {
   const stringPath = path.toLowerCase().includes("file:")
