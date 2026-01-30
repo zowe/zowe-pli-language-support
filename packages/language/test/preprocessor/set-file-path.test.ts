@@ -9,27 +9,12 @@
  *
  */
 import { describe, test, expect, beforeEach } from "vitest";
-// import { TextDocument } from "vscode-languageserver-textdocument";
-// import {
-//   VirtualFileSystemProvider,
-//   setFileSystemProvider,
-// } from "../../src/workspace/file-system-provider";
 import {
   PluginConfigurationProvider,
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
 import { URI, UriUtils } from "../../src/utils/uri";
 import path from "path";
-// import { capitalize } from "../../src/preprocessor/util";
-
-// function toCanonicalPath(filePath: string): string {
-//   let normalized = path.normalize(filePath).replace(/\\/g, "/");
-//   // Windows: ensure capital drive letter
-//   if (/^[a-z]:\//.test(normalized)) {
-//     normalized = capitalize(normalized);
-//   }
-//   return normalized;
-// }
 
 describe("setFilePath", () => {
   let pluginConfig: PluginConfigurationProvider;
@@ -50,10 +35,9 @@ describe("setFilePath", () => {
       workspaceRoot,
       abstFile.path,
     );
-    // const expected = toCanonicalPath(URI.file(absolutePath).fsPath);
     const expected = ["darwin", "linux"].includes(process.platform)
       ? "/absolute-folder/absolute.pli"
-      : "c:/absolute-folder/absolute.pli";
+      : "C:/absolute-folder/absolute.pli";
 
     expect(actualPath).toBe(expected);
   });
