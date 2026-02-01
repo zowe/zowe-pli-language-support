@@ -25,6 +25,7 @@ import {
   isCicsExecStatement,
   isCicsResponseStatement,
 } from "./cics-parser";
+import { CompilerOptions } from "../preprocessor/compiler-options/options";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -34,19 +35,38 @@ export type PreprocessorParserResult = {
 
 export function preprocessorParse(
   state: ParserState,
+  compilerOptions?: CompilerOptions,
 ): PreprocessorParserResult {
   const statements: ast.Statement[] = [];
+
+  // Select the appropriate token type index for preprocessor statements
+  // depending on the INCONLY option.
+  const incOnly = compilerOptions?.macroOptions?.incOnly;
+  const parseTokenTypeIdx = incOnly ? NaN : t.Percent.tokenTypeIdx;
+  const parseTokenTypeIdxWithIncOnly = incOnly ? t.Percent.tokenTypeIdx : NaN;
 
   let index = state.index;
   let token = state.token;
   while (token) {
     let stmt: ast.Statement | null = null;
     let isTokenStatement = true;
+
     switch (token.tokenTypeIdx) {
-      case t.Percent.tokenTypeIdx:
+      case parseTokenTypeIdx:
         isTokenStatement = false;
         // Parse a preprocessor statement
         stmt = statement(state);
+        break;
+      case parseTokenTypeIdxWithIncOnly:
+        const nextToken = state.peek(2);
+        const isInclude =
+          nextToken &&
+          (nextToken.tokenTypeIdx === t.INCLUDE.tokenTypeIdx ||
+            nextToken.tokenTypeIdx === t.INSCAN.tokenTypeIdx);
+        if (isInclude) {
+          isTokenStatement = false;
+          stmt = statement(state);
+        }
         break;
       case t.INCLUDE_ALT.tokenTypeIdx:
         isTokenStatement = false;
