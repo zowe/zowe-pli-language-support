@@ -1,0 +1,3 @@
+ DCL 1 A, 2 B FIXED;
+ DCL 1 A, 2 B FIXED;
+ B = 1; //<-- B cannot be "fixed" by changing to A.B
