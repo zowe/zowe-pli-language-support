@@ -228,7 +228,7 @@ function assignReference(
   reference.node = resolved.node;
 }
 
-const isProcedureParameterReference = (
+export const isProcedureParameterReference = (
   reference: Reference,
 ): reference is Reference<ProcedureParameter> =>
   reference.owner.kind === SyntaxKind.ProcedureParameter;
@@ -278,7 +278,11 @@ function getMatchingSymbols(
 
   const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
   if (isAmbiguous) {
-    reporter.reportAmbiguousReference(reference, getFullName());
+    reporter.reportAmbiguousReference(
+      reference,
+      getFullName(),
+      explicitlyDeclaredSymbols,
+    );
   }
 
   if (explicitlyDeclaredSymbols.length > 0) {

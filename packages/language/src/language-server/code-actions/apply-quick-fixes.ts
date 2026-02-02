@@ -141,11 +141,76 @@ export function quickFixUppercaseText(
   return action;
 }
 
+export type AmbiguousReferenceData = {
+  symbols: string[][];
+  uri: string;
+};
+
+export function quickFixResolveAmbiguousReference(
+  diagnostic: Diagnostic,
+): CodeAction[] {
+  const { symbols, uri } = diagnostic.data as AmbiguousReferenceData;
+  let current = symbols.map(
+    (sym) => [sym.slice(0, -1), sym[sym.length - 1]] as const,
+  );
+  const names = new Set<string>();
+  do {
+    names.clear();
+    for (const [, name] of current) {
+      names.add(name);
+    }
+    if (
+      names.size === current.length ||
+      current.every(([parent]) => parent.length === 0)
+    ) {
+      break;
+    }
+    current = current.map(([parent, name]) => {
+      if (parent.length === 0) {
+        return [[], name] as const;
+      }
+      return [
+        parent.slice(0, -1),
+        `${parent[parent.length - 1]}.${name}`,
+      ] as const;
+    });
+  } while (true);
+  if (names.size !== current.length) {
+    return [];
+  } else {
+    const actions: CodeAction[] = [];
+    //Example for a `current` list containing suffixes(*): "AA.BB.CC", *"BB.CC", *"CC"
+    //Here "CC" is suffix of "BB.CC", which is suffix of "AA.BB.CC". Here it is only save to suggest "AA.BB.CC".
+    //We filter out all real suffixes. If all members are suffixes of each other, there are no suggestions.
+    const isSuffixOf = (suffix: string, str: string) =>
+      str.endsWith("." + suffix) || str === suffix;
+    const whereNameIsNotASuffix = (name: string, index: number): boolean =>
+      !current.some(([_, n], i) => i !== index && isSuffixOf(name, n));
+    for (const [, fullName] of current.filter(([, name], index) =>
+      whereNameIsNotASuffix(name, index),
+    )) {
+      const action: CodeAction = {
+        title: `Change to "${fullName}"`,
+        kind: CodeActionKind.QuickFix,
+        diagnostics: [diagnostic],
+        edit: {
+          changes: {
+            [uri]: [TextEdit.replace(diagnostic.range, fullName)],
+          },
+        },
+      };
+      actions.push(action);
+    }
+    return actions;
+  }
+}
+
 export async function applyQuickFixes(
   diagnostics: Diagnostic[],
 ): Promise<CodeAction[] | undefined> {
   const actions: CodeAction[] = [];
   // PLI CODES LIST
+  const CODE_AMBIGUOUS_REFERENCE = fullCode(PLICodes.Severe.IBM1881I);
   const CODE_UNRESOLVED_INCLUDE = fullCode(PLICodes.Severe.IBM1848I); // The INCLUDE file could not be found
   const CODE_MISSING_CONFIG = fullCode(
     LspCodes.IncludeResolution.MissingConfiguration,
@@ -158,6 +223,9 @@ export async function applyQuickFixes(
     }
     let action: CodeAction | undefined;
     switch (diagnostic.code) {
+      case CODE_AMBIGUOUS_REFERENCE:
+        actions.push(...quickFixResolveAmbiguousReference(diagnostic));
+        break;
       case CODE_UNRESOLVED_INCLUDE:
         action = await quickFixResolveInclude(diagnostic);
         if (action) actions.push(action);
