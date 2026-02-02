@@ -300,6 +300,25 @@ export const EnvironmentOptionValueName =
   registerCombination<ast.EnvironmentOptionValueName>(
     "EnvironmentOptionValueName",
   );
+
+/**
+ * Combines the given token types into a lookup table for fast lookaheads.
+ */
+export function combine(...tokenTypes: TokenType[]): boolean[] {
+  const result: boolean[] = [];
+  for (const token of tokenTypes) {
+    const id = token.tokenTypeIdx ?? -1;
+    if (id >= 0) {
+      result[id] = true;
+    }
+    if (token.categoryMatches) {
+      for (const category of token.categoryMatches) {
+        result[category] = true;
+      }
+    }
+  }
+  return result;
+}
 // Custom functions
 
 export function escapeRegExp(value: string): string {
