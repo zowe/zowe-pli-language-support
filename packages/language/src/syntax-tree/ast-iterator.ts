@@ -737,8 +737,8 @@ export function forEachNode(
     case SyntaxKind.PageFormatItem:
       break;
     case SyntaxKind.Parenthesis:
-      if (node.value) {
-        action(node.value);
+      for (const value of node.expressions) {
+        action(value);
       }
       if (node.do) {
         action(node.do);

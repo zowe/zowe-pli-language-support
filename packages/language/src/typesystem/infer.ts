@@ -200,10 +200,11 @@ export class DefaultTypeInferer implements TypeInferer {
         //TODO implement
         return TypeDescriptions.Unknown();
       case ast.SyntaxKind.Parenthesis: {
-        if (!expression.value) {
+        if (expression.expressions.length === 0) {
           return TypeDescriptions.Unknown();
         }
-        return this.inferType(expression.value, compilationUnit);
+        // Infer type of the first expression inside the parenthesis
+        return this.inferType(expression.expressions[0], compilationUnit);
       }
       case ast.SyntaxKind.Literal: {
         if (!expression.value) {

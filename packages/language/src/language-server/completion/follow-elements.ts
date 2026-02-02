@@ -178,6 +178,7 @@ const expressionFollowKinds = new Set([
   CstNodeKind.InitAcrossExpression_Comma,
   CstNodeKind.EnvironmentOptionItem_Comma,
   CstNodeKind.DataSpecificationDataList_Comma,
+  CstNodeKind.ParenthesizedExpression_Comma,
 
   // After specific keywords
   CstNodeKind.ActivateStatement_ACTIVATE,
