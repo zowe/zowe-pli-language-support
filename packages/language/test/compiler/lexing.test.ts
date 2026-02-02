@@ -43,7 +43,7 @@ describe("Lexer uses compiler options", () => {
   test("Should lex correct OR without compiler option", async () => {
     const doc = await parseStmts(`
   DECLARE VAR FIXED;
-  VAR = 1 | 2;
+  VAR = 1|2;
   VAR |= 2;
   VAR = 1 || 0;
   VAR ||= 0;

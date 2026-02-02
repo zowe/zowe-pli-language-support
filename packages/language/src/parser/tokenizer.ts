@@ -297,7 +297,6 @@ function tokenizeOrSymbol(context: TokenizerContext): tokens.Token | undefined {
     context.advance(2, false);
     return context.createTokenInstance(tokens.PipeEquals);
   }
-  context.index++;
   context.advance(1, false);
   return context.createTokenInstance(tokens.Pipe);
 }
