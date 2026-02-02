@@ -789,8 +789,8 @@ export class TestBuilder {
     return this;
   }
 
-  expectNoParserDiagnostics(): TestBuilder {
-    const diagnostics = this.unit.diagnostics.get(DiagnosticCategory.Parser);
+  expectNoCategoryDiagnostics(category: DiagnosticCategory): TestBuilder {
+    const diagnostics = this.unit.diagnostics.get(category);
     if (diagnostics.length > 0) {
       const message = diagnostics
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
