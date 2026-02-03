@@ -732,11 +732,25 @@ export class PluginConfigurationProvider {
    * @param libUri URI of the including file (likely a library file)
    * @returns First process group config that includes a matching lib path, or undefined if not found
    */
+  // public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
+  //   const dirname = UriUtils.basename(UriUtils.dirname(libUri));
+  //   for (const config of this.processGroupConfigs.values()) {
+  //     if (config.$computedLibsSet.has(dirname)) {
+  //       return config;
+  //     }
+  //   }
+  //   return undefined;
+  // }
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
-      if (config.$computedLibsSet.has(dirname)) {
-        return config;
+      for (const lib of config.$computedLibsSet) {
+        const matches = !UriUtils.isPathRelative(lib)
+          ? UriUtils.basename(URI.parse(lib)) === dirname
+          : lib === dirname;
+        if (matches) {
+          return config;
+        }
       }
     }
     return undefined;
