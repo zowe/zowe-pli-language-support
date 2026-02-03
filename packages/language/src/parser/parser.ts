@@ -28,6 +28,10 @@ import {
 } from "./abstract-parser";
 import { Severe } from "../validation/pli-codes";
 import { Diagnostic, Severity } from "../language-server/types";
+import {
+  performAssignmentLookahead,
+  performEndStatementLookahead,
+} from "./parser-lookahead";
 
 export function parsePli(input: tokens.Token[]): {
   tree: ast.Program;
@@ -243,7 +247,7 @@ const options = rule(
   },
 );
 
-const optionsItem = orRule<ast.OptionsItem>(
+const optionsItem = orRule<ast.OptionsItem, []>(
   () => simpleOptionsItem,
   () => linkageOptionsItem,
   () => CMPATOptionsItem,
@@ -653,6 +657,8 @@ const statement = rule(
   (state: ParserState): ast.Statement => {
     const element = ast.createStatement();
 
+    element.startToken = state.token ?? null;
+
     if (state.canConsumeFirst(conditionPrefix.first())) {
       element.condition = conditionPrefix.rule(state);
     }
@@ -669,6 +675,8 @@ const statement = rule(
     } else {
       element.value = unit.rule(state);
     }
+
+    element.endToken = state.last ?? null;
 
     state.recover(() => performRecovery(state));
 
@@ -692,7 +700,7 @@ function performRecovery(state: ParserState): RecoveryResult {
   return RecoveryResult.Continue;
 }
 
-const unit = orRule<ast.Unit>(
+const unit = orRule<ast.Unit, []>(
   () => allocateStatement,
   () => assertStatement,
   () => attachStatement,
@@ -792,7 +800,7 @@ const allocatedVariable = rule(
       element.level = levelToken!.image;
     }
 
-    element.var = referenceItem.rule(state);
+    element.var = referenceItem.rule(state, ast.ReferenceType.Variable);
 
     if (state.canConsumeFirst(allocateAttribute.first())) {
       element.attribute = allocateAttribute.rule(state);
@@ -802,7 +810,7 @@ const allocatedVariable = rule(
   },
 );
 
-const allocateAttribute = orRule<ast.AllocateAttribute>(
+const allocateAttribute = orRule<ast.AllocateAttribute, []>(
   () => allocateDimension,
   () => allocateType,
   () => allocateLocationReferenceIn,
@@ -1674,6 +1682,7 @@ const defineOrdinalStatement = rule(
       CstNodeKind.DefineOrdinalStatement_DEFINE,
       tokens.DEFINE,
     );
+    element.startToken = defineToken ?? null;
     if (defineToken?.image.charAt(0).toUpperCase() === "X") {
       element.xDefine = true;
     }
@@ -1757,7 +1766,7 @@ const defineOrdinalStatement = rule(
       }
     }
 
-    state.consume(
+    element.endToken = state.consume(
       element,
       CstNodeKind.DefineOrdinalStatement_Semicolon,
       tokens.Semicolon,
@@ -2178,7 +2187,7 @@ const doStatement = rule(
   },
 );
 
-const doType2 = orRule<ast.DoType2>(
+const doType2 = orRule<ast.DoType2, []>(
   () => doWhile,
   () => doUntil,
 );
@@ -2624,7 +2633,7 @@ const formatListItemLevel = rule(
   },
 );
 
-const formatItem = orRule<ast.FormatItem>(
+const formatItem = orRule<ast.FormatItem, []>(
   () => AFormatItem,
   () => BFormatItem,
   () => CFormatItem,
@@ -3462,7 +3471,7 @@ const onStatement = rule(
   },
 );
 
-const condition = orRule<ast.Condition>(
+const condition = orRule<ast.Condition, []>(
   () => keywordCondition,
   () => namedCondition,
   () => fileReferenceCondition,
@@ -3920,6 +3929,39 @@ const qualifyStatement = rule(
       tokens.Semicolon,
     );
 
+    return element;
+  },
+);
+
+const reservedAttribute = rule(
+  sequence(tokens.RESERVED),
+  (state: ParserState): ast.ReservedAttribute => {
+    const element = ast.createReservedAttribute();
+
+    state.consume(
+      element,
+      CstNodeKind.ReservedAttribute_RESERVED,
+      tokens.RESERVED,
+    );
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.ReservedAttribute_OpenParen,
+        tokens.OpenParen,
+      )
+    ) {
+      const importedToken = state.consume(
+        element,
+        CstNodeKind.ReservedAttribute_Imported,
+        tokens.IMPORTED,
+      );
+      element.importedToken = importedToken;
+      state.consume(
+        element,
+        CstNodeKind.ReservedAttribute_CloseParen,
+        tokens.CloseParen,
+      );
+    }
     return element;
   },
 );
@@ -4667,7 +4709,7 @@ const initAcrossExpression = rule(
   },
 );
 
-const initialAttributeItem = orRule<ast.InitialAttributeItem>(
+const initialAttributeItem = orRule<ast.InitialAttributeItem, []>(
   () => initialAttributeItemStar,
   () => initialAttributeSpecification,
 );
@@ -4726,11 +4768,13 @@ const initialAttributeSpecification = rule(
   },
 );
 
-const initialAttributeSpecificationIteration =
-  orRule<ast.InitialAttributeSpecificationIteration>(
-    () => initialAttributeItemStar,
-    () => initialAttributeSpecificationIterationValue,
-  );
+const initialAttributeSpecificationIteration = orRule<
+  ast.InitialAttributeSpecificationIteration,
+  []
+>(
+  () => initialAttributeItemStar,
+  () => initialAttributeSpecificationIterationValue,
+);
 
 const initialAttributeSpecificationIterationValue = rule(
   sequence(tokens.OpenParen),
@@ -4829,6 +4873,7 @@ const declaredItem = rule(
     ) {
       const levelToken = state.last;
       if (levelToken) {
+        element.startToken = levelToken;
         element.levelToken = levelToken;
         element.level = parseInt(levelToken.image, 10);
       }
@@ -4836,11 +4881,17 @@ const declaredItem = rule(
 
     // Main content: variable, wildcard, or nested items
     if (state.canConsumeFirst(declaredVariable.first())) {
+      if (element.startToken == null) {
+        element.startToken = state.token!;
+      }
       const variable = declaredVariable.rule(state);
       variable && element.elements.push(variable);
     } else if (
       state.tryConsume(element, CstNodeKind.WildcardItem_Asterisk, tokens.Star)
     ) {
+      if (element.startToken == null) {
+        element.startToken = state.last!;
+      }
       const wildcard: ast.WildcardItem = {
         kind: ast.SyntaxKind.WildcardItem,
         container: null,
@@ -4854,6 +4905,9 @@ const declaredItem = rule(
         tokens.OpenParen,
       )
     ) {
+      if (element.startToken == null) {
+        element.startToken = state.last!;
+      }
       // Nested items in parentheses
       const lhs = declaredItem.rule(state);
       lhs && element.elements.push(lhs);
@@ -4884,6 +4938,8 @@ const declaredItem = rule(
       const attr = declarationAttribute.rule(state);
       attr && element.attributes.push(attr);
     }
+
+    element.endToken = state.last || null;
 
     return element;
   },
@@ -4927,14 +4983,15 @@ const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAtt
     () => typeAttribute,
     () => genericAttribute,
     () => indForAttribute,
+    () => reservedAttribute,
   ];
 
-const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute>(
+const defaultDeclarationAttribute = orRule<ast.DefaultDeclarationAttribute, []>(
   ...commonDeclarationAttributes,
   () => defaultValueAttribute,
 );
 
-const declarationAttribute = orRule<ast.DeclarationAttribute>(
+const declarationAttribute = orRule<ast.DeclarationAttribute, []>(
   ...commonDeclarationAttributes,
   () => valueAttribute,
 );
@@ -5413,7 +5470,11 @@ const likeAttribute = rule(
   (state: ParserState): ast.LikeAttribute => {
     const element = ast.createLikeAttribute();
 
-    state.consume(element, CstNodeKind.LikeAttribute_LIKE, tokens.LIKE);
+    element.likeToken = state.consume(
+      element,
+      CstNodeKind.LikeAttribute_LIKE,
+      tokens.LIKE,
+    );
     element.reference = locatorCall.rule(state);
 
     return element;
@@ -5428,13 +5489,12 @@ const handleAttribute = rule(
     state.consume(element, CstNodeKind.HandleAttribute_HANDLE, tokens.HANDLE);
 
     // Optional size in parentheses
-    if (
-      state.tryConsume(
+    if (state.canConsume(tokens.OpenParen, tokens.NUMBER)) {
+      state.consume(
         element,
         CstNodeKind.HandleAttribute_OpenParenSize,
         tokens.OpenParen,
-      )
-    ) {
+      );
       const sizeToken = state.consume(
         element,
         CstNodeKind.HandleAttribute_SizeNumber,
@@ -5513,14 +5573,14 @@ const dimensions = rule(
 
     // Optional dimension bounds
     if (state.canConsumeFirst(dimensionBound.first())) {
-      const lhs = dimensionBound.rule(state);
+      const lhs = dimensionBound.rule(state, ast.ReferenceType.Variable);
       lhs && element.dimensions.push(lhs);
       const { inc } = state.createLoopContext("Dimensions");
       while (
         state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
       ) {
         inc();
-        const rhs = dimensionBound.rule(state);
+        const rhs = dimensionBound.rule(state, ast.ReferenceType.Variable);
         rhs && element.dimensions.push(rhs);
       }
     }
@@ -5535,20 +5595,59 @@ const dimensions = rule(
   },
 );
 
+const dimensionsWithTypes = rule(
+  sequence(tokens.OpenParenColon),
+  (state: ParserState): ast.Dimensions => {
+    const element = ast.createDimensions();
+
+    const openToken = state.consume(
+      element,
+      CstNodeKind.Dimensions_OpenParenColon,
+      tokens.OpenParenColon,
+    );
+    element.token = openToken;
+
+    // Optional dimension bounds
+    if (state.canConsumeFirst(dimensionBound.first())) {
+      const lhs = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
+      lhs && element.dimensions.push(lhs);
+      const { inc } = state.createLoopContext("DimensionsWithTypes");
+      while (
+        state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+      ) {
+        inc();
+        const rhs = dimensionBound.rule(
+          state,
+          ast.ReferenceType.TypeOrVariable,
+        );
+        rhs && element.dimensions.push(rhs);
+      }
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.Dimensions_CloseParenColon,
+      tokens.CloseParenColon,
+    );
+
+    return element;
+  },
+);
+
 const dimensionBound = rule(
   () => bound.first(),
-  (state: ParserState): ast.DimensionBound => {
+  (state: ParserState, refType: ast.ReferenceType): ast.DimensionBound => {
     const element = ast.createDimensionBound();
 
     // First bound is the upper bound
-    element.upper = bound.rule(state);
+    element.upper = bound.rule(state, refType);
 
     // Optional colon followed by lower bound
     if (
       state.tryConsume(element, CstNodeKind.DimensionBound_Colon, tokens.Colon)
     ) {
       element.lower = element.upper; // Move upper to lower
-      element.upper = bound.rule(state); // Parse new upper
+      element.upper = bound.rule(state, refType); // Parse new upper
     }
 
     return element;
@@ -5557,7 +5656,7 @@ const dimensionBound = rule(
 
 const bound = rule(
   choice(sequence(tokens.Star), () => expression.first()),
-  (state: ParserState): ast.Bound => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.Bound => {
     const element = ast.createBound();
 
     if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
@@ -5565,7 +5664,7 @@ const bound = rule(
       element.expression = "*";
     } else {
       // Expression bound
-      element.expression = expression.rule(state);
+      element.expression = expression.rule(state, refType);
 
       // Optional REFER clause
       if (state.tryConsume(element, CstNodeKind.Bound_REFER, tokens.REFER)) {
@@ -5597,19 +5696,16 @@ const environmentAttribute = rule(
 
     // Parse zero or more environment attribute items
     const { inc } = state.createLoopContext("EnvironmentAttribute");
-    while (
-      !state.eof &&
-      state.canConsumeFirst(environmentAttributeItem.first())
-    ) {
+    while (!state.eof && state.canConsumeFirst(environmentOptionItem.first())) {
       inc();
-      const item = environmentAttributeItem.rule(state);
+      const item = environmentOptionItem.rule(state);
       item && element.items.push(item);
 
       // TODO: research, This does not align to the language spec
       // Optional comma between items
       state.tryConsume(
         element,
-        CstNodeKind.EnvironmentAttributeItem_Comma,
+        CstNodeKind.EnvironmentOptionItem_Comma,
         tokens.Comma,
       );
     }
@@ -5624,61 +5720,119 @@ const environmentAttribute = rule(
   },
 );
 
-const environmentAttributeItem = rule(
-  sequence(tokens.ID),
-  (state: ParserState): ast.EnvironmentAttributeItem => {
-    const element = ast.createEnvironmentAttributeItem();
+const environmentOptionItem = orRule<ast.EnvironmentOptionItem, []>(
+  () => environmentOptionOrganization,
+  () => environmentOptionRecordFormat,
+  () => environmentOptionSymbol,
+  () => environmentOptionValue,
+);
 
-    const envToken = state.consume(
+const environmentOptionSymbol = rule(
+  sequence(tokens.EnvironmentOptionSymbolName),
+  (state: ParserState): ast.EnvironmentOptionSymbol => {
+    const element = ast.createEnvironmentOptionSymbol();
+
+    element.token = state.consume(
       element,
-      CstNodeKind.EnvironmentAttributeItem_Environment,
-      tokens.ID,
+      CstNodeKind.EnvironmentOptionSymbol_Name,
+      tokens.EnvironmentOptionSymbolName,
     );
-    if (envToken) {
-      element.environment = envToken.image;
-    }
-
-    // Optional arguments in parentheses
-    if (
-      state.tryConsume(
-        element,
-        CstNodeKind.EnvironmentAttributeItem_OpenParen,
-        tokens.OpenParen,
-      )
-    ) {
-      // Optional expression list
-      if (state.canConsumeFirst(expression.first())) {
-        const lhs = expression.rule(state);
-        lhs && element.args.push(lhs);
-        const { inc } = state.createLoopContext("EnvironmentAttributeItem");
-        while (
-          !state.eof &&
-          (state.canConsume(tokens.Comma) ||
-            state.canConsumeFirst(expression.first()))
-        ) {
-          inc();
-          // Optional comma before next expression
-          state.tryConsume(
-            element,
-            CstNodeKind.EnvironmentAttributeItem_Comma,
-            tokens.Comma,
-          );
-
-          if (state.canConsumeFirst(expression.first())) {
-            const rhs = expression.rule(state);
-            rhs && element.args.push(rhs);
-          } else {
-            break; //TODO is this correct?! Very weird behavior
-          }
-        }
-      }
-
-      state.consume(
-        element,
-        CstNodeKind.EnvironmentAttributeItem_CloseParen,
-        tokens.CloseParen,
+    if (element.token) {
+      element.name = tokens.EnvironmentOptionSymbolName.mapToEnumLiteral(
+        element.token.tokenTypeIdx,
       );
     }
+
+    return element;
+  },
+);
+
+const environmentOptionValue = rule(
+  sequence(tokens.EnvironmentOptionValueName),
+  (state: ParserState): ast.EnvironmentOptionValue => {
+    const element = ast.createEnvironmentOptionValue();
+
+    element.token = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_Name,
+      tokens.EnvironmentOptionValueName,
+    );
+    if (element.token) {
+      element.name = tokens.EnvironmentOptionValueName.mapToEnumLiteral(
+        element.token.tokenTypeIdx,
+      );
+    }
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const expr = expression.rule(state);
+    expr && (element.value = expr);
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionValue_CloseParen,
+      tokens.CloseParen,
+    );
+
+    return element;
+  },
+);
+
+const environmentOptionRecordFormat = rule(
+  sequence(tokens.RecordFormat),
+  (state: ParserState): ast.EnvironmentOptionRecordFormat => {
+    const element = ast.createEnvironmentOptionRecordFormat();
+
+    const token = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionRecordFormat_RECORDFORMAT,
+      tokens.RecordFormat,
+    );
+    if (token) {
+      element.token = token;
+      element.format = tokens.RecordFormat.mapToEnumLiteral(token.tokenTypeIdx);
+    }
+
+    return element;
+  },
+);
+
+const environmentOptionOrganization = rule(
+  sequence(tokens.ORGANIZATION),
+  (state: ParserState): ast.EnvironmentOptionOrganization => {
+    const element = ast.createEnvironmentOptionOrganization();
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_ORGANIZATION,
+      tokens.ORGANIZATION,
+    );
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_OpenParen,
+      tokens.OpenParen,
+    );
+
+    const orgToken = state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_Organization,
+      tokens.Organization,
+    );
+    if (orgToken) {
+      element.token = orgToken;
+      element.organization = tokens.Organization.mapToEnumLiteral(
+        orgToken.tokenTypeIdx,
+      );
+    }
+
+    state.consume(
+      element,
+      CstNodeKind.EnvironmentOptionOrganization_CloseParen,
+      tokens.CloseParen,
+    );
 
     return element;
   },
@@ -5720,22 +5874,25 @@ const entryAttribute = rule(
         tokens.OpenParen,
       )
     ) {
-      const lhs = entryDescription.rule(state);
-      lhs && element.attributes.push(lhs);
+      // DISCREPANCY: The language spec says that the parameter list cannot be empty
+      // But the compiler seems to allow it, so we do the same here
+      if (state.canConsumeFirst(entryDescription.first())) {
+        const lhs = entryDescription.rule(state);
+        lhs && element.attributes.push(lhs);
 
-      const { inc } = state.createLoopContext("EntryAttribute 2");
-      while (
-        state.tryConsume(
-          element,
-          CstNodeKind.EntryAttribute_CommaAttribute,
-          tokens.Comma,
-        )
-      ) {
-        inc();
-        const rhs = entryDescription.rule(state);
-        rhs && element.attributes.push(rhs);
+        const { inc } = state.createLoopContext("EntryAttribute 2");
+        while (
+          state.tryConsume(
+            element,
+            CstNodeKind.EntryAttribute_CommaAttribute,
+            tokens.Comma,
+          )
+        ) {
+          inc();
+          const rhs = entryDescription.rule(state);
+          rhs && element.attributes.push(rhs);
+        }
       }
-
       state.consume(
         element,
         CstNodeKind.EntryAttribute_CloseParenAttribute,
@@ -5789,6 +5946,7 @@ const entryAttribute = rule(
           tokens.EXTERNAL,
         )
       ) {
+        element.hasExternal = true;
         if (
           state.tryConsume(
             element,
@@ -5797,7 +5955,7 @@ const entryAttribute = rule(
           )
         ) {
           const envExpression = expression.rule(state);
-          envExpression && element.environmentName.push(envExpression);
+          envExpression && (element.environmentName = envExpression);
           state.consume(
             element,
             CstNodeKind.EntryAttribute_CloseParenEnv,
@@ -5816,7 +5974,11 @@ const returnsOption = rule(
   (state: ParserState): ast.ReturnsOption => {
     const element = ast.createReturnsOption();
 
-    state.consume(element, CstNodeKind.ReturnsOption_RETURNS, tokens.RETURNS);
+    element.returnsToken = state.consume(
+      element,
+      CstNodeKind.ReturnsOption_RETURNS,
+      tokens.RETURNS,
+    );
     state.consume(
       element,
       CstNodeKind.ReturnsOption_OpenParen,
@@ -5841,7 +6003,7 @@ const returnsOption = rule(
   },
 );
 
-const entryDescription = orRule<ast.EntryDescription>(
+const entryDescription = orRule<ast.EntryDescription, []>(
   () => entryParameterDescription,
   () => entryUnionDescription,
 );
@@ -5906,17 +6068,20 @@ const entryUnionDescription = rule(
       attr && element.attributes.push(attr);
     }
 
-    // Required comma
-    state.consume(
-      element,
-      CstNodeKind.EntryUnionDescription_Comma,
-      tokens.Comma,
-    );
+    // DISCREPANCY: The language spec says that there is a mandatory comma here
+    // And that the prefixed attributes aren't separated by commas
+    // However, this simply seems to be a documentation error in the syntax diagram
 
-    // Parse zero or more prefixed attributes
     const { inc: inc2 } = state.createLoopContext("EntryUnionDescription 2");
-    while (state.canConsumeFirst(prefixedAttribute.first())) {
+    // IMPORTANT NOTE: Since the comma can also indicate that the next element is a declaration attribute,
+    // we have to check for both comma AND number here to prevent parser errors
+    while (state.canConsume(tokens.Comma, tokens.NUMBER)) {
       inc2();
+      state.consume(
+        element,
+        CstNodeKind.EntryUnionDescription_Comma,
+        tokens.Comma,
+      );
       const attr = prefixedAttribute.rule(state);
       attr && element.prefixedAttributes.push(attr);
     }
@@ -5975,7 +6140,7 @@ const procedureParameter = rule(
 
 const referenceItem = rule(
   sequence(tokens.ID),
-  (state: ParserState): ast.ReferenceItem => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.ReferenceItem => {
     const element = ast.createReferenceItem();
 
     const idToken = state.consume(
@@ -5987,13 +6152,17 @@ const referenceItem = rule(
       element.ref = ast.createReference(
         element,
         idToken,
-        ast.ReferenceType.Variable,
+        refType ?? ast.ReferenceType.Variable,
       );
     }
 
     // Optional dimensions
     if (state.canConsumeFirst(dimensions.first())) {
+      // "Normal" dimensions, that simply target variables in their references
       element.dimensions = dimensions.rule(state);
+    } else if (state.canConsumeFirst(dimensionsWithTypes.first())) {
+      // Dimensions that can also target types in their references
+      element.dimensions = dimensionsWithTypes.rule(state);
     }
 
     return element;
@@ -6002,7 +6171,7 @@ const referenceItem = rule(
 
 const expression = rule(
   () => primaryExpression.first(),
-  (state: ParserState): ast.Expression | null => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.Expression | null => {
     const element: IntermediateBinaryExpression = {
       infix: true,
       items: [],
@@ -6011,7 +6180,7 @@ const expression = rule(
     };
 
     // Parse first primary expression
-    const lhs = primaryExpression.rule(state);
+    const lhs = primaryExpression.rule(state, refType);
     lhs && element.items.push(lhs);
 
     // Parse zero or more operator-expression pairs
@@ -6029,7 +6198,7 @@ const expression = rule(
         );
         element.operatorTokens.push(operatorToken);
       }
-      const rhs = primaryExpression.rule(state);
+      const rhs = primaryExpression.rule(state, refType);
       rhs && element.items.push(rhs);
     }
 
@@ -6037,7 +6206,10 @@ const expression = rule(
   },
 );
 
-const primaryExpression = orRule<ast.Expression>(
+const primaryExpression = orRule<
+  ast.Expression,
+  [ast.ReferenceType | undefined]
+>(
   () => literal,
   () => parenthesizedExpression,
   () => unaryExpression,
@@ -6046,7 +6218,10 @@ const primaryExpression = orRule<ast.Expression>(
 
 const parenthesizedExpression = rule(
   sequence(tokens.OpenParen),
-  (state: ParserState): ast.Parenthesis | ast.Literal => {
+  (
+    state: ParserState,
+    refType?: ast.ReferenceType,
+  ): ast.Parenthesis | ast.Literal => {
     const element = ast.createParenthesis();
 
     state.consume(
@@ -6054,7 +6229,7 @@ const parenthesizedExpression = rule(
       CstNodeKind.ParenthesizedExpression_OpenParen,
       tokens.OpenParen,
     );
-    element.value = expression.rule(state);
+    element.value = expression.rule(state, refType);
 
     // Optional DO clause
     if (
@@ -6092,11 +6267,11 @@ const parenthesizedExpression = rule(
 
 const memberCall = rule(
   () => referenceItem.first(),
-  (state: ParserState): ast.MemberCall => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.MemberCall => {
     let element = ast.createMemberCall();
 
     // Parse first reference item
-    element.element = referenceItem.rule(state);
+    element.element = referenceItem.rule(state, refType);
 
     // Parse zero or more dot-separated member accesses
     const { inc } = state.createLoopContext("MemberCall");
@@ -6111,7 +6286,7 @@ const memberCall = rule(
         previous: previous,
       };
       state.consume(element, CstNodeKind.MemberCall_Dot, tokens.Dot);
-      element.element = referenceItem.rule(state);
+      element.element = referenceItem.rule(state, refType);
     }
 
     return element;
@@ -6120,11 +6295,11 @@ const memberCall = rule(
 
 const locatorCall = rule(
   () => memberCall.first(),
-  (state: ParserState): ast.LocatorCall => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.LocatorCall => {
     let element = ast.createLocatorCall();
 
     // Parse first member call
-    element.element = memberCall.rule(state);
+    element.element = memberCall.rule(state, refType);
 
     // Parse zero or more pointer/handle chains
     const { inc } = state.createLoopContext("LocatorCall");
@@ -6163,7 +6338,7 @@ const locatorCall = rule(
         element.handle = true;
       }
 
-      element.element = memberCall.rule(state);
+      element.element = memberCall.rule(state, refType);
     }
 
     return element;
@@ -6313,7 +6488,7 @@ const labelReference = rule(
 
 const unaryExpression = rule(
   sequence(tokens.UnaryOperator),
-  (state: ParserState): ast.UnaryExpression => {
+  (state: ParserState, refType?: ast.ReferenceType): ast.UnaryExpression => {
     const element = ast.createUnaryExpression();
 
     const operatorToken = state.consume(
@@ -6327,7 +6502,7 @@ const unaryExpression = rule(
       );
     }
 
-    element.expr = expression.rule(state);
+    element.expr = expression.rule(state, refType);
 
     return element;
   },
@@ -6342,7 +6517,7 @@ const literal = rule(
   },
 );
 
-const literalValue = orRule<ast.LiteralValue>(
+const literalValue = orRule<ast.LiteralValue, []>(
   () => stringLiteral,
   () => numberLiteral,
 );
@@ -6382,93 +6557,3 @@ const numberLiteral = rule(
     return element;
   },
 );
-
-export function performAssignmentLookahead(state: ParserState): boolean {
-  const expressionTokenTypes = [
-    tokens.ID,
-    tokens.BinaryOperator,
-    tokens.UnaryOperator,
-    tokens.AssignmentOperator,
-    tokens.STRING_TERM,
-    tokens.NUMBER,
-    tokens.Comma,
-    tokens.Dot,
-  ];
-
-  let previousToken: tokens.Token | undefined = undefined;
-  const lookahead: (la: number) => tokens.Token | undefined = (la) => {
-    previousToken = state.peek(la - 1);
-    return state.peek(la);
-  };
-  let i = 1;
-  let token = lookahead(i++);
-  // First token of an assigment needs to be an ID
-  if (!token || !tokenMatcher(token, tokens.ID)) {
-    return false;
-  } else if (token.tokenTypeIdx === tokens.ID.tokenTypeIdx) {
-    return true;
-  }
-  token = lookahead(i);
-  // We have found a match immediately with the assignment operator
-  if (token && tokenMatcher(token, tokens.AssignmentOperator)) {
-    return true;
-  }
-
-  // The compiler will not use more than 160 tokens to perform the lookahead
-  const max = 160;
-  let parenthesis = 0;
-  while (i < max) {
-    const token = lookahead(i++);
-    if (!token) {
-      return false;
-    }
-    if (parenthesis === 0 && tokenMatcher(token, tokens.AssignmentOperator)) {
-      return true;
-    }
-    if (tokenMatcher(token, tokens.OpenParen)) {
-      parenthesis++;
-    } else if (tokenMatcher(token, tokens.CloseParen)) {
-      parenthesis--;
-    } else if (tokenMatcher(token, tokens.Semicolon)) {
-      // Semicolon indicates the end of the statement
-      return false;
-    } else {
-      if (
-        !expressionTokenTypes.some((tokenType) =>
-          tokenMatcher(token, tokenType),
-        )
-      ) {
-        return false;
-      }
-      if (tokenMatcher(token, tokens.ID)) {
-        if (previousToken && tokenMatcher(previousToken, tokens.ID)) {
-          return false;
-        }
-      }
-      // Continue with the next token, the current token is a valid expression token
-    }
-  }
-  // If we reach this point, the lookahead was not successful
-  return false;
-}
-
-function performEndStatementLookahead(state: ParserState): boolean {
-  const lookahead = (la: number) => state.peek(la);
-  let index: number = 1;
-  let token: tokens.Token | undefined = undefined;
-  while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
-    const idToken = lookahead(index);
-    const colonToken = lookahead(index + 1);
-    if (!idToken || !colonToken) {
-      return false;
-    }
-    if (
-      !tokenMatcher(idToken, tokens.ID) ||
-      !tokenMatcher(colonToken, tokens.Colon)
-    ) {
-      return false;
-    }
-    index += 2;
-  }
-  return token !== undefined && tokenMatcher(token, tokens.END);
-}

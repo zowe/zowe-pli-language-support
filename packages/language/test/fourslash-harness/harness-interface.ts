@@ -13,7 +13,9 @@ import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { Diagnostic, type Severity } from "../../src/language-server/types";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
-import { CompilerOptions } from "../../src/preprocessor/compiler-options/options";
+import { CompilerOptions as PliCompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
+import { CompilerOptions as MacroCompilerOptions } from "../../src/preprocessor/compiler-options/options-macro";
+import { CompilerOptions as SQLCompilerOptions } from "../../src/preprocessor/compiler-options/options-sql";
 import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { DefaultAttribute, SyntaxKind } from "../../src/syntax-tree/ast";
 import {
@@ -51,19 +53,25 @@ import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
 
 type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
 
+export type CompilerOptions = PliCompilerOptions & {
+  macroOptions: MacroCompilerOptions;
+  sqlOptions: SQLCompilerOptions;
+};
+
 export type Not<T> = Omit<T, "not">;
+
+type ExpectedDimension = {
+  dimension?: {
+    lowerBound: Partial<Bound>;
+    upperBound: Partial<Bound>;
+  }[];
+};
 
 type EditComputedAttributes<T extends TypeDescriptions.Any> = Omit<
   T,
   "dimension"
-> & {
-  dimension:
-    | {
-        lowerBound: Partial<Bound>;
-        upperBound: Partial<Bound>;
-      }[]
-    | undefined;
-};
+> &
+  ExpectedDimension;
 export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Area>
   | EditComputedAttributes<TypeDescriptions.Arithmetic>
@@ -79,10 +87,14 @@ export type PrimitiveTypeExpectation =
 export type TypeExpectation =
   | Partial<PrimitiveTypeExpectation>
   | Partial<TypeDescriptions.Unknown>
-  | {
+  | ({
       type: DataType.Structure;
       members: Record<string, TypeExpectation>;
-    };
+    } & ExpectedDimension)
+  | ({
+      type: DataType.Union;
+      members: Record<string, TypeExpectation>;
+    } & ExpectedDimension);
 
 export interface HarnessTesterInterface {
   Syntax: typeof SyntaxKind;
@@ -182,6 +194,11 @@ export interface HarnessTesterInterface {
      * ```
      */
     noDiagnostics(label?: Label, ...errorCodes: PLICode[]): void;
+
+    /**
+     * Expect that the compilation unit has no parser diagnostics.
+     */
+    noParserDiagnostics(): void;
 
     /**
      * Expect that the compilation unit has no diagnostics apart from the given regexes.
@@ -334,5 +351,9 @@ export interface HarnessTesterInterface {
     CompletionKeywords: typeof CompletionKeywords;
     Severity: typeof Severity;
     DefaultAttribute: typeof DefaultAttribute;
+    CompilerOptions: typeof PliCompilerOptions & {
+      Macro: typeof MacroCompilerOptions;
+      SQL: typeof SQLCompilerOptions;
+    };
   };
 }

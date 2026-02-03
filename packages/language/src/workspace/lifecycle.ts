@@ -32,14 +32,10 @@ export async function lifecycle(
   document: TextDocument,
   cancellation: CancellationToken,
 ): Promise<void> {
-  compilationUnit.services.files.clear();
-  compilationUnit.services.typeCache.clear();
-  compilationUnit.statementOrderCache.clear();
-  compilationUnit.referencesCache.clear();
-  compilationUnit.scopeCaches.clear();
-  compilationUnit.diagnostics.clear();
+  compilationUnit.reset();
   await interruptAndCheck(cancellation);
   await tokenize(compilationUnit, document);
+  await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
   generateSymbolTable(compilationUnit);
@@ -65,17 +61,11 @@ export async function tokenize(
   );
   compilationUnit.tokens = result.all;
   compilationUnit.preprocessorAst.statements = result.statements;
+  result.statements.forEach((stmt) => {
+    stmt.container = compilationUnit.preprocessorAst;
+  });
   compilationUnit.preprocessorEvaluationResults = result.evaluationResults;
   compilationUnit.referencesCache.addAll(result.tokenReferences);
-  const uri = compilationUnit.uri.toString();
-  compilationUnit.diagnostics.addAll(
-    DiagnosticCategory.Lexer,
-    result.diagnostics,
-  );
-  compilationUnit.diagnostics.addAll(
-    DiagnosticCategory.CompilerOptions,
-    (result.compilerOptions.result?.issues ?? []).filter((e) => e.uri === uri),
-  );
   return result;
 }
 

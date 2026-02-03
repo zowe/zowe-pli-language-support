@@ -20,10 +20,10 @@ completion.expectAt(1, {
     "B",
     "C",
     "D",
-    ...constants.CompletionKeywords.StatementStart.values().map(
+    ...constants.CompletionKeywords.StatementStart.valuesArray().map(
       (keyword) => keyword.label,
     ),
-    ...constants.CompletionKeywords.StatementStartPreprocessor.values().map(
+    ...constants.CompletionKeywords.StatementStartPreprocessorWithPercent.valuesArray().map(
       (keyword) => keyword.label,
     ),
   ],

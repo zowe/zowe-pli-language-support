@@ -9,14 +9,14 @@
  *
  */
 
-// Tests including a ddname(member) by its member
+// Tests including a ddname(member) by its member directly & recursively
 
 /// <reference path="../../framework.ts" />
 
 // @filename: cpy/MYLIB(m1)
 //// DECLARE LIB_VAR1 FIXED;
 
-// @filename: cpy/A.B.C(m2)
+// @filename: cpy/f2/A.B.C(m2)
 //// DECLARE LIB_VAR2 FIXED;
 
 // @filename: main.pli

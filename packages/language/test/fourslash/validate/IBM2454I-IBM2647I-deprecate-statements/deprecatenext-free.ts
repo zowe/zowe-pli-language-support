@@ -9,13 +9,12 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-/**
- * Strip away irrelevant nested nodes in the hover response to show the structure of the declaration.
- */
+////*PROCESS DEPRECATENEXT(STMT(FREE));
+//// TEST: PROC OPTIONS(MAIN);
+////   DCL VARB FIXED BIN(31);
+////   <|1:FREE|> VARB;
+//// END TEST;
 
-//// DCL 1 A, 2 A2, 3 A3, 2 B, 3 B3, 2 C2, 3 C3;
-//// PUT(<|1>C3);
-
-hover.expectMarkdownAt(1, hover.codeBlock("DCL 1 A, 2 C2, 3 C3;"));
+verify.expectDiagnosticsAt(1, code.Warning.IBM2647I);

@@ -1,0 +1,12 @@
+ GERT1: PROCEDURE OPTIONS (MAIN);
+  DCL 1 A BASED(ADDR(X)),
+        5 B BIN FIXED(31), 
+          6 C (CT REFER(C)),  /*lacks quick fix */
+           10* CHAR(1);  
+
+
+ DCL 1 AA BASED(ADDR(X)),
+        5 B BIN FIXED(31), 
+          6 C (CT REFER(B));  /*lacks quick fix */  
+
+ END GERT1;

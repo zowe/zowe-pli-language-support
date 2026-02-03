@@ -41,7 +41,7 @@ import {
   ProgramConfig,
 } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
-import { Mutex } from "./mutex.js";
+import { createMutex, Mutex } from "./mutex.js";
 import { Deferred, isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -86,6 +86,11 @@ export interface CompilationUnit {
   readonly services: CompilationServices;
   readonly programConfig: ProgramConfig | undefined;
   readonly processGroup: ProcessGroup | undefined;
+  readonly mutex: Mutex;
+  /**
+   * Resets all caches associated with this compilation unit.
+   */
+  reset(): void;
 }
 
 export interface CompilationServices {
@@ -138,6 +143,10 @@ export async function createCompilationUnit(
     }),
     inferer: new DefaultTypeInferer(),
   };
+  // Cache for programConfig and processGroup to avoid repeated lookups
+  // They cannot change during the lifetime of a compilation unit anyway
+  let cachedProgramConfig: ProgramConfig | undefined | null = null;
+  let cachedProcessGroup: ProcessGroup | undefined | null = null;
   const unit: CompilationUnit = {
     uri,
     services,
@@ -171,15 +180,37 @@ export async function createCompilationUnit(
     rootScope: await getBuiltinScope(uri),
     rootPreprocessorScope: await getRootPreprocessorScope(uri),
     get programConfig() {
-      return PluginConfigurationProviderInstance.getProgramConfig(uri);
+      if (cachedProgramConfig !== null) {
+        return cachedProgramConfig;
+      }
+      cachedProgramConfig =
+        PluginConfigurationProviderInstance.getProgramConfig(uri);
+      return cachedProgramConfig;
     },
     get processGroup() {
-      if (this.programConfig) {
-        return PluginConfigurationProviderInstance.getProcessGroupConfig(
-          this.programConfig.pgroup,
-        );
+      if (cachedProcessGroup !== null) {
+        return cachedProcessGroup;
       }
-      return undefined;
+      if (this.programConfig) {
+        cachedProcessGroup =
+          PluginConfigurationProviderInstance.getProcessGroupConfig(
+            this.programConfig.pgroup,
+          );
+      } else {
+        cachedProcessGroup = undefined;
+      }
+      return cachedProcessGroup;
+    },
+    mutex: createMutex(),
+    reset() {
+      services.files.clear();
+      services.typeCache.clear();
+      unit.statementOrderCache.clear();
+      unit.referencesCache.clear();
+      unit.scopeCaches.clear();
+      unit.diagnostics.clear();
+      cachedProcessGroup = null;
+      cachedProgramConfig = null;
     },
   };
 
@@ -249,18 +280,12 @@ export class CompilationUnitHandler {
   }
 
   listen(connection: Connection): void {
-    // Before we start listening, we need to set up the mutex
-    // to prevent compilation unit updates before we're ready.
-    Mutex.run(async () => {
-      await this.ready.promise;
-    });
     this.connection = connection;
     const textDocuments = EditorDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
-      Mutex.cancel();
       const uri = URI.parse(event.document.uri);
-      Mutex.run((token) => this.updateUri(uri, token));
+      this.updateUri(uri);
     });
     textDocuments.onDidClose((event) => {
       connection.sendDiagnostics({
@@ -270,23 +295,23 @@ export class CompilationUnitHandler {
     });
   }
 
-  async updateUri(
-    uri: URI,
-    cancellationToken: CancellationToken,
-  ): Promise<void> {
+  async updateUri(uri: URI): Promise<void> {
+    await this.ready.promise;
     const unit = await this.getOrCreateCompilationUnit(uri);
     if (!unit) {
       // standalone library files do not synthesize new compilation units
       return;
     }
-    const document = await EditorDocuments.get(unit.uri);
-    if (!document) {
-      return;
-    }
-    await this.process(unit, document, this.connection, cancellationToken);
-    // TODO: Wagner Laranjeiras -> includeCache based on changes of a specific file.
-    unit.services.includeCache.clear();
-    unit.requestCaches.revalidateAll({ connection: this.connection, unit });
+    unit.mutex.run(async (cancellationToken) => {
+      const document = await EditorDocuments.get(unit.uri);
+      if (!document) {
+        return;
+      }
+      await this.process(unit, document, this.connection, cancellationToken);
+      // TODO: Wagner Laranjeiras -> includeCache based on changes of a specific file.
+      unit.services.includeCache.clear();
+      unit.requestCaches.revalidateAll({ connection: this.connection, unit });
+    });
   }
 
   /**
@@ -339,10 +364,12 @@ export class CompilationUnitHandler {
       if (cancellationToken.isCancellationRequested) {
         return;
       }
-      const textDocument = await TextDocuments.get(unit.uri.toString());
-      if (textDocument) {
-        this.process(unit, textDocument, connection, cancellationToken);
-      }
+      unit.mutex.run(async (cancellationToken) => {
+        const textDocument = await TextDocuments.get(unit.uri.toString());
+        if (textDocument) {
+          this.process(unit, textDocument, connection, cancellationToken);
+        }
+      });
     }
   }
 }

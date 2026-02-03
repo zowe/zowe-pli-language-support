@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    multiSemi: "SOURCE",
+    multiSemi: constants.CompilerOptions.RulesSource.SOURCE,
   },
 });

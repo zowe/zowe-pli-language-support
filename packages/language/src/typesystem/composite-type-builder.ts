@@ -1,75 +1,100 @@
+import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { BuilderDeclareItem, TypeDescriptions } from "./descriptions";
+import {
+  AttributeCollectorResult,
+  DefaultTypeAttributeCollector,
+} from "./attribute-witnesses";
+import {
+  AttributeKind,
+  BuilderDeclareItem,
+  DataType,
+  TypeDescriptions,
+} from "./descriptions";
 import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 
 export interface CompositeTypeBuilder {
   flattenDeclareStatement(
-    declareStatement: ast.DeclareStatement,
+    declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[];
-  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean;
+  collectAttributes(
+    nameToken: Token,
+    attributes: ast.DeclarationAttribute[],
+  ): AttributeCollectorResult;
+  isCompositeDeclaredItem(
+    declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
+  ): boolean;
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Structure;
+    attributes: AttributeCollectorResult,
+  ): TypeDescriptions.Composite;
   handlePrimitiveDeclaredItem(
-    declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
+    nameToken: Token,
+    attributes: AttributeCollectorResult,
   ): TypeDescriptions.Any;
 }
 
 export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
+  constructor(private unit: CompilationUnit) {}
   handleCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
-  ): TypeDescriptions.Structure {
-    //TODO handle UNION and other composite types
-    return TypeDescriptions.Structure({
-      level: declaredItem.level!,
-      members: {},
-      membersMetadata: {},
+    attributes: AttributeCollectorResult,
+  ): TypeDescriptions.Composite {
+    const hasUnion = declaredItem.attributes.some(
+      (attr) =>
+        attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
+        attr.type === ast.DefaultAttribute.UNION,
+    );
+    return TypeDescriptions.createComposite({
+      type: hasUnion ? DataType.Union : DataType.Structure,
+      witnesses: attributes.witnesses,
+      level: declaredItem.level ?? 1,
+      variableNode: declaredItem.node,
     });
   }
   handlePrimitiveDeclaredItem(
-    declaredItem: BuilderDeclareItem,
-    compilationUnit: CompilationUnit,
+    nameToken: Token,
+    attributes: AttributeCollectorResult,
   ): TypeDescriptions.Any {
-    const builder = new DefaultPrimitiveTypeBuilder(declaredItem.nameToken);
-    for (const attr of declaredItem.attributes) {
-      builder.addAttribute(attr);
-    }
-    const { type, diagnostics } = builder.build();
-    compilationUnit.diagnostics.addAll(
-      DiagnosticCategory.TypeSystem,
-      diagnostics,
+    const builder = new DefaultPrimitiveTypeBuilder(
+      nameToken,
+      attributes,
+      this.unit,
     );
+    const { type, diagnostics } = builder.build();
+    this.unit.diagnostics.addAll(DiagnosticCategory.TypeSystem, diagnostics);
     return type;
   }
-  isCompositeDeclaredItem(declaredItem: BuilderDeclareItem): boolean {
-    const CompositeAttributeKinds: ast.DefaultAttribute[] = [
-      //TODO add more composite types if needed
-      ast.DefaultAttribute.UNION,
-      ast.DefaultAttribute.DIMACROSS,
-    ];
-    function isOnlyCompositeAttribute(attr: ast.DeclarationAttribute): boolean {
-      if (
-        attr.kind === ast.SyntaxKind.ComputationDataAttribute &&
-        attr.type !== null &&
-        attr.typeToken !== null
-      ) {
-        return CompositeAttributeKinds.includes(attr.type);
-      }
-      return false;
+  collectAttributes(
+    nameToken: Token,
+    attributes: ast.DeclarationAttribute[],
+  ): AttributeCollectorResult {
+    const collector = new DefaultTypeAttributeCollector(nameToken, this.unit);
+    for (const attr of attributes) {
+      collector.addAttribute(attr);
     }
+    return collector.build();
+  }
+  isCompositeDeclaredItem(
+    declaredItem: BuilderDeclareItem,
+    attributes: AttributeCollectorResult,
+  ): boolean {
+    const validCompositeAttributeKinds: AttributeKind[] = [
+      AttributeKind.Dimension,
+      AttributeKind.Alignment,
+      AttributeKind.Storage,
+    ];
     return (
       declaredItem.level !== undefined &&
-      (declaredItem.attributes.length === 0 ||
-        declaredItem.attributes.every(isOnlyCompositeAttribute))
+      attributes.witnesses.order.every((kind) =>
+        validCompositeAttributeKinds.includes(kind),
+      )
     );
   }
   flattenDeclareStatement(
-    declareStatement: ast.DeclareStatement,
+    declareStatement: ast.DeclareStatement | ast.DefineStructureStatement,
   ): BuilderDeclareItem[] {
     return declareStatement.items.flatMap((item) =>
       this.flattenDeclaredItem(item),

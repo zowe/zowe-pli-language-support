@@ -31,6 +31,6 @@ verify.expectDiagnosticsAt([5, 7], {
 verify.noDiagnostics([9, 11]);
 verify.expectCompilerOptions({
   macroOptions: {
-    case: "UPPER",
+    case: constants.CompilerOptions.Macro.Case.UPPER,
   },
 });

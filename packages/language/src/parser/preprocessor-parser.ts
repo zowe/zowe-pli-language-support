@@ -30,6 +30,7 @@ import {
   tokenToRange,
 } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
+import { performAssignmentLookahead } from "./parser-lookahead";
 
 const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
 
@@ -157,7 +158,7 @@ export function commonStatement(
   }
   let unit: ast.Unit | null = null;
   let endStmt: ast.EndStatement | null = null;
-  if (performAssignmentLookahead((la) => state.peek(la))) {
+  if (performAssignmentLookahead(state)) {
     unit = assignmentStatement(state);
   } else if (state.isInProcedure()) {
     switch (state.token?.tokenTypeIdx) {
@@ -1088,8 +1089,10 @@ function selectStatement(state: ParserState): ast.SelectStatement {
   if (state.canPercentConsume(t.OTHERWISE)) {
     statement.cases.push(otherwiseStatement(state));
   }
-  // END statement is preceded by a percent
-  state.consume(statement, CstNodeKind.Percentage, t.Percent);
+  if (!state.isInProcedure()) {
+    // END statement is preceded by a percent
+    state.consume(statement, CstNodeKind.Percentage, t.Percent);
+  }
   statement.end = endStatement(state);
   return statement;
 }
@@ -1353,9 +1356,16 @@ function noprintDirective(state: ParserState): ast.NoPrintDirective {
 function assignmentStatement(state: ParserState): ast.AssignmentStatement {
   const assignment = ast.createAssignmentStatement();
   assignment.refs.push(locatorCall(state, true));
-  // TODO: add support for more assignment operators (+=, -=, etc)
-  state.consume(assignment, CstNodeKind.AssignmentStatement_Operator, t.Equals);
-  assignment.operator = ast.AssignmentOperator.Equals;
+  const operatorToken = state.consume(
+    assignment,
+    CstNodeKind.AssignmentStatement_Operator,
+    t.AssignmentOperator,
+  );
+  if (operatorToken) {
+    assignment.operator = t.AssignmentOperator.mapToEnumLiteral(
+      operatorToken.tokenTypeIdx,
+    );
+  }
   const right = expression(state);
   assignment.expression = right;
   state.consume(
@@ -1677,9 +1687,27 @@ function primary(state: ParserState): ast.Expression | null {
       t.CloseParen,
     );
     return expr;
+  } else if (state.canConsume(t.UnaryOperator)) {
+    return unaryExpression(state);
   }
   state.error();
   return null;
+}
+
+function unaryExpression(state: ParserState): ast.Expression | null {
+  const unaryExpression = ast.createUnaryExpression();
+  const operatorToken = state.consume(
+    unaryExpression,
+    CstNodeKind.UnaryExpression_Operator,
+    t.UnaryOperator,
+  );
+  if (operatorToken) {
+    unaryExpression.op = t.UnaryOperator.mapToEnumLiteral(
+      operatorToken.tokenTypeIdx,
+    );
+  }
+  unaryExpression.expr = primary(state);
+  return unaryExpression;
 }
 
 function numberLiteral(state: ParserState): ast.Literal {
@@ -1732,66 +1760,4 @@ function isXInstruction(token: t.Token | null | undefined): boolean {
   }
   const char0 = token.image.charCodeAt(0);
   return char0 === XCharCodeLower || char0 === XCharCode;
-}
-
-const expressionTokenTypes = [
-  t.ID,
-  t.BinaryOperator,
-  t.UnaryOperator,
-  t.AssignmentOperator,
-  t.STRING_TERM,
-  t.NUMBER,
-  t.Comma,
-];
-
-export function performAssignmentLookahead(
-  lookahead: (la: number) => t.Token | undefined,
-): boolean {
-  let i = 1;
-  let token = lookahead(i++);
-  // First token of an assigment needs to be an ID
-  if (!token || !tokenMatcher(token, t.ID)) {
-    return false;
-  }
-  token = lookahead(i++);
-  // We have found a match immediately with the assignment operator
-  if (token && tokenMatcher(token, t.AssignmentOperator)) {
-    return true;
-  }
-  // Otherwise expect an opening parenthesis
-  if (!token || !tokenMatcher(token, t.OpenParen)) {
-    return false;
-  }
-  // The compiler will not use more than 160 tokens to perform the lookahead
-  const max = 160;
-  let parenthesis = 1;
-  while (i < max) {
-    const token = lookahead(i++);
-    if (!token) {
-      return false;
-    }
-    if (parenthesis === 0) {
-      // If we are outside of the parentheses, we always try to match the assignment operator
-      return tokenMatcher(token, t.AssignmentOperator);
-    }
-    if (tokenMatcher(token, t.OpenParen)) {
-      parenthesis++;
-    } else if (tokenMatcher(token, t.CloseParen)) {
-      parenthesis--;
-    } else if (tokenMatcher(token, t.Semicolon)) {
-      // Semicolon indicates the end of the statement
-      return false;
-    } else {
-      if (
-        !expressionTokenTypes.some((tokenType) =>
-          tokenMatcher(token, tokenType),
-        )
-      ) {
-        return false;
-      }
-      // Continue with the next token, the current token is a valid expression token
-    }
-  }
-  // If we reach this point, the lookahead was not successful
-  return false;
 }

@@ -28,6 +28,8 @@ import {
   PluginConfigurationProviderInstance,
 } from "../workspace/plugin-configuration-provider";
 import { CompilerOptionResult } from "./compiler-options/options";
+import { CompilerOptions as MacroCompilerOptions } from "./compiler-options/options-macro";
+import { CompilerOptions as PliCompilerOptions } from "./compiler-options/options-pli";
 import {
   generateInstructions,
   InstructionGeneratorResult,
@@ -277,7 +279,7 @@ interface InterpreterContext {
   options: InterpreterOptions;
   returnValue: Value;
   counterValue: number;
-  sqlAttributeCache: SqlAttributeCache;
+  generationCache: GenerationCache;
   /**
    * MACNAME returns the name of the preprocessor procedure within which it is invoked.
    * It is invalid to invoke MACNAME outside of a preprocessor procedure.
@@ -286,14 +288,15 @@ interface InterpreterContext {
   instructionCounterLimit: number;
 }
 
-interface SqlAttributeCache {
+interface GenerationCache {
   lastProcedureTokenIndex: number;
-  entries: Map<number, SqlAttributeEntry>;
+  entries: Map<number, GenerationCacheEntry>;
 }
 
-interface SqlAttributeEntry {
-  hasFile: boolean;
-  lobSizes: Set<number>;
+interface GenerationCacheEntry {
+  hasSqlLobFile: boolean;
+  hasCicsExec: boolean;
+  sqlLobSizes: Set<number>;
 }
 
 interface DoType3Context {
@@ -350,7 +353,7 @@ export async function runInstructions(
     counter: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
-    sqlAttributeCache: {
+    generationCache: {
       lastProcedureTokenIndex: 0,
       entries: new Map(),
     },
@@ -526,6 +529,9 @@ function runInstructionSync(
     case inst.InstructionKind.CicsResponseCode:
       runCicsResponseInstruction(instruction, context);
       break;
+    case inst.InstructionKind.CicsExecStatement:
+      runCicsExecInstruction(instruction, context);
+      break;
   }
   return undefined;
 }
@@ -536,6 +542,22 @@ function runCicsResponseInstruction(
 ): void {
   const codeValue = instruction.code.toString();
   context.tokens.push(...lex(codeValue));
+}
+
+function getGenerationCacheEntry(
+  context: InterpreterContext,
+  offset: number,
+): GenerationCacheEntry {
+  let entry = context.generationCache.entries.get(offset);
+  if (!entry) {
+    entry = {
+      hasSqlLobFile: false,
+      hasCicsExec: false,
+      sqlLobSizes: new Set(),
+    };
+    context.generationCache.entries.set(offset, entry);
+  }
+  return entry;
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
@@ -574,23 +596,17 @@ function runSqlAttributeInstruction(
     if (procSemicolonIndex === undefined) {
       return;
     }
-    let entry = context.sqlAttributeCache.entries.get(procSemicolonIndex);
-    if (!entry) {
-      entry = {
-        hasFile: false,
-        lobSizes: new Set(),
-      };
-      context.sqlAttributeCache.entries.set(procSemicolonIndex, entry);
-    }
+    const entry = getGenerationCacheEntry(context, procSemicolonIndex);
     if (body.kind === ast.SyntaxKind.SqlAttributeLobFile) {
-      if (!entry.hasFile) {
+      if (!entry.hasSqlLobFile) {
+        entry.hasSqlLobFile = true;
         insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
       }
       context.tokens.push(...lex(LOB_FILE_TYPE));
     } else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
       const computedLength = computeLobLength(body);
-      if (!entry.lobSizes.has(computedLength)) {
-        entry.lobSizes.add(computedLength);
+      if (!entry.sqlLobSizes.has(computedLength)) {
+        entry.sqlLobSizes.add(computedLength);
         insertSqlAttributeLobTokens(
           context,
           procSemicolonIndex,
@@ -626,6 +642,8 @@ function insertSqlAttributeLobFileTokens(
   context: InterpreterContext,
   offset: number,
 ): void {
+  // These declarations aren't documented anywhere
+  // They are extracted from the PL/I code after running through the SQL preprocessor
   context.tokens.splice(
     offset,
     0,
@@ -642,6 +660,81 @@ function insertSqlAttributeLobFileTokens(
     DCL SQL_FILE_OVERWRITE FIXED BIN(31) VALUE(16);
     DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
   `),
+  );
+}
+
+function runCicsExecInstruction(
+  instruction: inst.CicsExecInstruction,
+  context: InterpreterContext,
+): void {
+  const procSemicolonIndex = findProcSemicolon(context);
+  if (procSemicolonIndex === undefined) {
+    return;
+  }
+  const entry = getGenerationCacheEntry(context, procSemicolonIndex);
+  if (!entry.hasCicsExec) {
+    entry.hasCicsExec = true;
+    insertCicsExecTokens(context, procSemicolonIndex);
+  }
+}
+
+function insertCicsExecTokens(
+  context: InterpreterContext,
+  offset: number,
+): void {
+  // These declarations aren't documented anywhere
+  // They are extracted from the PL/I code after running through the CICS preprocessor
+  context.tokens.splice(
+    offset,
+    0,
+    ...lex(`
+      DCL 
+        1 DFHCNSTS STATIC,
+          2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
+          2 DFHEIB0 FIXED BIN(15) INIT(0),
+          2 DFHEID0 FIXED DEC(7) INIT(0),
+          2 DFHEICB CHAR(8) INIT('        ');
+      DCL DFHEPI ENTRY, DFHEIPTR PTR;
+      DCL 
+        1 DFHEIBLK BASED (DFHEIPTR),
+          2 EIBTIME  FIXED DEC(7),
+          2 EIBDATE  FIXED DEC(7),
+          2 EIBTRNID CHAR(4),
+          2 EIBTASKN FIXED DEC(7),
+          2 EIBTRMID CHAR(4),
+          2 EIBFIL01 FIXED BIN(15),
+          2 EIBCPOSN FIXED BIN(15),
+          2 EIBCALEN FIXED BIN(15),
+          2 EIBAID   CHAR(1),
+          2 EIBFN    CHAR(2),
+          2 EIBRCODE CHAR(6),
+          2 EIBDS    CHAR(8),
+          2 EIBREQID CHAR(8),
+          2 EIBRSRCE CHAR(8),
+          2 EIBSYNC  CHAR(1),
+          2 EIBFREE  CHAR(1),
+          2 EIBRECV  CHAR(1),
+          2 EIBFIL02 CHAR(1),
+          2 EIBATT   CHAR(1),
+          2 EIBEOC   CHAR(1),
+          2 EIBFMH   CHAR(1),
+          2 EIBCOMPL CHAR(1),
+          2 EIBSIG   CHAR(1),
+          2 EIBCONF  CHAR(1),
+          2 EIBERR   CHAR(1),
+          2 EIBERRCD CHAR(4),
+          2 EIBSYNRB CHAR(1),
+          2 EIBNODAT CHAR(1),
+          2 EIBRESP  FIXED BIN(31),
+          2 EIBRESP2 FIXED BIN(31),
+          2 EIBRLDBK CHAR(1);
+      DCL 
+        1 DFHCNTBS  STATIC,
+          2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 730.');
+      DCL DFHDUMMY STATIC FIXED BIN(15) INIT(0);
+      DCL DFHEI0 ENTRY VARIABLE INIT(DFHEI01) AUTO OPTIONS(INTER ASSEMBLER);
+      DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
+    `),
   );
 }
 
@@ -666,12 +759,12 @@ function insertSqlAttributeLobTokens(
  * Searches for the nearest procedure semicolon token before the current position
  */
 function findProcSemicolon(context: InterpreterContext): number | undefined {
-  const min = context.sqlAttributeCache.lastProcedureTokenIndex;
+  const min = context.generationCache.lastProcedureTokenIndex;
   const max = context.tokens.length - 1;
   for (let i = max; i >= min; i--) {
     const token = context.tokens[i];
     if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
-      context.sqlAttributeCache.lastProcedureTokenIndex = i;
+      context.generationCache.lastProcedureTokenIndex = i;
       for (let j = i + 1; j <= max; j++) {
         const nextToken = context.tokens[j].tokenTypeIdx;
         if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
@@ -1102,7 +1195,7 @@ function runAssignmentInstruction(
   instruction: inst.AssignmentInstruction,
   context: InterpreterContext,
 ): void {
-  const value = evaluateExpression(instruction.value, context);
+  let value = evaluateExpression(instruction.value, context);
   for (const ref of instruction.refs) {
     let variable = getVariable(context, ref.variable);
     if (!variable) {
@@ -1121,6 +1214,14 @@ function runAssignmentInstruction(
       };
       setVariable(context, variable);
     } else {
+      const operator = ast.assignmentToBinaryOperator(instruction.operator);
+      if (operator !== null) {
+        // Update the value by applying the binary operator
+        const currentValue = variable.value;
+        if (isScalarValue(currentValue) && isScalarValue(value)) {
+          value = applyBinaryOperation(currentValue, value, operator);
+        }
+      }
       evaluateValueAccess(variable, ref.args, context).setter(value);
     }
   }
@@ -1250,7 +1351,15 @@ function evaluateBinaryExpression(
   if (!isScalarValue(left) || !isScalarValue(right)) {
     return defaultEmptyValue;
   }
-  switch (expression.operator) {
+  return applyBinaryOperation(left, right, expression.operator);
+}
+
+function applyBinaryOperation(
+  left: ScalarValue,
+  right: ScalarValue,
+  operator: ast.BinaryOperator | null,
+): ScalarValue {
+  switch (operator) {
     case ast.BinaryOperator.Plus:
       return plus(left, right);
     case ast.BinaryOperator.Minus:
@@ -1274,7 +1383,6 @@ function evaluateBinaryExpression(
     case ast.BinaryOperator.Equals:
       return equals(left, right);
     case ast.BinaryOperator.NotEquals:
-    case ast.BinaryOperator.LessThanGreaterThan:
       return notEquals(left, right);
     case ast.BinaryOperator.Ampersand:
       return and(left, right);
@@ -1954,7 +2062,8 @@ function replaceTokenWithValue(
 ): Token[] {
   const tokens = lex(
     value,
-    context.unit.compilerOptions.macroOptions?.rescan !== "ASIS",
+    context.unit.compilerOptions.macroOptions?.rescan !==
+      MacroCompilerOptions.Rescan.ASIS,
   );
   setImmediateFollowProperty(immediateFollow, tokens);
   return replaceTokensInText(tokens, context);
@@ -1966,12 +2075,12 @@ function generateSyntheticRefItem(
   context: InterpreterContext,
 ): ast.ReferenceItem {
   const refItem = ast.createReferenceItem();
-  const ref = ast.createReference<ast.NamedElement>(
+  const ref = ast.createReference<ast.NamedVariable>(
     refItem,
     token,
     ast.ReferenceType.Variable,
   );
-  ref.node = targetNode as ast.NamedElement;
+  ref.node = targetNode as ast.NamedVariable;
   refItem.ref = ref;
   context.references.push(ref);
   return refItem;
@@ -2202,7 +2311,7 @@ async function runInclude(
       uri,
     });
     context.diagnostics.push(...cachedResult.diagnostics);
-    for (const [key, value] of Object.entries(cachedResult.result.procedures)) {
+    for (const [key, value] of cachedResult.result.procedures.entries()) {
       context.procedures.set(key, value);
     }
     const newContext: InterpreterContext = {
@@ -2245,7 +2354,7 @@ function getFileNameOrPartialName(item: IncludeItem): string | undefined {
  * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
  *
  * @param item Include item to resolve a URI for
- * @param state Current PP state, used to resolve relative paths, program configs, and report errors
+ * @param context Interpreter context used for resolution & diagnostic collection
  * @returns URI of the included file if found, otherwise undefined
  */
 async function resolveIncludeFileUri(
@@ -2261,6 +2370,11 @@ async function resolveIncludeFileUri(
       context.currentUri,
     );
 
+  if (!pgroup) {
+    // no process group to resolve libs from
+    return undefined;
+  }
+
   // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
   // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
   /*
@@ -2275,145 +2389,145 @@ async function resolveIncludeFileUri(
   } else ....
   */
 
-  if (pgroup) {
-    // lib file as either a string or a member from a known process group
-    const computedLibs = pgroup.$computedLibs;
+  // lib file as either a string or a member from a known process group
+  const computedLibs = pgroup.$computedLibs;
 
-    // construct the appropriate file name or partial name for members
-    const fileNameOrPartial = getFileNameOrPartialName(item);
-    if (!fileNameOrPartial) {
-      // no fileName or memberName to work with, abandon resolution
-      return undefined;
-    }
-
-    // whether the include item is a standalone member, no ddname specified
-    // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
-    // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
-    const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
-
-    /**
-     * Computes the URI for a lib file based on whether the path is absolute or relative
-     * Relative paths are combined w/ the workspace path
-     * @path Lib path from the process group
-     * @fileName Optional file name to append to the lib path (generally the include file name)
-     */
-    function resolveLibFileUri(path: string, fileName?: string): URI {
-      const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
-      if (!absPathRegex.test(path)) {
-        // relative lib path, combine w/ workspace
-        return UriUtils.joinPath(
-          URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
-          path,
-          fileName ?? "",
-        );
-      } else {
-        // use lib path over workspace
-        const libUri = URI.file(path).with({
-          scheme: context.entryUri.scheme,
-        });
-        return UriUtils.joinPath(libUri, fileName ?? "");
-      }
-    }
-
-    /**
-     * Helper to check & validate member names when member name validations are enabled.
-     * Pushes diagnostics to the context when validation fails.
-     * Effectively a noop when member name validation is disabled in the process group.
-     * @param memberName Member to validate, implied to be a member of an existing ddlib entry
-     */
-    function checkToValidateMember(memberName: string): void {
-      if (!pgroup?.memberNameValidation) {
-        return;
-      }
-      // apply additional validation to the member name
-      if (memberName.length > 8) {
-        // emit diagnostic for member names > 8 characters
-        context.diagnostics.push(
-          diagnosticFromCode(
-            LspCodes.MemberValidation.ExceedsMaxLength,
-            item.token,
-          ),
-        );
-      }
-
-      const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
-      if (!memberNameRegex.test(memberName)) {
-        // emit a diagnostic for invalid member names
-        context.diagnostics.push(
-          diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
-        );
-      }
-    }
-
-    let libMatch: URI | undefined;
-    // whether a match was found for a member include
-    let needsMemberValidation = isMemberWithoutDDName;
-
-    for (const lib of computedLibs) {
-      if (isLibsDir(lib)) {
-        const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
-
-        if (isMemberWithoutDDName) {
-          // attempt to first resolve for any DDName that introduces this member
-          // This is done to ensure resolution order of libs is maintained as members > files
-          // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
-          // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
-          libMatch = await FileSystemProviderInstance.search({
-            dirPath: resolveLibFileUri(lib.dir),
-            member: fileNameOrPartial,
-          });
-          if (libMatch) {
-            break;
-          }
-        }
-
-        // perform standard search
-        libMatch = await FileSystemProviderInstance.search({
-          path: libFileUri,
-          extensions: pgroup.includeExtensions,
-        });
-        if (libMatch) {
-          // regular file match, no member to validate
-          needsMemberValidation = false;
-          break;
-        }
-      } else if (isMemberWithoutDDName) {
-        // standalone member w/out an explicit ddname, search within ddlib for a match
-        const ddLibUri = resolveLibFileUri(lib.ddLib);
-        libMatch = await FileSystemProviderInstance.search({
-          path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
-          extensions: [],
-        });
-        if (libMatch) {
-          break;
-        }
-      } else if (
-        isMemberIncludeItem(item) &&
-        item.ddname &&
-        lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
-      ) {
-        // member w/ ddname, search for an exact match using ddlib
-        const end = lib.ddLib.length - item.ddname.length;
-        const libPath = lib.ddLib.substring(0, end);
-        const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
-        libMatch = await FileSystemProviderInstance.search({
-          path: ddLibUri,
-          extensions: [],
-        });
-        if (libMatch) {
-          break;
-        }
-      }
-    }
-
-    // depending on whether we matched a member, check to apply validation on the name
-    if (needsMemberValidation) {
-      checkToValidateMember(fileNameOrPartial);
-    }
-    return libMatch;
+  // construct the appropriate file name or partial name for members
+  const fileNameOrPartial = getFileNameOrPartialName(item);
+  if (!fileNameOrPartial) {
+    // no fileName or memberName to work with, abandon resolution
+    return undefined;
   }
 
-  return undefined;
+  // whether the include item is a standalone member, no ddname specified
+  // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
+  // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
+  const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
+
+  /**
+   * Computes the URI for a lib file based on whether the path is absolute or relative.
+   * Relative paths are combined w/ the workspace path.
+   *
+   * @param path Lib path from the process group
+   * @param fileName Optional file name to append to the lib path (generally the include file name)
+   */
+  function resolveLibFileUri(path: string, fileName?: string): URI {
+    const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
+    if (!absPathRegex.test(path)) {
+      // relative lib path, combine w/ workspace
+      return UriUtils.joinPath(
+        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+        path,
+        fileName ?? "",
+      );
+    } else {
+      // use lib path over workspace
+      const libUri = URI.file(path).with({
+        scheme: context.entryUri.scheme,
+      });
+      return UriUtils.joinPath(libUri, fileName ?? "");
+    }
+  }
+
+  // what constitutes a valid member name, whether it's a member or file include
+  const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
+
+  /**
+   * Helper to check & validate member names when member name validations are enabled.
+   * Pushes diagnostics to the context when validation fails.
+   * Effectively a noop when member name validation is disabled in the process group.
+   * @param memberName Member to validate, implied to be a member of an existing ddlib entry
+   */
+  function checkToValidateMember(memberName: string): void {
+    if (!pgroup?.memberNameValidation) {
+      return;
+    }
+    // apply additional validation to the member name
+    if (memberName.length > 8) {
+      // emit diagnostic for member names > 8 characters
+      context.diagnostics.push(
+        diagnosticFromCode(
+          LspCodes.MemberValidation.ExceedsMaxLength,
+          item.token,
+        ),
+      );
+    }
+
+    if (!memberNameRegex.test(memberName)) {
+      // emit a diagnostic for invalid member names
+      context.diagnostics.push(
+        diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
+      );
+    }
+  }
+
+  let libMatch: URI | undefined;
+  // whether a match was found for a member include
+  let needsMemberValidation = isMemberWithoutDDName;
+
+  for (const lib of computedLibs) {
+    if (isLibsDir(lib)) {
+      const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
+
+      if (memberNameRegex.test(fileNameOrPartial)) {
+        // attempt to first resolve for any DDName that may introduce a member by this name
+        // This is done to ensure resolution order of libs is maintained as members > files
+        // Same applies for both member & file includes, to ensure behavior is consistent.
+        // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
+        // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
+        libMatch = await FileSystemProviderInstance.search({
+          dirPath: resolveLibFileUri(lib.dir),
+          member: fileNameOrPartial,
+        });
+        if (libMatch) {
+          break;
+        }
+      }
+
+      // perform standard search
+      libMatch = await FileSystemProviderInstance.search({
+        path: libFileUri,
+        extensions: pgroup.includeExtensions,
+      });
+      if (libMatch) {
+        // regular file match, no member to validate
+        needsMemberValidation = false;
+        break;
+      }
+    } else if (isMemberWithoutDDName) {
+      // standalone member w/out an explicit ddname, search within ddlib for a match
+      const ddLibUri = resolveLibFileUri(lib.ddLib);
+      libMatch = await FileSystemProviderInstance.search({
+        path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
+        extensions: [],
+      });
+      if (libMatch) {
+        break;
+      }
+    } else if (
+      isMemberIncludeItem(item) &&
+      item.ddname &&
+      lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
+    ) {
+      // member w/ ddname, search for an exact match using ddlib
+      const end = lib.ddLib.length - item.ddname.length;
+      const libPath = lib.ddLib.substring(0, end);
+      const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
+      libMatch = await FileSystemProviderInstance.search({
+        path: ddLibUri,
+        extensions: [],
+      });
+      if (libMatch) {
+        break;
+      }
+    }
+  }
+
+  // depending on whether we matched a member, check to apply validation on the name
+  if (needsMemberValidation) {
+    checkToValidateMember(fileNameOrPartial);
+  }
+  return libMatch;
 }
 
 type PreprocessorBuiltin = (
@@ -2689,7 +2803,7 @@ builtinImplementations.set("SYSDIMSIZE", (context) => {
   // * 4 under CMPAT(V2) and CMPAT(LE)
   // * 8 under CMPAT(V3)
   const cmpat = context.unit.compilerOptions.cmpat;
-  return numberToValue(cmpat === "V3" ? 8 : 4);
+  return numberToValue(cmpat === PliCompilerOptions.CMPat.V3 ? 8 : 4);
 });
 
 builtinImplementations.set("SYSOFFSETSIZE", () => {
@@ -2705,12 +2819,12 @@ builtinImplementations.set("SYSPARM", (context) => {
 
 builtinImplementations.set("SYSPOINTERSIZE", (context) => {
   const lp = context.unit.compilerOptions.LP;
-  return numberToValue(lp === "64" ? 8 : 4);
+  return numberToValue(lp === PliCompilerOptions.LP.LP64 ? 8 : 4);
 });
 
 builtinImplementations.set("SYSTEM", (context) => {
   const systemInfo = context.unit.compilerOptions.system;
-  return stringToValue(systemInfo);
+  return stringToValue(PliCompilerOptions.System[systemInfo]);
 });
 
 builtinImplementations.set("SYSVERSION", () => {

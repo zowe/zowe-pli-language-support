@@ -29,6 +29,9 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.expectCompilerOptions({
   ignore: {
-    items: ["ASSERT", "PUT"],
+    items: [
+      constants.CompilerOptions.IgnoreItem.ASSERT,
+      constants.CompilerOptions.IgnoreItem.PUT,
+    ],
   },
 });

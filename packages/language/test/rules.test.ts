@@ -95,27 +95,24 @@ namespace AST {
 }
 
 namespace Rules {
-  export const hello = rule<AST.HelloNode>(sequence(Tokens.HELLO), (state) => {
+  export const hello = rule(sequence(Tokens.HELLO), (state) => {
     const element = AST.createHelloNode() as unknown as SyntaxNode;
     state.consume(element, 1, Tokens.HELLO);
     const name = state.consume(element, 2, Tokens.ID)!.image;
     state.consume(element, 3, Tokens.EXCLAMATION);
     return { ...element, name } as unknown as AST.HelloNode;
   });
-  export const person = rule<AST.PersonNode>(
-    sequence(Tokens.PERSON),
-    (state) => {
-      const element = AST.createPersonNode() as unknown as SyntaxNode;
-      state.consume(element, 4, Tokens.PERSON);
-      const name = state.consume(element, 5, Tokens.ID)!.image;
-      return { ...element, name } as unknown as AST.PersonNode;
-    },
-  );
-  export const statement = orRule<AST.StatementNode>(
+  export const person = rule(sequence(Tokens.PERSON), (state) => {
+    const element = AST.createPersonNode() as unknown as SyntaxNode;
+    state.consume(element, 4, Tokens.PERSON);
+    const name = state.consume(element, 5, Tokens.ID)!.image;
+    return { ...element, name } as unknown as AST.PersonNode;
+  });
+  export const statement = orRule<AST.StatementNode, []>(
     () => hello,
     () => person,
   );
-  export const program = rule<AST.StatementNode[]>(
+  export const program = rule(
     () => statement.first(),
     (state) => {
       const program: AST.StatementNode[] = [];

@@ -228,7 +228,7 @@ function assignReference(
   reference.node = resolved.node;
 }
 
-const isProcedureParameterReference = (
+export const isProcedureParameterReference = (
   reference: Reference,
 ): reference is Reference<ProcedureParameter> =>
   reference.owner.kind === SyntaxKind.ProcedureParameter;
@@ -255,6 +255,13 @@ function getMatchingSymbols(
 ): readonly QualifiedSyntaxNode[] {
   if (reference.type === ReferenceType.Type) {
     return scope.getTypeSymbols(qualifiedName);
+  } else if (reference.type === ReferenceType.TypeOrVariable) {
+    // First try to get type symbols
+    const typeSymbols = scope.getTypeSymbols(qualifiedName);
+    if (typeSymbols.length > 0) {
+      return typeSymbols;
+    }
+    // Else continue to variable symbols
   }
 
   const getFullName = () => qualifiedName.toReversed().join(".");
@@ -271,7 +278,11 @@ function getMatchingSymbols(
 
   const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
   if (isAmbiguous) {
-    reporter.reportAmbiguousReference(reference, getFullName());
+    reporter.reportAmbiguousReference(
+      reference,
+      getFullName(),
+      explicitlyDeclaredSymbols,
+    );
   }
 
   if (explicitlyDeclaredSymbols.length > 0) {

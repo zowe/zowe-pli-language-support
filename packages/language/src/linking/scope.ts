@@ -89,6 +89,19 @@ export class Scope {
     );
   }
 
+  allDistinctTypeSymbols(
+    qualifiedName: string[],
+    symbols: QualifiedSyntaxNode[] = [],
+  ): QualifiedSyntaxNode[] {
+    if (this.symbolTable) {
+      symbols.push(...this.symbolTable.allDistinctTypeSymbols(qualifiedName));
+    }
+    if (this.parent) {
+      this.parent.allDistinctTypeSymbols(qualifiedName, symbols);
+    }
+    return symbols;
+  }
+
   allDistinctSymbols(
     qualifiedName: string[],
     symbols: QualifiedSyntaxNode[] = [],
@@ -130,7 +143,16 @@ export class ScopeCache {
   }
 
   get(node: SyntaxNode): Scope | undefined {
-    return this.scopes.get(node);
+    const existing = this.scopes.get(node);
+    if (existing) {
+      return existing;
+    }
+    // Get container node scope
+    const parentNode = node.container;
+    if (parentNode) {
+      return this.get(parentNode);
+    }
+    return undefined;
   }
 
   clear(): void {
@@ -138,7 +160,7 @@ export class ScopeCache {
     this.uniqueScopes.clear();
   }
 
-  values(): Scope[] {
-    return Array.from(this.uniqueScopes);
+  values(): IterableIterator<Scope> {
+    return this.uniqueScopes.values();
   }
 }

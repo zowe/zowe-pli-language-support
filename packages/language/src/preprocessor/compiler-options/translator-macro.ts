@@ -13,23 +13,25 @@ import { diagnosticFromCode } from "../../language-server/types";
 import { CompilerOptionsCodes } from "./codes";
 import { CompilerOptions, getDefaultCompilerOptions } from "./options-macro";
 import {
-  ensureArgument,
   ensureArguments,
+  ensureEnum,
   ensureType,
   originalImage,
   Translator,
 } from "./translator";
 
-const translator = new Translator<CompilerOptions>(getDefaultCompilerOptions());
+const translator = new Translator<CompilerOptions>(() =>
+  getDefaultCompilerOptions(),
+);
 
 translator.rule(["CASE"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plain");
-  options.case = ensureArgument(
+  options.case = ensureEnum(
     value,
     CompilerOptionsCodes.PPMacro.Case.InvalidParameter,
-    ["UPPER", "ASIS"],
+    CompilerOptions.Case,
   );
 });
 
@@ -37,10 +39,10 @@ translator.rule(["DBCS"], (option, options, acceptor) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plain");
-  options.dbcs = ensureArgument(
+  options.dbcs = ensureEnum(
     value,
     CompilerOptionsCodes.PPMacro.Dbcs.InvalidParameter,
-    ["EXACT", "INEXACT"],
+    CompilerOptions.Dbcs,
   );
   acceptor(
     diagnosticFromCode(
@@ -105,10 +107,10 @@ translator.rule(["FIXED"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plain");
-  options.fixed = ensureArgument(
+  options.fixed = ensureEnum(
     value,
     CompilerOptionsCodes.PPMacro.Fixed.InvalidParameter,
-    ["DECIMAL", "BINARY"],
+    CompilerOptions.Fixed,
   );
 });
 
@@ -174,10 +176,10 @@ translator.rule(["RESCAN"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plain");
-  options.rescan = ensureArgument(
+  options.rescan = ensureEnum(
     value,
     CompilerOptionsCodes.PPMacro.Rescan.InvalidParameter,
-    ["UPPER", "ASIS"],
+    CompilerOptions.Rescan,
   );
 });
 

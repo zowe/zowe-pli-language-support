@@ -65,6 +65,7 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.ReferenceItem_Ref:
     case CstNodeKind.Exports_Procedure:
     case CstNodeKind.ProcedureParameter_Id:
+    case CstNodeKind.TypeReference_Ref:
       return true;
   }
   return false;

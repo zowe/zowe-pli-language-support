@@ -42,9 +42,9 @@ export function completionRequest(
   let context: SyntaxNode | undefined;
   if (token) {
     context = getTokenContext(tokens, tokenIndex);
-    followElements.push(...getFollowElements(context, token));
+    followElements.push(...getFollowElements(unit, context, token));
   } else {
-    followElements.push(...provideEntryPointFollowElements());
+    followElements.push(...provideEntryPointFollowElements(unit));
   }
   const items = followElements.flatMap((element) =>
     generateCompletionItems(unit, context, element),

@@ -39,17 +39,12 @@ verify.expectDiagnosticsAt(13, {
   message:
     code.CompilerOptions.Deprecate.InvalidStatementParameter.message("INVALID"),
 });
-verify.expectDiagnosticsAt([4, 8, 10, 12, 14, 16, 18, 20, 22], {
-  message: code.CompilerOptions.DupeOptionIssue.message("DEPRECATENEXT"),
-});
 verify.expectCompilerOptions({
   deprecateNext: {
-    items: [
-      { type: "STMT", value: "ALLOCATE" },
-      { type: "BUILTIN", value: "STRLEN" },
-      { type: "ENTRY", value: "MAIN" },
-      { type: "INCLUDE", value: "LIB" },
-      { type: "VARIABLE", value: "FOO" },
-    ],
+    BUILTIN: new Set(["STRLEN"]),
+    ENTRY: new Set(["MAIN"]),
+    INCLUDE: new Set(["LIB"]),
+    STMT: new Set(["ALLOCATE"]),
+    VARIABLE: new Set(["FOO"]),
   },
 });

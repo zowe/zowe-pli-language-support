@@ -9,13 +9,13 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-/**
- * Failing test for hover on regular variable declaration
- */
+////*PROCESS DEPRECATE(BUILTIN(STRLEN));
+//// TEST: PROC OPTIONS(MAIN);
+////   DCL <|1:STRLEN|> BUILTIN;
+////   DCL X FIXED BIN(31);
+////   X = STRLEN('TEST');
+//// END TEST;
 
-//// DCL MyVar FIXED DECIMAL(2,5);
-//// <|1>MyVar = 12.1234;
-
-hover.expectMarkdownAt(1, hover.codeBlock("DCL MYVAR FIXED DECIMAL;"));
+verify.expectDiagnosticsAt(1, code.Error.IBM2444I);

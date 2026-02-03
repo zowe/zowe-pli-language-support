@@ -28,6 +28,6 @@ verify.expectDiagnosticsAt(3, {
 });
 verify.expectCompilerOptions({
   default: {
-    nullinit: { type: "SYSNULL" },
+    nullinit: { type: constants.CompilerOptions.DefaultNullInitType.SYSNULL },
   },
 });

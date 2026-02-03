@@ -12,7 +12,7 @@
 export interface CompilerOptions {
   ccsid0?: boolean;
   codepage?: boolean;
-  deprecate?: string[];
+  deprecate?: Set<string>;
   emptyDbrm?: boolean;
   hostCopy?: boolean;
   incOnly?: boolean;
@@ -21,20 +21,21 @@ export interface CompilerOptions {
 }
 
 export namespace CompilerOptions {
-  export type Line = "LINEONLY" | "LINEFILE";
+  export enum Line {
+    LINEONLY,
+    LINEFILE,
+  }
 }
 
-const defaultCompilerOptions: CompilerOptions = {
-  ccsid0: true,
-  codepage: false,
-  deprecate: [],
-  emptyDbrm: false,
-  hostCopy: true,
-  incOnly: false,
-  line: "LINEONLY",
-  warnDecp: false,
-};
-
 export function getDefaultCompilerOptions(): CompilerOptions {
-  return { ...defaultCompilerOptions };
+  return {
+    ccsid0: true,
+    codepage: false,
+    deprecate: new Set(),
+    emptyDbrm: false,
+    hostCopy: true,
+    incOnly: false,
+    line: CompilerOptions.Line.LINEONLY,
+    warnDecp: false,
+  };
 }

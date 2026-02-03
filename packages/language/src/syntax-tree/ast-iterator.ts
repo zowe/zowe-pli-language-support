@@ -404,7 +404,7 @@ export function forEachNode(
       node.attributes.forEach(action);
       node.options.forEach(action);
       node.returns.forEach(action);
-      node.environmentName.forEach(action);
+      node.environmentName && action(node.environmentName);
       break;
     case SyntaxKind.EntryParameterDescription:
       node.attributes.forEach(action);
@@ -421,9 +421,6 @@ export function forEachNode(
       break;
     case SyntaxKind.EnvironmentAttribute:
       node.items.forEach(action);
-      break;
-    case SyntaxKind.EnvironmentAttributeItem:
-      node.args.forEach(action);
       break;
     case SyntaxKind.ExecStatement:
       break;
@@ -848,6 +845,8 @@ export function forEachNode(
       break;
     case SyntaxKind.Reserves:
       break;
+    case SyntaxKind.ReservedAttribute:
+      break;
     case SyntaxKind.ResignalStatement:
       break;
     case SyntaxKind.ReturnsAttribute:
@@ -972,6 +971,14 @@ export function forEachNode(
         action(node.body);
       }
       break;
+    case SyntaxKind.EnvironmentOptionValue:
+      if (node.value) {
+        action(node.value);
+      }
+      break;
+    case SyntaxKind.EnvironmentOptionSymbol:
+    case SyntaxKind.EnvironmentOptionOrganization:
+    case SyntaxKind.EnvironmentOptionRecordFormat:
     case SyntaxKind.SqlAttributeBinary:
     case SyntaxKind.SqlAttributeLob:
     case SyntaxKind.SqlAttributeLobFile:
@@ -980,6 +987,7 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeTableLocator:
     case SyntaxKind.SqlAttributeResultSetLocator:
     case SyntaxKind.CicsResponseStatement:
+    case SyntaxKind.CicsExecStatement:
       break;
     default:
       assertUnreachable(node);

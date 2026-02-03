@@ -30,5 +30,5 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Unroll.InvalidParameter.message("INVALID"),
 });
 verify.expectCompilerOptions({
-  unroll: "NO",
+  unroll: constants.CompilerOptions.Unroll.NO,
 });

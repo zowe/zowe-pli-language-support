@@ -32,5 +32,5 @@ verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.ExpectedPlain.message(),
 });
 verify.expectCompilerOptions({
-  initAuto: "FULL",
+  initAuto: constants.CompilerOptions.InitAuto.FULL,
 });

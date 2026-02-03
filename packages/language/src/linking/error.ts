@@ -9,8 +9,8 @@
  *
  */
 
+import { AmbiguousReferenceData } from "../language-server/code-actions/apply-quick-fixes";
 import {
-  diagnostic,
   diagnosticFromCode,
   fullCode,
   Range,
@@ -20,6 +20,7 @@ import {
 } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { InternalCodes } from "../validation/internal-codes";
 import { PLICodes } from "../validation/pli-codes";
 import { ValidationAcceptor } from "../validation/validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -118,7 +119,9 @@ export class LinkerErrorReporter {
    * Synthetic error for when we cannot find a symbol.
    */
   reportCannotFindSymbol(token: Token, name: string) {
-    this.accept(diagnostic(Severity.E, `Unknown identifier '${name}'`, token));
+    this.accept(
+      diagnosticFromCode(InternalCodes.UnknownIdentifier, token, name),
+    );
   }
 
   /**
@@ -133,18 +136,39 @@ export class LinkerErrorReporter {
   /**
    * S IBM1881I
    */
-  reportAmbiguousReference(reference: Reference, name: string) {
+  reportAmbiguousReference(
+    reference: Reference,
+    name: string,
+    symbols: QualifiedSyntaxNode[],
+  ) {
+    function fullName(symbol: QualifiedSyntaxNode): string[] {
+      let current: QualifiedSyntaxNode | null = symbol;
+      const parts: string[] = [];
+      while (current) {
+        parts.push(current.name);
+        current = current.parent;
+      }
+      return parts.reverse();
+    }
+
     const range =
       getQualifiedReferenceRange(reference.owner) ??
       tokenToRange(reference.token);
     const uri = tokenToUri(reference.token);
 
+    const data: AmbiguousReferenceData | undefined = uri
+      ? {
+          symbols: symbols.map(fullName),
+          uri: uri,
+        }
+      : undefined;
     this.accept({
       message: PLICodes.Severe.IBM1881I.message(name),
       severity: Severity.S,
       range,
       uri,
       code: fullCode(PLICodes.Severe.IBM1881I),
+      data,
     });
   }
 

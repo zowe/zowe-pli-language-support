@@ -14,7 +14,9 @@ import { CompilerOptionsCodes } from "./codes";
 import { CompilerOptions, getDefaultCompilerOptions } from "./options-sql";
 import { ensureArguments, ensureType, Translator } from "./translator";
 
-const translator = new Translator<CompilerOptions>(getDefaultCompilerOptions());
+const translator = new Translator<CompilerOptions>(() =>
+  getDefaultCompilerOptions(),
+);
 
 translator.flag("ccsid0", ["CCSID0"], ["NOCCSID0"]);
 
@@ -22,7 +24,7 @@ translator.flag("codepage", ["CODEPAGE"], ["NOCODEPAGE"]);
 
 translator.rule(["DEPRECATE"], (option, options) => {
   ensureArguments(option, 1);
-  options.deprecate = [];
+  options.deprecate = new Set<string>();
   for (const value of option.values) {
     ensureType(value, "option");
     if (value.name !== "STMT") {
@@ -48,7 +50,7 @@ translator.rule(["DEPRECATE"], (option, options) => {
           entry.value,
         );
       }
-      options.deprecate.push(entry.value as string);
+      options.deprecate.add(entry.value as string);
     }
   }
 });
@@ -63,12 +65,12 @@ translator.rule(
   ["LINEFILE"],
   (option, options) => {
     ensureArguments(option, 0, 0);
-    options.line = "LINEFILE";
+    options.line = CompilerOptions.Line.LINEFILE;
   },
   ["LINEONLY"],
   (option, options) => {
     ensureArguments(option, 0, 0);
-    options.line = "LINEONLY";
+    options.line = CompilerOptions.Line.LINEONLY;
   },
 );
 

@@ -37,6 +37,6 @@ verify.expectDiagnosticsAt(10, {
 });
 verify.expectCompilerOptions({
   inSource: {
-    type: "FULL",
+    type: constants.CompilerOptions.InSourceType.FULL,
   },
 });

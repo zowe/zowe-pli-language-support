@@ -11,7 +11,9 @@
 
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
+import { assertUnreachable } from "../utils/common";
 import { isObject } from "../utils/types";
+import type { CompilationUnit } from "../workspace/compilation-unit";
 
 export enum SyntaxKind {
   // Preprocessor AST
@@ -88,7 +90,10 @@ export enum SyntaxKind {
   EntryStatement,
   EntryUnionDescription,
   EnvironmentAttribute,
-  EnvironmentAttributeItem,
+  EnvironmentOptionSymbol,
+  EnvironmentOptionValue,
+  EnvironmentOptionOrganization,
+  EnvironmentOptionRecordFormat,
   ExecStatement,
   ExitStatement,
   Exports,
@@ -181,6 +186,7 @@ export enum SyntaxKind {
   PutItem,
   PutStringStatement,
   QualifyStatement,
+  ReservedAttribute,
   ReplaceStatement,
   ReadStatement,
   ReadStatementOption,
@@ -225,6 +231,7 @@ export enum SyntaxKind {
   WriteStatementOption,
   XFormatItem,
   CicsResponseStatement,
+  CicsExecStatement,
 }
 
 export enum KeywordConditions {
@@ -336,7 +343,6 @@ export enum DefaultAttribute {
   INTERNAL,
   OPTIONAL,
   POSITION,
-  RESERVED,
   UNSIGNED,
   VARYING4,
   VARYINGZ,
@@ -521,15 +527,42 @@ export enum AssignmentOperator {
   AmpersandEquals,
   /** ¬= or ^= */
   NotEquals,
-  /** <> */
-  LessThanGreaterThan,
   /** = */
   Equals,
 }
 
+export function assignmentToBinaryOperator(
+  operator: AssignmentOperator,
+): BinaryOperator | null {
+  switch (operator) {
+    case AssignmentOperator.PipePipeEquals:
+      return BinaryOperator.PipePipe;
+    case AssignmentOperator.StarStarEquals:
+      return BinaryOperator.StarStar;
+    case AssignmentOperator.PlusEquals:
+      return BinaryOperator.Plus;
+    case AssignmentOperator.MinusEquals:
+      return BinaryOperator.Minus;
+    case AssignmentOperator.StarEquals:
+      return BinaryOperator.Star;
+    case AssignmentOperator.SlashEquals:
+      return BinaryOperator.Slash;
+    case AssignmentOperator.PipeEquals:
+      return BinaryOperator.Pipe;
+    case AssignmentOperator.AmpersandEquals:
+      return BinaryOperator.Ampersand;
+    case AssignmentOperator.NotEquals:
+      return BinaryOperator.Not;
+    case AssignmentOperator.Equals:
+      // No corresponding binary operator, simple assignment
+      return null;
+    default:
+      assertUnreachable(operator);
+  }
+}
+
 export enum BinaryOperator {
   NotEquals,
-  LessThanGreaterThan,
   NotLessThan,
   LessThanEquals,
   GreaterThanEquals,
@@ -582,11 +615,7 @@ export interface AstNode {
 }
 
 export function isSyntaxNode(node: unknown): node is SyntaxNode {
-  return (
-    isObject<AstNode>(node) &&
-    typeof node.kind === "number" &&
-    typeof node.container === "object"
-  );
+  return isObject<AstNode>(node) && typeof node.kind === "number";
 }
 
 export function getContainer<K extends SyntaxNode["kind"]>(
@@ -615,6 +644,13 @@ export enum ReferenceType {
    * A type reference in the PL/I code. Only valid for normal PL/I code.
    */
   Type,
+  /**
+   * References a type OR variable, but will prefer type if both exist.
+   *
+   * This is a rather exotic case that only exists to support the limited amount of type functions.
+   * These look like `BIND(:type, pointer:)`, and require to be able to reference either a type or variable.
+   */
+  TypeOrVariable,
 }
 
 export interface Reference<T extends SyntaxNode = SyntaxNode> {
@@ -652,15 +688,37 @@ export function createReference<T extends SyntaxNode>(
   };
 }
 
+export function isPreprocessorNode(
+  unit: CompilationUnit,
+  node: SyntaxNode,
+): boolean {
+  let parent = node;
+  while (parent.container) {
+    parent = parent.container;
+  }
+  return unit.preprocessorAst === parent;
+}
+
 export type Wildcard<T> = T | "*";
 
 export type SyntaxNode =
   // Preprocessor nodes
   | ActivateStatement
   | ActivateItem
+  | AnswerStatement
   | DeactivateStatement
   | TokenStatement
-  | AnswerStatement
+  | CicsExecStatement
+  | CicsResponseStatement
+  | SqlAttributeStatement
+  | SqlAttributeBinary
+  | SqlAttributeLob
+  | SqlAttributeLobLocator
+  | SqlAttributeLobFile
+  | SqlAttributeRowId
+  | SqlAttributeTableLocator
+  | SqlAttributeResultSetLocator
+
   // Normal nodes
   | AFormatItem
   | AllocateDimension
@@ -729,7 +787,7 @@ export type SyntaxNode =
   | EntryStatement
   | EntryUnionDescription
   | EnvironmentAttribute
-  | EnvironmentAttributeItem
+  | EnvironmentOptionItem
   | ExecStatement
   | ExitStatement
   | Exports
@@ -825,6 +883,7 @@ export type SyntaxNode =
   | ReinitStatement
   | ReleaseStatement
   | Reserves
+  | ReservedAttribute
   | ResignalStatement
   | ReturnsAttribute
   | ReturnsOption
@@ -841,15 +900,6 @@ export type SyntaxNode =
   | Statement
   | StopStatement
   | StringLiteral
-  | SqlAttributeStatement
-  | CicsResponseStatement
-  | SqlAttributeBinary
-  | SqlAttributeLob
-  | SqlAttributeLobLocator
-  | SqlAttributeLobFile
-  | SqlAttributeRowId
-  | SqlAttributeTableLocator
-  | SqlAttributeResultSetLocator
   | TypeAttribute
   | UnaryExpression
   | ValueAttribute
@@ -895,7 +945,8 @@ export type CommonDeclarationAttribute =
   | ValueListFromAttribute
   | ValueRangeAttribute
   | GenericAttribute
-  | IndForAttribute;
+  | IndForAttribute
+  | ReservedAttribute;
 /**
  * Type extending attributes are attributes that extend the type of a variable.
  */
@@ -959,12 +1010,13 @@ export type InitialAttributeSpecificationIteration =
   | InitialAttributeItemStar
   | InitialAttributeSpecificationIterationValue;
 export type LiteralValue = NumberLiteral | StringLiteral;
-export type NamedElement = DeclaredVariable | OrdinalValue | LabelPrefix;
+export type NamedVariable = DeclaredVariable | OrdinalValue | LabelPrefix;
 export type NamedType =
   | DefineAliasStatement
   | DefineOrdinalStatement
   // Only if part of a define struct statement
   | DeclaredVariable;
+export type NamedElement = NamedVariable | NamedType;
 export type OptionsItem =
   | CMPATOptionsItem
   | LinkageOptionsItem
@@ -1043,7 +1095,8 @@ export type Unit =
   | NoPrintDirective
   | SkipDirective
   | SqlAttributeStatement
-  | CicsResponseStatement;
+  | CicsResponseStatement
+  | CicsExecStatement;
 
 // Preprocessor AST
 
@@ -1586,6 +1639,8 @@ export interface DeclaredItem extends AstNode {
   elements: DeclaredItemElement[];
   levelToken: Token | null;
   attributes: DeclarationAttribute[];
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createDeclaredItem(): DeclaredItem {
   return {
@@ -1595,6 +1650,8 @@ export function createDeclaredItem(): DeclaredItem {
     levelToken: null,
     elements: [],
     attributes: [],
+    startToken: null,
+    endToken: null,
   };
 }
 export interface DeclaredVariable extends AstNode {
@@ -1791,6 +1848,8 @@ export interface DefineOrdinalStatement extends AstNode {
   xDefine: boolean;
   attributes: DefineOrdinalAttribute[];
   precision: string | null;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 
 export function createDefineOrdinalStatement(): DefineOrdinalStatement {
@@ -1803,6 +1862,8 @@ export function createDefineOrdinalStatement(): DefineOrdinalStatement {
     xDefine: false,
     attributes: [],
     precision: null,
+    startToken: null,
+    endToken: null,
   };
 }
 
@@ -2053,7 +2114,8 @@ export interface EntryAttribute extends AstNode {
   options: Options[];
   variable: Token[];
   returns: ReturnsOption[];
-  environmentName: Expression[];
+  hasExternal: boolean;
+  environmentName: Expression | null;
   entryToken: Token | null;
 }
 export function createEntryAttribute(): EntryAttribute {
@@ -2065,8 +2127,9 @@ export function createEntryAttribute(): EntryAttribute {
     options: [],
     variable: [],
     returns: [],
-    environmentName: [],
+    environmentName: null,
     entryToken: null,
+    hasExternal: false,
   };
 }
 export interface EntryParameterDescription extends AstNode {
@@ -2126,7 +2189,7 @@ export function createEntryUnionDescription(): EntryUnionDescription {
 
 export interface EnvironmentAttribute extends AstNode {
   kind: SyntaxKind.EnvironmentAttribute;
-  items: EnvironmentAttributeItem[];
+  items: EnvironmentOptionItem[];
 }
 
 export function createEnvironmentAttribute(): EnvironmentAttribute {
@@ -2137,18 +2200,116 @@ export function createEnvironmentAttribute(): EnvironmentAttribute {
   };
 }
 
-export interface EnvironmentAttributeItem extends AstNode {
-  kind: SyntaxKind.EnvironmentAttributeItem;
-  environment: string | null;
-  args: Expression[];
+export type EnvironmentOptionItem =
+  | EnvironmentOptionOrganization
+  | EnvironmentOptionRecordFormat
+  | EnvironmentOptionSymbol
+  | EnvironmentOptionValue;
+
+export enum Organization {
+  Consecutive,
+  Indexed,
+  Relative,
 }
 
-export function createEnvironmentAttributeItem(): EnvironmentAttributeItem {
+export interface EnvironmentOptionOrganization extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionOrganization;
+  organization: Organization | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionOrganization(): EnvironmentOptionOrganization {
   return {
-    kind: SyntaxKind.EnvironmentAttributeItem,
+    kind: SyntaxKind.EnvironmentOptionOrganization,
     container: null,
-    environment: null,
-    args: [],
+    organization: null,
+    token: null,
+  };
+}
+
+export enum RecordFormat {
+  F,
+  FB,
+  FS,
+  FBS,
+  V,
+  VB,
+  VS,
+  VBS,
+  U,
+}
+
+export interface EnvironmentOptionRecordFormat extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionRecordFormat;
+  format: RecordFormat | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionRecordFormat(): EnvironmentOptionRecordFormat {
+  return {
+    kind: SyntaxKind.EnvironmentOptionRecordFormat,
+    container: null,
+    format: null,
+    token: null,
+  };
+}
+
+export enum EnvironmentOptionSymbolName {
+  BKWD,
+  GENKEY,
+  REUSE,
+  SKIP,
+  VSAM,
+  SCALARVARYING,
+  CONSECUTIVE,
+  LEAVE,
+  REREAD,
+  CTLASA,
+  CTL360,
+  GRAPHIC,
+  INDEXED,
+}
+
+export enum EnvironmentOptionValueName {
+  BUFND,
+  BUFNI,
+  BUFSP,
+  BLKSIZE,
+  RECSIZE,
+  PASSWORD,
+  KEYLOC,
+  REGIONAL,
+}
+
+export interface EnvironmentOptionSymbol extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionSymbol;
+  name: EnvironmentOptionSymbolName | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionSymbol(): EnvironmentOptionSymbol {
+  return {
+    kind: SyntaxKind.EnvironmentOptionSymbol,
+    container: null,
+    name: null,
+    token: null,
+  };
+}
+
+export interface EnvironmentOptionValue extends AstNode {
+  kind: SyntaxKind.EnvironmentOptionValue;
+  name: EnvironmentOptionValueName | null;
+  value: Expression | null;
+  token: Token | null;
+}
+
+export function createEnvironmentOptionValue(): EnvironmentOptionValue {
+  return {
+    kind: SyntaxKind.EnvironmentOptionValue,
+    container: null,
+    name: null,
+    value: null,
+    token: null,
   };
 }
 
@@ -2835,6 +2996,7 @@ export function createLFormatItem(): LFormatItem {
 export interface LikeAttribute extends AstNode {
   kind: SyntaxKind.LikeAttribute;
   reference: LocatorCall | null;
+  likeToken: Token | null;
 }
 
 export function createLikeAttribute(): LikeAttribute {
@@ -2842,6 +3004,7 @@ export function createLikeAttribute(): LikeAttribute {
     kind: SyntaxKind.LikeAttribute,
     container: null,
     reference: null,
+    likeToken: null,
   };
 }
 
@@ -2949,6 +3112,7 @@ export function createMemberCall(): MemberCall {
     previous: null,
   };
 }
+
 export interface NamedCondition extends AstNode {
   kind: SyntaxKind.NamedCondition;
   name: string | null;
@@ -3270,7 +3434,7 @@ export interface ProcedureCall extends AstNode {
   /**
    * Call to a known procedure or external declaration (via a named element), does not necessarily require an arg list
    */
-  procedure: Reference<NamedElement> | null;
+  procedure: Reference<NamedVariable> | null;
   /**
    * First argument list of the CALL statement.
    * In case of a procedure array, this is the index!
@@ -3309,7 +3473,7 @@ export function createProcedureCallArgs(): ProcedureCallArgs {
 
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;
-  ref: Reference<NamedElement> | null;
+  ref: Reference<NamedVariable> | null;
 }
 export function createProcedureParameter(): ProcedureParameter {
   return {
@@ -3467,6 +3631,19 @@ export function createQualifyStatement(): QualifyStatement {
   };
 }
 
+export interface ReservedAttribute extends AstNode {
+  kind: SyntaxKind.ReservedAttribute;
+  importedToken: Token | null;
+}
+
+export function createReservedAttribute(): ReservedAttribute {
+  return {
+    kind: SyntaxKind.ReservedAttribute,
+    container: null,
+    importedToken: null,
+  };
+}
+
 export interface ReplaceStatement extends AstNode {
   kind: SyntaxKind.ReplaceStatement;
   name: string | null;
@@ -3598,12 +3775,14 @@ export function createReturnsAttribute(): ReturnsAttribute {
 export interface ReturnsOption extends AstNode {
   kind: SyntaxKind.ReturnsOption;
   returnAttributes: DeclarationAttribute[];
+  returnsToken: Token | null;
 }
 export function createReturnsOption(): ReturnsOption {
   return {
     kind: SyntaxKind.ReturnsOption,
     container: null,
     returnAttributes: [],
+    returnsToken: null,
   };
 }
 export interface ReturnStatement extends AstNode {
@@ -3750,6 +3929,8 @@ export interface Statement extends AstNode {
   condition: ConditionPrefix | null;
   labels: LabelPrefix[];
   value: Unit | null;
+  startToken: Token | null;
+  endToken: Token | null;
 }
 export function createStatement(): Statement {
   return {
@@ -3758,6 +3939,8 @@ export function createStatement(): Statement {
     condition: null,
     labels: [],
     value: null,
+    startToken: null,
+    endToken: null,
   };
 }
 export interface StopStatement extends AstNode {
@@ -4123,5 +4306,18 @@ export function createCicsResponseStatement(): CicsResponseStatement {
     token: null,
     code: null,
     codeToken: null,
+  };
+}
+
+// This is a placeholder for future CICS EXEC statements
+// It is currently used to generate the correct AST structure
+export interface CicsExecStatement extends AstNode {
+  kind: SyntaxKind.CicsExecStatement;
+}
+
+export function createCicsExecStatement(): CicsExecStatement {
+  return {
+    kind: SyntaxKind.CicsExecStatement,
+    container: null,
   };
 }

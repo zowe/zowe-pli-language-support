@@ -31,5 +31,5 @@ verify.expectDiagnosticsAt(7, {
 });
 verify.noDiagnostics(9);
 verify.expectCompilerOptions({
-  extrn: "SHORT",
+  extrn: constants.CompilerOptions.Length.SHORT,
 });

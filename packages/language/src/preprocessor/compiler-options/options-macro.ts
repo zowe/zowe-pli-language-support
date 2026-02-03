@@ -32,27 +32,40 @@ export interface CompilerOptions {
 }
 
 export namespace CompilerOptions {
-  export type Case = "UPPER" | "ASIS";
-  export type Dbcs = "EXACT" | "INEXACT";
-  export type Fixed = "DECIMAL" | "BINARY";
-  export type Rescan = "UPPER" | "ASIS";
+  export enum Case {
+    UPPER,
+    ASIS,
+  }
+
+  export enum Dbcs {
+    EXACT,
+    INEXACT,
+  }
+
+  export enum Fixed {
+    DECIMAL,
+    BINARY,
+  }
+
+  export enum Rescan {
+    UPPER,
+    ASIS,
+  }
 }
 
-const defaultCompilerOptions: CompilerOptions = {
-  // Contrary to the spec, our current implementation and tests use UPPER as default for case and rescan.
-  case: "UPPER",
-  dbcs: "INEXACT",
-  deprecate: new Set(),
-  deprecateNext: new Set(),
-  eolComm: true,
-  fixed: "DECIMAL",
-  id: "",
-  ignore: false,
-  incOnly: false,
-  namePrefix: false,
-  rescan: "UPPER",
-};
-
 export function getDefaultCompilerOptions(): CompilerOptions {
-  return { ...defaultCompilerOptions };
+  // Contrary to the spec, our current implementation and tests use UPPER as default for case and rescan.
+  return {
+    case: CompilerOptions.Case.UPPER,
+    dbcs: CompilerOptions.Dbcs.INEXACT,
+    deprecate: new Set(),
+    deprecateNext: new Set(),
+    eolComm: true,
+    fixed: CompilerOptions.Fixed.DECIMAL,
+    id: "",
+    ignore: false,
+    incOnly: false,
+    namePrefix: false,
+    rescan: CompilerOptions.Rescan.UPPER,
+  };
 }

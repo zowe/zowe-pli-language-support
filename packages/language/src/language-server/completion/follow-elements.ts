@@ -10,31 +10,43 @@
  */
 
 import { Token } from "../../parser/tokens";
-import { MemberCall, SyntaxKind, SyntaxNode } from "../../syntax-tree/ast";
+import {
+  getContainer,
+  isPreprocessorNode,
+  MemberCall,
+  SyntaxKind,
+  SyntaxNode,
+} from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
-import { CompletionKeywords } from "./keywords";
+import { CompletionKeywords, kw } from "./keywords";
 import * as tokens from "../../parser/tokens";
+import { tokenMatcher } from "chevrotain";
+import { SimpleCompletionItem } from "../types";
+import { CompilationUnit } from "../../workspace/compilation-unit";
 
 const DataSpecificationCompletionKeywordsArray =
-  CompletionKeywords.DeclarationKeyword.keysArray();
+  CompletionKeywords.DeclarationKeyword.valuesArray();
 const StatementStartCompletionKeywordsArray =
-  CompletionKeywords.StatementStart.keysArray();
+  CompletionKeywords.StatementStart.valuesArray();
 const StatementStartPreprocessorCompletionKeywordsArray =
-  CompletionKeywords.StatementStartPreprocessor.keysArray();
+  CompletionKeywords.StatementStartPreprocessor.valuesArray();
+const StatementStartPreprocessorWithPercentCompletionKeywordsArray =
+  CompletionKeywords.StatementStartPreprocessorWithPercent.valuesArray();
 const AllStatementStartKeywordsArray = [
   ...StatementStartCompletionKeywordsArray,
-  ...StatementStartPreprocessorCompletionKeywordsArray,
+  ...StatementStartPreprocessorWithPercentCompletionKeywordsArray,
 ];
 
 export enum FollowKind {
   CstNode,
   LocalReference,
   QualifiedReference,
+  TypeReference,
 }
 
 export interface FollowCstNode {
   kind: FollowKind.CstNode;
-  types: CstNodeKind[];
+  items: SimpleCompletionItem[];
 }
 
 export interface FollowLocalReference {
@@ -46,31 +58,15 @@ export interface FollowQualifiedReference {
   previous: MemberCall;
 }
 
+export interface FollowTypeReference {
+  kind: FollowKind.TypeReference;
+}
+
 export type FollowElement =
   | FollowCstNode
   | FollowLocalReference
-  | FollowQualifiedReference;
-
-const binaryTokens = [
-  tokens.StarStar,
-  tokens.Star,
-  tokens.Slash,
-  tokens.Plus,
-  tokens.Minus,
-  tokens.PipePipe,
-  tokens.LessThan,
-  tokens.NotLessThan,
-  tokens.LessThanEquals,
-  tokens.Equals,
-  tokens.NotEquals,
-  tokens.LessThanGreaterThan,
-  tokens.GreaterThanEquals,
-  tokens.GreaterThan,
-  tokens.NotGreaterThan,
-  tokens.Ampersand,
-  tokens.Pipe,
-  tokens.Not,
-].map((token) => token.name);
+  | FollowQualifiedReference
+  | FollowTypeReference;
 
 function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
   switch (token.tokenType.name) {
@@ -85,9 +81,24 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
           kind: FollowKind.LocalReference,
         },
       ];
+    case ";":
+      // On semicolon, we can always start a new statement or reference (assignment)
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items: AllStatementStartKeywordsArray,
+        },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
   }
 
-  if (binaryTokens.includes(token.tokenType.name)) {
+  if (
+    tokenMatcher(token, tokens.BinaryOperator) ||
+    tokenMatcher(token, tokens.UnaryOperator) ||
+    tokenMatcher(token, tokens.AssignmentOperator)
+  ) {
     return [
       {
         kind: FollowKind.LocalReference,
@@ -98,18 +109,171 @@ function getFollowElementsForUnknownToken(token: Token): FollowElement[] {
   return [];
 }
 
+const expressionFollowKinds = new Set([
+  // Within expressions
+  CstNodeKind.BinaryExpression_Operator,
+  CstNodeKind.UnaryExpression_Operator,
+  CstNodeKind.AssignmentStatement_Operator,
+
+  // After '(' in various places
+  CstNodeKind.Dimensions_OpenParen,
+  CstNodeKind.PutStatement_OpenParen,
+  CstNodeKind.InitialAttribute_OpenParenDirect,
+  CstNodeKind.ReturnStatement_OpenParen,
+  CstNodeKind.DoWhile_OpenParenWhile,
+  CstNodeKind.DoWhile_OpenParenUntil,
+  CstNodeKind.DoUntil_OpenParenUntil,
+  CstNodeKind.DoUntil_OpenParenWhile,
+  CstNodeKind.EntryStatement_OpenParenEnv,
+  CstNodeKind.AssertStatement_OpenParen0,
+  CstNodeKind.AssertStatement_OpenParen1,
+  CstNodeKind.AttachStatement_OpenParenTStack,
+  CstNodeKind.OrdinalValue_OpenParen,
+  CstNodeKind.DelayStatement_OpenParen,
+  CstNodeKind.DeleteStatement_OpenParenKey,
+  CstNodeKind.DisplayStatement_OpenParenExpression,
+  CstNodeKind.FetchEntry_OpenParenTitle,
+  CstNodeKind.FormatListItemLevel_OpenParen,
+  CstNodeKind.AFormatItem_OpenParen,
+  CstNodeKind.BFormatItem_OpenParen,
+  CstNodeKind.FFormatItem_OpenParen,
+  CstNodeKind.EFormatItem_OpenParen,
+  CstNodeKind.ColumnFormatItem_OpenParen,
+  CstNodeKind.GFormatItem_OpenParen,
+  CstNodeKind.LineFormatItem_OpenParen,
+  CstNodeKind.SkipFormatItem_OpenParen,
+  CstNodeKind.XFormatItem_OpenParen,
+  CstNodeKind.GetStatement_OpenParen,
+  CstNodeKind.GetFile_OpenParen,
+  CstNodeKind.GetSkip_OpenParen,
+  CstNodeKind.LocateStatementOption_OpenParen,
+  CstNodeKind.OpenOption_OpenParen,
+  CstNodeKind.PutItem_OpenParen,
+  CstNodeKind.ReadStatementFile_OpenParen,
+  CstNodeKind.RewriteStatementFile_OpenParen,
+  CstNodeKind.SelectStatement_OpenParen,
+  CstNodeKind.WhenStatement_OpenParen,
+  CstNodeKind.WriteStatementFile_OpenParen,
+  CstNodeKind.InitialAttribute_OpenParenInitAcross,
+  CstNodeKind.InitAcrossExpression_OpenParen,
+  CstNodeKind.DefinedAttribute_OpenParenPos,
+  CstNodeKind.ValueAttribute_OpenParen,
+  CstNodeKind.ValueListAttribute_OpenParen,
+  CstNodeKind.ValueRangeAttribute_OpenParen,
+  CstNodeKind.EnvironmentAttributeItem_OpenParen,
+  CstNodeKind.EntryAttribute_OpenParenEnv,
+  CstNodeKind.ParenthesizedExpression_OpenParen,
+  CstNodeKind.ProcedureCallArgs_OpenParen,
+  CstNodeKind.DataSpecificationOptions_OpenParenList,
+
+  // After ',' in various places
+  CstNodeKind.AssertStatement_Comma0,
+  CstNodeKind.DefaultStatement_Comma,
+  CstNodeKind.FFormatItem_CommaFractional,
+  CstNodeKind.FFormatItem_CommaScalingFactor,
+  CstNodeKind.EFormatItem_Comma0,
+  CstNodeKind.EFormatItem_Comma1,
+  CstNodeKind.WhenStatement_Comma,
+  CstNodeKind.InitialAttribute_CommaInitAcross,
+  CstNodeKind.InitAcrossExpression_Comma,
+  CstNodeKind.EnvironmentOptionItem_Comma,
+  CstNodeKind.DataSpecificationDataList_Comma,
+
+  // After specific keywords
+  CstNodeKind.ActivateStatement_ACTIVATE,
+  CstNodeKind.DeactivateStatement_DEACTIVATE,
+  CstNodeKind.InscanDirective_INSCAN,
+  CstNodeKind.AssertStatement_TEXT,
+  CstNodeKind.AssignmentStatement_DIMACROSS,
+  CstNodeKind.DefaultStatement_DEFAULT,
+  CstNodeKind.DoSpecification_TO0,
+  CstNodeKind.DoSpecification_BY0,
+  CstNodeKind.DoSpecification_BY1,
+  CstNodeKind.DoSpecification_TO1,
+  CstNodeKind.DoSpecification_UPTHRU,
+  CstNodeKind.DoSpecification_DOWNTHRU,
+  CstNodeKind.DoSpecification_REPEAT,
+  CstNodeKind.IfStatement_IF,
+  CstNodeKind.LikeAttribute_LIKE,
+]);
+
+const semicolonFollowKinds = new Set([
+  CstNodeKind.DeactivateStatement_Semicolon,
+  CstNodeKind.ActivateStatement_Semicolon,
+  CstNodeKind.ProcedureStatement_Semicolon0,
+  CstNodeKind.ProcedureStatement_Semicolon1,
+  CstNodeKind.EntryStatement_Semicolon,
+  CstNodeKind.AllocateStatement_Semicolon,
+  CstNodeKind.AssignmentStatement_Semicolon,
+  CstNodeKind.AttachStatement_Semicolon,
+  CstNodeKind.BeginStatement_Semicolon0,
+  CstNodeKind.BeginStatement_Semicolon1,
+  CstNodeKind.CallStatement_Semicolon,
+  CstNodeKind.CancelThreadStatement_Semicolon,
+  CstNodeKind.CloseStatement_Semicolon,
+  CstNodeKind.DefaultStatement_Semicolon,
+  CstNodeKind.DefineAliasStatement_Semicolon,
+  CstNodeKind.DefineOrdinalStatement_Semicolon,
+  CstNodeKind.DefineStructureStatement_Semicolon,
+  CstNodeKind.DelayStatement_Semicolon,
+  CstNodeKind.DeleteStatement_Semicolon,
+  CstNodeKind.DetachStatement_Semicolon,
+  CstNodeKind.DisplayStatement_Semicolon,
+  CstNodeKind.DoStatement_Semicolon0,
+  CstNodeKind.DoStatement_Semicolon1,
+  CstNodeKind.ExecStatement_Semicolon,
+  CstNodeKind.ExitStatement_Semicolon,
+  CstNodeKind.FetchStatement_Semicolon,
+  CstNodeKind.FlushStatement_Semicolon,
+  CstNodeKind.FormatStatement_Semicolon,
+  CstNodeKind.FreeStatement_Semicolon,
+  CstNodeKind.GetStatement_Semicolon,
+  CstNodeKind.GoToStatement_Semicolon,
+  CstNodeKind.IterateStatement_Semicolon,
+  CstNodeKind.LeaveStatement_Semicolon,
+  CstNodeKind.LocateStatement_Semicolon,
+  CstNodeKind.NullStatement_Semicolon,
+  CstNodeKind.OnStatement_Semicolon,
+  CstNodeKind.OpenStatement_Semicolon,
+  CstNodeKind.PutStatement_Semicolon,
+  CstNodeKind.QualifyStatement_Semicolon0,
+  CstNodeKind.QualifyStatement_Semicolon1,
+  CstNodeKind.ReadStatement_Semicolon,
+  CstNodeKind.ReinitStatement_Semicolon,
+  CstNodeKind.ReleaseStatement_Semicolon,
+  CstNodeKind.ResignalStatement_Semicolon,
+  CstNodeKind.ReturnStatement_Semicolon,
+  CstNodeKind.RevertStatement_Semicolon,
+  CstNodeKind.RewriteStatement_Semicolon,
+  CstNodeKind.SelectStatement_Semicolon0,
+  CstNodeKind.SelectStatement_Semicolon1,
+  CstNodeKind.SignalStatement_Semicolon,
+  CstNodeKind.StopStatement_Semicolon,
+  CstNodeKind.WaitStatement_Semicolon,
+  CstNodeKind.WriteStatement_Semicolon,
+  CstNodeKind.DeclareStatement_Semicolon,
+]);
+
 export function getFollowElements(
+  unit: CompilationUnit,
   context: SyntaxNode | undefined,
   token: Token,
 ): FollowElement[] {
   // TODO: add more entry points for the completion of expressions
   switch (token.kind) {
-    case undefined:
-      return getFollowElementsForUnknownToken(token);
+    case CstNodeKind.LabelPrefix_Colon:
+      return provideEntryPointFollowElements(unit, context);
     case CstNodeKind.BinaryExpression_Operator:
+    case CstNodeKind.UnaryExpression_Operator:
       return [
         {
           kind: FollowKind.LocalReference,
+        },
+      ];
+    case CstNodeKind.TypeReference_StartColon:
+      return [
+        {
+          kind: FollowKind.TypeReference,
         },
       ];
     // We are inside a declaration, e.g.:
@@ -118,90 +282,7 @@ export function getFollowElements(
       return [
         {
           kind: FollowKind.CstNode,
-          types: DataSpecificationCompletionKeywordsArray,
-        },
-      ];
-    case CstNodeKind.DeactivateStatement_Semicolon:
-    case CstNodeKind.ActivateStatement_Semicolon:
-    case CstNodeKind.ProcedureStatement_Semicolon0:
-    case CstNodeKind.ProcedureStatement_Semicolon1:
-    case CstNodeKind.EntryStatement_Semicolon:
-    case CstNodeKind.AllocateStatement_Semicolon:
-    case CstNodeKind.AssignmentStatement_Semicolon:
-    case CstNodeKind.AttachStatement_Semicolon:
-    case CstNodeKind.BeginStatement_Semicolon0:
-    case CstNodeKind.BeginStatement_Semicolon1:
-    case CstNodeKind.CallStatement_Semicolon:
-    case CstNodeKind.CancelThreadStatement_Semicolon:
-    case CstNodeKind.CloseStatement_Semicolon:
-    case CstNodeKind.DefaultStatement_Semicolon:
-    case CstNodeKind.DefineAliasStatement_Semicolon:
-    case CstNodeKind.DefineOrdinalStatement_Semicolon:
-    case CstNodeKind.DefineStructureStatement_Semicolon:
-    case CstNodeKind.DelayStatement_Semicolon:
-    case CstNodeKind.DeleteStatement_Semicolon:
-    case CstNodeKind.DetachStatement_Semicolon:
-    case CstNodeKind.DisplayStatement_Semicolon:
-    case CstNodeKind.DoStatement_Semicolon0:
-    case CstNodeKind.DoStatement_Semicolon1:
-    case CstNodeKind.ExecStatement_Semicolon:
-    case CstNodeKind.ExitStatement_Semicolon:
-    case CstNodeKind.FetchStatement_Semicolon:
-    case CstNodeKind.FlushStatement_Semicolon:
-    case CstNodeKind.FormatStatement_Semicolon:
-    case CstNodeKind.FreeStatement_Semicolon:
-    case CstNodeKind.GetStatement_Semicolon:
-    case CstNodeKind.GoToStatement_Semicolon:
-    case CstNodeKind.IterateStatement_Semicolon:
-    case CstNodeKind.LeaveStatement_Semicolon:
-    case CstNodeKind.LocateStatement_Semicolon:
-    case CstNodeKind.NullStatement_Semicolon:
-    case CstNodeKind.OnStatement_Semicolon:
-    case CstNodeKind.OpenStatement_Semicolon:
-    case CstNodeKind.PutStatement_Semicolon:
-    case CstNodeKind.QualifyStatement_Semicolon0:
-    case CstNodeKind.QualifyStatement_Semicolon1:
-    case CstNodeKind.ReadStatement_Semicolon:
-    case CstNodeKind.ReinitStatement_Semicolon:
-    case CstNodeKind.ReleaseStatement_Semicolon:
-    case CstNodeKind.ResignalStatement_Semicolon:
-    case CstNodeKind.ReturnStatement_Semicolon:
-    case CstNodeKind.RevertStatement_Semicolon:
-    case CstNodeKind.RewriteStatement_Semicolon:
-    case CstNodeKind.SelectStatement_Semicolon0:
-    case CstNodeKind.SelectStatement_Semicolon1:
-    case CstNodeKind.SignalStatement_Semicolon:
-    case CstNodeKind.StopStatement_Semicolon:
-    case CstNodeKind.WaitStatement_Semicolon:
-    case CstNodeKind.WriteStatement_Semicolon:
-    case CstNodeKind.DeclareStatement_Semicolon:
-      return [
-        {
-          kind: FollowKind.CstNode,
-          types: AllStatementStartKeywordsArray,
-        },
-        {
-          kind: FollowKind.LocalReference,
-        },
-      ];
-    // Happens on '(' in `PUT()`
-    case CstNodeKind.Dimensions_OpenParen:
-    // Happens on '(' in `PUT(f)`
-    case CstNodeKind.DataSpecificationOptions_OpenParenList:
-    // Happens on ',' in `PUT(A, )`
-    case CstNodeKind.DataSpecificationDataList_Comma:
-      return [
-        {
-          kind: FollowKind.LocalReference,
-        },
-      ];
-    case CstNodeKind.AssignmentStatement_Operator:
-    case CstNodeKind.BinaryExpression_Operator:
-    case CstNodeKind.UnaryExpression_Operator:
-    case CstNodeKind.InitialAttribute_OpenParenDirect:
-      return [
-        {
-          kind: FollowKind.LocalReference,
+          items: DataSpecificationCompletionKeywordsArray,
         },
       ];
     case CstNodeKind.Percentage:
@@ -211,7 +292,7 @@ export function getFollowElements(
         },
         {
           kind: FollowKind.CstNode,
-          types: StatementStartPreprocessorCompletionKeywordsArray,
+          items: StatementStartPreprocessorCompletionKeywordsArray,
         },
       ];
     case CstNodeKind.MemberCall_Dot:
@@ -227,19 +308,87 @@ export function getFollowElements(
         }
       }
       break;
+    // After the 'TYPE' or 'TYPE(' in a type attribute
+    case CstNodeKind.TypeAttribute_TYPE:
+    case CstNodeKind.TypeAttribute_OpenParen:
+    // After '(:' in a type function call
+    case CstNodeKind.Dimensions_OpenParenColon:
+      return [
+        {
+          kind: FollowKind.TypeReference,
+        },
+      ];
+    case CstNodeKind.PutStatement_PUT:
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items: [kw("STRING")],
+        },
+      ];
   }
 
-  return [];
+  if (token.kind !== undefined) {
+    if (expressionFollowKinds.has(token.kind)) {
+      return [
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    } else if (semicolonFollowKinds.has(token.kind)) {
+      // After a semicolon, we usually can start a new statement
+      // However, the exact keywords proposed are dependent on the context
+      // e.g. whether we are in a preprocessor procedure or not.
+      return provideEntryPointFollowElements(unit, context);
+    }
+  }
+
+  return getFollowElementsForUnknownToken(token);
 }
 
-export function provideEntryPointFollowElements(): FollowElement[] {
-  /**
-   * TODO @didrikmunther: What follow elements are available for an empty program?
-   */
-  return [
-    {
-      kind: FollowKind.CstNode,
-      types: AllStatementStartKeywordsArray,
-    },
-  ];
+export function provideEntryPointFollowElements(
+  unit: CompilationUnit,
+  context?: SyntaxNode,
+): FollowElement[] {
+  const allKeywords: FollowElement = {
+    kind: FollowKind.CstNode,
+    items: AllStatementStartKeywordsArray,
+  };
+  if (!context) {
+    return [allKeywords];
+  }
+  if (isPreprocessorNode(unit, context)) {
+    const isProc = context.kind === SyntaxKind.ProcedureStatement;
+    const procItem = isProc
+      ? context
+      : getContainer(context, SyntaxKind.ProcedureStatement);
+    if (procItem) {
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items:
+            CompletionKeywords.StatementStartPreprocessorInProcedure.valuesArray(),
+        },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    } else {
+      return [
+        {
+          kind: FollowKind.CstNode,
+          items: CompletionKeywords.StatementStartPreprocessor.valuesArray(),
+        },
+        {
+          kind: FollowKind.LocalReference,
+        },
+      ];
+    }
+  } else {
+    return [
+      allKeywords,
+      {
+        kind: FollowKind.LocalReference,
+      },
+    ];
+  }
 }
