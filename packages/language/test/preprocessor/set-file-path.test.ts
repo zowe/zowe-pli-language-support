@@ -35,9 +35,15 @@ describe("setFilePath", () => {
       workspaceRoot,
       abstFile.path,
     );
+    // This const returns the correct drive letter for different windows environments.
+    const absolutePathDriveLetter =
+      process.platform === "win32"
+        ? (absolutePath.match(/^[A-Za-z]:/)?.[0] ?? "")
+        : "";
+
     const expected = ["darwin", "linux"].includes(process.platform)
-      ? "/absolute-folder/absolute.pli"
-      : "C:/absolute-folder/absolute.pli";
+      ? `/absolute-folder/absolute.pli`
+      : `${absolutePathDriveLetter}/absolute-folder/absolute.pli`;
 
     expect(actualPath).toBe(expected);
   });
