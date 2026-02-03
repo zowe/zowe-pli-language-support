@@ -18,7 +18,7 @@ import * as ast from "../syntax-tree/ast";
 import {
   constructBinaryExpression,
   IntermediateBinaryExpression,
-} from "./abstract-parser";
+} from "./binary-expressions";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import { tokenMatcher, TokenType } from "chevrotain";
