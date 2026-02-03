@@ -2095,8 +2095,10 @@ export function createEFormatItem(): EFormatItem {
 
 export interface EndStatement extends AstNode {
   kind: SyntaxKind.EndStatement;
+  endToken: Token | null;
   labels: LabelPrefix[];
   label: LabelReference | null;
+  semicolon: Token | null;
 }
 
 export function createEndStatement(): EndStatement {
@@ -2105,6 +2107,8 @@ export function createEndStatement(): EndStatement {
     container: null,
     labels: [],
     label: null,
+    semicolon: null,
+    endToken: null,
   };
 }
 export interface EntryAttribute extends AstNode {
