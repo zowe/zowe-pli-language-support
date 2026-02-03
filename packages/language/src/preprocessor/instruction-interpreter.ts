@@ -2474,7 +2474,7 @@ async function resolveIncludeFileUri(
    */
   function isMemberWithoutDDName(
     item: IncludeItem,
-  ): item is MemberIncludeItem & { ddname: undefined } {
+  ): item is MemberIncludeItem {
     return isMemberIncludeItem(item) && !item.ddname;
   }
 
@@ -2489,8 +2489,8 @@ async function resolveIncludeFileUri(
   ): item is MemberIncludeItem & { ddname: string; memberName: string } {
     return (
       isMemberIncludeItem(item) &&
-      Boolean(item.ddname) &&
-      Boolean(item.memberName)
+      item.ddname !== null &&
+      item.memberName !== null
     );
   }
 
