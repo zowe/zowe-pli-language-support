@@ -48,7 +48,7 @@ beforeEach(async () => {
 
   await pluginConfig.setProcessGroupConfigs([processGroup]);
   pluginConfig.setProgramConfigs("/workspace", [
-    { program: "main.pli", pgroup: "default", pliOptions: {} },
+    { program: "main.pli", pgroup: "default" },
   ]);
 });
 

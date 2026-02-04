@@ -18,13 +18,7 @@ import {
   parseAbstractCompilerOptions,
 } from "../preprocessor/compiler-options/parser";
 import { translateCompilerOptions } from "../preprocessor/compiler-options/translate";
-import {
-  isBoolean,
-  isNumber,
-  isRecordOf,
-  isString,
-  isStringArray,
-} from "../utils/types";
+import { isBoolean, isNumber, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "./file-system-provider";
 import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
@@ -41,7 +35,7 @@ export type PliOptions = Record<string, string>;
 export interface ProgramConfig {
   program: string;
   pgroup: string;
-  pliOptions: PliOptions;
+  compilerOptions?: string[];
 
   /**
    * Prebuilt abstract options for this program config.
@@ -60,15 +54,15 @@ export interface ProgramConfig {
 interface SerializedProgramConfig {
   program: string;
   pgroup: string;
-  "pli-options"?: PliOptions;
+  "compiler-options"?: string[];
 }
 
 function deserializeProgramConfig(obj: SerializedProgramConfig): ProgramConfig {
-  const pliOptions = obj["pli-options"] || {};
+  const compilerOptions = obj["compiler-options"] || [];
   return {
     program: obj.program,
     pgroup: obj.pgroup,
-    pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
+    compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
   };
 }
 
@@ -79,7 +73,6 @@ function deserializeProgramConfig(obj: SerializedProgramConfig): ProgramConfig {
 export interface ProcessGroup {
   name: string;
   compilerOptions: string[];
-  pliOptions: PliOptions;
 
   /**
    * Actual libs as they're loaded from the config on disk.
@@ -132,7 +125,6 @@ export function deserializeProcessGroup(
   obj: SerializedProcessGroup,
 ): ProcessGroup {
   const compilerOptions = obj["compiler-options"] || [];
-  const pliOptions = obj["pli-options"] || {};
   const includeExtensions = obj["include-extensions"] || [];
   const implicitBuiltins = obj["implicit-builtins"] || [];
   const libs = obj.libs || [];
@@ -143,7 +135,6 @@ export function deserializeProcessGroup(
   return {
     name: obj.name,
     compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
-    pliOptions: isRecordOf(pliOptions, isString) ? pliOptions : {},
     libs: isStringArray(libs) ? libs : [],
     $computedLibs: [],
     $computedLibsSet: new Set<string>(),
@@ -178,7 +169,6 @@ export function serializeProcessGroup(
   return {
     name: group.name,
     "compiler-options": group.compilerOptions,
-    "pli-options": group.pliOptions,
     libs: group.libs,
     "include-extensions": group.includeExtensions,
     "implicit-builtins": Array.from(group.implicitBuiltins).map((b) =>
@@ -194,7 +184,6 @@ export function serializeProcessGroup(
 interface SerializedProcessGroup {
   name: string;
   "compiler-options"?: string[];
-  "pli-options"?: PliOptions;
   libs?: string[];
   "include-extensions"?: string[];
   "implicit-builtins"?: string[];
@@ -549,16 +538,13 @@ export class PluginConfigurationProvider {
       );
 
       // collect raw compiler options from the group
-      const rawCompilerOptions = (
-        processGroupConfig?.compilerOptions || []
-      ).join(" ");
-      // collect raw pli-options from the group & program config
-      const rawPliOptions =
-        this.pliOptionsStringForProgramConfig(programConfig);
-
+      const rawCompilerOptions = [
+        ...(programConfig.compilerOptions || []),
+        ...(processGroupConfig?.compilerOptions || []),
+      ].join(" ");
       // combine them and pass them all together to parse and translate
       const [abstractOptions, translatedOptions, collectedIssues] =
-        this.parseAndTranslateOptions(`${rawCompilerOptions} ${rawPliOptions}`);
+        this.parseAndTranslateOptions(rawCompilerOptions);
       for (const issue of collectedIssues) {
         console.error(
           `Error in compiler options for program config "${programConfig.program}": ${issue}`,
@@ -740,32 +726,6 @@ export class PluginConfigurationProvider {
       }
     }
     return undefined;
-  }
-
-  /**
-   * Extracts & converts the merged pli-options for a given program config & associated process group to a compiler option string
-   * Program config pli-options override process group pli-options.
-   * @param programConfig Program config entry to retrieve options for, factoring in process group options too
-   * @returns Merged pli-options as a string, or "" if none
-   */
-  private pliOptionsStringForProgramConfig(
-    programConfig: ProgramConfig,
-  ): string {
-    const group = this.getProcessGroupConfig(programConfig.pgroup);
-    const groupOpts = group?.pliOptions ?? {};
-    const progOpts = programConfig.pliOptions;
-    // merge w/ program config entries taking precedence
-    const merged = { ...groupOpts, ...progOpts };
-    if (Object.keys(merged).length === 0) {
-      return "";
-    } else {
-      // form literal PP option strings
-      // e.g. { SYSPARM: "'a'"} => "SYSPARM('a')" // note the quotes
-      // e.g. { SYSTEM: "MVS", "SYSTEM(MVS)"
-      return Object.entries(merged)
-        .map(([key, value]) => `${key}(${value})`)
-        .join(" ");
-    }
   }
 }
 
