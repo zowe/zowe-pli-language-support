@@ -2472,9 +2472,7 @@ async function resolveIncludeFileUri(
    * @param item - The include item to check
    * @returns True if the item is a member include without a ddname
    */
-  function isMemberWithoutDDName(
-    item: IncludeItem,
-  ): item is MemberIncludeItem {
+  function isMemberWithoutDDName(item: IncludeItem): item is MemberIncludeItem {
     return isMemberIncludeItem(item) && !item.ddname;
   }
 
