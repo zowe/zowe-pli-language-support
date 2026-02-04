@@ -13,13 +13,28 @@ import { tokenMatcher } from "chevrotain";
 import { ParserState } from "./parser-state";
 import * as tokens from "./tokens";
 
+const assignmentIndicators = tokens.combine(
+  tokens.AssignmentOperator,
+  tokens.Dot,
+  tokens.MinusGreaterThan,
+  tokens.Comma,
+);
+
 function indicatesAssignment(token: tokens.Token): boolean {
-  return (
-    tokenMatcher(token, tokens.AssignmentOperator) ||
-    tokenMatcher(token, tokens.Dot) ||
-    tokenMatcher(token, tokens.Comma)
-  );
+  return assignmentIndicators[token.tokenTypeIdx] === true;
 }
+
+const expressionTokens = tokens.combine(
+  tokens.ID,
+  tokens.BinaryOperator,
+  tokens.UnaryOperator,
+  tokens.AssignmentOperator,
+  tokens.STRING_TERM,
+  tokens.NUMBER,
+  tokens.Comma,
+  tokens.Dot,
+  tokens.MinusGreaterThan,
+);
 
 export function performAssignmentLookahead(state: ParserState): boolean {
   if (performIfLookahead(state)) {
@@ -28,16 +43,7 @@ export function performAssignmentLookahead(state: ParserState): boolean {
     // e.g. IF (2 + 3) = 5 THEN; ...
     return false;
   }
-  const expressionTokenTypes = [
-    tokens.ID,
-    tokens.BinaryOperator,
-    tokens.UnaryOperator,
-    tokens.AssignmentOperator,
-    tokens.STRING_TERM,
-    tokens.NUMBER,
-    tokens.Comma,
-    tokens.Dot,
-  ];
+
   let i = 1;
   let token = state.peek(i++);
   // First token of an assigment needs to be an ID
@@ -73,11 +79,7 @@ export function performAssignmentLookahead(state: ParserState): boolean {
       // Semicolon indicates the end of the statement
       return false;
     } else {
-      if (
-        !expressionTokenTypes.some((tokenType) =>
-          tokenMatcher(token, tokenType),
-        )
-      ) {
+      if (!expressionTokens[token.tokenTypeIdx]) {
         // Non-expression token found, stop lookahead
         return false;
       }
