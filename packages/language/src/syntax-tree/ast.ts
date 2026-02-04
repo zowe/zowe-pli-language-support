@@ -3342,7 +3342,7 @@ export function createPageFormatItem(): PageFormatItem {
 
 export interface Parenthesis extends AstNode {
   kind: SyntaxKind.Parenthesis;
-  value: Expression | null;
+  expressions: Expression[];
   do: DoType3 | null;
 }
 
@@ -3350,7 +3350,7 @@ export function createParenthesis(): Parenthesis {
   return {
     kind: SyntaxKind.Parenthesis,
     container: null,
-    value: null,
+    expressions: [],
     do: null,
   };
 }
