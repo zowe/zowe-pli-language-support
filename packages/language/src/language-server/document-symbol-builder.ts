@@ -16,6 +16,7 @@ import {
   Statement,
   SyntaxKind,
   DefaultAttribute,
+  ProcedureStatement,
 } from "../syntax-tree/ast";
 import { Range, getSyntaxNodeRange, DocumentSymbol } from "./types";
 import { CstNodeKind } from "../syntax-tree/cst";
@@ -65,11 +66,20 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
     if (!procedureName || !range) {
       return [];
     }
+    const fullRange = getTokenRange(elementTokens, range);
+    const procedure = token.element as ProcedureStatement;
+
+    if (procedure.end) {
+      const endToken = procedure.end.semicolon ?? procedure.end.endToken;
+      if (endToken && isValidToken(endToken) && endToken.uri !== undefined) {
+        fullRange.end = endToken.endOffset;
+      }
+    }
 
     const symbol = createDocumentSymbol(
       procedureName,
       SymbolKind.Function,
-      getTokenRange(elementTokens, range),
+      fullRange,
       range,
       childSymbols,
     );
