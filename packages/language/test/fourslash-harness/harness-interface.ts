@@ -201,6 +201,11 @@ export interface HarnessTesterInterface {
     noParserDiagnostics(): void;
 
     /**
+     * Expect that the compilation unit has no linking diagnostics.
+     */
+    noLinkingDiagnostics(): void;
+
+    /**
      * Expect that the compilation unit has no diagnostics apart from the given regexes.
      * @param regexes The regexes to expect no diagnostics apart from.
      */

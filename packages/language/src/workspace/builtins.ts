@@ -27,6 +27,13 @@ export const BuiltinsBoolean = `
 
 `;
 
+export const BuiltinsFiles = `
+ /* Built-in files */
+ DECLARE SYSIN    EXTERNAL STREAM INPUT;
+ DECLARE SYSPRINT EXTERNAL STREAM OUTPUT PRINT;
+
+`;
+
 export const BuiltinsSQLCA = `
  DECLARE 1 SQLCA,
     2 SQLCAID CHAR(8),
@@ -885,6 +892,7 @@ export const Builtins =
  define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  ` +
   BuiltinsBoolean +
+  BuiltinsFiles +
   BuiltinsTypeFunctions +
   BuiltinsSQLCA +
   BuiltinsSQLDA;
