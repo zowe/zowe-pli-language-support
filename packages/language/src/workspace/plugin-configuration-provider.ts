@@ -745,8 +745,17 @@ export class PluginConfigurationProvider {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
       for (const lib of config.$computedLibsSet) {
-        const matches = !UriUtils.isPathRelative(lib)
-          ? UriUtils.basename(URI.parse(lib)) === dirname
+        let isPathAbsolute = false;
+        if (UriUtils.isWindows) {
+          // QUANDO VOLTAR: PROCESS DRIVE LETTER IS NOT RETURNING WHAT IT SHOULD. LOOK INTO IT.
+          let { path, drive } = UriUtils.processDriveLetter(lib);
+          if (drive) path = path.replace(drive, "");
+          isPathAbsolute = !UriUtils.isPathRelative(path);
+        } else {
+          isPathAbsolute = !UriUtils.isPathRelative(lib);
+        }
+        const matches = isPathAbsolute
+          ? lib.includes(dirname)
           : lib === dirname;
         if (matches) {
           return config;

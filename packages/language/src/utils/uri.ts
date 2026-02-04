@@ -40,7 +40,7 @@ export namespace UriUtils {
    *
    * @returns Object with normalized path and extracted drive letter
    */
-  function processDriveLetter(path: string): {
+  export function processDriveLetter(path: string): {
     path: string;
     drive: string | null;
   } {
@@ -58,7 +58,7 @@ export namespace UriUtils {
     if (match) {
       return {
         path: path,
-        drive: match[1].toLowerCase(),
+        drive: match[1],
       };
     }
 
