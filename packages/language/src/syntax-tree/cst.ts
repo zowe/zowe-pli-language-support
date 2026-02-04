@@ -676,6 +676,7 @@ export enum CstNodeKind {
   ReferenceItem_Ref,
   BinaryExpression_Operator,
   ParenthesizedExpression_OpenParen,
+  ParenthesizedExpression_Comma,
   ParenthesizedExpression_DO,
   ParenthesizedExpression_CloseParen,
   MemberCall_Dot,
