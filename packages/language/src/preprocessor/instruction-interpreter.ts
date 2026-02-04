@@ -2163,25 +2163,11 @@ function setFilePath(
   filePath: string | null,
   context: InterpreterContext,
 ): void {
-  if (filePath) {
-    item.filePath = filePath;
-    if (context.currentUri) {
-      const dirname = UriUtils.dirname(context.currentUri);
-      let relative = UriUtils.relative(dirname, filePath);
-      if (
-        // If the path isn't already relative
-        !relative.startsWith("../") &&
-        !relative.startsWith("./") &&
-        // If the path isn't absolute (Unix & Windows)
-        !relative.startsWith("/") &&
-        !(relative.charAt(1) === ":" && relative.charAt(2) === "/")
-      ) {
-        // Make sure the path is explicitly relative
-        relative = "./" + relative;
-      }
-      item.relativeFilePath = relative;
-    }
-  }
+  if (!filePath) return;
+  item.filePath = filePath;
+  if (!context.currentUri) return;
+  const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+  item.relativeFilePath = UriUtils.relativeDisplayPath(workspace, filePath);
 }
 
 /**
