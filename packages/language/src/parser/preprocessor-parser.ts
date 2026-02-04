@@ -479,7 +479,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
   }
   state.consume(
     statement,
-    CstNodeKind.ProcedureStatement_Semicolon0,
+    CstNodeKind.ProcedureStatement_Semicolon,
     t.Semicolon,
   );
   const body = statements(state, true);
@@ -850,7 +850,11 @@ function endStatement(
   // Assign existing labels if provided
   // Otherwise, parse new labels
   statement.labels = existingLabels ?? labels(state);
-  state.consume(statement, CstNodeKind.EndStatement_END, t.END);
+  statement.endToken = state.consume(
+    statement,
+    CstNodeKind.EndStatement_END,
+    t.END,
+  );
   if (state.canConsume(t.ID)) {
     const label = ast.createLabelReference();
     statement.label = label;
@@ -865,7 +869,11 @@ function endStatement(
       ast.ReferenceType.Variable,
     );
   }
-  state.consume(statement, CstNodeKind.EndStatement_Semicolon, t.Semicolon);
+  statement.semicolon = state.consume(
+    statement,
+    CstNodeKind.EndStatement_Semicolon,
+    t.Semicolon,
+  );
   return statement;
 }
 
@@ -876,7 +884,7 @@ function doStatement(state: ParserState): ast.DoStatement {
   if (state.canConsume(t.SKIP)) {
     // skip command
     state.consume(statement, CstNodeKind.DoStatement_SKIP, t.SKIP);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
+    state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
     statement.skip = true;
     const body = statements(state);
     statement.end = body.end;
@@ -884,7 +892,7 @@ function doStatement(state: ParserState): ast.DoStatement {
   } else if (state.canConsume(t.WHILE)) {
     //type-2-do-while-first
     const type2 = doWhile(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
+    state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
     const body = statements(state);
     statement.doType2 = type2;
     statement.statements = body.statements;
@@ -892,7 +900,7 @@ function doStatement(state: ParserState): ast.DoStatement {
   } else if (state.canConsume(t.UNTIL)) {
     //type-2-do-until-first
     const type2 = doUntil(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
+    state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
     const body = statements(state);
     statement.doType2 = type2;
     statement.statements = body.statements;
@@ -902,20 +910,20 @@ function doStatement(state: ParserState): ast.DoStatement {
   ) {
     //type-4 loops
     statement.doType4 = true;
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
+    state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
     const body = statements(state);
     statement.statements = body.statements;
     statement.end = body.end;
   } else if (state.canConsume(t.ID)) {
     // type-3-do
     const type3 = doType3(state);
-    state.consume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon);
+    state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
     const body = statements(state);
     statement.doType3 = type3;
     statement.statements = body.statements;
     statement.end = body.end;
   } else if (
-    state.tryConsume(statement, CstNodeKind.DoStatement_Semicolon0, t.Semicolon)
+    state.tryConsume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon)
   ) {
     //type-1-do
     const body = statements(state);
@@ -1082,7 +1090,7 @@ function selectStatement(state: ParserState): ast.SelectStatement {
       t.CloseParen,
     );
   }
-  state.consume(statement, CstNodeKind.SelectStatement_Semicolon0, t.Semicolon);
+  state.consume(statement, CstNodeKind.SelectStatement_Semicolon, t.Semicolon);
   while (state.canPercentConsume(t.WHEN)) {
     statement.cases.push(whenStatement(state));
   }

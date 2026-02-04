@@ -72,15 +72,17 @@ const packageRule = rule(
     if (state.canConsumeFirst(options.first())) {
       element.options = options.rule(state);
     }
-    state.consume(element, CstNodeKind.Package_Semicolon0, tokens.Semicolon);
+    state.consume(element, CstNodeKind.Package_Semicolon, tokens.Semicolon);
     const { inc } = state.createLoopContext("Package");
     while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
-    element.end = endStatement.rule(state);
-    state.consume(element, CstNodeKind.Package_Semicolon1, tokens.Semicolon);
+    // END statement for PACKAGE is optional
+    if (performEndStatementLookahead(state)) {
+      element.end = endStatement.rule(state);
+    }
     return element;
   },
 );
@@ -492,7 +494,7 @@ const procedureStatement = rule(
     }
     state.consume(
       element,
-      CstNodeKind.ProcedureStatement_Semicolon0,
+      CstNodeKind.ProcedureStatement_Semicolon,
       tokens.Semicolon,
     );
 
@@ -508,11 +510,6 @@ const procedureStatement = rule(
       tokens.PROCEDURE,
     );
     element.end = endStatement.rule(state);
-    state.consume(
-      element,
-      CstNodeKind.ProcedureStatement_Semicolon1,
-      tokens.Semicolon,
-    );
     return element;
   },
 );
@@ -1177,7 +1174,7 @@ const beginStatement = rule(
 
     state.consume(
       element,
-      CstNodeKind.BeginStatement_Semicolon0,
+      CstNodeKind.BeginStatement_Semicolon,
       tokens.Semicolon,
     );
     const { inc } = state.createLoopContext("BeginStatement");
@@ -1188,11 +1185,6 @@ const beginStatement = rule(
     }
 
     element.end = endStatement.rule(state);
-    state.consume(
-      element,
-      CstNodeKind.BeginStatement_Semicolon1,
-      tokens.Semicolon,
-    );
 
     return element;
   },
@@ -1211,12 +1203,22 @@ const endStatement = rule(
       prefix && element.labels.push(prefix);
     }
 
-    state.consume(element, CstNodeKind.EndStatement_END, tokens.END);
+    element.endToken = state.consume(
+      element,
+      CstNodeKind.EndStatement_END,
+      tokens.END,
+    );
 
     // Optional label reference
     if (state.canConsumeFirst(labelReference.first())) {
       element.label = labelReference.rule(state);
     }
+
+    element.semicolon = state.consume(
+      element,
+      CstNodeKind.EndStatement_Semicolon,
+      tokens.Semicolon,
+    );
 
     return element;
   },
@@ -2162,11 +2164,7 @@ const doStatement = rule(
       }
     }
 
-    state.consume(
-      element,
-      CstNodeKind.DoStatement_Semicolon0,
-      tokens.Semicolon,
-    );
+    state.consume(element, CstNodeKind.DoStatement_Semicolon, tokens.Semicolon);
 
     // Parse statements until END
     const { inc } = state.createLoopContext("DoStatement");
@@ -2177,11 +2175,6 @@ const doStatement = rule(
     }
 
     element.end = endStatement.rule(state);
-    state.consume(
-      element,
-      CstNodeKind.DoStatement_Semicolon1,
-      tokens.Semicolon,
-    );
 
     return element;
   },
@@ -3909,7 +3902,7 @@ const qualifyStatement = rule(
     );
     state.consume(
       element,
-      CstNodeKind.QualifyStatement_Semicolon0,
+      CstNodeKind.QualifyStatement_Semicolon,
       tokens.Semicolon,
     );
 
@@ -3921,11 +3914,6 @@ const qualifyStatement = rule(
     }
 
     element.end = endStatement.rule(state);
-    state.consume(
-      element,
-      CstNodeKind.QualifyStatement_Semicolon1,
-      tokens.Semicolon,
-    );
 
     return element;
   },
@@ -4270,7 +4258,7 @@ const selectStatement = rule(
 
     state.consume(
       element,
-      CstNodeKind.SelectStatement_Semicolon0,
+      CstNodeKind.SelectStatement_Semicolon,
       tokens.Semicolon,
     );
 
@@ -4292,11 +4280,6 @@ const selectStatement = rule(
     }
 
     element.end = endStatement.rule(state);
-    state.consume(
-      element,
-      CstNodeKind.SelectStatement_Semicolon1,
-      tokens.Semicolon,
-    );
 
     return element;
   },
