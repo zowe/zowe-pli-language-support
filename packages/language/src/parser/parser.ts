@@ -3890,10 +3890,8 @@ const dataSpecificationDataListItem = rule(
   (state: ParserState): ast.DataSpecificationDataListItem => {
     const element = ast.createDataSpecificationDataListItem();
 
-    // TODO: research, in some example, this can be found:
-    // ((I, ENTRY(I) DO I = 0 TO ENTRY_TABLE_COUNT))
-    // However, this does not conform to the language reference
-    element.value = expression.rule(state);
+    // Allows multiple sub-expressions separated by comma
+    element.value = expression.rule(state, undefined, true);
 
     return element;
   },
@@ -6171,7 +6169,15 @@ const referenceItem = rule(
 
 const expression = rule(
   () => primaryExpression.first(),
-  (state: ParserState, refType?: ast.ReferenceType): ast.Expression | null => {
+  (
+    state: ParserState,
+    // Some syntax nodes allow references to also target types (instead of just variables)
+    // This parameter indicates whether we are in such a context
+    refType?: ast.ReferenceType,
+    // Indicates whether we are parsing a data specification expression of a PUT/GET statement
+    // This enables some special syntax rules for parenthesized expressions
+    dataSpecification?: boolean,
+  ): ast.Expression | null => {
     const element: IntermediateBinaryExpression = {
       infix: true,
       items: [],
@@ -6180,7 +6186,7 @@ const expression = rule(
     };
 
     // Parse first primary expression
-    const lhs = primaryExpression.rule(state, refType);
+    const lhs = primaryExpression.rule(state, refType, dataSpecification);
     lhs && element.items.push(lhs);
 
     // Parse zero or more operator-expression pairs
@@ -6198,7 +6204,7 @@ const expression = rule(
         );
         element.operatorTokens.push(operatorToken);
       }
-      const rhs = primaryExpression.rule(state, refType);
+      const rhs = primaryExpression.rule(state, refType, dataSpecification);
       rhs && element.items.push(rhs);
     }
 
@@ -6208,7 +6214,10 @@ const expression = rule(
 
 const primaryExpression = orRule<
   ast.Expression,
-  [ast.ReferenceType | undefined]
+  [
+    refType: ast.ReferenceType | undefined,
+    dataSpecification: boolean | undefined,
+  ]
 >(
   () => literal,
   () => parenthesizedExpression,
@@ -6221,6 +6230,7 @@ const parenthesizedExpression = rule(
   (
     state: ParserState,
     refType?: ast.ReferenceType,
+    dataSpecification?: boolean,
   ): ast.Parenthesis | ast.Literal => {
     const element = ast.createParenthesis();
 
@@ -6229,7 +6239,26 @@ const parenthesizedExpression = rule(
       CstNodeKind.ParenthesizedExpression_OpenParen,
       tokens.OpenParen,
     );
-    element.value = expression.rule(state, refType);
+    const expr = expression.rule(state, refType, dataSpecification);
+    if (expr) {
+      element.expressions.push(expr);
+    }
+
+    // Additional expressions separated by commas
+    // These are exclusively used for PUT statements, but the syntax for that is completely undocumented
+    while (
+      dataSpecification &&
+      state.tryConsume(
+        element,
+        CstNodeKind.ParenthesizedExpression_Comma,
+        tokens.Comma,
+      )
+    ) {
+      const nextExpr = expression.rule(state, refType, dataSpecification);
+      if (nextExpr) {
+        element.expressions.push(nextExpr);
+      }
+    }
 
     // Optional DO clause
     if (
