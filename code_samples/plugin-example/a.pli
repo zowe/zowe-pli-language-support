@@ -1,9 +1,19 @@
 *PROCESS MARGINS(2,120);
- %INCLUDE "b.pli";
- VARB = 2;
- %INCLUDE C;
- VARC = 3;
- %INCLUDE lib;
- LIBREF = 44;
- %INCLUDE LIB2; // resolves w/out extension
- ABC = 24;
+ // WAGNER LINUX -> Everything works
+ // WAGNER WINDOWS -> DD members without DD name (ex.: abc123) are not resolved. Diagnostics triggers. 
+ // AZAT WINDOWS -> Includes works, but diagnostics only triggers when file is NOT resolved (therefore, doesn't exist)
+
+ // SHOULD TRIGGER
+ %INCLUDE AS892333T.ISPFT.TEST(DIM#@_$15678); // "Member exceeds 8 characters."
+ %INCLUDE AS892333T.ISPFT.TEST(_DIM1234); // "Member must start with a letter, followed by letters, numbers, @, #, _, or $.PL/I(LSPMV002E)"
+ %INCLUDE abc12345678; // "Member exceeds 8 characters."
+ %INCLUDE AS892333T.ISPFT.TEST(DIM12); // SHOULD NOT RESOLVE
+ 
+ // SHOULDN'T TRIGGER ANYTHING:
+ %INCLUDE abc#@_$1;
+ %INCLUDE abc123; 
+ %INCLUDE AS892333T.ISPFT.TEST(DIM1);
+ %INCLUDE AS892333T.ISPFT.TEST(DIM#@_$1);
+ %INCLUDE DIM1000;
+
+
