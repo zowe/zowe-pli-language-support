@@ -171,13 +171,14 @@ export namespace UriUtils {
       relative = "./" + relative;
       return relative;
     }
+    const { result, driveLetter } = stringPath(fallback);
     // WINDOWS
     if (isWindows) {
-      return handleDriveLetter(fallback);
+      return `${driveLetter}${result}`;
     }
     // UNIX
     if (UriUtils.isUnixAbsolutePath(relative)) {
-      return fallback;
+      return result;
     }
     return relative;
   }

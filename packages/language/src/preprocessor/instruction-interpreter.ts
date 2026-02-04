@@ -2167,11 +2167,7 @@ function setFilePath(
   item.filePath = filePath;
   if (!context.currentUri) return;
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-  item.relativeFilePath = UriUtils.relativeDisplayPath(
-    workspace,
-    filePath,
-    context.currentUri.path,
-  );
+  item.relativeFilePath = UriUtils.relativeDisplayPath(workspace, filePath);
 }
 
 /**
