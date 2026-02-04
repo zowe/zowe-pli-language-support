@@ -64,7 +64,6 @@ describe("Compilation Unit Tests", () => {
       {
         program: "test/entry.pli",
         pgroup: "",
-        pliOptions: {},
       },
     ]);
     expect(
@@ -95,7 +94,6 @@ describe("Compilation Unit Tests", () => {
       {
         program: "test/*.pli",
         pgroup: "",
-        pliOptions: {},
       },
     ]);
 
@@ -134,7 +132,6 @@ describe("Compilation Unit Tests", () => {
       {
         program: "src/*.pli",
         pgroup: "default",
-        pliOptions: {},
       },
     ]);
     // Simulate the process group config (normally this would be loaded from a config file)
@@ -151,7 +148,6 @@ describe("Compilation Unit Tests", () => {
           instructionCounterLimit: 5000,
           caseUpperValidation: false,
         },
-        pliOptions: {},
         implicitBuiltins: new Set(),
       },
     ]);
