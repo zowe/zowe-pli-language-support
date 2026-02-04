@@ -721,8 +721,18 @@ export class PluginConfigurationProvider {
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
-      if (config.$computedLibsSet.has(dirname)) {
-        return config;
+      for (const lib of config.$computedLibsSet) {
+        const isPathAbsolute = UriUtils.isWindows
+          ? !!(UriUtils.processDriveLetter(lib).drive)
+          : !UriUtils.isPathRelative(lib);
+
+        const matches = isPathAbsolute
+          ? lib.endsWith(dirname)
+          : lib === dirname;
+
+        if (matches) {
+          return config;
+        }
       }
     }
     return undefined;
