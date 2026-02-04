@@ -42,10 +42,7 @@ async function expectDocumentSymbols(annotatedCode: string): Promise<void> {
 
   EditorDocuments.set(textDocument);
   const unit = await parse(output, { validate: true });
-  const documentSymbols = await documentSymbolRequest(
-    URI.file("/test.pli"),
-    unit,
-  );
+  const documentSymbols = documentSymbolRequest(URI.file("/test.pli"), unit);
 
   const totalRanges = Object.values(ranges).reduce(
     (acc, curr) => acc + curr.length,
@@ -95,7 +92,7 @@ describe("Document Symbol Request", () => {
    WHAT = 123;
  END;`;
 
-    await await expectDocumentSymbols(code);
+    await expectDocumentSymbols(code);
   });
 
   test("should retrieve symbols for function, variable, and constant declarations", async () => {
