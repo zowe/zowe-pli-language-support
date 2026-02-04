@@ -32,6 +32,10 @@ export function getAttributes(item: DeclaredVariable): string[] {
   return attributes;
 }
 
+export function capitalize(str: string) {
+  return str[0].toUpperCase() + str.slice(1);
+}
+
 export function getEnumKeys<T extends Record<string, string | number>>(
   enumObject: T,
 ): string[] {
