@@ -378,7 +378,7 @@ describe("Validating", () => {
       });
       await pluginConfig.setProcessGroupConfigs([processGroup]);
       pluginConfig.setProgramConfigs("/", [
-        { program: "**/*.pli", pgroup: "default", pliOptions: {} },
+        { program: "**/*.pli", pgroup: "default" },
       ]);
 
       const doc = await parseWithValidations(` %INCLUDE 'nonexistent.pli';

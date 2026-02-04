@@ -299,7 +299,6 @@ export class TestBuilder {
         {
           program: "*.pli",
           pgroup: "default",
-          pliOptions: {},
         },
       ]);
     }
@@ -320,7 +319,6 @@ export class TestBuilder {
             instructionCounterLimit: 5000,
             caseUpperValidation: false,
           },
-          pliOptions: {},
         },
       ]);
     }

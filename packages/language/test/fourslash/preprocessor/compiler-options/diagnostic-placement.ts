@@ -11,6 +11,19 @@
 
 /// <reference path="../../framework.ts" />
 
+// @filename: .pliplugin/pgm_conf.json
+//// {
+////  "pgms": [
+////      {
+////      "program": "*.pli",
+////      "pgroup": "default",
+////      "compiler-options": [
+////          "MARGINS(2,72)"
+////      ]
+////      }
+////  ]
+//// }
+
 // @filename: .pliplugin/proc_grps.json
 //// {
 ////     "pgroups": [
@@ -20,11 +33,6 @@
 ////             "AGGREGATE",
 ////             "MARGINS(2,7)"
 ////         ],
-////         "pli-options": {
-////            "SYSPARM": "'from process group'",
-////            "SYSTEM": "MVS",
-////            "MARGINS": "2,72"
-////         },
 ////         "libs": [
 ////             "cpy"
 ////         ],

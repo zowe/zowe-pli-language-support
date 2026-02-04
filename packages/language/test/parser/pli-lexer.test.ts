@@ -118,7 +118,6 @@ describe("PL/1 Lexer", () => {
       const programConfig: ProgramConfig = {
         program: "test.pli",
         pgroup: "testGroup",
-        pliOptions: {},
       };
       const processGroupConfig: ProcessGroup = {
         name: "testGroup",
@@ -133,7 +132,6 @@ describe("PL/1 Lexer", () => {
           instructionCounterLimit: 5000,
           caseUpperValidation: false,
         },
-        pliOptions: {},
       };
 
       await PluginConfigurationProviderInstance.init("/test");
@@ -169,7 +167,6 @@ describe("PL/1 Lexer", () => {
       const programConfig: ProgramConfig = {
         program: "test.pli",
         pgroup: "missingGroup",
-        pliOptions: {},
       };
 
       await PluginConfigurationProviderInstance.init("/test");
@@ -194,7 +191,6 @@ describe("PL/1 Lexer", () => {
       const programConfig: ProgramConfig = {
         program: "test.pli",
         pgroup: "testGroup",
-        pliOptions: {},
       };
       const processGroupConfig: ProcessGroup = {
         name: "testGroup",
@@ -209,7 +205,6 @@ describe("PL/1 Lexer", () => {
           instructionCounterLimit: 5000,
           caseUpperValidation: false,
         },
-        pliOptions: {},
       };
 
       await PluginConfigurationProviderInstance.init("/test");
