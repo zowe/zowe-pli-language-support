@@ -747,15 +747,15 @@ export class PluginConfigurationProvider {
       for (const lib of config.$computedLibsSet) {
         let isPathAbsolute = false;
         if (UriUtils.isWindows) {
-          // QUANDO VOLTAR: PROCESS DRIVE LETTER IS NOT RETURNING WHAT IT SHOULD. LOOK INTO IT.
-          let { path, drive } = UriUtils.processDriveLetter(lib);
-          if (drive) path = path.replace(drive, "");
-          isPathAbsolute = !UriUtils.isPathRelative(path);
+          let { drive } = UriUtils.processDriveLetter(lib);
+          if (drive) {
+            isPathAbsolute = true;
+          }
         } else {
           isPathAbsolute = !UriUtils.isPathRelative(lib);
         }
         const matches = isPathAbsolute
-          ? lib.includes(dirname)
+          ? lib.endsWith(dirname)
           : lib === dirname;
         if (matches) {
           return config;
