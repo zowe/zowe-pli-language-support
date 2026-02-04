@@ -34,7 +34,6 @@ async function init(libPath: string): Promise<Diagnostic[]> {
   const programConfig: ProgramConfig = {
     program: "test.pli",
     pgroup: "testGroup",
-    pliOptions: {},
   };
   const processGroupConfig: ProcessGroup = {
     name: "testGroup",
@@ -49,7 +48,6 @@ async function init(libPath: string): Promise<Diagnostic[]> {
       instructionCounterLimit: 5000,
       caseUpperValidation: false,
     },
-    pliOptions: {},
   };
 
   await PluginConfigurationProviderInstance.init("/test");

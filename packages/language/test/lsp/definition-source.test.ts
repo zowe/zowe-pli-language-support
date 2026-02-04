@@ -46,7 +46,7 @@ async function setupIncludes(path: string, libEntry: string): Promise<void> {
 
   await pluginConfig.setProcessGroupConfigs([processGroup]);
   pluginConfig.setProgramConfigs("/workspace", [
-    { program: "*.pli", pgroup: "default", pliOptions: {} },
+    { program: "*.pli", pgroup: "default" },
   ]);
 }
 
