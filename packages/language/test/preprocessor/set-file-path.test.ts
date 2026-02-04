@@ -8,25 +8,12 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
-import { describe, test, expect, beforeEach } from "vitest";
-import {
-  PluginConfigurationProvider,
-  setPluginConfigurationProvider,
-} from "../../src/workspace/plugin-configuration-provider";
+import { describe, test, expect } from "vitest";
 import { URI, UriUtils } from "../../src/utils/uri";
 import path from "path";
 
 describe("setFilePath", () => {
-  let pluginConfig: PluginConfigurationProvider;
-  let workspaceRoot: string;
-
-  beforeEach(async () => {
-    pluginConfig = new PluginConfigurationProvider();
-    setPluginConfigurationProvider(pluginConfig);
-
-    workspaceRoot = path.resolve("Users/mockUser/workspace");
-    await pluginConfig.init(workspaceRoot);
-  });
+  const workspaceRoot = path.resolve("Users/mockUser/workspace");
 
   test("returns absolute path when target file resolves to absolute (outside workspace rules)", async () => {
     const absolutePath = path.resolve("/absolute-folder/absolute.pli");

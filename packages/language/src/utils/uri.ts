@@ -58,7 +58,7 @@ export namespace UriUtils {
     if (match) {
       return {
         path: path,
-        drive: match[1].toLowerCase(),
+        drive: match[1],
       };
     }
 
@@ -100,8 +100,11 @@ export namespace UriUtils {
     return startsWithLetter && !isAbsolute;
   }
 
+  // TODO: 04.02.2026 @wagner-laranjeiras
   // In our test environment, sometimes the toPath is evaluated as a single slash ("/"),
   // which can break the logic and return a relative path when an absolute should be given.
+  // This is a workaround, but a refactor regarding the URI handling in the project is needed.
+  // See GitHub Issue #568
   function normalizeForWindowsTests(path: string) {
     if (path.startsWith("/")) {
       path = path.substring(1);
