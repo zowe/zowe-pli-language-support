@@ -20,6 +20,7 @@ import { generateIncludeItemMarkup } from "../../../src/language-server/hover-re
 import { PLICode } from "../../../src/validation/pli-codes";
 import { HarnessTypeAttributes } from "./type-attributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
+import { DiagnosticCategory } from "../../../src/validation/diagnostics-store";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -56,7 +57,10 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.noDiagnosticsExcept(regex),
       noDiagnosticsExceptAt: (label, regex: RegExp[] | string[]) =>
         testBuilder.noDiagnosticsExcept(regex, label),
-      noParserDiagnostics: () => testBuilder.expectNoParserDiagnostics(),
+      noParserDiagnostics: () =>
+        testBuilder.expectNoCategoryDiagnostics(DiagnosticCategory.Parser),
+      noLinkingDiagnostics: () =>
+        testBuilder.expectNoCategoryDiagnostics(DiagnosticCategory.Linking),
       expectToThrow: (fn, messageToThrow) =>
         testBuilder.expectToThrow(fn, messageToThrow),
       expectCompilerOptions: (expectedOptions) =>
