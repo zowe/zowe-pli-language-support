@@ -723,7 +723,7 @@ export class PluginConfigurationProvider {
     for (const config of this.processGroupConfigs.values()) {
       for (const lib of config.$computedLibsSet) {
         const isPathAbsolute = UriUtils.isWindows
-          ? !!(UriUtils.processDriveLetter(lib).drive)
+          ? !!UriUtils.processDriveLetter(lib).drive
           : !UriUtils.isPathRelative(lib);
 
         const matches = isPathAbsolute
