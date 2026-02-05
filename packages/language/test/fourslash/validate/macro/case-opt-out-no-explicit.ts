@@ -23,7 +23,6 @@
 ////     ]
 //// }
 
-////%PROCESS PP(MACRO('CASE(UPPER)'));
 //// %DCL <|1:x|> <|2:char|>;
 //// %DCL Y CHAR;
 //// %X = <|3:"PUT SKIP LIST('Hello, World!');"|>;
@@ -37,6 +36,6 @@
 ////   Y
 //// END RGT005;
 
-verify.expectDiagnosticsAt(1, code.LspCodes.UpperCase);
-verify.expectDiagnosticsAt(2, code.LspCodes.UpperCase);
-verify.expectDiagnosticsAt(3, code.LspCodes.UpperCase);
+verify.noDiagnostics(1, code.LspCodes.UpperCase);
+verify.noDiagnostics(2, code.LspCodes.UpperCase);
+verify.noDiagnostics(3, code.LspCodes.UpperCase);
