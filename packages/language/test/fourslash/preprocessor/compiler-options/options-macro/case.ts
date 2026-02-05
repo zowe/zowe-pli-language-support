@@ -21,6 +21,9 @@ verify.expectDiagnosticsAt(1, {
 
 verify.expectCompilerOptions({
   macroOptions: {
-    case: constants.CompilerOptions.Macro.Case.UPPER,
+    case: {
+      case: constants.CompilerOptions.Macro.Case.UPPER,
+      explicitlySet: true,
+    },
   },
 });

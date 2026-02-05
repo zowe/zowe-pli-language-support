@@ -14,8 +14,8 @@
 // @wrap: main
 //// declare 1 person,
 ////           2 address,
-////.            3 street char(100),
-////.            3 city char(50);
+////             3 street char(100),
+////             3 city char(50);
 //// declare <|same|> like person.address;
 //// declare <|same2|> like address;
 

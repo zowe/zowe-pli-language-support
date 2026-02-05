@@ -298,29 +298,17 @@ export class TestBuilder {
       PluginConfigurationProviderInstance.setProgramConfigs("", [
         {
           program: "*.pli",
-          pgroup: "default",
+          pgroup:
+            PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0].pgroup,
         },
       ]);
     }
 
     // add process group config if not present on disc
     if (!hasProcessGroupConfig) {
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        {
-          name: "default",
-          libs: ["cpy"],
-          $computedLibs: [],
-          $computedLibsSet: new Set<string>(),
-          includeExtensions: [".pli"],
-          compilerOptions: [],
-          implicitBuiltins: new Set(),
-          lspOptions: {
-            checkMargins: false,
-            instructionCounterLimit: 5000,
-            caseUpperValidation: false,
-          },
-        },
-      ]);
+      await PluginConfigurationProviderInstance.parseProcessGroupConfigs(
+        JSON.stringify(PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT),
+      );
     }
   }
 

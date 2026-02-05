@@ -11,24 +11,23 @@
 
 import { Range } from "../language-server/types";
 import { CompilerOptionResult } from "./compiler-options/options";
-import {
-  parseAbstractCompilerOptions,
-  AbstractCompilerOptions,
-} from "./compiler-options/parser";
-import { translateCompilerOptions } from "./compiler-options/translate";
+import { parseAbstractCompilerOptions } from "./compiler-options/parser";
+import { CompilerOptionTranslator } from "./compiler-options/translate";
 import { createTokenInstance, PROCESS, Token } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { CompilerOptionSource } from "./compiler-options/translator";
 
 export interface CompilerOptionsProcessorResult {
   result: CompilerOptionResult | undefined;
   text: string;
 }
-
 export class CompilerOptionsProcessor {
   // constant for the *PROCESS token length
   private static readonly PROCESS_TOKEN_LENGTH = 8;
+
+  protected translator = new CompilerOptionTranslator();
 
   /**
    * Extracts compiler options from the given text
@@ -40,111 +39,86 @@ export class CompilerOptionsProcessor {
     text: string,
     uri: URI,
   ): CompilerOptionsProcessorResult {
+    // Extract options and build modified text in a single pass
     const ranges = this.getCompilerOptionsRange(text, uri);
-    let sourceCompilerOptions: string[] = [];
-    let newText = text;
+    const sourceCompilerOptions: string[] = [];
+    const textSegments: string[] = [];
+    let lastPosition = 0;
+
     for (const range of ranges) {
-      // newText should recognize the line break for the margins in the first line after the process directive,
-      // because removing the linebreaks could position the first line of the program outside the margins.
+      // Extract the compiler option text (after *PROCESS token)
       const offset =
         range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH;
       sourceCompilerOptions.push(text.substring(offset, range.end));
-      newText =
-        newText.substring(0, range.start) +
-        " ".repeat(range.end - range.start - 1) +
-        "\n" +
-        newText.substring(range.end);
+
+      // Build the modified text: keep text before range, replace range with spaces + newline
+      textSegments.push(text.substring(lastPosition, range.start));
+      textSegments.push(" ".repeat(range.end - range.start - 1));
+      textSegments.push("\n");
+
+      lastPosition = range.end;
     }
 
-    // Retrieve compiler options from the plugin configuration provider
+    // Append remaining text after last range
+    textSegments.push(text.substring(lastPosition));
+    const newText = textSegments.join("");
+
+    // Start the compiler options translation here
+    this.translator.clear();
+
+    // Retrieve compiler options from the plugin configuration provider.
+    // We run the translation of the plugin configuration first, so that
+    // duplicate or mutual exclusive options are recognized when translating
+    // the current source file.
     const programConfig =
       PluginConfigurationProviderInstance.getProgramConfig(uri);
 
-    // apply abstract options from the program config
-    // factors in compiler-options as well as pli-options from program & group configs (key-value macro pairs)
-    let mergedAbstractOptions: AbstractCompilerOptions | undefined = undefined;
     if (programConfig?.abstractOptions) {
-      mergedAbstractOptions = {
-        options: [...programConfig.abstractOptions.options],
-        tokens: [],
-        issues: programConfig.issues
-          ? programConfig.issues.map((diag) => ({ ...diag }))
-          : [],
-      };
+      if (ranges.length === 0) {
+        // If there is no anchor in the current file, diagnostics are not added at all.
+        // Just run the compiler options translation.
+        this.translator.setDiagnosticAnchor();
+      } else {
+        // If there is at least one process directive, use the first one as anchor
+        // for the plugin configuration diagnostics.
+        const range = ranges[0];
+        this.translator.setDiagnosticAnchor(
+          {
+            start: range.start + 1,
+            end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+          },
+          uri.toString(),
+          (text) => `PLI Plugin Config: ${text}`,
+        );
+      }
+
+      // Add the compiler option parser issues and start the translation.
+      this.translator.addIssues(programConfig.issues || []);
+      this.translator.translateCompilerOptions(programConfig.abstractOptions, {
+        source: CompilerOptionSource.PLUGIN_CONFIG,
+      });
     }
 
-    for (const [index, srcCompilerOpts] of sourceCompilerOptions.entries()) {
-      const srcAbstractOptions = parseAbstractCompilerOptions(
-        srcCompilerOpts,
+    // Now translate all options from the source file.
+    this.translator.clearDiagnosticAnchor();
+    for (const [index, option] of sourceCompilerOptions.entries()) {
+      const sourceOptions = parseAbstractCompilerOptions(
+        option,
         uri,
         ranges[index].start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
       );
 
-      if (mergedAbstractOptions) {
-        mergedAbstractOptions.options.push(...srcAbstractOptions.options);
-        mergedAbstractOptions.tokens.push(...srcAbstractOptions.tokens);
-        mergedAbstractOptions.issues.push(...srcAbstractOptions.issues);
-      } else {
-        mergedAbstractOptions = srcAbstractOptions;
-      }
+      // Add parser errors and translate.
+      this.translator.addIssues(sourceOptions.issues);
+      this.translator.translateCompilerOptions(sourceOptions, {
+        source: CompilerOptionSource.SOURCE_FILE,
+      });
     }
 
-    if (mergedAbstractOptions) {
-      const compilerOptionResult = translateCompilerOptions(
-        mergedAbstractOptions,
-      );
-
-      // TODO @montymxb Jun. 18th, 2025: Block below is a temporary fix to avoid reporting the same issues repeatedly
-      //  i.e. parsing & translation from config reveals duplicate or bad options,
-      //  and translation again (in a program context) reinvokes duplicate + validation checks.
-      //  We want a subset of the dupe checks, but we don't want the validation issues again (however these come together atm)
-      //  this should be removed once we break up the translation process to avoid this issue
-
-      //  shave off the issues that are already present in the process group config
-      const issueCount = programConfig?.issues?.length;
-      if (issueCount) {
-        if (ranges.length === 0) {
-          // no *PROCESS to attach to, slice them off instead
-          compilerOptionResult.issues =
-            compilerOptionResult.issues.slice(issueCount);
-        } else {
-          const range = ranges[0];
-          const sourceCompilerOptionsUri = compilerOptionResult.issues.find(
-            (issue) => issue.uri !== undefined,
-          )?.uri;
-          // update just these first 'issueCount' issues to report on *PROCESS
-          for (let i = 0; i < issueCount; i++) {
-            if (i < compilerOptionResult.issues.length) {
-              const issue = compilerOptionResult.issues[i];
-              issue.range = {
-                start: range.start + 1,
-                end:
-                  range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
-              };
-              issue.message = `PLI Plugin Config: ${issue.message}`;
-              issue.uri = sourceCompilerOptionsUri;
-            } else {
-              // leave the rest alone
-              break;
-            }
-          }
-        }
-      }
-
-      for (const range of ranges) {
-        compilerOptionResult.tokens.unshift(range.token);
-      }
-
-      return {
-        result: compilerOptionResult,
-        text: newText,
-      };
-    } else {
-      return {
-        result: undefined,
-        text: newText,
-      };
-    }
+    return {
+      result: this.translator.getResults(),
+      text: newText,
+    };
   }
 
   private getCompilerOptionsRange(

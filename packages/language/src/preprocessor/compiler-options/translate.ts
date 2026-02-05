@@ -24,97 +24,194 @@ import {
 } from "./options-pli";
 import { CompilerOptions as CompilerOptionsMacro } from "./options-macro";
 import { CompilerOptions as CompilerOptionsSQL } from "./options-sql";
-import { Translator } from "./translator";
+import {
+  CompilerOptionSource,
+  RuleConfiguration,
+  Translator,
+} from "./translator";
+import { Diagnostic, Range } from "../../language-server/types";
 
-const translator = getTranslatorPLI();
-const translatorMacro = getTranslatorMacro();
-const translatorSQL = getTranslatorSQL();
+export interface DiagnosticAnchor {
+  range: Range;
+  uri: string;
+  message: (text: string) => string;
+}
+export class CompilerOptionTranslator {
+  protected translator = getTranslatorPLI();
+  protected translatorMacro = getTranslatorMacro();
+  protected translatorSQL = getTranslatorSQL();
 
-export function translateCompilerOptions(
-  input: AbstractCompilerOptions,
-): CompilerOptionResult {
-  // TODO ssmifi: Defaults are set here. They do not need to be set individually.
-  translator.clear();
-  translator.diagnostics = [...input.issues];
-  const options = optionsToUpperCase(input.options);
-  if (options.some((option) => option.name === "PP")) {
-    // If there are PP compiler options, ignore the defaults, because the settings in PP start empty and are accumulated.
-    translator.options.pp = { items: [] };
-  }
-  for (const option of options) {
-    translator.translate(option);
-  }
-
-  // Handle nested compiler options that are not yet parsed.
-  translatorMacro.clear();
-  parseNestedOptions(
-    translatorMacro,
-    CompilerOptions.PPItemName.MACRO,
-    translator.options.ppMacro,
-  );
-  translatorSQL.clear();
-  parseNestedOptions(
-    translatorSQL,
-    CompilerOptions.PPItemName.SQL,
-    translator.options.ppSql,
-  );
-
-  return {
+  protected result: CompilerOptionResult = {
     options: {
-      ...(translator.options as CompilerOptionsPLI),
-      macroOptions: translatorMacro.options as CompilerOptionsMacro,
-      sqlOptions: translatorSQL.options as CompilerOptionsSQL,
+      ...({} as CompilerOptionsPLI),
+      macroOptions: {} as CompilerOptionsMacro,
+      sqlOptions: {} as CompilerOptionsSQL,
     },
-    tokens: input.tokens,
-    issues: [
-      ...translator.diagnostics,
-      ...translatorMacro.diagnostics,
-      ...translatorSQL.diagnostics,
-    ],
+    tokens: [],
+    issues: [],
   };
-}
 
-function parseNestedOptions<T extends CompilerOptionsPP>(
-  ppTranslator: Translator<T>,
-  ppItemName: CompilerOptions.PPItemName,
-  ppDirectValue: CompilerOptions.PPValue | false | undefined,
-): void {
-  const items: CompilerOptions.PPValue[] = [
-    ...(ppDirectValue ? [ppDirectValue] : []),
-    ...(translator.options.pp?.items
-      .filter(
-        (item) => item.name === ppItemName && typeof item.value === "string",
-      )
-      .map((item) => ({ value: item.value, token: item.token })) ?? []),
-  ];
+  protected diagnosticAnchor: DiagnosticAnchor | null | undefined = undefined;
 
-  for (const item of items) {
-    const nestedOptions = parseAbstractCompilerOptions(
-      item.value as string,
-      item.token?.uri,
-      (item.token?.startOffset ?? 0) + 1,
-    );
-    nestedOptions.options.forEach((option) => ppTranslator.translate(option));
-    ppTranslator.diagnostics.push(...nestedOptions.issues);
-  }
-}
-
-// TODO ssmifi: remove the upper cases from the individual rules.
-function optionsToUpperCase(options: CompilerOption[]): CompilerOption[] {
-  const upperCasedOptions: CompilerOption[] = [...options];
-  const optionToUpperCase = (option: CompilerOption) => {
-    option.name = option.name.toUpperCase();
-    for (const value of option.values) {
-      switch (value.kind) {
-        case SyntaxKind.CompilerOptionText:
-          value.value = value.value.toUpperCase();
-          break;
-        case SyntaxKind.CompilerOption:
-          optionToUpperCase(value);
-      }
+  translateCompilerOptions(
+    input: AbstractCompilerOptions,
+    configuration?: RuleConfiguration,
+  ): void {
+    const options = this.optionsToUpperCase(input.options);
+    if (options.some((option) => option.name === "PP")) {
+      // If there are PP compiler options, ignore the defaults, because the settings in PP start empty and are accumulated.
+      this.translator.options.pp = { items: [] };
     }
-  };
+    for (const option of options) {
+      this.translator.translate(option, configuration);
+    }
 
-  upperCasedOptions.forEach(optionToUpperCase);
-  return upperCasedOptions;
+    // Handle nested compiler options that are not yet parsed.
+    this.parseNestedOptions(
+      this.translatorMacro,
+      CompilerOptions.PPItemName.MACRO,
+      this.translator.options.ppMacro,
+      configuration,
+    );
+    this.parseNestedOptions(
+      this.translatorSQL,
+      CompilerOptions.PPItemName.SQL,
+      this.translator.options.ppSql,
+      configuration,
+    );
+
+    this.result.options = {
+      ...(this.translator.options as CompilerOptionsPLI),
+      macroOptions: this.translatorMacro.options as CompilerOptionsMacro,
+      sqlOptions: this.translatorSQL.options as CompilerOptionsSQL,
+    };
+    if (configuration?.source === CompilerOptionSource.SOURCE_FILE) {
+      this.result.tokens.push(...input.tokens);
+    }
+    this.result.issues.push(
+      ...this.applyDiagnosticAnchor([
+        ...this.translator.diagnostics,
+        ...this.translatorMacro.diagnostics,
+        ...this.translatorSQL.diagnostics,
+      ]),
+    );
+    this.translator.clearIssues();
+    this.translatorMacro.clearIssues();
+    this.translatorSQL.clearIssues();
+  }
+
+  clear(): void {
+    this.translator.clear();
+    this.translatorMacro.clear();
+    this.translatorSQL.clear();
+    this.result = {
+      options: {
+        ...({} as CompilerOptionsPLI),
+        macroOptions: {} as CompilerOptionsMacro,
+        sqlOptions: {} as CompilerOptionsSQL,
+      },
+      tokens: [],
+      issues: [],
+    };
+  }
+
+  getResults(): CompilerOptionResult {
+    return this.result;
+  }
+
+  protected parseNestedOptions<T extends CompilerOptionsPP>(
+    ppTranslator: Translator<T>,
+    ppItemName: CompilerOptions.PPItemName,
+    ppDirectValue: CompilerOptions.PPValue | false | undefined,
+    configuration?: RuleConfiguration,
+  ): void {
+    const items: CompilerOptions.PPValue[] = [
+      ...(ppDirectValue ? [ppDirectValue] : []),
+    ];
+
+    // Process items from pp.items array and mark them as processed
+    const ppItems =
+      this.translator.options.pp?.items.filter(
+        (item) =>
+          item.name === ppItemName &&
+          typeof item.value === "string" &&
+          !item.processed,
+      ) ?? [];
+
+    items.push(...ppItems);
+
+    for (const item of items) {
+      const nestedOptions = parseAbstractCompilerOptions(
+        item.value as string,
+        item.token?.uri,
+        (item.token?.startOffset ?? 0) + 1,
+      );
+      item.processed = true;
+      nestedOptions.options.forEach((option) =>
+        ppTranslator.translate(option, configuration),
+      );
+      ppTranslator.diagnostics.push(...nestedOptions.issues);
+    }
+  }
+
+  // TODO ssmifi: remove the upper cases from the individual rules.
+  protected optionsToUpperCase(options: CompilerOption[]): CompilerOption[] {
+    const upperCasedOptions: CompilerOption[] = [...options];
+    const optionToUpperCase = (option: CompilerOption) => {
+      option.name = option.name.toUpperCase();
+      for (const value of option.values) {
+        switch (value.kind) {
+          case SyntaxKind.CompilerOptionText:
+            value.value = value.value.toUpperCase();
+            break;
+          case SyntaxKind.CompilerOption:
+            optionToUpperCase(value);
+        }
+      }
+    };
+
+    upperCasedOptions.forEach(optionToUpperCase);
+    return upperCasedOptions;
+  }
+
+  setDiagnosticAnchor(): void;
+  setDiagnosticAnchor(
+    range: Range,
+    uri: string,
+    message: (text: string) => string,
+  ): void;
+  setDiagnosticAnchor(
+    range?: Range,
+    uri?: string,
+    message?: (text: string) => string,
+  ): void {
+    if (!range || !uri || !message) {
+      this.diagnosticAnchor = null;
+    } else {
+      this.diagnosticAnchor = { range, uri, message };
+    }
+  }
+
+  clearDiagnosticAnchor(): void {
+    this.diagnosticAnchor = undefined;
+  }
+
+  protected applyDiagnosticAnchor(diagnostics: Diagnostic[]): Diagnostic[] {
+    if (this.diagnosticAnchor === undefined) {
+      return diagnostics;
+    } else if (this.diagnosticAnchor === null) {
+      return [];
+    } else {
+      return diagnostics.map((diag) => ({
+        ...diag,
+        range: this.diagnosticAnchor!.range,
+        uri: this.diagnosticAnchor!.uri,
+        message: this.diagnosticAnchor!.message(diag.message),
+      }));
+    }
+  }
+
+  addIssues(issues: Diagnostic[]): void {
+    this.result.issues.push(...issues);
+  }
 }
