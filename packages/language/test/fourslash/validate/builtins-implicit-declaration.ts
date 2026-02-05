@@ -25,7 +25,7 @@
 //// END RGT005;
 
 verify.expectExclusiveErrorCodesAt(1, code.Error.IBM1373I);
-verify.expectExclusiveErrorCodesAt(2, code.Error.IBM1373I);
-verify.expectDiagnosticsAt(2, {
+verify.expectDiagnosticsAt(1, {
   severity: constants.Severity.W,
 });
+verify.noDiagnostics(2, code.Error.IBM1373I);

@@ -12,12 +12,10 @@
 import { minimatch } from "minimatch";
 import { Diagnostic as LspDiagnostic } from "vscode-languageserver-types";
 import { Diagnostic } from "../language-server/types";
-import { CompilerOptionResult } from "../preprocessor/compiler-options/options";
 import {
   AbstractCompilerOptions,
   parseAbstractCompilerOptions,
 } from "../preprocessor/compiler-options/parser";
-import { translateCompilerOptions } from "../preprocessor/compiler-options/translate";
 import { isBoolean, isNumber, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "./file-system-provider";
@@ -151,7 +149,7 @@ export function deserializeProcessGroup(
         : MAX_INSTRUCTION_COUNTER,
       caseUpperValidation: isBoolean(lspOptions["case-upper-validation"])
         ? lspOptions["case-upper-validation"]
-        : false,
+        : true,
     },
     memberNameValidation: isBoolean(memberNameValidation)
       ? memberNameValidation
@@ -543,36 +541,17 @@ export class PluginConfigurationProvider {
         ...(processGroupConfig?.compilerOptions || []),
       ].join(" ");
       // combine them and pass them all together to parse and translate
-      const [abstractOptions, translatedOptions, collectedIssues] =
-        this.parseAndTranslateOptions(rawCompilerOptions);
-      for (const issue of collectedIssues) {
+      const abstractOptions = parseAbstractCompilerOptions(
+        `${rawCompilerOptions} ${rawCompilerOptions}`,
+      );
+      for (const issue of abstractOptions.issues) {
         console.error(
           `Error in compiler options for program config "${programConfig.program}": ${issue}`,
         );
       }
       programConfig.abstractOptions = abstractOptions;
-      programConfig.issues = translatedOptions.issues;
+      programConfig.issues = abstractOptions.issues;
     }
-  }
-
-  /**
-   * Helper to translate some string of compiler options into a tuple of abstract & translated options
-   * @param options Options string to parse and translate
-   * @returns Tuple of AbstractCompilerOptions and CompilerOptionResult
-   */
-  private parseAndTranslateOptions(
-    options: string,
-  ): [AbstractCompilerOptions, CompilerOptionResult, string[]] {
-    const abstractOptions = parseAbstractCompilerOptions(options);
-    const translatedOptions = translateCompilerOptions(abstractOptions);
-    const collectedIssues: string[] = [];
-    for (const issue of [
-      ...translatedOptions.issues,
-      ...abstractOptions.issues,
-    ]) {
-      collectedIssues.push(issue.message);
-    }
-    return [abstractOptions, translatedOptions, collectedIssues];
   }
 
   /**
