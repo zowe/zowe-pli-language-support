@@ -19,7 +19,7 @@ import { URI } from "vscode-uri";
 import { Diagnostic, Severity } from "../src/language-server/types";
 import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { forEachNode } from "../src/syntax-tree/ast-iterator";
-import { IntermediateBinaryExpression } from "../src/parser/abstract-parser";
+import { IntermediateBinaryExpression } from "../src/parser/binary-expressions";
 import { escapeRegExp, Token } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { CancellationToken } from "vscode-languageserver";
