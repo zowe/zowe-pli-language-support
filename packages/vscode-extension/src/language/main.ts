@@ -73,9 +73,12 @@ class NodeFileSystemProvider implements FileSystemProvider {
         nocase: true,
       });
     } else {
+      // Windows paths may contain double slashes, which can prevent blob search from finding matches.
+      // This mainly affects INCLUDEs for members without DD names (ddname(member)).
+      const forwardSlashPath = options.dirPath.fsPath.replace(/\\/g, "/");
       // member lookup w/ dir path
       files = await glob.glob(
-        `${options.dirPath.fsPath}**/*\\(${options.member}\\)`,
+        `${forwardSlashPath}**/*\\(${options.member}\\)`,
         {
           nodir: true,
           absolute: true,
