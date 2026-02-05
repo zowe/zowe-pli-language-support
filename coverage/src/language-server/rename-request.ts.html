@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">21.42% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/14</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">21.42% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/14</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -107,24 +107,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -143,19 +143,19 @@ import { getReferenceLocations } from "../linking/resolver";
 import { URI } from "../utils/uri";
 import { CompilationUnit } from "../workspace/compilation-unit";
 &nbsp;
-export <span class="fstat-no" title="function not covered" >function renameRequest(</span>
-<span class="cstat-no" title="statement not covered" >  unit: CompilationUnit,</span>
-<span class="cstat-no" title="statement not covered" >  uri: URI,</span>
-<span class="cstat-no" title="statement not covered" >  offset: number,</span>
-<span class="cstat-no" title="statement not covered" >): Record&lt;DocumentUri, Location[]&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  const references = getReferenceLocations(unit, uri, offset);</span>
-<span class="cstat-no" title="statement not covered" >  const referencesGroupedByUri = groupBy(</span>
-<span class="cstat-no" title="statement not covered" >    references,</span>
-<span class="cstat-no" title="statement not covered" >    (reference) =&gt; reference.uri,</span>
-<span class="cstat-no" title="statement not covered" >  );</span>
+export function <span class="fstat-no" title="function not covered" >renameRequest(</span>
+  unit: CompilationUnit,
+  uri: URI,
+  offset: number,
+): Record&lt;DocumentUri, Location[]&gt; {
+  const <span class="cstat-no" title="statement not covered" >references = getReferenceLocations(unit, uri, offset);</span>
+  const <span class="cstat-no" title="statement not covered" >referencesGroupedByUri = groupBy(</span>
+    references,
+<span class="fstat-no" title="function not covered" >    (r</span>eference) =&gt; <span class="cstat-no" title="statement not covered" >reference.uri,</span>
+  );
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return referencesGroupedByUri;</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -163,7 +163,7 @@ export <span class="fstat-no" title="function not covered" >function renameReque
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-04T16:12:36.677Z
+                at 2026-02-05T13:40:04.212Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

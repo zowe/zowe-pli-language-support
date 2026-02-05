@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.42% </span>
+                <span class="strong">63.63% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/19</span>
+                <span class='fraction'>7/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/2</span>
+                <span class='fraction'>3/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.42% </span>
+                <span class="strong">63.63% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/19</span>
+                <span class='fraction'>7/11</span>
             </div>
         
             
@@ -113,34 +113,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">5992x</span>
+<span class="cline-any cline-yes">2996x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -163,9 +163,9 @@ const SyntaxKindReverseLookup: Map&lt;SyntaxKind, string&gt; = new Map(
 &nbsp;
 const createDebugIdGenerator = () =&gt; {
   let id = 0;
-  return () =&gt; {
+  return <span class="fstat-no" title="function not covered" >() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    return id++;</span>
-<span class="cstat-no" title="statement not covered" >  };</span>
+  };
 };
 &nbsp;
 const generateDebugId = createDebugIdGenerator();
@@ -175,11 +175,11 @@ const generateDebugId = createDebugIdGenerator();
  * alleviates debugging by allowing the user to see the kind
  * of the node in the debugger.
  */
-export <span class="fstat-no" title="function not covered" >function assignDebugKinds(node: SyntaxNode) {</span>
-<span class="cstat-no" title="statement not covered" >  (node as any)._debugKind = SyntaxKindReverseLookup.get(node.kind);</span>
-<span class="cstat-no" title="statement not covered" >  (node as any)._debugId = generateDebugId();</span>
+export function <span class="fstat-no" title="function not covered" >assignDebugKinds(n</span>ode: SyntaxNode) {
+  (<span class="cstat-no" title="statement not covered" >node as any)._debugKind = SyntaxKindReverseLookup.get(node.kind);</span>
+  (<span class="cstat-no" title="statement not covered" >node as any)._debugId = generateDebugId();</span>
 <span class="cstat-no" title="statement not covered" >  forEachNode(node, assignDebugKinds);</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -187,7 +187,7 @@ export <span class="fstat-no" title="function not covered" >function assignDebug
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-04T16:12:36.677Z
+                at 2026-02-05T13:40:04.212Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

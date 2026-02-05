@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>18/30</span>
+                <span class='fraction'>6/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">40% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/3</span>
+                <span class='fraction'>2/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/30</span>
+                <span class='fraction'>6/9</span>
             </div>
         
             
@@ -126,41 +126,41 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2794x</span>
-<span class="cline-any cline-yes">2794x</span>
-<span class="cline-any cline-yes">2794x</span>
-<span class="cline-any cline-yes">2794x</span>
-<span class="cline-any cline-yes">2794x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1822x</span>
 <span class="cline-any cline-yes">1822x</span>
 <span class="cline-any cline-yes">1782x</span>
-<span class="cline-any cline-yes">1782x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1822x</span>
 <span class="cline-any cline-yes">1822x</span>
-<span class="cline-any cline-yes">1822x</span>
-<span class="cline-any cline-yes">2794x</span>
-<span class="cline-any cline-yes">2794x</span>
-<span class="cline-any cline-yes">2794x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -195,21 +195,21 @@ export function groupBy&lt;T, K extends string | number | symbol&gt;(
 /**
  * Map the values of an object using a function.
  */
-export <span class="fstat-no" title="function not covered" >function mapValues&lt;K extends string | number | symbol, T, U&gt;(</span>
-<span class="cstat-no" title="statement not covered" >  obj: Record&lt;K, T&gt;,</span>
-<span class="cstat-no" title="statement not covered" >  fn: (value: T, key: K) =&gt; U,</span>
-<span class="cstat-no" title="statement not covered" >): Record&lt;K, U&gt; {</span>
+export function <span class="fstat-no" title="function not covered" >mapValues&lt;K extends string | number | symbol, T, U&gt;(</span>
+  obj: Record&lt;K, T&gt;,
+  fn: (value: T, key: K) =&gt; U,
+): Record&lt;K, U&gt; {
 <span class="cstat-no" title="statement not covered" >  return Object.fromEntries(</span>
-<span class="cstat-no" title="statement not covered" >    Object.entries(obj).map(([key, value]) =&gt; [</span>
-<span class="cstat-no" title="statement not covered" >      key as K,</span>
-<span class="cstat-no" title="statement not covered" >      fn(value as T, key as K),</span>
-<span class="cstat-no" title="statement not covered" >    ]),</span>
-<span class="cstat-no" title="statement not covered" >  ) as Record&lt;K, U&gt;;</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+    Object.entries(obj).map(<span class="fstat-no" title="function not covered" >([</span>key, value]) =&gt; <span class="cstat-no" title="statement not covered" >[</span>
+      key as K,
+      fn(value as T, key as K),
+    ]),
+  ) as Record&lt;K, U&gt;;
+}
 &nbsp;
-export <span class="fstat-no" title="function not covered" >function assertUnreachable(_: never): never {</span>
+export function <span class="fstat-no" title="function not covered" >assertUnreachable(_</span>: never): never {
 <span class="cstat-no" title="statement not covered" >  throw new Error("Error! The input value was not handled.");</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -217,7 +217,7 @@ export <span class="fstat-no" title="function not covered" >function assertUnrea
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-04T16:12:36.677Z
+                at 2026-02-05T13:40:04.212Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.57% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/21</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.57% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/21</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
@@ -116,7 +116,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -125,28 +124,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -172,23 +172,23 @@ export const MarginIndicatorNotification =
     "pli/marginIndicator",
   );
 &nbsp;
-export <span class="fstat-no" title="function not covered" >function marginIndicator(</span>
-<span class="cstat-no" title="statement not covered" >  connection: Connection,</span>
-<span class="cstat-no" title="statement not covered" >  compilationUnit: CompilationUnit,</span>
-<span class="cstat-no" title="statement not covered" >) {</span>
-<span class="cstat-no" title="statement not covered" >  const margins = compilationUnit.compilerOptions.margins;</span>
-<span class="cstat-no" title="statement not covered" >  const indicator: MarginIndicatorNotificationParams = {</span>
-<span class="cstat-no" title="statement not covered" >    uri: compilationUnit.uri.toString(),</span>
-<span class="cstat-no" title="statement not covered" >    m: margins ? margins.m : 2,</span>
-<span class="cstat-no" title="statement not covered" >    n: margins ? margins.n : 72,</span>
-<span class="cstat-no" title="statement not covered" >  };</span>
+export function <span class="fstat-no" title="function not covered" >marginIndicator(</span>
+  connection: Connection,
+  compilationUnit: CompilationUnit,
+) {
+  const margins = <span class="cstat-no" title="statement not covered" >compilationUnit.compilerOptions.margins;</span>
+  const indicator: MarginIndicatorNotificationParams = <span class="cstat-no" title="statement not covered" >{</span>
+    uri: compilationUnit.uri.toString(),
+    m: margins ? margins.m : 2,
+    n: margins ? margins.n : 72,
+  };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  const cachedMargins = compilationUnit.requestCaches.get("margins");</span>
+  const cachedMargins = <span class="cstat-no" title="statement not covered" >compilationUnit.requestCaches.get("margins");</span>
 <span class="cstat-no" title="statement not covered" >  if (cachedMargins?.m !== indicator.m || cachedMargins?.n !== indicator.n) {</span>
 <span class="cstat-no" title="statement not covered" >    compilationUnit.requestCaches.set("margins", indicator);</span>
 <span class="cstat-no" title="statement not covered" >    connection.sendNotification(MarginIndicatorNotification, indicator);</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+  }
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -196,7 +196,7 @@ export <span class="fstat-no" title="function not covered" >function marginIndic
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-04T16:12:36.677Z
+                at 2026-02-05T13:40:04.212Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
