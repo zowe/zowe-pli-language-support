@@ -159,9 +159,9 @@ export interface TextDocuments<T extends { uri: string }> {
 /**
  * Normalizing text document manager. Normalizes all incoming URIs to the same format used by VS Code.
  */
-export class NormalizedTextDocuments<T extends { uri: string }>
-  implements TextDocuments<T>
-{
+export class NormalizedTextDocuments<
+  T extends { uri: string },
+> implements TextDocuments<T> {
   private readonly _configuration: TextDocumentsConfiguration<T>;
 
   private readonly _syncedDocuments: Map<string, T>;
