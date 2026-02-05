@@ -25,7 +25,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import {
   constructBinaryExpression,
   IntermediateBinaryExpression,
-} from "./abstract-parser";
+} from "./binary-expressions";
 import { Severe } from "../validation/pli-codes";
 import { Diagnostic, Severity } from "../language-server/types";
 import {

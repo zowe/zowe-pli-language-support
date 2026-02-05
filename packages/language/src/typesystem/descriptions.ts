@@ -812,9 +812,7 @@ interface WithParentType {
 }
 
 interface BaseTypeDescription
-  extends WithTypeDescriminator,
-    BaseTypeDescriptionProps,
-    WithParentType {}
+  extends WithTypeDescriminator, BaseTypeDescriptionProps, WithParentType {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -993,8 +991,7 @@ interface AreaTypeDescriptionProps extends BaseTypeDescriptionProps {
 }
 
 interface AreaTypeDescription
-  extends BaseTypeDescription,
-    AreaTypeDescriptionProps {
+  extends BaseTypeDescription, AreaTypeDescriptionProps {
   type: AreaType;
 }
 
@@ -1082,8 +1079,7 @@ interface ArithmeticTypeDescriptionProps {
 }
 
 interface ArithmeticTypeDescription
-  extends BaseTypeDescription,
-    ArithmeticTypeDescriptionProps {
+  extends BaseTypeDescription, ArithmeticTypeDescriptionProps {
   type: ArithmeticType;
 }
 
@@ -1186,8 +1182,7 @@ interface FileTypeDescriptionProps extends BaseTypeDescriptionProps {
 }
 
 interface FileTypeDescription
-  extends BaseTypeDescription,
-    FileTypeDescriptionProps {
+  extends BaseTypeDescription, FileTypeDescriptionProps {
   type: FileType;
 }
 
@@ -1223,8 +1218,7 @@ type FormatType = typeof FormatType;
 interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface FormatTypeDescription
-  extends BaseTypeDescription,
-    FormatTypeDescriptionProps {
+  extends BaseTypeDescription, FormatTypeDescriptionProps {
   type: FormatType;
 }
 
@@ -1250,8 +1244,7 @@ type LabelType = typeof LabelType;
 interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface LabelTypeDescription
-  extends BaseTypeDescription,
-    LabelTypeDescriptionProps {
+  extends BaseTypeDescription, LabelTypeDescriptionProps {
   type: LabelType;
 }
 
@@ -1290,8 +1283,7 @@ interface LocatorTypeDescriptionProps extends BaseTypeDescriptionProps {
 }
 
 interface LocatorTypeDescription
-  extends BaseTypeDescription,
-    LocatorTypeDescriptionProps {
+  extends BaseTypeDescription, LocatorTypeDescriptionProps {
   type: LocatorType;
 }
 
@@ -1322,8 +1314,7 @@ type EntryType = typeof EntryType;
 interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface EntryTypeDescription
-  extends BaseTypeDescription,
-    EntryTypeDescriptionProps {
+  extends BaseTypeDescription, EntryTypeDescriptionProps {
   type: EntryType;
 }
 
@@ -1351,8 +1342,7 @@ interface OrdinalTypeDescriptionProps extends BaseTypeDescriptionProps {
 }
 
 interface OrdinalTypeDescription
-  extends BaseTypeDescription,
-    OrdinalTypeDescriptionProps {
+  extends BaseTypeDescription, OrdinalTypeDescriptionProps {
   type: OrdinalType;
 }
 
@@ -1392,8 +1382,7 @@ interface PictureTypeDescriptionProps extends BaseTypeDescriptionProps {
 }
 
 interface PictureTypeDescription
-  extends BaseTypeDescription,
-    PictureTypeDescriptionProps {
+  extends BaseTypeDescription, PictureTypeDescriptionProps {
   type: PictureType;
 }
 
@@ -1452,8 +1441,7 @@ interface StringTypeDescriptionProps extends BaseTypeDescriptionProps {
 }
 
 interface StringTypeDescription
-  extends BaseTypeDescription,
-    StringTypeDescriptionProps {
+  extends BaseTypeDescription, StringTypeDescriptionProps {
   type: StringType;
 }
 
@@ -1486,8 +1474,7 @@ type TaskType = typeof TaskType;
 interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface TaskTypeDescription
-  extends BaseTypeDescription,
-    TaskTypeDescriptionProps {
+  extends BaseTypeDescription, TaskTypeDescriptionProps {
   type: TaskType;
 }
 
