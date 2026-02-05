@@ -2288,7 +2288,10 @@ async function runInclude(
       );
       const tokenizeResult = tokenize(processedContent, uri);
       const subState = new ParserState(tokenizeResult.tokens);
-      const subProgram = preprocessorParse(subState);
+      const subProgram = preprocessorParse(
+        subState,
+        context.options.compilerOptions?.options,
+      );
       subProgram.diagnostics.push(...tokenizeResult.diagnostics);
       const result = generateInstructions(subProgram.statements);
       return {
