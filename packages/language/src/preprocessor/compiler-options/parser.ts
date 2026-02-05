@@ -35,7 +35,7 @@ import { createToken } from "../../parser/token-type-factory";
 
 const commaToken = createToken({ name: "comma", pattern: "," });
 const semicolonToken = createToken({ name: "semicolon", pattern: ";" });
-const stringToken = createToken({
+export const stringToken = createToken({
   name: "string",
   pattern: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')/,
 });

@@ -11,6 +11,18 @@
 
 /// <reference path="../../framework.ts" />
 
+// @filename: .pliplugin/proc_grps.json
+//// {
+////     "pgroups": [
+////         {
+////         "name": "default",
+////         "lsp-options": {
+////             "case-upper-validation": false
+////         }
+////         }
+////     ]
+//// }
+
 ////%PROCESS PP(MACRO('CASE(UPPER)'));
 //// %DCL <|1:x|> <|2:char|>;
 //// %DCL Y CHAR;
