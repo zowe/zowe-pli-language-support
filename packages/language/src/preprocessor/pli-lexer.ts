@@ -77,7 +77,7 @@ export class PliLexer {
         statements,
         diagnostics,
         tokens: fileTokens,
-      } = preprocessorParse(state);
+      } = preprocessorParse(state, opts);
       const result = generateInstructions(statements);
       diagnostics.push(...tokenizeResult.diagnostics);
       return {
