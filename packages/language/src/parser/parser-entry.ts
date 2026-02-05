@@ -33,96 +33,168 @@ export type PreprocessorParserResult = {
   tokens: t.Token[];
 };
 
+/**
+ * Statement parser handler function type.
+ * Returns:
+ * - ast.Statement: Successfully parsed a statement
+ * - null: Failed to parse (error condition)
+ * - undefined: This handler doesn't recognize this token (pass to next handler)
+ */
+type StatementParser = (state: ParserState) => ast.Statement | null | undefined;
+
+function createPreprocessorHandler(): StatementParser {
+  return (state) => {
+    if (state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx) {
+      return undefined; // Not a preprocessor statement
+    }
+    return statement(state);
+  };
+}
+
+function createIncOnlyPreprocessorHandler(): StatementParser {
+  return (state) => {
+    if (state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx) {
+      return undefined; // Not a preprocessor statement
+    }
+    const nextToken = state.peek(2);
+    const isInclude =
+      nextToken &&
+      (nextToken.tokenTypeIdx === t.INCLUDE.tokenTypeIdx ||
+        nextToken.tokenTypeIdx === t.INSCAN.tokenTypeIdx);
+    if (!isInclude) {
+      return undefined; // Not an include, let token statement handle it
+    }
+    return statement(state);
+  };
+}
+
+function createIncludeAltHandler(): StatementParser {
+  return (state) => {
+    if (state.token?.tokenTypeIdx !== t.INCLUDE_ALT.tokenTypeIdx) {
+      return undefined;
+    }
+    const includeAlt = includeAltStatement(state);
+    const includeAltStmt = ast.createStatement();
+    includeAltStmt.value = includeAlt;
+    return includeAltStmt;
+  };
+}
+
+function createSqlAttributeHandler(): StatementParser {
+  return (state) => {
+    if (state.token?.tokenTypeIdx !== t.SQL.tokenTypeIdx) {
+      return undefined;
+    }
+    if (!isSqlAttributeStatement(state)) {
+      return undefined;
+    }
+    const sqlAttrStmt = sqlAttributeStatement(state);
+    const sqlAttrStatement = ast.createStatement();
+    sqlAttrStatement.value = sqlAttrStmt;
+    return sqlAttrStatement;
+  };
+}
+
+function createCicsResponseHandler(): StatementParser {
+  return (state) => {
+    if (state.token?.tokenTypeIdx !== t.DFHRESP.tokenTypeIdx) {
+      return undefined;
+    }
+    if (!isCicsResponseStatement(state)) {
+      return undefined;
+    }
+    const cicsRespStmt = cicsResponseStatement(state);
+    const cicsRespStatement = ast.createStatement();
+    cicsRespStatement.value = cicsRespStmt;
+    return cicsRespStatement;
+  };
+}
+
+function createCicsExecHandler(statements: ast.Statement[]): StatementParser {
+  return (state) => {
+    if (state.token?.tokenTypeIdx !== t.EXEC.tokenTypeIdx) {
+      return undefined;
+    }
+    if (!isCicsExecStatement(state)) {
+      return undefined;
+    }
+    // Special case: CICS EXEC creates a placeholder and adds it directly
+    // but we return undefined to let the token statement be created
+    const cicsExecStatement = ast.createCicsExecStatement();
+    const stmtWrapper = ast.createStatement();
+    stmtWrapper.value = cicsExecStatement;
+    statements.push(stmtWrapper);
+    return undefined; // Let token statement handler process the EXEC token
+  };
+}
+
+function generateStatementParser(
+  compilerOptions: CompilerOptions | undefined,
+  statements: ast.Statement[],
+): StatementParser {
+  const handlers: StatementParser[] = [];
+
+  const incOnly = compilerOptions?.macroOptions?.incOnly;
+
+  if (incOnly) {
+    handlers.push(createIncOnlyPreprocessorHandler());
+  } else {
+    handlers.push(createPreprocessorHandler());
+  }
+
+  handlers.push(createIncludeAltHandler());
+  handlers.push(createSqlAttributeHandler());
+  handlers.push(createCicsResponseHandler());
+  handlers.push(createCicsExecHandler(statements));
+
+  return (state) => {
+    for (const handler of handlers) {
+      const result = handler(state);
+      if (result !== undefined) {
+        return result;
+      }
+    }
+    return undefined;
+  };
+}
+
 export function preprocessorParse(
   state: ParserState,
   compilerOptions?: CompilerOptions,
 ): PreprocessorParserResult {
   const statements: ast.Statement[] = [];
 
-  // Select the appropriate token type index for preprocessor statements
-  // depending on the INCONLY option.
-  const incOnly = compilerOptions?.macroOptions?.incOnly;
-  const parseTokenTypeIdx = incOnly ? NaN : t.Percent.tokenTypeIdx;
-  const parseTokenTypeIdxWithIncOnly = incOnly ? t.Percent.tokenTypeIdx : NaN;
+  const statementParser = generateStatementParser(compilerOptions, statements);
 
   let index = state.index;
   let token = state.token;
   while (token) {
     let stmt: ast.Statement | null = null;
-    let isTokenStatement = true;
 
-    switch (token.tokenTypeIdx) {
-      case parseTokenTypeIdx:
-        isTokenStatement = false;
-        // Parse a preprocessor statement
-        stmt = statement(state);
-        break;
-      case parseTokenTypeIdxWithIncOnly:
-        const nextToken = state.peek(2);
-        const isInclude =
-          nextToken &&
-          (nextToken.tokenTypeIdx === t.INCLUDE.tokenTypeIdx ||
-            nextToken.tokenTypeIdx === t.INSCAN.tokenTypeIdx);
-        if (isInclude) {
-          isTokenStatement = false;
-          stmt = statement(state);
-        }
-        break;
-      case t.INCLUDE_ALT.tokenTypeIdx:
-        isTokenStatement = false;
-        // Parse the "include-alt" statement
-        // This is the only preprocessor statement that does not start with a percentage token
-        const includeAlt = includeAltStatement(state);
-        const includeAltStmt = ast.createStatement();
-        includeAltStmt.value = includeAlt;
-        stmt = includeAltStmt;
-        break;
-      case t.SQL.tokenTypeIdx:
-        if (isSqlAttributeStatement(state)) {
-          isTokenStatement = false;
-          const sqlAttrStmt = sqlAttributeStatement(state);
-          const sqlAttrStatement = ast.createStatement();
-          sqlAttrStatement.value = sqlAttrStmt;
-          stmt = sqlAttrStatement;
-        }
-        break;
-      case t.DFHRESP.tokenTypeIdx:
-        if (isCicsResponseStatement(state)) {
-          isTokenStatement = false;
-          const cicsRespStmt = cicsResponseStatement(state);
-          const cicsRespStatement = ast.createStatement();
-          cicsRespStatement.value = cicsRespStmt;
-          stmt = cicsRespStatement;
-        }
-        break;
-      case t.EXEC.tokenTypeIdx:
-        if (isCicsExecStatement(state)) {
-          // Do not really parse the CICS EXEC statement yet
-          // Just create a placeholder AST node for now
-          isTokenStatement = true;
-          const cicsExecStatement = ast.createCicsExecStatement();
-          const stmtWrapper = ast.createStatement();
-          stmtWrapper.value = cicsExecStatement;
-          statements.push(stmtWrapper);
-        }
-    }
-    if (isTokenStatement) {
+    const result = statementParser(state);
+    if (result !== undefined) {
+      stmt = result;
+    } else {
       // Otherwise construct a token statement
       stmt = consumeTokenStatement(state);
     }
+
     if (stmt) {
       recursivelySetContainer(stmt);
       statements.push(stmt);
     }
+
     if (index === state.index) {
       console.error("Parser did not advance at token: " + token.image);
       state.index++;
     }
+
     // Always recover after each statement
     state.skipRecovery();
     token = state.token;
     index = state.index;
   }
+
   return {
     statements,
     diagnostics: state.diagnostics,
