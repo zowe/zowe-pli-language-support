@@ -2488,7 +2488,7 @@ async function resolveIncludeFileUri(
     return (
       isMemberIncludeItem(item) &&
       item.ddname !== null &&
-      item.memberName !== null
+      item.memberName.length > 0
     );
   }
 
