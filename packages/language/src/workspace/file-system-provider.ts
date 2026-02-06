@@ -306,7 +306,6 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       const memberPart = `(${options.member})`.toLowerCase();
       const sortedFiles = this.getSortedFiles();
       for (const filePath of sortedFiles) {
-        // const fpl = stripSchemaFromURIString(filePath).toLowerCase();
         const fpl = filePath.toLowerCase();
         if (
           fpl.endsWith(memberPart) &&
