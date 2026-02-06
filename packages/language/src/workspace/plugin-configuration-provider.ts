@@ -666,7 +666,7 @@ export class PluginConfigurationProvider {
     // try direct match first
     // TO INVESTIGATE:
     // Current uri value = 'file:///Users/pli/pgm-test/app-ext.pli'
-    // Current this.programConfigs values: 
+    // Current this.programConfigs values:
     // "file:///Users/wagnerlaranjeiras/Desktop/Typefox/broadcom/broadcom-pli/code_samples/plugin-example/%2A.pli"
     // "file:///Users/wagnerlaranjeiras/Desktop/Typefox/broadcom/broadcom-pli/code_samples/plugin-example/Users/pli/pgm-test/app-ext.pli"
 
@@ -675,7 +675,9 @@ export class PluginConfigurationProvider {
       return direct;
     }
     for (const [pattern, config] of this.programConfigs.entries()) {
-      const newUri = uri.toLowerCase().includes("file:///") ?  uri.replace("file:///", "") : uri;
+      const newUri = uri.toLowerCase().includes("file:///")
+        ? uri.replace("file:///", "")
+        : uri;
       if (pattern.endsWith(newUri)) return config;
     }
     // fallback to glob matching
