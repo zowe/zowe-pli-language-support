@@ -653,32 +653,23 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Returns the program config for the given program.
-   * If no exact match is found, will attempt to match against
-   * any glob patterns registered as a config keys using minimatch.
-   * See: https://github.com/isaacs/minimatch for ref
+   * Returns the program config for the given program URI.
+   * Lookup order:
+   * 1. Exact match against registered config keys.
+   * 2. Glob pattern match (using minimatch) against decoded URIs.
+   * 3. Fallback suffix match to handle configs stored with a workspace-prefixed
+   *    absolute path that would otherwise never resolve.
+   *
+   * @see https://github.com/isaacs/minimatch
    * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
   public getProgramConfig(program: URI): ProgramConfig | undefined {
     // Note that we need to decode the URI
     const uri = program.toString(true);
-    // try direct match first
-    // TO INVESTIGATE:
-    // Current uri value = 'file:///Users/pli/pgm-test/app-ext.pli'
-    // Current this.programConfigs values:
-    // "file:///Users/wagnerlaranjeiras/Desktop/Typefox/broadcom/broadcom-pli/code_samples/plugin-example/%2A.pli"
-    // "file:///Users/wagnerlaranjeiras/Desktop/Typefox/broadcom/broadcom-pli/code_samples/plugin-example/Users/pli/pgm-test/app-ext.pli"
-
     const direct = this.programConfigs.get(uri);
     if (direct) {
       return direct;
-    }
-    for (const [pattern, config] of this.programConfigs.entries()) {
-      const newUri = uri.toLowerCase().includes("file:///")
-        ? uri.replace("file:///", "")
-        : uri;
-      if (pattern.endsWith(newUri)) return config;
     }
     // fallback to glob matching
     for (const [pattern, config] of this.programConfigs.entries()) {
@@ -695,6 +686,20 @@ export class PluginConfigurationProvider {
           `Invalid glob pattern "${pattern}" for program "${program}": ${e}`,
         );
       }
+    }
+    // Program configs added via absolute path are stored with their absolute path prefixed by
+    // the workspace path,producing URIs that will never exactly match a real program URI.
+    // As a last resort, we strip the `file:///` prefix from the program URI and check
+    // whether any config key ends with that path segment.
+    // Example:
+    //   program URI:  file:///Users/mockUser/projects/app/bin/app-ext.pli
+    //   config key:   file:///workspace/Users/alice/projects/app/bin/app-ext.pli
+    // Without this fallback, the config would not be found.
+    for (const [pattern, config] of this.programConfigs.entries()) {
+      const progConfigPath = uri.toLowerCase().includes("file:///")
+        ? uri.replace("file:///", "")
+        : uri;
+      if (pattern.endsWith(progConfigPath)) return config;
     }
     // no match
     return undefined;
