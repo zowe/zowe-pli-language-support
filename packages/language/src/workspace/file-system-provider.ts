@@ -52,15 +52,14 @@ export function isPathSearch(obj: any): obj is PathSearch {
 }
 
 /**
- * Converts a filesystem path into a valid `file://` URI.
  * Strips any existing `file:` prefix before conversion.
  * The resulting URI properly encodes special characters while preserving path structure.
  */
-function filePathToFileURI(path: string): URI {
+function stripSchemaFromURIString(path: string): string {
   const stringPath = path.toLowerCase().includes("file:")
     ? path.replace("file:", "")
     : path;
-  return URI.file(stringPath);
+  return stringPath;
 }
 
 /**
@@ -256,7 +255,8 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         return aSlashes - bSlashes;
       });
     }
-    return this.sortedFilesCache;
+
+    return this.sortedFilesCache.map(stripSchemaFromURIString);
   }
 
   /**
@@ -306,12 +306,17 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       const memberPart = `(${options.member})`.toLowerCase();
       const sortedFiles = this.getSortedFiles();
       for (const filePath of sortedFiles) {
+        // const fpl = stripSchemaFromURIString(filePath).toLowerCase();
         const fpl = filePath.toLowerCase();
         if (
           fpl.endsWith(memberPart) &&
-          fpl.startsWith(options.dirPath.toString(true).toLowerCase())
+          fpl.startsWith(
+            stripSchemaFromURIString(
+              options.dirPath.toString(true),
+            ).toLowerCase(),
+          )
         ) {
-          return filePathToFileURI(filePath);
+          return URI.parse(filePath);
         }
       }
     }
