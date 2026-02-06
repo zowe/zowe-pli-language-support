@@ -2365,6 +2365,14 @@ async function resolveIncludeFileUri(
     );
 
   if (!pgroup) {
+    ///////////// UGLY CODE JUST FOR TEST
+    const test = PluginConfigurationProviderInstance.getProgramConfig(context.entryUri);
+    if (test) console.log(test);
+
+
+
+
+    ///////////////////////
     // no process group to resolve libs from
     return undefined;
   }
