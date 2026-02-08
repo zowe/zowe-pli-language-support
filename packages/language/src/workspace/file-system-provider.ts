@@ -256,7 +256,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       });
     }
 
-    return this.sortedFilesCache.map(stripSchemaFromURIString);
+    return this.sortedFilesCache;
   }
 
   /**
@@ -304,7 +304,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     } else {
       // perform a search by a member w/ candidate dir path
       const memberPart = `(${options.member})`.toLowerCase();
-      const sortedFiles = this.getSortedFiles();
+      const sortedFiles = this.getSortedFiles().map(stripSchemaFromURIString);
       for (const filePath of sortedFiles) {
         const fpl = filePath.toLowerCase();
         if (
