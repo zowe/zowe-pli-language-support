@@ -696,10 +696,16 @@ export class PluginConfigurationProvider {
     //   config key:   file:///workspace/Users/alice/projects/app/bin/app-ext.pli
     // Without this fallback, the config would not be found.
     for (const [pattern, config] of this.programConfigs.entries()) {
-      const progConfigPath = uri.toLowerCase().includes("file:///")
+      let encodedProgConfigPath = uri.toLowerCase().includes("file:///")
         ? uri.replace("file:///", "")
         : uri;
-      if (pattern.endsWith(progConfigPath)) return config;
+      encodedProgConfigPath = encodedProgConfigPath.replace(
+        /^([a-zA-Z]):/,
+        (_, drive) => encodeURIComponent(drive + ":"),
+      );
+      encodedProgConfigPath = encodedProgConfigPath.toLowerCase();
+      const newPattern = pattern.replace(/%5C/gi, "/").toLowerCase();
+      if (newPattern.endsWith(encodedProgConfigPath)) return config;
     }
     // no match
     return undefined;
