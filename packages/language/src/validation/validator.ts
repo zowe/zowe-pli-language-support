@@ -37,8 +37,8 @@ export type ValidationFunction<T extends SyntaxNode> = (
 
 export type ValidationChecks = Partial<{
   [K in keyof typeof SyntaxKind as (typeof SyntaxKind)[K] extends SyntaxNode["kind"]
-    ? K
-    : never]: ValidationFunction<
+  ? K
+  : never]: ValidationFunction<
     Extract<SyntaxNode, { kind: (typeof SyntaxKind)[K] }>
   >[];
 }>;
@@ -180,40 +180,40 @@ export function linkingErrorsToDiagnostics(
   }
 
   // Warn if a label is never referenced
-  const symbolReferences = [...scopeCaches.regular.values()]
-    .flatMap((scope) => [...scope.symbolTable.nodeLookup.keys()])
-    .map((sym) => [sym, references.findReferences(sym)] as const);
-  for (const [node, nodeReferences] of symbolReferences) {
-    if (node.kind !== SyntaxKind.LabelPrefix) {
-      continue;
+  for (const scope of scopeCaches.regular.values()) {
+    for (const node of scope.symbolTable.nodeLookup.keys()) {
+      const nodeReferences = references.findReferences(node);
+      if (node.kind !== SyntaxKind.LabelPrefix) {
+        continue;
+      }
+
+      // If the node has no name token, we can't even create a diagnostic, skip it
+      if (!node.nameToken) {
+        continue;
+      }
+
+      // If the label prefix points to a package, don't warn
+      if (labelPrefixPointsToPackage(node)) {
+        continue;
+      }
+
+      // The main procedure is never directly referenced anyway, so we don't need to warn
+      if (isMainProcedure(node)) {
+        continue;
+      }
+
+      // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
+      const actualReferences = nodeReferences.filter(
+        (reference) =>
+          reference.owner.container?.kind !== SyntaxKind.EndStatement,
+      );
+
+      // The label is referenced, so we don't generate a warning
+      if (actualReferences.length > 0) {
+        continue;
+      }
+
+      reporter.reportUnreferencedSymbol(node.nameToken);
     }
-
-    // If the node has no name token, we can't even create a diagnostic, skip it
-    if (!node.nameToken) {
-      continue;
-    }
-
-    // If the label prefix points to a package, don't warn
-    if (labelPrefixPointsToPackage(node)) {
-      continue;
-    }
-
-    // The main procedure is never directly referenced anyway, so we don't need to warn
-    if (isMainProcedure(node)) {
-      continue;
-    }
-
-    // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
-    const actualReferences = nodeReferences.filter(
-      (reference) =>
-        reference.owner.container?.kind !== SyntaxKind.EndStatement,
-    );
-
-    // The label is referenced, so we don't generate a warning
-    if (actualReferences.length > 0) {
-      continue;
-    }
-
-    reporter.reportUnreferencedSymbol(node.nameToken);
   }
 }
