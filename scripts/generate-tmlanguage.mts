@@ -16,38 +16,14 @@ import * as tokens from '../packages/language/src/parser/tokens.js';
 const keywords = Array.from(tokens.keywordMap, ([key]) => key.toLowerCase()).sort();
 const manual = JSON.parse(await fs.readFile('./packages/vscode-extension/syntaxes/pli.manual.json', 'utf8'));
 
-const controlKeywords = [
-    'if',
-    'else',
-    'then',
-    'do',
-    'end',
-    'select',
-    'otherwise',
-    'on',
-    'while',
-    'next',
-    'go',
-    'to',
-    'goto',
-    'return',
-    'when',
-    'begin',
-    'process',
-    'include',
-    'xinclude',
-    'inscan',
-    'xinscan',
-    'deactivate',
-    'deact',
-    'activate',
-    'act',
-].sort();
-
+const controlKeywords: string[] = [];
 const storageKeywords: string[] = [];
-for (const keyword of keywords) {
-    if (!controlKeywords.includes(keyword)) {
-        storageKeywords.push(keyword);
+
+for (const [text, type] of tokens.keywordMap.entries()) {
+    if (tokens.controlTokens.has(type)) {
+        controlKeywords.push(text.toLowerCase());
+    } else {
+        storageKeywords.push(text.toLowerCase());
     }
 }
 

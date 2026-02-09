@@ -128,7 +128,9 @@ export function createTokenInstance(
 }
 
 export const keywordMap = new Map<string, TokenType>();
-const keywords: TokenType[] = [];
+export const keywords = new Set<TokenType>();
+export const controlTokens = new Set<TokenType>();
+export const modifierTokens = new Set<TokenType>();
 //combination name -> {mapTo: keyword index -> enum value, mapFrom: enum value -> keyword name}
 const mappings = new Map<
   string,
@@ -138,11 +140,20 @@ const mappings = new Map<
   }
 >();
 
+enum KeywordType {
+  Control,
+  Modifier,
+}
+
 interface KeywordConfig {
   /**
    * The keyword name or names (aliases). The first name is the canonical name.
    */
   name: string | string[];
+  /**
+   * The type of the keyword, used for semantic highlighting. Optional, will use `KeywordType.Modifier` if not specified.
+   */
+  type?: KeywordType;
   categories?: [MappableTokenType, number][];
 }
 
@@ -164,7 +175,15 @@ function registerKeyword(config: KeywordConfig): TokenType {
     keywordMap.set(alias, tokenType);
   }
   assignToMappings(tokenType, config.categories ?? [], names);
-  keywords.push(tokenType);
+  keywords.add(tokenType);
+  switch (config.type) {
+    case KeywordType.Control:
+      controlTokens.add(tokenType);
+      break;
+    default:
+      modifierTokens.add(tokenType);
+      break;
+  }
   return tokenType;
 }
 
@@ -749,6 +768,7 @@ export const UNDERFLOW = registerKeyword({
 });
 export const OTHERWISE = registerKeyword({
   name: ["OTHERWISE", "OTHER"],
+  type: KeywordType.Control,
 });
 export const DIMENSION = registerKeyword({
   name: ["DIMENSION", "DIM"],
@@ -869,13 +889,17 @@ export const DOWNTHRU = registerKeyword({
 });
 export const INCLUDE = registerKeyword({
   name: ["INCLUDE", "XINCLUDE"],
+  type: KeywordType.Control,
 });
 export const INCLUDE_ALT = createToken({
   name: "INCLUDE_ALT",
   pattern: Lexer.NA,
 });
+// Manually adding the INCLUDE_ALT token here, due to special semantics
+controlTokens.add(INCLUDE_ALT);
 export const INSCAN = registerKeyword({
   name: ["INSCAN", "XINSCAN"],
+  type: KeywordType.Control,
 });
 export const REPLACE = registerKeyword({
   name: "REPLACE",
@@ -905,6 +929,7 @@ export const NULLINIT = registerKeyword({
 });
 export const PROCESS = registerKeyword({
   name: "PROCESS",
+  type: KeywordType.Control,
 });
 export const PROCINC = registerKeyword({
   name: "PROCINC",
@@ -1286,9 +1311,11 @@ export const REINIT = registerKeyword({
 });
 export const RETURN = registerKeyword({
   name: "RETURN",
+  type: KeywordType.Control,
 });
 export const SELECT = registerKeyword({
   name: "SELECT",
+  type: KeywordType.Control,
 });
 export const SIGNAL = registerKeyword({
   name: "SIGNAL",
@@ -1346,6 +1373,7 @@ export const FALSE = registerKeyword({
 });
 export const BEGIN = registerKeyword({
   name: "BEGIN",
+  type: KeywordType.Control,
 });
 export const CLOSE = registerKeyword({
   name: "CLOSE",
@@ -1417,6 +1445,7 @@ export const REPLY = registerKeyword({
 });
 export const WHILE = registerKeyword({
   name: "WHILE",
+  type: KeywordType.Control,
 });
 export const UNTIL = registerKeyword({
   name: "UNTIL",
@@ -1560,12 +1589,15 @@ export const COPY = registerKeyword({
 });
 export const GOTO = registerKeyword({
   name: "GOTO",
+  type: KeywordType.Control,
 });
 export const THEN = registerKeyword({
   name: "THEN",
+  type: KeywordType.Control,
 });
 export const ELSE = registerKeyword({
   name: "ELSE",
+  type: KeywordType.Control,
 });
 export const SNAP = registerKeyword({
   name: "SNAP",
@@ -1608,6 +1640,7 @@ export const LOOP = registerKeyword({
 });
 export const WHEN = registerKeyword({
   name: "WHEN",
+  type: KeywordType.Control,
 });
 export const STOP = registerKeyword({
   name: "STOP",
@@ -1649,6 +1682,7 @@ export const StarStarEquals = registerOperator({
 });
 export const END = registerKeyword({
   name: "END",
+  type: KeywordType.Control,
 });
 export const AND = registerKeyword({
   name: "AND",
@@ -1741,18 +1775,23 @@ export const OR = registerKeyword({
 });
 export const DO = registerKeyword({
   name: "DO",
+  type: KeywordType.Control,
 });
 export const TO = registerKeyword({
   name: "TO",
+  type: KeywordType.Control,
 });
 export const GO = registerKeyword({
   name: "GO",
+  type: KeywordType.Control,
 });
 export const IF = registerKeyword({
   name: "IF",
+  type: KeywordType.Control,
 });
 export const ON = registerKeyword({
   name: "ON",
+  type: KeywordType.Control,
 });
 export const NotLessThan = registerOperator({
   name: "^<",
