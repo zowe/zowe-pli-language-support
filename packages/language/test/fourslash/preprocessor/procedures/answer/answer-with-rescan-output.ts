@@ -18,20 +18,16 @@
 ////   ANSWER ('VAR = VAL;') RESCAN;
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC OPTIONS(MAIN);
-////   DCL VAL FIXED;
-////   VAL = 200;
-////   DCL VAR FIXED;
-////   %ACTIVATE VAL;
-////   MYMACRO
-//// END;
+//// DCL VAL FIXED;
+//// VAL = 200;
+//// DCL VAR FIXED;
+//// %ACTIVATE VAL;
+//// MYMACRO
 
 preprocessor.expectTokens(`
-    ppp: PROC OPTIONS(MAIN);
-        DCL VAL FIXED;
-        VAL = 200;
-        DCL VAR FIXED; 
-        VAR = 100;
-    END;
+    DCL VAL FIXED;
+    VAL = 200;
+    DCL VAR FIXED; 
+    VAR = 100;
 `);
 verify.noDiagnostics();

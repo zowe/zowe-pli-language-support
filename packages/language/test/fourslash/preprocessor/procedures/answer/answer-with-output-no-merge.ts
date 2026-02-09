@@ -16,13 +16,9 @@
 ////   ANSWER ('VAR FIXED;') SKIP;
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC OPTIONS(MAIN);
-////    MYMACRO
-//// END;
+//// MYMACRO
 
 preprocessor.expectTokens(`
-    ppp: PROC OPTIONS(MAIN);
-        DCL VAR FIXED; 
-    END;
+  DCL VAR FIXED; 
 `);
 verify.noDiagnostics();

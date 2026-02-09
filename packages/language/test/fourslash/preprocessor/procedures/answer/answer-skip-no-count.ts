@@ -15,9 +15,7 @@
 ////   ANSWER SKIP;
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC OPTIONS(MAIN);
-////   MYMACRO
-//// END;
+//// MYMACRO
 
-preprocessor.expectTokens("ppp: PROC OPTIONS(MAIN); END;");
+preprocessor.expectTokens("");
 verify.noDiagnostics();
