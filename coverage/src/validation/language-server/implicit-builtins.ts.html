@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.44% </span>
+                <span class="strong">93.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>17/18</span>
+                <span class='fraction'>14/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.11% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>16/17</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.44% </span>
+                <span class="strong">93.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>17/18</span>
+                <span class='fraction'>14/15</span>
             </div>
         
             
@@ -119,11 +119,7 @@
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
 <a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L57'></a><a href='#L57'>57</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -139,27 +135,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">521x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">518x</span>
-<span class="cline-any cline-yes">90x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">428x</span>
-<span class="cline-any cline-yes">521x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">521x</span>
-<span class="cline-any cline-yes">398x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">511x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">511x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">511x</span>
+<span class="cline-any cline-yes">471x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -167,13 +164,8 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">30x</span>
-<span class="cline-any cline-yes">30x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -193,18 +185,19 @@ import { ValidationAcceptor } from "../validator";
 // Builtins after this offset are valid to be used even if not listed
 let knownBuiltinsOffset = 0;
 &nbsp;
+// This function checks if a builtin is implicitly declared and if it is, it reports a warning diagnostic.
+// Note that builtins can be "contextually declared" when used with dimensions, so we skip the check in that case.
+// From the language reference manual:
+//   Some built-ins do not require arguments. You must either explicitly declare these with the BUILTIN
+//   attribute or contextually declare them by including a null argument list in the reference—for example,
+//   ONCHAR(). Otherwise, the name is not recognized as a built-in.
 export function checkImplicitBuiltins(
   node: AST.ReferenceItem,
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ): void {
-  // Skip if there is no process group information available.
-  if (!compilationUnit.processGroup) {
-    return;
-  }
-&nbsp;
-  // Check for present name
-  if (!node.ref?.node?.name) {
+  // When using dimensions, the builtin is automatically contextually declared, so we can skip the check.
+  if (node.dimensions) {
     return;
   }
 &nbsp;
@@ -212,7 +205,7 @@ export function checkImplicitBuiltins(
   const uri = nameToken?.uri;
 &nbsp;
   // Check if the reference item is a builtin.
-  if (!nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
+  if (!node.ref || !nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
     return;
   }
 &nbsp;
@@ -227,12 +220,7 @@ export function checkImplicitBuiltins(
     const text = file.getText();
     knownBuiltinsOffset = text.indexOf(KNOWN_BUILTINS);
   }
-&nbsp;
-  const name = nameToken.image;
-  if (
-    nameToken.startOffset &lt; knownBuiltinsOffset &amp;&amp;
-    !compilationUnit.processGroup.implicitBuiltins.has(name)
-  ) {
+  if (nameToken.startOffset &lt; knownBuiltinsOffset) {
     acceptor({
       ...diagnosticFromCode(
         PLICodes.Error.IBM1373I,
@@ -250,7 +238,7 @@ export function checkImplicitBuiltins(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-09T12:59:59.507Z
+                at 2026-02-09T13:09:17.800Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
