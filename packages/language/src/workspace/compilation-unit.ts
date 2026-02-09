@@ -310,17 +310,13 @@ export class CompilationUnitHandler {
       // Nothing to close
       return false;
     }
-    let isOpen = false;
     for (const file of unit.services.files.keys()) {
       if (EditorDocuments.has(file)) {
-        isOpen = true;
-        break;
+        // Return early if any file is still open
+        return false;
       }
     }
-    if (!isOpen) {
-      return this.deleteCompilationUnit(uri);
-    }
-    return false;
+    return this.deleteCompilationUnit(uri);
   }
 
   async updateUri(uri: URI): Promise<void> {
