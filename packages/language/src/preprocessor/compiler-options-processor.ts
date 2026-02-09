@@ -73,7 +73,7 @@ export class CompilerOptionsProcessor {
     const programConfig =
       PluginConfigurationProviderInstance.getProgramConfig(uri);
 
-    if (programConfig?.abstractOptions) {
+    if (programConfig) {
       if (ranges.length === 0) {
         // If there is no anchor in the current file, diagnostics are not added at all.
         // Just run the compiler options translation.
@@ -93,10 +93,15 @@ export class CompilerOptionsProcessor {
       }
 
       // Add the compiler option parser issues and start the translation.
-      this.translator.addIssues(programConfig.issues || []);
-      this.translator.translateCompilerOptions(programConfig.abstractOptions, {
-        source: CompilerOptionSource.PLUGIN_CONFIG,
-      });
+      this.translator.addIssues(programConfig?.issues || []);
+      if (programConfig.abstractOptions) {
+        this.translator.translateCompilerOptions(
+          programConfig.abstractOptions,
+          {
+            source: CompilerOptionSource.PLUGIN_CONFIG,
+          },
+        );
+      }
     }
 
     // Now translate all options from the source file.
