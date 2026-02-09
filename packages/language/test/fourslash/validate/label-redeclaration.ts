@@ -22,4 +22,7 @@
 //// END OUTER;
 //// CALL OUTER;
 
-verify.expectExclusiveErrorCodesAt(1, [code.Severe.IBM1916I, code.Warning.IBM1213I]);
+verify.expectExclusiveErrorCodesAt(1, [
+  code.Severe.IBM1916I,
+  code.Warning.IBM1213I,
+]);
