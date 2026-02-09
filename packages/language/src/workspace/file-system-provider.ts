@@ -52,6 +52,17 @@ export function isPathSearch(obj: any): obj is PathSearch {
 }
 
 /**
+ * Strips any existing `file:` prefix before conversion.
+ * The resulting URI properly encodes special characters while preserving path structure.
+ */
+function stripSchemaFromURIString(path: string): string {
+  const stringPath = path.toLowerCase().includes("file:")
+    ? path.replace("file:", "")
+    : path;
+  return stringPath;
+}
+
+/**
  * File or directory stats
  */
 export interface Stats {
@@ -153,11 +164,26 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
   }
 
   /**
+   * Converts a URI object to a normalized file:// URL string.
+   * Ensures proper file:// protocol prefix and includes fragment if present.
+   * Returns lowercase normalized path for case-insensitive comparison.
+   */
+  reconstructFileUri(uri: URI): string {
+    const prefix = uri.path.startsWith("/") ? "file://" : "file:///";
+    // In some cases, filenames containing `#` (e.g. `A1@#_$`) are split by URI parsing:
+    // everything after `#` is interpreted as a URI fragment. As a result, the path
+    // becomes `A1@` and `_$` is treated as the fragment, causing part of the filename
+    // to be lost if not handled explicitly.
+    const fragment = uri.fragment ? `#${uri.fragment}` : "";
+    return `${prefix}${uri.path}${fragment}`.toLowerCase();
+  }
+
+  /**
    * Attempts to read a file synchronously from the virtualized file system.
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(uri.toString(true).toLowerCase());
+    return this.files.get(this.reconstructFileUri(uri));
   }
 
   /**
@@ -229,6 +255,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         return aSlashes - bSlashes;
       });
     }
+
     return this.sortedFilesCache;
   }
 
@@ -240,9 +267,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   async search(options: SearchOptions): Promise<URI | undefined> {
     if (isPathSearch(options)) {
-      // perform a search with a uri
-      const searchPath = options.path
-        .toString(true)
+      let searchPath = decodeURIComponent(options.path.toString(true))
         .toLowerCase()
         .replace(/\\/g, "/");
       const extensions = options.extensions ?? [];
@@ -279,13 +304,13 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     } else {
       // perform a search by a member w/ candidate dir path
       const memberPart = `(${options.member})`.toLowerCase();
-      const sortedFiles = this.getSortedFiles();
+      const sortedFiles = this.getSortedFiles().map(stripSchemaFromURIString);
+      const normalizedDirPath = stripSchemaFromURIString(
+        options.dirPath.toString(true),
+      ).toLowerCase();
       for (const filePath of sortedFiles) {
         const fpl = filePath.toLowerCase();
-        if (
-          fpl.endsWith(memberPart) &&
-          fpl.startsWith(options.dirPath.toString(true).toLowerCase())
-        ) {
+        if (fpl.endsWith(memberPart) && fpl.startsWith(normalizedDirPath)) {
           return URI.parse(filePath);
         }
       }
