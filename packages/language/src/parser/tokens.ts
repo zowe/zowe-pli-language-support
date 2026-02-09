@@ -488,6 +488,12 @@ export const BKWD = registerKeyword({
     [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.BKWD],
   ],
 });
+export const TOTAL = registerKeyword({
+  name: "TOTAL",
+  categories: [
+    [EnvironmentOptionSymbolName, ast.EnvironmentOptionSymbolName.TOTAL],
+  ],
+});
 export const GENKEY = registerKeyword({
   name: "GENKEY",
   categories: [

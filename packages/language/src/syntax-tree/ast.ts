@@ -2272,6 +2272,7 @@ export enum EnvironmentOptionSymbolName {
   CTL360,
   GRAPHIC,
   INDEXED,
+  TOTAL,
 }
 
 export enum EnvironmentOptionValueName {
