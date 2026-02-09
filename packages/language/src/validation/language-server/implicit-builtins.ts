@@ -8,18 +8,19 @@ import { ValidationAcceptor } from "../validator";
 // Builtins after this offset are valid to be used even if not listed
 let knownBuiltinsOffset = 0;
 
+// This function checks if a builtin is implicitly declared and if it is, it reports a warning diagnostic.
+// Note that builtins can be "contextually declared" when used with dimensions, so we skip the check in that case.
+// From the language reference manual:
+//   Some built-ins do not require arguments. You must either explicitly declare these with the BUILTIN
+//   attribute or contextually declare them by including a null argument list in the reference—for example,
+//   ONCHAR(). Otherwise, the name is not recognized as a built-in.
 export function checkImplicitBuiltins(
   node: AST.ReferenceItem,
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ): void {
-  // Skip if there is no process group information available.
-  if (!compilationUnit.processGroup) {
-    return;
-  }
-
-  // Check for present name
-  if (!node.ref?.node?.name) {
+  // When using dimensions, the builtin is automatically contextually declared, so we can skip the check.
+  if (node.dimensions) {
     return;
   }
 
@@ -27,7 +28,7 @@ export function checkImplicitBuiltins(
   const uri = nameToken?.uri;
 
   // Check if the reference item is a builtin.
-  if (!nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
+  if (!node.ref || !nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
     return;
   }
 
@@ -42,12 +43,7 @@ export function checkImplicitBuiltins(
     const text = file.getText();
     knownBuiltinsOffset = text.indexOf(KNOWN_BUILTINS);
   }
-
-  const name = nameToken.image;
-  if (
-    nameToken.startOffset < knownBuiltinsOffset &&
-    !compilationUnit.processGroup.implicitBuiltins.has(name)
-  ) {
+  if (nameToken.startOffset < knownBuiltinsOffset) {
     acceptor({
       ...diagnosticFromCode(
         PLICodes.Error.IBM1373I,
