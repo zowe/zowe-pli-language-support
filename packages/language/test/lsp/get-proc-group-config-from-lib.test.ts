@@ -40,8 +40,8 @@ describe("Process group library path matching", () => {
   });
 
   test("matches absolute Windows-style library path", async () => {
-    await setupConfig(["cpy", "C:/Users/pgm"]);
-    const testUri = URI.parse("C:/Users/pgm/ext-pgm.pli");
+    await setupConfig(["cpy", "C:/Users/mockUser/pgm"]);
+    const testUri = URI.parse("C:/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
@@ -49,8 +49,8 @@ describe("Process group library path matching", () => {
   });
 
   test("matches backslash Windows library path against normalized URI", async () => {
-    await setupConfig(["cpy", "C:\\Users\\pgm"]);
-    const testUri = URI.parse("C:/Users/pgm/ext-pgm.pli");
+    await setupConfig(["cpy", "C:\\Users\\mockUser\\pgm"]);
+    const testUri = URI.parse("C:/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
@@ -59,7 +59,7 @@ describe("Process group library path matching", () => {
 
   test("matches configured library regardless of platform path differences", async () => {
     await setupConfig(["cpy", "/Users/mockUser/pgm"]);
-    const testUri = URI.parse("C:/Users/pgm/ext-pgm.pli");
+    const testUri = URI.parse("C:/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
