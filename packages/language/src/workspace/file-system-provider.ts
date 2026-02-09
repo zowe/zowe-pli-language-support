@@ -305,16 +305,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       // perform a search by a member w/ candidate dir path
       const memberPart = `(${options.member})`.toLowerCase();
       const sortedFiles = this.getSortedFiles().map(stripSchemaFromURIString);
+      const normalizedDirPath = stripSchemaFromURIString(
+        options.dirPath.toString(true),
+      ).toLowerCase();
       for (const filePath of sortedFiles) {
         const fpl = filePath.toLowerCase();
-        if (
-          fpl.endsWith(memberPart) &&
-          fpl.startsWith(
-            stripSchemaFromURIString(
-              options.dirPath.toString(true),
-            ).toLowerCase(),
-          )
-        ) {
+        if (fpl.endsWith(memberPart) && fpl.startsWith(normalizedDirPath)) {
           return URI.parse(filePath);
         }
       }
