@@ -17,6 +17,7 @@ const assignmentIndicators = tokens.combine(
   tokens.AssignmentOperator,
   tokens.Dot,
   tokens.MinusGreaterThan,
+  tokens.EqualsGreaterThan,
   tokens.Comma,
 );
 
@@ -34,6 +35,7 @@ const expressionTokens = tokens.combine(
   tokens.Comma,
   tokens.Dot,
   tokens.MinusGreaterThan,
+  tokens.EqualsGreaterThan,
 );
 
 export function performAssignmentLookahead(state: ParserState): boolean {
