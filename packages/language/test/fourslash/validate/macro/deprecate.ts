@@ -13,7 +13,7 @@
 
 ////%PROCESS PP(MACRO('DEPRECATE(ENTRY(TEST))'));
 //// %<|1:TEST|>: PROC RETURNS (CHAR);
-////   RETURN (X);
+////   RETURN ('X');
 //// %END;
 
 verify.expectDiagnosticsAt(1, code.Error.IBM3660I);
