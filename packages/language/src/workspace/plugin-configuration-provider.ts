@@ -94,7 +94,6 @@ export interface ProcessGroup {
   $computedLibsSet: Set<string>;
 
   includeExtensions: string[];
-  implicitBuiltins: Set<string>;
   lspOptions: {
     checkMargins: boolean;
     instructionCounterLimit: number;
@@ -124,7 +123,6 @@ export function deserializeProcessGroup(
 ): ProcessGroup {
   const compilerOptions = obj["compiler-options"] || [];
   const includeExtensions = obj["include-extensions"] || [];
-  const implicitBuiltins = obj["implicit-builtins"] || [];
   const libs = obj.libs || [];
   const lspOptions = obj["lsp-options"] || {};
   const checkMargins = lspOptions["check-margins"] ?? false;
@@ -139,9 +137,6 @@ export function deserializeProcessGroup(
     includeExtensions: isStringArray(includeExtensions)
       ? includeExtensions
       : [],
-    implicitBuiltins: isStringArray(implicitBuiltins)
-      ? new Set(implicitBuiltins.map((b) => b.toUpperCase()))
-      : new Set(),
     lspOptions: {
       checkMargins: isBoolean(checkMargins) ? checkMargins : false,
       instructionCounterLimit: isNumber(instructionCounterLimit)
@@ -169,9 +164,6 @@ export function serializeProcessGroup(
     "compiler-options": group.compilerOptions,
     libs: group.libs,
     "include-extensions": group.includeExtensions,
-    "implicit-builtins": Array.from(group.implicitBuiltins).map((b) =>
-      b.toLowerCase(),
-    ),
     "member-name-validation": group.memberNameValidation,
     "lsp-options": {
       "check-margins": group.lspOptions.checkMargins,
@@ -184,7 +176,6 @@ interface SerializedProcessGroup {
   "compiler-options"?: string[];
   libs?: string[];
   "include-extensions"?: string[];
-  "implicit-builtins"?: string[];
   "member-name-validation"?: boolean;
   "lsp-options"?: {
     "check-margins"?: boolean;

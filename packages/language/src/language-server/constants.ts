@@ -27,7 +27,6 @@ export namespace PluginConfiguration {
         "compiler-options": [],
         libs: ["cpy", "inc"],
         "include-extensions": [".pli", ".pl1", ".inc"],
-        "implicit-builtins": ["SUBSTR"],
         "lsp-options": {
           "check-margins": true,
         },

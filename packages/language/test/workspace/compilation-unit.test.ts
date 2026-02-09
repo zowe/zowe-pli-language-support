@@ -148,7 +148,6 @@ describe("Compilation Unit Tests", () => {
           instructionCounterLimit: 5000,
           caseUpperValidation: false,
         },
-        implicitBuiltins: new Set(),
       },
     ]);
 
