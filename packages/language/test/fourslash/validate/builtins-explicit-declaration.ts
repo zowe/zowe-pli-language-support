@@ -12,10 +12,9 @@
 /// <reference path="../framework.ts" />
 
 // @filename: main.pli
-//// RGT005: PACKAGE EXPORTS(RGT005);
 //// DCL SYSNULL BUILTIN;
 //// DCL SUBSTR BUILTIN;
-//// RGT005: PROCEDURE() OPTIONS(MAIN);
+//// MAIN: PROCEDURE() OPTIONS(MAIN);
 ////   DCL  P1     POINTER;
 ////   P1 = <|1:SYSNULL|>;
 ////   DCL (I,J) CHAR(32);
@@ -23,8 +22,7 @@
 ////   J = <|2:SUBSTR|>(I,1,10);
 ////   PUT SKIP LIST(I);
 ////   PUT SKIP LIST(J);
-//// END RGT005;
-//// END RGT005;
+//// END MAIN;
 
 verify.noDiagnostics(1);
 verify.noDiagnostics(2);
