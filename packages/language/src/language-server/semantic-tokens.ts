@@ -11,7 +11,7 @@
 
 import { SemanticTokensBuilder } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { offsetToPosition, Range } from "./types";
+import { Range } from "./types";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   SemanticTokensLegend,
@@ -63,10 +63,9 @@ export function semanticTokens(
   for (const token of tokens) {
     const type = tokenType(token);
     if (type !== undefined) {
-      const position = offsetToPosition(textDocument, token.startOffset);
       semanticTokens.push(
-        position.line,
-        position.character,
+        token.startLine,
+        token.startColumn,
         token.image.length,
         tokenTypes.get(type)!,
         0,
