@@ -693,7 +693,7 @@ export class PluginConfigurationProvider {
     // whether any config key ends with that path segment.
     // Example:
     //   program URI:  file:///Users/mockUser/projects/app/bin/app-ext.pli
-    //   config key:   file:///workspace/Users/alice/projects/app/bin/app-ext.pli
+    //   config pattern:   file:///workspace/Users/mockUser/projects/app/bin/app-ext.pli
     // Without this fallback, the config would not be found.
     for (const [pattern, config] of this.programConfigs.entries()) {
       const { normalizedUri, normalizedPattern } = this.normalizeSearchPatterns(
@@ -764,13 +764,14 @@ export class PluginConfigurationProvider {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
       for (const lib of config.$computedLibsSet) {
+        const normalizedLib = lib.replace(/\\/g, "/");
         const isPathAbsolute = UriUtils.isWindows
-          ? !!UriUtils.processDriveLetter(lib).drive
-          : !UriUtils.isPathRelative(lib);
+          ? !!UriUtils.processDriveLetter(normalizedLib).drive
+          : !UriUtils.isPathRelative(normalizedLib);
 
         const matches = isPathAbsolute
-          ? lib.endsWith(dirname)
-          : lib === dirname;
+          ? normalizedLib.endsWith(dirname)
+          : normalizedLib === dirname;
 
         if (matches) {
           return config;
