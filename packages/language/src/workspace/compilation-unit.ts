@@ -288,11 +288,35 @@ export class CompilationUnitHandler {
       this.updateUri(uri);
     });
     textDocuments.onDidClose((event) => {
-      connection.sendDiagnostics({
-        uri: event.document.uri,
-        diagnostics: [],
-      });
+      const uri = URI.parse(event.document.uri);
+      const unit = this.compilationUnits.get(uri.toString());
+      if (unit && this.tryCloseCompilationUnit(uri)) {
+        console.debug(`Closed compilation unit for ${uri.toString()}`);
+        for (const file of unit.services.files.keys()) {
+          // Clear diagnostics for all files in the closed compilation unit
+          // Otherwise, keep the diagnostics, even if the files have been closed
+          connection.sendDiagnostics({
+            uri: file,
+            diagnostics: [],
+          });
+        }
+      }
     });
+  }
+
+  private tryCloseCompilationUnit(uri: URI): boolean {
+    const unit = this.compilationUnits.get(uri.toString());
+    if (!unit) {
+      // Nothing to close
+      return false;
+    }
+    for (const file of unit.services.files.keys()) {
+      if (EditorDocuments.has(file)) {
+        // Return early if any file is still open
+        return false;
+      }
+    }
+    return this.deleteCompilationUnit(uri);
   }
 
   async updateUri(uri: URI): Promise<void> {
