@@ -528,27 +528,31 @@ export class PluginConfigurationProvider {
    * updates abstractOptions & issue counts, sourcing from the associated process group config as well.
    */
   private postProcessProgramConfigs() {
-    const programConfigs = this.programConfigs.values();
-    for (const programConfig of programConfigs) {
-      // get the process group config for this program
+    for (const programConfig of this.programConfigs.values()) {
       const processGroupConfig = this.getProcessGroupConfig(
         programConfig.pgroup,
       );
 
-      // collect raw compiler options from the group
-      const rawCompilerOptions = [
-        ...(programConfig.compilerOptions || []),
-        ...(processGroupConfig?.compilerOptions || []),
-      ].join(" ");
-      // combine them and pass them all together to parse and translate
-      const abstractOptions = parseAbstractCompilerOptions(
-        `${rawCompilerOptions} ${rawCompilerOptions}`,
-      );
-      for (const issue of abstractOptions.issues) {
-        console.error(
-          `Error in compiler options for program config "${programConfig.program}": ${issue}`,
-        );
+      // Collect and parse compiler options from both program and process group
+      // and parse them individually to accept working ones even if some have parser errors.
+      const compilerOptions = [
+        ...(programConfig.compilerOptions ?? []),
+        ...(processGroupConfig?.compilerOptions ?? []),
+      ];
+
+      const abstractOptions: AbstractCompilerOptions = {
+        options: [],
+        tokens: [],
+        issues: [],
+      };
+
+      for (const option of compilerOptions) {
+        const parsed = parseAbstractCompilerOptions(option);
+        abstractOptions.options.push(...parsed.options);
+        abstractOptions.tokens.push(...parsed.tokens);
+        abstractOptions.issues.push(...parsed.issues);
       }
+
       programConfig.abstractOptions = abstractOptions;
       programConfig.issues = abstractOptions.issues;
     }

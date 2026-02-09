@@ -212,6 +212,6 @@ export class CompilerOptionTranslator {
   }
 
   addIssues(issues: Diagnostic[]): void {
-    this.result.issues.push(...issues);
+    this.result.issues.push(...this.applyDiagnosticAnchor(issues));
   }
 }
