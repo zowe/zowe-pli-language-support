@@ -38,7 +38,6 @@ async function init(libPath: string): Promise<Diagnostic[]> {
   const processGroupConfig: ProcessGroup = {
     name: "testGroup",
     compilerOptions: [],
-    implicitBuiltins: new Set(),
     includeExtensions: [],
     libs: [libPath],
     $computedLibs: [],
