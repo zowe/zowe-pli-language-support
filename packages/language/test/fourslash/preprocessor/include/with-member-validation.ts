@@ -43,33 +43,74 @@
 // @filename: cpy/__legitimatefile.pli
 //// DECLARE V4 FIXED;
 
+// @filename: cpy/ABC.DEF(GHI)
+//// // expecting to be valid
+//// DECLARE V5 FIXED;
+
+// @filename: cpy/ABC.DEF(GH@#_$I)
+//// // expecting to be valid
+//// DECLARE V6 FIXED;
+
+// @filename: cpy/ABC.DEF(GHIJKLMNO)
+//// // expecting to be invalid
+//// DECLARE V7 FIXED;
+
+// @filename: cpy/ABC.DEF(#GH@#_$I)
+//// // expecting to be invalid
+//// DECLARE V8 FIXED;
+
+// @filename: cpy/ABC.DEF(_GH@#_$IJKLM)
+//// // expecting to be invalid
+//// DECLARE V9 FIXED;
+
 // @filename: main.pli
-//// %INCLUDE <|1:m12345678|>;
-//// %INCLUDE <|2:m1234567|>;
-//// %INCLUDE <|3:A1@#_$|>;
+//// %INCLUDE <|m12345678|>;
+//// %INCLUDE <|m1234567|>;
+//// %INCLUDE <|A1@#_$|>;
 //// // bad include
-//// %INCLUDE <|4:_A1@#|>;
+//// %INCLUDE <|_A1@#|>;
 //// // legitimate file include
-//// %INCLUDE <|5:__legitimatefile|>;
+//// %INCLUDE <|__legitimatefile|>;
+//// %INCLUDE ABC.DEF(<|GHI|>);
+//// %INCLUDE ABC.DEF(<|GH@#_$I|>);
+//// %INCLUDE ABC.DEF(<|GHIJKLMNO|>);
+//// %INCLUDE ABC.DEF(<|#GH@#_$I|>);
+//// %INCLUDE ABC.DEF(<|_GH@#_$IJKLM|>);
 
 // verify 1 diagnostic on the first include only
-verify.expectExclusiveDiagnosticsAt(1, [
+verify.expectExclusiveDiagnosticsAt("m12345678", [
   code.LSP.MemberValidation.ExceedsMaxLength,
 ]);
 // no diagnostics on the second include
-verify.expectExclusiveDiagnosticsAt(2, []);
+verify.expectExclusiveDiagnosticsAt("m1234567", []);
 // no diagnostics on the 3rd include
-verify.expectExclusiveDiagnosticsAt(3, []);
+verify.expectExclusiveDiagnosticsAt("A1@#_$", []);
 
 // verify 2 diagnostics on the 4th include
 // one for invalid starting char, and another for unresolved include
-verify.expectExclusiveDiagnosticsAt(4, [
+verify.expectExclusiveDiagnosticsAt("_A1@#", [
   code.LSP.MemberValidation.InvalidName,
   code.Severe.IBM1848I,
 ]);
 
-// lastly verify no diagnostics on the legitimate file include
-verify.expectExclusiveDiagnosticsAt(5, []);
+// verify no diagnostics on the legitimate file include
+verify.expectExclusiveDiagnosticsAt("__legitimatefile", []);
+
+// verify no diagnostic on the member with valid ddnames.
+verify.expectExclusiveDiagnosticsAt("GHI", []);
+verify.expectExclusiveDiagnosticsAt("GH@#_$I", []);
+
+// verify diagnostics for members with ddnames: exceeding lenght (8), invalid name (9), both (10)
+verify.expectExclusiveDiagnosticsAt("GHIJKLMNO", [
+  code.LSP.MemberValidation.ExceedsMaxLength,
+]);
+verify.expectExclusiveDiagnosticsAt("#GH@#_$I", [
+  code.LSP.MemberValidation.InvalidName,
+]);
+verify.expectExclusiveDiagnosticsAt("_GH@#_$IJKLM", [
+  code.LSP.MemberValidation.ExceedsMaxLength,
+  code.LSP.MemberValidation.InvalidName,
+]);
 
 // still expecting the same tokens as before
 preprocessor.expectTokens(`
@@ -77,4 +118,9 @@ preprocessor.expectTokens(`
   DECLARE V2 FIXED;
   DECLARE V3 FIXED;
   DECLARE V4 FIXED;
+  DECLARE V5 FIXED;
+  DECLARE V6 FIXED;
+  DECLARE V7 FIXED;
+  DECLARE V8 FIXED;
+  DECLARE V9 FIXED;
 `);

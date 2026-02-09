@@ -2274,6 +2274,7 @@ async function runInclude(
 
   try {
     const document = await TextDocuments.get(uri);
+
     if (!document) {
       throw new Error("Document not found after URI resolution.");
     }
@@ -2320,7 +2321,6 @@ async function runInclude(
   } catch (err) {
     failToResolve(err);
   }
-
   return uri.toString();
 }
 
@@ -2396,11 +2396,6 @@ async function resolveIncludeFileUri(
     return undefined;
   }
 
-  // whether the include item is a standalone member, no ddname specified
-  // in such cases this member may be the suffix of an a ddname entry in the libs, (ex. `A.B.C(member)`)
-  // corresponding to mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`
-  const isMemberWithoutDDName = isMemberIncludeItem(item) && !item.ddname;
-
   /**
    * Computes the URI for a lib file based on whether the path is absolute or relative.
    * Relative paths are combined w/ the workspace path.
@@ -2458,9 +2453,38 @@ async function resolveIncludeFileUri(
     }
   }
 
+  /**
+   * Type guard to check if an include item is a standalone member without a DDName specified.
+   * In such cases, this member may be the suffix of a DDName entry in the libs (e.g., `A.B.C(member)`).
+   * Following mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`.
+   *
+   * @param item - The include item to check
+   * @returns True if the item is a member include without a ddname
+   */
+  function isMemberWithoutDDName(item: IncludeItem): item is MemberIncludeItem {
+    return isMemberIncludeItem(item) && !item.ddname;
+  }
+
+  /**
+   * Type guard to check if an include item is a member with an explicitly specified DDName (ex. `ABC.DEF(MEMBER)`).
+   *
+   * @param item - The include item to check
+   * @returns True if the item is a member include with both ddname and memberName populated
+   */
+  function isMemberWithDDName(
+    item: IncludeItem,
+  ): item is MemberIncludeItem & { ddname: string; memberName: string } {
+    return (
+      isMemberIncludeItem(item) &&
+      item.ddname !== null &&
+      item.memberName.length > 0
+    );
+  }
+
   let libMatch: URI | undefined;
   // whether a match was found for a member include
-  let needsMemberValidation = isMemberWithoutDDName;
+  let needsMemberValidation =
+    isMemberWithoutDDName(item) || isMemberWithDDName(item);
 
   for (const lib of computedLibs) {
     if (isLibsDir(lib)) {
@@ -2488,10 +2512,10 @@ async function resolveIncludeFileUri(
       });
       if (libMatch) {
         // regular file match, no member to validate
-        needsMemberValidation = false;
+        needsMemberValidation = isMemberWithDDName(item);
         break;
       }
-    } else if (isMemberWithoutDDName) {
+    } else if (isMemberWithoutDDName(item)) {
       // standalone member w/out an explicit ddname, search within ddlib for a match
       const ddLibUri = resolveLibFileUri(lib.ddLib);
       libMatch = await FileSystemProviderInstance.search({
@@ -2502,8 +2526,7 @@ async function resolveIncludeFileUri(
         break;
       }
     } else if (
-      isMemberIncludeItem(item) &&
-      item.ddname &&
+      isMemberWithDDName(item) &&
       lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
     ) {
       // member w/ ddname, search for an exact match using ddlib
@@ -2522,7 +2545,11 @@ async function resolveIncludeFileUri(
 
   // depending on whether we matched a member, check to apply validation on the name
   if (needsMemberValidation) {
-    checkToValidateMember(fileNameOrPartial);
+    const memberToValidate = isMemberWithDDName(item)
+      ? item.memberName
+      : fileNameOrPartial;
+
+    checkToValidateMember(memberToValidate);
   }
   return libMatch;
 }
