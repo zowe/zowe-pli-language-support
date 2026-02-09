@@ -122,7 +122,6 @@ describe("PL/1 Lexer", () => {
       const processGroupConfig: ProcessGroup = {
         name: "testGroup",
         compilerOptions: ["ASSERT(ENTRY)"],
-        implicitBuiltins: new Set(),
         includeExtensions: [],
         libs: [],
         $computedLibs: [],
@@ -195,7 +194,6 @@ describe("PL/1 Lexer", () => {
       const processGroupConfig: ProcessGroup = {
         name: "testGroup",
         compilerOptions: ["ASSERT(ENTRY)"],
-        implicitBuiltins: new Set(),
         includeExtensions: [],
         libs: [],
         $computedLibs: [],
