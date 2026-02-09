@@ -11,8 +11,8 @@
 
 /// <reference path="../../framework.ts" />
 
-////%PROCESS PP(MACRO('DEPRECATE(ENTRY(TEST))'));
-//// %X: <|1:TEST|>: PROC RETURNS (CHAR);
+////%PROCESS PP(MACRO('DEPRECATE(ENTRY(test))'));
+//// %<|1:TEST|>: PROC RETURNS (CHAR);
 ////   RETURN ('X');
 //// %END;
 
