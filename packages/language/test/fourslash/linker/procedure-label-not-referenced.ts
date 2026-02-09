@@ -9,15 +9,13 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../framework.ts" />
 
-//// %MYMACRO: PROC;
-////   ANSWER MARGINS (123);
-//// %END;
-//// %ACTIVATE MYMACRO;
-//// ppp: PROC OPTIONS(MAIN);
-////   MYMACRO
-//// END;
+//// <|name2|>: procedure;
+//// end <|name2>name2;
+//// <|name1|>: procedure;
+//// end;
 
-preprocessor.expectTokens("ppp: PROC OPTIONS(MAIN); END;");
-verify.noDiagnostics();
+linker.expectLinks();
+verify.expectErrorCodesAt("name2", code.Warning.IBM1213I);
+verify.expectErrorCodesAt("name1", code.Warning.IBM1213I);

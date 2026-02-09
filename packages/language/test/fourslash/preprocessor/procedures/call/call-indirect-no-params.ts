@@ -22,13 +22,13 @@
 ////   CALL make();
 //// %END;
 //// %ACTIVATE something;
-//// ppp: PROC;
+//// ppp: PROC OPTIONS(MAIN);
 ////   DCL VAR FIXED;
 ////   something
 //// END;
 
 preprocessor.expectTokens(`
-    ppp: PROC;
+    ppp: PROC OPTIONS(MAIN);
         DCL VAR FIXED;
         VAR = 123;
         VAR = 456;

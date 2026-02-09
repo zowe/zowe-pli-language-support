@@ -32,13 +32,13 @@
 ////   CALL fibonacci(6);
 //// %END;
 //// %ACTIVATE something;
-//// ppp: PROC;
+//// ppp: PROC OPTIONS(MAIN);
 ////   DCL VAR FIXED;
 ////   something
 //// END;
 
 preprocessor.expectTokens(`
-    ppp: PROC;
+    ppp: PROC OPTIONS(MAIN);
         DCL VAR FIXED;
         VAR =        5;
         VAR =        8;

@@ -16,12 +16,12 @@
 ////   ANSWER ('Y FIXED;');
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC;
+//// ppp: PROC OPTIONS(MAIN);
 ////    MYMACRO
 //// END;
 
 preprocessor.expectTokens(`
-    ppp: PROC;
+    ppp: PROC OPTIONS(MAIN);
         DCL XY FIXED; 
     END;
 `);

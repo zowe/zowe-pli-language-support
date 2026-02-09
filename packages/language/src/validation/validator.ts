@@ -180,7 +180,10 @@ export function linkingErrorsToDiagnostics(
   }
 
   // Warn if a label is never referenced
-  for (const [node, nodeReferences] of references.allReverseReferences()) {
+  const symbolReferences = [...scopeCaches.regular.values()]
+    .flatMap((scope) => [...scope.symbolTable.nodeLookup.keys()])
+    .map(sym => [sym, references.findReferences(sym)] as const);
+  for (const [node, nodeReferences] of symbolReferences) {
     if (node.kind !== SyntaxKind.LabelPrefix) {
       continue;
     }

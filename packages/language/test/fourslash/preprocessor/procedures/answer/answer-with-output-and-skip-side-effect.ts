@@ -25,13 +25,13 @@
 ////
 //// %ACTIVATE MYMACRO;
 ////
-//// ppp: PROC;
+//// ppp: PROC OPTIONS(MAIN);
 ////   DCL VAR FIXED;
 ////   MYMACRO
 //// END;
 
 preprocessor.expectTokens(`
-    ppp: PROC;
+    ppp: PROC OPTIONS(MAIN);
         DCL VAR FIXED;
         VAR = 2;
     END;
