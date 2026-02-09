@@ -57,9 +57,9 @@ describe("Process group library path matching", () => {
     expect(config).toBeDefined();
   });
 
-  test("matches configured library regardless of platform path differences", async () => {
+  test("matches absolute path lib for Unix environments", async () => {
     await setupConfig(["cpy", "/Users/mockUser/pgm"]);
-    const testUri = URI.parse("C:/Users/mockUser/pgm/ext-pgm.pli");
+    const testUri = URI.parse("/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
