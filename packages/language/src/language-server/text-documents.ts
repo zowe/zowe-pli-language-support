@@ -219,6 +219,10 @@ export class NormalizedTextDocuments<
     return this._onDidClose.event;
   }
 
+  public has(uri: string | URI): boolean {
+    return this._syncedDocuments.has(UriUtils.normalize(uri));
+  }
+
   public async get(uri: string | URI): Promise<T | undefined> {
     let syncedDocument = this._syncedDocuments.get(UriUtils.normalize(uri));
     if (syncedDocument === undefined && this._loadFromURI) {
