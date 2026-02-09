@@ -765,9 +765,9 @@ export class PluginConfigurationProvider {
     for (const config of this.processGroupConfigs.values()) {
       for (const lib of config.$computedLibsSet) {
         const normalizedLib = lib.replace(/\\/g, "/");
-        const isPathAbsolute = UriUtils.isWindows
-          ? !!UriUtils.processDriveLetter(normalizedLib).drive
-          : !UriUtils.isPathRelative(normalizedLib);
+        const isPathAbsolute =
+          UriUtils.processDriveLetter(normalizedLib).drive ||
+          !UriUtils.isPathRelative(normalizedLib);
 
         const matches = isPathAbsolute
           ? normalizedLib.endsWith(dirname)
