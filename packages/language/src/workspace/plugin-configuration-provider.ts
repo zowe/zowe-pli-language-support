@@ -696,19 +696,38 @@ export class PluginConfigurationProvider {
     //   config key:   file:///workspace/Users/alice/projects/app/bin/app-ext.pli
     // Without this fallback, the config would not be found.
     for (const [pattern, config] of this.programConfigs.entries()) {
-      let encodedProgConfigPath = uri.toLowerCase().includes("file:///")
-        ? uri.replace("file:///", "")
-        : uri;
-      encodedProgConfigPath = encodedProgConfigPath.replace(
-        /^([a-zA-Z]):/,
-        (_, drive) => encodeURIComponent(drive + ":"),
+      const { normalizedUri, normalizedPattern } = this.normalizeSearchPatterns(
+        uri,
+        pattern,
       );
-      encodedProgConfigPath = encodedProgConfigPath.toLowerCase();
-      const newPattern = pattern.replace(/%5C/gi, "/").toLowerCase();
-      if (newPattern.endsWith(encodedProgConfigPath)) return config;
+      if (normalizedPattern.endsWith(normalizedUri)) return config;
     }
     // no match
     return undefined;
+  }
+
+  /**
+   * Normalizes a search URI and pattern for consistent cross-platform file path matching.
+   *
+   * @param searchUri - The file URI to normalize
+   * @param pattern - The search pattern to normalize
+   * @returns Object containing normalized URI and pattern
+   */
+  private normalizeSearchPatterns(searchUri: string, pattern: string) {
+    const normalizedPattern = pattern.replace(/%5C/gi, "/").toLowerCase();
+
+    const uriWithoutProtocol = searchUri.toLowerCase().includes("file:///")
+      ? searchUri.replace("file:///", "")
+      : searchUri;
+
+    // Encode and lowercase Windows drive letters (C: → c%3a)
+    const normalizedUri = uriWithoutProtocol
+      .replace(/^([a-zA-Z]):/, (_, driveLetter) =>
+        encodeURIComponent(driveLetter + ":"),
+      )
+      .toLowerCase();
+
+    return { normalizedUri, normalizedPattern };
   }
 
   /**
