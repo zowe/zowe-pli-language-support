@@ -11,7 +11,7 @@
             "request": "launch",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension",
-                "${workspaceFolder}/code_samples"
+                "${workspaceFolder}/code_samples/plugin-example"
             ],
             "sourceMaps": true,
             "outFiles": [
