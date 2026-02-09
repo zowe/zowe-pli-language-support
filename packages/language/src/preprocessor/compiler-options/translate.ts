@@ -147,7 +147,8 @@ export class CompilerOptionTranslator {
         (item.token?.startOffset ?? 0) + 1,
       );
       item.processed = true;
-      nestedOptions.options.forEach((option) =>
+      const options = this.optionsToUpperCase(nestedOptions.options);
+      options.forEach((option) =>
         ppTranslator.translate(option, configuration),
       );
       ppTranslator.diagnostics.push(...nestedOptions.issues);
