@@ -12,6 +12,6 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// DCL SYSIS FILE RECORD ENV(LEAVE BKWD VSAM SKIP GENKEY);
+//// DCL SYSIS FILE RECORD ENV(LEAVE BKWD VSAM SKIP GENKEY TOTAL);
 
 verify.noParserDiagnostics();
