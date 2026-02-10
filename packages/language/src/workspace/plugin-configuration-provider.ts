@@ -519,7 +519,9 @@ export class PluginConfigurationProvider {
       processGroup.$computedLibs = computedLibs;
       // build a lookup set for dir entries only
       processGroup.$computedLibsSet = new Set(
-        computedLibs.filter((e) => isLibsDir(e)).map((e) => e.dir),
+        computedLibs
+          .filter((e) => isLibsDir(e))
+          .map((e) => e.dir.replace(/\\/g, "/")),
       );
     }
     return diagnostics;
@@ -746,20 +748,15 @@ export class PluginConfigurationProvider {
    */
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
+    const absolutePathLib = UriUtils.dirname(libUri)
+      .toString()
+      .replace(/^file:\/\//, "");
     for (const config of this.processGroupConfigs.values()) {
-      for (const lib of config.$computedLibsSet) {
-        const normalizedLib = lib.replace(/\\/g, "/");
-        const isPathAbsolute =
-          UriUtils.processDriveLetter(normalizedLib).drive ||
-          !UriUtils.isPathRelative(normalizedLib);
-
-        const matches = isPathAbsolute
-          ? normalizedLib.endsWith(dirname)
-          : normalizedLib === dirname;
-
-        if (matches) {
-          return config;
-        }
+      if (
+        config.$computedLibsSet.has(dirname) ||
+        config.$computedLibsSet.has(absolutePathLib)
+      ) {
+        return config;
       }
     }
     return undefined;
