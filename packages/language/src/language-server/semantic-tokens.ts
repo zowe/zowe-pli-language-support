@@ -147,20 +147,24 @@ function getReferenceTarget(token: Token): SyntaxNode | undefined {
       if (token.element?.kind === SyntaxKind.ReferenceItem) {
         return token.element.ref?.node ?? undefined;
       }
+      break;
     case CstNodeKind.LabelReference_LabelRef:
       if (token.element?.kind === SyntaxKind.LabelReference) {
         return token.element.label?.node ?? undefined;
       }
+      break;
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:
       if (token.element?.kind === SyntaxKind.TypeAttribute) {
         return token.element.type?.node ?? undefined;
       }
+      break;
     case CstNodeKind.HandleAttribute_TypeId0:
     case CstNodeKind.HandleAttribute_TypeId1:
       if (token.element?.kind === SyntaxKind.HandleAttribute) {
         return token.element.type?.node ?? undefined;
       }
+      break;
   }
   return undefined;
 }
