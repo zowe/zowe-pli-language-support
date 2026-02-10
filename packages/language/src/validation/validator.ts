@@ -182,7 +182,6 @@ export function linkingErrorsToDiagnostics(
   // Warn if a label is never referenced
   for (const scope of scopeCaches.regular.values()) {
     nodeLoop: for (const node of scope.symbolTable.nodeLookup.keys()) {
-      const nodeReferences = references.findReferences(node);
       if (node.kind !== SyntaxKind.LabelPrefix) {
         continue;
       }
@@ -203,6 +202,7 @@ export function linkingErrorsToDiagnostics(
       }
 
       // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
+      const nodeReferences = references.findReferences(node);
       for (const reference of nodeReferences) {
         if (reference.owner.container?.kind !== SyntaxKind.EndStatement) {
           // The label is referenced, so we don't generate a warning
