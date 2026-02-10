@@ -658,6 +658,12 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
   text: string;
   token: Token;
   node: T | null | undefined;
+  /**
+   * PLI generally only allows a reference to resolve to a single element.
+   * However, for the purpose of the language server, we want to be able to reference multiple elements at once.
+   * For example, in the case of ambiguous reference or when encountering a procedure and its forward declaration.
+   */
+  nodes: T[];
   type: ReferenceType;
 }
 
@@ -683,9 +689,18 @@ export function createReference<T extends SyntaxNode>(
     owner,
     text: token.image,
     token,
+    nodes: [],
     node: undefined,
     type,
   };
+}
+
+export function* iterateReferenceNodes(ref: Reference): Iterable<SyntaxNode> {
+  if (ref.nodes.length > 0) {
+    yield* ref.nodes;
+  } else if (ref.node) {
+    yield ref.node;
+  }
 }
 
 export function isPreprocessorNode(

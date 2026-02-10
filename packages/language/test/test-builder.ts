@@ -925,7 +925,17 @@ export class TestBuilder {
       expect(result, message).toHaveLength(rangeIndex.length);
 
       if (rangeIndex.length > 1) {
-        throw new Error("TODO: Range index is not supported yet");
+        for (const expected of rangeIndex) {
+          const [start, end] = expected;
+          const exists = result.some(
+            (definition) =>
+              definition.range.start === start && definition.range.end === end,
+          );
+          expect(
+            exists,
+            `Expected definition at range [${start}, ${end}] for label "${label}" (${this.createLabelPositionMessage(label)}) not found`,
+          ).toBeTruthy();
+        }
       } else if (rangeIndex.length === 1) {
         const [singleRangeIndex] = rangeIndex;
         const [definition] = result;
