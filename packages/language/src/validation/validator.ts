@@ -37,8 +37,8 @@ export type ValidationFunction<T extends SyntaxNode> = (
 
 export type ValidationChecks = Partial<{
   [K in keyof typeof SyntaxKind as (typeof SyntaxKind)[K] extends SyntaxNode["kind"]
-  ? K
-  : never]: ValidationFunction<
+    ? K
+    : never]: ValidationFunction<
     Extract<SyntaxNode, { kind: (typeof SyntaxKind)[K] }>
   >[];
 }>;
@@ -181,7 +181,7 @@ export function linkingErrorsToDiagnostics(
 
   // Warn if a label is never referenced
   for (const scope of scopeCaches.regular.values()) {
-    for (const node of scope.symbolTable.nodeLookup.keys()) {
+    nodeLoop: for (const node of scope.symbolTable.nodeLookup.keys()) {
       const nodeReferences = references.findReferences(node);
       if (node.kind !== SyntaxKind.LabelPrefix) {
         continue;
@@ -203,14 +203,11 @@ export function linkingErrorsToDiagnostics(
       }
 
       // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
-      const actualReferences = nodeReferences.filter(
-        (reference) =>
-          reference.owner.container?.kind !== SyntaxKind.EndStatement,
-      );
-
-      // The label is referenced, so we don't generate a warning
-      if (actualReferences.length > 0) {
-        continue;
+      for (const reference of nodeReferences) {
+        if (reference.owner.container?.kind !== SyntaxKind.EndStatement) {
+          // The label is referenced, so we don't generate a warning
+          continue nodeLoop;
+        }
       }
 
       reporter.reportUnreferencedSymbol(node.nameToken);
