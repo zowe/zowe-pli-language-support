@@ -71,3 +71,5 @@ class MutexImpl implements Mutex {
 export function createMutex(): Mutex {
   return new MutexImpl();
 }
+
+export const GlobalMutex = createMutex();

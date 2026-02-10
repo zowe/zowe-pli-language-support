@@ -41,7 +41,7 @@ import {
   ProgramConfig,
 } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
-import { createMutex, Mutex } from "./mutex.js";
+import { createMutex, GlobalMutex, Mutex } from "./mutex.js";
 import { Deferred, isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -220,7 +220,11 @@ export async function createCompilationUnit(
 export class CompilationUnitHandler {
   private compilationUnits: Map<string, CompilationUnit> = new Map();
   private connection!: Connection;
-  private ready = new Deferred();
+  private readyDeferred = new Deferred();
+
+  get ready(): Promise<void> {
+    return this.readyDeferred.promise;
+  }
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {
     return this.compilationUnits.get(uri.toString());
@@ -276,7 +280,7 @@ export class CompilationUnitHandler {
    * **Must** be called if `listen` has been called previously.
    */
   finalize(): void {
-    this.ready.resolve();
+    this.readyDeferred.resolve();
   }
 
   listen(connection: Connection): void {
@@ -320,21 +324,28 @@ export class CompilationUnitHandler {
   }
 
   async updateUri(uri: URI): Promise<void> {
-    await this.ready.promise;
-    const unit = await this.getOrCreateCompilationUnit(uri);
-    if (!unit) {
-      // standalone library files do not synthesize new compilation units
-      return;
-    }
-    unit.mutex.run(async (cancellationToken) => {
-      const document = await EditorDocuments.get(unit.uri);
-      if (!document) {
+    await GlobalMutex.run(async () => {
+      await this.ready;
+      const unit = await this.getOrCreateCompilationUnit(uri);
+      if (!unit) {
+        // standalone library files do not synthesize new compilation units
         return;
       }
-      await this.process(unit, document, this.connection, cancellationToken);
-      // TODO: Wagner Laranjeiras -> includeCache based on changes of a specific file.
-      unit.services.includeCache.clear();
-      unit.requestCaches.revalidateAll({ connection: this.connection, unit });
+      // We do not await the compilation unit mutex operation here
+      // This ensures that we exit the global mutex as soon as possible.
+      // That way, we allow subsequent updates cancel the previous requests
+      // While ensuring that only one update runs at a time for a specific compilation unit
+      // And also ensuring that the LSP requests wait for the compilation unit to be available
+      unit.mutex.run(async (cancellationToken) => {
+        const document = await EditorDocuments.get(unit.uri);
+        if (!document) {
+          return;
+        }
+        await this.process(unit, document, this.connection, cancellationToken);
+        // TODO: Wagner Laranjeiras -> includeCache based on changes of a specific file.
+        unit.services.includeCache.clear();
+        unit.requestCaches.revalidateAll({ connection: this.connection, unit });
+      });
     });
   }
 
@@ -384,16 +395,18 @@ export class CompilationUnitHandler {
     connection: Connection,
     cancellationToken: CancellationToken,
   ): Promise<void> {
-    for (const unit of this.getAllCompilationUnits()) {
-      if (cancellationToken.isCancellationRequested) {
-        return;
-      }
-      unit.mutex.run(async (cancellationToken) => {
-        const textDocument = await TextDocuments.get(unit.uri.toString());
-        if (textDocument) {
-          this.process(unit, textDocument, connection, cancellationToken);
+    GlobalMutex.run(async () => {
+      for (const unit of this.getAllCompilationUnits()) {
+        if (cancellationToken.isCancellationRequested) {
+          return;
         }
-      });
-    }
+        unit.mutex.run(async (cancellationToken) => {
+          const textDocument = await TextDocuments.get(unit.uri.toString());
+          if (textDocument) {
+            this.process(unit, textDocument, connection, cancellationToken);
+          }
+        });
+      }
+    });
   }
 }
