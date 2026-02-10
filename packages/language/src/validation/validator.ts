@@ -180,37 +180,37 @@ export function linkingErrorsToDiagnostics(
   }
 
   // Warn if a label is never referenced
-  for (const [node, nodeReferences] of references.allReverseReferences()) {
-    if (node.kind !== SyntaxKind.LabelPrefix) {
-      continue;
+  for (const scope of scopeCaches.regular.values()) {
+    nodeLoop: for (const node of scope.symbolTable.nodeLookup.keys()) {
+      if (node.kind !== SyntaxKind.LabelPrefix) {
+        continue;
+      }
+
+      // If the node has no name token, we can't even create a diagnostic, skip it
+      if (!node.nameToken) {
+        continue;
+      }
+
+      // If the label prefix points to a package, don't warn
+      if (labelPrefixPointsToPackage(node)) {
+        continue;
+      }
+
+      // The main procedure is never directly referenced anyway, so we don't need to warn
+      if (isMainProcedure(node)) {
+        continue;
+      }
+
+      // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
+      const nodeReferences = references.findReferences(node);
+      for (const reference of nodeReferences) {
+        if (reference.owner.container?.kind !== SyntaxKind.EndStatement) {
+          // The label is referenced, so we don't generate a warning
+          continue nodeLoop;
+        }
+      }
+
+      reporter.reportUnreferencedSymbol(node.nameToken);
     }
-
-    // If the node has no name token, we can't even create a diagnostic, skip it
-    if (!node.nameToken) {
-      continue;
-    }
-
-    // If the label prefix points to a package, don't warn
-    if (labelPrefixPointsToPackage(node)) {
-      continue;
-    }
-
-    // The main procedure is never directly referenced anyway, so we don't need to warn
-    if (isMainProcedure(node)) {
-      continue;
-    }
-
-    // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
-    const actualReferences = nodeReferences.filter(
-      (reference) =>
-        reference.owner.container?.kind !== SyntaxKind.EndStatement,
-    );
-
-    // The label is referenced, so we don't generate a warning
-    if (actualReferences.length > 0) {
-      continue;
-    }
-
-    reporter.reportUnreferencedSymbol(node.nameToken);
   }
 }

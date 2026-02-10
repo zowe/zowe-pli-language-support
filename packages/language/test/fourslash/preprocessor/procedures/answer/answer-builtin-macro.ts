@@ -15,15 +15,11 @@
 ////   ANSWER (Counter);
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC;
-////    DCL VAR FIXED;
-////    VAR = MYMACRO;
-//// END;
+//// DCL VAR FIXED;
+//// VAR = MYMACRO;
 
 preprocessor.expectTokens(`
-    ppp: PROC;
-        DCL VAR FIXED;
-        VAR = 00001;
-    END;
+    DCL VAR FIXED;
+    VAR = 00001;
 `);
 verify.noDiagnostics();

@@ -16,13 +16,9 @@
 ////   ANSWER ('Y FIXED;');
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC;
-////    MYMACRO
-//// END;
+//// MYMACRO
 
 preprocessor.expectTokens(`
-    ppp: PROC;
-        DCL XY FIXED; 
-    END;
+  DCL XY FIXED; 
 `);
 verify.noDiagnostics();

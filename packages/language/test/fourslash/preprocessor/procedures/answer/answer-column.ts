@@ -15,9 +15,7 @@
 ////   ANSWER COLUMN (123);
 //// %END;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC;
-////   MYMACRO
-//// END;
+//// MYMACRO
 
-preprocessor.expectTokens("ppp: PROC; END;");
+preprocessor.expectTokens("");
 verify.noDiagnostics();
