@@ -20,15 +20,11 @@
 ////   CALL make(1, 2);
 //// %END;
 //// %ACTIVATE something;
-//// ppp: PROC;
-////   DCL VAR FIXED;
-////   something
-//// END;
+//// DCL VAR FIXED;
+//// something
 
 preprocessor.expectTokens(`
-    ppp: PROC;
-        DCL VAR FIXED;
-        VAR = 3;
-    END;
+    DCL VAR FIXED;
+    VAR = 3;
 `);
 verify.noDiagnostics();
