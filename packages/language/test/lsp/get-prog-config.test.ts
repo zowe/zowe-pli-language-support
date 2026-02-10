@@ -26,7 +26,7 @@ async function setupConfig(
 }
 
 describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retrieve proper values.", () => {
-  (test("Matches workspace-relative program - most common use case", async () => {
+  test("Matches workspace-relative program - most common use case", async () => {
     await setupConfig([{ program: "*.pli", pgroup: "default" }]);
     const testUri = URI.parse("workspace/a.pli");
     const config =
@@ -74,5 +74,5 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
         PluginConfigurationProviderInstance.getProgramConfig(testUri);
 
       expect(config).toBeDefined();
-    }));
+    });
 });
