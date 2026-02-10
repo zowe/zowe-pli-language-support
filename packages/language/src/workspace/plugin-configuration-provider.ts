@@ -595,9 +595,9 @@ export class PluginConfigurationProvider {
 
   /**
    * Sets the program configs of this plugin configuration provider, overwriting any existing configs.
-   * The config key is set as the full path relative to the workspace.
+   * Program paths are normalized and resolved relative to the workspace (unless absolute).
    * Post-processes the program configs after setting them, to ensure abstract options are built.
-   * @param workspacePath The full workspace path (used as a prefix for program config keys)
+   * @param workspacePath The full workspace path (used as base for resolving relative program paths)
    * @param programConfigs Program configs loaded from .pliplugin/pgm_conf.json (when present)
    */
   public setProgramConfigs(
@@ -606,11 +606,36 @@ export class PluginConfigurationProvider {
   ): void {
     this.programConfigs.clear();
     const workspaceUri = URI.parse(workspacePath);
+
     for (const config of programConfigs) {
-      const newPath = UriUtils.joinPath(workspaceUri, config.program);
-      this.programConfigs.set(newPath.toString(), config);
+      const resolvedUri = this.resolveProgramPath(config.program, workspaceUri);
+      this.programConfigs.set(resolvedUri.toString(), config);
     }
     this.postProcessProgramConfigs();
+  }
+
+  /**
+   * Resolves a program path to an absolute URI.
+   * Normalizes backslashes to forward slashes, then returns the path as-is if absolute,
+   * or joins it with the workspace URI if relative.
+   */
+  private resolveProgramPath(programPath: string, workspaceUri: URI): URI {
+    const normalizedProgramPath = programPath.replace(/\\/g, "/");
+    if (this.isAbsolutePath(normalizedProgramPath)) {
+      return URI.parse(normalizedProgramPath);
+    }
+    return UriUtils.joinPath(workspaceUri, normalizedProgramPath);
+  }
+
+  /**
+   * Determines if a path is absolute (either Windows-style with drive letter or Unix-style).
+   * Paths starting with "*" are treated as relative even if they appear absolute.
+   */
+  private isAbsolutePath(path: string): boolean {
+    const hasWindowsDrive = Boolean(UriUtils.processDriveLetter(path).drive);
+    const hasUnixRoot = !UriUtils.isPathRelative(path) && !path.startsWith("*");
+
+    return hasWindowsDrive || hasUnixRoot;
   }
 
   /**
@@ -657,8 +682,6 @@ export class PluginConfigurationProvider {
    * Lookup order:
    * 1. Exact match against registered config keys.
    * 2. Glob pattern match (using minimatch) against decoded URIs.
-   * 3. Fallback suffix match to handle configs stored with a workspace-prefixed
-   *    absolute path that would otherwise never resolve.
    *
    * @see https://github.com/isaacs/minimatch
    * @param program Name of the program to get a config for
@@ -687,47 +710,8 @@ export class PluginConfigurationProvider {
         );
       }
     }
-    // Program configs added via absolute path are stored with their absolute path prefixed by
-    // the workspace path,producing URIs that will never exactly match a real program URI.
-    // As a last resort, we strip the `file:///` prefix from the program URI and check
-    // whether any config key ends with that path segment.
-    // Example:
-    //   program URI:  file:///Users/mockUser/projects/app/bin/app-ext.pli
-    //   config pattern:   file:///workspace/Users/mockUser/projects/app/bin/app-ext.pli
-    // Without this fallback, the config would not be found.
-    for (const [pattern, config] of this.programConfigs.entries()) {
-      const { normalizedUri, normalizedPattern } = this.normalizeSearchPatterns(
-        uri,
-        pattern,
-      );
-      if (normalizedPattern.endsWith(normalizedUri)) return config;
-    }
     // no match
     return undefined;
-  }
-
-  /**
-   * Normalizes a search URI and pattern for consistent cross-platform file path matching.
-   *
-   * @param searchUri - The file URI to normalize
-   * @param pattern - The search pattern to normalize
-   * @returns Object containing normalized URI and pattern
-   */
-  private normalizeSearchPatterns(searchUri: string, pattern: string) {
-    const normalizedPattern = pattern.replace(/%5C/gi, "/").toLowerCase();
-
-    const uriWithoutProtocol = searchUri.toLowerCase().includes("file:///")
-      ? searchUri.replace("file:///", "")
-      : searchUri;
-
-    // Encode and lowercase Windows drive letters (C: → c%3a)
-    const normalizedUri = uriWithoutProtocol
-      .replace(/^([a-zA-Z]):/, (_, driveLetter) =>
-        encodeURIComponent(driveLetter + ":"),
-      )
-      .toLowerCase();
-
-    return { normalizedUri, normalizedPattern };
   }
 
   /**

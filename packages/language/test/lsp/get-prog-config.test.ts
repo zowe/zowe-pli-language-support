@@ -67,9 +67,9 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
     test("matches absolute UNIX style path", async () => {
       await setupConfig([
         { program: "*.pli", pgroup: "default" },
-        { program: "Users/pgm/ext-pgm.pli", pgroup: "default" },
+        { program: "/Users/pgm/ext-pgm.pli", pgroup: "default" },
       ]);
-      const testUri = URI.parse("Users/pgm/ext-pgm.pli");
+      const testUri = URI.parse("/Users/pgm/ext-pgm.pli");
       const config =
         PluginConfigurationProviderInstance.getProgramConfig(testUri);
 
