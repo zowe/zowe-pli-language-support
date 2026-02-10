@@ -9,16 +9,13 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../framework.ts" />
 
-//// %MYMACRO: PROC;
-////   ANSWER ('DCL');
-////   ANSWER ('VAR FIXED;') SKIP;
-//// %END;
-//// %ACTIVATE MYMACRO;
-//// MYMACRO
+//// <|name2|>: procedure;
+//// end <|name2>name2;
+//// <|name1|>: procedure;
+//// end;
 
-preprocessor.expectTokens(`
-  DCL VAR FIXED; 
-`);
-verify.noDiagnostics();
+linker.expectLinks();
+verify.expectErrorCodesAt("name2", code.Warning.IBM1213I);
+verify.expectErrorCodesAt("name1", code.Warning.IBM1213I);
