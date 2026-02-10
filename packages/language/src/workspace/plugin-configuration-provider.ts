@@ -508,7 +508,9 @@ export class PluginConfigurationProvider {
       processGroup.$computedLibs = computedLibs;
       // build a lookup set for dir entries only
       processGroup.$computedLibsSet = new Set(
-        computedLibs.filter((e) => isLibsDir(e)).map((e) => e.dir),
+        computedLibs
+          .filter((e) => isLibsDir(e))
+          .map((e) => e.dir.replace(/\\/g, "/")),
       );
     }
     return diagnostics;
@@ -569,9 +571,9 @@ export class PluginConfigurationProvider {
 
   /**
    * Sets the program configs of this plugin configuration provider, overwriting any existing configs.
-   * The config key is set as the full path relative to the workspace.
+   * Program paths are normalized and resolved relative to the workspace (unless absolute).
    * Post-processes the program configs after setting them, to ensure abstract options are built.
-   * @param workspacePath The full workspace path (used as a prefix for program config keys)
+   * @param workspacePath The full workspace path (used as base for resolving relative program paths)
    * @param programConfigs Program configs loaded from .pliplugin/pgm_conf.json (when present)
    */
   public setProgramConfigs(
@@ -580,11 +582,36 @@ export class PluginConfigurationProvider {
   ): void {
     this.programConfigs.clear();
     const workspaceUri = URI.parse(workspacePath);
+
     for (const config of programConfigs) {
-      const newPath = UriUtils.joinPath(workspaceUri, config.program);
-      this.programConfigs.set(newPath.toString(), config);
+      const resolvedUri = this.resolveProgramPath(config.program, workspaceUri);
+      this.programConfigs.set(resolvedUri.toString(), config);
     }
     this.postProcessProgramConfigs();
+  }
+
+  /**
+   * Resolves a program path to an absolute URI.
+   * Normalizes backslashes to forward slashes, then returns the path as-is if absolute,
+   * or joins it with the workspace URI if relative.
+   */
+  private resolveProgramPath(programPath: string, workspaceUri: URI): URI {
+    const normalizedProgramPath = programPath.replace(/\\/g, "/");
+    if (this.isAbsolutePath(normalizedProgramPath)) {
+      return URI.parse(normalizedProgramPath);
+    }
+    return UriUtils.joinPath(workspaceUri, normalizedProgramPath);
+  }
+
+  /**
+   * Determines if a path is absolute (either Windows-style with drive letter or Unix-style).
+   * Paths starting with "*" are treated as relative even if they appear absolute.
+   */
+  private isAbsolutePath(path: string): boolean {
+    const hasWindowsDrive = Boolean(UriUtils.processDriveLetter(path).drive);
+    const hasUnixRoot = !UriUtils.isPathRelative(path) && !path.startsWith("*");
+
+    return hasWindowsDrive || hasUnixRoot;
   }
 
   /**
@@ -627,17 +654,18 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Returns the program config for the given program.
-   * If no exact match is found, will attempt to match against
-   * any glob patterns registered as a config keys using minimatch.
-   * See: https://github.com/isaacs/minimatch for ref
+   * Returns the program config for the given program URI.
+   * Lookup order:
+   * 1. Exact match against registered config keys.
+   * 2. Glob pattern match (using minimatch) against decoded URIs.
+   *
+   * @see https://github.com/isaacs/minimatch
    * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
   public getProgramConfig(program: URI): ProgramConfig | undefined {
     // Note that we need to decode the URI
     const uri = program.toString(true);
-    // try direct match first
     const direct = this.programConfigs.get(uri);
     if (direct) {
       return direct;
@@ -694,8 +722,14 @@ export class PluginConfigurationProvider {
    */
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
+    const absolutePathLib = UriUtils.dirname(libUri)
+      .toString()
+      .replace(/^file:\/\//, "");
     for (const config of this.processGroupConfigs.values()) {
-      if (config.$computedLibsSet.has(dirname)) {
+      if (
+        config.$computedLibsSet.has(dirname) ||
+        config.$computedLibsSet.has(absolutePathLib)
+      ) {
         return config;
       }
     }
