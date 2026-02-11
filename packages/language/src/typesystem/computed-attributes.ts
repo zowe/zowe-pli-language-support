@@ -11,11 +11,15 @@
 import { Bound, DimensionBound } from "./descriptions";
 import * as ast from "../syntax-tree/ast";
 import { evaluateExpression } from "./evaluate";
+import { Token } from "../parser/tokens";
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=arrays-dimension-attribute */
 export function computeDimensions(
   dimension: ast.Dimensions,
-): Array<DimensionBound> {
+): {
+  bounds: DimensionBound[];
+  closingParenthesisToken: Token | null;
+} {
   const dims = dimension.dimensions;
   const result: Array<DimensionBound> = [];
   for (const dim of dims) {
@@ -68,5 +72,8 @@ export function computeDimensions(
       upperBound: computeExpression(dim.upper, undefined),
     });
   }
-  return result;
+  return {
+    bounds: result,
+    closingParenthesisToken: dimension.closingParenthesisToken,
+  };
 }

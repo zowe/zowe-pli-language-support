@@ -11,6 +11,7 @@
 
 /// <reference path="../../../framework.ts" />
 
-//// DCL ANYTHING(<|dim:)|> FIXED BIN;
 
-verify.expectDiagnosticsAt('dim', code.Error.IBM1352I);
+////   DCL ARRAY(100:<|50|>) FIXED BIN;
+
+verify.expectDiagnosticsAt("50", code.Error.IBM1338I);

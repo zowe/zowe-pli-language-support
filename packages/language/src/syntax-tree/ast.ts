@@ -1982,6 +1982,7 @@ export interface Dimensions extends AstNode {
   kind: SyntaxKind.Dimensions;
   dimensions: DimensionBound[];
   token: Token | null;
+  closingParenthesisToken: Token | null;
 }
 export function createDimensions(): Dimensions {
   return {
@@ -1989,6 +1990,7 @@ export function createDimensions(): Dimensions {
     container: null,
     dimensions: [],
     token: null,
+    closingParenthesisToken: null,
   };
 }
 export interface DimensionsDataAttribute extends AstNode {

@@ -33,14 +33,19 @@ export function typeCheck(
   }
 
   if (description.dimension) {
-    if (description.dimension.length === 0) {
-      //acceptor(diagnosticFromCode(PLICodes.Error.IBM1352I, , "dimension"));
-      //continue;
+    if (description.dimension.bounds.length === 0 && description.dimension.closingParenthesisToken) {
+      acceptor(diagnosticFromCode(PLICodes.Error.IBM1352I, description.dimension.closingParenthesisToken, description.dimension.closingParenthesisToken.image));
+      return;
     }
-    // for (const dimension of description.dimension) {
-    //   // const upperBound = validateBound(dimension.upperBound, acceptor, compilationUnit);
-    //   // const lowerBound = validateBound(dimension.lowerBound, acceptor, compilationUnit);
-    // }
+    for (const dimension of description.dimension.bounds) {
+      const upperBound = validateBound(dimension.upperBound, acceptor, compilationUnit);
+      const lowerBound = validateBound(dimension.lowerBound, acceptor, compilationUnit);
+      if (typeof upperBound === "number" && typeof lowerBound === "number") {
+        if (upperBound < lowerBound) {
+          acceptor(diagnosticFromCode(PLICodes.Error.IBM1338I, dimension.upperBound?.token ?? dimension.lowerBound?.token));
+        }
+      }
+    }
   }
 }
 
@@ -75,4 +80,3 @@ export function validateBound(bound: Bound, acceptor: ValidationAcceptor, compil
   }
   return undefined;
 }
-

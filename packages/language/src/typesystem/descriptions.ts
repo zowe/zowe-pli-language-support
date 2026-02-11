@@ -210,7 +210,10 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: DimensionBound[] | undefined;
+  [AttributeKind.Dimension]: {
+    bounds: DimensionBound[];
+    closingParenthesisToken: Token | null;
+  } | undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.Entry]: EntryData | undefined;
   [AttributeKind.FileUsage]: FileUsage;
@@ -357,7 +360,10 @@ export const AttributeStringifiers: {
     return undefined;
   },
   [AttributeKind.Dimension]: function (
-    value: DimensionBound[] | undefined,
+    value: {
+      bounds: DimensionBound[];
+      closingParenthesisToken: Token | null;
+    } | undefined,
   ): string | undefined {
     if (!value) {
       return undefined;
@@ -788,7 +794,10 @@ interface BaseTypeDescriptionProps {
   alignment: Alignment;
   assignability: Assignability;
   connection: StorageConnection;
-  dimension?: DimensionBound[];
+  dimension?: {
+    bounds: DimensionBound[];
+    closingParenthesisToken: Token | null;
+  };
   initial?: ast.InitialAttribute;
   list: boolean;
   optional: boolean;
@@ -814,7 +823,7 @@ interface WithParentType {
 }
 
 interface BaseTypeDescription
-  extends WithTypeDescriminator, BaseTypeDescriptionProps, WithParentType {}
+  extends WithTypeDescriminator, BaseTypeDescriptionProps, WithParentType { }
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -1217,7 +1226,7 @@ function isFileTypeDescription(
 const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
-interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface FormatTypeDescription
   extends BaseTypeDescription, FormatTypeDescriptionProps {
@@ -1243,7 +1252,7 @@ function isFormatTypeDescription(
 const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
-interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface LabelTypeDescription
   extends BaseTypeDescription, LabelTypeDescriptionProps {
@@ -1313,7 +1322,7 @@ function isLocatorTypeDescription(
 const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
-interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface EntryTypeDescription
   extends BaseTypeDescription, EntryTypeDescriptionProps {
@@ -1473,7 +1482,7 @@ function isStringTypeDescription(
 const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
-interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
+interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps { }
 
 interface TaskTypeDescription
   extends BaseTypeDescription, TaskTypeDescriptionProps {
@@ -1526,13 +1535,16 @@ type StructureType = typeof StructureType;
 
 interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   type: DataType.Structure | DataType.Union;
-  dimension?: DimensionBound[];
+  dimension?: {
+    bounds: DimensionBound[];
+    closingParenthesisToken: Token | null;
+  };
   storage?: StorageClass;
   alignment?: Alignment;
   toString(): string;
 }
 
-interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
+interface CompositeTypeDescription extends CompositeTypeDescriptionProps { }
 
 //--- Union ---
 const UnionType = DataType.Union;

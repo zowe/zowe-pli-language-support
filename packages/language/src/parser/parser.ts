@@ -5566,7 +5566,7 @@ const dimensions = rule(
       }
     }
 
-    state.consume(
+    element.closingParenthesisToken = state.consume(
       element,
       CstNodeKind.Dimensions_CloseParen,
       tokens.CloseParen,
@@ -5605,7 +5605,7 @@ const dimensionsWithTypes = rule(
       }
     }
 
-    state.consume(
+    element.closingParenthesisToken = state.consume(
       element,
       CstNodeKind.Dimensions_CloseParenColon,
       tokens.CloseParenColon,

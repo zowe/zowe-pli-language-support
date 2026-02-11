@@ -11,6 +11,9 @@
 
 /// <reference path="../../../framework.ts" />
 
-//// DCL ANYTHING(<|dim:)|> FIXED BIN;
 
-verify.expectDiagnosticsAt('dim', code.Error.IBM1352I);
+//// main: PROCEDURE (P) OPTIONS(MAIN); 
+////   DCL P(*) FIXED BIN;
+//// END main;
+
+verify.noDiagnostics();
