@@ -653,21 +653,29 @@ export class PluginConfigurationProvider {
     return diagnostics;
   }
 
-  public pushConfigProgram(workspacePath: string, programConfigPath: string) {
+  /**
+   * Adds or updates a ProgramConfig in the internal map and persists
+   * the updated configuration set for the given workspace.
+   *
+   * @param workspacePath - Absolute path to the workspace.
+   * @param programConfig - The program configuration to add.
+   * @returns `true` if the configuration was pushed successfully,
+   *          `false` if no existing configurations are present.
+   */
+  public pushConfigProgram(
+    workspacePath: string,
+    programConfig: ProgramConfig,
+  ): boolean {
     if (this.programConfigs.size === 0) {
       return false;
     }
-    this.programConfigs.set(programConfigPath, {
-      program: programConfigPath,
-      pgroup: "default",
-    });
+    this.programConfigs.set(programConfig.program, programConfig);
     this.setProgramConfigs(
       workspacePath,
       [...this.programConfigs.values()].map(deserializeProgramConfig),
     );
     return true;
   }
-  // uma função só p pushar pra o negocio. a função em si é privada e a gente faz a checagem da config dentro dela
 
   /**
    * Returns the program config for the given program URI.

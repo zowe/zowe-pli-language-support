@@ -15,6 +15,7 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 import { ExecuteCommandParams } from "vscode-languageserver";
 import { UriUtils } from "../utils/uri";
 import { PluginConfiguration } from "./constants";
+import { updateExistingConfig, createNewConfig } from "../utils/config";
 
 export async function commandResolveInclude(params: ExecuteCommandParams) {
   const [uri, content] = params.arguments as string[];
@@ -29,73 +30,28 @@ export async function commandCreateConfig(params: ExecuteCommandParams) {
   const workspaceFolderUri = URI.parse(
     PluginConfigurationProviderInstance.getWorkspacePath(),
   );
+
   if (!workspaceFolderUri || !params.arguments) {
     return;
   }
+
   const programPath = params.arguments[0];
-  const entryUri = URI.parse(params.arguments[1]);
-  const test = PluginConfigurationProviderInstance.getProgramConfig(entryUri);
-  console.log(test);
-  const test2 = PluginConfigurationProviderInstance.pushConfigProgram(
-    workspaceFolderUri.path,
-    programPath,
+  const configFilePath = UriUtils.joinPath(
+    workspaceFolderUri,
+    PluginConfiguration.PROGRAM_FILE_PATH,
   );
-  console.log(test2);
-  // hasProgramConfig(entryUri);
-  if (test2) {
-    const FILE = await FileSystemProviderInstance.readFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROGRAM_FILE_PATH,
-      ),
+
+  const progConfigFile =
+    await FileSystemProviderInstance.readFile(configFilePath);
+
+  if (progConfigFile) {
+    await updateExistingConfig(
+      workspaceFolderUri,
+      configFilePath,
+      progConfigFile,
+      programPath,
     );
-    if (!FILE) return;
-    const textContent = JSON.parse(FILE);
-    console.log(textContent);
-    textContent.pgms.push({
-      program: programPath,
-      pgroup: "default",
-    });
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROGRAM_FILE_PATH,
-      ),
-      JSON.stringify(textContent, null, 2));
-      return;
-  }
-  try {
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROGRAM_FILE_PATH,
-      ),
-      JSON.stringify(
-        {
-          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-          pgms: [
-            {
-              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-              program: programPath,
-            },
-          ],
-        },
-        null,
-        2,
-      ),
-    );
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-      ),
-      JSON.stringify(
-        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-        null,
-        2,
-      ),
-    );
-  } catch (err) {
-    console.error("Failed to create configuration: ", err);
+  } else {
+    await createNewConfig(workspaceFolderUri, programPath);
   }
 }

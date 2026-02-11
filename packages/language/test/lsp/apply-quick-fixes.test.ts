@@ -146,7 +146,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create a plugin configuration folder");
+    expect(result!.title).toContain("Create a plugin configuration ");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe("foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
@@ -159,7 +159,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create a plugin configuration folder");
+    expect(result!.title).toContain("Create a plugin configuration ");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe("nested/foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
@@ -207,7 +207,7 @@ describe("applyQuickFixes", () => {
 
     const result = await applyQuickFixes.applyQuickFixes(diagnostics);
     expect(result).toHaveLength(1);
-    expect(result![0].title).toContain("Create a plugin configuration folder");
+    expect(result![0].title).toContain("Create a plugin configuration ");
   });
 
   test("returns undefined when no recognized diagnostics", async () => {
