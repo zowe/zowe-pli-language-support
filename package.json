@@ -17,11 +17,14 @@
     "pretty": "prettier -w \"**/*.ts\"",
     "playground": "pnpm --dir packages/playground build",
     "playground:clean": "pnpm --dir packages/playground clean",
-    "watch": "tsc -b tsconfig.build.json --watch"
+    "watch": "tsc -b tsconfig.build.json --watch",
+    "license:check": "tsx ./scripts/check-license-headers.mts",
+    "license:fix": "tsx ./scripts/check-license-headers.mts --fix"
   },
   "devDependencies": {
     "@types/node": "^22.19.8",
     "@vitest/coverage-v8": "^4.0.18",
+    "glob": "^13.0.0",
     "prettier": "^3.8.1",
     "shx": "~0.4.0",
     "tsx": "^4.21.0",
