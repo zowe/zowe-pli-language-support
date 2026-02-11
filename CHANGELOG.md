@@ -22,11 +22,14 @@
     - Support the `MACRO` compiler options ([#471](https://github.com/zowe/zowe-pli-language-support/pull/471), [#476](https://github.com/zowe/zowe-pli-language-support/pull/476)).
     - Support `%INCLUDE` statements using the `ddname(value)` syntax ([#455](https://github.com/zowe/zowe-pli-language-support/pull/455)).
     - Support includes of files specified using absolute library paths ([#424](https://github.com/zowe/zowe-pli-language-support/pull/424)).
+    - Support for includes of files outside of the current workspace ([#569](https://github.com/zowe/zowe-pli-language-support/pull/569)).
+    - Support for the `PP(MACRO(INCONLY))` compiler option ([#558](https://github.com/zowe/zowe-pli-language-support/pull/558)).
 - Improve hover support for variables and procedures ([#474](github.com/zowe/zowe-pli-language-support/pull/474), [#537](https://github.com/zowe/zowe-pli-language-support/pull/537)).
 - Improve hover support for `%INCLUDE` statements ([#495](https://github.com/zowe/zowe-pli-language-support/pull/495), [#470](https://github.com/zowe/zowe-pli-language-support/pull/470)).
 - Improve support for parsing/understanding various compiler options ([#480](https://github.com/zowe/zowe-pli-language-support/pull/480), [#548](https://github.com/zowe/zowe-pli-language-support/pull/548)).
 - Improve performance in various areas ([#494](https://github.com/zowe/zowe-pli-language-support/pull/494), [#553](https://github.com/zowe/zowe-pli-language-support/pull/553)).
-- Fix an issue that sporadically caused missing LSP features ([#539](https://github.com/zowe/zowe-pli-language-support/pull/539)).
+- Improve support for builtins that are now contextually declared ([#575](https://github.com/zowe/zowe-pli-language-support/pull/575)).
+- Fix an issue that sporadically caused missing LSP features ([#539](https://github.com/zowe/zowe-pli-language-support/pull/539), [#587](github.com/zowe/zowe-pli-language-support/pull/587)).
 - Fix an issue that sporadically caused the margin rulers to disappear from files ([#528](https://github.com/zowe/zowe-pli-language-support/pull/528)).
 - Fix an issue that caused compiler options diagnostics to appear incorrectly ([#529](https://github.com/zowe/zowe-pli-language-support/pull/529)).
 
