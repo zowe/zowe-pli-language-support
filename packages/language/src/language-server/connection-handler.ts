@@ -48,7 +48,6 @@ import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
 import { Commands, PluginConfiguration } from "./constants";
-import { GlobalMutex } from "../workspace/mutex";
 export { PluginConfiguration } from "./constants";
 
 /**
@@ -67,7 +66,7 @@ export function startLanguageServer(connection: Connection): void {
     cb: (uri: URI, unit?: CompilationUnit) => Promise<T>,
   ) {
     await compilationUnitHandler.ready;
-    return GlobalMutex.read(() => {
+    return compilationUnitHandler.globalMutex.read(() => {
       const parsedUri = URI.parse(uri);
       const compilationUnit =
         compilationUnitHandler.getCompilationUnit(parsedUri);
@@ -142,7 +141,7 @@ export function startLanguageServer(connection: Connection): void {
       );
     }
     await Promise.all(promises);
-    compilationUnitHandler.finalize();
+    compilationUnitHandler.markReady();
   });
   connection.onHover(async (params) => {
     const position = params.position;
@@ -319,7 +318,7 @@ export function startLanguageServer(connection: Connection): void {
     );
   });
   connection.onWorkspaceSymbol(async (params) => {
-    return GlobalMutex.read(async () => {
+    return compilationUnitHandler.globalMutex.read(async () => {
       return workspaceSymbolRequest(
         params.query,
         compilationUnitHandler.getAllCompilationUnits(),

@@ -41,7 +41,7 @@ import {
   ProgramConfig,
 } from "./plugin-configuration-provider.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
-import { createMutex, GlobalMutex, Mutex } from "./mutex.js";
+import { createMutex, Mutex } from "./mutex.js";
 import { Deferred, isOperationCancelled } from "../utils/promises.js";
 import { InstructionCache } from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -222,6 +222,11 @@ export class CompilationUnitHandler {
   private connection!: Connection;
   private readyDeferred = new Deferred();
 
+  /**
+   * A global mutex that ensures that retrieving compilation units happens after they are created.
+   */
+  readonly globalMutex = createMutex();
+
   get ready(): Promise<void> {
     return this.readyDeferred.promise;
   }
@@ -279,7 +284,7 @@ export class CompilationUnitHandler {
    * Marks the compilation unit handler as ready to process updates.
    * **Must** be called if `listen` has been called previously.
    */
-  finalize(): void {
+  markReady(): void {
     this.readyDeferred.resolve();
   }
 
@@ -293,18 +298,19 @@ export class CompilationUnitHandler {
     });
     textDocuments.onDidClose((event) => {
       const uri = URI.parse(event.document.uri);
-      const unit = this.compilationUnits.get(uri.toString());
-      if (unit && this.tryCloseCompilationUnit(uri)) {
-        console.debug(`Closed compilation unit for ${uri.toString()}`);
-        for (const file of unit.services.files.keys()) {
-          // Clear diagnostics for all files in the closed compilation unit
-          // Otherwise, keep the diagnostics, even if the files have been closed
-          connection.sendDiagnostics({
-            uri: file,
-            diagnostics: [],
-          });
+      this.globalMutex.read(async () => {
+        const unit = this.compilationUnits.get(uri.toString());
+        if (unit && this.tryCloseCompilationUnit(uri)) {
+          for (const file of unit.services.files.keys()) {
+            // Clear diagnostics for all files in the closed compilation unit
+            // Otherwise, keep the diagnostics, even if the files have been closed
+            connection.sendDiagnostics({
+              uri: file,
+              diagnostics: [],
+            });
+          }
         }
-      }
+      });
     });
   }
 
@@ -324,7 +330,7 @@ export class CompilationUnitHandler {
   }
 
   async updateUri(uri: URI): Promise<void> {
-    await GlobalMutex.run(async () => {
+    await this.globalMutex.run(async () => {
       await this.ready;
       const unit = await this.getOrCreateCompilationUnit(uri);
       if (!unit) {
@@ -395,18 +401,22 @@ export class CompilationUnitHandler {
     connection: Connection,
     cancellationToken: CancellationToken,
   ): Promise<void> {
-    GlobalMutex.run(async () => {
+    const promises: Promise<void>[] = [];
+    this.globalMutex.run(async () => {
       for (const unit of this.getAllCompilationUnits()) {
         if (cancellationToken.isCancellationRequested) {
           return;
         }
-        unit.mutex.run(async (cancellationToken) => {
-          const textDocument = await TextDocuments.get(unit.uri.toString());
-          if (textDocument) {
-            this.process(unit, textDocument, connection, cancellationToken);
-          }
-        });
+        promises.push(
+          unit.mutex.run(async (cancellationToken) => {
+            const textDocument = await TextDocuments.get(unit.uri.toString());
+            if (textDocument) {
+              this.process(unit, textDocument, connection, cancellationToken);
+            }
+          }),
+        );
       }
     });
+    return Promise.all(promises).then(() => undefined);
   }
 }
