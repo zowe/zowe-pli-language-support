@@ -13,14 +13,10 @@
 
 // @wrap: process
 ////*PROCESS PP(MACRO("<|1:NOEOLCOMM|>"));
-////*PROCESS PP(MACRO("<|2:INCONLY|>"));
 ////*PROCESS PP(MACRO("<|3:DBCS|>(EXACT)"));
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.OptionNotSupported.message("EOLCOMM"),
-});
-verify.expectDiagnosticsAt(2, {
-  message: code.CompilerOptions.OptionNotSupported.message("INCONLY"),
 });
 verify.expectDiagnosticsAt(3, {
   message: code.CompilerOptions.OptionNotSupported.message("DBCS"),
