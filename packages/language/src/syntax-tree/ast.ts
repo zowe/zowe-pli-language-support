@@ -657,7 +657,25 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
   owner: SyntaxNode;
   text: string;
   token: Token;
+  /**
+   * This is the main target of the reference.
+   *
+   * If the reference hasn't been resolved yet, this will be `undefined`.
+   * If the reference resolution has failed (i.e. the reference doesn't actually point to any element in the code), this will be `null`.
+   * In all other cases, this will be the resolved target of the reference.
+   */
   node: T | null | undefined;
+  /**
+   * PL/I generally only allows a reference to resolve to a single element.
+   * However, for the purpose of the language server, we want to be able to reference multiple elements at once.
+   * For example, in the case of ambiguous reference or when encountering a procedure and its forward declaration.
+   * This field is only really useful for selected LSP services - other features should use the `node` field instead.
+   *
+   * Note that the `nodes` might not always be filled, even when the `node` field is set.
+   * However, when the `nodes` are filled, they should always also contain the value of the `node` field as one of their elements.
+   * Use the `iterateReferenceNodes` helper to iterate over all possible nodes of a reference, regardless of how they are stored.
+   */
+  nodes: T[];
   type: ReferenceType;
 }
 
@@ -683,9 +701,19 @@ export function createReference<T extends SyntaxNode>(
     owner,
     text: token.image,
     token,
+    nodes: [],
     node: undefined,
     type,
   };
+}
+
+export function* iterateReferenceNodes(ref: Reference): Iterable<SyntaxNode> {
+  if (ref.nodes.length > 0) {
+    // If any nodes are set, they automatically include the `node` field as well.
+    yield* ref.nodes;
+  } else if (ref.node) {
+    yield ref.node;
+  }
 }
 
 export function isPreprocessorNode(
