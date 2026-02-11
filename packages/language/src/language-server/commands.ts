@@ -32,8 +32,39 @@ export async function commandCreateConfig(params: ExecuteCommandParams) {
   if (!workspaceFolderUri || !params.arguments) {
     return;
   }
+  const programPath = params.arguments[0];
+  const entryUri = URI.parse(params.arguments[1]);
+  const test = PluginConfigurationProviderInstance.getProgramConfig(entryUri);
+  console.log(test);
+  const test2 = PluginConfigurationProviderInstance.pushConfigProgram(
+    workspaceFolderUri.path,
+    programPath,
+  );
+  console.log(test2);
+  // hasProgramConfig(entryUri);
+  if (test2) {
+    const FILE = await FileSystemProviderInstance.readFile(
+      UriUtils.joinPath(
+        workspaceFolderUri,
+        PluginConfiguration.PROGRAM_FILE_PATH,
+      ),
+    );
+    if (!FILE) return;
+    const textContent = JSON.parse(FILE);
+    console.log(textContent);
+    textContent.pgms.push({
+      program: programPath,
+      pgroup: "default",
+    });
+    await FileSystemProviderInstance.writeFile(
+      UriUtils.joinPath(
+        workspaceFolderUri,
+        PluginConfiguration.PROGRAM_FILE_PATH,
+      ),
+      JSON.stringify(textContent, null, 2));
+      return;
+  }
   try {
-    const entryUri = params.arguments[0];
     await FileSystemProviderInstance.writeFile(
       UriUtils.joinPath(
         workspaceFolderUri,
@@ -45,7 +76,7 @@ export async function commandCreateConfig(params: ExecuteCommandParams) {
           pgms: [
             {
               ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-              program: entryUri,
+              program: programPath,
             },
           ],
         },

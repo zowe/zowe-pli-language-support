@@ -103,18 +103,19 @@ export async function quickFixCreateConfig(
   if (!workspace || !entryUri) {
     return undefined;
   }
-  const programPath = URI.parse(
-    diagnostic.data.entryUri.replace(workspace, ""),
-  ).path.replace(/^\//, "");
+  const programPath = URI.parse(entryUri.replace(workspace, "")).path.replace(
+    /^\//,
+    "",
+  );
 
   const action: CodeAction = {
-    title: `Create a plugin configuration folder for this file.`,
+    title: `Create a plugin configuration for this file.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
     command: {
       title: "Create configuration folder",
       command: Commands.CREATE_CONFIG,
-      arguments: [programPath],
+      arguments: [programPath, entryUri],
     },
   };
 

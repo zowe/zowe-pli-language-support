@@ -653,6 +653,22 @@ export class PluginConfigurationProvider {
     return diagnostics;
   }
 
+  public pushConfigProgram(workspacePath: string, programConfigPath: string) {
+    if (this.programConfigs.size === 0) {
+      return false;
+    }
+    this.programConfigs.set(programConfigPath, {
+      program: programConfigPath,
+      pgroup: "default",
+    });
+    this.setProgramConfigs(
+      workspacePath,
+      [...this.programConfigs.values()].map(deserializeProgramConfig),
+    );
+    return true;
+  }
+  // uma função só p pushar pra o negocio. a função em si é privada e a gente faz a checagem da config dentro dela
+
   /**
    * Returns the program config for the given program URI.
    * Lookup order:
