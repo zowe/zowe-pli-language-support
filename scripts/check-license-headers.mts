@@ -16,7 +16,7 @@ import { glob } from "glob";
 const fixFlag = process.argv.includes("--fix");
 
 const header = await readFile("license-header.js", "utf-8");
-const files = await glob("**/{src,test}/**/*.{js,mjs,cjs,ts,mts,cts}");
+const files = await glob("**/{src,test}/**/*.{js,mjs,cjs,ts,mts,cts,langium}");
 let count = 0;
 for (const file of files) {
     if(file.startsWith("packages/language/test/fourslash-harness/wrappers")) {
@@ -39,4 +39,6 @@ if (count > 0) {
     const are = fixFlag ? "were" : "are";
     console.error(`${count} files of ${files.length} ${are} missing license headers.`);
     !fixFlag && process.exit(1);
+} else {
+    console.log(`All ${files.length} files have a license header.`);
 }
