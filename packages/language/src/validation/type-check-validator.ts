@@ -11,7 +11,7 @@
 
 import { diagnosticFromCode } from "../language-server/types";
 import * as ast from "../syntax-tree/ast";
-import { Bound, TypeDescriptions } from "../typesystem/descriptions";
+import { Bound, ScaleMode, TypeDescriptions } from "../typesystem/descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
@@ -43,6 +43,23 @@ export function typeCheck(
       if (typeof upperBound === "number" && typeof lowerBound === "number") {
         if (upperBound < lowerBound) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM1338I, dimension.upperBound?.token ?? dimension.lowerBound?.token));
+        }
+      }
+    }
+  }
+
+  if(TypeDescriptions.isArithmetic(description)) {
+    if(description.precision) {
+      if(description.precision.totalDigitsCount < 0) {
+        acceptor(diagnosticFromCode(PLICodes.Error.IBM2434I, ));
+      }
+      if(typeof description.precision.fractionalDigitsCount === "number") {
+        if(description.precision.fractionalDigitsCount < 0) {
+          acceptor(diagnosticFromCode(PLICodes.Error.IBM2435I, ));
+        } else if(description.precision.fractionalDigitsCount > description.precision.totalDigitsCount) {
+          acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, ));
+        } else if(description.scale == ScaleMode.Float) {
+          acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, );
         }
       }
     }
