@@ -53,18 +53,26 @@ function createPreprocessorHandler(): StatementParser {
 
 function createIncOnlyPreprocessorHandler(): StatementParser {
   return (state) => {
-    if (state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx) {
-      return undefined; // Not a preprocessor statement
+    // If it is not a preprocessor statement and also not an include alternate,
+    // return undefined to let other handlers process it.
+    if (
+      state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx &&
+      state.token?.tokenTypeIdx !== t.INCLUDE_ALT.tokenTypeIdx
+    ) {
+      return undefined;
     }
+
     const nextToken = state.peek(2);
     const isInclude =
       nextToken &&
       (nextToken.tokenTypeIdx === t.INCLUDE.tokenTypeIdx ||
         nextToken.tokenTypeIdx === t.INSCAN.tokenTypeIdx);
-    if (!isInclude) {
-      return undefined; // Not an include, let token statement handle it
+    if (isInclude) {
+      // Only process include statements.
+      return statement(state);
     }
-    return statement(state);
+
+    return undefined;
   };
 }
 
