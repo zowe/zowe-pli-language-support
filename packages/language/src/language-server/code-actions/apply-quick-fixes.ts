@@ -98,10 +98,15 @@ export async function quickFixResolveInclude(
 export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
 ): Promise<CodeAction | undefined> {
-  const entryUri = UriUtils.basename(URI.parse(diagnostic.data.entryUri));
-  if (!diagnostic.data.entryUri || !entryUri) {
+  const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+  const entryUri = diagnostic.data.entryUri;
+  if (!workspace || !entryUri) {
     return undefined;
   }
+  const programPath = URI.parse(
+    diagnostic.data.entryUri.replace(workspace, ""),
+  ).path.replace(/^\//, "");
+
   const action: CodeAction = {
     title: `Create a plugin configuration folder for this file.`,
     kind: CodeActionKind.QuickFix,
@@ -109,7 +114,7 @@ export async function quickFixCreateConfig(
     command: {
       title: "Create configuration folder",
       command: Commands.CREATE_CONFIG,
-      arguments: [entryUri],
+      arguments: [programPath],
     },
   };
 

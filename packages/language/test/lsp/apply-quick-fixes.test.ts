@@ -148,6 +148,20 @@ describe("quickFixCreateConfig", () => {
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a plugin configuration folder");
     expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe("foo.pli");
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when nested entryUri provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "/workspace/nested/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a plugin configuration folder");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe("nested/foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
   });
 });
