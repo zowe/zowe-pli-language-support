@@ -10,6 +10,7 @@
  */
 
 import {
+  DeclaredVariable,
   DeclareStatement,
   DefineAliasStatement,
   DefineOrdinalStatement,
@@ -320,8 +321,7 @@ function assignRedeclaredSymbols(scopeCache: ScopeCache) {
           symbol.node.kind !== SyntaxKind.WildcardItem, // Wildcard items are not checked for redeclarations.
       );
 
-      // A group of symbols is colliding if it contains more than one symbol.
-      const isColliding = filteredSymbols.length > 1;
+      const isColliding = checkRedeclaration(filteredSymbols);
       for (const symbol of filteredSymbols) {
         symbol.isRedeclared = isColliding;
       }
@@ -344,6 +344,57 @@ function assignRedeclaredSymbols(scopeCache: ScopeCache) {
         item.isRedeclared = false;
       }
     }
+  }
+}
+
+/**
+ * Checks whether the given symbols are conflicting declarations.
+ * Has special handling for forward declarations of procedures using the ENTRY attribute.
+ * These are not considered redeclarations, even though they have the same name and are in the same scope,
+ * because they are semantically connected.
+ */
+export function checkRedeclaration(symbols: QualifiedSyntaxNode[]): boolean {
+  if (symbols.length < 2) {
+    // No redeclaration if there is only one symbol
+    return false;
+  } else if (symbols.length > 2) {
+    // More than 2 symbols with the same name is always a redeclaration
+    return true;
+  } else {
+    // In case of 2 symbols with the same name, we have to check whether:
+    // 1. One of them is a procedure
+    // 2. The other one is a forward declaration of that procedure using the ENTRY attribute
+    const declaredVariable = symbols.find(
+      (symbol) => symbol.node.kind === SyntaxKind.DeclaredVariable,
+    );
+    if (!declaredVariable) {
+      // No variable found
+      return true;
+    }
+    const entryProcedure = symbols.find(
+      (symbol) =>
+        symbol.node.kind === SyntaxKind.LabelPrefix &&
+        symbol.node.container?.kind === SyntaxKind.Statement &&
+        symbol.node.container?.value?.kind === SyntaxKind.ProcedureStatement,
+    );
+    if (!entryProcedure) {
+      // No entry procedure found
+      return true;
+    }
+    const variable = declaredVariable.node as DeclaredVariable;
+    let item = variable.container;
+    while (item?.kind === SyntaxKind.DeclaredItem) {
+      for (const attribute of item.attributes) {
+        if (attribute.kind === SyntaxKind.EntryAttribute) {
+          // We found an entry attribute for the variable
+          // Therefore, this variable is a forward declaration
+          // Show no redeclaration error
+          return false;
+        }
+      }
+      item = item.container;
+    }
+    return true;
   }
 }
 
