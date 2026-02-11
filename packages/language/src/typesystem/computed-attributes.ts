@@ -29,6 +29,8 @@ export function computeDimensions(
           value: defaultValue,
           expression: null,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       }
       if (expr === "*") {
@@ -36,6 +38,8 @@ export function computeDimensions(
           value: "*",
           expression: expr,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       }
       const value = evaluateExpression(expr);
@@ -44,12 +48,16 @@ export function computeDimensions(
           value: value.value,
           expression: expr,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       } else {
         return {
           value: undefined,
           expression: expr,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       }
     }

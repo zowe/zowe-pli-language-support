@@ -10,7 +10,7 @@
  */
 
 import * as ast from "../syntax-tree/ast";
-import { TypeDescriptions } from "./descriptions";
+import { StringFormat, StringKind, TypeDescriptions } from "./descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
@@ -212,10 +212,17 @@ export class DefaultTypeInferer implements TypeInferer {
         }
         switch (expression.value.kind) {
           case ast.SyntaxKind.StringLiteral:
-          //TODO implement
+            return TypeDescriptions.String({
+              format: StringFormat.NonVarying,
+              stringBits: {
+                //TODO handle other string kinds
+                kind: StringKind.Character,
+                length: expression.value.value!.length,
+              }
+            });
           case ast.SyntaxKind.NumberLiteral:
-            //TODO implement
-            return TypeDescriptions.Unknown();
+            //TODO handle other numeric literals
+            return TypeDescriptions.Arithmetic({});
         }
       }
       case ast.SyntaxKind.UnaryExpression:

@@ -185,6 +185,8 @@ export type Bound = {
   value: number | "*" | undefined;
   expression: ast.Wildcard<ast.Expression> | null;
   refersTo: ast.LocatorCall | null;
+  node: ast.SyntaxNode | null;
+  token: Token | null;
 };
 
 export type DimensionBound = {

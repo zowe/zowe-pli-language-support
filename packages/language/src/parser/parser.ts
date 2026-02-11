@@ -5642,9 +5642,11 @@ const bound = rule(
 
     if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
       // Star bound (indicates variable size)
+      element.token = state.last!;
       element.expression = "*";
     } else {
       // Expression bound
+      element.token = state.token ?? null;
       element.expression = expression.rule(state, refType);
 
       // Optional REFER clause
