@@ -20,7 +20,7 @@ import {
   isReferenceToken,
 } from "../linking/tokens";
 import { URI } from "../utils/uri";
-import { SyntaxKind } from "../syntax-tree/ast";
+import { SyntaxKind, iterateReferenceNodes } from "../syntax-tree/ast";
 
 export function definitionRequest(
   compilationUnit: CompilationUnit,
@@ -28,46 +28,45 @@ export function definitionRequest(
   offset: number,
 ): Location[] {
   const tokens = compilationUnit.services.files.getTokens(uri);
+  const locations: Location[] = [];
   if (!tokens) {
-    return [];
+    return locations;
   }
   const token = binaryTokenSearch(tokens, offset);
   if (!token) {
-    return [];
+    return locations;
   }
   if (isNameToken(token.kind) && token.uri) {
-    return [
-      {
-        uri: token.uri.toString(),
-        range: {
-          start: token.startOffset,
-          end: token.endOffset + 1,
-        },
+    locations.push({
+      uri: token.uri.toString(),
+      range: {
+        start: token.startOffset,
+        end: token.endOffset + 1,
       },
-    ];
+    });
   } else if (isReferenceToken(token.kind) && token.element) {
     const ref = getReference(token.element);
     if (!ref || !ref.node) {
-      return [];
+      return locations;
     }
     // If we're looking at ourselves, we don't report the definition.
     if (ref.node === token.element) {
-      return [];
+      return locations;
     }
-    const nameToken = getNameToken(ref.node);
-    if (!nameToken?.uri) {
-      return [];
-    }
-    return [
-      {
+    for (const node of iterateReferenceNodes(ref)) {
+      const nameToken = getNameToken(node);
+      if (!nameToken?.uri) {
+        continue;
+      }
+      locations.push({
         uri: nameToken.uri.toString(),
         range: {
           start: nameToken.startOffset,
           end: nameToken.endOffset + 1,
         },
         source: tokenToRange(token),
-      },
-    ];
+      });
+    }
   } else if (
     isIncludeItemToken(token.kind) &&
     (token.element?.kind === SyntaxKind.IncludeItemFile ||
@@ -84,17 +83,15 @@ export function definitionRequest(
     // allow jumping to the resolved file when present
     const filePath = token.element.filePath;
     if (filePath) {
-      return [
-        {
-          uri: filePath,
-          range: {
-            start: 0,
-            end: 0,
-          },
-          source: sourceRange,
+      locations.push({
+        uri: filePath,
+        range: {
+          start: 0,
+          end: 0,
         },
-      ];
+        source: sourceRange,
+      });
     }
   }
-  return [];
+  return locations;
 }
