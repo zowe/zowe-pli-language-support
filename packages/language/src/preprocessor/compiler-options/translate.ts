@@ -60,7 +60,11 @@ export class CompilerOptionTranslator {
     const options = this.optionsToUpperCase(input.options);
     if (options.some((option) => option.name === "PP")) {
       // If there are PP compiler options, ignore the defaults, because the settings in PP start empty and are accumulated.
-      this.translator.options.pp = { items: [] };
+      // Keep the ppInclude value that might have been set previously.
+      this.translator.options.pp = {
+        items: [],
+        ppInclude: this.translator.options.pp?.ppInclude,
+      };
     }
     for (const option of options) {
       this.translator.translate(option, configuration);
