@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80.76% </span>
+                <span class="strong">85.71% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/26</span>
+                <span class='fraction'>24/28</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80.76% </span>
+                <span class="strong">85.71% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>21/26</span>
+                <span class='fraction'>24/28</span>
             </div>
         
             
@@ -160,10 +160,7 @@
 <a name='L95'></a><a href='#L95'>95</a>
 <a name='L96'></a><a href='#L96'>96</a>
 <a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L98'></a><a href='#L98'>98</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -192,15 +189,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">176x</span>
-<span class="cline-any cline-yes">176x</span>
+<span class="cline-any cline-yes">178x</span>
+<span class="cline-any cline-yes">178x</span>
+<span class="cline-any cline-yes">178x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">176x</span>
-<span class="cline-any cline-yes">176x</span>
+<span class="cline-any cline-yes">178x</span>
+<span class="cline-any cline-yes">178x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">176x</span>
+<span class="cline-any cline-yes">178x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -208,23 +206,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">176x</span>
-<span class="cline-any cline-yes">171x</span>
-<span class="cline-any cline-yes">171x</span>
+<span class="cline-any cline-yes">178x</span>
+<span class="cline-any cline-yes">173x</span>
+<span class="cline-any cline-yes">173x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">164x</span>
+<span class="cline-any cline-yes">166x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">162x</span>
-<span class="cline-any cline-yes">162x</span>
+<span class="cline-any cline-yes">164x</span>
+<span class="cline-any cline-yes">166x</span>
+<span class="cline-any cline-yes">166x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">162x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">166x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -259,9 +255,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">169x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
@@ -285,7 +279,7 @@ import {
   isReferenceToken,
 } from "../linking/tokens";
 import { URI } from "../utils/uri";
-import { SyntaxKind } from "../syntax-tree/ast";
+import { SyntaxKind, iterateReferenceNodes } from "../syntax-tree/ast";
 &nbsp;
 export function definitionRequest(
   compilationUnit: CompilationUnit,
@@ -293,46 +287,45 @@ export function definitionRequest(
   offset: number,
 ): Location[] {
   const tokens = compilationUnit.services.files.getTokens(uri);
+  const locations: Location[] = [];
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!tokens) {
-<span class="cstat-no" title="statement not covered" >    return [];</span>
+<span class="cstat-no" title="statement not covered" >    return locations;</span>
   }
   const token = binaryTokenSearch(tokens, offset);
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!token) {
-<span class="cstat-no" title="statement not covered" >    return [];</span>
+<span class="cstat-no" title="statement not covered" >    return locations;</span>
   }
   <span class="missing-if-branch" title="if path not taken" >I</span>if (isNameToken(token.kind) &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >token.uri) {</span>
-<span class="cstat-no" title="statement not covered" >    return [</span>
-      {
-        uri: token.uri.toString(),
-        range: {
-          start: token.startOffset,
-          end: token.endOffset + 1,
-        },
+<span class="cstat-no" title="statement not covered" >    locations.push({</span>
+      uri: token.uri.toString(),
+      range: {
+        start: token.startOffset,
+        end: token.endOffset + 1,
       },
-    ];
+    });
   } else if (isReferenceToken(token.kind) &amp;&amp; token.element) {
     const ref = getReference(token.element);
     if (!ref || !ref.node) {
-      return [];
+      return locations;
     }
     // If we're looking at ourselves, we don't report the definition.
     if (ref.node === token.element) {
-      return [];
+      return locations;
     }
-    const nameToken = getNameToken(ref.node);
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!nameToken?.uri) {
-<span class="cstat-no" title="statement not covered" >      return [];</span>
-    }
-    return [
-      {
+    for (const node of iterateReferenceNodes(ref)) {
+      const nameToken = getNameToken(node);
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (!nameToken?.uri) {
+<span class="cstat-no" title="statement not covered" >        continue;</span>
+      }
+      locations.push({
         uri: nameToken.uri.toString(),
         range: {
           start: nameToken.startOffset,
           end: nameToken.endOffset + 1,
         },
         source: tokenToRange(token),
-      },
-    ];
+      });
+    }
   <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
     isIncludeItemToken(token.kind) &amp;&amp;
     (token.element?.kind === SyntaxKind.IncludeItemFile ||
@@ -349,19 +342,17 @@ export function definitionRequest(
     // allow jumping to the resolved file when present
     const filePath = token.element.filePath;
     <span class="missing-if-branch" title="else path not taken" >E</span>if (filePath) {
-      return [
-        {
-          uri: filePath,
-          range: {
-            start: 0,
-            end: 0,
-          },
-          source: sourceRange,
+      locations.push({
+        uri: filePath,
+        range: {
+          start: 0,
+          end: 0,
         },
-      ];
+        source: sourceRange,
+      });
     }
   }
-<span class="cstat-no" title="statement not covered" >  return [];</span>
+  return locations;
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -370,7 +361,7 @@ export function definitionRequest(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-11T15:27:22.083Z
+                at 2026-02-11T15:38:24.350Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
