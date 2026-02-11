@@ -151,13 +151,7 @@ translator.rule(
   },
 );
 
-translator.flag("incOnly", ["INCONLY"], ["NOINCONLY"], (option) => {
-  throw diagnosticFromCode(
-    CompilerOptionsCodes.OptionNotSupported,
-    option.token,
-    "INCONLY",
-  );
-});
+translator.flag("incOnly", ["INCONLY"], ["NOINCONLY"]);
 
 translator.rule(
   ["NAMEPREFIX"],
