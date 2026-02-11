@@ -2221,6 +2221,7 @@ translator.rule(
     ensureArguments(option, 0, 0);
     options.pp = { items: [] };
   },
+  { allowDuplicates: true },
 );
 
 /** {@link CompilerOptions.ppCics} */
