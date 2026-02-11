@@ -13,6 +13,7 @@ import { Location, tokenToRange } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import {
   getContainer,
+  iterateReferenceNodes,
   MemberCall,
   ProcedureParameter,
   Reference,
@@ -32,8 +33,13 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { QualifiedSyntaxNode } from "./qualified-syntax-node";
 import { LinkerErrorReporter } from "./error";
 import { Scope } from "./scope";
-import { getPriorityReferenceElement, reiterateSymbols } from "./symbol-table";
+import {
+  checkRedeclaration,
+  getPriorityReferenceElement,
+  reiterateSymbols,
+} from "./symbol-table";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { MultiMap } from "../utils/collections";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -103,7 +109,7 @@ export class ReferencesCache {
    */
   private priorityList: Reference[] = [];
   private list: Reference[] = [];
-  private reverseMap = new Map<SyntaxNode, Reference[]>();
+  private reverseMap = new MultiMap<SyntaxNode, Reference>();
 
   clear(): void {
     this.priorityList = [];
@@ -124,18 +130,13 @@ export class ReferencesCache {
   }
 
   addInverse(reference: Reference): void {
-    if (reference.node) {
-      let list = this.reverseMap.get(reference.node);
-      if (!list) {
-        list = [];
-        this.reverseMap.set(reference.node, list);
-      }
-      list.push(reference);
+    for (const node of iterateReferenceNodes(reference)) {
+      this.reverseMap.add(node, reference);
     }
   }
 
-  findReferences(node: SyntaxNode): Reference[] {
-    return this.reverseMap.get(node) || [];
+  findReferences(node: SyntaxNode): readonly Reference[] {
+    return this.reverseMap.get(node);
   }
 
   priorityReferences(): Reference[] {
@@ -151,7 +152,7 @@ export class ReferencesCache {
     yield* this.list;
   }
 
-  allReverseReferences(): Map<SyntaxNode, Reference[]> {
+  allReverseReferences(): MultiMap<SyntaxNode, Reference> {
     return this.reverseMap;
   }
 }
@@ -189,6 +190,7 @@ function assignQualifiedReference(
   reference: Reference,
   memberCall: MemberCall,
   resolved: QualifiedSyntaxNode,
+  matchingSymbols?: readonly QualifiedSyntaxNode[],
 ) {
   // The names are not matching, this is a partial qualification.
   if (reference.text !== resolved.name) {
@@ -204,6 +206,9 @@ function assignQualifiedReference(
   }
 
   reference.node = resolved.node;
+  if (matchingSymbols) {
+    reference.nodes = matchingSymbols.map((symbol) => symbol.node);
+  }
 
   // There are more qualified names to resolve, continue up the chain.
   if (memberCall.previous?.element?.ref && resolved.parent) {
@@ -215,17 +220,25 @@ function assignReference(
   unit: CompilationUnit,
   reference: Reference<SyntaxNode>,
   resolved: QualifiedSyntaxNode,
+  matchingSymbols?: readonly QualifiedSyntaxNode[],
 ) {
   // Special handling for member calls and qualification.
   // We want to assign the resolved references to the entire chain of references.
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
-    assignQualifiedReference(unit, reference, memberCall, resolved);
-
-    return;
+    assignQualifiedReference(
+      unit,
+      reference,
+      memberCall,
+      resolved,
+      matchingSymbols,
+    );
+  } else {
+    reference.node = resolved.node;
+    if (matchingSymbols) {
+      reference.nodes = matchingSymbols.map((symbol) => symbol.node);
+    }
   }
-
-  reference.node = resolved.node;
 }
 
 export const isProcedureParameterReference = (
@@ -276,7 +289,7 @@ function getMatchingSymbols(
     })
     .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
 
-  const isAmbiguous = explicitlyDeclaredSymbols.length > 1;
+  const isAmbiguous = checkRedeclaration(explicitlyDeclaredSymbols);
   if (isAmbiguous) {
     reporter.reportAmbiguousReference(
       reference,
@@ -328,6 +341,30 @@ function getMatchingSymbols(
   return [firstImplicitSymbol];
 }
 
+function getRelevantSymbol(
+  reference: Reference,
+  nodes: readonly QualifiedSyntaxNode[],
+): QualifiedSyntaxNode | undefined {
+  if (nodes.length < 2) {
+    return nodes[0];
+  }
+  if (
+    reference.owner.kind === SyntaxKind.LabelReference &&
+    reference.owner.container?.kind === SyntaxKind.EndStatement
+  ) {
+    // In case of a label reference in an END statement
+    // We want to link to the label declaration
+    // and not to any potential variable with the same name (like a forward declaration)
+    for (const node of nodes) {
+      if (node.node.kind === SyntaxKind.LabelPrefix) {
+        return node;
+      }
+    }
+  }
+
+  return nodes[0];
+}
+
 function resolveReference(
   unit: CompilationUnit,
   reference: Reference,
@@ -351,9 +388,7 @@ function resolveReference(
     reporter,
   );
 
-  // We take the first symbol, even if there are multiple matching.
-  // Ideally, we'd want to reference all matching symbols, but the AST currently only supports a single reference per symbol.
-  const symbol = matchingSymbols[0];
+  const symbol = getRelevantSymbol(reference, matchingSymbols);
   if (!symbol) {
     reference.node = null;
     return;
@@ -361,7 +396,7 @@ function resolveReference(
 
   // Assign the resolved symbol to the reference.
   // This function handles assigning references to member calls.
-  assignReference(unit, reference, symbol);
+  assignReference(unit, reference, symbol, matchingSymbols);
 }
 
 export function resolveReferences(unit: CompilationUnit): void {
@@ -428,7 +463,7 @@ export function findTokenElementReference(
 export function findElementReferences(
   unit: CompilationUnit,
   element: SyntaxNode,
-): Reference<SyntaxNode>[] {
+): readonly Reference<SyntaxNode>[] {
   return unit.referencesCache.findReferences(element);
 }
 
