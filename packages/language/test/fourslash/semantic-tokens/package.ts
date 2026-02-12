@@ -11,11 +11,17 @@
 
 /// <reference path="../framework.ts" />
 
-//// <|1:RGT005|>: PACKAGE EXPORTS(<|2:RGT005|>);
-//// <|3:RGT005|>: PROCEDURE() OPTIONS(MAIN);
-////   DCL SYSNULL BUILTIN;
+//// <|1:RGT005|>: <|PACKAGE|> <|EXPORTS|>(<|2:RGT005|>);
+//// <|3:RGT005|>: <|PROCEDURE|>() OPTIONS(MAIN);
+////   <|DCL|> SYSNULL <|BUILTIN|>;
 //// END <|4:RGT005|>;
 //// END <|5:RGT005|>;
+
+semanticTokens.expectAt("PACKAGE", "modifier");
+semanticTokens.expectAt("PROCEDURE", "modifier");
+semanticTokens.expectAt("EXPORTS", "modifier");
+semanticTokens.expectAt("DCL", "modifier");
+semanticTokens.expectAt("BUILTIN", "modifier");
 
 semanticTokens.expectAt(1, "function");
 semanticTokens.expectAt(2, "function");
