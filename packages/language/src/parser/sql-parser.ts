@@ -14,6 +14,7 @@ import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Severe } from "../validation/pli-codes";
+import { diagnosticFromCode } from "../language-server/types";
 
 export function isSqlAttributeStatement(state: ParserState): boolean {
   return state.canConsume(t.SQL, t.TYPE, t.IS);
@@ -44,6 +45,7 @@ export function sqlAttributeStatement(
       attributeStatement,
       CstNodeKind.SqlAttributeStatement_AS,
       t.AS,
+      Severe.IBM3782I,
     );
     attributeStatement.isXml = true;
   }
@@ -91,6 +93,9 @@ export function sqlAttributeStatement(
     attributeStatement.body = parseSqlTableLocator(state);
   } else if (state.canConsume(t.RESULT_SET_LOCATOR)) {
     attributeStatement.body = parseSqlResultSetLocator(state);
+  } else {
+    const code = attributeStatement.isXml ? Severe.IBM3783I : Severe.IBM3788I;
+    state.diagnostics.push(diagnosticFromCode(code, state.token));
   }
   return attributeStatement;
 }
@@ -234,21 +239,33 @@ function parseSqlTableLocator(
 ): ast.SqlAttributeTableLocator {
   const locator = ast.createSqlAttributeTableLocator();
   state.consume(locator, CstNodeKind.SqlAttributeTableLocator_TABLE, t.TABLE);
-  state.consume(locator, CstNodeKind.SqlAttributeTableLocator_LIKE, t.LIKE);
+  state.consume(
+    locator,
+    CstNodeKind.SqlAttributeTableLocator_LIKE,
+    t.LIKE,
+    Severe.IBM3784I,
+  );
   const tableNameToken = state.consume(
     locator,
     CstNodeKind.SqlAttributeTableLocator_TableName,
     t.ID,
+    Severe.IBM3785I,
   );
   if (tableNameToken) {
     locator.name = tableNameToken.image;
     locator.nameToken = tableNameToken;
   }
-  state.consume(locator, CstNodeKind.SqlAttributeTableLocator_AS, t.AS);
+  state.consume(
+    locator,
+    CstNodeKind.SqlAttributeTableLocator_AS,
+    t.AS,
+    Severe.IBM3786I,
+  );
   state.consume(
     locator,
     CstNodeKind.SqlAttributeTableLocator_LOCATOR,
     t.LOCATOR,
+    Severe.IBM3787I,
   );
   return locator;
 }
