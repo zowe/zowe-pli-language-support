@@ -51,24 +51,36 @@ export function typeCheck(
             witness.token.image,
           ),
         );
-        return;
-      }
-      for (const dimension of description.dimension) {
-        const upperBound = validateBound(
-          dimension.upperBound,
-          acceptor,
-          compilationUnit,
-        );
-        const lowerBound = validateBound(
-          dimension.lowerBound,
-          acceptor,
-          compilationUnit,
-        );
-        if (typeof upperBound === "number" && typeof lowerBound === "number") {
-          if (upperBound < lowerBound) {
-            acceptor(
-              diagnosticFromCode(PLICodes.Error.IBM1338I, witness.token),
-            );
+      } else {
+        for (const dimension of description.dimension) {
+          const upperBound = validateBound(
+            dimension.upperBound,
+            acceptor,
+            compilationUnit,
+          );
+          const lowerBound = validateBound(
+            dimension.lowerBound,
+            acceptor,
+            compilationUnit,
+          );
+          if (
+            typeof lowerBound === "undefined" &&
+            typeof upperBound === "number"
+          ) {
+            if (upperBound < 1) {
+              acceptor(
+                diagnosticFromCode(PLICodes.Error.IBM1295I, witness.token),
+              );
+            }
+          } else if (
+            typeof upperBound === "number" &&
+            typeof lowerBound === "number"
+          ) {
+            if (upperBound < lowerBound) {
+              acceptor(
+                diagnosticFromCode(PLICodes.Error.IBM1338I, witness.token),
+              );
+            }
           }
         }
       }

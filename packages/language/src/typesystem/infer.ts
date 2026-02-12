@@ -226,7 +226,9 @@ export class DefaultTypeInferer implements TypeInferer {
         }
       }
       case ast.SyntaxKind.UnaryExpression:
-        //TODO implement
+        if (expression.expr) {
+          return this.inferExpressionType(expression.expr, compilationUnit);
+        }
         return TypeDescriptions.Unknown();
       case ast.SyntaxKind.BinaryExpression:
         //TODO implement
