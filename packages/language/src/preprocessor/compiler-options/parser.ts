@@ -290,6 +290,9 @@ export function parseAbstractCompilerOptions(
   if (uri) {
     for (const token of tokens) {
       token.uri = uri;
+      token.startLine -= 1;
+      token.startColumn -= 1;
+      token.endLine -= 1;
     }
   }
   parser.input = tokens;
