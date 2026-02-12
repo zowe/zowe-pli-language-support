@@ -4291,6 +4291,7 @@ export type SqlAttributeType =
 export interface SqlAttributeStatement extends AstNode {
   kind: SyntaxKind.SqlAttributeStatement;
   isXml: boolean;
+  xmlToken: Token | null;
   body: SqlAttributeType | null;
 }
 
@@ -4299,6 +4300,7 @@ export function createSQLAttributeStatement(): SqlAttributeStatement {
     kind: SyntaxKind.SqlAttributeStatement,
     container: null,
     isXml: false,
+    xmlToken: null,
     body: null,
   };
 }

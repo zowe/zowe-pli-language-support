@@ -36,7 +36,7 @@ export function sqlAttributeStatement(
   );
   state.consume(attributeStatement, CstNodeKind.SqlAttributeStatement_IS, t.IS);
   if (state.canConsume(t.XML)) {
-    state.consume(
+    attributeStatement.xmlToken = state.consume(
       attributeStatement,
       CstNodeKind.SqlAttributeStatement_XML,
       t.XML,
