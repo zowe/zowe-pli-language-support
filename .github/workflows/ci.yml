@@ -39,9 +39,6 @@ jobs:
       shell: bash
       run: |
         pnpm install --frozen-lockfile
-    - name: Lint sources
-      run: |
-        pnpm lint
     - name: Build monorepo
       run: |
         pnpm build
@@ -50,12 +47,30 @@ jobs:
       run: |
         pnpm test
 
-  check-licenses:
+  check-pretty:
     name: Check license headers
     runs-on: ubuntu-latest
     timeout-minutes: 2
     needs: build
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'pnpm'
+    - name: Install node modules
+      shell: bash
+      run: |
+        pnpm install --frozen-lockfile
+    - name: Lint sources
+      run: |
+        pnpm lint
     - name: Check license headers
       if: success() || failure()
       run: |
