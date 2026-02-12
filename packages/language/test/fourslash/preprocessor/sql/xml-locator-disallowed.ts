@@ -12,7 +12,7 @@
 /// <reference path="../../framework.ts" />
 
 //// TEST: PROC;
-////   DCL TEST_SQL SQL TYPE IS <|XML|> AS BLOB_LOCATOR;
+////   DCL TEST_SQL SQL TYPE IS XML AS <|BLOB_LOCATOR|>;
 //// END;
 
-verify.expectDiagnosticsAt("XML", code.Severe.IBM3783I);
+verify.expectDiagnosticsAt("BLOB_LOCATOR", code.Severe.IBM3783I);

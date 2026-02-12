@@ -15,9 +15,18 @@ import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Severe } from "../validation/pli-codes";
 import { diagnosticFromCode } from "../language-server/types";
+import { SqlAttributeType } from "../syntax-tree/ast";
 
 export function isSqlAttributeStatement(state: ParserState): boolean {
   return state.canConsume(t.SQL, t.TYPE, t.IS);
+}
+
+function isLocator(node: SqlAttributeType): boolean {
+  return (
+    node.kind === ast.SyntaxKind.SqlAttributeLobLocator ||
+    node.kind === ast.SyntaxKind.SqlAttributeTableLocator ||
+    node.kind === ast.SyntaxKind.SqlAttributeResultSetLocator
+  );
 }
 
 export function sqlAttributeStatement(
@@ -35,8 +44,9 @@ export function sqlAttributeStatement(
     t.TYPE,
   );
   state.consume(attributeStatement, CstNodeKind.SqlAttributeStatement_IS, t.IS);
+  let afterXmlAs: t.Token | null = null;
   if (state.canConsume(t.XML)) {
-    attributeStatement.xmlToken = state.consume(
+    state.consume(
       attributeStatement,
       CstNodeKind.SqlAttributeStatement_XML,
       t.XML,
@@ -47,6 +57,7 @@ export function sqlAttributeStatement(
       t.AS,
       Severe.IBM3782I,
     );
+    afterXmlAs = state.token ?? null;
     attributeStatement.isXml = true;
   }
   const isLargePeek = state.peek(2)?.tokenTypeIdx === t.LARGE.tokenTypeIdx;
@@ -97,6 +108,15 @@ export function sqlAttributeStatement(
     const code = attributeStatement.isXml ? Severe.IBM3783I : Severe.IBM3788I;
     state.diagnostics.push(diagnosticFromCode(code, state.token));
   }
+
+  if (
+    attributeStatement.isXml &&
+    attributeStatement.body &&
+    isLocator(attributeStatement.body)
+  ) {
+    state.diagnostics.push(diagnosticFromCode(Severe.IBM3783I, afterXmlAs));
+  }
+
   return attributeStatement;
 }
 
