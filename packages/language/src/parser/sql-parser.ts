@@ -15,18 +15,9 @@ import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { Severe } from "../validation/pli-codes";
 import { diagnosticFromCode } from "../language-server/types";
-import { SqlAttributeType } from "../syntax-tree/ast";
 
 export function isSqlAttributeStatement(state: ParserState): boolean {
   return state.canConsume(t.SQL, t.TYPE, t.IS);
-}
-
-function isLocator(node: SqlAttributeType): boolean {
-  return (
-    node.kind === ast.SyntaxKind.SqlAttributeLobLocator ||
-    node.kind === ast.SyntaxKind.SqlAttributeTableLocator ||
-    node.kind === ast.SyntaxKind.SqlAttributeResultSetLocator
-  );
 }
 
 export function sqlAttributeStatement(
@@ -44,7 +35,6 @@ export function sqlAttributeStatement(
     t.TYPE,
   );
   state.consume(attributeStatement, CstNodeKind.SqlAttributeStatement_IS, t.IS);
-  let afterXmlAsToken: t.Token | null = null;
   if (state.canConsume(t.XML)) {
     state.consume(
       attributeStatement,
@@ -57,7 +47,6 @@ export function sqlAttributeStatement(
       t.AS,
       Severe.IBM3782I,
     );
-    afterXmlAsToken = state.token ?? null;
     attributeStatement.isXml = true;
   }
   const isLargePeek = state.peek(2)?.tokenTypeIdx === t.LARGE.tokenTypeIdx;
@@ -79,7 +68,7 @@ export function sqlAttributeStatement(
       state,
       attributeStatement.isXml,
     );
-  } else if (state.canConsume(t.LOBLocator)) {
+  } else if (!attributeStatement.isXml && state.canConsume(t.LOBLocator)) {
     attributeStatement.body = ast.createSqlAttributeLobLocator();
     state.consume(
       attributeStatement.body,
@@ -100,24 +89,16 @@ export function sqlAttributeStatement(
       CstNodeKind.SqlAttributeRowId_ROWID,
       t.ROWID,
     );
-  } else if (state.canConsume(t.TABLE)) {
+  } else if (!attributeStatement.isXml && state.canConsume(t.TABLE)) {
     attributeStatement.body = parseSqlTableLocator(state);
-  } else if (state.canConsume(t.RESULT_SET_LOCATOR)) {
+  } else if (
+    !attributeStatement.isXml &&
+    state.canConsume(t.RESULT_SET_LOCATOR)
+  ) {
     attributeStatement.body = parseSqlResultSetLocator(state);
   } else {
     const code = attributeStatement.isXml ? Severe.IBM3783I : Severe.IBM3788I;
     state.diagnostics.push(diagnosticFromCode(code, state.token));
-  }
-
-  if (
-    attributeStatement.isXml &&
-    attributeStatement.body &&
-    isLocator(attributeStatement.body) &&
-    afterXmlAsToken
-  ) {
-    state.diagnostics.push(
-      diagnosticFromCode(Severe.IBM3783I, afterXmlAsToken),
-    );
   }
 
   return attributeStatement;
