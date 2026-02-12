@@ -11,7 +11,7 @@
 
 import { diagnosticFromCode } from "../language-server/types";
 import * as ast from "../syntax-tree/ast";
-import { Bound, ScaleMode, TypeDescriptions } from "../typesystem/descriptions";
+import { AttributeKind, Bound, ScaleMode, TypeDescriptions } from "../typesystem/descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
@@ -49,17 +49,13 @@ export function typeCheck(
   }
 
   if(TypeDescriptions.isArithmetic(description)) {
-    if(description.precision) {
-      if(description.precision.totalDigitsCount < 0) {
-        acceptor(diagnosticFromCode(PLICodes.Error.IBM2434I, ));
-      }
+    const witness = description.witnesses.witnesses[AttributeKind.Precision];
+    if(description.precision && witness?.token) {
       if(typeof description.precision.fractionalDigitsCount === "number") {
-        if(description.precision.fractionalDigitsCount < 0) {
-          acceptor(diagnosticFromCode(PLICodes.Error.IBM2435I, ));
-        } else if(description.precision.fractionalDigitsCount > description.precision.totalDigitsCount) {
-          acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, ));
+        if(description.precision.fractionalDigitsCount > description.precision.totalDigitsCount) {
+          acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, witness.token));
         } else if(description.scale == ScaleMode.Float) {
-          acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, );
+          acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, witness.token));
         }
       }
     }
