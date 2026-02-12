@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0.71% </span>
+                <span class="strong">0.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/140</span>
+                <span class='fraction'>1/143</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/31</span>
+                <span class='fraction'>0/33</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0.72% </span>
+                <span class="strong">0.7% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/138</span>
+                <span class='fraction'>1/141</span>
             </div>
         
             
@@ -438,7 +438,11 @@
 <a name='L373'></a><a href='#L373'>373</a>
 <a name='L374'></a><a href='#L374'>374</a>
 <a name='L375'></a><a href='#L375'>375</a>
-<a name='L376'></a><a href='#L376'>376</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a>
+<a name='L378'></a><a href='#L378'>378</a>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -506,6 +510,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -516,11 +522,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -757,6 +763,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -876,25 +884,27 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >  compilationUnitHandler.listen(connection);</span>
   let folders: WorkspaceFolder[] = <span class="cstat-no" title="statement not covered" >[];</span>
 &nbsp;
-  function <span class="fstat-no" title="function not covered" >withReadMutex&lt;T&gt;(</span>
+  async function <span class="fstat-no" title="function not covered" >withReadMutex&lt;T&gt;(</span>
     uri: string,
     cb: (uri: URI, unit?: CompilationUnit) =&gt; Promise&lt;T&gt;,
   ) {
-    const parsedUri = <span class="cstat-no" title="statement not covered" >URI.parse(uri);</span>
-    const compilationUnit =
-<span class="cstat-no" title="statement not covered" >      compilationUnitHandler.getCompilationUnit(parsedUri);</span>
-<span class="cstat-no" title="statement not covered" >    if (!compilationUnit) {</span>
-<span class="cstat-no" title="statement not covered" >      return cb(parsedUri, undefined);</span>
-    }
-<span class="cstat-no" title="statement not covered" >    return compilationUnit.mutex.read(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >      return cb(parsedUri, compilationUnit);</span>
+<span class="cstat-no" title="statement not covered" >    await compilationUnitHandler.ready;</span>
+<span class="cstat-no" title="statement not covered" >    return compilationUnitHandler.globalMutex.read(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+      const parsedUri = <span class="cstat-no" title="statement not covered" >URI.parse(uri);</span>
+      const compilationUnit =
+<span class="cstat-no" title="statement not covered" >        compilationUnitHandler.getCompilationUnit(parsedUri);</span>
+<span class="cstat-no" title="statement not covered" >      if (!compilationUnit) {</span>
+<span class="cstat-no" title="statement not covered" >        return cb(parsedUri, undefined);</span>
+      }
+<span class="cstat-no" title="statement not covered" >      return compilationUnit.mutex.read(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >        return cb(parsedUri, compilationUnit);</span>
+      });
     });
   }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  connection.onInitialize(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
 <span class="cstat-no" title="statement not covered" >    folders = params.workspaceFolders?.reverse() ?? [];</span>
-&nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>
       capabilities: {
         workspace: {
@@ -954,7 +964,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
       );
     }
 <span class="cstat-no" title="statement not covered" >    await Promise.all(promises);</span>
-<span class="cstat-no" title="statement not covered" >    compilationUnitHandler.finalize();</span>
+<span class="cstat-no" title="statement not covered" >    compilationUnitHandler.markReady();</span>
   });
 <span class="cstat-no" title="statement not covered" >  connection.onHover(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
     const position = <span class="cstat-no" title="statement not covered" >params.position;</span>
@@ -1131,10 +1141,12 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     );
   });
 <span class="cstat-no" title="statement not covered" >  connection.onWorkspaceSymbol(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    return workspaceSymbolRequest(</span>
-      params.query,
-      compilationUnitHandler.getAllCompilationUnits(),
-    );
+<span class="cstat-no" title="statement not covered" >    return compilationUnitHandler.globalMutex.read(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >      return workspaceSymbolRequest(</span>
+        params.query,
+        compilationUnitHandler.getAllCompilationUnits(),
+      );
+    });
   });
 <span class="cstat-no" title="statement not covered" >  connection.onNotification(</span>
     WorkspaceDidChangePlipluginConfigNotification,
@@ -1195,7 +1207,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T10:57:52.228Z
+                at 2026-02-12T11:25:28.869Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
