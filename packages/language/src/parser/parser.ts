@@ -5566,6 +5566,12 @@ const dimensions = rule(
       }
     }
 
+    state.consume(
+      element,
+      CstNodeKind.Dimensions_CloseParen,
+      tokens.CloseParen,
+    );
+
     return element;
   },
 );
@@ -5598,6 +5604,12 @@ const dimensionsWithTypes = rule(
         rhs && element.dimensions.push(rhs);
       }
     }
+
+    state.consume(
+      element,
+      CstNodeKind.Dimensions_CloseParenColon,
+      tokens.CloseParenColon,
+    );
 
     return element;
   },
