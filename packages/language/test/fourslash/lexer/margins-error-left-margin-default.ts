@@ -36,5 +36,5 @@
 //// END RGT005;
 
 verify.expectExclusiveDiagnosticsAt(1, {
-  message: code.Lexer.Margins.ErrorLeft,
+  message: code.Lexer.Margins.ErrorLeft(2, 72),
 });

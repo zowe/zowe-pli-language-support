@@ -34,8 +34,12 @@ export interface MarginsProcessor {
  * Helper class to replace text margins with space characters (characters 2-72 are normal program text)
  */
 export class PliMarginsProcessor implements MarginsProcessor {
-  static readonly MARGIN_ERROR_MESSAGE_LEFT =
-    "PL/I statements must start from column 2 or as defined in MARGINS(M,N).";
+  static readonly MARGIN_ERROR_MESSAGE_LEFT = (m: number, n: number) => {
+    if (m === 2) {
+      return `PL/I statements must start from column 2.`;
+    }
+    return `PL/I statements must start from column ${m} as defined in MARGINS(${m},${n}).`;
+  };
   static readonly MARGIN_ERROR_MESSAGE_RIGHT = Warning.IBM1084I.message;
 
   issues: Diagnostic[] = [];
@@ -90,7 +94,10 @@ export class PliMarginsProcessor implements MarginsProcessor {
         diagnostic(
           Severity.W,
           side === "left"
-            ? PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT
+            ? PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT(
+                margins.start,
+                margins.end,
+              )
             : PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
           { start, end },
           uri.toString(),
