@@ -2,11 +2,7 @@
   "pgms": [
     {
       "program": "*.pli",
-      "pgroup": "default",
-      "pli-options": {
-        "SYSPARM": "'from program config'",
-        "SYSTEM": "MVS"
-      }
+      "pgroup": "default"
     }
   ]
 }
