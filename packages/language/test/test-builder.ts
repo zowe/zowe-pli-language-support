@@ -25,10 +25,7 @@ import { completionRequest } from "../src/language-server/completion/completion-
 import { AssertionError, fail } from "assert";
 import { MarkupContent, Position } from "vscode-languageserver";
 import { hoverRequest } from "../src/language-server/hover-request";
-import {
-  semanticTokens,
-  tokenTypes,
-} from "../src/language-server/semantic-tokens";
+import { semanticTokens } from "../src/language-server/semantic-tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
 import { SemanticTokenTypes } from "vscode-languageserver-types";
@@ -975,11 +972,7 @@ export class TestBuilder {
       const textDocument = file.textDocument;
 
       const tokens = semanticTokens(textDocument, this.unit);
-      const decodedTokens = SemanticTokenDecoder.decode(
-        tokens,
-        tokenTypes,
-        textDocument,
-      );
+      const decodedTokens = SemanticTokenDecoder.decode(tokens, textDocument);
 
       for (const [start, end] of ranges) {
         const matchingToken = decodedTokens.find(
