@@ -23,7 +23,7 @@ There are no client or server-side prerequisites for PL/I Language Support.
 
 Integrate PL/I Language Support with Zowe Explorer to retrieve your PL/I source code stored on mainframe data sets. PL/I Language Support and [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) are both available as part of the [Code4z Foundation](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) pack.
 
-<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=20% height=20% /></a>
+<div align="center"><a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=20% height=20% /></a></div>
 
 ## Language Support Features
 
