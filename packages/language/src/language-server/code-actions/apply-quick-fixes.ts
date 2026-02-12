@@ -115,7 +115,7 @@ export async function quickFixCreateConfig(
     command: {
       title: "Create configuration folder",
       command: Commands.CREATE_CONFIG,
-      arguments: [programPath, entryUri],
+      arguments: [programPath],
     },
   };
 

@@ -20,7 +20,7 @@ export async function updateExistingConfig(
   configFilePath: URI,
   progConfigFile: string,
   programPath: string,
-): Promise<boolean> {
+) {
   const canAddToExistingConfig =
     PluginConfigurationProviderInstance.pushConfigProgram(
       workspaceFolderUri.path,
@@ -28,7 +28,7 @@ export async function updateExistingConfig(
     );
 
   if (!canAddToExistingConfig) {
-    return false;
+    return;
   }
 
   const textContent = JSON.parse(progConfigFile);
@@ -42,10 +42,9 @@ export async function updateExistingConfig(
       configFilePath,
       JSON.stringify(textContent, null, 2),
     );
-    return true;
   } catch (err) {
     console.error("Failed to create configuration: ", err);
-    return false;
+    return;
   }
 }
 

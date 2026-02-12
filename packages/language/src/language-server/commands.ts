@@ -26,15 +26,16 @@ export async function commandResolveInclude(params: ExecuteCommandParams) {
   }
 }
 
-export async function commandCreateConfig(params: ExecuteCommandParams) {
-  const workspaceFolderUri = URI.parse(
-    PluginConfigurationProviderInstance.getWorkspacePath(),
-  );
-
-  if (!workspaceFolderUri || !params.arguments) {
+export async function commandCreateConfig(
+  params: ExecuteCommandParams,
+  returnUpdatedFile = false,
+): Promise<string | undefined> {
+  const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
+  if (!workspacePath.length || !params.arguments) {
     return;
   }
 
+  const workspaceFolderUri = URI.parse(workspacePath);
   const programPath = params.arguments[0];
   const configFilePath = UriUtils.joinPath(
     workspaceFolderUri,
@@ -54,4 +55,15 @@ export async function commandCreateConfig(params: ExecuteCommandParams) {
   } else {
     await createNewConfig(workspaceFolderUri, programPath);
   }
+
+  if (!returnUpdatedFile) {
+    return;
+  }
+
+  const fileContent = JSON.stringify(
+    await FileSystemProviderInstance.readFile(configFilePath),
+    null,
+    2,
+  );
+  return fileContent;
 }
