@@ -13,4 +13,4 @@
 
 //// DCL ANYTHING<|dim:(|>) FIXED BIN;
 
-verify.expectDiagnosticsAt('dim', code.Error.IBM1352I);
+verify.expectDiagnosticsAt("dim", code.Error.IBM1352I);

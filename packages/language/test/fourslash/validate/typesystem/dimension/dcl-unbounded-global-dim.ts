@@ -13,4 +13,4 @@
 
 //// DCL ANYTHING(<|*|>) FIXED BIN;
 
-verify.expectDiagnosticsAt('*', code.Severe.IBM1629I);
+verify.expectDiagnosticsAt("*", code.Severe.IBM1629I);

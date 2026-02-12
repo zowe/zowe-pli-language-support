@@ -11,8 +11,7 @@
 
 /// <reference path="../../../framework.ts" />
 
-
-//// main: PROCEDURE (P) OPTIONS(MAIN); 
+//// main: PROCEDURE (P) OPTIONS(MAIN);
 ////   DCL P(*) FIXED BIN;
 //// END main;
 

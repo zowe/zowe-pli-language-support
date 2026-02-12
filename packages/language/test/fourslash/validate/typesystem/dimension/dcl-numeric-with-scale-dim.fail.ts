@@ -13,20 +13,22 @@
 
 //// DCL <|array:ANYTHING|>(<|num:20.51234|>) FIXED BIN;
 
-verify.noDiagnostics('num');
+verify.noDiagnostics("num");
 types.expectTypeAt("array", {
-    base: types.bases.Binary,
-    scale: types.scales.Fixed,
-    dimension: [{
-        upperBound: {
-            value: 20,
-        },
-        lowerBound: {
-            /**
-             * @see https://www.ibm.com/docs/en/epfz/6.2.0?topic=arrays-dimension-attribute
-             * If only the upper bound is given, the lower bound defaults to 1.
-             */
-            value: 1,
-        },
-    }],
+  base: types.bases.Binary,
+  scale: types.scales.Fixed,
+  dimension: [
+    {
+      upperBound: {
+        value: 20,
+      },
+      lowerBound: {
+        /**
+         * @see https://www.ibm.com/docs/en/epfz/6.2.0?topic=arrays-dimension-attribute
+         * If only the upper bound is given, the lower bound defaults to 1.
+         */
+        value: 1,
+      },
+    },
+  ],
 });

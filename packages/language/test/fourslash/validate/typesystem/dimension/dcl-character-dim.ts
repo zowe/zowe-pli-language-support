@@ -13,4 +13,4 @@
 
 //// DCL ANYTHING(<|str:'hello'|>) FIXED BIN;
 
-verify.expectDiagnosticsAt('str', code.Severe.IBM1948I);
+verify.expectDiagnosticsAt("str", code.Severe.IBM1948I);

@@ -210,7 +210,7 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: DimensionBound[]|undefined;
+  [AttributeKind.Dimension]: DimensionBound[] | undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.Entry]: EntryData | undefined;
   [AttributeKind.FileUsage]: FileUsage;
@@ -815,7 +815,7 @@ interface WithParentType {
 }
 
 interface BaseTypeDescription
-  extends WithTypeDescriminator, BaseTypeDescriptionProps, WithParentType { }
+  extends WithTypeDescriminator, BaseTypeDescriptionProps, WithParentType {}
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=alignment-aligned-unaligned-attributes */
 export enum AlignmentType {
@@ -1220,7 +1220,7 @@ function isFileTypeDescription(
 const FormatType = DataType.Format;
 type FormatType = typeof FormatType;
 
-interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface FormatTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface FormatTypeDescription
   extends BaseTypeDescription, FormatTypeDescriptionProps {
@@ -1246,7 +1246,7 @@ function isFormatTypeDescription(
 const LabelType = DataType.Label;
 type LabelType = typeof LabelType;
 
-interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface LabelTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface LabelTypeDescription
   extends BaseTypeDescription, LabelTypeDescriptionProps {
@@ -1316,7 +1316,7 @@ function isLocatorTypeDescription(
 const EntryType = DataType.Entry;
 type EntryType = typeof EntryType;
 
-interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface EntryTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface EntryTypeDescription
   extends BaseTypeDescription, EntryTypeDescriptionProps {
@@ -1476,7 +1476,7 @@ function isStringTypeDescription(
 const TaskType = DataType.Task;
 type TaskType = typeof TaskType;
 
-interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps { }
+interface TaskTypeDescriptionProps extends BaseTypeDescriptionProps {}
 
 interface TaskTypeDescription
   extends BaseTypeDescription, TaskTypeDescriptionProps {
@@ -1536,7 +1536,7 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   witnesses: AttributeWitnesses;
 }
 
-interface CompositeTypeDescription extends CompositeTypeDescriptionProps { }
+interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
 
 //--- Union ---
 const UnionType = DataType.Union;

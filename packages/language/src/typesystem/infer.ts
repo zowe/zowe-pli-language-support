@@ -218,7 +218,7 @@ export class DefaultTypeInferer implements TypeInferer {
                 //TODO handle other string kinds
                 kind: StringKind.Character,
                 length: expression.value.value!.length,
-              }
+              },
             });
           case ast.SyntaxKind.NumberLiteral:
             //TODO handle other numeric literals

@@ -13,9 +13,7 @@ import * as ast from "../syntax-tree/ast";
 import { evaluateExpression } from "./evaluate";
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=arrays-dimension-attribute */
-export function computeDimensions(
-  dimension: ast.Dimensions,
-): DimensionBound[] {
+export function computeDimensions(dimension: ast.Dimensions): DimensionBound[] {
   const dims = dimension.dimensions;
   const result: Array<DimensionBound> = [];
   for (const dim of dims) {

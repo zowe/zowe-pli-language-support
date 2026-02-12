@@ -11,7 +11,12 @@
 
 import { diagnosticFromCode } from "../language-server/types";
 import * as ast from "../syntax-tree/ast";
-import { AttributeKind, Bound, ScaleMode, TypeDescriptions } from "../typesystem/descriptions";
+import {
+  AttributeKind,
+  Bound,
+  ScaleMode,
+  TypeDescriptions,
+} from "../typesystem/descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
@@ -26,7 +31,10 @@ export function typeCheck(
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ) {
-  const description = compilationUnit.services.inferer.inferType(stmt, compilationUnit);
+  const description = compilationUnit.services.inferer.inferType(
+    stmt,
+    compilationUnit,
+  );
   if (TypeDescriptions.isUnknown(description)) {
     // ignore further type checking
     return;
@@ -36,15 +44,31 @@ export function typeCheck(
     const witness = description.witnesses.witnesses[AttributeKind.Dimension];
     if (witness && witness.token && witness.token.image) {
       if (description.dimension.length === 0) {
-        acceptor(diagnosticFromCode(PLICodes.Error.IBM1352I, witness.token, witness.token.image));
+        acceptor(
+          diagnosticFromCode(
+            PLICodes.Error.IBM1352I,
+            witness.token,
+            witness.token.image,
+          ),
+        );
         return;
       }
       for (const dimension of description.dimension) {
-        const upperBound = validateBound(dimension.upperBound, acceptor, compilationUnit);
-        const lowerBound = validateBound(dimension.lowerBound, acceptor, compilationUnit);
+        const upperBound = validateBound(
+          dimension.upperBound,
+          acceptor,
+          compilationUnit,
+        );
+        const lowerBound = validateBound(
+          dimension.lowerBound,
+          acceptor,
+          compilationUnit,
+        );
         if (typeof upperBound === "number" && typeof lowerBound === "number") {
           if (upperBound < lowerBound) {
-            acceptor(diagnosticFromCode(PLICodes.Error.IBM1338I, witness.token));
+            acceptor(
+              diagnosticFromCode(PLICodes.Error.IBM1338I, witness.token),
+            );
           }
         }
       }
@@ -55,7 +79,10 @@ export function typeCheck(
     const witness = description.witnesses.witnesses[AttributeKind.Precision];
     if (description.precision && witness?.token) {
       if (typeof description.precision.fractionalDigitsCount === "number") {
-        if (description.precision.fractionalDigitsCount > description.precision.totalDigitsCount) {
+        if (
+          description.precision.fractionalDigitsCount >
+          description.precision.totalDigitsCount
+        ) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, witness.token));
         } else if (description.scale == ScaleMode.Float) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, witness.token));
@@ -65,32 +92,48 @@ export function typeCheck(
   }
 }
 
-export function validateBound(bound: Bound, acceptor: ValidationAcceptor, compilationUnit: CompilationUnit) {
+export function validateBound(
+  bound: Bound,
+  acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
+) {
   if (bound.expression) {
-    if (bound.expression === '*') {
-      if (bound.token && !ast.getContainer(bound.node, ast.SyntaxKind.ProcedureStatement)) {
+    if (bound.expression === "*") {
+      if (
+        bound.token &&
+        !ast.getContainer(bound.node, ast.SyntaxKind.ProcedureStatement)
+      ) {
         acceptor(diagnosticFromCode(PLICodes.Severe.IBM1629I, bound.token));
       }
-      return 'unbounded';
+      return "unbounded";
     } else {
-      const boundDescription = compilationUnit.services.inferer.inferType(bound.expression, compilationUnit);
+      const boundDescription = compilationUnit.services.inferer.inferType(
+        bound.expression,
+        compilationUnit,
+      );
       if (TypeDescriptions.isUnknown(boundDescription)) {
         // ignore further type checking
-        return 'unknown';
+        return "unknown";
       }
       if (!TypeDescriptions.isArithmetic(boundDescription)) {
         //TODO handle other types
         //CHAR=612
-        acceptor(diagnosticFromCode(PLICodes.Severe.IBM1948I, bound.token, "CONVERSION", "612"));
-        return 'invalid';
+        acceptor(
+          diagnosticFromCode(
+            PLICodes.Severe.IBM1948I,
+            bound.token,
+            "CONVERSION",
+            "612",
+          ),
+        );
+        return "invalid";
       }
       //TODO assignability check
-
 
       if (typeof bound.value === "number") {
         return bound.value;
       } else {
-        return 'computed';
+        return "computed";
       }
     }
   }
