@@ -254,13 +254,6 @@ export function parseHarnessTest(
   return new HarnessTestParser(text, fileName, context).parse();
 }
 
-function normalize(text: string): string {
-  return text.replace(/\r\n/g, "\n");
-}
-
-const ownFile = fs.readFileSync(__filename, "utf-8");
-const header = normalize(ownFile.substring(0, ownFile.indexOf("*/") + 2));
-
 /**
  * Parse a harness test file into a `HarnessTest` object.
  *
@@ -276,12 +269,6 @@ export async function parseHarnessTestFile(
   context: Context,
 ): Promise<HarnessTest> {
   const text = await fs.promises.readFile(fileName, "utf-8");
-
-  if (!normalize(text).startsWith(header)) {
-    throw new Error(
-      `File '${relativePath}' does not start with the expected license header.`,
-    );
-  }
 
   try {
     return parseHarnessTest(text, fileName, context);

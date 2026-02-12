@@ -10,47 +10,57 @@
  *
  */
 
-import * as fs from 'fs/promises';
-import * as tokens from '../packages/language/src/parser/tokens.js';
+import * as fs from "fs/promises";
+import * as tokens from "../packages/language/src/parser/tokens.js";
 
-const keywords = Array.from(tokens.keywordMap, ([key]) => key.toLowerCase()).sort();
-const manual = JSON.parse(await fs.readFile('./packages/vscode-extension/syntaxes/pli.manual.json', 'utf8'));
+const keywords = Array.from(tokens.keywordMap, ([key]) =>
+  key.toLowerCase(),
+).sort();
+const manual = JSON.parse(
+  await fs.readFile(
+    "./packages/vscode-extension/syntaxes/pli.manual.json",
+    "utf8",
+  ),
+);
 
 const controlKeywords: string[] = [];
 const storageKeywords: string[] = [];
 
 for (const [text, type] of tokens.keywordMap.entries()) {
-    if (tokens.controlTokens.has(type)) {
-        controlKeywords.push(text.toLowerCase());
-    } else {
-        storageKeywords.push(text.toLowerCase());
-    }
+  if (tokens.controlTokens.has(type)) {
+    controlKeywords.push(text.toLowerCase());
+  } else {
+    storageKeywords.push(text.toLowerCase());
+  }
 }
 
 function toPattern(keywords: string[]) {
-    const patterns: string[] = [];
-    for (const keyword of keywords) {
-        let keywordPattern = '';
-        for (const char of keyword) {
-            keywordPattern += tokens.escapeRegExp(char);
-        }
-        patterns.push(keywordPattern);
+  const patterns: string[] = [];
+  for (const keyword of keywords) {
+    let keywordPattern = "";
+    for (const char of keyword) {
+      keywordPattern += tokens.escapeRegExp(char);
     }
-    return `(?i)\\b(${patterns.join('|')})\\b`;
+    patterns.push(keywordPattern);
+  }
+  return `(?i)\\b(${patterns.join("|")})\\b`;
 }
 
 const controlPattern = toPattern(controlKeywords);
 const storagePattern = toPattern(storageKeywords);
 
 manual.patterns.unshift({
-    name: 'keyword.control.pli',
-    match: controlPattern
+  name: "keyword.control.pli",
+  match: controlPattern,
 });
 
 manual.patterns.unshift({
-    name: 'keyword.storage.pli',
-    match: storagePattern
+  name: "keyword.storage.pli",
+  match: storagePattern,
 });
 
 const json = JSON.stringify(manual, null, 2);
-await fs.writeFile('./packages/vscode-extension/syntaxes/pli.merged.json', json);
+await fs.writeFile(
+  "./packages/vscode-extension/syntaxes/pli.merged.json",
+  json,
+);
