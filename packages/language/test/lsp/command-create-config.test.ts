@@ -82,19 +82,17 @@ describe("commandCreateConfig", () => {
     }));
 
   test("creates a new config file when none exists", async () => {
-      const result = await commandCreateConfig(
-        {
-          command: Commands.CREATE_CONFIG,
-          arguments: ["a.pli"],
-        },
-        true,
-      );
+    const result = await commandCreateConfig(
+      {
+        command: Commands.CREATE_CONFIG,
+        arguments: ["a.pli"],
+      },
+      true,
+    );
 
-      expect(result).toBeDefined();
-      expect(JSON.parse(JSON.parse(result!))).toEqual({
-        pgms: [
-          { program: "a.pli", pgroup: "default" }
-        ],
-      });
+    expect(result).toBeDefined();
+    expect(JSON.parse(JSON.parse(result!))).toEqual({
+      pgms: [{ program: "a.pli", pgroup: "default" }],
     });
+  });
 });

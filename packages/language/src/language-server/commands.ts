@@ -44,10 +44,11 @@ export async function commandCreateConfig(
 
   let progConfigFile: string | undefined;
   try {
-   progConfigFile =
-    await FileSystemProviderInstance.readFile(configFilePath);
+    progConfigFile = await FileSystemProviderInstance.readFile(configFilePath);
   } catch {
-    console.info(`[Info] No existing "pgm_conf.json" found in workspace — a new configuration file will be created.`);
+    console.info(
+      `[Info] No existing "pgm_conf.json" found in workspace — a new configuration file will be created.`,
+    );
   }
 
   if (progConfigFile) {
