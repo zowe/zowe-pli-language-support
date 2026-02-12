@@ -42,8 +42,13 @@ export async function commandCreateConfig(
     PluginConfiguration.PROGRAM_FILE_PATH,
   );
 
-  const progConfigFile =
+  let progConfigFile: string | undefined;
+  try {
+   progConfigFile =
     await FileSystemProviderInstance.readFile(configFilePath);
+  } catch {
+    console.info(`[Info] No existing "pgm_conf.json" found in workspace — a new configuration file will be created.`);
+  }
 
   if (progConfigFile) {
     await updateExistingConfig(
