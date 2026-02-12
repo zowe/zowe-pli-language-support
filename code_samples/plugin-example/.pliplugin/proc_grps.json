@@ -6,11 +6,6 @@
         "AGGREGATE",
         "MARGINS(2,72)"
       ],
-      "pli-options": {
-        "SYSPARM": "'from process group'",
-        "SYSTEM": "MVS",
-        "MARGINS": "2,72"
-      },
       "member-name-validation": true,
       "libs": [
         "cpy"
