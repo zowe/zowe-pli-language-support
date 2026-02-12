@@ -210,10 +210,7 @@ export type AttributeTypes = {
   [AttributeKind.BufferMode]: BufferMode;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
-  [AttributeKind.Dimension]: {
-    bounds: DimensionBound[];
-    closingParenthesisToken: Token | null;
-  } | undefined;
+  [AttributeKind.Dimension]: DimensionBound[]|undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.Entry]: EntryData | undefined;
   [AttributeKind.FileUsage]: FileUsage;
@@ -360,10 +357,7 @@ export const AttributeStringifiers: {
     return undefined;
   },
   [AttributeKind.Dimension]: function (
-    value: {
-      bounds: DimensionBound[];
-      closingParenthesisToken: Token | null;
-    } | undefined,
+    value: DimensionBound[] | undefined,
   ): string | undefined {
     if (!value) {
       return undefined;
@@ -794,10 +788,7 @@ interface BaseTypeDescriptionProps {
   alignment: Alignment;
   assignability: Assignability;
   connection: StorageConnection;
-  dimension?: {
-    bounds: DimensionBound[];
-    closingParenthesisToken: Token | null;
-  };
+  dimension?: DimensionBound[];
   initial?: ast.InitialAttribute;
   list: boolean;
   optional: boolean;
@@ -1538,10 +1529,7 @@ type StructureType = typeof StructureType;
 
 interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   type: DataType.Structure | DataType.Union;
-  dimension?: {
-    bounds: DimensionBound[];
-    closingParenthesisToken: Token | null;
-  };
+  dimension?: DimensionBound[];
   storage?: StorageClass;
   alignment?: Alignment;
   toString(): string;

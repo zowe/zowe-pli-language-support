@@ -1525,7 +1525,6 @@ function dimensions(state: ParserState): ast.Dimensions {
   while (state.tryConsume(dimensions, CstNodeKind.Dimensions_Comma, t.Comma)) {
     dimensions.dimensions.push(parseBound(state));
   }
-  dimensions.closingParenthesisToken =state.consume(dimensions, CstNodeKind.Dimensions_CloseParen, t.CloseParen);
   return dimensions;
 }
 

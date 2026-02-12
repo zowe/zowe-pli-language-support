@@ -33,28 +33,31 @@ export function typeCheck(
   }
 
   if (description.dimension) {
-    if (description.dimension.bounds.length === 0 && description.dimension.closingParenthesisToken) {
-      acceptor(diagnosticFromCode(PLICodes.Error.IBM1352I, description.dimension.closingParenthesisToken, description.dimension.closingParenthesisToken.image));
-      return;
-    }
-    for (const dimension of description.dimension.bounds) {
-      const upperBound = validateBound(dimension.upperBound, acceptor, compilationUnit);
-      const lowerBound = validateBound(dimension.lowerBound, acceptor, compilationUnit);
-      if (typeof upperBound === "number" && typeof lowerBound === "number") {
-        if (upperBound < lowerBound) {
-          acceptor(diagnosticFromCode(PLICodes.Error.IBM1338I, dimension.upperBound?.token ?? dimension.lowerBound?.token));
+    const witness = description.witnesses.witnesses[AttributeKind.Dimension];
+    if (witness && witness.token && witness.token.image) {
+      if (description.dimension.length === 0) {
+        acceptor(diagnosticFromCode(PLICodes.Error.IBM1352I, witness.token, witness.token.image));
+        return;
+      }
+      for (const dimension of description.dimension) {
+        const upperBound = validateBound(dimension.upperBound, acceptor, compilationUnit);
+        const lowerBound = validateBound(dimension.lowerBound, acceptor, compilationUnit);
+        if (typeof upperBound === "number" && typeof lowerBound === "number") {
+          if (upperBound < lowerBound) {
+            acceptor(diagnosticFromCode(PLICodes.Error.IBM1338I, witness.token));
+          }
         }
       }
     }
   }
 
-  if(TypeDescriptions.isArithmetic(description)) {
+  if (TypeDescriptions.isArithmetic(description)) {
     const witness = description.witnesses.witnesses[AttributeKind.Precision];
-    if(description.precision && witness?.token) {
-      if(typeof description.precision.fractionalDigitsCount === "number") {
-        if(description.precision.fractionalDigitsCount > description.precision.totalDigitsCount) {
+    if (description.precision && witness?.token) {
+      if (typeof description.precision.fractionalDigitsCount === "number") {
+        if (description.precision.fractionalDigitsCount > description.precision.totalDigitsCount) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, witness.token));
-        } else if(description.scale == ScaleMode.Float) {
+        } else if (description.scale == ScaleMode.Float) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, witness.token));
         }
       }

@@ -5566,12 +5566,6 @@ const dimensions = rule(
       }
     }
 
-    element.closingParenthesisToken = state.consume(
-      element,
-      CstNodeKind.Dimensions_CloseParen,
-      tokens.CloseParen,
-    );
-
     return element;
   },
 );
@@ -5604,12 +5598,6 @@ const dimensionsWithTypes = rule(
         rhs && element.dimensions.push(rhs);
       }
     }
-
-    element.closingParenthesisToken = state.consume(
-      element,
-      CstNodeKind.Dimensions_CloseParenColon,
-      tokens.CloseParenColon,
-    );
 
     return element;
   },
