@@ -52,17 +52,13 @@ Before you write your PL/I code from scratch, search the snippet library for use
 
 You can also insert a code snippet by typing the name of the snippet in your code and clicking on the autocomplete text.
 
-### Core Preprocessor Support
+### Preprocessor Support
 
-The following preprocessor statements are supported:
-
-* Listing control statements (`PAGE`, `SKIP`, `PRINT`, `PUSH`, `POP`)
-* Standard include statements (`%INCLUDE`, `%XINCLUDE`, `%INSCAN`, `%INSCAN`)
-* Core preprocessor statements (`%DECLARE`, `%ACTIVATE`, `%DEACTIVATE`, `%DO`, `%SELECT`, `%IF`, `%ELSE`, `%THEN`, `%GOTO`, `%END`, `%ITERATE`, `%LEAVE`, `%NOTE`, `%null`, `%REPLACE`)
+PL/I Preprocessors process source code before compilation. They support complex logic, variable manipulation, and string processing to generate optimized or customized code. All PL/I Core Preprocessors are supported by PL/I Language Support.
 
 ### Include File Support
 
-The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another workspace folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised by default as PL/I include files. If your include files use other extensions, specify them in a processor group. 
+The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised by default as PL/I include files. If your include files use other extensions, specify them in a processor group. 
 
 The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified as compiler options in a processor group.
 
@@ -82,7 +78,7 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
 - **"name":** (string)  
     - Specify a name for the processor group.
 - (Optional) **"libs":** (array)  
-    - Specify local folders that contain include files. Folders can be either absolute or relative local paths.
+    - Specify local folders that contain include files. Folders can be relative paths to the workspace root, or absolute paths to any local folder.
     - Include members by adding ddnames, such as adding `mylibs/a.b.c`, where `a.b.c(member)` is a file in the `mylibs` folder.
 - (Optional) **"include-extensions":** (array)  
     - Specify file extensions that you use for the include files in programs linked with this processor groups.
@@ -141,3 +137,11 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
   ]
 }
 ```
+### Dynamic Include File Resolution
+
+You can use the VS Code Quick Fix feature to dynamically resolve include files that are stored in a subfolder of your workspace. For this feature to work correctly, your `proc_grps.json` file must be present in the correct location your workspace.
+
+1. Hover over an unresolved include file name.
+2. Select **Quick Fix...**
+3. Select the option **Add *folder* to INCLUDE...**  
+   The folder is added to the `"libs"` array in your `proc_grps.json` file in order to resolve the include file.
