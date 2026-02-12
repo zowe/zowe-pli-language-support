@@ -49,6 +49,13 @@ jobs:
       if: success() || failure()
       run: |
         pnpm test
+
+  check-licenses:
+    name: Check license headers
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    needs: build
+    steps:
     - name: Check license headers
       if: success() || failure()
       run: |
