@@ -61,25 +61,27 @@ export function startLanguageServer(connection: Connection): void {
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
 
-  function withReadMutex<T>(
+  async function withReadMutex<T>(
     uri: string,
     cb: (uri: URI, unit?: CompilationUnit) => Promise<T>,
   ) {
-    const parsedUri = URI.parse(uri);
-    const compilationUnit =
-      compilationUnitHandler.getCompilationUnit(parsedUri);
-    if (!compilationUnit) {
-      return cb(parsedUri, undefined);
-    }
-    return compilationUnit.mutex.read(async () => {
-      return cb(parsedUri, compilationUnit);
+    await compilationUnitHandler.ready;
+    return compilationUnitHandler.globalMutex.read(() => {
+      const parsedUri = URI.parse(uri);
+      const compilationUnit =
+        compilationUnitHandler.getCompilationUnit(parsedUri);
+      if (!compilationUnit) {
+        return cb(parsedUri, undefined);
+      }
+      return compilationUnit.mutex.read(async () => {
+        return cb(parsedUri, compilationUnit);
+      });
     });
   }
 
   connection.onInitialize(async (params) => {
     // init the plugin config provider in reverse folder order, last plugin config encountered will take precedence
     folders = params.workspaceFolders?.reverse() ?? [];
-
     return {
       capabilities: {
         workspace: {
@@ -139,7 +141,7 @@ export function startLanguageServer(connection: Connection): void {
       );
     }
     await Promise.all(promises);
-    compilationUnitHandler.finalize();
+    compilationUnitHandler.markReady();
   });
   connection.onHover(async (params) => {
     const position = params.position;
@@ -316,10 +318,12 @@ export function startLanguageServer(connection: Connection): void {
     );
   });
   connection.onWorkspaceSymbol(async (params) => {
-    return workspaceSymbolRequest(
-      params.query,
-      compilationUnitHandler.getAllCompilationUnits(),
-    );
+    return compilationUnitHandler.globalMutex.read(async () => {
+      return workspaceSymbolRequest(
+        params.query,
+        compilationUnitHandler.getAllCompilationUnits(),
+      );
+    });
   });
   connection.onNotification(
     WorkspaceDidChangePlipluginConfigNotification,
