@@ -10,6 +10,7 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { SemanticTokenTypes } from "./semantic-tokens";
 
 export namespace SemanticTokenDecoder {
   export interface DecodedSemanticToken {
@@ -22,15 +23,9 @@ export namespace SemanticTokenDecoder {
 
   export function decode(
     tokens: number[],
-    tokenTypes: Map<string, number>,
     textDocument: TextDocument,
   ): DecodedSemanticToken[] {
     const decodedTokens: DecodedSemanticToken[] = [];
-    const reverseTokenTypes = new Map<number, string>();
-
-    for (const [key, value] of tokenTypes.entries()) {
-      reverseTokenTypes.set(value, key);
-    }
 
     let line = 0;
     let character = 0;
@@ -46,7 +41,7 @@ export namespace SemanticTokenDecoder {
       const decodedToken: DecodedSemanticToken = {
         offsetStart: offset,
         offsetEnd: offset + tokens[i + 2],
-        semanticTokenType: reverseTokenTypes.get(tokens[i + 3])!,
+        semanticTokenType: SemanticTokenTypes[tokens[i + 3]],
         tokenModifiers: tokens[i + 4],
         text: textDocument.getText({
           start: { line, character },

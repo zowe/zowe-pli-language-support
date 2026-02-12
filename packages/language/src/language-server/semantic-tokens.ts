@@ -13,10 +13,7 @@ import { SemanticTokensBuilder } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Range } from "./types";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import {
-  SemanticTokensLegend,
-  SemanticTokenTypes,
-} from "vscode-languageserver-types";
+import { SemanticTokensLegend } from "vscode-languageserver-types";
 import {
   DeclaredVariable,
   getContainer,
@@ -24,29 +21,35 @@ import {
   SyntaxNode,
 } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { Token } from "../parser/tokens";
+import {
+  controlTokens,
+  modifierTokens,
+  NUMBER,
+  STRING_TERM,
+  Token,
+} from "../parser/tokens";
 import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
 
-export const semanticTokenTypes = [
-  SemanticTokenTypes.variable,
-  SemanticTokenTypes.keyword,
-  SemanticTokenTypes.number,
-  SemanticTokenTypes.function,
-  SemanticTokenTypes.parameter,
-  SemanticTokenTypes.enum,
-  SemanticTokenTypes.enumMember,
-  SemanticTokenTypes.class,
-  SemanticTokenTypes.type,
-];
-
-export const tokenTypes = new Map<string, number>(
-  semanticTokenTypes.map((type, index) => [type, index]),
-);
+export enum SemanticTokenTypes {
+  variable,
+  keyword,
+  modifier,
+  number,
+  function,
+  parameter,
+  enum,
+  enumMember,
+  class,
+  type,
+  string,
+}
 
 const tokenModifiers = new Map<string, number>([]);
 
 export const semanticTokenLegend: SemanticTokensLegend = {
-  tokenTypes: Array.from(tokenTypes.keys()),
+  tokenTypes: Object.keys(SemanticTokenTypes).filter((key) =>
+    isNaN(Number(key)),
+  ),
   tokenModifiers: Array.from(tokenModifiers.keys()),
 };
 
@@ -67,7 +70,7 @@ export function semanticTokens(
         token.startLine,
         token.startColumn,
         token.image.length,
-        tokenTypes.get(type)!,
+        type,
         0,
       );
     }
@@ -75,7 +78,7 @@ export function semanticTokens(
   return semanticTokens.build().data;
 }
 
-function tokenType(token: Token): string | undefined {
+function tokenType(token: Token): number | undefined {
   const referenceTarget = getReferenceTarget(token);
   if (referenceTarget) {
     switch (referenceTarget.kind) {
@@ -114,9 +117,22 @@ function tokenType(token: Token): string | undefined {
   } else if (token.kind === CstNodeKind.ProcedureParameter_Id) {
     return SemanticTokenTypes.parameter;
   } else if (token.kind === CstNodeKind.CompilerOption_Name) {
-    return SemanticTokenTypes.keyword;
+    return SemanticTokenTypes.modifier;
   } else if (token.kind === CstNodeKind.CompilerOption_Number) {
     return SemanticTokenTypes.number;
+  }
+
+  if (token.tokenTypeIdx === STRING_TERM.tokenTypeIdx) {
+    return SemanticTokenTypes.string;
+  } else if (token.tokenTypeIdx === NUMBER.tokenTypeIdx) {
+    return SemanticTokenTypes.number;
+  }
+
+  // If the token has no semantic meaning based on the CST, check if it's a keyword
+  if (controlTokens.has(token.tokenType)) {
+    return SemanticTokenTypes.keyword;
+  } else if (modifierTokens.has(token.tokenType)) {
+    return SemanticTokenTypes.modifier;
   }
 
   return undefined;
@@ -126,28 +142,29 @@ function tokenType(token: Token): string | undefined {
  * If the specified token represents a reference, this function returns the target SyntaxNode of that reference.
  */
 function getReferenceTarget(token: Token): SyntaxNode | undefined {
-  if (
-    token.kind === CstNodeKind.ReferenceItem_Ref &&
-    token.element?.kind === SyntaxKind.ReferenceItem
-  ) {
-    return token.element.ref?.node ?? undefined;
-  } else if (
-    token.kind === CstNodeKind.LabelReference_LabelRef &&
-    token.element?.kind === SyntaxKind.LabelReference
-  ) {
-    return token.element.label?.node ?? undefined;
-  } else if (
-    (token.kind === CstNodeKind.TypeAttribute_TypeId0 ||
-      token.kind === CstNodeKind.TypeAttribute_TypeId1) &&
-    token.element?.kind === SyntaxKind.TypeAttribute
-  ) {
-    return token.element.type?.node ?? undefined;
-  } else if (
-    (token.kind === CstNodeKind.HandleAttribute_TypeId0 ||
-      token.kind === CstNodeKind.HandleAttribute_TypeId1) &&
-    token.element?.kind === SyntaxKind.HandleAttribute
-  ) {
-    return token.element.type?.node ?? undefined;
+  switch (token.kind) {
+    case CstNodeKind.ReferenceItem_Ref:
+      if (token.element?.kind === SyntaxKind.ReferenceItem) {
+        return token.element.ref?.node ?? undefined;
+      }
+      break;
+    case CstNodeKind.LabelReference_LabelRef:
+      if (token.element?.kind === SyntaxKind.LabelReference) {
+        return token.element.label?.node ?? undefined;
+      }
+      break;
+    case CstNodeKind.TypeAttribute_TypeId0:
+    case CstNodeKind.TypeAttribute_TypeId1:
+      if (token.element?.kind === SyntaxKind.TypeAttribute) {
+        return token.element.type?.node ?? undefined;
+      }
+      break;
+    case CstNodeKind.HandleAttribute_TypeId0:
+    case CstNodeKind.HandleAttribute_TypeId1:
+      if (token.element?.kind === SyntaxKind.HandleAttribute) {
+        return token.element.type?.node ?? undefined;
+      }
+      break;
   }
   return undefined;
 }
@@ -169,18 +186,12 @@ function isProcedureKind(container: SyntaxNode | null | undefined): boolean {
 }
 
 function isProcedureType(token: Token): boolean {
-  const kind = token.kind;
-  if (
-    kind === CstNodeKind.LabelPrefix_Name &&
-    isProcedurePrefix(token.element)
-  ) {
-    return true;
-  }
-  if (kind === CstNodeKind.ProcedureCall_ProcedureRef) {
-    return true;
-  }
-  if (kind === CstNodeKind.Exports_Procedure) {
-    return true;
+  switch (token.kind) {
+    case CstNodeKind.ProcedureCall_ProcedureRef:
+    case CstNodeKind.Exports_Procedure:
+      return true;
+    case CstNodeKind.LabelPrefix_Name:
+      return isProcedurePrefix(token.element);
   }
   return false;
 }
