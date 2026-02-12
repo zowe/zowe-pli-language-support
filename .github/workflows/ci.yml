@@ -49,3 +49,7 @@ jobs:
       if: success() || failure()
       run: |
         pnpm test
+    - name: Check license headers
+      if: success() || failure()
+      run: |
+        pnpm license:check
