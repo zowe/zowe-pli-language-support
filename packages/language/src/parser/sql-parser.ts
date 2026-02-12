@@ -44,7 +44,7 @@ export function sqlAttributeStatement(
     t.TYPE,
   );
   state.consume(attributeStatement, CstNodeKind.SqlAttributeStatement_IS, t.IS);
-  let afterXmlAs: t.Token | null = null;
+  let afterXmlAsToken: t.Token | null = null;
   if (state.canConsume(t.XML)) {
     state.consume(
       attributeStatement,
@@ -57,7 +57,7 @@ export function sqlAttributeStatement(
       t.AS,
       Severe.IBM3782I,
     );
-    afterXmlAs = state.token ?? null;
+    afterXmlAsToken = state.token ?? null;
     attributeStatement.isXml = true;
   }
   const isLargePeek = state.peek(2)?.tokenTypeIdx === t.LARGE.tokenTypeIdx;
@@ -112,9 +112,12 @@ export function sqlAttributeStatement(
   if (
     attributeStatement.isXml &&
     attributeStatement.body &&
-    isLocator(attributeStatement.body)
+    isLocator(attributeStatement.body) &&
+    afterXmlAsToken
   ) {
-    state.diagnostics.push(diagnosticFromCode(Severe.IBM3783I, afterXmlAs));
+    state.diagnostics.push(
+      diagnosticFromCode(Severe.IBM3783I, afterXmlAsToken),
+    );
   }
 
   return attributeStatement;
