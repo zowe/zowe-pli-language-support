@@ -662,7 +662,7 @@ export class PluginConfigurationProvider {
    * @returns `true` if the configuration was pushed successfully,
    *          `false` if no existing configurations are present.
    */
-  public pushConfigProgram(
+  public addProgramConfig(
     workspacePath: string,
     programConfig: ProgramConfig,
   ): boolean {

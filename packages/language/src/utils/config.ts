@@ -22,7 +22,7 @@ export async function updateExistingConfig(
   programPath: string,
 ) {
   const canAddToExistingConfig =
-    PluginConfigurationProviderInstance.pushConfigProgram(
+    PluginConfigurationProviderInstance.addProgramConfig(
       workspaceFolderUri.path,
       { program: programPath, pgroup: "default" },
     );
@@ -31,13 +31,12 @@ export async function updateExistingConfig(
     return;
   }
 
-  const textContent = JSON.parse(progConfigFile);
-  textContent.pgms.push({
-    program: programPath,
-    pgroup: "default",
-  });
-
   try {
+    const textContent = JSON.parse(progConfigFile);
+    textContent.pgms.push({
+      program: programPath,
+      pgroup: "default",
+    });
     await FileSystemProviderInstance.writeFile(
       configFilePath,
       JSON.stringify(textContent, null, 2),

@@ -37,6 +37,10 @@ export async function commandCreateConfig(
 
   const workspaceFolderUri = URI.parse(workspacePath);
   const programPath = params.arguments[0];
+  if (!programPath.length) {
+    return;
+  }
+
   const configFilePath = UriUtils.joinPath(
     workspaceFolderUri,
     PluginConfiguration.PROGRAM_FILE_PATH,
@@ -66,10 +70,5 @@ export async function commandCreateConfig(
     return;
   }
 
-  const fileContent = JSON.stringify(
-    await FileSystemProviderInstance.readFile(configFilePath),
-    null,
-    2,
-  );
-  return fileContent;
+  return await FileSystemProviderInstance.readFile(configFilePath);
 }

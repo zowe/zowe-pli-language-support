@@ -101,12 +101,15 @@ export async function quickFixCreateConfig(
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
   const entryUri = diagnostic.data.entryUri;
   if (!workspace || !entryUri) {
-    return undefined;
+    return;
   }
   const programPath = URI.parse(entryUri.replace(workspace, "")).path.replace(
     /^\//,
     "",
   );
+  if (!programPath.length) {
+    return;
+  }
 
   const action: CodeAction = {
     title: `Create a plugin configuration for this file.`,

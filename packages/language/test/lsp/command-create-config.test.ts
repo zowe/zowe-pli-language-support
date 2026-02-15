@@ -53,7 +53,7 @@ describe("commandCreateConfig", () => {
     );
 
     expect(result).toBeDefined();
-    expect(JSON.parse(JSON.parse(result!))).toEqual({
+    expect(JSON.parse(result!)).toEqual({
       pgms: [
         { program: "a.pli", pgroup: "default" },
         { program: "b.pli", pgroup: "default" },
@@ -73,7 +73,7 @@ describe("commandCreateConfig", () => {
       );
 
       expect(result).toBeDefined();
-      expect(JSON.parse(JSON.parse(result!))).toEqual({
+      expect(JSON.parse(result!)).toEqual({
         pgms: [
           { program: "a.pli", pgroup: "default" },
           { program: "nested/b.pli", pgroup: "default" },
@@ -91,7 +91,7 @@ describe("commandCreateConfig", () => {
     );
 
     expect(result).toBeDefined();
-    expect(JSON.parse(JSON.parse(result!))).toEqual({
+    expect(JSON.parse(result!)).toEqual({
       pgms: [{ program: "a.pli", pgroup: "default" }],
     });
   });
