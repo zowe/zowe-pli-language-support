@@ -12,5 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 //// DCL ANYTHING(<|str:'hello'|>) FIXED BIN;
+//// //TODO DCL ANYTHING(<|pic:P'AAA99X'|>) FIXED BIN;
+//// DCL ANYTHING(<|wide:'3100'wx|>) FIXED BIN;
 
-verify.expectDiagnosticsAt("str", code.Severe.IBM1948I);
+verify.expectDiagnosticsAt("str", {
+  message:
+    "CONVERSION condition with ONCODE= 612 raised while evaluating restricted expression.",
+});
+verify.expectDiagnosticsAt("wide", {
+  message:
+    "CONVERSION condition with ONCODE= 676 raised while evaluating restricted expression.",
+});

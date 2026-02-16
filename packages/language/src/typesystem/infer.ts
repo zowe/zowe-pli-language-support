@@ -216,7 +216,12 @@ export class DefaultTypeInferer implements TypeInferer {
               format: StringFormat.NonVarying,
               stringBits: {
                 //TODO handle other string kinds
-                kind: StringKind.Character,
+                kind:
+                  expression.value.value &&
+                  expression.value.value.endsWith("wx")
+                    ? StringKind.WideChar
+                    : StringKind.Character,
+                //TODO set corrrect string length
                 length: expression.value.value!.length,
               },
             });
