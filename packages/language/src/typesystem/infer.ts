@@ -10,7 +10,7 @@
  */
 
 import * as ast from "../syntax-tree/ast";
-import { TypeDescriptions } from "./descriptions";
+import { StringFormat, StringKind, TypeDescriptions } from "./descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { DefaultCompositeTypeBuilder } from "./composite-type-builder";
 import { BuilderDeclareItem } from "./descriptions";
@@ -212,14 +212,28 @@ export class DefaultTypeInferer implements TypeInferer {
         }
         switch (expression.value.kind) {
           case ast.SyntaxKind.StringLiteral:
-          //TODO implement
+            return TypeDescriptions.String({
+              format: StringFormat.NonVarying,
+              stringBits: {
+                //TODO handle other string kinds
+                kind:
+                  expression.value.value &&
+                  expression.value.value.endsWith("wx")
+                    ? StringKind.WideChar
+                    : StringKind.Character,
+                //TODO set corrrect string length
+                length: expression.value.value!.length,
+              },
+            });
           case ast.SyntaxKind.NumberLiteral:
-            //TODO implement
-            return TypeDescriptions.Unknown();
+            //TODO handle other numeric literals
+            return TypeDescriptions.Arithmetic({});
         }
       }
       case ast.SyntaxKind.UnaryExpression:
-        //TODO implement
+        if (expression.expr) {
+          return this.inferExpressionType(expression.expr, compilationUnit);
+        }
         return TypeDescriptions.Unknown();
       case ast.SyntaxKind.BinaryExpression:
         //TODO implement
