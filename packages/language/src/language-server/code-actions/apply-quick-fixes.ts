@@ -107,12 +107,18 @@ export async function quickFixCreateConfig(
     ? URI.parse(entryUri).fsPath.replace(/\\/g, "/")
     : entryUri.replace(/\\/g, "/");
 
-  const normalizedWorkspace = workspace.replace(/\\/g, "/");
-  const workspacePrefix = normalizedWorkspace + "/";
+  const workspaceParts = workspace
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter((e) => e.length > 0);
+  const entryParts = resolvedEntry.split("/").filter((e) => e.length > 0);
 
-  const isInsideWorkspace = resolvedEntry.startsWith(workspacePrefix);
+  const isInsideWorkspace = workspaceParts.every(
+    (part, index) => part === entryParts[index],
+  );
+
   const rawPath = isInsideWorkspace
-    ? resolvedEntry.slice(workspacePrefix.length)
+    ? entryParts.slice(workspaceParts.length).join("/")
     : resolvedEntry;
 
   const programPath = UriUtils.processDriveLetter(rawPath).drive
