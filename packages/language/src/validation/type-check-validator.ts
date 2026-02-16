@@ -15,6 +15,7 @@ import {
   AttributeKind,
   Bound,
   ScaleMode,
+  StringKind,
   TypeDescriptions,
 } from "../typesystem/descriptions";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -96,7 +97,7 @@ export function typeCheck(
           description.precision.totalDigitsCount
         ) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, witness.token));
-        } else if (description.scale == ScaleMode.Float) {
+        } else if (description.scale === ScaleMode.Float) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, witness.token));
         }
       }
@@ -104,7 +105,7 @@ export function typeCheck(
   }
 }
 
-export function validateBound(
+function validateBound(
   bound: Bound,
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
@@ -129,13 +130,25 @@ export function validateBound(
       }
       if (!TypeDescriptions.isArithmetic(boundDescription)) {
         //TODO handle other types
-        //CHAR=612
+        let code = "";
+        if (TypeDescriptions.isString(boundDescription)) {
+          if (
+            boundDescription.stringBits &&
+            boundDescription.stringBits.kind === StringKind.WideChar
+          ) {
+            code = "676";
+          } else {
+            code = "612";
+          }
+        } else if (TypeDescriptions.isPicture(boundDescription)) {
+          code = "652";
+        }
         acceptor(
           diagnosticFromCode(
             PLICodes.Severe.IBM1948I,
             bound.token,
             "CONVERSION",
-            "612",
+            code,
           ),
         );
         return "invalid";
