@@ -19,28 +19,7 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
   const hasExistingConfigs =
     PluginConfigurationProviderInstance.hasRegisteredProgramConfigs();
 
-  if (hasExistingConfigs) {
-    const workspaceFolderUri = URI.parse(
-      PluginConfigurationProviderInstance.getWorkspacePath(),
-    );
-    const configFilePath = UriUtils.joinPath(
-      workspaceFolderUri,
-      PluginConfiguration.PROGRAM_FILE_PATH,
-    );
-    const progConfigFile =
-      await FileSystemProviderInstance.readFile(configFilePath);
-    if (!progConfigFile) {
-      return;
-    }
-    const textContent = JSON.parse(progConfigFile);
-
-    PluginConfigurationProviderInstance.addProgramConfig(
-      workspaceFolderUri,
-      { program: programPath, pgroup: "default" },
-      programPath,
-      textContent,
-    );
-  } else {
+  if (!hasExistingConfigs) {
     try {
       await PluginConfigurationProviderInstance.writeProgramConfigFile(
         programPath,
@@ -48,7 +27,27 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
       await PluginConfigurationProviderInstance.writeProcessGroupsFile();
     } catch (err) {
       console.error(err);
-      return;
     }
+    return;
   }
+  const workspaceFolderUri = URI.parse(
+    PluginConfigurationProviderInstance.getWorkspacePath(),
+  );
+  const configFilePath = UriUtils.joinPath(
+    workspaceFolderUri,
+    PluginConfiguration.PROGRAM_FILE_PATH,
+  );
+  const progConfigFile =
+    await FileSystemProviderInstance.readFile(configFilePath);
+  if (!progConfigFile) {
+    return;
+  }
+  const textContent = JSON.parse(progConfigFile);
+
+  PluginConfigurationProviderInstance.addProgramConfig(
+    workspaceFolderUri,
+    { program: programPath, pgroup: "default" },
+    programPath,
+    textContent,
+  );
 }
