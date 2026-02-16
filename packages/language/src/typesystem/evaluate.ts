@@ -62,7 +62,7 @@ export function evaluateExpression(expression: Expression): Value {
           case SyntaxKind.NumberLiteral:
             return {
               type: TypeDescriptions.Arithmetic({}),
-              value: parseInt(literal.value),
+              value: parseFloat(literal.value),
             };
         }
       }

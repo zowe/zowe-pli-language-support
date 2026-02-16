@@ -1434,6 +1434,7 @@ export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;
   expression: Wildcard<Expression> | null;
   refer: LocatorCall | null;
+  token: Token | null;
 }
 export function createBound(): Bound {
   return {
@@ -1441,6 +1442,7 @@ export function createBound(): Bound {
     container: null,
     expression: null,
     refer: null,
+    token: null,
   };
 }
 export interface CallStatement extends AstNode {
