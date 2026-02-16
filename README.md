@@ -19,6 +19,12 @@ This extension is a part of the Zowe open-source project, hosted by the Open Mai
     
 There are no client or server-side prerequisites for PL/I Language Support.
 
+## Integrate with Zowe Explorer
+
+Integrate PL/I Language Support with Zowe Explorer to retrieve your PL/I source code stored on mainframe data sets. PL/I Language Support and [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) are both available as part of the [Code4z Foundation](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) pack.
+
+<div align="center"><a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=20% height=20% /></a></div>
+
 ## Language Support Features
 
 PL/I Language Support provides the following PL/I syntax awareness features:
@@ -32,7 +38,7 @@ The syntax check feature also validates built-in functions, pseudovariables, and
 The extension enables syntax highlighting for PL/I code.
 
 ### Syntax Coloring
-Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, compiler options, paragraphs, and sections.
+Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, type functions, compiler options, paragraphs, and sections.
 
 ### Outline View and Breadcrumbs
 The extension enables outline view and the breadcrumbs navigation bar at the top of the edit window, which show the structure of elements within the program and allow easy navigation between them.
@@ -46,17 +52,13 @@ Before you write your PL/I code from scratch, search the snippet library for use
 
 You can also insert a code snippet by typing the name of the snippet in your code and clicking on the autocomplete text.
 
-### Core Preprocessor Support
+### Preprocessor Support
 
-The following preprocessor statements are supported:
-
-* Listing control statements (`PAGE`, `SKIP`, `PRINT`, `PUSH`, `POP`)
-* Standard include statements (`%INCLUDE`, `%XINCLUDE`, `%INSCAN`, `%INSCAN`)
-* Core preprocessor statements (`%DECLARE`, `%ACTIVATE`, `%DEACTIVATE`, `%DO`, `%SELECT`, `%IF`, `%ELSE`, `%THEN`, `%GOTO`, `%END`, `%ITERATE`, `%LEAVE`, `%NOTE`, `%null`, `%REPLACE`)
+PL/I Preprocessors process source code before compilation. They support complex logic, variable manipulation, and string processing to generate optimized or customized code. All PL/I Core Preprocessors are supported by PL/I Language Support.
 
 ### Include File Support
 
-The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another workspace folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised by default as PL/I include files. If your include files use other extensions, specify them in a processor group. 
+The PL/I Language Support extension supports include files used in your source code as long as they are stored locally in an **/inc** folder in your workspace, or in another folder which you specify in a processor group. Files with the extensions `.inc` and `.mac` or with no extension are recognised by default as PL/I include files. If your include files use other extensions, specify them in a processor group. 
 
 The `%INCLUDE` statement is supported by default, variations on it such as `++INCLUDE` must be specified as compiler options in a processor group.
 
@@ -67,6 +69,14 @@ The Find All References and Go To Definition functionalities are extended to wor
 
 ![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](https://github.com/zowe/zowe-pli-language-support/blob/main/img/include.gif?raw=true)  
 
+### CICS and SQL Built-In Variable Support
+
+The PL/I Language Support extension supports the built-in variables for CICS, SQLCA and SQLDA. Hover over a built-in variable to display its definition.
+
+### Type Function Support
+
+The PL/I Language Support extension supports all PL/I type functions. Hover over a type function to display its definition.
+
 ## Configure Processor Groups
 
 Configure processor groups to link specific programs with compiler options, folders that contain include files, and non-standard include file extensions. You define processor groups in a `proc_grps.json` file and associate processor groups with programs in a `pgm_conf.json` file. You can use a wildcard in the `pgm_conf.json` file to create a global processor group. Create both of these files in a **/.pliplugin** folder in your workspace root.
@@ -76,7 +86,7 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
 - **"name":** (string)  
     - Specify a name for the processor group.
 - (Optional) **"libs":** (array)  
-    - Specify local folders that contain include files. Folders can be either absolute or relative local paths.
+    - Specify local folders that contain include files. Folders can be relative paths to the workspace root, or absolute paths to any local folder.
     - Include members by adding ddnames, such as adding `mylibs/a.b.c`, where `a.b.c(member)` is a file in the `mylibs` folder.
 - (Optional) **"include-extensions":** (array)  
     - Specify file extensions that you use for the include files in programs linked with this processor groups.
@@ -135,3 +145,11 @@ Using the example `pgm_conf.json` file in the section above, the following `proc
   ]
 }
 ```
+### Dynamic Include File Resolution
+
+You can use the VS Code Quick Fix feature to dynamically resolve include files that are stored in a subfolder of your workspace. For this feature to work correctly, your `proc_grps.json` file must be present in the correct location your workspace.
+
+1. Hover over an unresolved include file name.
+2. Select **Quick Fix...**
+3. Select the option **Add *folder* to INCLUDE...**  
+   The folder is added to the `"libs"` array in your `proc_grps.json` file in order to resolve the include file.
