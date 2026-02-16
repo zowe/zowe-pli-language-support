@@ -726,10 +726,9 @@ export class PluginConfigurationProvider {
     textContent: PgmsConfig,
   ) {
     this.programConfigs.set(programConfig.program, programConfig);
-    this.setProgramConfigs(
-      workspacePath.path,
-      [...this.programConfigs.values()],
-    );
+    this.setProgramConfigs(workspacePath.path, [
+      ...this.programConfigs.values(),
+    ]);
     if (!textContent || !Array.isArray(textContent.pgms)) {
       console.error("Invalid configuration file format");
       return;
