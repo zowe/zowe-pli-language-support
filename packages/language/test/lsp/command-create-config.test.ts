@@ -42,7 +42,7 @@ describe("commandCreateConfig", () => {
     await pluginConfig.init(WORKSPACE_PATH);
   });
 
-  (test("appends a new program to an existing config file", async () => {
+  test("appends a new program to an existing config file", async () => {
     await vfs.writeFile(URI.parse(CONFIG_FILE_PATH), INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
@@ -61,26 +61,26 @@ describe("commandCreateConfig", () => {
         { program: "b.pli", pgroup: "default" },
       ],
     });
-  }),
-    test("appends a new nested program to an existing config file", async () => {
-      await vfs.writeFile(URI.parse(CONFIG_FILE_PATH), INITIAL_CONFIG);
-      await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
+  });
+  test("appends a new nested program to an existing config file", async () => {
+    await vfs.writeFile(URI.parse(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-      await commandCreateConfig({
-        command: Commands.CREATE_CONFIG,
-        arguments: ["nested/b.pli"],
-      });
-      const result = await FileSystemProviderInstance.readFile(
-        URI.parse(CONFIG_FILE_PATH),
-      );
-      expect(result).toBeDefined();
-      expect(JSON.parse(result!)).toEqual({
-        pgms: [
-          { program: "a.pli", pgroup: "default" },
-          { program: "nested/b.pli", pgroup: "default" },
-        ],
-      });
-    }));
+    await commandCreateConfig({
+      command: Commands.CREATE_CONFIG,
+      arguments: ["nested/b.pli"],
+    });
+    const result = await FileSystemProviderInstance.readFile(
+      URI.parse(CONFIG_FILE_PATH),
+    );
+    expect(result).toBeDefined();
+    expect(JSON.parse(result!)).toEqual({
+      pgms: [
+        { program: "a.pli", pgroup: "default" },
+        { program: "nested/b.pli", pgroup: "default" },
+      ],
+    });
+  });
 
   test("creates a new config file when none exists", async () => {
     await commandCreateConfig({
