@@ -15,7 +15,7 @@ import { PluginConfigurationProviderInstance } from "../workspace/plugin-configu
 import { ExecuteCommandParams } from "vscode-languageserver";
 import { UriUtils } from "../utils/uri";
 import { PluginConfiguration } from "./constants";
-import { updateExistingConfig, createNewConfig } from "../utils/config";
+import { updateOrCreateConfig } from "../utils/config";
 
 export async function commandResolveInclude(params: ExecuteCommandParams) {
   const [uri, content] = params.arguments as string[];
@@ -55,16 +55,12 @@ export async function commandCreateConfig(
     );
   }
 
-  if (progConfigFile) {
-    await updateExistingConfig(
-      workspaceFolderUri,
-      configFilePath,
-      progConfigFile,
-      programPath,
-    );
-  } else {
-    await createNewConfig(workspaceFolderUri, programPath);
-  }
+  await updateOrCreateConfig(
+    workspaceFolderUri,
+    configFilePath,
+    progConfigFile,
+    programPath,
+  );
 
   if (!returnUpdatedFile) {
     return;

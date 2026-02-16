@@ -99,14 +99,14 @@ export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
 ): Promise<CodeAction | undefined> {
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-  const entryUri = diagnostic.data.entryUri;
+  const entryUri = diagnostic.data.entryUri as string;
   if (!workspace || !entryUri) {
     return;
   }
-  const programPath = URI.parse(entryUri.replace(workspace, "")).path.replace(
-    /^\//,
-    "",
-  );
+  const workspaceStrippedUri = entryUri.startsWith(workspace)
+    ? entryUri.replace(workspace, "")
+    : entryUri;
+  const programPath = URI.parse(workspaceStrippedUri).path.replace(/^\//, "");
   if (!programPath.length) {
     return;
   }

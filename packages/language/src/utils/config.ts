@@ -15,10 +15,10 @@ import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { UriUtils } from "../utils/uri";
 
-export async function updateExistingConfig(
+export async function updateOrCreateConfig(
   workspaceFolderUri: URI,
   configFilePath: URI,
-  progConfigFile: string,
+  progConfigFile: string | undefined,
   programPath: string,
 ) {
   const canAddToExistingConfig =
@@ -28,9 +28,48 @@ export async function updateExistingConfig(
     );
 
   if (!canAddToExistingConfig) {
-    return;
+    try {
+      await FileSystemProviderInstance.writeFile(
+        UriUtils.joinPath(
+          workspaceFolderUri,
+          PluginConfiguration.PROGRAM_FILE_PATH,
+        ),
+        JSON.stringify(
+          {
+            ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+            pgms: [
+              {
+                ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
+                program: programPath,
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+      );
+
+      await FileSystemProviderInstance.writeFile(
+        UriUtils.joinPath(
+          workspaceFolderUri,
+          PluginConfiguration.PROCESS_GROUP_FILE_PATH,
+        ),
+        JSON.stringify(
+          PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+          null,
+          2,
+        ),
+      );
+      return;
+    } catch (err) {
+      console.error("Failed to create configuration: ", err);
+      return;
+    }
   }
 
+  if (!progConfigFile) {
+    return;
+  }
   try {
     const textContent = JSON.parse(progConfigFile);
     textContent.pgms.push({
@@ -44,46 +83,5 @@ export async function updateExistingConfig(
   } catch (err) {
     console.error("Failed to create configuration: ", err);
     return;
-  }
-}
-
-export async function createNewConfig(
-  workspaceFolderUri: URI,
-  programPath: string,
-) {
-  try {
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROGRAM_FILE_PATH,
-      ),
-      JSON.stringify(
-        {
-          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-          pgms: [
-            {
-              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-              program: programPath,
-            },
-          ],
-        },
-        null,
-        2,
-      ),
-    );
-
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-      ),
-      JSON.stringify(
-        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-        null,
-        2,
-      ),
-    );
-  } catch (err) {
-    console.error("Failed to create configuration: ", err);
   }
 }
