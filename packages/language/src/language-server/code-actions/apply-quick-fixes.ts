@@ -120,11 +120,11 @@ export async function quickFixCreateConfig(
     : rawPath;
 
   const action: CodeAction = {
-    title: `Create a plugin configuration for this file.`,
+    title: `Create an startup configuration for this file.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
     command: {
-      title: "Create configuration folder",
+      title: "Create an startup configuration",
       command: Commands.CREATE_CONFIG,
       arguments: [programPath],
     },
