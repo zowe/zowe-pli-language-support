@@ -11,16 +11,18 @@
 
 import { beforeEach, describe, expect, test } from "vitest";
 import {
-  URI,
+  FileSystemProviderInstance,
   VirtualFileSystemProvider,
   setFileSystemProvider,
-} from "../../src";
+} from "../../src/workspace/file-system-provider";
+
 import {
   PluginConfigurationProvider,
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
 import { commandCreateConfig } from "../../src/language-server/commands";
 import { Commands } from "../../src/language-server/constants";
+import { URI } from "../../src/utils/uri";
 
 const WORKSPACE_PATH = "/workspace";
 const CONFIG_FILE_PATH = "/workspace/.pliplugin/pgm_conf.json";
@@ -44,14 +46,14 @@ describe("commandCreateConfig", () => {
     await vfs.writeFile(URI.parse(CONFIG_FILE_PATH), INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-    const result = await commandCreateConfig(
-      {
-        command: Commands.CREATE_CONFIG,
-        arguments: ["b.pli"],
-      },
-      true,
-    );
+    await commandCreateConfig({
+      command: Commands.CREATE_CONFIG,
+      arguments: ["b.pli"],
+    });
 
+    const result = await FileSystemProviderInstance.readFile(
+      URI.parse(CONFIG_FILE_PATH),
+    );
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [
@@ -64,14 +66,13 @@ describe("commandCreateConfig", () => {
       await vfs.writeFile(URI.parse(CONFIG_FILE_PATH), INITIAL_CONFIG);
       await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-      const result = await commandCreateConfig(
-        {
-          command: Commands.CREATE_CONFIG,
-          arguments: ["nested/b.pli"],
-        },
-        true,
+      await commandCreateConfig({
+        command: Commands.CREATE_CONFIG,
+        arguments: ["nested/b.pli"],
+      });
+      const result = await FileSystemProviderInstance.readFile(
+        URI.parse(CONFIG_FILE_PATH),
       );
-
       expect(result).toBeDefined();
       expect(JSON.parse(result!)).toEqual({
         pgms: [
@@ -82,14 +83,14 @@ describe("commandCreateConfig", () => {
     }));
 
   test("creates a new config file when none exists", async () => {
-    const result = await commandCreateConfig(
-      {
-        command: Commands.CREATE_CONFIG,
-        arguments: ["a.pli"],
-      },
-      true,
-    );
+    await commandCreateConfig({
+      command: Commands.CREATE_CONFIG,
+      arguments: ["a.pli"],
+    });
 
+    const result = await FileSystemProviderInstance.readFile(
+      URI.parse(CONFIG_FILE_PATH),
+    );
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [{ program: "a.pli", pgroup: "default" }],

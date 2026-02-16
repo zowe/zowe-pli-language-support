@@ -28,8 +28,7 @@ export async function commandResolveInclude(params: ExecuteCommandParams) {
 
 export async function commandCreateConfig(
   params: ExecuteCommandParams,
-  returnUpdatedFile = false,
-): Promise<string | undefined> {
+): Promise<undefined> {
   const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
   if (!workspacePath.length || !params.arguments) {
     return;
@@ -61,10 +60,4 @@ export async function commandCreateConfig(
     progConfigFile,
     programPath,
   );
-
-  if (!returnUpdatedFile) {
-    return;
-  }
-
-  return await FileSystemProviderInstance.readFile(configFilePath);
 }
