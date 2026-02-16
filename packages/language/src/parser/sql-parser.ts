@@ -50,53 +50,62 @@ export function sqlAttributeStatement(
     attributeStatement.isXml = true;
   }
   const isLargePeek = state.peek(2)?.tokenTypeIdx === t.LARGE.tokenTypeIdx;
-  if (state.canConsume(t.LOB)) {
-    attributeStatement.body = parseSQLAttributeLob(
-      state,
-      attributeStatement.isXml,
-    );
-  } else if (
-    state.canConsume(t.VARBINARY) ||
-    (state.canConsume(t.BINARY) && !isLargePeek)
-  ) {
-    attributeStatement.body = parseSQLAttributeBinary(
-      state,
-      attributeStatement.isXml,
-    );
-  } else if (state.canConsume(t.BINARY) || state.canConsume(t.CHARACTER)) {
-    attributeStatement.body = parseSQLAttributeExplicitLob(
-      state,
-      attributeStatement.isXml,
-    );
-  } else if (state.canConsume(t.LOBLocator)) {
-    attributeStatement.body = ast.createSqlAttributeLobLocator();
-    state.consume(
-      attributeStatement.body,
-      CstNodeKind.SqlAttributeLobLocator_LOB_LOCATOR,
-      t.LOBLocator,
-    );
-  } else if (state.canConsume(t.LOBFile)) {
-    attributeStatement.body = ast.createSqlAttributeLobFile();
-    state.consume(
-      attributeStatement.body,
-      CstNodeKind.SqlAttributeLobFile_LOB_FILE,
-      t.LOBFile,
-    );
-  } else if (state.canConsume(t.ROWID)) {
-    attributeStatement.body = ast.createSqlAttributeRowId();
-    state.consume(
-      attributeStatement.body,
-      CstNodeKind.SqlAttributeRowId_ROWID,
-      t.ROWID,
-    );
-  } else if (state.canConsume(t.TABLE)) {
-    attributeStatement.body = parseSqlTableLocator(state);
-  } else if (state.canConsume(t.RESULT_SET_LOCATOR)) {
-    attributeStatement.body = parseSqlResultSetLocator(state);
-  } else {
-    const code = attributeStatement.isXml ? Severe.IBM3783I : Severe.IBM3788I;
-    state.diagnostics.push(diagnosticFromCode(code, state.token));
+  let found = true;
+  if (!attributeStatement.isXml) {
+    if (
+      state.canConsume(t.VARBINARY) ||
+      (state.canConsume(t.BINARY) && !isLargePeek)
+    ) {
+      attributeStatement.body = parseSQLAttributeBinary(
+        state,
+        attributeStatement.isXml,
+      );
+    } else if (state.canConsume(t.BINARY) || state.canConsume(t.CHARACTER)) {
+      attributeStatement.body = parseSQLAttributeExplicitLob(
+        state,
+        attributeStatement.isXml,
+      );
+    } else if (state.canConsume(t.LOBLocator)) {
+      attributeStatement.body = ast.createSqlAttributeLobLocator();
+      state.consume(
+        attributeStatement.body,
+        CstNodeKind.SqlAttributeLobLocator_LOB_LOCATOR,
+        t.LOBLocator,
+      );
+    } else if (state.canConsume(t.ROWID)) {
+      attributeStatement.body = ast.createSqlAttributeRowId();
+      state.consume(
+        attributeStatement.body,
+        CstNodeKind.SqlAttributeRowId_ROWID,
+        t.ROWID,
+      );
+    } else if (state.canConsume(t.TABLE)) {
+      attributeStatement.body = parseSqlTableLocator(state);
+    } else if (state.canConsume(t.RESULT_SET_LOCATOR)) {
+      attributeStatement.body = parseSqlResultSetLocator(state);
+    } else {
+      found = false;
+    }
   }
+  if (attributeStatement.isXml || !found) {
+    if (state.canConsume(t.LOB)) {
+      attributeStatement.body = parseSQLAttributeLob(
+        state,
+        attributeStatement.isXml,
+      );
+    } else if (state.canConsume(t.LOBFile)) {
+      attributeStatement.body = ast.createSqlAttributeLobFile();
+      state.consume(
+        attributeStatement.body,
+        CstNodeKind.SqlAttributeLobFile_LOB_FILE,
+        t.LOBFile,
+      );
+    } else {
+      const code = attributeStatement.isXml ? Severe.IBM3783I : Severe.IBM3788I;
+      state.diagnostics.push(diagnosticFromCode(code, state.token));
+    }
+  }
+
   return attributeStatement;
 }
 
