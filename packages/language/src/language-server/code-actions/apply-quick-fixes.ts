@@ -107,8 +107,8 @@ export async function quickFixCreateConfig(
     ? URI.parse(entryUri).fsPath.replace(/\\/g, "/")
     : entryUri.replace(/\\/g, "/");
 
-  const workspaceParts = workspace
-    .replace(/\\/g, "/")
+  const workspaceParts = URI.parse(workspace)
+    .fsPath.replace(/\\/g, "/")
     .split("/")
     .filter((e) => e.length > 0);
   const entryParts = resolvedEntry.split("/").filter((e) => e.length > 0);
