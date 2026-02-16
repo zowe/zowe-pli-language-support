@@ -30,13 +30,13 @@ export async function commandCreateConfig(
   params: ExecuteCommandParams,
 ): Promise<undefined> {
   const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
-  if (!workspacePath.length || !params.arguments) {
+  if (!workspacePath || !params.arguments) {
     return;
   }
 
   const workspaceFolderUri = URI.parse(workspacePath);
   const programPath = params.arguments[0];
-  if (!programPath.length) {
+  if (!programPath) {
     return;
   }
 
