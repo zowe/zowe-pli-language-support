@@ -16,31 +16,31 @@ import { UriUtils } from "./uri";
 import { PluginConfiguration } from "../language-server/constants";
 
 export async function updateOrCreateConfig(programPath: string): Promise<void> {
-  const hasExistingConfigs = PluginConfigurationProviderInstance.hasRegisteredProgramConfigs();
-  console.log(hasExistingConfigs);
-  const workspaceFolderUri = URI.parse(
-    PluginConfigurationProviderInstance.getWorkspacePath(),
-  );
-  
-  const configFilePath = UriUtils.joinPath(
-    workspaceFolderUri,
-    PluginConfiguration.PROGRAM_FILE_PATH,
-  );
-  let progConfigFile: string | undefined;
-  try {
-    progConfigFile = await FileSystemProviderInstance.readFile(configFilePath);
-  } catch {
-    console.info(
-      `[Info] No existing "pgm_conf.json" found in workspace — a new configuration file will be created.`,
-    );
-  }
-  const canAddToExistingConfig =
-    PluginConfigurationProviderInstance.addProgramConfig(
-      workspaceFolderUri.path,
-      { program: programPath, pgroup: "default" },
-    );
+  const hasExistingConfigs =
+    PluginConfigurationProviderInstance.hasRegisteredProgramConfigs();
 
-  if (!canAddToExistingConfig) {
+  if (hasExistingConfigs) {
+    const workspaceFolderUri = URI.parse(
+      PluginConfigurationProviderInstance.getWorkspacePath(),
+    );
+    const configFilePath = UriUtils.joinPath(
+      workspaceFolderUri,
+      PluginConfiguration.PROGRAM_FILE_PATH,
+    );
+    const progConfigFile =
+      await FileSystemProviderInstance.readFile(configFilePath);
+    if (!progConfigFile) {
+      return;
+    }
+    const textContent = JSON.parse(progConfigFile);
+
+    PluginConfigurationProviderInstance.addProgramConfig(
+      workspaceFolderUri,
+      { program: programPath, pgroup: "default" },
+      programPath,
+      textContent,
+    );
+  } else {
     try {
       await PluginConfigurationProviderInstance.writeProgramConfigFile(
         programPath,
@@ -50,31 +50,5 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
       console.error(err);
       return;
     }
-  }
-
-  if (!progConfigFile) {
-    return;
-  }
-  try {
-    const textContent = JSON.parse(progConfigFile);
-    if (
-      !textContent ||
-      typeof textContent !== "object" ||
-      !Array.isArray(textContent.pgms)
-    ) {
-      console.error("Invalid configuration file format");
-      return;
-    }
-    textContent.pgms.push({
-      program: programPath,
-      pgroup: "default",
-    });
-    await PluginConfigurationProviderInstance.writeProgramConfigFile(
-      configFilePath.path,
-      textContent,
-    );
-  } catch (err) {
-    console.error("Failed to create configuration: ", err);
-    return;
   }
 }

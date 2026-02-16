@@ -208,6 +208,15 @@ export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
   return (entry as LibsDirEntry).dir !== undefined;
 }
 
+type ProgramEntry = {
+  program: string;
+  pgroup: string;
+};
+
+type PgmsConfig = {
+  pgms: ProgramEntry[];
+};
+
 /**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
  * processing their contents, and making those settings available to the language server.
@@ -708,22 +717,32 @@ export class PluginConfigurationProvider {
    *
    * @param workspacePath - Absolute path to the workspace.
    * @param programConfig - The program configuration to add.
-   * @returns `true` if the configuration was pushed successfully,
-   *          `false` if no existing configurations are present.
    */
-  public addProgramConfig(
-    workspacePath: string,
+
+  public async addProgramConfig(
+    workspacePath: URI,
     programConfig: ProgramConfig,
-  ): boolean {
-    if (this.programConfigs.size === 0) {
-      return false;
-    }
+    programPath: string,
+    textContent: PgmsConfig,
+  ) {
     this.programConfigs.set(programConfig.program, programConfig);
     this.setProgramConfigs(
-      workspacePath,
+      workspacePath.path,
       [...this.programConfigs.values()].map(deserializeProgramConfig),
     );
-    return true;
+    if (!textContent || !Array.isArray(textContent.pgms)) {
+      console.error("Invalid configuration file format");
+      return;
+    }
+    textContent.pgms.push({
+      program: programPath,
+      pgroup: "default",
+    });
+    await PluginConfigurationProviderInstance.writeProgramConfigFile(
+      UriUtils.joinPath(workspacePath, PluginConfiguration.PROGRAM_FILE_PATH)
+        .path,
+      textContent,
+    );
   }
 
   /**
