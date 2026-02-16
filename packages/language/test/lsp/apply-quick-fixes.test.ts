@@ -164,6 +164,50 @@ describe("quickFixCreateConfig", () => {
     expect(result!.command!.arguments![0]).toBe("nested/foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
   });
+
+  test("returns valid CodeAction when absolute UNIX entryUri provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "/Users/mockUser/mockFolder/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a plugin configuration ");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when absolute Windows entryUri provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "C:\\Users\\mockUser\\mockFolder\\foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a plugin configuration ");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "C:/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+  test("returns valid CodeAction when absolute Windows entryUri provided already normalized", async () => {
+    const diagnostic = {
+      data: { entryUri: "C:/Users/mockUser/mockFolder/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a plugin configuration ");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "C:/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
 });
 
 //
