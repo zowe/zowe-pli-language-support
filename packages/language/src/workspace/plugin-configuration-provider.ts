@@ -20,6 +20,7 @@ import { isBoolean, isNumber, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "./file-system-provider";
 import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
+import { PluginConfiguration } from "../language-server/constants";
 
 /**
  * Pli options are effectively macros to set w/ the given values
@@ -355,6 +356,54 @@ export class PluginConfigurationProvider {
     // clear otherwise, no valid program config to use
     this.programConfigs.clear();
     console.warn("No program config found, clearing existing configurations.");
+  }
+
+  public async writeProcessGroupsFile(
+    content = PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+  ) {
+    const workspaceUri = URI.parse(this.getWorkspacePath());
+    try {
+      await FileSystemProviderInstance.writeFile(
+        UriUtils.joinPath(
+          workspaceUri,
+          PluginConfiguration.PROCESS_GROUP_FILE_PATH,
+        ),
+        JSON.stringify(content, null, 2),
+      );
+    } catch (err) {
+      return err;
+    }
+    return;
+  }
+
+  private static defaultProgramConfigContent(programPath: string) {
+    return {
+      ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+      pgms: [
+        {
+          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
+          program: programPath,
+        },
+      ],
+    };
+  }
+
+  public async writeProgramConfigFile(
+    programPath: string,
+    content = PluginConfigurationProvider.defaultProgramConfigContent(
+      programPath,
+    ),
+  ) {
+    const workspaceUri = URI.parse(this.getWorkspacePath());
+    try {
+      await FileSystemProviderInstance.writeFile(
+        UriUtils.joinPath(workspaceUri, PluginConfiguration.PROGRAM_FILE_PATH),
+        JSON.stringify(content, null, 2),
+      );
+    } catch (err) {
+      return err;
+    }
+    return;
   }
 
   /**

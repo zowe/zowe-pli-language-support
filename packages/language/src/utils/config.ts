@@ -10,10 +10,7 @@
  */
 
 import { URI } from "vscode-uri";
-import { PluginConfiguration } from "../language-server/constants";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
-import { UriUtils } from "../utils/uri";
 
 export async function updateOrCreateConfig(
   workspaceFolderUri: URI,
@@ -29,40 +26,12 @@ export async function updateOrCreateConfig(
 
   if (!canAddToExistingConfig) {
     try {
-      await FileSystemProviderInstance.writeFile(
-        UriUtils.joinPath(
-          workspaceFolderUri,
-          PluginConfiguration.PROGRAM_FILE_PATH,
-        ),
-        JSON.stringify(
-          {
-            ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-            pgms: [
-              {
-                ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-                program: programPath,
-              },
-            ],
-          },
-          null,
-          2,
-        ),
+      await PluginConfigurationProviderInstance.writeProgramConfigFile(
+        programPath,
       );
-
-      await FileSystemProviderInstance.writeFile(
-        UriUtils.joinPath(
-          workspaceFolderUri,
-          PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-        ),
-        JSON.stringify(
-          PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-          null,
-          2,
-        ),
-      );
-      return;
+      await PluginConfigurationProviderInstance.writeProcessGroupsFile();
     } catch (err) {
-      console.error("Failed to create configuration: ", err);
+      console.error(err);
       return;
     }
   }
@@ -76,9 +45,9 @@ export async function updateOrCreateConfig(
       program: programPath,
       pgroup: "default",
     });
-    await FileSystemProviderInstance.writeFile(
-      configFilePath,
-      JSON.stringify(textContent, null, 2),
+    await PluginConfigurationProviderInstance.writeProgramConfigFile(
+      configFilePath.path,
+      textContent,
     );
   } catch (err) {
     console.error("Failed to create configuration: ", err);
