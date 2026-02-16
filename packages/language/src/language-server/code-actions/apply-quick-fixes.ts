@@ -100,7 +100,7 @@ export async function quickFixCreateConfig(
 ): Promise<CodeAction | undefined> {
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
   const entryUri = diagnostic.data.entryUri as string;
-  if (!workspace.length || !entryUri || !entryUri.length) {
+  if (!workspace || !entryUri) {
     return;
   }
   const resolvedEntry = entryUri.startsWith("file://")
