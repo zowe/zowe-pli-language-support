@@ -11,10 +11,7 @@
 
 import { URI } from "vscode-uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { ExecuteCommandParams } from "vscode-languageserver";
-import { UriUtils } from "../utils/uri";
-import { PluginConfiguration } from "./constants";
 import { updateOrCreateConfig } from "../utils/config";
 
 export async function commandResolveInclude(params: ExecuteCommandParams) {
@@ -28,36 +25,14 @@ export async function commandResolveInclude(params: ExecuteCommandParams) {
 
 export async function commandCreateConfig(
   params: ExecuteCommandParams,
-): Promise<undefined> {
-  const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
-  if (!workspacePath || !params.arguments) {
+): Promise<void> {
+  if (!params.arguments) {
     return;
   }
-
-  const workspaceFolderUri = URI.parse(workspacePath);
   const programPath = params.arguments[0];
   if (!programPath) {
     return;
   }
 
-  const configFilePath = UriUtils.joinPath(
-    workspaceFolderUri,
-    PluginConfiguration.PROGRAM_FILE_PATH,
-  );
-
-  let progConfigFile: string | undefined;
-  try {
-    progConfigFile = await FileSystemProviderInstance.readFile(configFilePath);
-  } catch {
-    console.info(
-      `[Info] No existing "pgm_conf.json" found in workspace — a new configuration file will be created.`,
-    );
-  }
-
-  await updateOrCreateConfig(
-    workspaceFolderUri,
-    configFilePath,
-    progConfigFile,
-    programPath,
-  );
+  await updateOrCreateConfig(programPath);
 }

@@ -11,13 +11,29 @@
 
 import { URI } from "vscode-uri";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { UriUtils } from "./uri";
+import { PluginConfiguration } from "../language-server/constants";
 
-export async function updateOrCreateConfig(
-  workspaceFolderUri: URI,
-  configFilePath: URI,
-  progConfigFile: string | undefined,
-  programPath: string,
-) {
+export async function updateOrCreateConfig(programPath: string): Promise<void> {
+  const hasExistingConfigs = PluginConfigurationProviderInstance.hasRegisteredProgramConfigs();
+  console.log(hasExistingConfigs);
+  const workspaceFolderUri = URI.parse(
+    PluginConfigurationProviderInstance.getWorkspacePath(),
+  );
+  
+  const configFilePath = UriUtils.joinPath(
+    workspaceFolderUri,
+    PluginConfiguration.PROGRAM_FILE_PATH,
+  );
+  let progConfigFile: string | undefined;
+  try {
+    progConfigFile = await FileSystemProviderInstance.readFile(configFilePath);
+  } catch {
+    console.info(
+      `[Info] No existing "pgm_conf.json" found in workspace — a new configuration file will be created.`,
+    );
+  }
   const canAddToExistingConfig =
     PluginConfigurationProviderInstance.addProgramConfig(
       workspaceFolderUri.path,
@@ -41,6 +57,14 @@ export async function updateOrCreateConfig(
   }
   try {
     const textContent = JSON.parse(progConfigFile);
+    if (
+      !textContent ||
+      typeof textContent !== "object" ||
+      !Array.isArray(textContent.pgms)
+    ) {
+      console.error("Invalid configuration file format");
+      return;
+    }
     textContent.pgms.push({
       program: programPath,
       pgroup: "default",
