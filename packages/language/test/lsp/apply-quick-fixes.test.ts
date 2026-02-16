@@ -146,7 +146,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe("foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
@@ -159,7 +159,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe("nested/foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
@@ -172,7 +172,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe(
       "/Users/mockUser/mockFolder/foo.pli",
@@ -187,7 +187,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe(
       "/Users/mockUser/mockFolder/foo.pli",
@@ -202,7 +202,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe(
       "C:/Users/mockUser/mockFolder/foo.pli",
@@ -217,7 +217,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe(
       "C:/Users/mockUser/mockFolder/foo.pli",
@@ -231,7 +231,7 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create an startup configuration ");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
     expect(result!.command!.arguments![0]).toBe(
       "C:/Users/mockUser/mockFolder/foo.pli",
@@ -281,7 +281,9 @@ describe("applyQuickFixes", () => {
 
     const result = await applyQuickFixes.applyQuickFixes(diagnostics);
     expect(result).toHaveLength(1);
-    expect(result![0].title).toContain("Create an startup configuration ");
+    expect(result![0].title).toContain(
+      "Create a startup configuration for this file.",
+    );
   });
 
   test("returns undefined when no recognized diagnostics", async () => {
