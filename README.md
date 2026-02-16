@@ -38,7 +38,7 @@ The syntax check feature also validates built-in functions, pseudovariables, and
 The extension enables syntax highlighting for PL/I code.
 
 ### Syntax Coloring
-Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, compiler options, paragraphs, and sections.
+Contrasting colors are used in displayed code for ease of identifying and distinguishing keywords, variables, type functions, compiler options, paragraphs, and sections.
 
 ### Outline View and Breadcrumbs
 The extension enables outline view and the breadcrumbs navigation bar at the top of the edit window, which show the structure of elements within the program and allow easy navigation between them.
@@ -68,6 +68,14 @@ The Find All References and Go To Definition functionalities are extended to wor
 * **Go To Definition** enables you to right-click on any variable or paragraph to reveal a definition of the element. If the definition is in an include file, or the name of an include file, the include file opens.
 
 ![Animated gif showing the Go To Definition functionality on a PL/I include file and a variable defined in that file](https://github.com/zowe/zowe-pli-language-support/blob/main/img/include.gif?raw=true)  
+
+### CICS and SQL Built-In Variable Support
+
+The PL/I Language Support extension supports the built-in variables for CICS, SQLCA and SQLDA. Hover over a built-in variable to display its definition.
+
+### Type Function Support
+
+The PL/I Language Support extension supports all PL/I type functions. Hover over a type function to display its definition.
 
 ## Configure Processor Groups
 
