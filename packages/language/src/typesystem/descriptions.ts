@@ -185,6 +185,8 @@ export type Bound = {
   value: number | "*" | undefined;
   expression: ast.Wildcard<ast.Expression> | null;
   refersTo: ast.LocatorCall | null;
+  node: ast.SyntaxNode | null;
+  token: Token | null;
 };
 
 export type DimensionBound = {
@@ -799,6 +801,7 @@ interface BaseTypeDescriptionProps {
   storage: StorageClass;
   variable?: boolean;
   volatility: Volatility;
+  witnesses: AttributeWitnesses;
   toString(): string;
 }
 
@@ -923,6 +926,7 @@ function createBaseTypeDescription(
     initial,
     optional,
     parameter,
+    witnesses,
     toString,
   }: Partial<BaseTypeDescriptionProps>,
 ): BaseTypeDescriptionProps {
@@ -976,6 +980,7 @@ function createBaseTypeDescription(
     variable,
     volatility,
 
+    witnesses: witnesses ?? { order: [], witnesses: {} },
     toString() {
       return toString!();
     },
@@ -1528,6 +1533,7 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   storage?: StorageClass;
   alignment?: Alignment;
   toString(): string;
+  witnesses: AttributeWitnesses;
 }
 
 interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
@@ -1785,6 +1791,7 @@ export namespace TypeDescriptions {
     const attributes = witnesses.witnesses;
     return {
       type,
+      witnesses,
       level,
       members: new Map(),
       membersMetadata: new Map(),
@@ -1806,6 +1813,7 @@ export namespace TypeDescriptions {
     const attributes = witnesses.witnesses;
     const common = {
       toString: () => stringifyAttributeWitnesses(witnesses),
+      witnesses,
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],

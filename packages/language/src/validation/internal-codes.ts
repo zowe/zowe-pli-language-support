@@ -10,7 +10,7 @@
  */
 
 import { Severity } from "../language-server/types";
-import { PLICode, Error } from "./pli-codes";
+import { PLICode, Error, Severe } from "./pli-codes";
 
 export const InternalCodes = {
   DiagnosticURIMismatch: {
@@ -32,4 +32,5 @@ export const TypeSystemCodes: PLICode[] = [
   Error.IBM2424I,
   Error.IBM1482I,
   Error.IBM1483I,
+  Severe.IBM1629I,
 ];
