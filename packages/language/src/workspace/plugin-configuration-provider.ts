@@ -598,7 +598,7 @@ export class PluginConfigurationProvider {
   private resolveProgramPath(programPath: string, workspaceUri: URI): URI {
     const normalizedProgramPath = programPath.replace(/\\/g, "/");
     if (this.isAbsolutePath(normalizedProgramPath)) {
-      return URI.parse(normalizedProgramPath);
+      return URI.file(normalizedProgramPath);
     }
     return UriUtils.joinPath(workspaceUri, normalizedProgramPath);
   }
