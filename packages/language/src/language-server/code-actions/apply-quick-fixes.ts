@@ -100,16 +100,24 @@ export async function quickFixCreateConfig(
 ): Promise<CodeAction | undefined> {
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
   const entryUri = diagnostic.data.entryUri as string;
-  if (!workspace || !entryUri) {
+  if (!workspace.length || !entryUri || !entryUri.length) {
     return;
   }
-  const workspaceStrippedUri = entryUri.startsWith(workspace)
-    ? entryUri.replace(workspace, "")
-    : entryUri;
-  const programPath = URI.parse(workspaceStrippedUri).path.replace(/^\//, "");
-  if (!programPath.length) {
-    return;
-  }
+  const resolvedEntry = entryUri.startsWith("file://")
+    ? URI.parse(entryUri).fsPath.replace(/\\/g, "/")
+    : entryUri.replace(/\\/g, "/");
+
+  const normalizedWorkspace = workspace.replace(/\\/g, "/");
+  const workspacePrefix = normalizedWorkspace + "/";
+
+  const isInsideWorkspace = resolvedEntry.startsWith(workspacePrefix);
+  const rawPath = isInsideWorkspace
+    ? resolvedEntry.slice(workspacePrefix.length)
+    : resolvedEntry;
+
+  const programPath = UriUtils.processDriveLetter(rawPath).drive
+    ? rawPath[0].toUpperCase() + rawPath.slice(1)
+    : rawPath;
 
   const action: CodeAction = {
     title: `Create a plugin configuration for this file.`,
