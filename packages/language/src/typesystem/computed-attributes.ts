@@ -13,9 +13,7 @@ import * as ast from "../syntax-tree/ast";
 import { evaluateExpression } from "./evaluate";
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=arrays-dimension-attribute */
-export function computeDimensions(
-  dimension: ast.Dimensions,
-): Array<DimensionBound> {
+export function computeDimensions(dimension: ast.Dimensions): DimensionBound[] {
   const dims = dimension.dimensions;
   const result: Array<DimensionBound> = [];
   for (const dim of dims) {
@@ -29,6 +27,8 @@ export function computeDimensions(
           value: defaultValue,
           expression: null,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       }
       if (expr === "*") {
@@ -36,6 +36,8 @@ export function computeDimensions(
           value: "*",
           expression: expr,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       }
       const value = evaluateExpression(expr);
@@ -44,12 +46,16 @@ export function computeDimensions(
           value: value.value,
           expression: expr,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       } else {
         return {
           value: undefined,
           expression: expr,
           refersTo: null,
+          node: dim,
+          token: bound?.token || null,
         };
       }
     }
