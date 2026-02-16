@@ -126,11 +126,11 @@ export async function quickFixCreateConfig(
     : rawPath;
 
   const action: CodeAction = {
-    title: `Create an startup configuration for this file.`,
+    title: `Create a startup configuration for this file.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
     command: {
-      title: "Create an startup configuration",
+      title: "Create a startup configuration",
       command: Commands.CREATE_CONFIG,
       arguments: [programPath],
     },
