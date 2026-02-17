@@ -44,13 +44,6 @@ export namespace UriUtils {
     path: string;
     drive: string | null;
   } {
-    if (!UriUtils.isWindows) {
-      return {
-        path: path,
-        drive: null,
-      };
-    }
-
     // Check for leading slash before drive: /C:/ or /c:/
     if (/^\/[a-zA-Z]:\//.test(path)) {
       const drive = path.substring(1, 3); // Extract "C:" and lowercase

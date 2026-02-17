@@ -20,6 +20,7 @@ import { isBoolean, isNumber, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProviderInstance } from "./file-system-provider";
 import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
+import { PluginConfiguration } from "../language-server/constants";
 
 /**
  * Pli options are effectively macros to set w/ the given values
@@ -207,6 +208,16 @@ export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
   return (entry as LibsDirEntry).dir !== undefined;
 }
 
+/** ProgramEntry: Represents a single program entry in the program configuration file. */
+export type ProgramEntry = {
+  program: string;
+  pgroup: string;
+};
+/** ProgramConfig: Represents the structure of the program configuration file. */
+export type PgmsConfig = {
+  pgms: ProgramEntry[];
+};
+
 /**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
  * processing their contents, and making those settings available to the language server.
@@ -355,6 +366,68 @@ export class PluginConfigurationProvider {
     // clear otherwise, no valid program config to use
     this.programConfigs.clear();
     console.warn("No program config found, clearing existing configurations.");
+  }
+
+  /**
+   * Writes the process groups configuration file to the workspace.
+   *
+   * Uses the default process group content unless an override is provided.
+   * Throws if the file cannot be written, so callers can handle the failure
+   * appropriately.
+   *
+   * @param content - Process groups content to serialize and write.
+   */
+  public async writeProcessGroupsFile(
+    content = PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+  ): Promise<void> {
+    const workspaceUri = URI.parse(this.getWorkspacePath());
+    try {
+      await FileSystemProviderInstance.writeFile(
+        UriUtils.joinPath(
+          workspaceUri,
+          PluginConfiguration.PROCESS_GROUP_FILE_PATH,
+        ),
+        JSON.stringify(content, null, 2),
+      );
+    } catch (err) {
+      console.error("Failed to write process groups file:", err);
+      throw err;
+    }
+  }
+
+  public defaultProgramConfigContent(programPath: string): PgmsConfig {
+    return {
+      ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+      pgms: [
+        {
+          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
+          program: programPath,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Writes the program configuration file to the workspace.
+   *
+   * Uses the provided content, or falls back to the default program config
+   * content if none is given. Throws if the file cannot be written.
+   *
+   * @param content - Configuration content to serialize and write.
+   */
+  public async writeProgramConfigFile(
+    content: PgmsConfig = PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+  ): Promise<void> {
+    const workspaceUri = URI.parse(this.getWorkspacePath());
+    try {
+      await FileSystemProviderInstance.writeFile(
+        UriUtils.joinPath(workspaceUri, PluginConfiguration.PROGRAM_FILE_PATH),
+        JSON.stringify(content, null, 2),
+      );
+    } catch (err) {
+      console.error("Failed to write program config file:", err);
+      throw err;
+    }
   }
 
   /**
@@ -651,6 +724,29 @@ export class PluginConfigurationProvider {
     const diagnostics = await this.postProcessProcessGroups();
     this.libFileGlobPatterns = undefined;
     return diagnostics;
+  }
+
+  /**
+   * Adds a program entry to the in-memory config and persists it to disk.
+   *
+   * @param workspacePath - Absolute path to the workspace.
+   * @param programConfig - The program configuration to register.
+   */
+  public async addProgramConfig(
+    workspacePath: URI,
+    programConfig: ProgramConfig,
+  ) {
+    const existing = this.programConfigs.get(programConfig.program);
+    if (existing) {
+      console.error(
+        `The following configuration entry already exists: ${existing}`,
+      );
+      return;
+    }
+    this.setProgramConfigs(workspacePath.path, [
+      ...this.programConfigs.values(),
+      programConfig,
+    ]);
   }
 
   /**
