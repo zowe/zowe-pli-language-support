@@ -238,6 +238,21 @@ describe("quickFixCreateConfig", () => {
     );
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
   });
+  test("returns valid CodeAction when entryUri is outside (above) the workspace", async () => {
+    pluginConfig.setProgramConfigs("/Users/mockUser/workspace", [
+      { program: "main.pli", pgroup: "default" },
+    ]);
+    const diagnostic = {
+      data: { entryUri: "/Users/mockUser/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe("/Users/mockUser/foo.pli");
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
 });
 
 //

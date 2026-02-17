@@ -34,7 +34,9 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
   if (!hasExistingConfigs) {
     try {
       await PluginConfigurationProviderInstance.writeProgramConfigFile(
-        programPath,
+        PluginConfigurationProviderInstance.defaultProgramConfigContent(
+          programPath,
+        ),
       );
       await PluginConfigurationProviderInstance.writeProcessGroupsFile();
     } catch (err) {
@@ -56,9 +58,7 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
     await FileSystemProviderInstance.fileExists(configFilePath);
   if (!fileExists) {
     try {
-      await PluginConfigurationProviderInstance.writeProgramConfigFile(
-        programPath,
-      );
+      await PluginConfigurationProviderInstance.writeProgramConfigFile();
     } catch (err) {
       console.error("Failed to create program config file:", err);
       throw err;

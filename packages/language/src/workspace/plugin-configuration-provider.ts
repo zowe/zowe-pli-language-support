@@ -398,7 +398,7 @@ export class PluginConfigurationProvider {
     }
   }
 
-  private static defaultProgramConfigContent(programPath: string) {
+  public defaultProgramConfigContent(programPath: string): PgmsConfig {
     return {
       ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
       pgms: [
@@ -413,17 +413,13 @@ export class PluginConfigurationProvider {
   /**
    * Writes the program configuration file to the workspace.
    *
-   * Uses a default content derived from the given program path unless an
-   * override is provided. Throws if the file cannot be written.
+   * Uses the provided content, or falls back to the default program config
+   * content if none is given. Throws if the file cannot be written.
    *
-   * @param programPath - Path of the program, used to generate default content.
    * @param content - Configuration content to serialize and write.
    */
   public async writeProgramConfigFile(
-    programPath: string,
-    content = PluginConfigurationProvider.defaultProgramConfigContent(
-      programPath,
-    ),
+    content: PgmsConfig = PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
   ): Promise<void> {
     const workspaceUri = URI.parse(this.getWorkspacePath());
     try {
@@ -756,8 +752,6 @@ export class PluginConfigurationProvider {
       pgroup: "default",
     });
     await PluginConfigurationProviderInstance.writeProgramConfigFile(
-      UriUtils.joinPath(workspacePath, PluginConfiguration.PROGRAM_FILE_PATH)
-        .path,
       textContent,
     );
   }
