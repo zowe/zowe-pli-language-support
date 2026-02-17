@@ -11,60 +11,27 @@
 
 import { URI } from "vscode-uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { ExecuteCommandParams } from "vscode-languageserver";
-import { UriUtils } from "../utils/uri";
-import { PluginConfiguration } from "./constants";
+import { updateOrCreateConfig } from "../utils/config";
 
 export async function commandResolveInclude(params: ExecuteCommandParams) {
   const [uri, content] = params.arguments as string[];
   try {
     await FileSystemProviderInstance.writeFile(URI.parse(uri), content);
   } catch (err) {
-    console.error("Failed to write proc_grps.json:", err);
+    console.error(`Failed to write file at URI: ${uri}`, err);
   }
 }
 
-export async function commandCreateConfig(params: ExecuteCommandParams) {
-  const workspaceFolderUri = URI.parse(
-    PluginConfigurationProviderInstance.getWorkspacePath(),
-  );
-  if (!workspaceFolderUri || !params.arguments) {
+export async function commandCreateConfig(
+  params: ExecuteCommandParams,
+): Promise<void> {
+  if (!params.arguments) {
     return;
   }
-  try {
-    const entryUri = params.arguments[0];
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROGRAM_FILE_PATH,
-      ),
-      JSON.stringify(
-        {
-          ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
-          pgms: [
-            {
-              ...PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0],
-              program: entryUri,
-            },
-          ],
-        },
-        null,
-        2,
-      ),
-    );
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.joinPath(
-        workspaceFolderUri,
-        PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-      ),
-      JSON.stringify(
-        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-        null,
-        2,
-      ),
-    );
-  } catch (err) {
-    console.error("Failed to create configuration: ", err);
+  const programPath = params.arguments[0];
+  if (!programPath) {
+    return;
   }
+  await updateOrCreateConfig(programPath);
 }

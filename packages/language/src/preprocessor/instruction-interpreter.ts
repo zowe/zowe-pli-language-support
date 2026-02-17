@@ -2231,6 +2231,8 @@ async function runInclude(
         item.token,
       );
     } else {
+      // TODO: @wagner-laranjeiras - in case we have a config file with the right program but the wrong pgroup,
+      // it triggers IBM1848I instead of offering to create a new config.
       diagnostic = diagnosticFromCode(
         PLICodes.Severe.IBM1848I,
         item.token,
