@@ -741,6 +741,9 @@ export class PluginConfigurationProvider {
     textContent: PgmsConfig,
   ) {
     if (this.programConfigs.has(programConfig.program)) {
+      console.error(
+        `The following configuration entry already exists: ${programPath}`,
+      );
       return;
     }
     this.programConfigs.set(programConfig.program, programConfig);
