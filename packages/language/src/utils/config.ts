@@ -10,10 +10,7 @@
  */
 
 import { URI } from "vscode-uri";
-import {
-  PgmsConfig,
-  PluginConfigurationProviderInstance,
-} from "../workspace/plugin-configuration-provider";
+import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { UriUtils } from "./uri";
 import { PluginConfiguration } from "../language-server/constants";
@@ -77,12 +74,15 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
       console.error("Unexpected format in program config file");
       return;
     }
-    const textContent: PgmsConfig = parsedTextContent;
 
-    PluginConfigurationProviderInstance.addProgramConfig(
-      workspaceFolderUri,
-      { program: programPath, pgroup: "default" },
-      textContent,
+    PluginConfigurationProviderInstance.addProgramConfig(workspaceFolderUri, {
+      program: programPath,
+      pgroup: "default",
+    });
+
+    parsedTextContent.pgms.push({ program: programPath, pgroup: "default" });
+    await PluginConfigurationProviderInstance.writeProgramConfigFile(
+      parsedTextContent,
     );
   } catch (err) {
     console.error("Failed to read or update program config file:", err);

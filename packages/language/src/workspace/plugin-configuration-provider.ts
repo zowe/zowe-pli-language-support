@@ -731,31 +731,22 @@ export class PluginConfigurationProvider {
    *
    * @param workspacePath - Absolute path to the workspace.
    * @param programConfig - The program configuration to register.
-   * @param textContent - Parsed contents of the existing program config file.
    */
   public async addProgramConfig(
     workspacePath: URI,
     programConfig: ProgramConfig,
-    textContent: PgmsConfig,
   ) {
     const existing = this.programConfigs.get(programConfig.program);
-    if (existing && existing.pgroup === programConfig.pgroup) {
+    if (existing) {
       console.error(
         `The following configuration entry already exists: ${existing}`,
       );
       return;
     }
-    this.programConfigs.set(programConfig.program, programConfig);
     this.setProgramConfigs(workspacePath.path, [
       ...this.programConfigs.values(),
+      programConfig,
     ]);
-    textContent.pgms.push({
-      program: programConfig.program,
-      pgroup: "default",
-    });
-    await PluginConfigurationProviderInstance.writeProgramConfigFile(
-      textContent,
-    );
   }
 
   /**
