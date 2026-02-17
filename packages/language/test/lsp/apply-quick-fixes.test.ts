@@ -146,8 +146,111 @@ describe("quickFixCreateConfig", () => {
     const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
 
     expect(result).toBeDefined();
-    expect(result!.title).toContain("Create a plugin configuration folder");
+    expect(result!.title).toContain("Create a startup configuration");
     expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe("foo.pli");
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when nested entryUri provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "/workspace/nested/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe("nested/foo.pli");
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when absolute UNIX entryUri provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "/Users/mockUser/mockFolder/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when absolute UNIX entryUri with file schema is provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "file:///Users/mockUser/mockFolder/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when absolute Windows entryUri with schema provided already normalized", async () => {
+    const diagnostic = {
+      data: { entryUri: "file:///C:/Users/mockUser/mockFolder/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "C:/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+
+  test("returns valid CodeAction when absolute Windows entryUri provided", async () => {
+    const diagnostic = {
+      data: { entryUri: "C:\\Users\\mockUser\\mockFolder\\foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "C:/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+  test("returns valid CodeAction when absolute Windows entryUri provided already normalized", async () => {
+    const diagnostic = {
+      data: { entryUri: "C:/Users/mockUser/mockFolder/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe(
+      "C:/Users/mockUser/mockFolder/foo.pli",
+    );
+    expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
+  });
+  test("returns valid CodeAction when entryUri is outside (above) the workspace", async () => {
+    pluginConfig.setProgramConfigs("/Users/mockUser/workspace", [
+      { program: "main.pli", pgroup: "default" },
+    ]);
+    const diagnostic = {
+      data: { entryUri: "/Users/mockUser/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.arguments![0]).toBe("/Users/mockUser/foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
   });
 });
@@ -193,7 +296,9 @@ describe("applyQuickFixes", () => {
 
     const result = await applyQuickFixes.applyQuickFixes(diagnostics);
     expect(result).toHaveLength(1);
-    expect(result![0].title).toContain("Create a plugin configuration folder");
+    expect(result![0].title).toContain(
+      "Create a startup configuration for this file.",
+    );
   });
 
   test("returns undefined when no recognized diagnostics", async () => {
