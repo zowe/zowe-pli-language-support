@@ -731,7 +731,6 @@ export class PluginConfigurationProvider {
    *
    * @param workspacePath - Absolute path to the workspace.
    * @param programConfig - The program configuration to register.
-   * @param programPath - Path of the program to append to the config file.
    * @param textContent - Parsed contents of the existing program config file.
    */
   public async addProgramConfig(
