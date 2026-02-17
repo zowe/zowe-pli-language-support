@@ -208,15 +208,12 @@ export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
   return (entry as LibsDirEntry).dir !== undefined;
 }
 
-/**
- * Program Configuration types
- * ProgramEntry: Represents a single program entry in the program configuration file.
- * ProgramConfig: Represents the structure of the program configuration file.
- */
+/** ProgramEntry: Represents a single program entry in the program configuration file. */
 export type ProgramEntry = {
   program: string;
   pgroup: string;
 };
+/** ProgramConfig: Represents the structure of the program configuration file. */
 export type PgmsConfig = {
   pgms: ProgramEntry[];
 };
@@ -730,19 +727,22 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Adds or updates a ProgramConfig in the internal map and persists
-   * the updated configuration set for the given workspace.
+   * Adds a program entry to the in-memory config and persists it to disk.
    *
    * @param workspacePath - Absolute path to the workspace.
-   * @param programConfig - The program configuration to add.
+   * @param programConfig - The program configuration to register.
+   * @param programPath - Path of the program to append to the config file.
+   * @param textContent - Parsed contents of the existing program config file.
    */
-
   public async addProgramConfig(
     workspacePath: URI,
     programConfig: ProgramConfig,
     programPath: string,
     textContent: PgmsConfig,
   ) {
+    if (this.programConfigs.has(programConfig.program)) {
+      return;
+    }
     this.programConfigs.set(programConfig.program, programConfig);
     this.setProgramConfigs(workspacePath.path, [
       ...this.programConfigs.values(),
