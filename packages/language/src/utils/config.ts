@@ -82,7 +82,6 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
     PluginConfigurationProviderInstance.addProgramConfig(
       workspaceFolderUri,
       { program: programPath, pgroup: "default" },
-      programPath,
       textContent,
     );
   } catch (err) {

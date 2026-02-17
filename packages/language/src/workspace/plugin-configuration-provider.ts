@@ -737,12 +737,12 @@ export class PluginConfigurationProvider {
   public async addProgramConfig(
     workspacePath: URI,
     programConfig: ProgramConfig,
-    programPath: string,
     textContent: PgmsConfig,
   ) {
-    if (this.programConfigs.has(programConfig.program)) {
+    const existing = this.programConfigs.get(programConfig.program);
+    if (existing && existing.pgroup === programConfig.pgroup) {
       console.error(
-        `The following configuration entry already exists: ${programConfig.program}`,
+        `The following configuration entry already exists: ${existing}`,
       );
       return;
     }
@@ -751,7 +751,7 @@ export class PluginConfigurationProvider {
       ...this.programConfigs.values(),
     ]);
     textContent.pgms.push({
-      program: programPath,
+      program: programConfig.program,
       pgroup: "default",
     });
     await PluginConfigurationProviderInstance.writeProgramConfigFile(
