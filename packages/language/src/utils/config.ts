@@ -10,11 +10,23 @@
  */
 
 import { URI } from "vscode-uri";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import {
+  PgmsConfig,
+  PluginConfigurationProviderInstance,
+} from "../workspace/plugin-configuration-provider";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { UriUtils } from "./uri";
 import { PluginConfiguration } from "../language-server/constants";
 
+/**
+ * Creates or updates the program configuration for the given program path.
+ *
+ * If no existing configs are registered, both the program config file and
+ * process groups file are created from scratch. Otherwise, the existing
+ * program config file is read and updated with the new program entry.
+ *
+ * @param programPath - Absolute path to the program to register.
+ */
 export async function updateOrCreateConfig(programPath: string): Promise<void> {
   const hasExistingConfigs =
     PluginConfigurationProviderInstance.hasRegisteredProgramConfigs();
@@ -26,10 +38,12 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
       );
       await PluginConfigurationProviderInstance.writeProcessGroupsFile();
     } catch (err) {
-      console.error(err);
+      console.error("Failed to create initial config files:", err);
+      throw err;
     }
     return;
   }
+
   const workspaceFolderUri = URI.parse(
     PluginConfigurationProviderInstance.getWorkspacePath(),
   );
@@ -37,17 +51,42 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
     workspaceFolderUri,
     PluginConfiguration.PROGRAM_FILE_PATH,
   );
-  const progConfigFile =
-    await FileSystemProviderInstance.readFile(configFilePath);
-  if (!progConfigFile) {
+
+  const fileExists =
+    await FileSystemProviderInstance.fileExists(configFilePath);
+  if (!fileExists) {
+    try {
+      await PluginConfigurationProviderInstance.writeProgramConfigFile(
+        programPath,
+      );
+    } catch (err) {
+      console.error("Failed to create program config file:", err);
+      throw err;
+    }
     return;
   }
-  const textContent = JSON.parse(progConfigFile);
 
-  PluginConfigurationProviderInstance.addProgramConfig(
-    workspaceFolderUri,
-    { program: programPath, pgroup: "default" },
-    programPath,
-    textContent,
-  );
+  try {
+    const progConfigFile =
+      await FileSystemProviderInstance.readFile(configFilePath);
+    if (!progConfigFile) {
+      return;
+    }
+    const parsedTextContent = JSON.parse(progConfigFile);
+    if (!parsedTextContent || !Array.isArray(parsedTextContent.pgms)) {
+      console.error("Unexpected format in program config file");
+      return;
+    }
+    const textContent: PgmsConfig = parsedTextContent;
+
+    PluginConfigurationProviderInstance.addProgramConfig(
+      workspaceFolderUri,
+      { program: programPath, pgroup: "default" },
+      programPath,
+      textContent,
+    );
+  } catch (err) {
+    console.error("Failed to read or update program config file:", err);
+    throw err;
+  }
 }

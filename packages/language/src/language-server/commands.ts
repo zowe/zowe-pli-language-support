@@ -19,7 +19,7 @@ export async function commandResolveInclude(params: ExecuteCommandParams) {
   try {
     await FileSystemProviderInstance.writeFile(URI.parse(uri), content);
   } catch (err) {
-    console.error("Failed to write proc_grps.json:", err);
+    console.error(`Failed to write file at URI: ${uri}`, err);
   }
 }
 
@@ -33,6 +33,5 @@ export async function commandCreateConfig(
   if (!programPath) {
     return;
   }
-
   await updateOrCreateConfig(programPath);
 }

@@ -208,12 +208,16 @@ export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
   return (entry as LibsDirEntry).dir !== undefined;
 }
 
-type ProgramEntry = {
+/**
+ * Program Configuration types
+ * ProgramEntry: Represents a single program entry in the program configuration file.
+ * ProgramConfig: Represents the structure of the program configuration file.
+ */
+export type ProgramEntry = {
   program: string;
   pgroup: string;
 };
-
-type PgmsConfig = {
+export type PgmsConfig = {
   pgms: ProgramEntry[];
 };
 
@@ -367,9 +371,18 @@ export class PluginConfigurationProvider {
     console.warn("No program config found, clearing existing configurations.");
   }
 
+  /**
+   * Writes the process groups configuration file to the workspace.
+   *
+   * Uses the default process group content unless an override is provided.
+   * Throws if the file cannot be written, so callers can handle the failure
+   * appropriately.
+   *
+   * @param content - Process groups content to serialize and write.
+   */
   public async writeProcessGroupsFile(
     content = PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
-  ) {
+  ): Promise<void> {
     const workspaceUri = URI.parse(this.getWorkspacePath());
     try {
       await FileSystemProviderInstance.writeFile(
@@ -380,9 +393,9 @@ export class PluginConfigurationProvider {
         JSON.stringify(content, null, 2),
       );
     } catch (err) {
-      return err;
+      console.error("Failed to write process groups file:", err);
+      throw err;
     }
-    return;
   }
 
   private static defaultProgramConfigContent(programPath: string) {
@@ -397,12 +410,21 @@ export class PluginConfigurationProvider {
     };
   }
 
+  /**
+   * Writes the program configuration file to the workspace.
+   *
+   * Uses a default content derived from the given program path unless an
+   * override is provided. Throws if the file cannot be written.
+   *
+   * @param programPath - Path of the program, used to generate default content.
+   * @param content - Configuration content to serialize and write.
+   */
   public async writeProgramConfigFile(
     programPath: string,
     content = PluginConfigurationProvider.defaultProgramConfigContent(
       programPath,
     ),
-  ) {
+  ): Promise<void> {
     const workspaceUri = URI.parse(this.getWorkspacePath());
     try {
       await FileSystemProviderInstance.writeFile(
@@ -410,9 +432,9 @@ export class PluginConfigurationProvider {
         JSON.stringify(content, null, 2),
       );
     } catch (err) {
-      return err;
+      console.error("Failed to write program config file:", err);
+      throw err;
     }
-    return;
   }
 
   /**
@@ -729,10 +751,6 @@ export class PluginConfigurationProvider {
     this.setProgramConfigs(workspacePath.path, [
       ...this.programConfigs.values(),
     ]);
-    if (!textContent || !Array.isArray(textContent.pgms)) {
-      console.error("Invalid configuration file format");
-      return;
-    }
     textContent.pgms.push({
       program: programPath,
       pgroup: "default",
