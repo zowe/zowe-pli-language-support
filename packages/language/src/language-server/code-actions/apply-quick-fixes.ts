@@ -98,18 +98,41 @@ export async function quickFixResolveInclude(
 export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
 ): Promise<CodeAction | undefined> {
-  const entryUri = UriUtils.basename(URI.parse(diagnostic.data.entryUri));
-  if (!diagnostic.data.entryUri || !entryUri) {
-    return undefined;
+  const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+  const entryUri = diagnostic.data.entryUri as string;
+  if (!workspace || !entryUri) {
+    return;
   }
+  const resolvedEntry = entryUri.startsWith("file://")
+    ? URI.parse(entryUri).fsPath.replace(/\\/g, "/")
+    : entryUri.replace(/\\/g, "/");
+
+  const workspaceParts = URI.parse(workspace)
+    .fsPath.replace(/\\/g, "/")
+    .split("/")
+    .filter((e) => e.length > 0);
+  const entryParts = resolvedEntry.split("/").filter((e) => e.length > 0);
+
+  const isInsideWorkspace = workspaceParts.every(
+    (part, index) => part === entryParts[index],
+  );
+
+  const rawPath = isInsideWorkspace
+    ? entryParts.slice(workspaceParts.length).join("/")
+    : resolvedEntry;
+
+  const programPath = UriUtils.processDriveLetter(rawPath).drive
+    ? rawPath[0].toUpperCase() + rawPath.slice(1)
+    : rawPath;
+
   const action: CodeAction = {
-    title: `Create a plugin configuration folder for this file.`,
+    title: `Create a startup configuration for this file.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
     command: {
-      title: "Create configuration folder",
+      title: "Create a startup configuration",
       command: Commands.CREATE_CONFIG,
-      arguments: [entryUri],
+      arguments: [programPath],
     },
   };
 
