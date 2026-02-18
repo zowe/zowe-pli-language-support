@@ -22,6 +22,7 @@ import { Range, getSyntaxNodeRange, DocumentSymbol } from "./types";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isValidToken } from "../linking/tokens";
 import { Token } from "../parser/tokens";
+import { URI } from "vscode-uri";
 
 interface LevelSymbol {
   level: number | null;
@@ -115,7 +116,9 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     for (const item of declareStatement.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
-      levelSymbols.push(...this.retrieveLevelSymbols(item, null, childSymbols));
+      levelSymbols.push(
+        ...this.retrieveLevelSymbols(token.uri, item, null, childSymbols),
+      );
     }
 
     for (const levelSymbol of levelSymbols) {
@@ -128,6 +131,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
   }
 
   private retrieveLevelSymbols(
+    documentUri: URI | undefined,
     item: DeclaredItem,
     inheritedLevel: number | null,
     children: DocumentSymbol[],
@@ -153,6 +157,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
         // e.g., 11 (XX, ZZ) char(10).
         levelSymbols.push(
           ...this.retrieveLevelSymbols(
+            documentUri,
             element,
             item.level ?? inheritedLevel,
             children,
@@ -166,6 +171,14 @@ class DeclareSymbolBuilder implements SymbolBuilder {
         const range = getSyntaxNodeRange(element);
 
         if (!element.name || !range) {
+          continue;
+        }
+
+        if (
+          !documentUri ||
+          !element.nameToken.uri ||
+          element.nameToken.uri.toString() !== documentUri.toString()
+        ) {
           continue;
         }
 
