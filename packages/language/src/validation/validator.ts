@@ -9,9 +9,8 @@
  *
  */
 
-import { IRecognitionException, MismatchedTokenException } from "chevrotain";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { Diagnostic, Range, Severity } from "../language-server/types";
+import { Diagnostic } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
@@ -20,7 +19,6 @@ import { registerPliValidationChecks } from "./pli-validator";
 import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
-import { Token } from "../parser/tokens";
 import { registerPreprocessorValidationChecks } from "./pp-validator";
 import { DiagnosticCategory } from "./diagnostics-store";
 
@@ -86,51 +84,6 @@ function validateSyntaxNode(
   forEachNode(node, (childNode: SyntaxNode) => {
     validateSyntaxNode(compilationUnit, childNode, acceptor, handlers);
   });
-}
-
-export function parserErrorsToDiagnostics(
-  parserErrors: IRecognitionException[],
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  for (const error of parserErrors) {
-    const token = error.token as Token;
-    let range: Range | undefined = undefined;
-    let uri: string | undefined = undefined;
-    if (isNaN(token.startOffset)) {
-      if ("previousToken" in error) {
-        const previousToken = (error as MismatchedTokenException)
-          .previousToken as Token;
-        if (!isNaN(previousToken.startOffset)) {
-          range = {
-            start: previousToken.startOffset,
-            end: previousToken.startOffset,
-          };
-          uri = previousToken?.uri?.toString();
-        } else {
-          // No valid prev token. Might be empty document or containing only hidden tokens.
-          // Point to document start
-          range = { start: 0, end: 0 };
-        }
-      }
-    } else {
-      range = {
-        start: token.startOffset,
-        end: token.startOffset,
-      };
-      uri = token?.uri?.toString();
-    }
-    if (range && uri) {
-      const diagnostic: Diagnostic = {
-        uri,
-        severity: Severity.E,
-        range,
-        message: error.message,
-        source: "parser",
-      };
-      diagnostics.push(diagnostic);
-    }
-  }
-  return diagnostics;
 }
 
 function linkingRedeclarationErrorsToDiagnostics(
