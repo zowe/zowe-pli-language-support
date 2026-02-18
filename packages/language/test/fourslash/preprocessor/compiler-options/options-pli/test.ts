@@ -12,20 +12,16 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS <|1:TEST|>;
-////*PROCESS <|2:TEST|>();
-////*PROCESS <|4:TEST|>(<|5:INVALID|>);
-////*PROCESS <|6:TEST|>(<|7:BLOCK|>);
-////*PROCESS <|8:TEST|>(<|9:NOSEPARATE, NOSOURCE|>);
-////*PROCESS <|10:TEST|>(<|11:SYM NOHOOK|>);
+////*PROCESS NOTEST;
+////*PROCESS <|TEST|>;
+////*PROCESS <|TEST|>();
+////*PROCESS <|TEST|>(<|5:INVALID|>);
+////*PROCESS <|TEST|>(<|7:BLOCK|>);
+////*PROCESS <|TEST|>(<|9:NOSEPARATE, NOSOURCE|>);
+////*PROCESS <|TEST|>(<|11:SYM NOHOOK SEPNAME|>);
 
-verify.noDiagnostics(1);
-verify.noDiagnosticsExceptAt(
-  [2, 4, 6, 8, 10],
-  [new RegExp(code.CompilerOptions.DupeOptionIssue.message("TEST"))],
-);
-verify.expectDiagnosticsAt([2, 4, 6, 8, 10], {
-  message: code.CompilerOptions.DupeOptionIssue.message("TEST"),
+verify.expectDiagnosticsAt("TEST", {
+  message: code.CompilerOptions.MutexOptionIssue.message("TEST"),
 });
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Test.InvalidParameter.message("INVALID"),
