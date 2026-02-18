@@ -229,6 +229,7 @@ export class DefaultTypeInferer implements TypeInferer {
             //TODO handle other numeric literals
             return TypeDescriptions.Arithmetic({});
         }
+        break;
       }
       case ast.SyntaxKind.UnaryExpression:
         if (expression.expr) {
