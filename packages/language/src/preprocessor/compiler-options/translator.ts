@@ -502,7 +502,9 @@ function stringToNumber(text: string): number {
     switch (match[2]) {
       case "M":
       case "m":
-        num *= 1024;
+        num *= 1024 * 1024;
+        break;
+      // We are not allowed to fall through here because of non-technical reasons.
       case "K":
       case "k":
         num *= 1024;
