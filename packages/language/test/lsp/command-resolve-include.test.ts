@@ -116,7 +116,6 @@ describe("commandResolveInclude", () => {
 
   test("Does not throw when write fails (error is logged instead).", async () => {
     // Mock writeFile to throw an error
-    const originalWriteFile = vfs.writeFile.bind(vfs);
     vfs.writeFile = vi.fn().mockRejectedValue(new Error("Permission denied"));
 
     await expect(
@@ -128,16 +127,12 @@ describe("commandResolveInclude", () => {
         ],
       }),
     ).resolves.toBeUndefined();
-
-    // Restore original
-    vfs.writeFile = originalWriteFile;
   });
 
   test("Logs error message with correct URI when write fails.", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-    const originalWriteFile = vfs.writeFile.bind(vfs);
     vfs.writeFile = vi.fn().mockRejectedValue(new Error("Write failed"));
 
     await commandResolveInclude({
@@ -152,8 +147,5 @@ describe("commandResolveInclude", () => {
       `Failed to write file at URI: ${CONFIG_FILE_PATH}`,
       expect.any(Error),
     );
-
-    consoleErrorSpy.mockRestore();
-    vfs.writeFile = originalWriteFile;
   });
 });
