@@ -116,7 +116,9 @@ class DeclareSymbolBuilder implements SymbolBuilder {
     for (const item of declareStatement.items.filter(
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
-      levelSymbols.push(...this.retrieveLevelSymbols(token.uri!, item, null, childSymbols));
+      levelSymbols.push(
+        ...this.retrieveLevelSymbols(token.uri!, item, null, childSymbols),
+      );
     }
 
     for (const levelSymbol of levelSymbols) {
@@ -172,7 +174,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
           continue;
         }
 
-        if(element.nameToken.uri?.toString() !== documentUri.toString()) {
+        if (element.nameToken.uri?.toString() !== documentUri.toString()) {
           continue;
         }
 
