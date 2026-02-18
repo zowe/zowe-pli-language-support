@@ -31,9 +31,6 @@ const CONFIG_FILE_PATH = "/workspace/.pliplugin/pgm_conf.json";
 const INITIAL_PROGRAM = { program: "a.pli", pgroup: "default" };
 const INITIAL_CONFIG = JSON.stringify({ pgms: [INITIAL_PROGRAM] }, null, 2);
 
-/**
- * COMMAND CREATE CONFIG
- */
 describe("commandCreateConfig", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
@@ -102,9 +99,6 @@ describe("commandCreateConfig", () => {
   });
 });
 
-/**
- * UPDATE OR CREATE CONFIG
- */
 describe("updateOrCreateConfig", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
@@ -191,8 +185,6 @@ describe("updateOrCreateConfig", () => {
 
   test("throws error when initial config file creation fails", async () => {
     // Mock writeProgramConfigFile to fail
-    const originalWrite =
-      pluginConfig.writeProgramConfigFile.bind(pluginConfig);
     pluginConfig.writeProgramConfigFile = vi
       .fn()
       .mockRejectedValue(new Error("Write failed"));
@@ -200,9 +192,6 @@ describe("updateOrCreateConfig", () => {
     await expect(updateOrCreateConfig("test.pli")).rejects.toThrow(
       "Write failed",
     );
-
-    // Restore
-    pluginConfig.writeProgramConfigFile = originalWrite;
   });
 
   test("throws error when program config file creation fails for existing configs", async () => {
@@ -210,8 +199,6 @@ describe("updateOrCreateConfig", () => {
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
     // Mock writeProgramConfigFile to fail
-    const originalWrite =
-      pluginConfig.writeProgramConfigFile.bind(pluginConfig);
     pluginConfig.writeProgramConfigFile = vi
       .fn()
       .mockRejectedValue(new Error("Permission denied"));
@@ -219,9 +206,6 @@ describe("updateOrCreateConfig", () => {
     await expect(updateOrCreateConfig("test.pli")).rejects.toThrow(
       "Permission denied",
     );
-
-    // Restore
-    pluginConfig.writeProgramConfigFile = originalWrite;
   });
 
   test("returns early when config file exists but readFile returns null/undefined", async () => {
@@ -267,8 +251,6 @@ describe("updateOrCreateConfig", () => {
       URI.parse(CONFIG_FILE_PATH),
     );
     expect(JSON.parse(result!)).toEqual({ invalid: "structure" });
-
-    consoleErrorSpy.mockRestore();
   });
 
   test("returns early when config file contains null", async () => {
@@ -285,8 +267,6 @@ describe("updateOrCreateConfig", () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unexpected format in program config file",
     );
-
-    consoleErrorSpy.mockRestore();
   });
 
   test("returns early when config file has non-array pgms field", async () => {
@@ -306,8 +286,6 @@ describe("updateOrCreateConfig", () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unexpected format in program config file",
     );
-
-    consoleErrorSpy.mockRestore();
   });
 
   test("throws error when reading or updating config file fails", async () => {
@@ -315,15 +293,11 @@ describe("updateOrCreateConfig", () => {
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
     // Mock readFile to throw an error
-    const originalRead = vfs.readFile.bind(vfs);
     vfs.readFile = vi.fn().mockRejectedValue(new Error("Read failed"));
 
     await expect(updateOrCreateConfig("test.pli")).rejects.toThrow(
       "Read failed",
     );
-
-    // Restore
-    vfs.readFile = originalRead;
   });
 
   test("throws error when JSON.parse fails on malformed config", async () => {
