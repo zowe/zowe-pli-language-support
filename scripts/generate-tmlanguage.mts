@@ -27,10 +27,16 @@ const controlKeywords: string[] = [];
 const storageKeywords: string[] = [];
 
 for (const [text, type] of tokens.keywordMap.entries()) {
+  const lowerText = text.toLowerCase();
+  if (type === tokens.SQL) {
+    //we exclude SQL as a keyword, because then its highlighting will be handled the same as CICS.
+    //(the EXEC rule in the `pli.manual.json` can be applied afterwards)
+    continue;
+  }
   if (tokens.controlTokens.has(type)) {
-    controlKeywords.push(text.toLowerCase());
+    controlKeywords.push(lowerText);
   } else {
-    storageKeywords.push(text.toLowerCase());
+    storageKeywords.push(lowerText);
   }
 }
 
