@@ -117,7 +117,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
       (i: DeclaredItem) => i.kind === SyntaxKind.DeclaredItem,
     )) {
       levelSymbols.push(
-        ...this.retrieveLevelSymbols(token.uri!, item, null, childSymbols),
+        ...this.retrieveLevelSymbols(token.uri, item, null, childSymbols),
       );
     }
 
@@ -131,7 +131,7 @@ class DeclareSymbolBuilder implements SymbolBuilder {
   }
 
   private retrieveLevelSymbols(
-    documentUri: URI,
+    documentUri: URI | undefined,
     item: DeclaredItem,
     inheritedLevel: number | null,
     children: DocumentSymbol[],
@@ -174,7 +174,11 @@ class DeclareSymbolBuilder implements SymbolBuilder {
           continue;
         }
 
-        if (element.nameToken.uri?.toString() !== documentUri.toString()) {
+        if (
+          !documentUri ||
+          !element.nameToken.uri ||
+          element.nameToken.uri.toString() !== documentUri.toString()
+        ) {
           continue;
         }
 
