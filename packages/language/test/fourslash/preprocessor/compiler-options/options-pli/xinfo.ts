@@ -16,7 +16,7 @@
 ////*PROCESS <|d2:XINFO|>();
 ////*PROCESS <|d3:XINFO|>(<|2:INVALID|>);
 ////*PROCESS <|d3:XINFO|>(<|3:INVALID|>());
-////*PROCESS <|d4:XINFO|>(<|4:XML|>);
+////*PROCESS <|d4:XINFO|>(<|4:NOXML|>);
 ////*PROCESS <|d5:XINFO|>(XML(<|5:INVALID|>));
 ////*PROCESS <|d6:XINFO|>(XML(HASH));
 ////*PROCESS <|d7:XINFO|>(DEF);
