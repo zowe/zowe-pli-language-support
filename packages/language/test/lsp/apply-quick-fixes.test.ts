@@ -136,7 +136,7 @@ describe("quickFixResolveInclude", () => {
     expect(result!.command!.command).toBe(Commands.RESOLVE_INCLUDE);
   });
 
-  test("returns valid CodeAction when all conditions are met", async () => {
+  test("returns valid CodeAction when all conditions are met and there are more than one pgroup entry", async () => {
     await vfs.writeFile(URI.parse("/workspace/nested/missing.inc"), "");
     await vfs.writeFile(
       URI.parse("/workspace/.pliplugin/proc_grps.json"),
