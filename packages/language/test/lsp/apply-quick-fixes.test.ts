@@ -9,7 +9,7 @@
  *
  */
 
-import { describe, test, expect, beforeEach } from "vitest";
+import { describe, test, expect, beforeEach, vi } from "vitest";
 import { Diagnostic } from "vscode-languageserver-types";
 import {
   VirtualFileSystemProvider,
@@ -37,24 +37,14 @@ beforeEach(async () => {
   setFileSystemProvider(vfs);
   setPluginConfigurationProvider(pluginConfig);
 
-  await pluginConfig.init("/workspace");
-
   // Base config setup
   const processGroup = deserializeProcessGroup({
     name: "default",
     "include-extensions": [".inc"],
     libs: [],
   });
-
+  await pluginConfig.init("/workspace");
   await pluginConfig.setProcessGroupConfigs([processGroup]);
-  await vfs.writeFile(
-    URI.parse("/workspace/.pliplugin/proc_grps.json"),
-    JSON.stringify({
-    name: "default",
-    "include-extensions": [".inc"],
-    libs: [],
-  }),
-  );
   pluginConfig.setProgramConfigs("/workspace", [
     { program: "main.pli", pgroup: "default" },
   ]);
@@ -120,6 +110,17 @@ describe("quickFixResolveInclude", () => {
 
   test("returns valid CodeAction when all conditions are met", async () => {
     await vfs.writeFile(URI.parse("/workspace/libs/missing.inc"), "");
+    vfs.readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "default",
+            libs: [],
+            "include-extensions": [".inc"],
+          },
+        ],
+      }),
+    );
 
     const diagnostic = {
       data: {
@@ -271,6 +272,17 @@ describe("applyQuickFixes", () => {
   test("returns code actions only for unresolved include (IBM3841I) diagnostics", async () => {
     await vfs.writeFile(URI.parse("/workspace/some/file1.inc"), "");
     await vfs.writeFile(URI.parse("/workspace/some/file2.inc"), "");
+    vfs.readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "default",
+            libs: [],
+            "include-extensions": [".inc"],
+          },
+        ],
+      }),
+    );
 
     const diagnostics = [
       {
@@ -321,6 +333,17 @@ describe("applyQuickFixes", () => {
 
   test("combines multiple quick fixes (include(IBM3841I) + config(LSPIR001) and a diagnostic with no quick fix.)", async () => {
     await vfs.writeFile(URI.parse("/workspace/libs/missing.inc"), "");
+    vfs.readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "default",
+            libs: [],
+            "include-extensions": [".inc"],
+          },
+        ],
+      }),
+    );
 
     const diagnostics = [
       {
