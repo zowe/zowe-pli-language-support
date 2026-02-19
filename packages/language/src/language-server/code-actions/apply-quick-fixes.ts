@@ -69,11 +69,20 @@ export async function quickFixResolveInclude(
   try {
     const originalFileContent =
       await FileSystemProviderInstance.readFile(procGrpsFileUri);
-    if (!originalFileContent) return;
+    if (!originalFileContent) {
+      console.error("Missing 'proc_grps.json' file content.");
+      return;
+    }
     newFileContent = JSON.parse(originalFileContent);
-    if (!newFileContent) return;
+    if (!newFileContent.pgroups) {
+      console.error("Missing 'pgroups' property under 'proc_grps.json' file");
+      return;
+    }
   } catch (err) {
-    console.error("Error reading configuration file: ", err);
+    console.error(
+      "Error reading or parsing configuration 'proc_grps.json' file: ",
+      err,
+    );
     return;
   }
   const groupToUpdate = newFileContent.pgroups.find(
