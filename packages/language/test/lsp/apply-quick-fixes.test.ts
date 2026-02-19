@@ -47,6 +47,14 @@ beforeEach(async () => {
   });
 
   await pluginConfig.setProcessGroupConfigs([processGroup]);
+  await vfs.writeFile(
+    URI.parse("/workspace/.pliplugin/proc_grps.json"),
+    JSON.stringify({
+    name: "default",
+    "include-extensions": [".inc"],
+    libs: [],
+  }),
+  );
   pluginConfig.setProgramConfigs("/workspace", [
     { program: "main.pli", pgroup: "default" },
   ]);

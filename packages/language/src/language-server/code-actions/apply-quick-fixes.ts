@@ -20,7 +20,7 @@ import {
 } from "vscode-languageserver-types";
 import {
   PluginConfigurationProviderInstance,
-  serializeProcessGroup,
+  ProcessGroup,
 } from "../../workspace/plugin-configuration-provider";
 
 import { Commands, PluginConfiguration } from "../constants";
@@ -54,32 +54,36 @@ export async function quickFixResolveInclude(
     PluginConfigurationProviderInstance.getWorkspacePath(),
   );
 
-  let parentFolder = UriUtils.computeWorkspaceRelativeParentFolder(
+  const parentFolder = UriUtils.computeWorkspaceRelativeParentFolder(
     unresolvedFilePath,
     workspaceFolderUri,
   );
   if (!parentFolder || procGrpsConfig.$computedLibsSet.has(parentFolder)) {
     return undefined;
   }
-
-  const serializedProcGrpsConfig = serializeProcessGroup(procGrpsConfig);
-  const newContent = JSON.stringify(
-    {
-      pgroups: [
-        {
-          ...serializedProcGrpsConfig,
-          libs: [...(serializedProcGrpsConfig.libs ?? []), parentFolder],
-        },
-      ],
-    },
-    undefined,
-    2,
-  );
-
   const procGrpsFileUri = UriUtils.joinPath(
     workspaceFolderUri,
     PluginConfiguration.PROCESS_GROUP_FILE_PATH,
   );
+  let newFileContent;
+  try {
+    const originalFileContent =
+      await FileSystemProviderInstance.readFile(procGrpsFileUri);
+    if (!originalFileContent) return;
+    newFileContent = JSON.parse(originalFileContent);
+    if (!newFileContent) return;
+  } catch (err) {
+    console.error("Error reading configuration file: ", err);
+    return;
+  }
+  const groupToUpdate = newFileContent.pgroups.find(
+    (g: ProcessGroup) => g.name === progConfig.pgroup,
+  );
+  if (!groupToUpdate) {
+    return;
+  }
+  groupToUpdate.libs.push(parentFolder);
+  const newContent = JSON.stringify(newFileContent, undefined, 2);
 
   const action: CodeAction = {
     title: `Add '${parentFolder}' to INCLUDE libs.`,
