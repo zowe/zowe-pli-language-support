@@ -37,15 +37,25 @@ beforeEach(async () => {
   setFileSystemProvider(vfs);
   setPluginConfigurationProvider(pluginConfig);
 
-  await pluginConfig.init("/workspace");
-
   // Base config setup
   const processGroup = deserializeProcessGroup({
     name: "default",
     "include-extensions": [".inc"],
     libs: [],
   });
-
+  await vfs.writeFile(
+    URI.parse("/workspace/.pliplugin/proc_grps.json"),
+    JSON.stringify({
+      pgroups: [
+        {
+          name: "default",
+          "include-extensions": [".inc"],
+          libs: [],
+        },
+      ],
+    }),
+  );
+  await pluginConfig.init("/workspace");
   await pluginConfig.setProcessGroupConfigs([processGroup]);
   pluginConfig.setProgramConfigs("/workspace", [
     { program: "main.pli", pgroup: "default" },
@@ -112,7 +122,6 @@ describe("quickFixResolveInclude", () => {
 
   test("returns valid CodeAction when all conditions are met", async () => {
     await vfs.writeFile(URI.parse("/workspace/libs/missing.inc"), "");
-
     const diagnostic = {
       data: {
         unresolvedFile: "file:///missing.inc",
@@ -125,6 +134,59 @@ describe("quickFixResolveInclude", () => {
     expect(result!.kind).toBe("quickfix");
     expect(result!.title).toContain("Add");
     expect(result!.command!.command).toBe(Commands.RESOLVE_INCLUDE);
+  });
+
+  test("returns valid CodeAction when all conditions are met and there are more than one pgroup entry", async () => {
+    await vfs.writeFile(URI.parse("/workspace/nested/missing.inc"), "");
+    await vfs.writeFile(
+      URI.parse("/workspace/.pliplugin/proc_grps.json"),
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "default",
+            "include-extensions": [".inc"],
+            libs: [],
+          },
+          {
+            name: "custom",
+            "include-extensions": [".inc"],
+            libs: [],
+          },
+        ],
+      }),
+    );
+    const diagnostic = {
+      data: {
+        unresolvedFile: "file:///workspace/nested/missing.inc",
+        entryUri: "file:///workspace/main.pli",
+      },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+
+    expect(result).toBeDefined();
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.title).toContain("Add");
+    expect(result!.command!.command).toBe(Commands.RESOLVE_INCLUDE);
+    expect(result!.command!.arguments![1]).toEqual(
+      JSON.stringify(
+        {
+          pgroups: [
+            {
+              name: "default",
+              "include-extensions": [".inc"],
+              libs: ["nested"],
+            },
+            {
+              name: "custom",
+              "include-extensions": [".inc"],
+              libs: [],
+            },
+          ],
+        },
+        undefined,
+        2,
+      ),
+    );
   });
 });
 
@@ -263,7 +325,6 @@ describe("applyQuickFixes", () => {
   test("returns code actions only for unresolved include (IBM3841I) diagnostics", async () => {
     await vfs.writeFile(URI.parse("/workspace/some/file1.inc"), "");
     await vfs.writeFile(URI.parse("/workspace/some/file2.inc"), "");
-
     const diagnostics = [
       {
         code: fullCode(PLICodes.Severe.IBM1848I),
@@ -313,7 +374,6 @@ describe("applyQuickFixes", () => {
 
   test("combines multiple quick fixes (include(IBM3841I) + config(LSPIR001) and a diagnostic with no quick fix.)", async () => {
     await vfs.writeFile(URI.parse("/workspace/libs/missing.inc"), "");
-
     const diagnostics = [
       {
         code: fullCode(PLICodes.Severe.IBM1848I),
