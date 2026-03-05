@@ -71,6 +71,7 @@ async function createTestingHarnessImplementation(
     types: {
       ...HarnessTypeAttributes,
       expectTypeAt: listen("types.expectTypeAt"),
+      expectPreprocessorTypeAt: listen("types.expectPreprocessorTypeAt"),
     },
     completion: {
       expectAt: listen("completion.expectAt"),

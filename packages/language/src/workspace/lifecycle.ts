@@ -60,6 +60,7 @@ export async function tokenize(
     compilationUnit.uri,
   );
   compilationUnit.tokens = result.all;
+  compilationUnit.preprocessorTokens = result.preprocessorTokens;
   compilationUnit.preprocessorAst.statements = result.statements;
   result.statements.forEach((stmt) => {
     stmt.container = compilationUnit.preprocessorAst;

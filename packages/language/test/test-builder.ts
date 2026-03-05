@@ -1091,6 +1091,30 @@ export class TestBuilder {
     }
   }
 
+  expectPreprocessorTypeAt(label: string, expectedType: TypeExpectation): void {
+    const ranges = this.getLabelRanges(label);
+    for (const [start] of ranges) {
+      const token = binaryTokenSearch(this.unit.preprocessorTokens, start);
+      const node = token?.element;
+      if (!node) {
+        throw new Error(
+          `No syntax node found at position ${this.createPositionMessage(start)}`,
+        );
+      }
+      const actualType = this.unit.services.inferer.inferType(node, this.unit);
+      if (
+        actualType.type === DataType.Unknown ||
+        actualType.type === DataType.Structure ||
+        actualType.type === DataType.Union ||
+        !actualType.dimension
+      ) {
+        this.expectTypeWithComposite(expectedType, actualType as any);
+      } else {
+        this.expectTypeNoStructure(expectedType, actualType);
+      }
+    }
+  }
+
   private expectTypeWithComposite(
     expectedType: TypeExpectation,
     actualType: TypeDescriptions.Any,

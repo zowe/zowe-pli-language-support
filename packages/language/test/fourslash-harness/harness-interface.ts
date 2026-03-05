@@ -107,6 +107,7 @@ export interface HarnessTesterInterface {
 
   types: {
     expectTypeAt(label: Label, expectedType: TypeExpectation): void;
+    expectPreprocessorTypeAt(label: Label, expectedType: TypeExpectation): void;
     dataTypes: typeof DataType;
 
     accessModes: typeof AccessMode;
