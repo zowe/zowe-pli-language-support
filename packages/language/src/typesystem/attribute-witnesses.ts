@@ -28,6 +28,7 @@ import {
   FileUsage,
   FloatFormat,
   Implications,
+  isAttributeValidForPreprocessor,
   NumberMode,
   ParameterPassDirection,
   ParameterPassMode,
@@ -72,6 +73,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
   constructor(
     public elementName: Token,
     private unit: CompilationUnit,
+    private inPreprocessor: boolean,
   ) {}
 
   addAttribute(attribute: ast.DeclarationAttribute): void {
@@ -869,6 +871,12 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
       }
     } else {
       //first time seeing this attribute
+      if (this.inPreprocessor && !isAttributeValidForPreprocessor(kind, value)) {
+        this.diagnostics.push(
+          diagnosticFromCode(Error.IBM3552I, token, token.image),
+        );
+        return;
+      }
       const current: AttributeWitness<K> = {
         value,
         witness: attribute,

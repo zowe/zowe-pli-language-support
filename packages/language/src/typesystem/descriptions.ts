@@ -241,10 +241,6 @@ export type AttributeTypes = {
   [AttributeKind.Volatility]: Volatility;
 };
 
-export type AttributeStringifier<K extends AttributeKind> = (
-  value: AttributeTypes[K],
-) => string | undefined;
-
 export const AttributePropertyNames = {
   [AttributeKind.AccessMode]: "accessMode" as const,
   [AttributeKind.Alignment]: "alignment" as const,
@@ -285,6 +281,37 @@ export const AttributePropertyNames = {
   [AttributeKind.SetType]: "typeRef" as const,
   [AttributeKind.AttributeWitnesses]: "attributeWitnesses" as const,
 } satisfies { [K in AttributeKind]: string };
+
+export type AttributePreprocessorValidator<K extends AttributeKind> = (
+  value: AttributeTypes[K],
+) => boolean;
+
+export const AttributeIsValidForPreprocessor: {
+  [K in AttributeKind]?: AttributePreprocessorValidator<K>;
+} = {
+  [AttributeKind.Scale]: function (value: ScaleMode): boolean {
+    return value === ScaleMode.Fixed;
+  },
+  [AttributeKind.StringBits]: function (value: StringBits): boolean {
+    return value.kind === StringKind.Character;
+  },
+  [AttributeKind.Scope]: function (_value: Scope): boolean {
+    return true;
+  },
+  [AttributeKind.Entry]: function (_value): boolean {
+    return true;
+  },
+  [AttributeKind.DataType]: (value) => value === DataType.Entry,
+}
+
+export function isAttributeValidForPreprocessor<K extends AttributeKind>(kind: K, value: AttributeTypes[K]): boolean {
+  const validator = AttributeIsValidForPreprocessor[kind];
+  return validator ? validator(value) : false;
+}
+
+export type AttributeStringifier<K extends AttributeKind> = (
+  value: AttributeTypes[K],
+) => string | undefined;
 
 export const AttributeStringifiers: {
   [K in AttributeKind]: AttributeStringifier<K>;
