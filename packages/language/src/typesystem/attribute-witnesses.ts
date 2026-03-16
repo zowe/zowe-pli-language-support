@@ -871,7 +871,10 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
       }
     } else {
       //first time seeing this attribute
-      if (this.inPreprocessor && !isAttributeValidForPreprocessor(kind, value)) {
+      if (
+        this.inPreprocessor &&
+        !isAttributeValidForPreprocessor(kind, value)
+      ) {
         this.diagnostics.push(
           diagnosticFromCode(Error.IBM3552I, token, token.image),
         );

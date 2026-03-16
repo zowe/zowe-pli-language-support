@@ -1067,8 +1067,12 @@ export class TestBuilder {
     });
   }
 
-  private expectTypeFromTokens(tokens: Token[], label: string, expectedType: TypeExpectation): void {
-     const ranges = this.getLabelRanges(label);
+  private expectTypeFromTokens(
+    tokens: Token[],
+    label: string,
+    expectedType: TypeExpectation,
+  ): void {
+    const ranges = this.getLabelRanges(label);
     for (const [start] of ranges) {
       const token = binaryTokenSearch(tokens, start);
       const node = token?.element;
@@ -1096,7 +1100,11 @@ export class TestBuilder {
   }
 
   expectPreprocessorTypeAt(label: string, expectedType: TypeExpectation): void {
-    return this.expectTypeFromTokens(this.unit.preprocessorTokens, label, expectedType);
+    return this.expectTypeFromTokens(
+      this.unit.preprocessorTokens,
+      label,
+      expectedType,
+    );
   }
 
   private expectTypeWithComposite(

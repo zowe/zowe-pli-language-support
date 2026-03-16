@@ -302,9 +302,12 @@ export const AttributeIsValidForPreprocessor: {
     return true;
   },
   [AttributeKind.DataType]: (value) => value === DataType.Entry,
-}
+};
 
-export function isAttributeValidForPreprocessor<K extends AttributeKind>(kind: K, value: AttributeTypes[K]): boolean {
+export function isAttributeValidForPreprocessor<K extends AttributeKind>(
+  kind: K,
+  value: AttributeTypes[K],
+): boolean {
   const validator = AttributeIsValidForPreprocessor[kind];
   return validator ? validator(value) : false;
 }

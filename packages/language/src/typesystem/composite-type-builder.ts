@@ -83,7 +83,11 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     attributes: ast.DeclarationAttribute[],
     inPreprocessor: boolean,
   ): AttributeCollectorResult {
-    const collector = new DefaultTypeAttributeCollector(nameToken, this.unit, inPreprocessor);
+    const collector = new DefaultTypeAttributeCollector(
+      nameToken,
+      this.unit,
+      inPreprocessor,
+    );
     for (const attr of attributes) {
       collector.addAttribute(attr);
     }

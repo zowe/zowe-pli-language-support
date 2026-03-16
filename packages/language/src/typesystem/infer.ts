@@ -253,7 +253,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const attributes = builder.collectAttributes(
       node.returnsToken,
       node.returnAttributes,
-      ast.isPreprocessorNode(compilationUnit, node)
+      ast.isPreprocessorNode(compilationUnit, node),
     );
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -268,7 +268,11 @@ export class DefaultTypeInferer implements TypeInferer {
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     const builder = new DefaultCompositeTypeBuilder(compilationUnit);
-    const attributes = builder.collectAttributes(nameToken, node.attributes, ast.isPreprocessorNode(compilationUnit, node));
+    const attributes = builder.collectAttributes(
+      nameToken,
+      node.attributes,
+      ast.isPreprocessorNode(compilationUnit, node),
+    );
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
       attributes.diagnostics,
@@ -286,7 +290,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const collector = new DefaultTypeAttributeCollector(
       node.nameToken,
       compilationUnit,
-      false
+      false,
     );
     {
       const fixedAttribute = ast.createComputationDataAttribute();
@@ -348,7 +352,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const collector = new DefaultTypeAttributeCollector(
       node.nameToken,
       compilationUnit,
-      false
+      false,
     );
     node.attributes.forEach((attribute) => {
       collector.addAttribute(attribute);
@@ -379,7 +383,7 @@ export class DefaultTypeInferer implements TypeInferer {
       const attributes = builder.collectAttributes(
         item.nameToken,
         item.attributes,
-        ast.isPreprocessorNode(compilationUnit, node)
+        ast.isPreprocessorNode(compilationUnit, node),
       );
       compilationUnit.diagnostics.addAll(
         DiagnosticCategory.TypeSystem,
