@@ -109,8 +109,7 @@ describe("Validating", () => {
     });
   });
 
-  // TODO @montymxb Mar. 28th, 2025: Pending a fix to linking + scoping
-  test.fails("validates ordinal reference", async () => {
+  test("validates ordinal reference", async () => {
     const doc = await parseWithValidations(`
         define ordinal day (
             Monday,

@@ -16,7 +16,6 @@ import { isValidToken } from "../linking/tokens";
 import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { registerPliValidationChecks } from "./pli-validator";
-import { isMainProcedure, labelPrefixPointsToPackage } from "./utils";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
 import { registerPreprocessorValidationChecks } from "./pp-validator";
@@ -129,41 +128,6 @@ export function linkingErrorsToDiagnostics(
     if (reference.node === null && isValidToken(reference.token)) {
       // Question: is reference.text and token.image the same?
       reporter.reportCannotFindSymbol(reference.token, reference.text);
-    }
-  }
-
-  // Warn if a label is never referenced
-  for (const scope of scopeCaches.regular.values()) {
-    nodeLoop: for (const node of scope.symbolTable.nodeLookup.keys()) {
-      if (node.kind !== SyntaxKind.LabelPrefix) {
-        continue;
-      }
-
-      // If the node has no name token, we can't even create a diagnostic, skip it
-      if (!node.nameToken) {
-        continue;
-      }
-
-      // If the label prefix points to a package, don't warn
-      if (labelPrefixPointsToPackage(node)) {
-        continue;
-      }
-
-      // The main procedure is never directly referenced anyway, so we don't need to warn
-      if (isMainProcedure(node)) {
-        continue;
-      }
-
-      // Ignore all `END` nodes, since a procedure will always have one `END` node referencing itself
-      const nodeReferences = references.findReferences(node);
-      for (const reference of nodeReferences) {
-        if (reference.owner.container?.kind !== SyntaxKind.EndStatement) {
-          // The label is referenced, so we don't generate a warning
-          continue nodeLoop;
-        }
-      }
-
-      reporter.reportUnreferencedSymbol(node.nameToken);
     }
   }
 }

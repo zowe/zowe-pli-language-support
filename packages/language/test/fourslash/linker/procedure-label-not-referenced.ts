@@ -11,10 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
-//// <|name2|>: procedure;
-//// end <|name2>name2;
-//// <|name1|>: procedure;
-//// end;
+//// MAIN: PROCEDURE OPTIONS(MAIN);
+////   <|name2|>: procedure;
+////   end <|name2>name2;
+////   <|name1|>: procedure;
+////   end;
+//// END;
 
 linker.expectLinks();
 verify.expectErrorCodesAt("name2", code.Warning.IBM1213I);
