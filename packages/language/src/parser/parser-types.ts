@@ -140,14 +140,8 @@ export function orRule<T, Args extends any[]>(
 
 export function rule<T, Args extends any[]>(
   set: FirstSet | (() => RuleMap<any>),
-  originalAction: Rule<T, Args>,
+  action: Rule<T, Args>,
 ): RuleFirstPair<T, Args> {
-  const action = (state: ParserState, ...args: Args) => {
-    if (state.eof) {
-      return null;
-    }
-    return originalAction(state, ...args);
-  };
   if (typeof set === "function") {
     return {
       first: memoize(() => {
