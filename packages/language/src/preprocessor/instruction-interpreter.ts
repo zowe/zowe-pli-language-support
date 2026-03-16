@@ -2298,6 +2298,7 @@ async function runInclude(
       subProgram.diagnostics.push(...tokenizeResult.diagnostics);
       const result = generateInstructions(subProgram.statements);
       return {
+        preprocessorTokens: tokenizeResult.tokens,
         tokens: subProgram.tokens,
         diagnostics: subProgram.diagnostics,
         statements: subProgram.statements,
