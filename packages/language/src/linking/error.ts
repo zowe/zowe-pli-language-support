@@ -125,15 +125,6 @@ export class LinkerErrorReporter {
   }
 
   /**
-   * W IBM1213I
-   */
-  reportUnreferencedSymbol(token: Token) {
-    this.accept(
-      diagnosticFromCode(PLICodes.Warning.IBM1213I, token, token.image),
-    );
-  }
-
-  /**
    * S IBM1881I
    */
   reportAmbiguousReference(

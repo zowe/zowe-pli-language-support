@@ -25,6 +25,7 @@ import {
   DeprecateStatements,
   DeprecateVariables,
 } from "./compiler/IBM2444Iff-deprecate";
+import { IBM1213I_unreferenced_procedure } from "./compiler/IBM1213I-unreferenced-procedure";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -49,6 +50,7 @@ export function registerPliValidationChecks(): ValidationChecks {
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
+      IBM1213I_unreferenced_procedure,
     ],
     ReferenceItem: [checkImplicitBuiltins],
     SelectStatement: [IBM1059I_select_without_otherwise],
