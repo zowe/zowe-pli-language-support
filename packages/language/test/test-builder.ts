@@ -1096,8 +1096,9 @@ export class TestBuilder {
         );
       }
       const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      if (
-        actualType.type === DataType.Unknown ||
+      if (actualType.type === DataType.Unknown) {
+        this.expectTypeNoStructure(expectedType, actualType);
+      } else if (
         actualType.type === DataType.Structure ||
         actualType.type === DataType.Union ||
         !actualType.dimension

@@ -602,13 +602,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
       }
 
       case ast.DefaultAttribute.BUILTIN: {
-        //TODO temporary solution
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Unknown,
-          attribute,
-          token,
-        );
+        this.addAttributeWitness(AttributeKind.BuiltIn, true, attribute, token);
         break;
       }
 

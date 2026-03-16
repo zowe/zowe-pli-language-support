@@ -46,6 +46,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 
   build() {
+    const builtIn =
+      this.attributeWitnesses.witnesses[AttributeKind.BuiltIn]?.value === true;
     const namedElement =
       this.attributeWitnesses.witnesses[AttributeKind.SetType];
     if (namedElement && namedElement.value) {
@@ -71,7 +73,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnosticFromCode(PLICodes.Warning.IBM3330I, this.elementName),
         );
         return {
-          type: TypeDescriptions.Unknown(),
+          type: TypeDescriptions.Unknown({ builtIn }),
           diagnostics: this.diagnostics,
         };
       }
@@ -84,7 +86,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnosticFromCode(PLICodes.Severe.IBM1650I, this.elementName),
         );
         return {
-          type: TypeDescriptions.Unknown(),
+          type: TypeDescriptions.Unknown({ builtIn }),
           diagnostics: this.diagnostics,
         };
       } else {
@@ -110,7 +112,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       //   );
       // }
       return {
-        type: TypeDescriptions.Unknown(),
+        type: TypeDescriptions.Unknown({ builtIn }),
         diagnostics: this.diagnostics,
       };
     }
