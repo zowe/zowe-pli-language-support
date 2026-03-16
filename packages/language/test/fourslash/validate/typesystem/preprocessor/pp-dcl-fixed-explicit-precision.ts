@@ -12,12 +12,6 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// %DCL <|1:ANYTHING|> <|FIXED|>;
+//// %DCL ANYTHING FIXED <|PRECISION|>(5, 0);
 
-verify.noDiagnostics("FIXED", code.Error.IBM3552I);
-types.expectPreprocessorTypeAt("1", {
-  type: types.dataTypes.Arithmetic,
-  scale: types.scales.Fixed,
-  precision: types.precision.create(5, 0),
-  mode: types.modes.Real,
-});
+verify.expectDiagnosticsAt("PRECISION", code.Error.IBM3552I);

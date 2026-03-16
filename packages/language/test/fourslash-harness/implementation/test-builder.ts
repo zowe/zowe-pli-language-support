@@ -110,8 +110,8 @@ export function createTestBuilderHarnessImplementation(
       ...HarnessTypeAttributes,
       expectTypeAt: (label, type) =>
         testBuilder.expectTypeAt(label.toString(), type),
-      expectPreprocessorTypeAt: (label, type) =>
-        testBuilder.expectPreprocessorTypeAt(label.toString(), type),
+      expectPreprocessorTypeAt: (label, type, fileUri) =>
+        testBuilder.expectPreprocessorTypeAt(label.toString(), type, fileUri),
     },
     code: HarnessCodes,
     constants: HarnessConstants,

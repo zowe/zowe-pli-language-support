@@ -20,10 +20,13 @@
 //// PUT SKIP EDIT (%X);
 
 preprocessor.expectTokens("PUT SKIP EDIT (100);");
-//TODO cannot access via current test framework
-// types.expectPreprocessorTypeAt("X", {
-//   type: types.dataTypes.Arithmetic,
-//   scale: types.scales.Fixed,
-//   precision: types.precision.create(5, 0),
-//   mode: types.modes.Real,
-// });
+types.expectPreprocessorTypeAt(
+  "X",
+  {
+    type: types.dataTypes.Arithmetic,
+    scale: types.scales.Fixed,
+    precision: types.precision.create(5, 0),
+    mode: types.modes.Real,
+  },
+  "cpy/include.pli",
+);

@@ -1067,12 +1067,26 @@ export class TestBuilder {
     });
   }
 
+  private getLabelRangesByFile(
+    fileUri: string,
+    label: string,
+  ): [number, number][] {
+    const ranges = [...this.files.entries()].find(
+      ([uri]) => URI.parse(uri).toString() === URI.parse(fileUri).toString(),
+    )?.[1].ranges[label];
+    if (!ranges || ranges.length === 0) {
+      throw new Error(`Label "${label}" not found`);
+    }
+    return ranges;
+  }
+
   private expectTypeFromTokens(
     tokens: Token[],
     label: string,
     expectedType: TypeExpectation,
+    fileUri: string,
   ): void {
-    const ranges = this.getLabelRanges(label);
+    const ranges = this.getLabelRangesByFile(fileUri, label);
     for (const [start] of ranges) {
       const token = binaryTokenSearch(tokens, start);
       const node = token?.element;
@@ -1096,15 +1110,24 @@ export class TestBuilder {
   }
 
   expectTypeAt(label: string, expectedType: TypeExpectation): void {
-    return this.expectTypeFromTokens(this.unit.tokens, label, expectedType);
-  }
-
-  expectPreprocessorTypeAt(label: string, expectedType: TypeExpectation): void {
     return this.expectTypeFromTokens(
-      this.unit.preprocessorTokens,
+      this.unit.tokens,
       label,
       expectedType,
+      DEFAULT_FILE_URI,
     );
+  }
+
+  expectPreprocessorTypeAt(
+    label: string,
+    expectedType: TypeExpectation,
+    fileUri: string = DEFAULT_FILE_URI,
+  ): void {
+    const file = this.unit.services.files.get(URI.parse(fileUri));
+    if (!file) {
+      throw new Error(`File with URI "${fileUri}" not found`);
+    }
+    return this.expectTypeFromTokens(file.tokens, label, expectedType, fileUri);
   }
 
   private expectTypeWithComposite(
