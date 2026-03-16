@@ -132,7 +132,7 @@ export class PliLexer {
       statements: [...instruction.statements, ...output.statements],
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,
-      preprocessorTokens: instruction.preprocessorTokens,
+      preprocessorTokens: instruction.tokens
     };
   }
 }

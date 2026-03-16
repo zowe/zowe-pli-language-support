@@ -29,7 +29,6 @@ export interface FileInstructionResult {
   diagnostics: Diagnostic[];
   statements: Statement[];
   result: InstructionGeneratorResult;
-  preprocessorTokens: Token[];
 }
 
 export class InstructionCache {
