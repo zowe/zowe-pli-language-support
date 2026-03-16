@@ -15,10 +15,11 @@
 ////*PROCESS <|2:OR|>;
 ////*PROCESS <|4:OR|>(<|5:)|>;
 ////*PROCESS <|6:OR|>(<|7:INVALID|>);
-////*PROCESS <|8:OR|>(<|9:'##'|>);
+////*PROCESS <|8:OR|>(<|9:'0123456789'|>);
 ////*PROCESS <|10:OR|>(<|11:'z'|>);
 ////*PROCESS <|12:OR|>(<|13:'|'|>);
-////*PROCESS <|14:OR|>('$');
+////*PROCESS <|14:OR|>(<|15:'|~'|>);
+////*PROCESS <|16:OR|>(<|17:'$'|>);
 
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
@@ -33,12 +34,12 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.ExpectedString.message(),
 });
 verify.expectDiagnosticsAt(9, {
-  message: code.CompilerOptions.Or.InvalidParameterLength.message("##"),
+  message: code.CompilerOptions.Or.InvalidParameterLength.message(10),
 });
 verify.expectDiagnosticsAt(11, {
   message: code.CompilerOptions.Or.InvalidParameterCharacter.message("z"),
 });
-verify.noDiagnostics(13);
+verify.noDiagnostics([13, 15, 17]);
 verify.expectCompilerOptions({
   or: "$",
 });
