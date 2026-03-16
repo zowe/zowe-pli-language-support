@@ -293,7 +293,7 @@ export const AttributeIsValidForPreprocessor: {
     return value === ScaleMode.Fixed;
   },
   [AttributeKind.StringBits]: function (value: StringBits): boolean {
-    return value.kind === StringKind.Character;
+    return value.kind === StringKind.Character && value.length === undefined;
   },
   [AttributeKind.Scope]: () => true,
   [AttributeKind.Entry]: () => true,
@@ -649,20 +649,22 @@ export const AttributeStringifiers: {
   },
   [AttributeKind.StringBits]: function (value: StringBits): string {
     const length =
-      typeof value.length === "number"
-        ? `${value.length}${value.refers ? ` REFERS ${value.refers.name}` : ""}`
-        : "*";
+      typeof value.length === "undefined"
+        ? ""
+        : typeof value.length === "number"
+          ? `(${value.length}${value.refers ? ` REFERS ${value.refers.name}` : ""})`
+          : "(*)";
     switch (value.kind) {
       case StringKind.Bit:
-        return `BIT(${length})`;
+        return `BIT${length}`;
       case StringKind.Character:
-        return `CHARACTER(${length})`;
+        return `CHARACTER${length}`;
       case StringKind.Graphic:
-        return `GRAPHIC(${length})`;
+        return `GRAPHIC${length}`;
       case StringKind.UChar:
-        return `UCHAR(${length})`;
+        return `UCHAR${length}`;
       case StringKind.WideChar:
-        return `WIDECHAR(${length})`;
+        return `WIDECHAR${length}`;
       default:
         assertUnreachable(value.kind);
     }
@@ -1456,7 +1458,7 @@ export enum StringKind {
 
 export type StringBits = {
   kind: StringKind;
-  length: number | "*";
+  length?: number | "*";
   refers?: ast.DeclaredVariable;
 };
 
