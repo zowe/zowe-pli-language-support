@@ -37,7 +37,7 @@ import {
 import { InternalCodes } from "../src/validation/internal-codes";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
-import { escapeRegExp } from "../src/parser/tokens";
+import { escapeRegExp, Token } from "../src/parser/tokens";
 import { isPLICode, PLICode } from "../src/validation/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
@@ -1067,10 +1067,10 @@ export class TestBuilder {
     });
   }
 
-  expectTypeAt(label: string, expectedType: TypeExpectation): void {
-    const ranges = this.getLabelRanges(label);
+  private expectTypeFromTokens(tokens: Token[], label: string, expectedType: TypeExpectation): void {
+     const ranges = this.getLabelRanges(label);
     for (const [start] of ranges) {
-      const token = binaryTokenSearch(this.unit.tokens, start);
+      const token = binaryTokenSearch(tokens, start);
       const node = token?.element;
       if (!node) {
         throw new Error(
@@ -1091,28 +1091,12 @@ export class TestBuilder {
     }
   }
 
+  expectTypeAt(label: string, expectedType: TypeExpectation): void {
+    return this.expectTypeFromTokens(this.unit.tokens, label, expectedType);
+  }
+
   expectPreprocessorTypeAt(label: string, expectedType: TypeExpectation): void {
-    const ranges = this.getLabelRanges(label);
-    for (const [start] of ranges) {
-      const token = binaryTokenSearch(this.unit.preprocessorTokens, start);
-      const node = token?.element;
-      if (!node) {
-        throw new Error(
-          `No syntax node found at position ${this.createPositionMessage(start)}`,
-        );
-      }
-      const actualType = this.unit.services.inferer.inferType(node, this.unit);
-      if (
-        actualType.type === DataType.Unknown ||
-        actualType.type === DataType.Structure ||
-        actualType.type === DataType.Union ||
-        !actualType.dimension
-      ) {
-        this.expectTypeWithComposite(expectedType, actualType as any);
-      } else {
-        this.expectTypeNoStructure(expectedType, actualType);
-      }
-    }
+    return this.expectTypeFromTokens(this.unit.preprocessorTokens, label, expectedType);
   }
 
   private expectTypeWithComposite(
