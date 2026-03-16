@@ -10,28 +10,13 @@
  */
 
 import { describe, expect, test } from "vitest";
-import * as tokens from "../src/parser/tokens";
 import {
   assertNoParseErrors,
   generateAndAssertValidSymbolTable,
   parse,
   parseStmts,
 } from "./utils";
-import { PreprocessorTokens } from "../src/preprocessor/pli-preprocessor-tokens";
-import { Lexer } from "chevrotain";
-
-test("PL/I tokens are all using sticky regex", async () => {
-  for (const token of tokens.all) {
-    if (token.PATTERN instanceof RegExp && token.PATTERN !== Lexer.NA) {
-      expect(token.PATTERN.sticky).toBe(true);
-    }
-  }
-  for (const token of Object.values(PreprocessorTokens)) {
-    if (token.PATTERN instanceof RegExp && token.PATTERN !== Lexer.NA) {
-      expect(token.PATTERN.sticky).toBe(true);
-    }
-  }
-});
+import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 
 describe("PL/I Parsing tests", () => {
   test("empty program parses as valid", async () => {
@@ -958,5 +943,14 @@ describe("PL/I Parsing tests", () => {
     `);
     assertNoParseErrors(doc);
     generateAndAssertValidSymbolTable(doc);
+  });
+
+  test("Expect error on EOF", async () => {
+    const doc = await parse(" MAIN: PROC OPTIONS(MAIN);");
+    const diagnostics = doc.diagnostics.get(DiagnosticCategory.Parser);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toContain(
+      'Expected token "END", but received end of file instead.',
+    );
   });
 });

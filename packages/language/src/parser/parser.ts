@@ -504,11 +504,6 @@ const procedureStatement = rule(
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
-    state.tryConsume(
-      element,
-      CstNodeKind.ProcedureStatement_PROCEDURE_END,
-      tokens.PROCEDURE,
-    );
     element.end = endStatement.rule(state);
     return element;
   },
