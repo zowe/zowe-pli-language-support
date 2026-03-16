@@ -253,7 +253,7 @@ export class DefaultTypeInferer implements TypeInferer {
     const attributes = builder.collectAttributes(
       node.returnsToken,
       node.returnAttributes,
-      ast.getContainer(node, ast.SyntaxKind.Program) === compilationUnit.preprocessorAst
+      ast.isPreprocessorNode(compilationUnit, node)
     );
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
@@ -268,7 +268,7 @@ export class DefaultTypeInferer implements TypeInferer {
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     const builder = new DefaultCompositeTypeBuilder(compilationUnit);
-    const attributes = builder.collectAttributes(nameToken, node.attributes, ast.getContainer(node, ast.SyntaxKind.Program) === compilationUnit.preprocessorAst);
+    const attributes = builder.collectAttributes(nameToken, node.attributes, ast.isPreprocessorNode(compilationUnit, node));
     compilationUnit.diagnostics.addAll(
       DiagnosticCategory.TypeSystem,
       attributes.diagnostics,
@@ -379,7 +379,7 @@ export class DefaultTypeInferer implements TypeInferer {
       const attributes = builder.collectAttributes(
         item.nameToken,
         item.attributes,
-        ast.getContainer(node, ast.SyntaxKind.Program) === compilationUnit.preprocessorAst
+        ast.isPreprocessorNode(compilationUnit, node)
       );
       compilationUnit.diagnostics.addAll(
         DiagnosticCategory.TypeSystem,
