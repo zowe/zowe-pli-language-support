@@ -12,8 +12,7 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// %DCL ANYTHING <|CHARACTER|> <|INTERNAL|> <|RESCAN|>;
+//// %DCL ANYTHING CHARACTER<|1:(|>123);
 
-verify.noDiagnostics("CHARACTER", code.Error.IBM3552I);
-verify.noDiagnostics("INTERNAL", code.Error.IBM3552I);
-verify.noDiagnostics("RESCAN", code.Error.IBM3552I);
+//TODO should have diagnostic, because string length is not allowed in preprocessor declarations
+verify.expectDiagnosticsAt("1", code.Error.IBM3552I);

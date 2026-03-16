@@ -12,8 +12,7 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: main
-//// %DCL ANYTHING <|CHARACTER|> <|INTERNAL|> <|RESCAN|>;
+//// %DCL ANYTHING<|1:(|>123) <|CHARACTER|>;
 
+verify.noDiagnostics("1");
 verify.noDiagnostics("CHARACTER", code.Error.IBM3552I);
-verify.noDiagnostics("INTERNAL", code.Error.IBM3552I);
-verify.noDiagnostics("RESCAN", code.Error.IBM3552I);

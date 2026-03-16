@@ -295,13 +295,11 @@ export const AttributeIsValidForPreprocessor: {
   [AttributeKind.StringBits]: function (value: StringBits): boolean {
     return value.kind === StringKind.Character;
   },
-  [AttributeKind.Scope]: function (_value: Scope): boolean {
-    return true;
-  },
-  [AttributeKind.Entry]: function (_value): boolean {
-    return true;
-  },
+  [AttributeKind.Scope]: () => true,
+  [AttributeKind.Entry]: () => true,
   [AttributeKind.DataType]: (value) => value === DataType.Entry,
+  [AttributeKind.ScanMode]: () => true,
+  [AttributeKind.Dimension]: () => true,
 };
 
 export function isAttributeValidForPreprocessor<K extends AttributeKind>(
