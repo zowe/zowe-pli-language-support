@@ -2,20 +2,22 @@
 
 This document describes the architecture of the PL/I language server (LS).
 
-## Source Files
+> **Note:** This is the original architecture document. It uses the term `SourceFile`, which has since been renamed to `CompilationUnit` in the codebase. For comprehensive up-to-date documentation, see the [Architecture Overview](architecture-overview.md), [Execution Flow](execution-flow.md), and [Study Roadmap](study-roadmap.md).
 
-The core of all data are the so called `SourceFile` objects.
+## Source Files (CompilationUnit)
+
+The core of all data are the `CompilationUnit` objects (previously called `SourceFile`).
 These don't represent a single file in our LS, but rather a connected graph of files that are somehow related via `INCLUDE` macros.
-I.e. if we have two files in our workspace, `A.pli` and `B.pli` (with `A` containing `%INCLUDE "B.pli"`), we only create a single `SourceFile` object that encapsulates both files.
-The `uri` of the `SourceFile` will point to the entry file.
+I.e. if we have two files in our workspace, `A.pli` and `B.pli` (with `A` containing `%INCLUDE "B.pli"`), we only create a single `CompilationUnit` object that encapsulates both files.
+The `uri` of the `CompilationUnit` will point to the entry file.
 
-LSP requests that target the `B.pli` file will be performed on the `SourceFile` that "belongs" to the `A.pli` file.
+LSP requests that target the `B.pli` file will be performed on the `CompilationUnit` that "belongs" to the `A.pli` file.
 
 ## Lifecycle
 
 The lifecycle of a document is always the same and is performed in isolation. 
-Meaning that no other `SourceFile` objects are involved in this process.
-Therefore, we don't need any kind of dependency checking - we just discard the current `SourceFile` object and construct a new one.
+Meaning that no other `CompilationUnit` objects are involved in this process.
+Therefore, we don't need any kind of dependency checking - we just discard the current `CompilationUnit` object and construct a new one.
 This might be subject to change later once we start caching data for unchanged parts of the code.
 
 The following steps are performed in the order they are written.
@@ -26,7 +28,7 @@ The first phase of the lifecycle is responsible for producing the token outputs 
 All tokens generated/used in the lexing and parsing phase are stored in the `tokens.ts` file.
 Note that for performance optimization, some tokens are combined into one, such as all binary operators, etc. This is done by using Chevrotain's token category feature.
 
-The generated tokens are stored on the `SourceFile` object.
+The generated tokens are stored on the `CompilationUnit` object.
 
 ### Parsing
 
@@ -48,7 +50,7 @@ It is created by iterating through the AST and storing some information about th
 ### Reference Resolution
 
 In the previous section, we traversed the AST and stored all `Reference` objects in our `ReferencesCache`.
-Since all named elements in the `SourceFile` are now known, we can start resolving those references.
+Since all named elements in the `CompilationUnit` are now known, we can start resolving those references.
 For that, we simply iterate over them and perform a lookup in the `ReferencesCache`.
 
 ### Semantic Validation
