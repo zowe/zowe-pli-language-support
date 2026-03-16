@@ -1985,22 +1985,21 @@ translator.rule(["NOT"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "string");
-  if (value.value.length !== 1) {
+  if (value.value.length > 7) {
     throw diagnosticFromCode(
       CompilerOptionsCodes.Not.InvalidParameterLength,
       value.token,
-      value.value,
+      value.value.length,
     );
   }
-  if (
-    value.value !== NOT_CHARACTER &&
-    Options.PLI_CHARACTER_REGEX.test(value.value)
-  ) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Not.InvalidParameterCharacter,
-      value.token,
-      value.value,
-    );
+  for (const char of value.value) {
+    if (char !== NOT_CHARACTER && Options.PLI_CHARACTER_SET.has(char)) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Not.InvalidParameterCharacter,
+        value.token,
+        char,
+      );
+    }
   }
   options.not = value.value;
 });
@@ -2140,19 +2139,21 @@ translator.rule(["OR"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "string");
-  if (value.value.length !== 1) {
+  if (value.value.length > 7) {
     throw diagnosticFromCode(
       CompilerOptionsCodes.Or.InvalidParameterLength,
       value.token,
-      value.value,
+      value.value.length,
     );
   }
-  if (value.value !== "|" && Options.PLI_CHARACTER_REGEX.test(value.value)) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Or.InvalidParameterCharacter,
-      value.token,
-      value.value,
-    );
+  for (const char of value.value) {
+    if (char !== "|" && Options.PLI_CHARACTER_SET.has(char)) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Or.InvalidParameterCharacter,
+        value.token,
+        char,
+      );
+    }
   }
   options.or = value.value;
 });

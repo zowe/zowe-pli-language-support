@@ -702,8 +702,8 @@ export const CompilerOptionsCodes = {
     InvalidParameterLength: {
       code: "CONO01",
       severity: Severity.W,
-      message: (value: string) =>
-        `Expected a single character, but received '${value}'.`,
+      message: (value: number) =>
+        `Expected up to seven characters, but received ${value} characters.`,
     },
     InvalidParameterCharacter: {
       code: "CONO02",
@@ -754,8 +754,8 @@ export const CompilerOptionsCodes = {
     InvalidParameterLength: {
       code: "COOR01",
       severity: Severity.W,
-      message: (value: string) =>
-        `Expected a single character, but received '${value}'.`,
+      message: (value: number) =>
+        `Expected up to seven characters, but received ${value} characters.`,
     },
     InvalidParameterCharacter: {
       code: "COOR02",
