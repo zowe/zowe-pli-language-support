@@ -20,7 +20,7 @@ import { Diagnostic, Severity } from "../src/language-server/types";
 import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/binary-expressions";
-import { escapeRegExp, Token } from "../src/parser/tokens";
+import { escapeRegExp } from "../src/parser/tokens";
 import { referencesRequest } from "../src/language-server/references-request";
 import { CancellationToken } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -224,10 +224,10 @@ export function generateAndAssertValidSymbolTable(
       (node as any)._beforeSymbolTable,
       `Node of kind ${node!.kind} (${SyntaxKind[node!.kind]}) was not reached by the AST iterator at all.`,
     ).toBeDefined();
-    forEachNode(node!, verifyNodeReachability);
   };
 
   tokens.forEach((token) => verifyNodeReachability(token.element));
+  forEachNode(compilationUnit.ast, (node) => verifyNodeReachability(node));
 
   // Generate the symbol table and verify the container structure.
   lifecycle.generateSymbolTable(compilationUnit);
@@ -236,12 +236,11 @@ export function generateAndAssertValidSymbolTable(
     addProperty(node, "_afterSymbolTable"),
   );
 
-  const verifyNodeContainer = (node: SyntaxNode | undefined, token: Token) => {
+  const verifyNodeContainer = (node: SyntaxNode | undefined) => {
     expect(node).toBeDefined();
     const kind = node!.kind;
     const kindName = SyntaxKind[kind];
     const reachedBefore = (node as any)._beforeSymbolTable !== undefined;
-    const image = token.image;
 
     // If there is a bug in the symbol table generation, it is possible to retrieve a node with a non-null container
     // that is still not reachable by the AST iterator anymore.
@@ -254,17 +253,16 @@ export function generateAndAssertValidSymbolTable(
     // All nodes should have a non-null container.
     expect(
       node!.container,
-      `Node of kind ${kind} (${kindName}) (${image}) should have a defined container`,
+      `Node of kind ${kind} (${kindName}) should have a defined container`,
     ).toBeDefined();
     expect(
       node!.container,
-      `Node of kind ${kind} (${kindName}) (${image}) should have a non-null container.`,
+      `Node of kind ${kind} (${kindName}) should have a non-null container.`,
     ).not.toBeNull();
-
-    forEachNode(node!, (child) => verifyNodeContainer(child, token));
   };
 
-  tokens.forEach((token) => verifyNodeContainer(token.element, token));
+  tokens.forEach((token) => verifyNodeContainer(token.element));
+  forEachNode(compilationUnit.ast, (node) => verifyNodeContainer(node));
 }
 
 /**
