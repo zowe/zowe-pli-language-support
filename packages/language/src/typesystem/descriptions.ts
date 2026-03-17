@@ -1548,6 +1548,7 @@ interface UnknownTypeDescription extends BaseTypeDescription {
   type: UnknownType;
 }
 
+//TODO [Lotes] remove the builtin flag again, when the referenced variable/function type is resolvable
 function createUnknownTypeDescription(common?: {
   builtIn?: boolean;
 }): UnknownTypeDescription {
