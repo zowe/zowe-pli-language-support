@@ -1021,78 +1021,73 @@ export class TestBuilder {
   expectSemanticTokens(label: string, tokenType: `${SemanticTokenTypes}`) {
     const ranges = this.getLabelRanges(label);
 
-    for (const file of this.files.values()) {
-      const textDocument = file.textDocument;
+    for (const [uri, start, end] of ranges) {
+      const file = this.files.get(uri);
+      if (!file) {
+        throw new Error(`File with URI ${uri} not found`);
+      }
 
+      const textDocument = file.textDocument;
       const tokens = semanticTokens(textDocument, this.unit);
       const decodedTokens = SemanticTokenDecoder.decode(tokens, textDocument);
+      const matchingToken = decodedTokens.find(
+        (t) => t.offsetStart === start && t.offsetEnd === end,
+      );
 
-      for (const [uri, start, end] of ranges) {
-        if (!UriUtils.equals(textDocument.uri, uri)) {
-          continue;
-        }
+      expect(
+        matchingToken,
+        `Semantic token for label "${label}" (${this.createPositionMessage(start)}) not found`,
+      ).toBeDefined();
 
-        const matchingToken = decodedTokens.find(
-          (t) => t.offsetStart === start && t.offsetEnd === end,
-        );
-
-        expect(
-          matchingToken,
-          `Semantic token for label "${label}" (${this.createPositionMessage(start)}) not found`,
-        ).toBeDefined();
-
-        expect(
-          matchingToken?.semanticTokenType,
-          `Semantic token for label "${label}" (${this.createPositionMessage(start)}) has wrong token type`,
-        ).toBe(tokenType);
-      }
+      expect(
+        matchingToken?.semanticTokenType,
+        `Semantic token for label "${label}" (${this.createPositionMessage(start)}) has wrong token type`,
+      ).toBe(tokenType);
     }
   }
 
   expectSkippedCode(label: string) {
     const ranges = this.getLabelRanges(label);
 
-    for (const file of this.files.values()) {
-      const textDocument = file.textDocument;
-      const codeRanges = skippedCodeRanges(this.unit, textDocument);
-
-      if (this.options.not) {
-        for (let i = 0; i < ranges.length; i++) {
-          const [uri, start, end] = ranges[i];
-          if (!UriUtils.equals(textDocument.uri, uri)) {
-            continue;
-          }
-          const startPosition = textDocument.positionAt(start);
-          const endPosition = textDocument.positionAt(end);
-          const codeRange = codeRanges.find(
-            (cr) =>
-              cr.start.line === startPosition.line &&
-              cr.start.character === startPosition.character &&
-              cr.end.line === endPosition.line &&
-              cr.end.character === endPosition.character,
+    if (this.options.not) {
+      for (let i = 0; i < ranges.length; i++) {
+        const [uri, start, end] = ranges[i];
+        const file = this.files.get(uri);
+        if (!file) {
+          throw new Error(`File with URI ${uri} not found`);
+        }
+        const textDocument = file.textDocument;
+        const codeRanges = skippedCodeRanges(this.unit, textDocument);
+        const startPosition = textDocument.positionAt(start);
+        const endPosition = textDocument.positionAt(end);
+        const codeRange = codeRanges.find(
+          (cr) =>
+            cr.start.line === startPosition.line &&
+            cr.start.character === startPosition.character &&
+            cr.end.line === endPosition.line &&
+            cr.end.character === endPosition.character,
+        );
+        if (codeRange) {
+          fail(
+            `Found unexpected skipped code from ${formatPosition(startPosition)} to ${formatPosition(endPosition)} for label "${label}" (${this.createLabelRangeMessage(label)})`,
           );
-          if (codeRange) {
-            fail(
-              `Found unexpected skipped code from ${formatPosition(startPosition)} to ${formatPosition(endPosition)} for label "${label}" (${this.createLabelRangeMessage(label)})`,
-            );
-          }
         }
-      } else {
-        const message = `Expected ${ranges.length} skipped code ranges but received ${codeRanges.length} for label "${label}" (${this.createLabelRangeMessage(label)})`;
-        expect(codeRanges, message).toHaveLength(ranges.length);
-
-        for (let i = 0; i < ranges.length; i++) {
-          const [uri, start, end] = ranges[i];
-          if (!UriUtils.equals(textDocument.uri, uri)) {
-            continue;
-          }
-          const startPosition = textDocument.positionAt(start);
-          const endPosition = textDocument.positionAt(end);
-          const messageStart = `Expected skipped code to start at ${formatPosition(startPosition)} but received ${formatPosition(codeRanges[i].start)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
-          expect(codeRanges[i].start, messageStart).toEqual(startPosition);
-          const messageEnd = `Expected skipped code to end at ${formatPosition(endPosition)} but received ${formatPosition(codeRanges[i].end)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
-          expect(codeRanges[i].end, messageEnd).toEqual(endPosition);
+      }
+    } else {
+      for (let i = 0; i < ranges.length; i++) {
+        const [uri, start, end] = ranges[i];
+        const file = this.files.get(uri);
+        if (!file) {
+          throw new Error(`File with URI ${uri} not found`);
         }
+        const textDocument = file.textDocument;
+        const codeRanges = skippedCodeRanges(this.unit, textDocument);
+        const startPosition = textDocument.positionAt(start);
+        const endPosition = textDocument.positionAt(end);
+        const messageStart = `Expected skipped code to start at ${formatPosition(startPosition)} but received ${formatPosition(codeRanges[i].start)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+        expect(codeRanges[i].start, messageStart).toEqual(startPosition);
+        const messageEnd = `Expected skipped code to end at ${formatPosition(endPosition)} but received ${formatPosition(codeRanges[i].end)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
+        expect(codeRanges[i].end, messageEnd).toEqual(endPosition);
       }
     }
   }
