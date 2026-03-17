@@ -17,9 +17,9 @@ import {
 import {
   setFileSystemProvider,
   startLanguageServer,
+  UriUtils,
   VirtualFileSystemProvider,
 } from "pli-language";
-import { URI } from "vscode-uri";
 
 export enum LSFileAction {
   Add = "add",
@@ -45,15 +45,21 @@ class LSFileSystemProvider extends VirtualFileSystemProvider {
         console.log("Received file system message: ", message);
         switch (message.type) {
           case LSFileAction.Add:
-            await this.writeFile(URI.parse(message.uri), message.content || "");
+            await this.writeFile(
+              UriUtils.toUri(message.uri),
+              message.content || "",
+            );
             break;
           case LSFileAction.Delete:
-            await this.deleteFile(URI.parse(event.data.uri));
+            await this.deleteFile(UriUtils.toUri(event.data.uri));
             break;
           case LSFileAction.Rename:
-            const content = await this.readFile(URI.parse(event.data.uri));
-            await this.deleteFile(URI.parse(event.data.uri));
-            await this.writeFile(URI.parse(event.data.content), content || "");
+            const content = await this.readFile(UriUtils.toUri(event.data.uri));
+            await this.deleteFile(UriUtils.toUri(event.data.uri));
+            await this.writeFile(
+              UriUtils.toUri(event.data.content),
+              content || "",
+            );
             break;
           default:
             console.log("Unsupported file action: ", event.data.type);

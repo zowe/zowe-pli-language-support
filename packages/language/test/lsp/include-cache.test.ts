@@ -11,7 +11,7 @@
 import { describe, test, expect, afterEach } from "vitest";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { getFileContentPreview } from "../../src/language-server/cache/include-cache";
 import { parse } from "../utils";
 
@@ -19,7 +19,7 @@ const mockCode = Array.from(
   { length: 100 },
   (_, i) => `DCL Var${i + 1} FIXED;`,
 ).join("\n");
-const mockPath = URI.file("/test.pli").toString();
+const mockPath = UriUtils.toUri("/test.pli").toString();
 const mockDocument = TextDocument.create(mockPath, "pli", 1, mockCode);
 const mockUnit = await parse(mockDocument.getText(), { validate: false });
 

@@ -10,7 +10,7 @@
  */
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
-import { URI } from "../utils/uri.js";
+import { URI, UriUtils } from "../utils/uri.js";
 import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
@@ -111,7 +111,7 @@ function createBuiltinScopeGetter(builtinDocument: TextDocument) {
       return Scope.createRoot();
     }
     if (!builtinFileScope) {
-      const fileUri = URI.parse(builtinDocument.uri);
+      const fileUri = UriUtils.toUri(builtinDocument.uri);
       const builtinUnit = await createCompilationUnit(fileUri);
       await tokenize(builtinUnit, builtinDocument);
       parse(builtinUnit);
@@ -293,11 +293,11 @@ export class CompilationUnitHandler {
     const textDocuments = EditorDocuments;
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
-      const uri = URI.parse(event.document.uri);
+      const uri = UriUtils.toUri(event.document.uri);
       this.updateUri(uri);
     });
     textDocuments.onDidClose((event) => {
-      const uri = URI.parse(event.document.uri);
+      const uri = UriUtils.toUri(event.document.uri);
       this.globalMutex.read(async () => {
         const unit = this.compilationUnits.get(uri.toString());
         if (unit && this.tryCloseCompilationUnit(uri)) {

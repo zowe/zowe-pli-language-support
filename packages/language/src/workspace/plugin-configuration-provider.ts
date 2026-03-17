@@ -326,7 +326,7 @@ export class PluginConfigurationProvider {
    * @returns List of diagnostics encountered during loading & processing
    */
   private async loadConfigurations(): Promise<LspDiagnostic[]> {
-    const workspaceUri = URI.parse(this.workspacePath);
+    const workspaceUri = UriUtils.toUri(this.workspacePath);
 
     // load configs
     await this.loadProgramConfig(
@@ -380,7 +380,7 @@ export class PluginConfigurationProvider {
   public async writeProcessGroupsFile(
     content = PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
   ): Promise<void> {
-    const workspaceUri = URI.parse(this.getWorkspacePath());
+    const workspaceUri = UriUtils.toUri(this.getWorkspacePath());
     try {
       await FileSystemProviderInstance.writeFile(
         UriUtils.joinPath(
@@ -418,7 +418,7 @@ export class PluginConfigurationProvider {
   public async writeProgramConfigFile(
     content: PgmsConfig = PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
   ): Promise<void> {
-    const workspaceUri = URI.parse(this.getWorkspacePath());
+    const workspaceUri = UriUtils.toUri(this.getWorkspacePath());
     try {
       await FileSystemProviderInstance.writeFile(
         UriUtils.joinPath(workspaceUri, PluginConfiguration.PROGRAM_FILE_PATH),
@@ -495,10 +495,9 @@ export class PluginConfigurationProvider {
           let libUri: URI;
           const absPathRegex = /^\/|[A-Z]:|~/i;
           if (absPathRegex.test(lib)) {
-            // absolute path, use as-is
-            libUri = URI.file(lib);
+            libUri = UriUtils.toUri(lib);
           } else {
-            libUri = UriUtils.joinPath(URI.parse(this.workspacePath), lib);
+            libUri = UriUtils.joinPath(UriUtils.toUri(this.workspacePath), lib);
           }
 
           try {
@@ -655,7 +654,7 @@ export class PluginConfigurationProvider {
     programConfigs: ProgramConfig[],
   ): void {
     this.programConfigs.clear();
-    const workspaceUri = URI.parse(workspacePath);
+    const workspaceUri = UriUtils.toUri(workspacePath);
 
     for (const config of programConfigs) {
       const resolvedUri = this.resolveProgramPath(config.program, workspaceUri);
@@ -672,7 +671,7 @@ export class PluginConfigurationProvider {
   private resolveProgramPath(programPath: string, workspaceUri: URI): URI {
     const normalizedProgramPath = programPath.replace(/\\/g, "/");
     if (this.isAbsolutePath(normalizedProgramPath)) {
-      return URI.file(normalizedProgramPath);
+      return UriUtils.toUri(normalizedProgramPath);
     }
     return UriUtils.joinPath(workspaceUri, normalizedProgramPath);
   }
@@ -682,7 +681,8 @@ export class PluginConfigurationProvider {
    * Paths starting with "*" are treated as relative even if they appear absolute.
    */
   private isAbsolutePath(path: string): boolean {
-    const hasWindowsDrive = Boolean(UriUtils.processDriveLetter(path).drive);
+    const hasWindowsDrive =
+      UriUtils.isWindowsAbsolutePath(path) || /^\/[a-zA-Z]:\//.test(path);
     const hasUnixRoot = !UriUtils.isPathRelative(path) && !path.startsWith("*");
 
     return hasWindowsDrive || hasUnixRoot;
@@ -819,9 +819,7 @@ export class PluginConfigurationProvider {
    */
   public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
-    const absolutePathLib = UriUtils.dirname(libUri)
-      .toString()
-      .replace(/^file:\/\//, "");
+    const absolutePathLib = UriUtils.toFilePath(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
       if (
         config.$computedLibsSet.has(dirname) ||

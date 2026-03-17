@@ -231,7 +231,7 @@ export class NormalizedTextDocuments<
       try {
         const uriName = UriUtils.normalize(uri);
         const content = await FileSystemProviderInstance.readFile(
-          URI.parse(uriName),
+          UriUtils.toUri(uriName),
         );
         if (content === undefined) {
           return undefined;

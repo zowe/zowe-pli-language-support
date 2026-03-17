@@ -12,7 +12,7 @@
 import { describe, expect, test, vitest, beforeAll, afterAll } from "vitest";
 import { MarginIndicatorNotification } from "../../src/language-server/margin-indicator";
 import { Connection } from "vscode-languageserver";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { parse } from "../utils";
 import {
   PluginConfigurationProviderInstance,
@@ -36,7 +36,7 @@ describe("marginIndicator", () => {
       sendNotification,
     } as unknown as Connection;
 
-    const uri = URI.file("/test/test.pli");
+    const uri = UriUtils.toUri("/test/test.pli");
     const inputText = `*PROCESS MARGINS(10, 80);
       DCL A fixed bin(31);`;
 
@@ -63,7 +63,7 @@ describe("marginIndicator", () => {
       sendNotification,
     } as unknown as Connection;
 
-    const uri = URI.file("/test/test.pli");
+    const uri = UriUtils.toUri("/test/test.pli");
     const inputText = `DCL A fixed bin(31);`;
 
     const unit = await parse(inputText, { uri });
@@ -89,7 +89,7 @@ describe("marginIndicator", () => {
       sendNotification,
     } as unknown as Connection;
 
-    const uri = URI.file("/test/test.pli");
+    const uri = UriUtils.toUri("/test/test.pli");
     const inputText = `*PROCESS MARGINS(5, 70);
       DCL A fixed bin(31);`;
 
@@ -115,7 +115,7 @@ describe("marginIndicator", () => {
       sendNotification,
     } as unknown as Connection;
 
-    const uri = URI.file("/test/test.pli");
+    const uri = UriUtils.toUri("/test/test.pli");
 
     // First compilation with margins 5, 70
     let inputText = `*PROCESS MARGINS(5, 70);
@@ -151,7 +151,7 @@ describe("marginIndicator", () => {
       sendNotification,
     } as unknown as Connection;
 
-    const uri = URI.file("/test/test.pli");
+    const uri = UriUtils.toUri("/test/test.pli");
     const inputText = `DCL A fixed bin(31);`;
 
     const programConfig: ProgramConfig = {

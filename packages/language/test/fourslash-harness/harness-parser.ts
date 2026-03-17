@@ -15,7 +15,7 @@ import { Wrapper } from "./wrapper";
 import path from "path";
 import fs from "fs";
 import { DEFAULT_FILE_URI } from "../test-builder";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 
 const HarnessFileTag = {
   // The name of the file
@@ -213,8 +213,7 @@ class HarnessTestParser {
         const uri =
           fileName === UnnamedFile
             ? DEFAULT_FILE_URI
-            : //TODO @tag(#issue-656) Change this back to `URI.file(fileName).toString()` once all builtin procedures signatures are setup
-              URI.parse(fileName).toString();
+            : UriUtils.toUri(fileName).toString();
 
         if (files.get(uri) !== undefined) {
           throw new Error(`Duplicate file name: '${uri}'`);

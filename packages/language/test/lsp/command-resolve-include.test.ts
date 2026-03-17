@@ -23,7 +23,7 @@ import {
 } from "../../src/workspace/plugin-configuration-provider";
 import { commandResolveInclude } from "../../src/language-server/commands";
 import { Commands } from "../../src/language-server/constants";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 
 const WORKSPACE_PATH = "/workspace";
 const CONFIG_FILE_PATH = "/workspace/.pliplugin/proc_grps.json";
@@ -61,7 +61,7 @@ describe("commandResolveInclude", () => {
     });
 
     const result = await FileSystemProviderInstance.readFile(
-      URI.parse(CONFIG_FILE_PATH),
+      UriUtils.toUri(CONFIG_FILE_PATH),
     );
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
@@ -83,7 +83,7 @@ describe("commandResolveInclude", () => {
     });
 
     const result = await FileSystemProviderInstance.readFile(
-      URI.parse(CONFIG_FILE_PATH),
+      UriUtils.toUri(CONFIG_FILE_PATH),
     );
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
@@ -105,7 +105,7 @@ describe("commandResolveInclude", () => {
     });
 
     const result = await FileSystemProviderInstance.readFile(
-      URI.parse(CONFIG_FILE_PATH),
+      UriUtils.toUri(CONFIG_FILE_PATH),
     );
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({

@@ -10,8 +10,12 @@
  */
 
 import { URI, Utils } from "vscode-uri";
-import { capitalize } from "../preprocessor/util";
 export { URI };
+
+/** Matches Windows absolute paths: letter + colon + slash, e.g. C:\ or D:/ */
+const WINDOWS_DRIVE_REGEX = /^[a-zA-Z]:[\\\/]/;
+/** Matches URI scheme prefixes, e.g. file:, memory:, https: */
+const SCHEME_REGEX = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
 export namespace UriUtils {
   export const basename = Utils.basename;
@@ -29,68 +33,81 @@ export namespace UriUtils {
     /^[a-zA-Z]/.test(path.charAt(0));
   export const isUnixAbsolutePath = (path: string) => path.startsWith("/");
 
+  /**
+   * Smart constructor: detects whether input is a URI string or a file path
+   * and calls the correct vscode-uri factory.
+   * - URI objects are returned as-is (fragment merged if present)
+   * - Strings starting with a Windows drive letter (e.g. C:\) go through URI.file
+   * - Strings with a URI scheme (file://, memory://) go through URI.parse
+   * - All other strings (bare paths) go through URI.file, which correctly
+   *   encodes special characters like '#' and spaces
+   *
+   * The returned URI is guaranteed to have an empty fragment. If the input
+   * has a fragment (e.g. from an unencoded '#' in a file:// URI string),
+   * it is merged back into the path so that PL/I filenames containing '#'
+   * are represented correctly.
+   */
+  export function toUri(input: string | URI): URI {
+    if (typeof input !== "string") {
+      return input.fragment
+        ? input.with({
+            path: input.path + "#" + input.fragment,
+            fragment: "",
+          })
+        : input;
+    }
+    if (WINDOWS_DRIVE_REGEX.test(input)) {
+      return URI.file(input.replace(/\\/g, "/"));
+    }
+    if (SCHEME_REGEX.test(input)) {
+      const parsed = URI.parse(input);
+      return parsed.fragment
+        ? parsed.with({
+            path: parsed.path + "#" + parsed.fragment,
+            fragment: "",
+          })
+        : parsed;
+    }
+    return URI.file(input);
+  }
+
   export function equals(a?: URI | string, b?: URI | string): boolean {
-    const lhs = typeof a === "string" ? URI.parse(a) : a;
-    const rhs = typeof b === "string" ? URI.parse(b) : b;
-    return lhs?.toString() === rhs?.toString();
+    if (a === undefined || b === undefined) {
+      return a === b;
+    }
+    const lhs = typeof a === "string" ? UriUtils.toUri(a) : a;
+    const rhs = typeof b === "string" ? UriUtils.toUri(b) : b;
+    return toNormalizedKey(lhs) === toNormalizedKey(rhs);
   }
 
   /**
-   * Processes Windows drive letters in a path.
-   * - Removes leading slash before drive letter (e.g., "/C:/" → "C:/")
-   * - Extracts and returns the drive letter if present
-   *
-   * @returns Object with normalized path and extracted drive letter
+   * Produces a canonical, case-insensitive string key for map lookups and
+   * equality comparisons. Built from decoded path components to avoid
+   * encoding variance.
    */
-  export function processDriveLetter(path: string): {
-    path: string;
-    drive: string | null;
-  } {
-    // Check for leading slash before drive: /C:/ or /c:/
-    if (/^\/[a-zA-Z]:\//.test(path)) {
-      const drive = path.substring(1, 3); // Extract "C:" and lowercase
-      return {
-        path: path.substring(1), // Remove leading slash
-        drive: drive,
-      };
-    }
-
-    // Check for drive letter without leading slash: C:\ or C:/
-    const match = path.match(/^([a-zA-Z]:)[\\\/]/);
-    if (match) {
-      return {
-        path: path,
-        drive: match[1],
-      };
-    }
-
-    // No drive letter found
-    return {
-      path: path,
-      drive: null,
-    };
+  export function toNormalizedKey(input: URI | string): string {
+    const uri = typeof input === "string" ? toUri(input) : input;
+    const path = uri.path.replace(/\\/g, "/").toLowerCase();
+    const scheme = uri.scheme ? uri.scheme.toLowerCase() + "://" : "";
+    const authority = uri.authority ? uri.authority.toLowerCase() : "";
+    return `${scheme}${authority}${path}`;
   }
 
-  export function stringPath(path: URI | string): {
-    result: string;
-    driveLetter: string | null;
-  } {
-    let result = typeof path === "string" ? URI.parse(path).path : path.path;
-
-    // Normalize possible leading slash before Windows drive and isolate windows drive letter if present
-    const { path: normalizedPath, drive: driveLetter } =
-      processDriveLetter(result);
-    result = normalizedPath;
-
-    // Remove drive letter if present
-    if (driveLetter) {
-      result = result.replace(driveLetter, "");
+  /**
+   * Returns a normalized, decoded file path string with no scheme.
+   * - Backslashes are normalized to forward slashes
+   * - Windows drive letters are uppercased and the URI leading slash is
+   *   stripped (e.g. /c:/path -> C:/path)
+   */
+  export function toFilePath(input: URI | string): string {
+    const uri = typeof input === "string" ? toUri(input) : input;
+    let path = uri.path.replace(/\\/g, "/");
+    if (/^\/[a-zA-Z]:\//.test(path)) {
+      path = path[1].toUpperCase() + path.slice(2);
+    } else if (/^[a-zA-Z]:\//.test(path)) {
+      path = path[0].toUpperCase() + path.slice(1);
     }
-
-    // Normalize slashes
-    result = result.replace(/\\/g, "/");
-
-    return { result, driveLetter };
+    return path;
   }
 
   export function isPathRelative(path: string) {
@@ -102,32 +119,33 @@ export namespace UriUtils {
     return startsWithLetter && !isAbsolute;
   }
 
-  // TODO: 04.02.2026 @wagner-laranjeiras
-  // In our test environment, sometimes the toPath is evaluated as a single slash ("/"),
-  // which can break the logic and return a relative path when an absolute should be given.
-  // This is a workaround, but a refactor regarding the URI handling in the project is needed.
-  // See GitHub Issue #568
-  function normalizeForWindowsTests(path: string) {
-    if (path.startsWith("/")) {
-      path = path.substring(1);
+  /**
+   * Strips a Windows drive letter prefix (e.g. "C:") from a path, returning
+   * the path portion and the extracted drive letter separately.
+   */
+  function splitDrive(path: string): { path: string; drive: string | null } {
+    if (/^[a-zA-Z]:\//.test(path)) {
+      return { path: path.slice(2), drive: path.slice(0, 2) };
     }
-    return path;
+    return { path, drive: null };
+  }
+
+  export function parts(path: string): string[] {
+    return path.split("/").filter((e) => e.length > 0);
   }
 
   export function relative(from: URI | string, to: URI | string): string {
-    const { result: fromPath } = stringPath(from);
-    const { result: toPath, driveLetter } = stringPath(to);
+    const fromFull = toFilePath(from);
+    const toFull = toFilePath(to);
 
-    const fromParts = fromPath.split("/").filter((e) => e.length > 0);
-    const toParts = toPath.split("/").filter((e) => e.length > 0);
+    const { path: fromPath, drive: fromDriveLetter } = splitDrive(fromFull);
+    const { path: toPath, drive: toDriveLetter } = splitDrive(toFull);
 
-    const shareWorkspace = Boolean(
-      fromParts.length && fromParts[0] === toParts[0],
-    );
-    if (isWindows && !shareWorkspace) {
-      const windowsPath = driveLetter ? driveLetter + toPath : toPath;
-      return normalizeForWindowsTests(windowsPath);
+    if (fromDriveLetter !== toDriveLetter) {
+      return toPath;
     }
+    const fromParts = parts(fromPath);
+    const toParts = parts(toPath);
     let commonFolders = 0;
     for (; commonFolders < fromParts.length; commonFolders++) {
       if (fromParts[commonFolders] !== toParts[commonFolders]) {
@@ -135,7 +153,7 @@ export namespace UriUtils {
       }
     }
     if (fromParts.length - commonFolders > 1) {
-      return typeof to === "string" ? toPath : to.path;
+      return toPath;
     }
 
     let toPart = toParts.slice(commonFolders).join("/");
@@ -149,44 +167,28 @@ export namespace UriUtils {
   }
 
   /**
-   * Removes leading character and capitalizes the first letter of the resulting string.
-   * Typically used to normalize Windows drive letters (e.g., "/c:/path" → "C:/path").
-   */
-  export function handleDriveLetter(path: string): string {
-    path = path.substring(1);
-    return capitalize(path);
-  }
-
-  /**
    * Computes a relative path from one location to another.
    * Ensures the result is prefixed with `./` for relative paths or returns
    * an absolute fallback when paths cannot be related (e.g., different drives on Windows).
    */
-  export function relativeDisplayPath(
+  export function composeRelativePath(
     from: string,
     to: string,
     fallback = to,
-    isWindows = UriUtils.isWindows,
   ): string {
-    let relative = UriUtils.relative(from, to);
-    if (UriUtils.isPathRelative(relative)) {
-      relative = "./" + relative;
-      return relative;
+    const rel = UriUtils.relative(from, to);
+    if (UriUtils.isPathRelative(rel)) {
+      return "./" + rel;
     }
-    const { result, driveLetter } = stringPath(fallback);
-    // WINDOWS
-    if (isWindows) {
-      return `${driveLetter}${result}`;
-    }
-    // UNIX
-    if (UriUtils.isUnixAbsolutePath(relative)) {
-      return result;
-    }
-    return relative;
+    return toFilePath(fallback);
   }
 
+  /**
+   * Normalizes a URI or path string into a canonical URI string representation.
+   * Useful for producing consistent keys in document maps.
+   */
   export function normalize(uri: URI | string): string {
-    return URI.parse(uri.toString()).toString();
+    return toUri(uri).toString();
   }
 
   /**
@@ -206,8 +208,8 @@ export namespace UriUtils {
   ): string | undefined {
     if (!candidateRaw) return undefined;
 
-    const candidate = normalize(candidateRaw);
-    const workspaceFolder = normalize(workspaceFolderUri);
+    const candidate = toNormalizedKey(candidateRaw);
+    const workspaceFolder = toNormalizedKey(workspaceFolderUri);
 
     if (!candidate.startsWith(workspaceFolder)) return undefined;
 

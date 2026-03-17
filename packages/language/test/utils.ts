@@ -25,6 +25,7 @@ import { referencesRequest } from "../src/language-server/references-request";
 import { CancellationToken } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
+import { UriUtils } from "../src/utils/uri";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -129,7 +130,7 @@ export async function parse(
   text: string,
   options?: { validate?: boolean; uri?: URI },
 ): Promise<CompilationUnit> {
-  const uri = options?.uri ?? URI.file("test.pli");
+  const uri = options?.uri ?? UriUtils.toUri("test.pli");
   const sourceFile = await createCompilationUnit(uri);
   const document = TextDocument.create(uri.toString(), "pli", 0, text);
   if (!options?.validate) {
@@ -273,7 +274,7 @@ export async function parseAndLink(
   text: string,
   options?: { validate?: boolean; uri?: URI },
 ): Promise<CompilationUnit> {
-  const uri = options?.uri ?? URI.file("test.pli");
+  const uri = options?.uri ?? UriUtils.toUri("test.pli");
   const document = TextDocument.create(uri.toString(), "pli", 0, text);
   const unit = await createCompilationUnit(uri);
 

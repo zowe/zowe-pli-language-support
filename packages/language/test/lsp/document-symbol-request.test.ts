@@ -12,7 +12,7 @@
 import { describe, test, expect } from "vitest";
 import { parse, replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { documentSymbolRequest } from "../../src/language-server/document-symbol-request";
 import { SymbolKind } from "vscode-languageserver-types";
 import { EditorDocuments } from "../../src/language-server/text-documents";
@@ -34,7 +34,7 @@ const documentSymbolKindString = (symbolKind: SymbolKind): string =>
 async function expectDocumentSymbols(annotatedCode: string): Promise<void> {
   const { output, ranges } = replaceNamedIndices(formatTestPLI(annotatedCode));
   const textDocument = TextDocument.create(
-    URI.file("/test.pli").toString(),
+    UriUtils.toUri("/test.pli").toString(),
     "pli",
     1,
     output,
@@ -42,7 +42,10 @@ async function expectDocumentSymbols(annotatedCode: string): Promise<void> {
 
   EditorDocuments.set(textDocument);
   const unit = await parse(output, { validate: true });
-  const documentSymbols = documentSymbolRequest(URI.file("/test.pli"), unit);
+  const documentSymbols = documentSymbolRequest(
+    UriUtils.toUri("/test.pli"),
+    unit,
+  );
 
   const totalRanges = Object.values(ranges).reduce(
     (acc, curr) => acc + curr.length,

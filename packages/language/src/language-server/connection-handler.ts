@@ -19,7 +19,7 @@ import {
   DocumentHighlight,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
-import { URI } from "../utils/uri";
+import { URI, UriUtils } from "../utils/uri";
 import { definitionRequest } from "./definition-request";
 import { referencesRequest } from "./references-request";
 import { semanticTokenLegend, semanticTokens } from "./semantic-tokens";
@@ -67,7 +67,7 @@ export function startLanguageServer(connection: Connection): void {
   ) {
     await compilationUnitHandler.ready;
     return compilationUnitHandler.globalMutex.read(() => {
-      const parsedUri = URI.parse(uri);
+      const parsedUri = UriUtils.toUri(uri);
       const compilationUnit =
         compilationUnitHandler.getCompilationUnit(parsedUri);
       if (!compilationUnit) {

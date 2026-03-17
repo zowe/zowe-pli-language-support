@@ -15,7 +15,7 @@ import {
   Diagnostic,
   TextEdit,
 } from "vscode-languageserver-types";
-import { URI } from "../../utils/uri";
+import { UriUtils } from "../../utils/uri";
 import { CompilationUnitHandler } from "../../workspace/compilation-unit";
 import { diagnosticToLSP, fullCode } from "../types";
 import { LspCodes } from "../../validation/lsp-codes";
@@ -71,7 +71,7 @@ export function getCaseDiagnosticsFromCompilationUnit(
   compilationUnitHandler: CompilationUnitHandler,
 ): Diagnostic[] {
   try {
-    const unit = compilationUnitHandler.getCompilationUnit(URI.parse(uri));
+    const unit = compilationUnitHandler.getCompilationUnit(UriUtils.toUri(uri));
     if (!unit) return [];
 
     const caseDiagnostics = unit.diagnostics
