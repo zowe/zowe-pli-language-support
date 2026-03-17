@@ -26,6 +26,7 @@ interface CachedInstructions {
 
 export interface FileInstructionResult {
   tokens: Token[];
+  comments: Token[];
   diagnostics: Diagnostic[];
   statements: Statement[];
   result: InstructionGeneratorResult;

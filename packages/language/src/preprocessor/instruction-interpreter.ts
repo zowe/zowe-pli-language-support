@@ -2298,7 +2298,8 @@ async function runInclude(
       subProgram.diagnostics.push(...tokenizeResult.diagnostics);
       const result = generateInstructions(subProgram.statements);
       return {
-        tokens: subProgram.tokens,
+        tokens: tokenizeResult.tokens,
+        comments: tokenizeResult.comments,
         diagnostics: subProgram.diagnostics,
         statements: subProgram.statements,
         result,
@@ -2308,6 +2309,7 @@ async function runInclude(
     context.unit.services.files.set({
       textDocument: document,
       tokens: cachedResult.tokens,
+      comments: cachedResult.comments,
       uri,
     });
     context.diagnostics.push(...cachedResult.diagnostics);

@@ -4,9 +4,6 @@
   "fileTypes": [".pli"],
   "patterns": [
     {
-      "include": "#comments"
-    },
-    {
       "name": "string.quoted.single.pli",
       "begin": "'",
       "end": "'",
@@ -46,31 +43,6 @@
           "name": "string.exec.pli",
           "begin": "(?i)(?<=EXEC\\s+)[a-z]+\\s",
           "end": "(?=;)"
-        },
-        {
-          "name": "comment.block.pli",
-          "begin": "/\\*",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.definition.comment.pli"
-            }
-          },
-          "end": "\\*/",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.comment.pli"
-            }
-          }
-        },
-        {
-          "name": "comment.line.pli",
-          "begin": "//",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.whitespace.comment.leading.pli"
-            }
-          },
-          "end": "(?=$)"
         }
       ]
     }

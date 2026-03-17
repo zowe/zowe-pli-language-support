@@ -17,6 +17,7 @@ import { BuiltinDocuments } from "../language-server/text-documents";
 export interface CompilationUnitFile {
   readonly uri: URI;
   readonly tokens: Token[];
+  readonly comments: Token[];
   readonly textDocument: TextDocument;
 }
 
@@ -29,6 +30,10 @@ export class FileStore {
 
   getTokens(uri: URI | string): Token[] | undefined {
     return this.get(uri)?.tokens;
+  }
+
+  getComments(uri: URI | string): Token[] | undefined {
+    return this.get(uri)?.comments;
   }
 
   *getAllTokens(): IterableIterator<Token> {

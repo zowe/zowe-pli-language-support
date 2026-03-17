@@ -96,6 +96,7 @@ const CICS = {
 
 class TokenizerContext {
   public tokens: tokens.Token[] = [];
+  public comments: tokens.Token[] = [];
   public char: string = "";
   public input: string;
   public length: number;
@@ -283,7 +284,6 @@ const tokenizeStringInternal = tokenizeRegex(tokens.STRING_TERM, stringRegex);
 const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
 
 function tokenizeOrSymbol(context: TokenizerContext): tokens.Token | undefined {
-  context.store();
   let nextChar = context.input[context.index + 1];
   if (orSymbols.includes(nextChar)) {
     nextChar = context.input[context.index + 2];
@@ -344,6 +344,7 @@ function tokenizeSlash(context: TokenizerContext): tokens.Token | undefined {
       context.index = i;
       context.line = line;
       context.column = column;
+      context.comments.push(context.createTokenInstance(tokens.ML_COMMENT));
       return undefined;
     } else if (nextChar === "/") {
       // Line comment
@@ -359,6 +360,7 @@ function tokenizeSlash(context: TokenizerContext): tokens.Token | undefined {
         }
       }
       context.index = i;
+      context.comments.push(context.createTokenInstance(tokens.SL_COMMENT));
       return undefined;
     } else if (nextChar === "=") {
       context.advance(2, false);
@@ -560,6 +562,7 @@ export function initLexer(compilerOptions: CompilerOptions): void {
 
 export interface TokenizationResult {
   tokens: tokens.Token[];
+  comments: tokens.Token[];
   diagnostics: Diagnostic[];
 }
 
@@ -618,6 +621,7 @@ export function tokenize(
 
   return {
     tokens: context.tokens,
+    comments: context.comments,
     diagnostics: context.diagnostics,
   };
 }

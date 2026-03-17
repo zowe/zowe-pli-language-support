@@ -30,7 +30,6 @@ import { CompilerOptions } from "../preprocessor/compiler-options/options";
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
   diagnostics: Diagnostic[];
-  tokens: t.Token[];
 };
 
 /**
@@ -206,6 +205,5 @@ export function preprocessorParse(
   return {
     statements,
     diagnostics: state.diagnostics,
-    tokens: state.tokens,
   };
 }

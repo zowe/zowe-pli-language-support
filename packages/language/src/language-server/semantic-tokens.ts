@@ -42,6 +42,7 @@ export enum SemanticTokenTypes {
   class,
   type,
   string,
+  comment,
 }
 
 const tokenModifiers = new Map<string, number>([]);
@@ -59,11 +60,21 @@ export function semanticTokens(
   range?: Range,
 ): number[] {
   const tokens = compilationUnit.services.files.getTokens(textDocument.uri);
-  if (!tokens) {
+  const comments = compilationUnit.services.files.getComments(textDocument.uri);
+  if (!tokens || !comments) {
     return [];
   }
+  let commentIndex = 0;
   const semanticTokens = new SemanticTokensBuilder();
   for (const token of tokens) {
+    // Process any comments that appear before the current token
+    while (
+      comments.length > commentIndex &&
+      comments[commentIndex].startOffset < token.startOffset
+    ) {
+      const comment = comments[commentIndex++];
+      handleCommentTokens(textDocument, semanticTokens, comment);
+    }
     const type = tokenType(token);
     if (type !== undefined) {
       semanticTokens.push(
@@ -75,7 +86,50 @@ export function semanticTokens(
       );
     }
   }
+  // Process any remaining comments after the last token
+  while (comments.length > commentIndex) {
+    const comment = comments[commentIndex++];
+    handleCommentTokens(textDocument, semanticTokens, comment);
+  }
   return semanticTokens.build().data;
+}
+
+// Most language clients cannot handle multi-line semantic tokens
+// This function breaks multi-line comments apart into separate semantic tokens
+// Each token covers a single line, so that all clients can display them correctly
+function handleCommentTokens(
+  document: TextDocument,
+  tokenBuilder: SemanticTokensBuilder,
+  token: Token,
+): void {
+  if (token.startLine === token.endLine) {
+    // Single-line comment, push as is
+    tokenBuilder.push(
+      token.startLine,
+      token.startColumn,
+      token.image.length,
+      SemanticTokenTypes.comment,
+      0,
+    );
+    return;
+  }
+  for (let line = token.startLine; line <= token.endLine; line++) {
+    const startChar = line === token.startLine ? token.startColumn : 0;
+    let length: number;
+    if (line === token.endLine) {
+      length = token.endColumn + 1 - startChar;
+    } else {
+      const lineStart = document.offsetAt({ line, character: 0 });
+      const lineEnd = document.offsetAt({
+        line,
+        character: Number.MAX_SAFE_INTEGER,
+      });
+      length = lineEnd - lineStart - startChar;
+    }
+    if (length > 0) {
+      tokenBuilder.push(line, startChar, length, SemanticTokenTypes.comment, 0);
+    }
+  }
 }
 
 function tokenType(token: Token): number | undefined {
