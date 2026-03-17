@@ -48,7 +48,6 @@ import { binaryTokenSearch } from "../src/utils/search";
 import { PluginConfiguration } from "../src/language-server/constants";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 import { UriUtils } from "../src";
-import { assertType } from "../src/preprocessor/util";
 
 export type Label = string | number | string[] | number[];
 
@@ -227,13 +226,25 @@ export class TestBuilder {
 
     const [[firstFileUri, firstFile]] = this.files.entries();
     this.output = firstFile.output;
-    this.indices = firstFile.indices;
-    this.ranges = [...this.files.entries()]
-      .map(([uri, file]) => [uri, file.ranges])
+    this.indices = [...this.files.entries()]
+      .map(([_, file]) => file.indices)
       .reduce(
-        (acc, [uri, ranges]) => {
+        (acc, indices) => {
+          for (const [label, labelIndices] of Object.entries(indices)) {
+            if (!acc[label]) {
+              acc[label] = [];
+            }
+            acc[label].push(...labelIndices);
+          }
+          return acc;
+        },
+        {} as Record<string, TestIndex[]>,
+      );
+    this.ranges = [...this.files.entries()]
+      .map(([_, file]) => file.ranges)
+      .reduce(
+        (acc, ranges) => {
           for (const [label, labelRanges] of Object.entries(ranges)) {
-            assertType<TestRange[]>(labelRanges);
             if (!acc[label]) {
               acc[label] = [];
             }
@@ -243,7 +254,6 @@ export class TestBuilder {
         },
         {} as Record<string, TestRange[]>,
       );
-
     this.unit = await parseAndLink(this.output, {
       validate: this.options.validate,
       uri: URI.parse(firstFileUri),
@@ -967,7 +977,7 @@ export class TestBuilder {
           const [uri, start, end] = expected;
           const exists = result.some(
             (definition) =>
-              definition.uri === uri &&
+              UriUtils.equals(definition.uri, uri) &&
               definition.range.start === start &&
               definition.range.end === end,
           );
@@ -1018,7 +1028,7 @@ export class TestBuilder {
       const decodedTokens = SemanticTokenDecoder.decode(tokens, textDocument);
 
       for (const [uri, start, end] of ranges) {
-        if (textDocument.uri !== uri) {
+        if (!UriUtils.equals(textDocument.uri, uri)) {
           continue;
         }
 
@@ -1049,7 +1059,7 @@ export class TestBuilder {
       if (this.options.not) {
         for (let i = 0; i < ranges.length; i++) {
           const [uri, start, end] = ranges[i];
-          if (textDocument.uri !== uri) {
+          if (!UriUtils.equals(textDocument.uri, uri)) {
             continue;
           }
           const startPosition = textDocument.positionAt(start);
@@ -1073,7 +1083,7 @@ export class TestBuilder {
 
         for (let i = 0; i < ranges.length; i++) {
           const [uri, start, end] = ranges[i];
-          if (textDocument.uri !== uri) {
+          if (!UriUtils.equals(textDocument.uri, uri)) {
             continue;
           }
           const startPosition = textDocument.positionAt(start);

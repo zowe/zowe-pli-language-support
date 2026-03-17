@@ -85,7 +85,6 @@ export class PliLexer {
         diagnostics: diagnostics,
         statements: statements,
         result,
-        preprocessorTokens: tokenizeResult.tokens,
       };
     });
     unit.diagnostics.addAll(DiagnosticCategory.Lexer, instruction.diagnostics);
