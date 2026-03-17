@@ -58,17 +58,17 @@ Microsoft created LSP so that a single **language server** can serve any IDE tha
 ### How it works in practice
 
 ```
-┌──────────────────────┐          LSP (JSON-RPC)          ┌───────────────────────┐
-│     VS Code          │ ◄──────────────────────────────►  │   Language Server      │
-│  (or any LSP client) │                                   │  (separate process)    │
-│                      │  textDocument/didOpen              │                        │
-│  User opens file  ──►│─────────────────────────────────►│  Tokenize, parse,      │
-│                      │                                   │  analyze, validate     │
-│                      │  textDocument/publishDiagnostics   │                        │
-│  Shows squiggles  ◄──│◄─────────────────────────────────│  Sends diagnostics     │
-│                      │                                   │                        │
-│  User hovers      ──►│  textDocument/hover ────────────►│  Looks up symbol info  │
-│  Shows tooltip    ◄──│◄──────────────── hover response──│                        │
+┌──────────────────────┐          LSP (JSON-RPC)           ┌───────────────────────┐
+│     VS Code          │ ◄──────────────────────────────►  │   Language Server     │
+│  (or any LSP client) │                                   │  (separate process)   │
+│                      │  textDocument/didOpen             │                       │
+│  User opens file  ──►│─────────────────────────────────► │  Tokenize, parse,     │
+│                      │                                   │  analyze, validate    │
+│                      │  textDocument/publishDiagnostics  │                       │
+│  Shows squiggles  ◄──│◄───────────────────────────────── │  Sends diagnostics    │
+│                      │                                   │                       │
+│  User hovers      ──►│  textDocument/hover ────────────► │  Looks up symbol info │
+│  Shows tooltip    ◄──│◄──────────────── hover response── │                       │
 └──────────────────────┘                                   └───────────────────────┘
 ```
 
