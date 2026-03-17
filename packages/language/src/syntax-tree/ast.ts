@@ -2450,7 +2450,7 @@ export function createFFormatItem(): FFormatItem {
 export interface FileReferenceCondition extends AstNode {
   kind: SyntaxKind.FileReferenceCondition;
   keyword: FileReferenceConditions | null;
-  fileReference: ReferenceItem | null;
+  fileReference: LocatorCall | null;
 }
 
 export function createFileReferenceCondition(): FileReferenceCondition {
