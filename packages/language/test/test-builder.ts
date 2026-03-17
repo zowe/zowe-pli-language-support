@@ -37,7 +37,7 @@ import {
 import { InternalCodes } from "../src/validation/internal-codes";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
-import { escapeRegExp, Token } from "../src/parser/tokens";
+import { escapeRegExp } from "../src/parser/tokens";
 import { isPLICode, PLICode } from "../src/validation/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
@@ -47,6 +47,8 @@ import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
 import { PluginConfiguration } from "../src/language-server/constants";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
+import { UriUtils } from "../src";
+import { assertType } from "../src/preprocessor/util";
 
 export type Label = string | number | string[] | number[];
 
@@ -85,10 +87,16 @@ export type PliTestFile = {
   content: string;
 };
 
+/** uri, index */
+export type TestIndex = [string, number];
+
+/** uri, start, end */
+export type TestRange = [string, number, number];
+
 type LinkingRequest = {
   label: string;
-  offset: number;
-  rangeIndex: [number, number][];
+  offset: TestIndex;
+  rangeIndex: TestRange[];
 };
 
 export type ExpectedCompletion = {
@@ -98,8 +106,8 @@ export type ExpectedCompletion = {
 
 type TestFile = {
   output: string;
-  indices: Record<string, number[]>;
-  ranges: Record<string, Array<[number, number]>>;
+  indices: Record<string, TestIndex[]>;
+  ranges: Record<string, TestRange[]>;
   textDocument: TextDocument;
 };
 
@@ -114,8 +122,18 @@ function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
 
   return {
     output,
-    indices,
-    ranges,
+    indices: Object.fromEntries(
+      Object.entries(indices).map(([label, indices]) => [
+        label,
+        indices.map((offset) => [file.uri, offset] as const),
+      ]),
+    ),
+    ranges: Object.fromEntries(
+      Object.entries(ranges).map(([label, ranges]) => [
+        label,
+        ranges.map((range) => [file.uri, ...range] as const),
+      ]),
+    ),
     textDocument,
   };
 }
@@ -124,8 +142,8 @@ export class TestBuilder {
   private unit!: CompilationUnit;
   private files: Map<string, TestFile> = new Map();
   private output!: string;
-  private indices!: Record<string, number[]>;
-  private ranges!: Record<string, Array<[number, number]>>;
+  private indices!: Record<string, TestIndex[]>;
+  private ranges!: Record<string, TestRange[]>;
   private diagnostics!: Diagnostic[];
   private options: TestBuilderOptions;
 
@@ -210,7 +228,21 @@ export class TestBuilder {
     const [[firstFileUri, firstFile]] = this.files.entries();
     this.output = firstFile.output;
     this.indices = firstFile.indices;
-    this.ranges = firstFile.ranges;
+    this.ranges = [...this.files.entries()]
+      .map(([uri, file]) => [uri, file.ranges])
+      .reduce(
+        (acc, [uri, ranges]) => {
+          for (const [label, labelRanges] of Object.entries(ranges)) {
+            assertType<TestRange[]>(labelRanges);
+            if (!acc[label]) {
+              acc[label] = [];
+            }
+            acc[label].push(...labelRanges);
+          }
+          return acc;
+        },
+        {} as Record<string, TestRange[]>,
+      );
 
     this.unit = await parseAndLink(this.output, {
       validate: this.options.validate,
@@ -561,7 +593,7 @@ export class TestBuilder {
     const containingMatches: Diagnostic[] = [];
 
     for (const range of ranges) {
-      const [start, end] = range;
+      const [uri, start, end] = range;
 
       // getMatchingDiagnostics is supposed to check against the ranges of the diagnostics.
       // Make sure there is a range to check against, because ranges from indices diagnostics may be undefined.
@@ -569,6 +601,7 @@ export class TestBuilder {
         ...this.diagnostics.filter(
           (diagnostic) =>
             diagnostic.range &&
+            UriUtils.equals(diagnostic.uri, uri) &&
             diagnostic.range.start === start &&
             diagnostic.range.end === end,
         ),
@@ -578,6 +611,7 @@ export class TestBuilder {
         ...this.diagnostics.filter(
           (diagnostic) =>
             diagnostic.range &&
+            UriUtils.equals(diagnostic.uri, uri) &&
             diagnostic.range.start >= start &&
             diagnostic.range.end <= end,
         ),
@@ -847,7 +881,7 @@ export class TestBuilder {
    * @returns The positions of the label
    * @throws If the label is not found
    */
-  private getLabelPositions(label: string): number[] {
+  private getLabelPositions(label: string): TestIndex[] {
     const indices = this.indices[label];
     if (!indices) {
       throw new Error(`Label "${label}" not found`);
@@ -886,8 +920,11 @@ export class TestBuilder {
   expectNoLinksAt(label: string): TestBuilder {
     const requests = this.getLinkingRequests(label);
 
-    for (const { label, offset } of requests) {
-      const result = definitionRequest(this.unit, this.unit.uri, offset);
+    for (const {
+      label,
+      offset: [uri, offset],
+    } of requests) {
+      const result = definitionRequest(this.unit, URI.parse(uri), offset);
 
       expect(
         result,
@@ -915,18 +952,24 @@ export class TestBuilder {
       this.getLinkingRequests(index),
     );
 
-    for (const { label, offset, rangeIndex } of requests) {
-      const result = definitionRequest(this.unit, this.unit.uri, offset);
+    for (const {
+      label,
+      offset: [uri, offset],
+      rangeIndex,
+    } of requests) {
+      const result = definitionRequest(this.unit, URI.parse(uri), offset);
       const message = `Expected ${rangeIndex.length} definitions but received ${result.length} for label "${label}" (${this.createLabelPositionMessage(label)})`;
 
       expect(result, message).toHaveLength(rangeIndex.length);
 
       if (rangeIndex.length > 1) {
         for (const expected of rangeIndex) {
-          const [start, end] = expected;
+          const [uri, start, end] = expected;
           const exists = result.some(
             (definition) =>
-              definition.range.start === start && definition.range.end === end,
+              definition.uri === uri &&
+              definition.range.start === start &&
+              definition.range.end === end,
           );
           expect(
             exists,
@@ -938,8 +981,8 @@ export class TestBuilder {
         const [definition] = result;
 
         const expectedRange: Range = {
-          start: singleRangeIndex[0],
-          end: singleRangeIndex[1],
+          start: singleRangeIndex[1],
+          end: singleRangeIndex[2],
         };
 
         expect(
@@ -974,7 +1017,11 @@ export class TestBuilder {
       const tokens = semanticTokens(textDocument, this.unit);
       const decodedTokens = SemanticTokenDecoder.decode(tokens, textDocument);
 
-      for (const [start, end] of ranges) {
+      for (const [uri, start, end] of ranges) {
+        if (textDocument.uri !== uri) {
+          continue;
+        }
+
         const matchingToken = decodedTokens.find(
           (t) => t.offsetStart === start && t.offsetEnd === end,
         );
@@ -1001,8 +1048,12 @@ export class TestBuilder {
 
       if (this.options.not) {
         for (let i = 0; i < ranges.length; i++) {
-          const startPosition = textDocument.positionAt(ranges[i][0]);
-          const endPosition = textDocument.positionAt(ranges[i][1]);
+          const [uri, start, end] = ranges[i];
+          if (textDocument.uri !== uri) {
+            continue;
+          }
+          const startPosition = textDocument.positionAt(start);
+          const endPosition = textDocument.positionAt(end);
           const codeRange = codeRanges.find(
             (cr) =>
               cr.start.line === startPosition.line &&
@@ -1021,8 +1072,12 @@ export class TestBuilder {
         expect(codeRanges, message).toHaveLength(ranges.length);
 
         for (let i = 0; i < ranges.length; i++) {
-          const startPosition = textDocument.positionAt(ranges[i][0]);
-          const endPosition = textDocument.positionAt(ranges[i][1]);
+          const [uri, start, end] = ranges[i];
+          if (textDocument.uri !== uri) {
+            continue;
+          }
+          const startPosition = textDocument.positionAt(start);
+          const endPosition = textDocument.positionAt(end);
           const messageStart = `Expected skipped code to start at ${formatPosition(startPosition)} but received ${formatPosition(codeRanges[i].start)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
           expect(codeRanges[i].start, messageStart).toEqual(startPosition);
           const messageEnd = `Expected skipped code to end at ${formatPosition(endPosition)} but received ${formatPosition(codeRanges[i].end)} for label "${label}" (${this.createLabelRangeMessage(label)})`;
@@ -1037,10 +1092,10 @@ export class TestBuilder {
     check: (completionResult: string[]) => void,
   ) {
     const indices = this.getLabelPositions(label);
-    for (const offset of indices) {
+    for (const [uri, offset] of indices) {
       const completionResult = completionRequest(
         this.unit,
-        this.unit.uri,
+        URI.parse(uri),
         offset,
       )
         .toSorted((a, b) => {
@@ -1067,27 +1122,15 @@ export class TestBuilder {
     });
   }
 
-  private getLabelRangesByFile(
-    fileUri: string,
-    label: string,
-  ): [number, number][] {
-    const ranges = [...this.files.entries()].find(
-      ([uri]) => URI.parse(uri).toString() === URI.parse(fileUri).toString(),
-    )?.[1].ranges[label];
-    if (!ranges || ranges.length === 0) {
-      throw new Error(`Label "${label}" not found`);
-    }
-    return ranges;
-  }
-
-  private expectTypeFromTokens(
-    tokens: Token[],
-    label: string,
-    expectedType: TypeExpectation,
-    fileUri: string,
-  ): void {
-    const ranges = this.getLabelRangesByFile(fileUri, label);
-    for (const [start] of ranges) {
+  expectTypeAt(label: string, expectedType: TypeExpectation): void {
+    const ranges = this.getLabelRanges(label);
+    for (const [uri, start] of ranges) {
+      const tokens = this.unit.services.files.get(
+        UriUtils.normalize(uri),
+      )?.tokens;
+      if (!tokens) {
+        throw new Error(`No tokens found for file ${uri}`);
+      }
       const token = binaryTokenSearch(tokens, start);
       const node = token?.element;
       if (!node) {
@@ -1108,27 +1151,6 @@ export class TestBuilder {
         this.expectTypeNoStructure(expectedType, actualType);
       }
     }
-  }
-
-  expectTypeAt(label: string, expectedType: TypeExpectation): void {
-    return this.expectTypeFromTokens(
-      this.unit.tokens,
-      label,
-      expectedType,
-      DEFAULT_FILE_URI,
-    );
-  }
-
-  expectPreprocessorTypeAt(
-    label: string,
-    expectedType: TypeExpectation,
-    fileUri: string = DEFAULT_FILE_URI,
-  ): void {
-    const file = this.unit.services.files.get(URI.parse(fileUri));
-    if (!file) {
-      throw new Error(`File with URI "${fileUri}" not found`);
-    }
-    return this.expectTypeFromTokens(file.tokens, label, expectedType, fileUri);
   }
 
   private expectTypeWithComposite(
@@ -1220,15 +1242,15 @@ export class TestBuilder {
   }
 
   private createLabelRangeMessage(label: string): string {
-    const [[start, _end]] = this.getLabelRanges(label);
-    return this.createPositionMessage(start, this.unit.uri.toString());
+    const [[uri, start, _end]] = this.getLabelRanges(label);
+    return this.createPositionMessage(start, uri);
   }
 
   expectHover(label: string, content: MarkupContent) {
     const indices = this.getLabelPositions(label);
 
-    for (const index of indices) {
-      const hoverResult = hoverRequest(this.unit, this.unit.uri, index);
+    for (const [uri, index] of indices) {
+      const hoverResult = hoverRequest(this.unit, URI.parse(uri), index);
 
       const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(hoverResult, message).toBeDefined();
@@ -1238,11 +1260,11 @@ export class TestBuilder {
   }
 
   private createLabelPositionMessage(label: string): string {
-    const position = this.getLabelPosition(label);
-    return this.createPositionMessage(position, this.unit.uri.toString());
+    const [uri, position] = this.getLabelPosition(label);
+    return this.createPositionMessage(position, uri);
   }
 
-  private getLabelRanges(label: string): [number, number][] {
+  private getLabelRanges(label: string): TestRange[] {
     const ranges = this.ranges[label];
     if (!ranges || ranges.length === 0) {
       throw new Error(`Label "${label}" not found`);
@@ -1251,7 +1273,7 @@ export class TestBuilder {
     return ranges;
   }
 
-  private getLabelPosition(label: string): number {
+  private getLabelPosition(label: string): TestIndex {
     const indices = this.indices[label];
     if (!indices) {
       throw new Error(`Label "${label}" not found`);

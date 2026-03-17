@@ -35,7 +35,7 @@ import { HarnessTesterInterface } from "../harness-interface";
 
 export const HarnessTypeAttributes: Omit<
   HarnessTesterInterface["types"],
-  "expectTypeAt" | "expectPreprocessorTypeAt"
+  "expectTypeAt"
 > = {
   dataTypes: DataType,
   accessModes: AccessMode,

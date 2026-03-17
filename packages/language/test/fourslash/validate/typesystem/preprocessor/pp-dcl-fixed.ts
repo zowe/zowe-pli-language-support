@@ -15,7 +15,7 @@
 //// %DCL <|1:ANYTHING|> <|FIXED|>;
 
 verify.noDiagnostics("FIXED", code.Error.IBM3552I);
-types.expectPreprocessorTypeAt("1", {
+types.expectTypeAt("1", {
   type: types.dataTypes.Arithmetic,
   scale: types.scales.Fixed,
   precision: types.precision.create(5, 0),

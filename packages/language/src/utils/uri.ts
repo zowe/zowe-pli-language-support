@@ -30,7 +30,9 @@ export namespace UriUtils {
   export const isUnixAbsolutePath = (path: string) => path.startsWith("/");
 
   export function equals(a?: URI | string, b?: URI | string): boolean {
-    return a?.toString() === b?.toString();
+    const lhs = typeof a === "string" ? URI.parse(a) : a;
+    const rhs = typeof b === "string" ? URI.parse(b) : b;
+    return lhs?.toString() === rhs?.toString();
   }
 
   /**

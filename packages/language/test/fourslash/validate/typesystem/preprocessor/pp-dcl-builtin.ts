@@ -15,7 +15,7 @@
 //// %DCL <|ANYTHING|> <|BUILTIN|>;
 
 verify.noDiagnostics("BUILTIN", code.Error.IBM3552I);
-types.expectPreprocessorTypeAt("ANYTHING", {
+types.expectTypeAt("ANYTHING", {
   type: types.dataTypes.Unknown,
   builtIn: true,
 });

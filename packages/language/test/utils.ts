@@ -311,6 +311,9 @@ interface ExpectedBase {
   rangeEndMarker?: string;
 }
 
+export type TestUtilsIndex = number;
+export type TestUtilsRange = [number, number];
+
 /**
  * Strip and extract named indices and ranges from the given text.
  * Currently supports markers through the following syntax:
@@ -321,11 +324,11 @@ interface ExpectedBase {
  */
 export function replaceNamedIndices(text: string): {
   output: string;
-  indices: Record<string, number[]>;
-  ranges: Record<string, Array<[number, number]>>;
+  indices: Record<string, TestUtilsIndex[]>;
+  ranges: Record<string, TestUtilsRange[]>;
 } {
-  const indices: Record<string, number[]> = {};
-  const ranges: Record<string, Array<[number, number]>> = {};
+  const indices: Record<string, TestUtilsIndex[]> = {};
+  const ranges: Record<string, TestUtilsRange[]> = {};
   const rangeStack: {
     index: number;
     label?: string;
