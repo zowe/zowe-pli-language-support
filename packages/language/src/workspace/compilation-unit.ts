@@ -72,7 +72,6 @@ export interface CompilationUnit {
   uri: URI;
   compilerOptions: CompilerOptions;
   ast: Program;
-  preprocessorTokens: Token[];
   preprocessorAst: Program;
   preprocessorEvaluationResults: EvaluationResults;
   tokens: Token[];
@@ -157,7 +156,6 @@ export async function createCompilationUnit(
       container: null,
       statements: [],
     },
-    preprocessorTokens: [],
     preprocessorAst: {
       kind: SyntaxKind.Program,
       container: null,

@@ -37,7 +37,6 @@ export interface LexerResult {
   statements: Statement[];
   evaluationResults: EvaluationResults;
   tokenReferences: Reference[];
-  preprocessorTokens: Token[];
 }
 
 /**
@@ -132,7 +131,6 @@ export class PliLexer {
       statements: [...instruction.statements, ...output.statements],
       evaluationResults: output.evaluationResults,
       tokenReferences: output.references,
-      preprocessorTokens: instruction.tokens,
     };
   }
 }
