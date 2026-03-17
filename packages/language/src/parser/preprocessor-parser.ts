@@ -1456,38 +1456,29 @@ function replaceStatement(state: ParserState): ast.ReplaceStatement {
 
 function declareStatement(state: ParserState): ast.DeclareStatement {
   const statement = ast.createDeclareStatement();
-  // Only one declared item is allowed in a preprocessor declare statement
-  const declaredItem = ast.createDeclaredItem();
-  statement.items.push(declaredItem);
   state.consume(statement, CstNodeKind.DeclareStatement_DECLARE, t.DECLARE);
   do {
-    if (
-      state.tryConsume(
-        declaredItem,
-        CstNodeKind.DeclaredItem_OpenParen,
-        t.OpenParen,
-      )
-    ) {
-      do {
-        declaredItem.elements.push(declaredVariable(state));
-      } while (
-        state.tryConsume(declaredItem, CstNodeKind.DeclaredItem_Comma, t.Comma)
-      );
-      state.consume(
-        declaredItem,
-        CstNodeKind.DeclaredItem_CloseParen,
-        t.CloseParen,
-      );
-    } else {
-      declaredItem.elements.push(declaredVariable(state));
-    }
-    const attrs = attributes(state);
-    declaredItem.attributes = attrs;
+    statement.items.push(declaredItem(state));
   } while (
     state.tryConsume(statement, CstNodeKind.DeclareStatement_Comma, t.Comma)
   );
   state.consume(statement, CstNodeKind.DeclareStatement_Semicolon, t.Semicolon);
   return statement;
+}
+
+function declaredItem(state: ParserState): ast.DeclaredItem {
+  const item = ast.createDeclaredItem();
+  if (state.tryConsume(item, CstNodeKind.DeclaredItem_OpenParen, t.OpenParen)) {
+    do {
+      item.elements.push(declaredItem(state));
+    } while (state.tryConsume(item, CstNodeKind.DeclaredItem_Comma, t.Comma));
+    state.consume(item, CstNodeKind.DeclaredItem_CloseParen, t.CloseParen);
+  } else {
+    item.elements.push(declaredVariable(state));
+  }
+  const attrs = attributes(state);
+  item.attributes = attrs;
+  return item;
 }
 
 function declaredVariable(state: ParserState): ast.DeclaredVariable {
