@@ -28,6 +28,7 @@ import {
   FileUsage,
   FloatFormat,
   Implications,
+  isAttributeValidForPreprocessor,
   NumberMode,
   ParameterPassDirection,
   ParameterPassMode,
@@ -72,6 +73,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
   constructor(
     public elementName: Token,
     private unit: CompilationUnit,
+    private inPreprocessor: boolean,
   ) {}
 
   addAttribute(attribute: ast.DeclarationAttribute): void {
@@ -519,7 +521,8 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
           AttributeKind.StringBits,
           {
             kind,
-            length: precision && precision.length > 0 ? precision[0] : 1,
+            length:
+              precision && precision.length > 0 ? precision[0] : undefined,
           }, //TODO default length?
           attribute,
           token,
@@ -599,13 +602,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
       }
 
       case ast.DefaultAttribute.BUILTIN: {
-        //TODO temporary solution
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Unknown,
-          attribute,
-          token,
-        );
+        this.addAttributeWitness(AttributeKind.BuiltIn, true, attribute, token);
         break;
       }
 
@@ -869,6 +866,15 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
       }
     } else {
       //first time seeing this attribute
+      if (
+        this.inPreprocessor &&
+        !isAttributeValidForPreprocessor(kind, value)
+      ) {
+        this.diagnostics.push(
+          diagnosticFromCode(Error.IBM3552I, token, token.image),
+        );
+        return;
+      }
       const current: AttributeWitness<K> = {
         value,
         witness: attribute,

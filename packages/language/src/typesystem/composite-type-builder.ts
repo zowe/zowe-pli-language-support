@@ -31,6 +31,7 @@ export interface CompositeTypeBuilder {
   collectAttributes(
     nameToken: Token,
     attributes: ast.DeclarationAttribute[],
+    inPreprocessor: boolean,
   ): AttributeCollectorResult;
   isCompositeDeclaredItem(
     declaredItem: BuilderDeclareItem,
@@ -80,8 +81,13 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
   collectAttributes(
     nameToken: Token,
     attributes: ast.DeclarationAttribute[],
+    inPreprocessor: boolean,
   ): AttributeCollectorResult {
-    const collector = new DefaultTypeAttributeCollector(nameToken, this.unit);
+    const collector = new DefaultTypeAttributeCollector(
+      nameToken,
+      this.unit,
+      inPreprocessor,
+    );
     for (const attr of attributes) {
       collector.addAttribute(attr);
     }

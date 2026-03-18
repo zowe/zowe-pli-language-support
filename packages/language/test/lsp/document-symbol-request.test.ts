@@ -66,14 +66,14 @@ async function expectDocumentSymbols(annotatedCode: string): Promise<void> {
   for (const [name, nameRanges] of Object.entries(ranges)) {
     const [symbolKind, hierarchyLevel] = name.split("_");
     for (const range of nameRanges) {
-      const startPosition = textDocument.positionAt(range[0]);
-      const endPosition = textDocument.positionAt(range[1]);
+      const startPosition = textDocument.positionAt(range.start);
+      const endPosition = textDocument.positionAt(range.end);
       const matchingSymbol = flatSymbols.find(
         (s) =>
           documentSymbolKindString(s.symbol.kind) === symbolKind &&
           s.level === Number(hierarchyLevel) &&
-          s.symbol.selectionRange.start === range[0] &&
-          s.symbol.selectionRange.end === range[1],
+          s.symbol.selectionRange.start === range.start &&
+          s.symbol.selectionRange.end === range.end,
       );
       expect(
         matchingSymbol,

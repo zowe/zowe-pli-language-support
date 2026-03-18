@@ -1573,6 +1573,10 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
         );
         dataAttribute.typeToken = attributeToken;
         attributes.push(dataAttribute);
+
+        if (state.canConsume(t.OpenParen)) {
+          dataAttribute.dimensions = dimensions(state);
+        }
       }
     } else if (state.canConsume(t.OpenParen)) {
       const dim = dimensions(state);

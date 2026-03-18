@@ -73,6 +73,8 @@ export enum AttributeKind {
   Base,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=files-buffered-unbuffered-attributes */
   BufferMode,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=subroutines-builtin-attribute */
+  BuiltIn,
   /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=control-connected-nonconnected-attributes */
   Connection,
   /** This is a meta type that can be set by different attributes. */
@@ -208,6 +210,7 @@ export type AttributeTypes = {
   [AttributeKind.AttributeWitnesses]: AttributeWitnesses;
   [AttributeKind.Base]: Base;
   [AttributeKind.BufferMode]: BufferMode;
+  [AttributeKind.BuiltIn]: boolean;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
   [AttributeKind.Dimension]: DimensionBound[] | undefined;
@@ -241,10 +244,6 @@ export type AttributeTypes = {
   [AttributeKind.Volatility]: Volatility;
 };
 
-export type AttributeStringifier<K extends AttributeKind> = (
-  value: AttributeTypes[K],
-) => string | undefined;
-
 export const AttributePropertyNames = {
   [AttributeKind.AccessMode]: "accessMode" as const,
   [AttributeKind.Alignment]: "alignment" as const,
@@ -252,6 +251,7 @@ export const AttributePropertyNames = {
   [AttributeKind.Assignability]: "assignability" as const,
   [AttributeKind.Base]: "base" as const,
   [AttributeKind.BufferMode]: "bufferMode" as const,
+  [AttributeKind.BuiltIn]: "builtIn" as const,
   [AttributeKind.Connection]: "connection" as const,
   [AttributeKind.DataType]: "dataType" as const,
   [AttributeKind.Dimension]: "dimension" as const,
@@ -286,9 +286,45 @@ export const AttributePropertyNames = {
   [AttributeKind.AttributeWitnesses]: "attributeWitnesses" as const,
 } satisfies { [K in AttributeKind]: string };
 
+export type AttributePreprocessorValidator<K extends AttributeKind> = (
+  value: AttributeTypes[K],
+) => boolean;
+
+export const AttributeIsValidForPreprocessor: {
+  [K in AttributeKind]?: AttributePreprocessorValidator<K>;
+} = {
+  [AttributeKind.Scale]: function (value: ScaleMode): boolean {
+    return value === ScaleMode.Fixed;
+  },
+  [AttributeKind.StringBits]: function (value: StringBits): boolean {
+    return value.kind === StringKind.Character && value.length === undefined;
+  },
+  [AttributeKind.DataType]: (value) => value === DataType.Entry,
+  [AttributeKind.Scope]: () => true,
+  [AttributeKind.BuiltIn]: () => true,
+  [AttributeKind.Entry]: () => true,
+  [AttributeKind.ScanMode]: () => true,
+  [AttributeKind.Dimension]: () => true,
+};
+
+export function isAttributeValidForPreprocessor<K extends AttributeKind>(
+  kind: K,
+  value: AttributeTypes[K],
+): boolean {
+  const validator = AttributeIsValidForPreprocessor[kind];
+  return validator ? validator(value) : false;
+}
+
+export type AttributeStringifier<K extends AttributeKind> = (
+  value: AttributeTypes[K],
+) => string | undefined;
+
 export const AttributeStringifiers: {
   [K in AttributeKind]: AttributeStringifier<K>;
 } = {
+  [AttributeKind.BuiltIn]: function (value: boolean): string | undefined {
+    return value ? "BUILTIN" : undefined;
+  },
   [AttributeKind.AccessMode]: function (value: AccessMode): string {
     switch (value) {
       case AccessMode.Direct:
@@ -621,20 +657,22 @@ export const AttributeStringifiers: {
   },
   [AttributeKind.StringBits]: function (value: StringBits): string {
     const length =
-      typeof value.length === "number"
-        ? `${value.length}${value.refers ? ` REFERS ${value.refers.name}` : ""}`
-        : "*";
+      typeof value.length === "undefined"
+        ? ""
+        : typeof value.length === "number"
+          ? `(${value.length}${value.refers ? ` REFERS ${value.refers.name}` : ""})`
+          : "(*)";
     switch (value.kind) {
       case StringKind.Bit:
-        return `BIT(${length})`;
+        return `BIT${length}`;
       case StringKind.Character:
-        return `CHARACTER(${length})`;
+        return `CHARACTER${length}`;
       case StringKind.Graphic:
-        return `GRAPHIC(${length})`;
+        return `GRAPHIC${length}`;
       case StringKind.UChar:
-        return `UCHAR(${length})`;
+        return `UCHAR${length}`;
       case StringKind.WideChar:
-        return `WIDECHAR(${length})`;
+        return `WIDECHAR${length}`;
       default:
         assertUnreachable(value.kind);
     }
@@ -688,6 +726,7 @@ export const CommonAttributeKinds = [
 
   AttributeKind.Alignment,
   AttributeKind.Assignability,
+  AttributeKind.BuiltIn,
   AttributeKind.Connection,
   AttributeKind.Dimension,
   AttributeKind.Initial,
@@ -787,6 +826,7 @@ export const DataTypesByAttributeKind = Object.entries(
 interface BaseTypeDescriptionProps {
   alignment: Alignment;
   assignability: Assignability;
+  builtIn: boolean;
   connection: StorageConnection;
   dimension?: DimensionBound[];
   initial?: ast.InitialAttribute;
@@ -918,6 +958,7 @@ function createBaseTypeDescription(
     position,
     dimension,
     assignability,
+    builtIn = false,
     variable,
     scanMode,
     list,
@@ -965,6 +1006,7 @@ function createBaseTypeDescription(
   return {
     alignment,
     assignability,
+    builtIn,
     connection,
     dimension,
     initial,
@@ -1428,7 +1470,7 @@ export enum StringKind {
 
 export type StringBits = {
   kind: StringKind;
-  length: number | "*";
+  length?: number | "*";
   refers?: ast.DeclaredVariable;
 };
 
@@ -1506,10 +1548,14 @@ interface UnknownTypeDescription extends BaseTypeDescription {
   type: UnknownType;
 }
 
-function createUnknownTypeDescription(): UnknownTypeDescription {
+//TODO [Lotes] remove the builtin flag again, when the referenced variable/function type is resolvable
+function createUnknownTypeDescription(common?: {
+  builtIn?: boolean;
+}): UnknownTypeDescription {
   return {
     type: UnknownType,
     ...createBaseTypeDescription(UnknownType, {
+      builtIn: common?.builtIn ?? false,
       toString() {
         return "<UNKNOWN>";
       },
@@ -1651,6 +1697,7 @@ export namespace TypeDescriptions {
 
   //TODO check default values
   export const DefaultValues: AttributeTypes = {
+    [AttributeKind.BuiltIn]: false,
     [AttributeKind.AttributeWitnesses]: {
       order: [],
       witnesses: {},
@@ -1817,6 +1864,7 @@ export namespace TypeDescriptions {
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],
+      builtIn: attributes[AttributeKind.BuiltIn]?.value ?? false,
       dimension:
         attributes[AttributeKind.Dimension]?.value ??
         DefaultValues[AttributeKind.Dimension],
@@ -1943,7 +1991,7 @@ export namespace TypeDescriptions {
       case DataType.Task:
         return TypeDescriptions.Task(common);
       case DataType.Unknown:
-        return TypeDescriptions.Unknown();
+        return TypeDescriptions.Unknown(common);
       default:
         assertUnreachable(type);
     }
