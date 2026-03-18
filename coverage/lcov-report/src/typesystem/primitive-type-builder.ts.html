@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>34/34</span>
+                <span class='fraction'>35/35</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>34/34</span>
+                <span class='fraction'>35/35</span>
             </div>
         
             
@@ -242,7 +242,9 @@
 <a name='L177'></a><a href='#L177'>177</a>
 <a name='L178'></a><a href='#L178'>178</a>
 <a name='L179'></a><a href='#L179'>179</a>
-<a name='L180'></a><a href='#L180'>180</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,20 +281,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16768x</span>
+<span class="cline-any cline-yes">16998x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16768x</span>
+<span class="cline-any cline-yes">16998x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16768x</span>
+<span class="cline-any cline-yes">16998x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16768x</span>
-<span class="cline-any cline-yes">16768x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16998x</span>
+<span class="cline-any cline-yes">16998x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16768x</span>
-<span class="cline-any cline-yes">16768x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16998x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16998x</span>
+<span class="cline-any cline-yes">16998x</span>
 <span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -303,8 +307,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16743x</span>
-<span class="cline-any cline-yes">16743x</span>
+<span class="cline-any cline-yes">16973x</span>
+<span class="cline-any cline-yes">16973x</span>
 <span class="cline-any cline-yes">35x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -342,7 +346,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16708x</span>
+<span class="cline-any cline-yes">16938x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -353,16 +357,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">44x</span>
+<span class="cline-any cline-yes">66x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16664x</span>
-<span class="cline-any cline-yes">16664x</span>
+<span class="cline-any cline-yes">16872x</span>
+<span class="cline-any cline-yes">16872x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16664x</span>
+<span class="cline-any cline-yes">16872x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -469,6 +473,8 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
   }
 &nbsp;
   build() {
+    const builtIn =
+      this.attributeWitnesses.witnesses[AttributeKind.BuiltIn]?.value === true;
     const namedElement =
       this.attributeWitnesses.witnesses[AttributeKind.SetType];
     if (namedElement &amp;&amp; namedElement.value) {
@@ -494,7 +500,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnosticFromCode(PLICodes.Warning.IBM3330I, this.elementName),
         );
         return {
-          type: TypeDescriptions.Unknown(),
+          type: TypeDescriptions.Unknown({ builtIn }),
           diagnostics: this.diagnostics,
         };
       }
@@ -507,7 +513,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
           diagnosticFromCode(PLICodes.Severe.IBM1650I, this.elementName),
         );
         return {
-          type: TypeDescriptions.Unknown(),
+          type: TypeDescriptions.Unknown({ builtIn }),
           diagnostics: this.diagnostics,
         };
       } else {
@@ -533,7 +539,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
       //   );
       // }
       return {
-        type: TypeDescriptions.Unknown(),
+        type: TypeDescriptions.Unknown({ builtIn }),
         diagnostics: this.diagnostics,
       };
     }
@@ -607,7 +613,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-18T07:27:02.049Z
+                at 2026-03-18T08:07:18.670Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
