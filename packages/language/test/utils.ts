@@ -312,7 +312,7 @@ interface ExpectedBase {
 }
 
 export type TestUtilsIndex = number;
-export type TestUtilsRange = [number, number];
+export type TestUtilsRange = { start: number; end: number };
 
 /**
  * Strip and extract named indices and ranges from the given text.
@@ -382,7 +382,7 @@ export function replaceNamedIndices(text: string): {
         if (!ranges[label]) {
           ranges[label] = [];
         }
-        ranges[label].push([rangeStart.index, regexMatch.index]);
+        ranges[label].push({ start: rangeStart.index, end: regexMatch.index });
       }
 
       const matchedString = regexMatch[0];
@@ -483,12 +483,12 @@ export async function expectReferences(text: string) {
 
     for (const reference of result) {
       const expectedIndex = rangeIndex.findIndex(
-        ([start, end]) =>
+        ({ start, end }) =>
           start === reference.range.start && end === reference.range.end,
       );
       if (expectedIndex === -1) {
         throw new Error(
-          `Reference ${reference.range.start}-${reference.range.end} not found in expected ranges for label "${label}". Expected ranges: ${rangeIndex.map(([start, end]) => `${start}-${end}`).join(", ")}`,
+          `Reference ${reference.range.start}-${reference.range.end} not found in expected ranges for label "${label}". Expected ranges: ${rangeIndex.map(({ start, end }) => `${start}-${end}`).join(", ")}`,
         );
       }
       // Remove the found index from the rangeIndex array
@@ -496,7 +496,7 @@ export async function expectReferences(text: string) {
     }
     expect(
       rangeIndex,
-      `Not all expected ranges were found for label "${label}". Remaining ranges: ${rangeIndex.map(([start, end]) => `${start}-${end}`).join(", ")}`,
+      `Not all expected ranges were found for label "${label}". Remaining ranges: ${rangeIndex.map(({ start, end }) => `${start}-${end}`).join(", ")}`,
     ).toHaveLength(0);
   }
 }

@@ -87,10 +87,17 @@ export type PliTestFile = {
 };
 
 /** uri, index */
-export type TestIndex = [string, number];
+export type TestIndex = {
+  uri: string;
+  offset: number;
+};
 
 /** uri, start, end */
-export type TestRange = [string, number, number];
+export type TestRange = {
+  uri: string;
+  start: number;
+  end: number;
+};
 
 type LinkingRequest = {
   label: string;
@@ -124,13 +131,17 @@ function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
     indices: Object.fromEntries(
       Object.entries(indices).map(([label, indices]) => [
         label,
-        indices.map((offset) => [file.uri, offset] as const),
+        indices.map((offset) => ({ uri: file.uri, offset })),
       ]),
     ),
     ranges: Object.fromEntries(
       Object.entries(ranges).map(([label, ranges]) => [
         label,
-        ranges.map((range) => [file.uri, ...range] as const),
+        ranges.map((range) => ({
+          uri: file.uri,
+          start: range.start,
+          end: range.end,
+        })),
       ]),
     ),
     textDocument,
@@ -603,7 +614,7 @@ export class TestBuilder {
     const containingMatches: Diagnostic[] = [];
 
     for (const range of ranges) {
-      const [uri, start, end] = range;
+      const { uri, start, end } = range;
 
       // getMatchingDiagnostics is supposed to check against the ranges of the diagnostics.
       // Make sure there is a range to check against, because ranges from indices diagnostics may be undefined.
@@ -932,7 +943,7 @@ export class TestBuilder {
 
     for (const {
       label,
-      offset: [uri, offset],
+      offset: { uri, offset },
     } of requests) {
       const result = definitionRequest(this.unit, URI.parse(uri), offset);
 
@@ -964,7 +975,7 @@ export class TestBuilder {
 
     for (const {
       label,
-      offset: [uri, offset],
+      offset: { uri, offset },
       rangeIndex,
     } of requests) {
       const result = definitionRequest(this.unit, URI.parse(uri), offset);
@@ -974,7 +985,7 @@ export class TestBuilder {
 
       if (rangeIndex.length > 1) {
         for (const expected of rangeIndex) {
-          const [uri, start, end] = expected;
+          const { uri, start, end } = expected;
           const exists = result.some(
             (definition) =>
               UriUtils.equals(definition.uri, uri) &&
@@ -991,8 +1002,8 @@ export class TestBuilder {
         const [definition] = result;
 
         const expectedRange: Range = {
-          start: singleRangeIndex[1],
-          end: singleRangeIndex[2],
+          start: singleRangeIndex.start,
+          end: singleRangeIndex.end,
         };
 
         expect(
@@ -1021,7 +1032,7 @@ export class TestBuilder {
   expectSemanticTokens(label: string, tokenType: `${SemanticTokenTypes}`) {
     const ranges = this.getLabelRanges(label);
 
-    for (const [uri, start, end] of ranges) {
+    for (const { uri, start, end } of ranges) {
       const file = this.files.get(uri);
       if (!file) {
         throw new Error(`File with URI ${uri} not found`);
@@ -1051,7 +1062,7 @@ export class TestBuilder {
 
     if (this.options.not) {
       for (let i = 0; i < ranges.length; i++) {
-        const [uri, start, end] = ranges[i];
+        const { uri, start, end } = ranges[i];
         const file = this.files.get(uri);
         if (!file) {
           throw new Error(`File with URI ${uri} not found`);
@@ -1075,7 +1086,7 @@ export class TestBuilder {
       }
     } else {
       for (let i = 0; i < ranges.length; i++) {
-        const [uri, start, end] = ranges[i];
+        const { uri, start, end } = ranges[i];
         const file = this.files.get(uri);
         if (!file) {
           throw new Error(`File with URI ${uri} not found`);
@@ -1097,7 +1108,7 @@ export class TestBuilder {
     check: (completionResult: string[]) => void,
   ) {
     const indices = this.getLabelPositions(label);
-    for (const [uri, offset] of indices) {
+    for (const { uri, offset } of indices) {
       const completionResult = completionRequest(
         this.unit,
         URI.parse(uri),
@@ -1129,7 +1140,7 @@ export class TestBuilder {
 
   expectTypeAt(label: string, expectedType: TypeExpectation): void {
     const ranges = this.getLabelRanges(label);
-    for (const [uri, start] of ranges) {
+    for (const { uri, start } of ranges) {
       const tokens = this.unit.services.files.get(
         UriUtils.normalize(uri),
       )?.tokens;
@@ -1247,15 +1258,15 @@ export class TestBuilder {
   }
 
   private createLabelRangeMessage(label: string): string {
-    const [[uri, start, _end]] = this.getLabelRanges(label);
+    const [{ uri, start }] = this.getLabelRanges(label);
     return this.createPositionMessage(start, uri);
   }
 
   expectHover(label: string, content: MarkupContent) {
     const indices = this.getLabelPositions(label);
 
-    for (const [uri, index] of indices) {
-      const hoverResult = hoverRequest(this.unit, URI.parse(uri), index);
+    for (const { uri, offset } of indices) {
+      const hoverResult = hoverRequest(this.unit, URI.parse(uri), offset);
 
       const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(hoverResult, message).toBeDefined();
@@ -1265,8 +1276,8 @@ export class TestBuilder {
   }
 
   private createLabelPositionMessage(label: string): string {
-    const [uri, position] = this.getLabelPosition(label);
-    return this.createPositionMessage(position, uri);
+    const { uri, offset } = this.getLabelPosition(label);
+    return this.createPositionMessage(offset, uri);
   }
 
   private getLabelRanges(label: string): TestRange[] {
