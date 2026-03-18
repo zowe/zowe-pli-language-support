@@ -3542,7 +3542,7 @@ const fileReferenceCondition = rule(
         tokens.OpenParen,
       )
     ) {
-      element.fileReference = referenceItem.rule(state);
+      element.fileReference = locatorCall.rule(state);
       state.consume(
         element,
         CstNodeKind.FileReferenceCondition_CloseParen,
