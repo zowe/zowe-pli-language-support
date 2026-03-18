@@ -13,17 +13,6 @@
 import * as fs from "fs/promises";
 import * as tokens from "../packages/language/src/parser/tokens.js";
 
-type CicsKeywordFile = {
-  control: string[];
-  storage: string[];
-};
-
-const cicsKeywords = JSON.parse(
-  await fs.readFile(
-    "./packages/vscode-extension/syntaxes/cics-keywords.json",
-    "utf8",
-  ),
-) as CicsKeywordFile;
 const manual = JSON.parse(
   await fs.readFile(
     "./packages/vscode-extension/syntaxes/pli.manual.json",
@@ -47,10 +36,6 @@ for (const [text, type] of tokens.keywordMap.entries()) {
     storageKeywords.push(lowerText);
   }
 }
-
-//add CICS keywords
-controlKeywords.push(...cicsKeywords.control);
-storageKeywords.push(...cicsKeywords.storage);
 
 function toPattern(keywords: string[]) {
   const patterns: string[] = [];
