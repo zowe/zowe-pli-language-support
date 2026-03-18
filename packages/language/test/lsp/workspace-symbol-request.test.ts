@@ -35,7 +35,7 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
     outputs.push(output);
     for (const [name, rangeList] of Object.entries(ranges)) {
       for (const range of rangeList) {
-        allRanges.push({ fileIndex, name, range });
+        allRanges.push({ fileIndex, name, range: [range.start, range.end] });
       }
     }
   }
