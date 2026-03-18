@@ -48,7 +48,7 @@ jobs:
         pnpm test
 
   check-pretty:
-    name: Check license headers
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 2
     needs: build

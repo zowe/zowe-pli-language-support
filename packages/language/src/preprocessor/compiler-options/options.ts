@@ -29,6 +29,7 @@ export interface CompilerOptions extends Pli.CompilerOptions {
 export interface CompilerOptionResult {
   options: CompilerOptions;
   tokens: Token[];
+  comments: Token[];
   issues: Diagnostic[];
 }
 

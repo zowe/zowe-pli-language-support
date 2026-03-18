@@ -111,6 +111,8 @@ export class CompilerOptionsProcessor {
         option,
         uri,
         ranges[index].start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+        index,
+        CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
       );
 
       // Add parser errors and translate.

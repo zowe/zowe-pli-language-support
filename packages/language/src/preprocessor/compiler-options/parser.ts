@@ -46,7 +46,7 @@ const ws = createToken({ name: "ws", pattern: /\s+/, group: Lexer.SKIPPED });
 const HALF_ML_COMMENT = createToken({
   name: "HALF_ML_COMMENT",
   pattern: /\/\*[\s\S]/y,
-  group: Lexer.SKIPPED,
+  group: "comments",
 });
 const tokenTypes = [
   ws,
@@ -81,9 +81,7 @@ class CompilerOptionsParser extends EmbeddedActionsParser {
     return super.CONSUME(tokType, options) as Token;
   }
 
-  compilerOptions = this.RULE<
-    () => Omit<AbstractCompilerOptions, "issues" | "tokens">
-  >(
+  compilerOptions = this.RULE<() => Pick<AbstractCompilerOptions, "options">>(
     "compilerOptions",
     () => {
       const options: CompilerOption[] = [];
@@ -264,6 +262,7 @@ const parser = new CompilerOptionsParser();
 export interface AbstractCompilerOptions {
   options: CompilerOption[];
   tokens: Token[];
+  comments: Token[];
   issues: Diagnostic[];
 }
 
@@ -271,15 +270,23 @@ export interface AbstractCompilerOptions {
  * Parses a string containing PL/I compiler options to generate an abstract opts object, ready for translation
  * @param input String containing the compiler options to parse.
  * @param offset Offset to apply to the input string, to preserve the original positions of tokens for diagnostics
+ * @param line Line to apply to the input string, to preserve the original positions of tokens for diagnostics
+ * @param column Column to apply to the input string, to preserve the original positions of tokens for diagnostics
  */
 export function parseAbstractCompilerOptions(
   input: string,
   uri?: URI,
   offset?: number,
+  line?: number,
+  column?: number,
 ): AbstractCompilerOptions {
+  offset ??= 0;
+  column ??= 0;
+  line ??= 0;
   // Remove everything after the first ;.
   // *PROCESS MARGINS(2, 72) ; MARGINS(1, 72); is valid, but everything after the first ; is ignored.
-  const lexerResult = lexer.tokenize(" ".repeat(offset ?? 0) + input);
+  const lexerResult = lexer.tokenize(input);
+  const comments = (lexerResult.groups.comments ?? []) as Token[];
   const semicolonTokenPosition = lexerResult.tokens.findIndex(
     (token) => token.tokenTypeIdx === semicolonToken.tokenTypeIdx,
   );
@@ -290,9 +297,21 @@ export function parseAbstractCompilerOptions(
   if (uri) {
     for (const token of tokens) {
       token.uri = uri;
-      token.startLine -= 1;
-      token.startColumn -= 1;
-      token.endLine -= 1;
+      token.startLine += line - 1;
+      token.startColumn += column - 1;
+      token.endLine += line - 1;
+      token.endColumn += column - 1;
+      token.startOffset += offset;
+      token.endOffset += offset;
+    }
+    for (const comment of comments) {
+      comment.uri = uri;
+      comment.startLine += line - 1;
+      comment.startColumn += column - 1;
+      comment.endLine += line - 1;
+      comment.endColumn += column - 1;
+      comment.startOffset += offset;
+      comment.endOffset += offset;
     }
   }
   parser.input = tokens;
@@ -303,8 +322,8 @@ export function parseAbstractCompilerOptions(
       uri: uri?.toString(),
       message: lexerError.message,
       range: {
-        start: lexerError.offset,
-        end: lexerError.offset + lexerError.length,
+        start: lexerError.offset + offset,
+        end: lexerError.offset + offset + lexerError.length,
       },
       severity: Severity.E,
     });
@@ -324,6 +343,7 @@ export function parseAbstractCompilerOptions(
   return {
     options: compilerOptions.options,
     tokens,
+    comments,
     issues,
   };
 }

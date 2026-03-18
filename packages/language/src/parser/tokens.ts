@@ -377,12 +377,12 @@ export const STRING_TERM = createToken({
 export const ML_COMMENT = createToken({
   name: "ML_COMMENT",
   pattern: /\/\*[\s\S]*?\*\//y,
-  group: Lexer.SKIPPED,
+  group: "comments",
 });
 export const SL_COMMENT = createToken({
   name: "SL_COMMENT",
   pattern: /\/\/[^\n\r]*/y,
-  group: Lexer.SKIPPED,
+  group: "comments",
 });
 // Start of keywords
 export const SUBSCRIPTRANGE = registerKeyword({
