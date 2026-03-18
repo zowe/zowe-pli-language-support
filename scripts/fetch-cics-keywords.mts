@@ -38,18 +38,14 @@ const SOURCES: Source[] = [
   {
     publicIndexUrl:
       "https://www.ibm.com/docs/en/cics-ts/6.x?topic=reference-cics-command-summary",
-    contentApiBase:
-      "https://www.ibm.com/docs/api/v1/content/SSJL4D_6.x/",
-    indexPath:
-      "reference-applications/commands-api/dfhp4_commandsummary.html",
+    contentApiBase: "https://www.ibm.com/docs/api/v1/content/SSJL4D_6.x/",
+    indexPath: "reference-applications/commands-api/dfhp4_commandsummary.html",
   },
   {
     publicIndexUrl:
       "https://www.ibm.com/docs/en/cics-ts/5.6.0?topic=programming-system-commands",
-    contentApiBase:
-      "https://www.ibm.com/docs/api/v1/content/SSGMCP_5.6.0/",
-    indexPath:
-      "reference-system-programming/commands-spi/dfha81j.html",
+    contentApiBase: "https://www.ibm.com/docs/api/v1/content/SSGMCP_5.6.0/",
+    indexPath: "reference-system-programming/commands-spi/dfha81j.html",
   },
 ];
 
@@ -92,7 +88,10 @@ function extractTitle(html: string): string {
   const raw = h1
     ? stripTags(h1[1])
     : (/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "");
-  return raw.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+  return raw
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // ── Link extraction ───────────────────────────────────────────────────────────
@@ -266,13 +265,19 @@ async function main(): Promise<void> {
   const mdLines: string[] = ["# CICS Command Keywords", ""];
 
   for (const { source, pages } of sourceResults) {
-    mdLines.push(`## Source: [${source.publicIndexUrl}](${source.publicIndexUrl})`, "");
+    mdLines.push(
+      `## Source: [${source.publicIndexUrl}](${source.publicIndexUrl})`,
+      "",
+    );
     mdLines.push("| Page | Keywords |");
     mdLines.push("| ---- | -------- |");
 
     for (const { contentUrl, title, keywords } of pages) {
       // Collapse whitespace/newlines and escape pipe chars for table safety
-      const safeTitle = title.replace(/[\r\n\s]+/g, " ").trim().replace(/\|/g, "\\|");
+      const safeTitle = title
+        .replace(/[\r\n\s]+/g, " ")
+        .trim()
+        .replace(/\|/g, "\\|");
       const titleLink = `[${safeTitle}](${contentUrl})`;
       const kwCell = keywords.join(", ").replace(/\|/g, "\\|");
       mdLines.push(`| ${titleLink} | ${kwCell} |`);
@@ -284,7 +289,9 @@ async function main(): Promise<void> {
   writeFileSync(mdPath, mdLines.join("\n") + "\n", "utf-8");
 
   const totalPages = sourceResults.reduce((s, r) => s + r.pages.length, 0);
-  console.log(`Wrote ${totalPages} rows (${sourceResults.length} sources) → ${mdPath}`);
+  console.log(
+    `Wrote ${totalPages} rows (${sourceResults.length} sources) → ${mdPath}`,
+  );
 }
 
 main().catch((err) => {
