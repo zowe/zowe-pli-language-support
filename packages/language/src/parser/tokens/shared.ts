@@ -3,7 +3,11 @@ import { URI } from "vscode-uri";
 import * as ast from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import { createToken } from "../token-type-factory";
-import { ID } from "./pli-tokens";
+
+export const ID = createToken({
+  name: "ID",
+  pattern: /[$@#_a-z][\w_$@#]*/iy,
+});
 
 export interface Token {
   /**

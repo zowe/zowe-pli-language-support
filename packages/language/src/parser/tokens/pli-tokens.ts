@@ -3,9 +3,7 @@ import * as ast from "../../syntax-tree/ast";
 import { createToken } from "../token-type-factory";
 import { registerCombination, registerKeyword, KeywordType, controlTokens, registerOperator } from "./shared";
 
-
 // Combination tokens (parser optimization)
-
 export const DefineOrdinalAttribute = registerCombination<ast.DefineOrdinalAttribute>("DefineOrdinalAttribute");
 export const ScanMode = registerCombination<ast.ScanMode>("ScanMode");
 export const ProcedureOrder = registerCombination<ast.ProcedureOrder>("ProcedureOrder");
@@ -87,10 +85,6 @@ export const ExecFragment = createToken({
     regex.lastIndex = offset;
     return regex.exec(text);
   },
-});
-export const ID = createToken({
-  name: "ID",
-  pattern: /[$@#_a-z][\w_$@#]*/iy,
 });
 export const NUMBER = createToken({
   name: "NUMBER",
