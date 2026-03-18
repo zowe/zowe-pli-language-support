@@ -23,7 +23,13 @@ export * from "./tokens/cics-tokens.generated";
  * Characters which start a preprocessor directive.
  * Used as start/stop points for the token statement
  */
-export const PPSignifier = [pli.Percent, pli.INCLUDE_ALT, pli.SQL, pli.DFHRESP, pli.EXEC];
+export const PPSignifier = [
+  pli.Percent,
+  pli.INCLUDE_ALT,
+  pli.SQL,
+  pli.DFHRESP,
+  pli.EXEC,
+];
 
 export const terminals = [pli.WS, ID, pli.NUMBER, pli.STRING_TERM, pli.ML_COMMENT, pli.SL_COMMENT];
 

@@ -1,51 +1,82 @@
 import { TokenType, Lexer } from "chevrotain";
 import * as ast from "../../syntax-tree/ast";
 import { createToken } from "../token-type-factory";
-import { registerCombination, registerKeyword, KeywordType, controlTokens, registerOperator } from "./shared";
+import {
+  registerCombination,
+  registerKeyword,
+  KeywordType,
+  controlTokens,
+  registerOperator,
+} from "./shared";
 
 // Combination tokens (parser optimization)
-export const DefineOrdinalAttribute = registerCombination<ast.DefineOrdinalAttribute>("DefineOrdinalAttribute");
+export const DefineOrdinalAttribute =
+  registerCombination<ast.DefineOrdinalAttribute>("DefineOrdinalAttribute");
 export const ScanMode = registerCombination<ast.ScanMode>("ScanMode");
-export const ProcedureOrder = registerCombination<ast.ProcedureOrder>("ProcedureOrder");
-export const LinkageOption = registerCombination<ast.LinkageOption>("LinkageOption");
+export const ProcedureOrder =
+  registerCombination<ast.ProcedureOrder>("ProcedureOrder");
+export const LinkageOption =
+  registerCombination<ast.LinkageOption>("LinkageOption");
 export const NoMapOption = registerCombination<ast.NoMapOption>("NoMapOption");
-export const SimpleOptions = registerCombination<ast.SimpleOptions>("SimpleOptions");
-export const Organization = registerCombination<ast.Organization>("Organization");
-export const DefaultAttribute = registerCombination<ast.DefaultAttribute>("DefaultAttribute");
-export const DefaultAttributeBinaryOperator = registerCombination<ast.DefaultAttributeBinaryOperator>(
-  "DefaultAttributeBinaryOperator"
-);
-export const BinaryOperator = registerCombination<ast.BinaryOperator>("BinaryOperator");
-export const UnaryOperator = registerCombination<ast.UnaryOperator>("UnaryOperator");
-export const ScopeAttribute = registerCombination<ast.ScopeAttribute>("ScopeAttribute");
-export const AllocateAttributeType = registerCombination<ast.AllocateAttributeType>("AllocateAttributeType");
-export const AssignmentOperator = registerCombination<ast.AssignmentOperator>("AssignmentOperator");
-export const KeywordConditions = registerCombination<ast.KeywordConditions>("KeywordConditions");
-export const FileReferenceConditions = registerCombination<ast.FileReferenceConditions>("FileReferenceConditions");
-export const PutAttribute = registerCombination<ast.PutAttribute>("PutAttribute");
+export const SimpleOptions =
+  registerCombination<ast.SimpleOptions>("SimpleOptions");
+export const Organization =
+  registerCombination<ast.Organization>("Organization");
+export const DefaultAttribute =
+  registerCombination<ast.DefaultAttribute>("DefaultAttribute");
+export const DefaultAttributeBinaryOperator =
+  registerCombination<ast.DefaultAttributeBinaryOperator>(
+    "DefaultAttributeBinaryOperator",
+  );
+export const BinaryOperator =
+  registerCombination<ast.BinaryOperator>("BinaryOperator");
+export const UnaryOperator =
+  registerCombination<ast.UnaryOperator>("UnaryOperator");
+export const ScopeAttribute =
+  registerCombination<ast.ScopeAttribute>("ScopeAttribute");
+export const AllocateAttributeType =
+  registerCombination<ast.AllocateAttributeType>("AllocateAttributeType");
+export const AssignmentOperator =
+  registerCombination<ast.AssignmentOperator>("AssignmentOperator");
+export const KeywordConditions =
+  registerCombination<ast.KeywordConditions>("KeywordConditions");
+export const FileReferenceConditions =
+  registerCombination<ast.FileReferenceConditions>("FileReferenceConditions");
+export const PutAttribute =
+  registerCombination<ast.PutAttribute>("PutAttribute");
 export const Varying = registerCombination<ast.Varying>("Varying");
 export const CharType = registerCombination<ast.CharType>("Char");
-export const ReadStatementType = registerCombination<ast.ReadStatementType>("ReadStatementType");
-export const WriteStatementType = registerCombination<ast.WriteStatementType>("WriteStatementType");
-export const RewriteStatementType = registerCombination<ast.RewriteStatementType>("RewriteStatementType");
+export const ReadStatementType =
+  registerCombination<ast.ReadStatementType>("ReadStatementType");
+export const WriteStatementType =
+  registerCombination<ast.WriteStatementType>("WriteStatementType");
+export const RewriteStatementType =
+  registerCombination<ast.RewriteStatementType>("RewriteStatementType");
 export const Boolean = registerCombination<ast.Boolean>("Boolean");
 export const LocateType = registerCombination<ast.LocateType>("LocateType");
-export const OpenOptionType = registerCombination<ast.OpenOptionType>("OpenOptionType");
+export const OpenOptionType =
+  registerCombination<ast.OpenOptionType>("OpenOptionType");
 export const VX = registerCombination<ast.VX>("VX");
-export const TypeOrOrdinal = registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
-export const BinaryType = registerCombination<ast.SqlAttributeBinaryType>("BinaryType");
+export const TypeOrOrdinal =
+  registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
+export const BinaryType =
+  registerCombination<ast.SqlAttributeBinaryType>("BinaryType");
 export const LOB = registerCombination<ast.LOB>("LOB");
 export const LOBLocator = registerCombination<ast.LOBLocator>("LOBLocator");
 export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
 export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
-export const CicsResponseCode = registerCombination<ast.CicsResponseCode>("CicsResponseCode");
-export const RecordFormat = registerCombination<ast.RecordFormat>("RecordFormat");
-export const EnvironmentOptionSymbolName = registerCombination<ast.EnvironmentOptionSymbolName>(
-  "EnvironmentOptionSymbolName"
-);
-export const EnvironmentOptionValueName = registerCombination<ast.EnvironmentOptionValueName>(
-  "EnvironmentOptionValueName"
-);
+export const CicsResponseCode =
+  registerCombination<ast.CicsResponseCode>("CicsResponseCode");
+export const RecordFormat =
+  registerCombination<ast.RecordFormat>("RecordFormat");
+export const EnvironmentOptionSymbolName =
+  registerCombination<ast.EnvironmentOptionSymbolName>(
+    "EnvironmentOptionSymbolName",
+  );
+export const EnvironmentOptionValueName =
+  registerCombination<ast.EnvironmentOptionValueName>(
+    "EnvironmentOptionValueName",
+  );
 /**
  * Combines the given token types into a lookup table for fast lookaheads.
  */
@@ -88,11 +119,13 @@ export const ExecFragment = createToken({
 });
 export const NUMBER = createToken({
   name: "NUMBER",
-  pattern: /((((([0-9][0-9_]*(\.[0-9_]+)?)|(\.[0-9_]+))([esdq][-+]?[0-9]+)?))[bi]*)/iy,
+  pattern:
+    /((((([0-9][0-9_]*(\.[0-9_]+)?)|(\.[0-9_]+))([esdq][-+]?[0-9]+)?))[bi]*)/iy,
 });
 export const STRING_TERM = createToken({
   name: "STRING_TERM",
-  pattern: /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*/iy,
+  pattern:
+    /("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*/iy,
 });
 export const ML_COMMENT = createToken({
   name: "ML_COMMENT",

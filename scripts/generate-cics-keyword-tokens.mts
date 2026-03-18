@@ -10,88 +10,87 @@
  *
  */
 
-
-
 import { readFile, writeFile } from "fs/promises";
 
 // These keywords are used by CICS and PLI at the same time.
 // PLI has precedence over CICS. Extend the list when getting into import trouble in tokens.ts
 const blacklist = new Set([
-  'ALLOCATE',
-  'AND',
-  'AS',
-  'ATTACH',
-  'BINARY',
-  'BIT',
-  'CANCEL',
-  'CLOSE',
-  'CONDITION',
-  'COPY',
-  'DATA',
-  'DATE',
-  'DEFAULT',
-  'DEFINE',
-  'DELAY',
-  'DELETE',
-  'END',
-  'ENDFILE',
-  'ENTRY',
-  'ERROR',
-  'EVENT',
-  'EXTERNAL',
-  'FETCH',
-  'FILE',
-  'FREE',
-  'FROM',
-  'GENERIC',
-  'GET',
-  'HANDLE',
-  'IGNORE',
-  'INPUT',
-  'INTO',
-  'LABEL',
-  'LINE',
-  'LIST',
-  'MAIN',
-  'NAME',
-  'NOTE',
-  'ON',
-  'OPEN',
-  'OPTIONS',
-  'OR',
-  'ORGANIZATION',
-  'OUTPUT',
-  'PAGE',
-  'PASSWORD',
-  'POP',
-  'PRINT',
-  'PROCESS',
-  'PUSH',
-  'PUT',
-  'READ',
-  'RECORD',
-  'RELEASE',
-  'REPLACE',
-  'REPLY',
-  'RETCODE',
-  'RETURN',
-  'REWRITE',
-  'SET',
-  'SIGNAL',
-  'STORAGE',
-  'TASK',
-  'TEXT',
-  'TITLE',
-  'TO',
-  'TYPE',
-  'UNTIL',
-  'UPDATE',
-  'VALUE',
-  'WAIT',
-  'WRITE',
+  "ALLOCATE",
+  "AND",
+  "AS",
+  "ATTACH",
+  "BINARY",
+  "BIT",
+  "CANCEL",
+  "CHAR",
+  "CLOSE",
+  "CONDITION",
+  "COPY",
+  "DATA",
+  "DATE",
+  "DEFAULT",
+  "DEFINE",
+  "DELAY",
+  "DELETE",
+  "END",
+  "ENDFILE",
+  "ENTRY",
+  "ERROR",
+  "EVENT",
+  "EXTERNAL",
+  "FETCH",
+  "FILE",
+  "FREE",
+  "FROM",
+  "GENERIC",
+  "GET",
+  "HANDLE",
+  "IGNORE",
+  "INPUT",
+  "INTO",
+  "LABEL",
+  "LINE",
+  "LIST",
+  "MAIN",
+  "NAME",
+  "NOTE",
+  "ON",
+  "OPEN",
+  "OPTIONS",
+  "OR",
+  "ORGANIZATION",
+  "OUTPUT",
+  "PAGE",
+  "PASSWORD",
+  "POP",
+  "PRINT",
+  "PROCESS",
+  "PUSH",
+  "PUT",
+  "READ",
+  "RECORD",
+  "RELEASE",
+  "REPLACE",
+  "REPLY",
+  "RETCODE",
+  "RETURN",
+  "REWRITE",
+  "SET",
+  "SIGNAL",
+  "STORAGE",
+  "TASK",
+  "TEXT",
+  "TITLE",
+  "TO",
+  "TYPE",
+  "UNTIL",
+  "UPDATE",
+  "VALUE",
+  "WAIT",
+  "WRITE",
 ]);
 
-const licenseHeader = await readFile('./license-header.js', 'utf8');
+const licenseHeader = await readFile("./license-header.js", "utf8");
 
 type CicsKeywordFile = {
   control: string[];
@@ -115,7 +114,9 @@ import { registerKeyword, KeywordType } from "./shared";
 
 `;
 
-for (const element of cicsKeywords.control.concat(cicsKeywords.storage).sort()) {
+for (const element of cicsKeywords.control
+  .concat(cicsKeywords.storage)
+  .sort()) {
   if (blacklist.has(element)) {
     continue;
   }
@@ -126,6 +127,7 @@ for (const element of cicsKeywords.control.concat(cicsKeywords.storage).sort()) 
 `;
 }
 
-await writeFile('./packages/language/src/parser/tokens/cics-tokens.generated.ts', sourceCode);
-
-
+await writeFile(
+  "./packages/language/src/parser/tokens/cics-tokens.generated.ts",
+  sourceCode,
+);

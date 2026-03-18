@@ -259,9 +259,6 @@ export const CHANNEL = registerKeyword({
   name: "CHANNEL",
   type: KeywordType.Control,
 });
-export const CHAR = registerKeyword({
-  name: "CHAR",
-});
 export const CHARACTERSET = registerKeyword({
   name: "CHARACTERSET",
 });

@@ -65,7 +65,7 @@ class TokenImpl implements Token {
     endOffset: number,
     endLine: number,
     endColumn: number,
-    uri: URI | undefined
+    uri: URI | undefined,
   ) {
     this.image = image;
     this.originalImage = originalImage;
@@ -102,7 +102,7 @@ export function createTokenInstance(
   endOffset: number,
   endLine: number,
   endColumn: number,
-  uri: URI | undefined
+  uri: URI | undefined,
 ): Token {
   return new TokenImpl(
     image,
@@ -115,7 +115,7 @@ export function createTokenInstance(
     endOffset,
     endLine,
     endColumn,
-    uri
+    uri,
   );
 }
 
@@ -134,7 +134,7 @@ const mappings = new Map<
 
 export enum KeywordType {
   Control,
-  Modifier
+  Modifier,
 }
 
 export interface KeywordConfig {
@@ -186,7 +186,7 @@ export interface OperatorConfig {
 function assignToMappings(
   tokenType: TokenType,
   categories: [MappableTokenType, number][],
-  names: string[]
+  names: string[],
 ) {
   for (const [category, enumValue] of categories) {
     const mapping = mappings.get(category.name)!;
@@ -211,7 +211,7 @@ export type MappableTokenType<TEnum extends number = number> = TokenType & {
   mapFromEnumLiteral(value: TEnum): string;
 };
 function createMappableToken<TEnum extends number = number>(
-  config: ITokenConfig
+  config: ITokenConfig,
 ): MappableTokenType<TEnum> {
   const tokenType = createToken(config);
   mappings.set(tokenType.name, {
@@ -231,7 +231,9 @@ function createMappableToken<TEnum extends number = number>(
   };
 }
 
-export function registerCombination<TEnum extends number = number>(name: string) {
+export function registerCombination<TEnum extends number = number>(
+  name: string,
+) {
   const tokenType = createMappableToken<TEnum>({
     name,
     pattern: Lexer.NA,
