@@ -69,7 +69,7 @@ export function semanticTokens(
   for (const token of tokens) {
     // Process any comments that appear before the current token
     while (
-      comments.length > commentIndex &&
+      commentIndex < comments.length &&
       comments[commentIndex].startOffset < token.startOffset
     ) {
       const comment = comments[commentIndex++];
@@ -87,7 +87,7 @@ export function semanticTokens(
     }
   }
   // Process any remaining comments after the last token
-  while (comments.length > commentIndex) {
+  while (commentIndex < comments.length) {
     const comment = comments[commentIndex++];
     handleCommentTokens(textDocument, semanticTokens, comment);
   }

@@ -112,6 +112,7 @@ export class PliLexer {
     });
     if (compilerOptionsResult.result) {
       instruction.tokens.unshift(...compilerOptionsResult.result.tokens);
+      instruction.comments.unshift(...compilerOptionsResult.result.comments);
     }
     const uriString = uri.toString();
     unit.diagnostics.addAll(DiagnosticCategory.Lexer, output.errors);

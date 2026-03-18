@@ -11,13 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
+////*PROCESS MARGIN(2, 30);
 //// MAIN: PROC OPTIONS(MAIN);
-////   PUT("HELLO WORLD"); <|comment:// single line comment|>
-////   <|comment:/* multi line comment start|>
-////<|comment: multi line comment content|>
-////<|comment: multi line comment end */|>
-////   PUT("GOODBYE WORLD");
+////   <|comment:// this is a very long single line comment that should go outside of the margin|>
 //// END MAIN;
-//// <|comment:// another single line comment at EOF|>
 
 semanticTokens.expectAt("comment");

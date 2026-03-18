@@ -328,7 +328,7 @@ function tokenizeSlash(context: TokenizerContext): tokens.Token | undefined {
       let line = context.line;
       let column = context.column + 2;
       let i = context.index + 2;
-      while (i < context.length - 1) {
+      while (i < context.length) {
         if (context.input[i] === "*" && context.input[i + 1] === "/") {
           i += 2;
           column += 2;
@@ -349,7 +349,7 @@ function tokenizeSlash(context: TokenizerContext): tokens.Token | undefined {
     } else if (nextChar === "/") {
       // Line comment
       let i = context.index + 2;
-      while (i < context.length - 1) {
+      while (i < context.length) {
         i++;
         if (context.input[i] === "\n") {
           // Skip the newline character as well
