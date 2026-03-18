@@ -48,6 +48,7 @@ export class CompilerOptionTranslator {
       sqlOptions: {} as CompilerOptionsSQL,
     },
     tokens: [],
+    comments: [],
     issues: [],
   };
 
@@ -91,6 +92,7 @@ export class CompilerOptionTranslator {
     };
     if (configuration?.source === CompilerOptionSource.SOURCE_FILE) {
       this.result.tokens.push(...input.tokens);
+      this.result.comments.push(...input.comments);
     }
     this.result.issues.push(
       ...this.applyDiagnosticAnchor([
@@ -115,6 +117,8 @@ export class CompilerOptionTranslator {
         sqlOptions: {} as CompilerOptionsSQL,
       },
       tokens: [],
+      comments: [],
+
       issues: [],
     };
   }
@@ -149,6 +153,8 @@ export class CompilerOptionTranslator {
         item.value as string,
         item.token?.uri,
         (item.token?.startOffset ?? 0) + 1,
+        item.token?.startLine,
+        (item.token?.startColumn ?? 0) + 1,
       );
       item.processed = true;
       const options = this.optionsToUpperCase(nestedOptions.options);

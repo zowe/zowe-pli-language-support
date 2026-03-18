@@ -73,15 +73,12 @@ export class PliLexer {
       const tokenizeResult = tokenize(textWithoutMargins, uri);
       const state = new ParserState(tokenizeResult.tokens);
       // Do a full parsing of the input text to extract all *local* statements
-      const {
-        statements,
-        diagnostics,
-        tokens: fileTokens,
-      } = preprocessorParse(state, opts);
+      const { statements, diagnostics } = preprocessorParse(state, opts);
       const result = generateInstructions(statements);
       diagnostics.push(...tokenizeResult.diagnostics);
       return {
-        tokens: fileTokens,
+        tokens: tokenizeResult.tokens,
+        comments: tokenizeResult.comments,
         diagnostics: diagnostics,
         statements: statements,
         result,
@@ -110,10 +107,12 @@ export class PliLexer {
     unit.services.files.set({
       textDocument: document,
       tokens: instruction.tokens,
+      comments: instruction.comments,
       uri,
     });
     if (compilerOptionsResult.result) {
       instruction.tokens.unshift(...compilerOptionsResult.result.tokens);
+      instruction.comments.unshift(...compilerOptionsResult.result.comments);
     }
     const uriString = uri.toString();
     unit.diagnostics.addAll(DiagnosticCategory.Lexer, output.errors);

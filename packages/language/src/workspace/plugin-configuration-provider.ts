@@ -610,6 +610,7 @@ export class PluginConfigurationProvider {
         options: [],
         tokens: [],
         issues: [],
+        comments: [],
       };
 
       for (const option of compilerOptions) {
