@@ -37,16 +37,16 @@ interface Source {
 const SOURCES: Source[] = [
   {
     publicIndexUrl:
-      "https://www.ibm.com/docs/en/cics-ts/6.x?topic=reference-cics-command-summary",
-    contentApiBase: "https://www.ibm.com/docs/api/v1/content/SSJL4D_6.x/",
+      "https://www.ibm.com/docs/en/cics-ts/5.6.0?topic=development-cics-command-summary",
+    contentApiBase: "https://www.ibm.com/docs/api/v1/content/SSGMCP_5.6.0/",
     indexPath: "reference-applications/commands-api/dfhp4_commandsummary.html",
   },
-  {
-    publicIndexUrl:
-      "https://www.ibm.com/docs/en/cics-ts/5.6.0?topic=programming-system-commands",
-    contentApiBase: "https://www.ibm.com/docs/api/v1/content/SSGMCP_5.6.0/",
-    indexPath: "reference-system-programming/commands-spi/dfha81j.html",
-  },
+  // {
+  //   publicIndexUrl:
+  //     "https://www.ibm.com/docs/en/cics-ts/5.6.0?topic=programming-system-commands",
+  //   contentApiBase: "https://www.ibm.com/docs/api/v1/content/SSGMCP_5.6.0/",
+  //   indexPath: "reference-system-programming/commands-spi/dfha81j.html",
+  // },
 ];
 
 const FETCH_HEADERS = {
@@ -239,6 +239,18 @@ async function scrapeSource(
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Extracts all-uppercase words from the part of a page title that precedes
+ * the first "(" (or the entire title if there is no parenthesis).
+ * E.g. "ALLOCATE (APPC)" → ["ALLOCATE"]
+ *      "GDS CONNECT PROCESS" → ["GDS", "CONNECT", "PROCESS"]
+ *      "RECEIVE (non-z/OS default)" → ["RECEIVE"]
+ */
+function controlWordsFromTitle(title: string): string[] {
+  const prefix = title.split("(")[0];
+  return prefix.match(/\b[A-Z][A-Z0-9]*\b/g) ?? [];
+}
+
 async function main(): Promise<void> {
   const allKeywords = new Set<string>();
   const sourceResults: Array<{ source: Source; pages: PageResult[] }> = [];
@@ -249,15 +261,29 @@ async function main(): Promise<void> {
   }
 
   // ── CICS.json ──────────────────────────────────────────────────────────────
-  const sortedKeywords = [...allKeywords].sort();
+  // control: all-caps words from page titles (before first "("), sorted & deduped
+  const controlSet = new Set<string>();
+  for (const { pages } of sourceResults) {
+    for (const { title } of pages) {
+      controlWordsFromTitle(title).forEach((w) => controlSet.add(w));
+    }
+  }
+
+  // storage: every keyword found in syntax diagrams that is not a control word
+  const storageSet = new Set<string>();
+  for (const kw of allKeywords) {
+    if (!controlSet.has(kw)) storageSet.add(kw);
+  }
+
+  const output = {
+    control: [...controlSet].sort(),
+    storage: [...storageSet].sort(),
+  };
+
   const jsonPath = resolve(__dirname, "CICS.json");
-  writeFileSync(
-    jsonPath,
-    JSON.stringify(sortedKeywords, null, 2) + "\n",
-    "utf-8",
-  );
+  writeFileSync(jsonPath, JSON.stringify(output, null, 2) + "\n", "utf-8");
   console.log(
-    `\n${"─".repeat(72)}\nWrote ${sortedKeywords.length} unique keywords → ${jsonPath}`,
+    `\n${"─".repeat(72)}\nWrote ${output.control.length} control + ${output.storage.length} storage keywords → ${jsonPath}`,
   );
 
   // ── CICS.md ────────────────────────────────────────────────────────────────
