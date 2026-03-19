@@ -132,7 +132,7 @@ export const configure = async (
     },
     languageClientConfigs: {
       configs: {
-        langium: {
+        pli: {
           clientOptions: {
             documentSelector: ["pli"],
           },

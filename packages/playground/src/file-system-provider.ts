@@ -170,7 +170,7 @@ export function watchWorkspaceChanges(
     const uriPath = event.document.uri.path;
 
     if (configFiles.has(uriPath)) {
-      const client = wrapper.getLanguageClient("langium");
+      const client = wrapper.getLanguageClient("pli");
       if (client) {
         console.debug("Change detected in", uriPath);
         client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);

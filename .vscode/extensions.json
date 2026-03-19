@@ -1,6 +1,5 @@
 {
     "recommendations": [
-        "langium.langium-vscode",
         "vitest.explorer",
         "esbenp.prettier-vscode"
     ]
