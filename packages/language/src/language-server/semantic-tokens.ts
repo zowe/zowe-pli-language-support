@@ -29,6 +29,8 @@ import {
   Token,
 } from "../parser/tokens";
 import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
+import { TokenizerMode } from "../parser/tokenizer/shared";
+import * as pliTokens from "../parser/tokens/pli-tokens";
 
 export enum SemanticTokenTypes {
   variable,
@@ -54,6 +56,32 @@ export const semanticTokenLegend: SemanticTokensLegend = {
   tokenModifiers: Array.from(tokenModifiers.keys()),
 };
 
+function tokenModeReconstructor() {
+  let readExec = false;
+  let mode: TokenizerMode = TokenizerMode.Default;
+  return {
+    get mode() {
+      return mode;
+    },
+    scan: (token: Token): TokenizerMode => {
+      if (token.tokenType === pliTokens.EXEC) {
+        readExec = true;
+      } else if (token.tokenType === pliTokens.Semicolon) {
+        readExec = false;
+        mode = TokenizerMode.Default;
+      } else if (readExec) {
+        readExec = false;
+        if (token.tokenType === pliTokens.SQL) {
+          mode = TokenizerMode.SQL;
+        } else if (token.tokenType === pliTokens.CICS) {
+          mode = TokenizerMode.CICS;
+        }
+      }
+      return mode;
+    },
+  };
+}
+
 export function semanticTokens(
   textDocument: TextDocument,
   compilationUnit: CompilationUnit,
@@ -65,8 +93,10 @@ export function semanticTokens(
     return [];
   }
   let commentIndex = 0;
+  const modeMachine = tokenModeReconstructor();
   const semanticTokens = new SemanticTokensBuilder();
   for (const token of tokens) {
+    modeMachine.scan(token);
     // Process any comments that appear before the current token
     while (
       commentIndex < comments.length &&
@@ -75,7 +105,7 @@ export function semanticTokens(
       const comment = comments[commentIndex++];
       handleCommentTokens(textDocument, semanticTokens, comment);
     }
-    const type = tokenType(token);
+    const type = tokenType(token, modeMachine.mode);
     if (type !== undefined) {
       semanticTokens.push(
         token.startLine,
@@ -132,7 +162,7 @@ function handleCommentTokens(
   }
 }
 
-function tokenType(token: Token): number | undefined {
+function tokenType(token: Token, mode: TokenizerMode): number | undefined {
   const referenceTarget = getReferenceTarget(token);
   if (referenceTarget) {
     switch (referenceTarget.kind) {
@@ -195,7 +225,10 @@ function tokenType(token: Token): number | undefined {
   }
 
   // Temporary solution for semantic EXEC tokens
-  if (token.kind === CstNodeKind.ExecStatement_Token) {
+  if (
+    token.kind === CstNodeKind.ExecStatement_Token &&
+    mode === TokenizerMode.SQL
+  ) {
     return SemanticTokenTypes.modifier;
   }
 
