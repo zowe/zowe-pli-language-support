@@ -29,7 +29,14 @@ export const PPSignifier = [
   pli.EXEC,
 ];
 
-export const terminals = [pli.WS, ID, pli.NUMBER, pli.STRING_TERM, pli.ML_COMMENT, pli.SL_COMMENT];
+export const terminals = [
+  pli.WS,
+  ID,
+  pli.NUMBER,
+  pli.STRING_TERM,
+  pli.ML_COMMENT,
+  pli.SL_COMMENT,
+];
 
 export const operators = [
   pli.INCLUDE_ALT,
