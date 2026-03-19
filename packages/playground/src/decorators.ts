@@ -23,7 +23,7 @@ export function registerSkipDecoratorType(
     inlineClassName: "pli-skippedCode",
   };
 
-  const client = wrapper.getLanguageClient("langium");
+  const client = wrapper.getLanguageClient("pli");
   if (client) {
     client.onNotification(
       "pli/skippedCode",
