@@ -11,8 +11,15 @@
  */
 
 import { readFile, writeFile } from "fs/promises";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const licenseHeader = await readFile("./license-header.js", "utf8");
+
+const blacklist = new Set([
+  "CICS", "EXEC"
+]);
 
 type CicsKeywordFile = {
   control: string[];
@@ -20,10 +27,7 @@ type CicsKeywordFile = {
 };
 
 const cicsKeywords = JSON.parse(
-  await readFile(
-    "./packages/vscode-extension/syntaxes/cics-keywords.json",
-    "utf8",
-  ),
+  await readFile(resolve(__dirname, "cics-keywords.json"), "utf8"),
 ) as CicsKeywordFile;
 
 const control = new Set(cicsKeywords.control);
@@ -43,6 +47,9 @@ for (const element of cicsKeywords.control
   .concat(cicsKeywords.storage)
   .sort()) {
   const keyword = element.toUpperCase();
+  if (blacklist.has(keyword)) {
+    continue;
+  }
   sourceCode += `export const ${keyword} = registerKeyword({
   name: "${keyword}",${control.has(element) ? "\n  type: KeywordType.Control," : ""}
 });

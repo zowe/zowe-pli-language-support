@@ -280,14 +280,14 @@ async function main(): Promise<void> {
     storage: [...storageSet].sort(),
   };
 
-  const jsonPath = resolve(__dirname, "CICS.json");
+  const jsonPath = resolve(__dirname, "cics-keywords.json");
   writeFileSync(jsonPath, JSON.stringify(output, null, 2) + "\n", "utf-8");
   console.log(
     `\n${"─".repeat(72)}\nWrote ${output.control.length} control + ${output.storage.length} storage keywords → ${jsonPath}`,
   );
 
   // ── CICS.md ────────────────────────────────────────────────────────────────
-  const mdPath = resolve(__dirname, "CICS.md");
+  const mdPath = resolve(__dirname, "../docs/CICS-KEYWORDS.md");
   const mdLines: string[] = ["# CICS Command Keywords", ""];
 
   for (const { source, pages } of sourceResults) {
