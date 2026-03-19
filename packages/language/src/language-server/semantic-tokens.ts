@@ -194,6 +194,11 @@ function tokenType(token: Token): number | undefined {
     return SemanticTokenTypes.modifier;
   }
 
+  // Temporary solution for semantic EXEC tokens
+  if (token.kind === CstNodeKind.ExecStatement_Token) {
+    return SemanticTokenTypes.modifier;
+  }
+
   return undefined;
 }
 
