@@ -19,7 +19,13 @@ import {
   tokenToUri,
 } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { DeclaredItem, DeclareStatement, Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import {
+  DeclaredItem,
+  DeclareStatement,
+  Reference,
+  SyntaxKind,
+  SyntaxNode,
+} from "../syntax-tree/ast";
 import { InternalCodes } from "../validation/internal-codes";
 import { PLICodes } from "../validation/pli-codes";
 import { ValidationAcceptor } from "../validation/validator";
@@ -83,7 +89,7 @@ export class LinkerErrorReporter {
   constructor(
     private readonly unit: CompilationUnit,
     protected readonly accept: ValidationAcceptor,
-  ) { }
+  ) {}
 
   /**
    * E IBM1363I
@@ -139,12 +145,12 @@ export class LinkerErrorReporter {
 
     const data: AmbiguousReferenceData | undefined = uri
       ? {
-        symbols: symbols.map((sym) => ({
-          nameChain: fullName(sym),
-          visible: excludeForeignComposites(sym),
-        })),
-        uri: uri,
-      }
+          symbols: symbols.map((sym) => ({
+            nameChain: fullName(sym),
+            visible: excludeForeignComposites(sym),
+          })),
+          uri: uri,
+        }
       : undefined;
     this.accept({
       message: PLICodes.Severe.IBM1881I.message(name),
@@ -165,15 +171,16 @@ export class LinkerErrorReporter {
         }
         node = node.container;
       }
-      if(!node || !lastDeclaredItem) {
+      if (!node || !lastDeclaredItem) {
         return false;
       }
       const currentItemIndex = node.items.indexOf(lastDeclaredItem);
-      if(currentItemIndex > itemIndex) {
+      if (currentItemIndex > itemIndex) {
         return false;
-      } else if(currentItemIndex === itemIndex) {
+      } else if (currentItemIndex === itemIndex) {
         return true;
-      } else { // currentItemIndex < itemIndex
+      } else {
+        // currentItemIndex < itemIndex
         //Case 1:
         //  DCL 1 A,     //not passing this declaration (level=1) makes result true
         //        2 B,   //<--currentItemIndex
@@ -182,11 +189,11 @@ export class LinkerErrorReporter {
         //Case 2:
         //  DCL 1 X,
         //        2 Y,   //<--currentItemIndex
-        //      1 A,     //passing this declaration (level=1) makes result false   
+        //      1 A,     //passing this declaration (level=1) makes result false
         //        2 B,
         //          3 C; //<--itemIndex
-        for(let index = itemIndex; index > currentItemIndex; index--) {
-          if(node.items[index].level === 1) {
+        for (let index = itemIndex; index > currentItemIndex; index--) {
+          if (node.items[index].level === 1) {
             return false;
           }
         }
@@ -206,7 +213,10 @@ export class LinkerErrorReporter {
         }
         node = node.container;
       }
-      return { declareStatement, itemIndex: declareStatement?.items.indexOf(lastDeclaredItem!) ?? -1 };
+      return {
+        declareStatement,
+        itemIndex: declareStatement?.items.indexOf(lastDeclaredItem!) ?? -1,
+      };
     }
     function fullName(symbol: QualifiedSyntaxNode): string[] {
       let current: QualifiedSyntaxNode | null = symbol;
