@@ -182,6 +182,11 @@ function tokenType(token: Token): number | undefined {
     return SemanticTokenTypes.number;
   }
 
+  // Temporary solution for semantic EXEC tokens
+  if (token.kind === CstNodeKind.ExecStatement_Token) {
+    return SemanticTokenTypes.modifier;
+  }
+
   // If the token has no semantic meaning based on the CST, check if it's a keyword
   if (controlTokens.has(token.tokenType)) {
     return SemanticTokenTypes.keyword;

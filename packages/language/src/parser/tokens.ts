@@ -350,16 +350,6 @@ export const WS = createToken({
   pattern: /\s+/y,
   group: Lexer.SKIPPED,
 });
-export const ExecFragment = createToken({
-  name: "ExecFragment",
-  line_breaks: true,
-  start_chars_hint: ["C", "c", "S", "s"],
-  pattern: (text, offset) => {
-    const regex = /(?<=EXEC\s*)[a-z]+\s[^;]*/iy;
-    regex.lastIndex = offset;
-    return regex.exec(text);
-  },
-});
 export const ID = createToken({
   name: "ID",
   pattern: /[$@#_a-z][\w_$@#]*/iy,
@@ -2057,6 +2047,10 @@ export const RESULT_SET_LOCATOR = registerKeyword({
 
 // CICS Keywords
 
+export const CICS = registerKeyword({
+  name: "CICS",
+});
+
 export const DFHRESP = registerKeyword({
   name: "DFHRESP",
 });
@@ -2127,15 +2121,7 @@ export const DISABLED = registerKeyword({
  */
 export const PPSignifier = [Percent, INCLUDE_ALT, SQL, DFHRESP, EXEC];
 
-export const terminals = [
-  WS,
-  ExecFragment,
-  ID,
-  NUMBER,
-  STRING_TERM,
-  ML_COMMENT,
-  SL_COMMENT,
-];
+export const terminals = [WS, ID, NUMBER, STRING_TERM, ML_COMMENT, SL_COMMENT];
 
 export const operators = [
   INCLUDE_ALT,
@@ -2178,7 +2164,6 @@ export const operators = [
 
 export const all = [
   WS,
-  ExecFragment,
   ...combinations,
   ...keywords,
   ...operators,

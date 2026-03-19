@@ -232,6 +232,7 @@ export enum SyntaxKind {
   XFormatItem,
   CicsResponseStatement,
   CicsExecStatement,
+  SqlExecStatement,
 }
 
 export enum KeywordConditions {
@@ -736,6 +737,7 @@ export type SyntaxNode =
   | AnswerStatement
   | DeactivateStatement
   | TokenStatement
+  | SqlExecStatement
   | CicsExecStatement
   | CicsResponseStatement
   | SqlAttributeStatement
@@ -1124,7 +1126,8 @@ export type Unit =
   | SkipDirective
   | SqlAttributeStatement
   | CicsResponseStatement
-  | CicsExecStatement;
+  | CicsExecStatement
+  | SqlExecStatement;
 
 // Preprocessor AST
 
@@ -2350,14 +2353,12 @@ export function createEnvironmentOptionValue(): EnvironmentOptionValue {
 
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
-  query: string | null;
 }
 
 export function createExecStatement(): ExecStatement {
   return {
     kind: SyntaxKind.ExecStatement,
     container: null,
-    query: null,
   };
 }
 
@@ -4353,6 +4354,17 @@ export interface CicsExecStatement extends AstNode {
 export function createCicsExecStatement(): CicsExecStatement {
   return {
     kind: SyntaxKind.CicsExecStatement,
+    container: null,
+  };
+}
+
+export interface SqlExecStatement extends AstNode {
+  kind: SyntaxKind.SqlExecStatement;
+}
+
+export function createSqlExecStatement(): SqlExecStatement {
+  return {
+    kind: SyntaxKind.SqlExecStatement,
     container: null,
   };
 }

@@ -711,7 +711,6 @@ const unit = orRule<ast.Unit, []>(
   () => displayStatement,
   () => doStatement,
   () => entryStatement,
-  () => execStatement,
   () => exitStatement,
   () => fetchStatement,
   () => flushStatement,
@@ -2347,30 +2346,6 @@ const doSpecification = rule(
         element.whileOrUntil = doUntil.rule(state);
       }
     }
-
-    return element;
-  },
-);
-
-const execStatement = rule(
-  sequence(tokens.EXEC),
-  (state: ParserState): ast.ExecStatement => {
-    const element = ast.createExecStatement();
-
-    state.consume(element, CstNodeKind.ExecStatement_EXEC, tokens.EXEC);
-    const queryToken = state.consume(
-      element,
-      CstNodeKind.ExecStatement_Query,
-      tokens.ExecFragment,
-    );
-    if (queryToken) {
-      element.query = queryToken.image;
-    }
-    state.consume(
-      element,
-      CstNodeKind.ExecStatement_Semicolon,
-      tokens.Semicolon,
-    );
 
     return element;
   },
