@@ -52,7 +52,7 @@ export function setInterruptionPeriod(period: number): void {
 }
 
 /**
- * This symbol may be thrown in an asynchronous context by any Langium service that receives
+ * This symbol may be thrown in an asynchronous context by any service that receives
  * a `CancellationToken`. This means that the promise returned by such a service is rejected with
  * this symbol as rejection reason.
  */
@@ -73,9 +73,9 @@ export function isOperationCancelled(
  *  1. Check the elapsed time since the last call to this function or to `startCancelableOperation`. If the predefined
  *     period (configured with `setInterruptionPeriod`) is exceeded, execution is delayed with `delayNextTick`.
  *  2. If the predefined period is not met yet or execution is resumed after an interruption, the given cancellation
- *     token is checked, and if cancellation is requested, `OperationCanceled` is thrown.
+ *     token is checked, and if cancellation is requested, `OperationCancelled` is thrown.
  *
- * All services in Langium that receive a `CancellationToken` may potentially call this function, so the
+ * All services that receive a `CancellationToken` may potentially call this function, so the
  * `CancellationToken` must be caught (with an `async` try-catch block or a `catch` callback attached to
  * the promise) to avoid that event being exposed as an error.
  */

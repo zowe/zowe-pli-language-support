@@ -9,10 +9,6 @@
  *
  */
 
-/**
- * MultiMap taken from Langium.
- */
-
 export class MultiMap<K, V> {
   private map = new Map<K, V[]>();
 

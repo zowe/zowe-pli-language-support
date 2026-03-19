@@ -15,8 +15,6 @@
  * - PL/I Programming Guide v6.1
  *
  * Each case is tagged with a bit of auto-extracted context + a comment referencing the sourcing doc & page number
- *
- * All cases have been run through the PL/I compiler and passed, and are now being run through the Langium parser to ensure they pass here as well
  */
 
 import { test } from "vitest";
