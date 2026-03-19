@@ -178,7 +178,11 @@ export function quickFixUppercaseText(
 }
 
 export type AmbiguousReferenceData = {
-  symbols: string[][];
+  symbols: {
+    nameChain: string[];
+    /** hide this option, when the symbol is not from the same structure */
+    visible: boolean;
+  }[];
   uri: string;
 };
 
@@ -187,25 +191,26 @@ export function quickFixResolveAmbiguousReference(
 ): CodeAction[] {
   const { symbols, uri } = diagnostic.data as AmbiguousReferenceData;
   let current = symbols.map(
-    (sym) => [sym.slice(0, -1), sym[sym.length - 1]] as const,
+    (sym) => [sym.visible, sym.nameChain.slice(0, -1), sym.nameChain[sym.nameChain.length - 1]] as const,
   );
   const names = new Set<string>();
   do {
     names.clear();
-    for (const [, name] of current) {
+    for (const [, , name] of current) {
       names.add(name);
     }
     if (
       names.size === current.length ||
-      current.every(([parent]) => parent.length === 0)
+      current.every(([, parent]) => parent.length === 0)
     ) {
       break;
     }
-    current = current.map(([parent, name]) => {
+    current = current.map(([visible, parent, name]) => {
       if (parent.length === 0) {
-        return [[], name] as const;
+        return [visible, [], name] as const;
       }
       return [
+        visible,
         parent.slice(0, -1),
         `${parent[parent.length - 1]}.${name}`,
       ] as const;
@@ -221,9 +226,9 @@ export function quickFixResolveAmbiguousReference(
     const isSuffixOf = (suffix: string, str: string) =>
       str.endsWith("." + suffix) || str === suffix;
     const whereNameIsNotASuffix = (name: string, index: number): boolean =>
-      !current.some(([_, n], i) => i !== index && isSuffixOf(name, n));
-    for (const [, fullName] of current.filter(([, name], index) =>
-      whereNameIsNotASuffix(name, index),
+      !current.some(([_, __, n], i) => i !== index && isSuffixOf(name, n));
+    for (const [, , fullName] of current.filter(([visible, , name], index) =>
+      whereNameIsNotASuffix(name, index) && visible
     )) {
       const action: CodeAction = {
         title: `Change to "${fullName}"`,

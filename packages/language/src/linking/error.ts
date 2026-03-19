@@ -132,16 +132,6 @@ export class LinkerErrorReporter {
     name: string,
     symbols: QualifiedSyntaxNode[],
   ) {
-    function fullName(symbol: QualifiedSyntaxNode): string[] {
-      let current: QualifiedSyntaxNode | null = symbol;
-      const parts: string[] = [];
-      while (current) {
-        parts.push(current.name);
-        current = current.parent;
-      }
-      return parts.reverse();
-    }
-
     const range =
       getQualifiedReferenceRange(reference.owner) ??
       tokenToRange(reference.token);
@@ -149,7 +139,10 @@ export class LinkerErrorReporter {
 
     const data: AmbiguousReferenceData | undefined = uri
       ? {
-          symbols: symbols.map(fullName),
+          symbols: symbols.map((sym) => ({
+            nameChain: fullName(sym),
+            visible: excludeForeignComposites(sym),
+          })),
           uri: uri,
         }
       : undefined;
@@ -161,6 +154,31 @@ export class LinkerErrorReporter {
       code: fullCode(PLICodes.Severe.IBM1881I),
       data,
     });
+    return;
+    function excludeForeignComposites(start: QualifiedSyntaxNode): boolean {
+      const declaredItemParents = new Set<SyntaxNode>();
+      let node: SyntaxNode | null = reference.owner;
+      while(node?.container) {
+        if (node.kind === SyntaxKind.DeclareStatement) {
+          declaredItemParents.add(node);
+        }
+        node = node.container;
+      }
+      node = start.node;
+      while(node && !declaredItemParents.has(node)) {
+        node = node.container;
+      }
+      return !!node && declaredItemParents.has(node);
+    }
+    function fullName(symbol: QualifiedSyntaxNode): string[] {
+      let current: QualifiedSyntaxNode | null = symbol;
+      const parts: string[] = [];
+      while (current) {
+        parts.push(current.name);
+        current = current.parent;
+      }
+      return parts.reverse();
+    }
   }
 
   /**
