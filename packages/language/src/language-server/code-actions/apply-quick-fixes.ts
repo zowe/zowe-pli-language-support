@@ -196,13 +196,11 @@ export function quickFixResolveAmbiguousReference(
   diagnostic: Diagnostic,
 ): CodeAction[] {
   const { symbols, uri } = diagnostic.data as AmbiguousReferenceData;
-  let current: ReferenceData[] = symbols.map(
-    (sym) => ({
-      visible: sym.visible,
-      parentsLeft: sym.nameChain.slice(0, -1),
-      replaceText: sym.nameChain[sym.nameChain.length - 1],
-    }),
-  );
+  let current: ReferenceData[] = symbols.map((sym) => ({
+    visible: sym.visible,
+    parentsLeft: sym.nameChain.slice(0, -1),
+    replaceText: sym.nameChain[sym.nameChain.length - 1],
+  }));
   const names = new Set<string>();
   do {
     names.clear();
@@ -238,9 +236,12 @@ export function quickFixResolveAmbiguousReference(
     const isSuffixOf = (suffix: string, str: string) =>
       str.endsWith("." + suffix) || str === suffix;
     const whereNameIsNotASuffix = (name: string, index: number): boolean =>
-      !current.some(({ replaceText }, i) => i !== index && isSuffixOf(name, replaceText));
-    for (const { replaceText } of current.filter(({ visible, replaceText }, index) =>
-      whereNameIsNotASuffix(replaceText, index) && visible
+      !current.some(
+        ({ replaceText }, i) => i !== index && isSuffixOf(name, replaceText),
+      );
+    for (const { replaceText } of current.filter(
+      ({ visible, replaceText }, index) =>
+        whereNameIsNotASuffix(replaceText, index) && visible,
     )) {
       const action: CodeAction = {
         title: `Change to "${replaceText}"`,

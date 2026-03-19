@@ -158,14 +158,14 @@ export class LinkerErrorReporter {
     function excludeForeignComposites(start: QualifiedSyntaxNode): boolean {
       const declaredItemParents = new Set<SyntaxNode>();
       let node: SyntaxNode | null = reference.owner;
-      while(node?.container) {
+      while (node?.container) {
         if (node.kind === SyntaxKind.DeclareStatement) {
           declaredItemParents.add(node);
         }
         node = node.container;
       }
       node = start.node;
-      while(node && !declaredItemParents.has(node)) {
+      while (node && !declaredItemParents.has(node)) {
         node = node.container;
       }
       return !!node && declaredItemParents.has(node);
