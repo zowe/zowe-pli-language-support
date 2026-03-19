@@ -1820,8 +1820,11 @@ export const LOCATOR = registerKeyword({
 export const RESULT_SET_LOCATOR = registerKeyword({
   name: "RESULT_SET_LOCATOR",
 });
-// CICS Keywords
 
+// CICS Keywords
+export const CICS = registerKeyword({
+  name: "CICS",
+});
 export const DFHRESP = registerKeyword({
   name: "DFHRESP",
 });

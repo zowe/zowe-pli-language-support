@@ -71,7 +71,7 @@ export const operators = [
 ];
 
 export const all = [
-  WS,
+  pli.WS,
   ...combinations,
   ...pli.keywords,
   ...operators,
