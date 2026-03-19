@@ -55,12 +55,5 @@ export function cicsResponseStatement(
 }
 
 export function isCicsExecStatement(state: ParserState): boolean {
-  const isExec = state.canConsume(t.EXEC, t.ExecFragment);
-  if (isExec) {
-    const execToken = state.peek(2);
-    if (execToken && /^CICS/i.test(execToken.image)) {
-      return true;
-    }
-  }
-  return false;
+  return state.canConsume(t.EXEC, t.CICS);
 }
