@@ -15,7 +15,6 @@
 
 // TODO: Reimplement once the validation infrastructure is in place
 
-// import { AstUtils, ValidationAcceptor } from "langium";
 // import {
 //   isDeclaredVariable,
 //   isEntryAttribute,

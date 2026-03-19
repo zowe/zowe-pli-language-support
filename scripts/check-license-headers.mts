@@ -16,7 +16,7 @@ import { glob } from "glob";
 const fixFlag = process.argv.includes("--fix");
 
 const header = await readFile("license-header.js", "utf-8");
-const files = await glob("**/{src,test}/**/*.{js,mjs,cjs,ts,mts,cts,langium}");
+const files = await glob("**/{src,test}/**/*.{js,mjs,cjs,ts,mts,cts}");
 let count = 0;
 for (const file of files) {
   if (file.startsWith("packages/language/test/fourslash-harness/wrappers")) {

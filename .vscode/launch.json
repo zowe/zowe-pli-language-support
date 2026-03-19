@@ -47,8 +47,7 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/packages/language/out/**/*",
-                "${workspaceFolder}/packages/vscode-extension/out/**/*",
-                "${workspaceFolder}/node_modules/langium"
+                "${workspaceFolder}/packages/vscode-extension/out/**/*"
             ]
         },
         {
