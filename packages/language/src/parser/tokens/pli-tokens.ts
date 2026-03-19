@@ -3,11 +3,14 @@ import * as ast from "../../syntax-tree/ast";
 import { createToken } from "../token-type-factory";
 import {
   registerCombination,
-  registerKeyword,
   KeywordType,
   controlTokens,
   registerOperator,
+  createKeywordRegistry,
 } from "./shared";
+
+const { registerKeyword, keywordMap, keywords } = createKeywordRegistry();
+export { keywordMap, keywords };
 
 // Combination tokens (parser optimization)
 export const DefineOrdinalAttribute =
@@ -112,7 +115,7 @@ export const ExecFragment = createToken({
   line_breaks: true,
   start_chars_hint: ["C", "c", "S", "s"],
   pattern: (text, offset) => {
-    const regex = /(?<=EXEC\s*)[a-z]+\s[^;]*/iy;
+    const regex = /(?<=EXEC\s*)([a-z]+)\s[^;]*/iy;
     regex.lastIndex = offset;
     return regex.exec(text);
   },

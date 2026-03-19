@@ -10,14 +10,12 @@
  */
 
 import { Lexer } from "chevrotain";
-import { combinations, keywords, ID } from "./tokens/shared";
+import { combinations, ID } from "./tokens/shared";
 import * as pli from "./tokens/pli-tokens";
 
 export * from "./tokens/shared";
 export * from "./tokens/pli-tokens";
-//If you get import problems here, consider adding the keyword to the blacklist in scripts/generate-cics-keyword-tokens.mts
-//Then regnerate the cics-tokens.generated.ts file by running `ts-node scripts/generate-cics-keyword-tokens.mts`
-export * from "./tokens/cics-tokens.generated";
+import "./tokens/cics-tokens.generated";
 
 /**
  * Characters which start a preprocessor directive.
@@ -75,7 +73,7 @@ export const operators = [
 export const all = [
   WS,
   ...combinations,
-  ...keywords,
+  ...pli.keywords,
   ...operators,
   ID,
   pli.NUMBER,

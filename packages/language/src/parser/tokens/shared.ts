@@ -119,8 +119,6 @@ export function createTokenInstance(
   );
 }
 
-export const keywordMap = new Map<string, TokenType>();
-export const keywords = new Set<TokenType>();
 export const controlTokens = new Set<TokenType>();
 export const modifierTokens = new Set<TokenType>();
 //combination name -> {mapTo: keyword index -> enum value, mapFrom: enum value -> keyword name}
@@ -149,34 +147,43 @@ export interface KeywordConfig {
   categories?: [MappableTokenType, number][];
 }
 
-export function registerKeyword(config: KeywordConfig): TokenType {
-  const names = Array.isArray(config.name) ? config.name : [config.name];
-  const name = names[0];
-  if (!name) {
-    throw new Error("Keyword must have at least one, non-empty name");
+export function createKeywordRegistry() {
+  const keywordMap = new Map<string, TokenType>();
+  const keywords = new Set<TokenType>();
+  return {
+    keywordMap,
+    keywords,
+    registerKeyword: (config: KeywordConfig) => registerKeyword(config),
+  };
+  function registerKeyword(config: KeywordConfig): TokenType {
+    const names = Array.isArray(config.name) ? config.name : [config.name];
+    const name = names[0];
+    if (!name) {
+      throw new Error("Keyword must have at least one, non-empty name");
+    }
+    const tokenType = createToken({
+      name,
+      pattern: Lexer.NA,
+      categories: [
+        ID,
+        ...(config.categories ?? []).map((category) => category[0]),
+      ],
+    });
+    for (const alias of names) {
+      keywordMap.set(alias, tokenType);
+    }
+    assignToMappings(tokenType, config.categories ?? [], names);
+    keywords.add(tokenType);
+    switch (config.type) {
+      case KeywordType.Control:
+        controlTokens.add(tokenType);
+        break;
+      default:
+        modifierTokens.add(tokenType);
+        break;
+    }
+    return tokenType;
   }
-  const tokenType = createToken({
-    name,
-    pattern: Lexer.NA,
-    categories: [
-      ID,
-      ...(config.categories ?? []).map((category) => category[0]),
-    ],
-  });
-  for (const alias of names) {
-    keywordMap.set(alias, tokenType);
-  }
-  assignToMappings(tokenType, config.categories ?? [], names);
-  keywords.add(tokenType);
-  switch (config.type) {
-    case KeywordType.Control:
-      controlTokens.add(tokenType);
-      break;
-    default:
-      modifierTokens.add(tokenType);
-      break;
-  }
-  return tokenType;
 }
 
 export interface OperatorConfig {
