@@ -24,12 +24,13 @@ import { generateInstructions } from "./instruction-generator";
 import { EvaluationResults, runInstructions } from "./instruction-interpreter";
 import { createIncludeInstruction, InstructionNode } from "./instructions";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { initLexer, tokenize } from "../parser/tokenizer";
+import { tokenize } from "../parser/tokenizer";
 import { ParserState } from "../parser/parser-state";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { getDefaultCompilerOptions } from "./compiler-options/options";
 import { CompilerOptions } from "./compiler-options/options-pli";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
+import { updatePliTokenizer } from "../parser/tokenizer/pli-tokenizer";
 
 export interface LexerResult {
   all: Token[];
@@ -63,7 +64,7 @@ export class PliLexer {
     const opts =
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
     unit.compilerOptions = opts;
-    initLexer(opts);
+    updatePliTokenizer(opts);
     unit.instructionCache.update(opts);
     const instruction = unit.instructionCache.get(uri, inputText, () => {
       const textWithoutMargins = this.marginsProcessor.processMargins(

@@ -20,12 +20,9 @@ import {
   statement,
 } from "./preprocessor-parser";
 import { isSqlAttributeStatement, sqlAttributeStatement } from "./sql-parser";
-import {
-  cicsResponseStatement,
-  isCicsExecStatement,
-  isCicsResponseStatement,
-} from "./cics-parser";
+import { cicsResponseStatement, isCicsResponseStatement } from "./cics-parser";
 import { CompilerOptions } from "../preprocessor/compiler-options/options";
+import { CstNodeKind } from "../syntax-tree/cst";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -117,27 +114,46 @@ function createCicsResponseHandler(): StatementParser {
   };
 }
 
-function createCicsExecHandler(statements: ast.Statement[]): StatementParser {
+function createExecHandler(): StatementParser {
   return (state) => {
     if (state.token?.tokenTypeIdx !== t.EXEC.tokenTypeIdx) {
       return undefined;
     }
-    if (!isCicsExecStatement(state)) {
-      return undefined;
-    }
-    // Special case: CICS EXEC creates a placeholder and adds it directly
-    // but we return undefined to let the token statement be created
-    const cicsExecStatement = ast.createCicsExecStatement();
-    const stmtWrapper = ast.createStatement();
-    stmtWrapper.value = cicsExecStatement;
-    statements.push(stmtWrapper);
-    return undefined; // Let token statement handler process the EXEC token
+    return parseExecStatement(state);
   };
+}
+
+function parseExecStatement(state: ParserState): ast.Statement | undefined {
+  const statement = ast.createStatement();
+  if (state.canConsume(t.EXEC, t.CICS)) {
+    const inner = ast.createCicsExecStatement();
+    state.consume(inner, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
+    state.consume(inner, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
+    statement.value = inner;
+  } else if (state.canConsume(t.EXEC, t.SQL)) {
+    const inner = ast.createSqlExecStatement();
+    state.consume(inner, CstNodeKind.ExecSqlStatement_EXEC, t.EXEC);
+    state.consume(inner, CstNodeKind.ExecSqlStatement_SQL, t.SQL);
+    statement.value = inner;
+  } else {
+    return undefined;
+  }
+  // Simply skip the tokens until the end of the statement (semicolon or end of file).
+  while (!state.eof && !state.canConsume(t.Semicolon)) {
+    const token = state.token;
+    if (!token) {
+      break;
+    }
+    token.element = statement;
+    token.kind = CstNodeKind.ExecStatement_Token;
+    state.index++;
+  }
+  state.consume(statement, CstNodeKind.ExecStatement_Semicolon, t.Semicolon);
+  return statement;
 }
 
 function generateStatementParser(
   compilerOptions: CompilerOptions | undefined,
-  statements: ast.Statement[],
 ): StatementParser {
   const handlers: StatementParser[] = [];
 
@@ -152,7 +168,7 @@ function generateStatementParser(
   handlers.push(createIncludeAltHandler());
   handlers.push(createSqlAttributeHandler());
   handlers.push(createCicsResponseHandler());
-  handlers.push(createCicsExecHandler(statements));
+  handlers.push(createExecHandler());
 
   return (state) => {
     for (const handler of handlers) {
@@ -171,7 +187,7 @@ export function preprocessorParse(
 ): PreprocessorParserResult {
   const statements: ast.Statement[] = [];
 
-  const statementParser = generateStatementParser(compilerOptions, statements);
+  const statementParser = generateStatementParser(compilerOptions);
 
   let index = state.index;
   let token = state.token;
