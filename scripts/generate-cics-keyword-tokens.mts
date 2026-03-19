@@ -17,9 +17,7 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const licenseHeader = await readFile("./license-header.js", "utf8");
 
-const blacklist = new Set([
-  "CICS", "EXEC"
-]);
+const blacklist = new Set(["CICS", "EXEC"]);
 
 type CicsKeywordFile = {
   control: string[];
