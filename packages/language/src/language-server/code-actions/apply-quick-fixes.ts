@@ -186,34 +186,46 @@ export type AmbiguousReferenceData = {
   uri: string;
 };
 
+type ReferenceData = {
+  visible: boolean;
+  parentsLeft: string[];
+  replaceText: string;
+};
+
 export function quickFixResolveAmbiguousReference(
   diagnostic: Diagnostic,
 ): CodeAction[] {
   const { symbols, uri } = diagnostic.data as AmbiguousReferenceData;
-  let current = symbols.map(
-    (sym) => [sym.visible, sym.nameChain.slice(0, -1), sym.nameChain[sym.nameChain.length - 1]] as const,
+  let current: ReferenceData[] = symbols.map(
+    (sym) => ({
+      visible: sym.visible,
+      parentsLeft: sym.nameChain.slice(0, -1),
+      replaceText: sym.nameChain[sym.nameChain.length - 1],
+    }),
   );
   const names = new Set<string>();
   do {
     names.clear();
-    for (const [, , name] of current) {
-      names.add(name);
+    for (const { replaceText } of current) {
+      names.add(replaceText);
     }
     if (
       names.size === current.length ||
-      current.every(([, parent]) => parent.length === 0)
+      current.every(({ parentsLeft }) => parentsLeft.length === 0)
     ) {
       break;
     }
-    current = current.map(([visible, parent, name]) => {
-      if (parent.length === 0) {
-        return [visible, [], name] as const;
+    current = current.map(({ visible, parentsLeft, replaceText }) => {
+      if (parentsLeft.length === 0) {
+        return { visible, parentsLeft: [], replaceText } as const;
       }
-      return [
+      const parent = parentsLeft.slice(0, -1);
+      const name = replaceText;
+      return {
         visible,
-        parent.slice(0, -1),
-        `${parent[parent.length - 1]}.${name}`,
-      ] as const;
+        parentsLeft: parent,
+        replaceText: `${parentsLeft[parentsLeft.length - 1]}.${name}`,
+      } as const;
     });
   } while (true);
   if (names.size !== current.length) {
@@ -226,17 +238,17 @@ export function quickFixResolveAmbiguousReference(
     const isSuffixOf = (suffix: string, str: string) =>
       str.endsWith("." + suffix) || str === suffix;
     const whereNameIsNotASuffix = (name: string, index: number): boolean =>
-      !current.some(([_, __, n], i) => i !== index && isSuffixOf(name, n));
-    for (const [, , fullName] of current.filter(([visible, , name], index) =>
-      whereNameIsNotASuffix(name, index) && visible
+      !current.some(({ replaceText }, i) => i !== index && isSuffixOf(name, replaceText));
+    for (const { replaceText } of current.filter(({ visible, replaceText }, index) =>
+      whereNameIsNotASuffix(replaceText, index) && visible
     )) {
       const action: CodeAction = {
-        title: `Change to "${fullName}"`,
+        title: `Change to "${replaceText}"`,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
         edit: {
           changes: {
-            [uri]: [TextEdit.replace(diagnostic.range, fullName)],
+            [uri]: [TextEdit.replace(diagnostic.range, replaceText)],
           },
         },
       };
