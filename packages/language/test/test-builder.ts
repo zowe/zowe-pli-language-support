@@ -419,29 +419,7 @@ export class TestBuilder {
     expectedActionLabel: string,
     expectedCodeAfter: string,
   ): Promise<void> {
-    let codeActions = this.codeActionCacheByLabel.get(label);
-    if (!codeActions) {
-      const asyncActionsByUri = this.getMatchingDiagnostics(label)
-        .exactMatches.map(
-          (d) => [d.uri, diagnosticToLSP(this.unit, d)] as const,
-        )
-        .filter(
-          ([uri, diagnostic]) => diagnostic !== undefined && uri !== undefined,
-        )
-        .map(([uri, diagnostic]) => ({
-          uri: uri!,
-          actions: applyQuickFixes([diagnostic!]),
-        }));
-      codeActions = [];
-      for (const { uri, actions } of asyncActionsByUri) {
-        const resolvedActions = await actions;
-        if (resolvedActions) {
-          codeActions.push([uri, resolvedActions] as const);
-        }
-      }
-      this.codeActionCacheByLabel.set(label, codeActions);
-    }
-
+    let codeActions = await this.getCodeActions(label);
     const expectedTokens = tokenize(expectedCodeAfter, undefined).tokens.map(
       (e) => e.image,
     );
@@ -467,8 +445,41 @@ export class TestBuilder {
       }
       fail(
         `Expected code action with title "${expectedActionLabel}" at label "${label}", but it was not found.
-Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(([_, actions]) => actions.map(a => a.title).join(", ")).join("; ")}`,
+Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(([_, actions]) => actions.map((a) => a.title).join(", ")).join("; ")}`,
       );
+    }
+  }
+
+  private async getCodeActions(label: string) {
+    let codeActions = this.codeActionCacheByLabel.get(label);
+    if (!codeActions) {
+      const asyncActionsByUri = this.getMatchingDiagnostics(label)
+        .exactMatches.map(
+          (d) => [d.uri, diagnosticToLSP(this.unit, d)] as const,
+        )
+        .filter(
+          ([uri, diagnostic]) => diagnostic !== undefined && uri !== undefined,
+        )
+        .map(([uri, diagnostic]) => ({
+          uri: uri!,
+          actions: applyQuickFixes([diagnostic!]),
+        }));
+      codeActions = [];
+      for (const { uri, actions } of asyncActionsByUri) {
+        const resolvedActions = await actions;
+        if (resolvedActions) {
+          codeActions.push([uri, resolvedActions] as const);
+        }
+      }
+      this.codeActionCacheByLabel.set(label, codeActions);
+    }
+    return codeActions;
+  }
+
+  async noCodeActions(label: string): Promise<void> {
+    const codeActions = await this.getCodeActions(label);
+    if (codeActions.some((ca) => ca[1].length > 0)) {
+      fail(`Expected no code actions at label "${label}", but found some.`);
     }
   }
 
