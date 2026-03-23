@@ -252,7 +252,11 @@ export interface HarnessTesterInterface {
      * @param expectedActionLabel The expected label of the code action.
      * @param expectedCodeAfter The expected code after applying the code action.
      */
-    expectCodeActionAt(label: Label, expectedActionLabel: string, expectedCodeAfter: string): void;
+    expectCodeActionAt(
+      label: Label,
+      expectedActionLabel: string,
+      expectedCodeAfter: string,
+    ): void;
   };
 
   linker: {

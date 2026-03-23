@@ -17,7 +17,7 @@ import {
   diagnosticToLSP,
   fullCode,
   Severity,
-  Range
+  Range,
 } from "../src/language-server/types";
 import { parseAndLink, replaceNamedIndices } from "./utils";
 import { expect } from "vitest";
@@ -29,7 +29,11 @@ import { hoverRequest } from "../src/language-server/hover-request";
 import { semanticTokens } from "../src/language-server/semantic-tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
-import { SemanticTokenTypes, Diagnostic as LspDiagnostic, CodeAction, TextEdit } from "vscode-languageserver-types";
+import {
+  SemanticTokenTypes,
+  CodeAction,
+  TextEdit,
+} from "vscode-languageserver-types";
 import { skippedCodeRanges } from "../src/language-server/skipped-code";
 import {
   PluginConfigurationProviderInstance,
@@ -50,7 +54,6 @@ import { PluginConfiguration } from "../src/language-server/constants";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 import { UriUtils } from "../src";
 import { applyQuickFixes } from "../src/language-server/code-actions/apply-quick-fixes";
-import { applySourceActions } from "../src/language-server/code-actions/apply-source-actions";
 
 export type Label = string | number | string[] | number[];
 
@@ -406,18 +409,29 @@ export class TestBuilder {
   }
 
   private applyEditsToString(content: string, edits: TextEdit[]): string {
-    const doc = TextDocument.create('file://inmemory', 'plaintext', 1, content);
+    const doc = TextDocument.create("file://inmemory", "plaintext", 1, content);
     return TextDocument.applyEdits(doc, edits);
   }
 
   private codeActionCacheByLabel = new Map<string, [string, CodeAction[]][]>();
-  async expectCodeActionAt(label: string, expectedActionLabel: string, expectedCodeAfter: string): Promise<void> {
+  async expectCodeActionAt(
+    label: string,
+    expectedActionLabel: string,
+    expectedCodeAfter: string,
+  ): Promise<void> {
     let codeActions = this.codeActionCacheByLabel.get(label);
     if (!codeActions) {
-      const asyncActionsByUri = this.getMatchingDiagnostics(label).exactMatches
-        .map(d => [d.uri, diagnosticToLSP(this.unit, d)] as const)
-        .filter(([uri, diagnostic]) => diagnostic !== undefined && uri !== undefined)
-        .map(([uri, diagnostic]) => ({ uri: uri!, actions: applyQuickFixes([diagnostic!]) }));
+      const asyncActionsByUri = this.getMatchingDiagnostics(label)
+        .exactMatches.map(
+          (d) => [d.uri, diagnosticToLSP(this.unit, d)] as const,
+        )
+        .filter(
+          ([uri, diagnostic]) => diagnostic !== undefined && uri !== undefined,
+        )
+        .map(([uri, diagnostic]) => ({
+          uri: uri!,
+          actions: applyQuickFixes([diagnostic!]),
+        }));
       codeActions = [];
       for (const { uri, actions } of asyncActionsByUri) {
         const resolvedActions = await actions;
@@ -428,20 +442,32 @@ export class TestBuilder {
       this.codeActionCacheByLabel.set(label, codeActions);
     }
 
-    const expectedTokens = tokenize(expectedCodeAfter, undefined).tokens.map(e => e.image);
+    const expectedTokens = tokenize(expectedCodeAfter, undefined).tokens.map(
+      (e) => e.image,
+    );
     for (const [uri, actions] of codeActions) {
       for (const codeAction of actions) {
         if (codeAction.title === expectedActionLabel) {
           if (codeAction.edit && codeAction.edit.changes) {
             const originalSource = this.files.get(uri)!.textDocument.getText();
-            const modifiedSource = this.applyEditsToString(originalSource, codeAction.edit.changes[uri]);
-            const actualTokens = tokenize(modifiedSource, undefined).tokens.map(e => e.image);
-            expect(actualTokens, `Expected code after applying code action "${expectedActionLabel}" at label "${label}" to have tokens ${expectedTokens.join(", ")}, but got ${actualTokens.join(", ")}`).toEqual(expectedTokens);
+            const modifiedSource = this.applyEditsToString(
+              originalSource,
+              codeAction.edit.changes[uri],
+            );
+            const actualTokens = tokenize(modifiedSource, undefined).tokens.map(
+              (e) => e.image,
+            );
+            expect(
+              actualTokens,
+              `Expected code after applying code action "${expectedActionLabel}" at label "${label}" to have tokens ${expectedTokens.join(", ")}, but got ${actualTokens.join(", ")}`,
+            ).toEqual(expectedTokens);
             return;
           }
         }
       }
-      fail(`Expected code action with title "${expectedActionLabel}" at label "${label}", but it was not found.`);
+      fail(
+        `Expected code action with title "${expectedActionLabel}" at label "${label}", but it was not found.`,
+      );
     }
   }
 
@@ -820,11 +846,11 @@ export class TestBuilder {
   private filterByErrorCodes(diagnostics: Diagnostic[], errorCodes: PLICode[]) {
     return errorCodes.length > 0
       ? diagnostics.filter((diagnostic) => {
-        return (
-          diagnostic.code !== undefined &&
-          errorCodes.map((code) => fullCode(code)).includes(diagnostic.code)
-        );
-      })
+          return (
+            diagnostic.code !== undefined &&
+            errorCodes.map((code) => fullCode(code)).includes(diagnostic.code)
+          );
+        })
       : diagnostics;
   }
 
@@ -883,8 +909,9 @@ export class TestBuilder {
   }
 
   expectToThrow(fn: () => void, messageToThrow?: string) {
-    const message = `Expected function to throw an error ${messageToThrow ? `with message "${messageToThrow}"` : ""
-      }, but it did not`;
+    const message = `Expected function to throw an error ${
+      messageToThrow ? `with message "${messageToThrow}"` : ""
+    }, but it did not`;
     try {
       fn();
       fail(message);

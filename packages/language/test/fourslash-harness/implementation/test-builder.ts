@@ -68,7 +68,11 @@ export function createTestBuilderHarnessImplementation(
       expectAst: (...expectedAst) => testBuilder.expectAst(expectedAst),
       expectPPAst: (...expectedAst) => testBuilder.expectMacroAst(expectedAst),
       expectCodeActionAt: (label, expectedActionLabel, expectedCodeAfter) =>
-        testBuilder.expectCodeActionAt(label.toString(), expectedActionLabel, expectedCodeAfter),
+        testBuilder.expectCodeActionAt(
+          label.toString(),
+          expectedActionLabel,
+          expectedCodeAfter,
+        ),
     },
     completion: {
       expectAt: (label, content) =>
