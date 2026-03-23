@@ -466,7 +466,8 @@ export class TestBuilder {
         }
       }
       fail(
-        `Expected code action with title "${expectedActionLabel}" at label "${label}", but it was not found.`,
+        `Expected code action with title "${expectedActionLabel}" at label "${label}", but it was not found.
+Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(([_, actions]) => actions.map(a => a.title).join(", ")).join("; ")}`,
       );
     }
   }
