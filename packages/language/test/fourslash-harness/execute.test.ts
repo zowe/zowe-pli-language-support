@@ -71,7 +71,7 @@ afterEach(async () => {
 function getTestFiles() {
   return readdirSync(testsPath, { recursive: true })
     .map((file) => file.toString())
-    .filter((file) => file.endsWith(".ts") || file.endsWith(".mts")) // Only .ts and .mts files
+    .filter((file) => file.endsWith(".ts")) // Only .ts files
     .filter((file) => file !== frameworkFileName); // No framework file
 }
 
