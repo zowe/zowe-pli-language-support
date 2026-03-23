@@ -68,6 +68,7 @@ async function createTestingHarnessImplementation(
       expectAst: listen("verify.expectAst"),
       expectPPAst: listen("verify.expectPPAst"),
       expectCodeActionAt: listen("verify.expectCodeActionAt"),
+      noCodeActions: listen("verify.noCodeActions"),
     },
     types: {
       ...HarnessTypeAttributes,
