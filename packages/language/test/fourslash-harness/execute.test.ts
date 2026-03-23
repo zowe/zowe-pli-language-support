@@ -21,11 +21,7 @@ import {
   HarnessTest,
   HarnessTestMode,
 } from "./types";
-import {
-  LocationOverride,
-  PliTestFile,
-  TestBuilder,
-} from "../test-builder";
+import { LocationOverride, PliTestFile, TestBuilder } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 import {

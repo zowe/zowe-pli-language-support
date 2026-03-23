@@ -210,9 +210,10 @@ class HarnessTestParser {
         const file = this.parseHarnessFile();
         const fileName = getFileName(file.fileName);
 
-        const uri = fileName === UnnamedFile
-          ? DEFAULT_FILE_URI
-          : URI.file(fileName).toString();
+        const uri =
+          fileName === UnnamedFile
+            ? DEFAULT_FILE_URI
+            : URI.file(fileName).toString();
 
         if (files.get(uri) !== undefined) {
           throw new Error(`Duplicate file name: '${uri}'`);

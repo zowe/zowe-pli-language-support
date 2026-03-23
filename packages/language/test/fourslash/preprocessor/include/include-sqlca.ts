@@ -17,7 +17,5 @@
 // @filename: main.pli
 //// %INCLUDE <|SQLCA|>;
 
-verify.expectExclusiveDiagnosticsAt("SQLCA", [
-  code.Severe.IBM1848I,
-]);
+verify.expectExclusiveDiagnosticsAt("SQLCA", [code.Severe.IBM1848I]);
 preprocessor.expectTokens("");
