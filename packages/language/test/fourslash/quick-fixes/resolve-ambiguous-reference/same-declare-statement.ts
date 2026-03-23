@@ -19,7 +19,7 @@
 ////       2 C (S REFER(<|B|>));
 
 verify.expectDiagnosticsAt("B", code.Severe.IBM1881I);
-verify.expectCodeActionAt(
+await verify.expectCodeActionAt(
   "B",
   'Change to "AA.B"',
   `

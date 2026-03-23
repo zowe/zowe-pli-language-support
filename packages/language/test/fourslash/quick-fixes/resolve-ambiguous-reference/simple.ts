@@ -20,7 +20,7 @@
 ////       2 Y3 (P REFER(<|Z|>));
 
 verify.expectDiagnosticsAt("Z", code.Severe.IBM1881I);
-verify.expectCodeActionAt(
+await verify.expectCodeActionAt(
   "Z",
   'Change to "Y1.Z"',
   `
@@ -33,7 +33,7 @@ verify.expectCodeActionAt(
           2 Y3 (P REFER (Y1.Z));
 `,
 );
-verify.expectCodeActionAt(
+await verify.expectCodeActionAt(
   "Z",
   'Change to "Y2.Z"',
   `

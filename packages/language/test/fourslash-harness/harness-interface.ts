@@ -183,7 +183,7 @@ export interface HarnessTesterInterface {
      * Expect that there are no code actions at the given label.
      * @param label The label to expect no code actions at.
      */
-    noCodeActions(label: Label): void;
+    noCodeActions(label: Label): Promise<void>;
     /**
      * Expect that the compilation unit has no diagnostics.
      *
@@ -261,7 +261,7 @@ export interface HarnessTesterInterface {
       label: Label,
       expectedActionLabel: string,
       expectedCodeAfter: string,
-    ): void;
+    ): Promise<void>;
   };
 
   linker: {

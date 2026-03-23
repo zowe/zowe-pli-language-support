@@ -21,7 +21,7 @@
 ////       2 BBB (P REFER(<|D|>));
 
 verify.expectDiagnosticsAt("D", code.Severe.IBM1881I);
-verify.expectCodeActionAt(
+await verify.expectCodeActionAt(
   "D",
   'Change to "B.BB.D"',
   `
@@ -35,7 +35,7 @@ verify.expectCodeActionAt(
           2 BBB (P REFER (B.BB.D));
 `,
 );
-verify.expectCodeActionAt(
+await verify.expectCodeActionAt(
   "D",
   'Change to "A.BB.D"',
   `

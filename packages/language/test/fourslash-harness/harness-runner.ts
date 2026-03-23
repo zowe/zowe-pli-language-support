@@ -19,13 +19,19 @@ import vm from "vm";
  * @param testFile - The test file to run.
  * @param implementation - The implementation to use to run the harness test.
  */
-export function runHarnessTest(
+export async function runHarnessTest(
   testFile: HarnessTest,
   implementation: HarnessTesterInterface,
 ) {
   const vmContext = vm.createContext(implementation);
 
-  vm.runInContext(testFile.commands, vmContext, {
-    filename: testFile.fileName,
-  });
+  const result = vm.runInContext(
+    `(async () => {\n${testFile.commands}\n})()`,
+    vmContext,
+    {
+      filename: testFile.fileName,
+    },
+  );
+
+  await result;
 }

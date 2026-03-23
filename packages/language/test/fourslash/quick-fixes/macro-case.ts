@@ -23,7 +23,7 @@ verify.expectCompilerOptions({
     },
   },
 });
-verify.expectCodeActionAt(
+await verify.expectCodeActionAt(
   "variable1",
   "Convert to uppercase",
   `
