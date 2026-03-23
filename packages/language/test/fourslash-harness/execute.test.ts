@@ -20,10 +20,8 @@ import {
   extractTestModeFromFileName,
   HarnessTest,
   HarnessTestMode,
-  UnnamedFile,
 } from "./types";
 import {
-  DEFAULT_FILE_URI,
   LocationOverride,
   PliTestFile,
   TestBuilder,
@@ -75,22 +73,6 @@ function getTestFiles() {
     .filter((file) => file !== frameworkFileName); // No framework file
 }
 
-function prefixUri(uri: string): string {
-  if (uri.startsWith("file:///")) {
-    return uri;
-  }
-
-  if (uri.startsWith("/")) {
-    return `file://${uri}`;
-  }
-
-  return `file:///${uri}`;
-}
-
-function getUri(uri: string | typeof UnnamedFile): string {
-  return uri === UnnamedFile ? DEFAULT_FILE_URI : uri;
-}
-
 /**
  * Get the files to load for a harness test.
  *
@@ -99,7 +81,7 @@ function getUri(uri: string | typeof UnnamedFile): string {
  */
 function getFiles(testFile: HarnessTest): PliTestFile[] {
   return Array.from(testFile.files.entries()).map(([uri, file]) => ({
-    uri: getUri(uri),
+    uri: uri,
     content: file.content,
   }));
 }
@@ -110,7 +92,7 @@ function getLocationOverrides(
 ): Record<string, LocationOverride> {
   return Object.fromEntries(
     Array.from(testFile.files.entries()).map(([uri, file]) => [
-      prefixUri(getUri(uri)),
+      uri,
       {
         uri: path,
         lineOffset: file.lineOffset,

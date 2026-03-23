@@ -209,8 +209,8 @@ ${content1
       },
     });
 
-    const file1 = file.files.get(fileName1);
-    const file2 = file.files.get(fileName2);
+    const file1 = file.files.get(`file:///${fileName1}`);
+    const file2 = file.files.get(`file:///${fileName2}`);
 
     expect(file1).toBeDefined();
     expect(file2).toBeDefined();
@@ -244,7 +244,7 @@ ${content1
       },
     });
 
-    const mainFile = file.files.get("main.pli");
+    const mainFile = file.files.get("file:///main.pli");
 
     expect(mainFile).toBeDefined();
     expect(mainFile?.wrap).toBe("main");

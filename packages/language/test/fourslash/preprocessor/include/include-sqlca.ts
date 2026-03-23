@@ -11,13 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// EXEC SQL INCLUDE SQLDA;
-//// SQLDA.SQLVAR.<|1>SQLIND = 1;
+// In theory, `EXEC SQL INCLUDE SQLCA;` should always be valid, using the builtin as a fallback.
+// However, `%INCLUDE SQLCA;` shouldn't do anything if the file doesn't exist.
 
-hover.expectMarkdownAt(
-  1,
-  hover.codeBlock(`DCL 1 SQLDA BASED(...),
-      2 SQLVAR DIMENSION(...),
-        3 SQLIND POINTER;`),
-);
+// @filename: main.pli
+//// %INCLUDE <|SQLCA|>;
+
+verify.expectExclusiveDiagnosticsAt("SQLCA", [
+  code.Severe.IBM1848I,
+]);
+preprocessor.expectTokens("");

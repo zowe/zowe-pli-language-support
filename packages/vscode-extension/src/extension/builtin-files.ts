@@ -15,6 +15,8 @@ import * as builtins from "pli-language/builtins";
 const files = new Map<string, string>([
   [builtins.BuiltinsFile, builtins.Builtins],
   [builtins.BuiltinsMacroFile, builtins.BuiltinsMacro],
+  [builtins.BuiltinsSqlcaFile, builtins.BuiltinsSqlca],
+  [builtins.BuiltinsSqldaFile, builtins.BuiltinsSqlda],
 ]);
 
 function getFile(uri: vscode.Uri): string | undefined {

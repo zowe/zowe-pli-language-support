@@ -9,16 +9,15 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-// @wrap: main
+// @filename: cpy/sqlca.pli
+//// DECLARE LIB_VAR FIXED;
+
+// @filename: main.pli
 //// EXEC SQL INCLUDE SQLCA;
-//// EXEC SQL INCLUDE SQLDA;
-//// PUT(<|1:SQLCA|>.<|2:SQLCODE|>);
-//// PUT(<|3:SQLDA|>.<|4:SQLTYPE|>);
-//// PUT(<|5:SQLCODE|>);
-//// PUT(<|6:SQLTYPE|>);
 
-// Should link to the SQLCA/SQLDA builtin copybook definition
-// Therefore, no diagnostics expected
-verify.noDiagnostics([1, 2, 3, 4, 5, 6]);
+// Should simply run the normal include logic
+preprocessor.expectTokens(`
+  DECLARE LIB_VAR FIXED;
+`);
