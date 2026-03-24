@@ -67,14 +67,19 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.expectCompilerOptions(expectedOptions),
       expectAst: (...expectedAst) => testBuilder.expectAst(expectedAst),
       expectPPAst: (...expectedAst) => testBuilder.expectMacroAst(expectedAst),
-      expectCodeActionAt: (label, expectedActionLabel, expectedCodeAfter) =>
+      expectCodeActionAt: (
+        label,
+        expectedActionLabel,
+        expectedCodeAfter,
+      ): Promise<void> =>
         testBuilder.expectCodeActionAt(
           label.toString(),
           expectedActionLabel,
           expectedCodeAfter,
         ),
-      noCodeActions: (label) => testBuilder.noCodeActions(label.toString()),
-      expectCodeActionCountAt: (label, expectedCount) =>
+      noCodeActions: (label): Promise<void> =>
+        testBuilder.noCodeActions(label.toString()),
+      expectCodeActionCountAt: (label, expectedCount): Promise<void> =>
         testBuilder.expectCodeActionCountAt(label.toString(), expectedCount),
     },
     completion: {
