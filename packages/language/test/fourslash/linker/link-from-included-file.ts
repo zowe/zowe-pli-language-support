@@ -11,10 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
-// @filename: file:///cpy/include.pli
+// @filename: cpy/include.pli
 //// DCL <|1:Y|> FIXED;
 
-// @filename: file:///main.pli
+// @filename: main.pli
 //// %INCLUDE "include.pli";
 //// <|1>Y = 42;
 

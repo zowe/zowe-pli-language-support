@@ -94,7 +94,6 @@ export enum SyntaxKind {
   EnvironmentOptionValue,
   EnvironmentOptionOrganization,
   EnvironmentOptionRecordFormat,
-  ExecStatement,
   ExitStatement,
   Exports,
   ExportsItem,
@@ -233,6 +232,7 @@ export enum SyntaxKind {
   CicsResponseStatement,
   CicsExecStatement,
   SqlExecStatement,
+  EmbeddedUnknownStatement,
 }
 
 export enum KeywordConditions {
@@ -738,6 +738,7 @@ export type SyntaxNode =
   | DeactivateStatement
   | TokenStatement
   | SqlExecStatement
+  | EmbeddedUnknownStatement
   | CicsExecStatement
   | CicsResponseStatement
   | SqlAttributeStatement
@@ -818,7 +819,6 @@ export type SyntaxNode =
   | EntryUnionDescription
   | EnvironmentAttribute
   | EnvironmentOptionItem
-  | ExecStatement
   | ExitStatement
   | Exports
   | ExportsItem
@@ -1074,7 +1074,6 @@ export type Unit =
   | DisplayStatement
   | DoStatement
   | EntryStatement
-  | ExecStatement
   | ExitStatement
   | FetchStatement
   | FlushStatement
@@ -2351,17 +2350,6 @@ export function createEnvironmentOptionValue(): EnvironmentOptionValue {
   };
 }
 
-export interface ExecStatement extends AstNode {
-  kind: SyntaxKind.ExecStatement;
-}
-
-export function createExecStatement(): ExecStatement {
-  return {
-    kind: SyntaxKind.ExecStatement,
-    container: null,
-  };
-}
-
 export interface ExitStatement extends AstNode {
   kind: SyntaxKind.ExitStatement;
 }
@@ -2746,12 +2734,15 @@ export interface IncludeItemFile extends AstNode {
   kind: SyntaxKind.IncludeItemFile;
   token: Token | null;
   range: Range | null;
+  fileName: string | null;
+  /**
+   * Indicates whether the include statement is sourced from an EXEC SQL statement.
+   */
+  sql: boolean;
 
   // Properties filled by the preprocessor
   filePath: string | null;
   relativeFilePath: string | null;
-
-  fileName: string | null;
 }
 
 /**
@@ -2811,6 +2802,7 @@ export function createIncludeItemFile(): IncludeItemFile {
     relativeFilePath: null,
     token: null,
     fileName: null,
+    sql: false,
   };
 }
 
@@ -4345,26 +4337,43 @@ export function createCicsResponseStatement(): CicsResponseStatement {
   };
 }
 
-// This is a placeholder for future CICS EXEC statements
-// It is currently used to generate the correct AST structure
 export interface CicsExecStatement extends AstNode {
   kind: SyntaxKind.CicsExecStatement;
+  content: CicsEmbeddedStatement | null;
 }
 
 export function createCicsExecStatement(): CicsExecStatement {
   return {
     kind: SyntaxKind.CicsExecStatement,
     container: null,
+    content: null,
   };
 }
 
+export type CicsEmbeddedStatement = EmbeddedUnknownStatement;
+
 export interface SqlExecStatement extends AstNode {
   kind: SyntaxKind.SqlExecStatement;
+  content: SqlEmbeddedStatement | null;
 }
 
 export function createSqlExecStatement(): SqlExecStatement {
   return {
     kind: SyntaxKind.SqlExecStatement,
+    container: null,
+    content: null,
+  };
+}
+
+export type SqlEmbeddedStatement = IncludeDirective | EmbeddedUnknownStatement;
+
+export interface EmbeddedUnknownStatement extends AstNode {
+  kind: SyntaxKind.EmbeddedUnknownStatement;
+}
+
+export function createEmbeddedUnknownStatement(): EmbeddedUnknownStatement {
+  return {
+    kind: SyntaxKind.EmbeddedUnknownStatement,
     container: null,
   };
 }

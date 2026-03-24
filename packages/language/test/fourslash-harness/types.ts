@@ -48,7 +48,7 @@ export interface HarnessFile {
 
 export interface HarnessTest {
   fileName: string;
-  files: Map<string | UnnamedFile, HarnessFile>;
+  files: Map<string, HarnessFile>;
   commands: string;
   tags: string[];
 }

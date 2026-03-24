@@ -141,6 +141,19 @@ export function createCicsExecInstruction(): CicsExecInstruction {
   };
 }
 
+export function createSqlExecInstruction(
+  statement: ast.SqlExecStatement,
+): Instruction | undefined {
+  const content = statement.content;
+  if (!content) {
+    return undefined;
+  }
+  if (content.kind === ast.SyntaxKind.IncludeDirective) {
+    return createIncludeInstruction(content.items, false);
+  }
+  return undefined;
+}
+
 export interface SqlAttributeInstruction {
   kind: InstructionKind.SqlAttribute;
   attribute: ast.SqlAttributeStatement;

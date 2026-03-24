@@ -23,6 +23,7 @@ import {
   DimensionBound,
   Dimensions,
   Expression,
+  getContainer,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -40,6 +41,7 @@ import {
   stringifyDeclaration,
   stringifyTypeDescription,
 } from "../typesystem/stringify";
+import { BuiltinsUriSchema } from "../workspace/builtins";
 
 type MarkupResponse = string | null;
 
@@ -221,17 +223,37 @@ function getIncludeItemRepresentation(
     return null;
   }
   const partialContent = getFileContentPreview(unit, node.filePath, doc);
-  if (!partialContent) return null;
+  if (!partialContent) {
+    return null;
+  }
 
-  return generateIncludeItemMarkup(type, node.relativeFilePath, partialContent);
+  if (fileUri.scheme === BuiltinsUriSchema) {
+    // for builtins, we don't actually want to show the path
+    return generateIncludeItemMarkup(partialContent);
+  } else {
+    return generateIncludeItemMarkup(
+      type,
+      node.relativeFilePath,
+      partialContent,
+    );
+  }
 }
-
+export function generateIncludeItemMarkup(sourceText: string): string;
 export function generateIncludeItemMarkup(
   type: string,
   relativePath: string,
   sourceText: string,
+): string;
+export function generateIncludeItemMarkup(
+  sourceTextOrType: string,
+  relativePath?: string,
+  sourceText?: string,
 ): string {
-  return `${formatPliCodeBlock(`${type} "${relativePath}"`)}\n\n---\n${formatPliCodeBlock(sourceText)}`;
+  if (sourceText !== undefined && relativePath !== undefined) {
+    return `${formatPliCodeBlock(`${sourceTextOrType} "${relativePath}"`)}\n\n---\n${formatPliCodeBlock(sourceText)}`;
+  } else {
+    return formatPliCodeBlock(sourceTextOrType);
+  }
 }
 
 /**
@@ -253,14 +275,7 @@ function getNodeRepresentation(
       return getLabelPrefixRepresentation(node);
     case SyntaxKind.IncludeItemFile:
     case SyntaxKind.IncludeItemMember:
-      let type = "%INCLUDE";
-      const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
-      if (
-        node.container?.kind === SyntaxKind.IncludeAltDirective &&
-        ppInclude
-      ) {
-        type = ppInclude;
-      }
+      const type = computeIncludeType(unit, node);
       return getIncludeItemRepresentation(unit, node, type);
     case SyntaxKind.InscanDirective:
       return getIncludeItemRepresentation(unit, node, "%INSCAN");
@@ -274,6 +289,18 @@ function getNodeRepresentation(
     default:
       return null;
   }
+}
+
+function computeIncludeType(unit: CompilationUnit, node: SyntaxNode): string {
+  let type = "%INCLUDE";
+  const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
+  if (node.container?.kind === SyntaxKind.IncludeAltDirective && ppInclude) {
+    type = ppInclude;
+  } else if (getContainer(node, SyntaxKind.SqlExecStatement)) {
+    // Include as part of an EXEC SQL statement
+    type = "EXEC SQL INCLUDE";
+  }
+  return type;
 }
 
 /**

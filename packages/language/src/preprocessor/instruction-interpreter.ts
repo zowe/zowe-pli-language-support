@@ -37,6 +37,12 @@ import {
 import * as inst from "./instructions";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import {
+  BuiltinsSqlcaName,
+  BuiltinsSqlcaUri,
+  BuiltinsSqldaName,
+  BuiltinsSqldaUri,
+} from "../workspace/builtins";
 
 interface Variable {
   name: string;
@@ -2114,6 +2120,7 @@ async function runInscanInstruction(
       fileName: value.value,
       token: instruction.variable.reference?.token,
       idempotent: instruction.idempotent,
+      sql: false,
     },
     context,
   );
@@ -2131,6 +2138,7 @@ async function runIncludeInstruction(
         fileName: item.fileName,
         token: item.token,
         idempotent: instruction.idempotent,
+        sql: item.sql,
       };
     } else if (ast.isIncludeItemMember(item)) {
       includeItem = {
@@ -2183,6 +2191,7 @@ interface FileIncludeItem {
   fileName: string;
   token?: Token | null;
   idempotent: boolean;
+  sql: boolean;
 }
 
 /**
@@ -2555,6 +2564,16 @@ async function resolveIncludeFileUri(
 
     checkToValidateMember(memberToValidate);
   }
+  if (!libMatch && isFileIncludeItem(item) && item.sql) {
+    // Special handling for missing SQL includes
+    // SQLCA and SQLDA are builtins that can be included, even if they are not present on disk
+    if (item.fileName.toUpperCase() === BuiltinsSqlcaName) {
+      libMatch = URI.parse(BuiltinsSqlcaUri);
+    } else if (item.fileName.toUpperCase() === BuiltinsSqldaName) {
+      libMatch = URI.parse(BuiltinsSqldaUri);
+    }
+  }
+
   return libMatch;
 }
 

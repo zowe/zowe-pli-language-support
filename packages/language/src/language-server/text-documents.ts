@@ -36,6 +36,8 @@ import { URI, UriUtils } from "../utils/uri.js";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider.js";
 import {
   BuiltinsMacroTextDocument,
+  BuiltinsSqlcaDocument,
+  BuiltinsSqldaDocument,
   BuiltinsTextDocument,
 } from "../workspace/builtins.js";
 
@@ -444,6 +446,8 @@ export function resetDocumentProviders() {
   );
   BuiltinDocuments.set(BuiltinsTextDocument);
   BuiltinDocuments.set(BuiltinsMacroTextDocument);
+  BuiltinDocuments.set(BuiltinsSqlcaDocument);
+  BuiltinDocuments.set(BuiltinsSqldaDocument);
 }
 
 resetDocumentProviders();

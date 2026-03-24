@@ -8,8 +8,9 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
+
 import { diagnosticFromCode, Severity } from "../../language-server/types";
-import { BuiltinsUriSchema, KNOWN_BUILTINS } from "../../workspace/builtins";
+import { BuiltinsUri, KNOWN_BUILTINS } from "../../workspace/builtins";
 import { PLICodes } from "../pli-codes";
 import * as AST from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
@@ -35,10 +36,10 @@ export function checkImplicitBuiltins(
   }
 
   const nameToken = node.ref?.node?.nameToken;
-  const uri = nameToken?.uri;
+  const uri = nameToken?.uri?.toString();
 
   // Check if the reference item is a builtin.
-  if (!node.ref || !nameToken || !uri || uri?.scheme !== BuiltinsUriSchema) {
+  if (!node.ref || !nameToken || !uri || uri !== BuiltinsUri) {
     return;
   }
 
