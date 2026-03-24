@@ -180,6 +180,11 @@ export interface HarnessTesterInterface {
         | PLICode[],
     ): void;
     /**
+     * Expect that there are no code actions at the given label.
+     * @param label The label to expect no code actions at.
+     */
+    noCodeActions(label: Label): Promise<void>;
+    /**
      * Expect that the compilation unit has no diagnostics.
      *
      * @param label The label to expect no diagnostics at. If not provided, all diagnostics are expected to be absent.
@@ -245,6 +250,18 @@ export interface HarnessTesterInterface {
      * @param statements The expected statements.
      */
     expectPPAst(...statements: any[]): void;
+
+    /**
+     * Expect that a code action with the given label and resulting in the given code after applying the code action exists at the given label.
+     * @param label The label to expect the code action at.
+     * @param expectedActionLabel The expected label of the code action.
+     * @param expectedCodeAfter The expected code after applying the code action.
+     */
+    expectCodeActionAt(
+      label: Label,
+      expectedActionLabel: string,
+      expectedCodeAfter: string,
+    ): Promise<void>;
   };
 
   linker: {
