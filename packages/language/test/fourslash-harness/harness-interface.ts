@@ -180,6 +180,11 @@ export interface HarnessTesterInterface {
         | PLICode[],
     ): void;
     /**
+     * Expect that there are no code actions at the given label.
+     * @param label The label to expect no code actions at.
+     */
+    noCodeActions(label: Label): Promise<void>;
+    /**
      * Expect that the compilation unit has no diagnostics.
      *
      * @param label The label to expect no diagnostics at. If not provided, all diagnostics are expected to be absent.

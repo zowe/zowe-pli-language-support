@@ -465,7 +465,15 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     ).toBe(expectedCount);
   }
 
-  private async getCodeActions(label: string) {
+  /**
+   * Get code actions for the given label. The code actions are cached, so subsequent calls with the same
+   * label will return the cached code actions.
+   * @param label The label to get code actions for.
+   * @returns A promise that resolves to an array of tuples, each containing a URI and an array of code actions.
+   */
+  private async getCodeActions(
+    label: string,
+  ): Promise<[string, CodeAction[]][]> {
     let codeActions = this.codeActionCacheByLabel.get(label);
     if (!codeActions) {
       const asyncActionsByUri = this.getMatchingDiagnostics(label)
@@ -489,6 +497,10 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       this.codeActionCacheByLabel.set(label, codeActions);
     }
     return codeActions;
+  }
+
+  async noCodeActions(label: string): Promise<void> {
+    await this.expectCodeActionCountAt(label, 0);
   }
 
   expectAst(statements: any[]): void {
