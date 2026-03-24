@@ -224,21 +224,6 @@ function tokenType(token: Token, mode: TokenizerMode): number | undefined {
     return SemanticTokenTypes.modifier;
   }
 
-  // Temporary solution for semantic EXEC tokens
-  if (
-    token.kind === CstNodeKind.ExecStatement_Token &&
-    mode === TokenizerMode.SQL
-  ) {
-    return SemanticTokenTypes.modifier;
-  }
-
-  // If the token has no semantic meaning based on the CST, check if it's a keyword
-  if (controlTokens.has(token.tokenType)) {
-    return SemanticTokenTypes.keyword;
-  } else if (modifierTokens.has(token.tokenType)) {
-    return SemanticTokenTypes.modifier;
-  }
-
   return undefined;
 }
 
