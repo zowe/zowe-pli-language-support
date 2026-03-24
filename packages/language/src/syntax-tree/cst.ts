@@ -272,6 +272,7 @@ export enum CstNodeKind {
   DoSpecification_REPEAT,
   ExecCicsStatement_EXEC,
   ExecCicsStatement_CICS,
+  ExecCicsStatement_COMMAND,
   ExecCicsStatement_Semicolon,
   ExecSqlStatement_EXEC,
   ExecSqlStatement_SQL,

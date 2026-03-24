@@ -22,7 +22,7 @@ import { describe, expect, test } from "vitest";
 
 describe("PL/I Token-to-Enum Mapping", () => {
   const ASTFileName = "packages/language/src/syntax-tree/ast.ts";
-  const TokensFileName = "packages/language/src/parser/tokens.ts";
+  const TokensFileName = "packages/language/src/parser/tokens/pli-tokens.ts";
   const __dirname = fileURLToPath(new URL("../../../..", import.meta.url));
 
   const EnumIgnoreList = new Set<string>([

@@ -12,8 +12,10 @@
 import { TokenType } from "chevrotain";
 import * as tokens from "../tokens";
 import { URI } from "../../utils/uri";
-import { Diagnostic } from "../../language-server/types";
-import { pliFuncs } from "./pli-tokenizer";
+import { Diagnostic, diagnosticFromCode } from "../../language-server/types";
+import { pliFuncs, pliKeywords } from "./pli-tokenizer";
+import { PLICodes } from "../../validation/pli-codes";
+import { cicsFuncs, cicsKeywords } from "./cics-tokenizer";
 
 export enum TokenizerMode {
   Default,
@@ -35,6 +37,7 @@ export class TokenizerContext {
   public caseUpper: boolean;
   public mode: TokenizerMode = TokenizerMode.Default;
   public funcs: TokenizeFunc[] = [];
+  public keywords: Map<bigint, KeywordToken> = new Map();
 
   private storedIndex: number = 0;
   private storedLine: number = 0;
@@ -46,6 +49,7 @@ export class TokenizerContext {
     this.uri = uri;
     this.caseUpper = caseUpper;
     this.funcs = pliFuncs;
+    this.keywords = pliKeywords;
   }
 
   switchMode(mode: TokenizerMode) {
@@ -53,12 +57,15 @@ export class TokenizerContext {
     switch (mode) {
       case TokenizerMode.Default:
         this.funcs = pliFuncs;
+        this.keywords = pliKeywords;
         break;
       case TokenizerMode.CICS:
-        this.funcs = pliFuncs; // switch to cicsFuncs when implemented
+        this.funcs = cicsFuncs;
+        this.keywords = cicsKeywords;
         break;
       case TokenizerMode.SQL:
         this.funcs = pliFuncs; // switch to sqlFuncs when implemented
+        this.keywords = pliKeywords; // switch to sqlKeywords when implemented
         break;
     }
   }
@@ -267,4 +274,139 @@ export function generateKeywords(
     keywords.set(hash, { image, kind });
   }
   return keywords;
+}
+export function tokenizeSlash(
+  context: TokenizerContext,
+): tokens.Token | undefined {
+  if (context.index + 1 < context.length) {
+    const nextChar = context.input[context.index + 1];
+
+    if (nextChar === "*") {
+      // Block comment
+      let line = context.line;
+      let column = context.column + 2;
+      let i = context.index + 2;
+      while (i < context.length) {
+        if (context.input[i] === "*" && context.input[i + 1] === "/") {
+          i += 2;
+          column += 2;
+          break;
+        } else if (context.input[i] === "\n") {
+          line++;
+          column = 0;
+        } else {
+          column++;
+        }
+        i++;
+      }
+      context.index = i;
+      context.line = line;
+      context.column = column;
+      context.comments.push(context.createTokenInstance(tokens.ML_COMMENT));
+      return undefined;
+    } else if (nextChar === "/") {
+      // Line comment
+      let i = context.index + 2;
+      while (i < context.length) {
+        i++;
+        if (context.input[i] === "\n") {
+          // Skip the newline character as well
+          i++;
+          context.column = 0;
+          context.line++;
+          break;
+        }
+      }
+      context.index = i;
+      context.comments.push(context.createTokenInstance(tokens.SL_COMMENT));
+      return undefined;
+    } else if (nextChar === "=") {
+      context.advance(2, false);
+      return context.createTokenInstance(tokens.SlashEquals);
+    }
+  }
+
+  context.advance(1, false);
+  return context.createTokenInstance(tokens.Slash);
+}
+const stringRegex = tokens.STRING_TERM.PATTERN as RegExp;
+const tokenizeStringInternal = tokenizeRegex(tokens.STRING_TERM, stringRegex);
+export function tokenizeString(
+  context: TokenizerContext,
+): tokens.Token | undefined {
+  const result = tokenizeStringInternal(context);
+  if (result) {
+    return result;
+  }
+  // Unterminated string, consume until the end of the line
+  const start = context.index;
+  let i = context.index;
+  while (i < context.length) {
+    const char = context.input[i];
+    if (char === "\n") {
+      break;
+    }
+    i++;
+  }
+  context.advance(i - start, false);
+  // Generate the token for the error diagnostic
+  const token = context.createTokenInstance(tokens.STRING_TERM);
+  context.diagnostics.push(diagnosticFromCode(PLICodes.Severe.IBM3961I, token));
+  // But return undefined to indicate no valid token was created
+  return undefined;
+}
+export function tokenizeSemicolon(
+  context: TokenizerContext,
+): tokens.Token | undefined {
+  context.advance(1, false);
+  if (context.mode !== TokenizerMode.Default) {
+    // Reset to default mode on semicolon, as it acts as a delimiter for all EXEC statements
+    context.switchMode(TokenizerMode.Default);
+  }
+  return context.createTokenInstance(tokens.Semicolon);
+}
+const numberRegex = tokens.NUMBER.PATTERN as RegExp;
+export const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
+export function tokenizeIdentifier(
+  context: TokenizerContext,
+): tokens.Token | undefined {
+  const start = context.index;
+  let hash = FNV_OFFSET_BASIS;
+  let i = context.index;
+  let charCode: number;
+  while (i < context.length) {
+    charCode = context.input.charCodeAt(i);
+    if (!isIdChar(charCode)) {
+      break;
+    }
+    if (context.caseUpper && charCode >= 97 && charCode <= 122) {
+      // Lowercase character, must be uppercased
+      charCode &= ~0x20;
+    }
+    hash ^= BigInt(charCode);
+    hash *= FNV_PRIME;
+    i++;
+  }
+  const originalImage = context.input.substring(start, i);
+  const image = context.caseUpper ? originalImage.toUpperCase() : originalImage;
+  const previousToken = context.tokens[context.tokens.length - 1];
+  // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
+  if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
+    if (image === "SQL") {
+      context.advance(3, false);
+      context.switchMode(TokenizerMode.SQL);
+      return context.createTokenInstance(tokens.SQL);
+    } else if (image === "CICS") {
+      context.advance(4, false);
+      context.switchMode(TokenizerMode.CICS);
+      return context.createTokenInstance(tokens.CICS);
+    }
+  }
+  let tokenType = tokens.ID;
+  const keyword = context.keywords.get(hash);
+  if (keyword && keyword.image === image) {
+    tokenType = keyword.kind;
+  }
+  context.advance(i - start, false);
+  return context.createTokenInstanceWithImage(image, originalImage, tokenType);
 }
