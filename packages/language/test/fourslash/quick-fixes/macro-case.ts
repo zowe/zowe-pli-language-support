@@ -23,6 +23,7 @@ verify.expectCompilerOptions({
     },
   },
 });
+await verify.expectCodeActionCountAt("variable1", 1);
 await verify.expectCodeActionAt(
   "variable1",
   "Convert to uppercase",

@@ -262,6 +262,13 @@ export interface HarnessTesterInterface {
       expectedActionLabel: string,
       expectedCodeAfter: string,
     ): Promise<void>;
+
+    /**
+     * Expect that the number of code actions at the given label is the given count.
+     * @param label The label to expect the code actions at.
+     * @param count The expected number of code actions.
+     */
+    expectCodeActionCountAt(label: Label, count: number): Promise<void>;
   };
 
   linker: {
