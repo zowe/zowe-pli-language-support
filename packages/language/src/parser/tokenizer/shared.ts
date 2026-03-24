@@ -393,9 +393,11 @@ export function tokenizeIdentifier(
   // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
   if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
     if (image === "SQL") {
+      context.advance(3, false);
       context.switchMode(TokenizerMode.SQL);
       return context.createTokenInstance(tokens.SQL);
     } else if (image === "CICS") {
+      context.advance(4, false);
       context.switchMode(TokenizerMode.CICS);
       return context.createTokenInstance(tokens.CICS);
     }
