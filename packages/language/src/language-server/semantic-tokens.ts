@@ -56,6 +56,7 @@ export const semanticTokenLegend: SemanticTokensLegend = {
   tokenModifiers: Array.from(tokenModifiers.keys()),
 };
 
+//TODO remove me once I am not needed anymore
 function tokenModeReconstructor() {
   let readExec = false;
   let mode: TokenizerMode = TokenizerMode.Default;
