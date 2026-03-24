@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "test",
-    "noEmit": true
+    "noEmit": true,
+    "moduleDetection": "force"
   },
   "references": [
     {

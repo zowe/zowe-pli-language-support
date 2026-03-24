@@ -227,7 +227,7 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
       const implementation =
         createTestBuilderHarnessImplementation(testBuilder);
 
-      runHarnessTest(testFile, implementation);
+      await runHarnessTest(testFile, implementation);
     },
   );
 }

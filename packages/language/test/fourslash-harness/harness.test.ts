@@ -22,14 +22,17 @@ import { generateIncludeItemMarkup } from "../../src/language-server/hover-reque
 import { SyntaxKind } from "../../src/syntax-tree/ast";
 import { HarnessTypeAttributes } from "./implementation/type-attributes";
 
-type HarnessImplementationListener = (method: string, ...args: any[]) => void;
+type HarnessImplementationListener = (
+  method: string,
+  ...args: any[]
+) => Promise<void>;
 
 const INTERNAL_METHOD_NAME_PREFIX = "__methodName";
 
 function createListenerCreator(listener: HarnessImplementationListener) {
   return (methodName: string) => {
-    const _listener = function (...args: any[]) {
-      listener(methodName, ...args);
+    const _listener = async function (...args: any[]) {
+      await listener(methodName, ...args);
     };
     _listener[INTERNAL_METHOD_NAME_PREFIX] = methodName;
 
@@ -67,6 +70,8 @@ async function createTestingHarnessImplementation(
       expectCompilerOptions: listen("verify.expectCompilerOptions"),
       expectAst: listen("verify.expectAst"),
       expectPPAst: listen("verify.expectPPAst"),
+      expectCodeActionAt: listen("verify.expectCodeActionAt"),
+      noCodeActions: listen("verify.noCodeActions"),
     },
     types: {
       ...HarnessTypeAttributes,
@@ -113,7 +118,7 @@ describe("Harness test framework tests", () => {
       tags: [],
     };
 
-    runHarnessTest(file, implementation);
+    await runHarnessTest(file, implementation);
 
     expect(mockFunction).toHaveBeenCalledWith(
       "linker.expectNoLinksAt",
@@ -153,7 +158,7 @@ describe("Harness test framework tests", () => {
       tags: [],
     };
 
-    runHarnessTest(file, implementation);
+    await runHarnessTest(file, implementation);
 
     for (const [method, methodArguments] of functionCalls) {
       expect(mockFunction).toHaveBeenCalledWith(method, methodArguments);
