@@ -422,8 +422,6 @@ export function forEachNode(
     case SyntaxKind.EnvironmentAttribute:
       node.items.forEach(action);
       break;
-    case SyntaxKind.ExecStatement:
-      break;
     case SyntaxKind.ExitStatement:
       break;
     case SyntaxKind.ExportsItem:
@@ -976,6 +974,16 @@ export function forEachNode(
         action(node.value);
       }
       break;
+    case SyntaxKind.CicsExecStatement:
+      if (node.content) {
+        action(node.content);
+      }
+      break;
+    case SyntaxKind.SqlExecStatement:
+      if (node.content) {
+        action(node.content);
+      }
+      break;
     case SyntaxKind.EnvironmentOptionSymbol:
     case SyntaxKind.EnvironmentOptionOrganization:
     case SyntaxKind.EnvironmentOptionRecordFormat:
@@ -987,8 +995,7 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeTableLocator:
     case SyntaxKind.SqlAttributeResultSetLocator:
     case SyntaxKind.CicsResponseStatement:
-    case SyntaxKind.CicsExecStatement:
-    case SyntaxKind.SqlExecStatement:
+    case SyntaxKind.EmbeddedUnknownStatement:
       break;
     default:
       assertUnreachable(node);

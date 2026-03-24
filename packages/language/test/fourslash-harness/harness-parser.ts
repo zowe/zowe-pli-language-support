@@ -14,6 +14,8 @@ import { getFileName } from "./utils";
 import { Wrapper } from "./wrapper";
 import path from "path";
 import fs from "fs";
+import { DEFAULT_FILE_URI } from "../test-builder";
+import { URI } from "../../src/utils/uri";
 
 const HarnessFileTag = {
   // The name of the file
@@ -175,7 +177,7 @@ class HarnessTestParser {
   }
 
   parse(): HarnessTest {
-    const files: Map<string | UnnamedFile, HarnessFile> = new Map();
+    const files: Map<string, HarnessFile> = new Map();
 
     // We consume lines, parsing files as we find them
     while (this.lines.length > 0) {
@@ -208,15 +210,16 @@ class HarnessTestParser {
         const file = this.parseHarnessFile();
         const fileName = getFileName(file.fileName);
 
-        if (files.get(fileName) !== undefined) {
-          if (fileName === UnnamedFile) {
-            throw new Error(`Multiple files without file names found`);
-          }
+        const uri =
+          fileName === UnnamedFile
+            ? DEFAULT_FILE_URI
+            : URI.file(fileName).toString();
 
-          throw new Error(`Duplicate file name: '${fileName}'`);
+        if (files.get(uri) !== undefined) {
+          throw new Error(`Duplicate file name: '${uri}'`);
         }
 
-        files.set(fileName, file);
+        files.set(uri, file);
         continue;
       }
 

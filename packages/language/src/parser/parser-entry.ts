@@ -19,10 +19,17 @@ import {
   includeAltStatement,
   statement,
 } from "./preprocessor-parser";
-import { isSqlAttributeStatement, sqlAttributeStatement } from "./sql-parser";
-import { cicsResponseStatement, isCicsResponseStatement } from "./cics-parser";
+import { sqlExecStatement } from "./sql-parser";
+import { cicsExecStatement } from "./cics-parser";
+import {
+  isSqlAttributeStatement,
+  sqlAttributeStatement,
+} from "./sql-attribute-parser";
+import {
+  cicsResponseStatement,
+  isCicsResponseStatement,
+} from "./cics-response-parser";
 import { CompilerOptions } from "../preprocessor/compiler-options/options";
-import { CstNodeKind } from "../syntax-tree/cst";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -126,29 +133,13 @@ function createExecHandler(): StatementParser {
 function parseExecStatement(state: ParserState): ast.Statement | undefined {
   const statement = ast.createStatement();
   if (state.canConsume(t.EXEC, t.CICS)) {
-    const inner = ast.createCicsExecStatement();
-    state.consume(inner, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
-    state.consume(inner, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
-    statement.value = inner;
+    statement.value = cicsExecStatement(state);
   } else if (state.canConsume(t.EXEC, t.SQL)) {
-    const inner = ast.createSqlExecStatement();
-    state.consume(inner, CstNodeKind.ExecSqlStatement_EXEC, t.EXEC);
-    state.consume(inner, CstNodeKind.ExecSqlStatement_SQL, t.SQL);
-    statement.value = inner;
+    statement.value = sqlExecStatement(state);
   } else {
+    // Failure; fall back to token statement
     return undefined;
   }
-  // Simply skip the tokens until the end of the statement (semicolon or end of file).
-  while (!state.eof && !state.canConsume(t.Semicolon)) {
-    const token = state.token;
-    if (!token) {
-      break;
-    }
-    token.element = statement;
-    token.kind = CstNodeKind.ExecStatement_Token;
-    state.index++;
-  }
-  state.consume(statement, CstNodeKind.ExecStatement_Semicolon, t.Semicolon);
   return statement;
 }
 

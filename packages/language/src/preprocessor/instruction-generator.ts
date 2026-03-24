@@ -191,6 +191,9 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.CicsExecStatement:
       instruction = inst.createCicsExecInstruction();
       break;
+    case ast.SyntaxKind.SqlExecStatement:
+      instruction = inst.createSqlExecInstruction(value);
+      break;
     default:
       return undefined;
   }

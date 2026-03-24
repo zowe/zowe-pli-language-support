@@ -13,47 +13,18 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { embeddedUnknownStatement } from "./unknown-parser";
 
-export function isCicsResponseStatement(state: ParserState): boolean {
-  return state.canConsume(t.DFHRESP, t.OpenParen, t.ID, t.CloseParen);
-}
-
-export function cicsResponseStatement(
-  state: ParserState,
-): ast.CicsResponseStatement {
-  const statement = ast.createCicsResponseStatement();
-  statement.token = state.consume(
-    statement,
-    CstNodeKind.CicsResponseStatement_DFHRESP,
-    t.DFHRESP,
-  );
+export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
+  const execStatement = ast.createCicsExecStatement();
+  state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
+  state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
+  // Use unknown CICS statement for now - we will get to more of the CICS spec later.
+  execStatement.content = embeddedUnknownStatement(state);
   state.consume(
-    statement,
-    CstNodeKind.CicsResponseStatement_OpenParen,
-    t.OpenParen,
+    execStatement,
+    CstNodeKind.ExecCicsStatement_Semicolon,
+    t.Semicolon,
   );
-  const codeToken = state.consume(
-    statement,
-    CstNodeKind.CicsResponseStatement_CicsResponseCode,
-    t.CicsResponseCode,
-  );
-  if (codeToken) {
-    statement.codeToken = codeToken;
-    statement.code = t.CicsResponseCode.mapToEnumLiteral(
-      codeToken.tokenTypeIdx,
-    );
-  } else if (state.canConsume(t.ID)) {
-    // Invalid CICS response code, skip the token
-    state.index++;
-  }
-  state.consume(
-    statement,
-    CstNodeKind.CicsResponseStatement_CloseParen,
-    t.CloseParen,
-  );
-  return statement;
-}
-
-export function isCicsExecStatement(state: ParserState): boolean {
-  return state.canConsume(t.EXEC, t.CICS);
+  return execStatement;
 }

@@ -34,8 +34,10 @@ export const BuiltinsFiles = `
 
 `;
 
-export const BuiltinsSQLCA = `
- DECLARE 1 SQLCA,
+export const BuiltinsSqlcaName = "SQLCA";
+export const BuiltinsSqlcaFile = BuiltinsSqlcaName.toLowerCase() + ".pli";
+export const BuiltinsSqlcaUri = `${BuiltinsUriSchema}:/${BuiltinsSqlcaFile}`;
+export const BuiltinsSqlca = ` DECLARE 1 SQLCA,
     2 SQLCAID CHAR(8),
     2 SQLCABC FIXED(31) BINARY,
     2 SQLCODE FIXED(31) BINARY,
@@ -58,8 +60,17 @@ export const BuiltinsSQLCA = `
       3 SQLSTATE CHAR(5);
 `;
 
-export const BuiltinsSQLDA = `
- DECLARE
+export const BuiltinsSqlcaDocument = TextDocument.create(
+  URI.parse(BuiltinsSqlcaUri).toString(),
+  "pli",
+  0,
+  BuiltinsSqlca,
+);
+
+export const BuiltinsSqldaName = "SQLDA";
+export const BuiltinsSqldaFile = BuiltinsSqldaName.toLowerCase() + ".pli";
+export const BuiltinsSqldaUri = `${BuiltinsUriSchema}:/${BuiltinsSqldaFile}`;
+export const BuiltinsSqlda = ` DECLARE
   1 SQLDA BASED(SQLDAPTR),
     2 SQLDAID CHAR(8),
     2 SQLDABC FIXED(31) BINARY,
@@ -91,6 +102,13 @@ export const BuiltinsSQLDA = `
  DECLARE SQLDOUBLED CHAR(1)   INITIAL('2');
  DECLARE SQLSINGLED CHAR(1)   INITIAL(' ');
 `;
+
+export const BuiltinsSqldaDocument = TextDocument.create(
+  URI.parse(BuiltinsSqldaUri).toString(),
+  "pli",
+  0,
+  BuiltinsSqlda,
+);
 
 export const BuiltinsTypeFunctions = `
  BIND: PROC (t, p); END;
@@ -893,9 +911,7 @@ export const Builtins =
  ` +
   BuiltinsBoolean +
   BuiltinsFiles +
-  BuiltinsTypeFunctions +
-  BuiltinsSQLCA +
-  BuiltinsSQLDA;
+  BuiltinsTypeFunctions;
 
 export const BuiltinsTextDocument = TextDocument.create(
   URI.parse(BuiltinsUri).toString(),

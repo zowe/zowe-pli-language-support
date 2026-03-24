@@ -11,13 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// EXEC SQL INCLUDE SQLDA;
-//// SQLDA.SQLVAR.<|1>SQLIND = 1;
+// @filename: cpy/lib.pli
+//// DECLARE LIB_VAR FIXED;
 
-hover.expectMarkdownAt(
-  1,
-  hover.codeBlock(`DCL 1 SQLDA BASED(...),
-      2 SQLVAR DIMENSION(...),
-        3 SQLIND POINTER;`),
-);
+// @filename: main.pli
+//// EXEC SQL INCLUDE lib;
+
+// Should simply run the normal include logic
+preprocessor.expectTokens(`
+  DECLARE LIB_VAR FIXED;
+`);

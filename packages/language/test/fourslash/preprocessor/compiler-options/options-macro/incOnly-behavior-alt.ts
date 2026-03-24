@@ -11,8 +11,6 @@
 
 /// <reference path="../../../framework.ts" />
 
-// @wrap: process
-
 // @filename: cpy/lib.pli
 //// DCL LIB_VAR FIXED;
 
