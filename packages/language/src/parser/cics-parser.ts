@@ -13,21 +13,17 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { embeddedUnknownStatement } from "./unknown-parser";
 
 export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
   const execStatement = ast.createCicsExecStatement();
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
   // Use unknown CICS statement for now - we will get to more of the CICS spec later.
-  while (!state.eof && !state.canConsume(t.Semicolon)) {
-    const token = state.token;
-    if (!token) {
-      break;
-    }
-    token.element = execStatement;
-    token.kind = CstNodeKind.ExecCicsStatement_COMMAND;
-    state.index++;
-  }
+  execStatement.content = embeddedUnknownStatement(
+    state,
+    CstNodeKind.ExecCicsStatement_COMMAND,
+  );
   state.consume(
     execStatement,
     CstNodeKind.ExecCicsStatement_Semicolon,
