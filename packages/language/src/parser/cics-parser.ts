@@ -20,7 +20,10 @@ export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
   // Use unknown CICS statement for now - we will get to more of the CICS spec later.
-  execStatement.content = embeddedUnknownStatement(state);
+  execStatement.content = embeddedUnknownStatement(
+    state,
+    CstNodeKind.ExecCicsStatement_COMMAND,
+  );
   state.consume(
     execStatement,
     CstNodeKind.ExecCicsStatement_Semicolon,

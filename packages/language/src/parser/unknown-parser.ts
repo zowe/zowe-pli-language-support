@@ -19,6 +19,7 @@ import { ParserState } from "./parser-state";
 
 export function embeddedUnknownStatement(
   state: ParserState,
+  kind: CstNodeKind,
 ): ast.EmbeddedUnknownStatement {
   const unknownStatement = ast.createEmbeddedUnknownStatement();
 
@@ -30,7 +31,7 @@ export function embeddedUnknownStatement(
       break;
     }
     token.element = unknownStatement;
-    token.kind = CstNodeKind.EmbeddedUnknownStatement_Token;
+    token.kind = kind;
     // Advance manually
     state.index++;
   }

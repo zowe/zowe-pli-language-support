@@ -24,7 +24,10 @@ export function sqlExecStatement(state: ParserState): ast.SqlExecStatement {
     execStatement.content = parseSqlIncludeStatement(state);
   } else {
     // Use unknown SQL statement for now - we will get to more of the SQL spec later.
-    execStatement.content = embeddedUnknownStatement(state);
+    execStatement.content = embeddedUnknownStatement(
+      state,
+      CstNodeKind.EmbeddedUnknownStatement_Token,
+    );
   }
   state.consume(
     execStatement,
