@@ -20,6 +20,7 @@
 ////       2 Y3 (P REFER(<|Z|>));
 
 verify.expectDiagnosticsAt("Z", code.Severe.IBM1881I);
+await verify.expectCodeActionCountAt("Z", 2);
 await verify.expectCodeActionAt(
   "Z",
   'Change to "Y1.Z"',

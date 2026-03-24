@@ -450,6 +450,21 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     }
   }
 
+  async expectCodeActionCountAt(
+    label: string,
+    expectedCount: number,
+  ): Promise<void> {
+    const codeActions = await this.getCodeActions(label);
+    const actualCount = codeActions.reduce(
+      (acc, [, actions]) => acc + actions.length,
+      0,
+    );
+    expect(
+      actualCount,
+      `Expected ${expectedCount} code actions at label "${label}", but found ${actualCount}.`,
+    ).toBe(expectedCount);
+  }
+
   private async getCodeActions(label: string) {
     let codeActions = this.codeActionCacheByLabel.get(label);
     if (!codeActions) {
@@ -474,13 +489,6 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       this.codeActionCacheByLabel.set(label, codeActions);
     }
     return codeActions;
-  }
-
-  async noCodeActions(label: string): Promise<void> {
-    const codeActions = await this.getCodeActions(label);
-    if (codeActions.some((ca) => ca[1].length > 0)) {
-      fail(`Expected no code actions at label "${label}", but found some.`);
-    }
   }
 
   expectAst(statements: any[]): void {
