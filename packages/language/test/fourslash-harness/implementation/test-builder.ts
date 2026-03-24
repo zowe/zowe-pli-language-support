@@ -73,7 +73,6 @@ export function createTestBuilderHarnessImplementation(
           expectedActionLabel,
           expectedCodeAfter,
         ),
-      noCodeActions: (label) => testBuilder.noCodeActions(label.toString()),
       expectCodeActionCountAt: (label, expectedCount) =>
         testBuilder.expectCodeActionCountAt(label.toString(), expectedCount),
     },

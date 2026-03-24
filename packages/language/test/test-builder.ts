@@ -491,13 +491,6 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     return codeActions;
   }
 
-  async noCodeActions(label: string): Promise<void> {
-    const codeActions = await this.getCodeActions(label);
-    if (codeActions.some((ca) => ca[1].length > 0)) {
-      fail(`Expected no code actions at label "${label}", but found some.`);
-    }
-  }
-
   expectAst(statements: any[]): void {
     const actualStatements = this.unit.ast.statements;
     this.matchStatements(statements, actualStatements);
