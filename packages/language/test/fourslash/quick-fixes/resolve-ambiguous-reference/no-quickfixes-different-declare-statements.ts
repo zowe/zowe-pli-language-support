@@ -21,4 +21,4 @@
 ////       2 Y3 (P REFER(<|Z|>));
 
 verify.expectDiagnosticsAt("Z", code.Severe.IBM1881I);
-await verify.noCodeActions("Z");
+await verify.expectCodeActionCountAt("Z", 0);

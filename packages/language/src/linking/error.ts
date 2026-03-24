@@ -19,7 +19,13 @@ import {
   tokenToUri,
 } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import {
+  DeclaredItem,
+  DeclareStatement,
+  Reference,
+  SyntaxKind,
+  SyntaxNode,
+} from "../syntax-tree/ast";
 import { InternalCodes } from "../validation/internal-codes";
 import { PLICodes } from "../validation/pli-codes";
 import { ValidationAcceptor } from "../validation/validator";
@@ -132,16 +138,6 @@ export class LinkerErrorReporter {
     name: string,
     symbols: QualifiedSyntaxNode[],
   ) {
-    function fullName(symbol: QualifiedSyntaxNode): string[] {
-      let current: QualifiedSyntaxNode | null = symbol;
-      const parts: string[] = [];
-      while (current) {
-        parts.push(current.name);
-        current = current.parent;
-      }
-      return parts.reverse();
-    }
-
     const range =
       getQualifiedReferenceRange(reference.owner) ??
       tokenToRange(reference.token);
@@ -149,7 +145,10 @@ export class LinkerErrorReporter {
 
     const data: AmbiguousReferenceData | undefined = uri
       ? {
-          symbols: symbols.map(fullName),
+          symbols: symbols.map((sym) => ({
+            nameChain: fullName(sym),
+            visible: excludeForeignComposites(sym),
+          })),
           uri: uri,
         }
       : undefined;
@@ -161,6 +160,73 @@ export class LinkerErrorReporter {
       code: fullCode(PLICodes.Severe.IBM1881I),
       data,
     });
+    return;
+    function excludeForeignComposites(start: QualifiedSyntaxNode): boolean {
+      var { declareStatement, itemIndex } = getReferencedDeclaration();
+      let node: SyntaxNode | null = start.node;
+      let lastDeclaredItem: DeclaredItem | null = null;
+      while (node && node != declareStatement) {
+        if (node.kind === SyntaxKind.DeclaredItem) {
+          lastDeclaredItem = node;
+        }
+        node = node.container;
+      }
+      if (!node || !lastDeclaredItem) {
+        return false;
+      }
+      const currentItemIndex = node.items.indexOf(lastDeclaredItem);
+      if (currentItemIndex > itemIndex) {
+        return false;
+      } else if (currentItemIndex === itemIndex) {
+        return true;
+      } else {
+        // currentItemIndex < itemIndex
+        //Case 1:
+        //  DCL 1 A,     //not passing this declaration (level=1) makes result true
+        //        2 B,   //<--currentItemIndex
+        //          3 C; //<--itemIndex
+
+        //Case 2:
+        //  DCL 1 X,
+        //        2 Y,   //<--currentItemIndex
+        //      1 A,     //passing this declaration (level=1) makes result false
+        //        2 B,
+        //          3 C; //<--itemIndex
+        for (let index = itemIndex; index > currentItemIndex; index--) {
+          if (node.items[index].level === 1) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+    function getReferencedDeclaration() {
+      let node: SyntaxNode | null = reference.owner;
+      let declareStatement: DeclareStatement | null = null;
+      let lastDeclaredItem: SyntaxNode | null = null;
+      while (node?.container) {
+        if (node.kind === SyntaxKind.DeclaredItem) {
+          lastDeclaredItem = node;
+        }
+        if (node.kind === SyntaxKind.DeclareStatement) {
+          declareStatement = node as DeclareStatement;
+        }
+        node = node.container;
+      }
+      return {
+        declareStatement,
+        itemIndex: declareStatement?.items.indexOf(lastDeclaredItem!) ?? -1,
+      };
+    }
+    function fullName(symbol: QualifiedSyntaxNode): string[] {
+      let current: QualifiedSyntaxNode | null = symbol;
+      const parts: string[] = [];
+      while (current) {
+        parts.push(current.name);
+        current = current.parent;
+      }
+      return parts.reverse();
+    }
   }
 
   /**

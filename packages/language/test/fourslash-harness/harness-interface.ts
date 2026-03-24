@@ -180,11 +180,6 @@ export interface HarnessTesterInterface {
         | PLICode[],
     ): void;
     /**
-     * Expect that there are no code actions at the given label.
-     * @param label The label to expect no code actions at.
-     */
-    noCodeActions(label: Label): Promise<void>;
-    /**
      * Expect that the compilation unit has no diagnostics.
      *
      * @param label The label to expect no diagnostics at. If not provided, all diagnostics are expected to be absent.
@@ -262,6 +257,13 @@ export interface HarnessTesterInterface {
       expectedActionLabel: string,
       expectedCodeAfter: string,
     ): Promise<void>;
+
+    /**
+     * Expect that the number of code actions at the given label is the given count.
+     * @param label The label to expect the code actions at.
+     * @param count The expected number of code actions.
+     */
+    expectCodeActionCountAt(label: Label, count: number): Promise<void>;
   };
 
   linker: {
