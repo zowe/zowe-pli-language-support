@@ -289,6 +289,10 @@ export enum SimpleOptions {
 }
 
 export enum DefaultAttribute {
+  // special builtin attributes
+  ANY,
+  VARARG,
+  // normal attributes
   INT,
   NORESCAN,
   BIT,

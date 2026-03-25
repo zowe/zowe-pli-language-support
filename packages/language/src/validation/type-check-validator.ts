@@ -18,9 +18,12 @@ import {
   StringKind,
   TypeDescriptions,
 } from "../typesystem/descriptions";
+import { BuiltinsUriSchema } from "../workspace/builtins";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { InternalCodes } from "./internal-codes";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
+import * as tokens from "../parser/tokens";
 
 export function typeCheck(
   stmt:
@@ -36,9 +39,36 @@ export function typeCheck(
     stmt,
     compilationUnit,
   );
-  if (TypeDescriptions.isUnknown(description)) {
-    // ignore further type checking
-    return;
+
+  if (compilationUnit.uri.scheme === BuiltinsUriSchema) {
+  } else {
+    if (description.variadicArgument) {
+      const token =
+        description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
+      if (token) {
+        acceptor(
+          diagnosticFromCode(
+            InternalCodes.BuiltinAttributeUsage,
+            token,
+            token.image,
+          ),
+        );
+      }
+    }
+    if (TypeDescriptions.isUnknown(description)) {
+      const witness = description.witnesses.witnesses[AttributeKind.DataType];
+      if (witness?.token.tokenType === tokens.ANY) {
+        acceptor(
+          diagnosticFromCode(
+            InternalCodes.BuiltinAttributeUsage,
+            witness.token,
+            witness.token.image,
+          ),
+        );
+      }
+      // ignore further type checking
+      return;
+    }
   }
 
   if (description.dimension) {

@@ -24,6 +24,12 @@ export const InternalCodes = {
     severity: Severity.E,
     message: (name: string) => `Unknown identifier '${name}'`,
   },
+  BuiltinAttributeUsage: {
+    code: "BUILTIN_ATTRIBUTE_USAGE",
+    severity: Severity.E,
+    message: (attribute: string) =>
+      `The attribute '${attribute}' is a builtin attribute and cannot be used in non-builtin files.`,
+  },
 };
 
 export const TypeSystemCodes: PLICode[] = [

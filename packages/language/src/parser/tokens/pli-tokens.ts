@@ -151,6 +151,16 @@ export const SL_COMMENT = createToken({
   group: "comments",
 });
 // Start of keywords
+// Special builtin keywords
+export const ANY = registerKeyword({
+  name: "ANY",
+  categories: [[DefaultAttribute, ast.DefaultAttribute.ANY]],
+});
+export const VARARG = registerKeyword({
+  name: "VARARG",
+  categories: [[DefaultAttribute, ast.DefaultAttribute.VARARG]],
+});
+// Normal keywords
 export const SUBSCRIPTRANGE = registerKeyword({
   name: "SUBSCRIPTRANGE",
   categories: [[KeywordConditions, ast.KeywordConditions.SUBSCRIPTRANGE]],
