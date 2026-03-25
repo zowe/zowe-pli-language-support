@@ -151,11 +151,19 @@ export const SL_COMMENT = createToken({
   group: "comments",
 });
 // Start of keywords
-// Special builtin keywords
+// Helper keywords outside of the PL/I specification
+/**
+ * Not part of the PL/I specification!
+ * Helps declaring parameters of any type for builtin procedures
+ */
 export const ANY = registerKeyword({
   name: "ANY",
   categories: [[DefaultAttribute, ast.DefaultAttribute.ANY]],
 });
+/**
+ * Not part of the PL/I specification!
+ * Helps declaring parameters of variadic nature for builtin procedures
+ */
 export const VARARG = registerKeyword({
   name: "VARARG",
   categories: [[DefaultAttribute, ast.DefaultAttribute.VARARG]],

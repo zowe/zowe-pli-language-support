@@ -11,10 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-// @filename: /xxx.pli
+// @filename: pli-builtin:///xxx.pli
 //// XXX: PROCEDURE (X) RETURNS(FIXED);
-////   DCL X(10) FIXED <|VARARG|>;
+////   DCL <|X|> <|1:ANY|>;
 ////   RETURN(12);
 //// END;
 
-verify.expectDiagnosticsAt("VARARG", code.Internal.BuiltinAttributeUsage);
+verify.noDiagnostics("1");
+types.expectTypeAt("X", {
+  type: types.dataTypes.Unknown,
+});
