@@ -24,6 +24,7 @@ import { InternalCodes } from "./internal-codes";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
 import * as tokens from "../parser/tokens";
+import { assertType } from "../preprocessor/util";
 
 export function typeCheck(
   stmt:
@@ -41,6 +42,59 @@ export function typeCheck(
   );
 
   if (compilationUnit.uri.scheme === BuiltinsUriSchema) {
+    if (description.variadicArgument) {
+      const token =
+        description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
+      if (token) {
+        const parameter = tryGetParameter(stmt);
+        if (!parameter) {
+          acceptor(
+            diagnosticFromCode(
+              InternalCodes.VariadicNonParameter,
+              token,
+              token.image,
+            ),
+          );
+        } else {
+          assertType<ast.DeclaredVariable>(stmt);
+          if (stmt.nameToken) {
+            if (!description.dimension) {
+              acceptor(
+                diagnosticFromCode(
+                  InternalCodes.VariadicParameterNotAnArray,
+                  stmt.nameToken,
+                  stmt.nameToken.image,
+                ),
+              );
+            } else {
+              if (
+                description.dimension.length >= 1 &&
+                description.dimension.some(
+                  (dim) => dim.upperBound.value !== "*" || dim.lowerBound.value,
+                )
+              ) {
+                acceptor(
+                  diagnosticFromCode(
+                    InternalCodes.VariadicParameterIsFixedArray,
+                    stmt.nameToken,
+                    stmt.nameToken.image,
+                  ),
+                );
+              }
+            }
+            if (parameter.index !== parameter.count - 1) {
+              acceptor(
+                diagnosticFromCode(
+                  InternalCodes.VariadicParameterNotLast,
+                  stmt.nameToken,
+                  stmt.nameToken.image,
+                ),
+              );
+            }
+          }
+        }
+      }
+    }
   } else {
     if (description.variadicArgument) {
       const token =
@@ -193,4 +247,66 @@ function validateBound(
     }
   }
   return undefined;
+}
+
+type ParameterResult = {
+  procedure: ast.ProcedureStatement;
+  index: number;
+  count: number;
+};
+
+function tryGetParameter(node: ast.SyntaxNode): ParameterResult | undefined {
+  if (node.kind !== ast.SyntaxKind.DeclaredVariable) {
+    return undefined;
+  }
+  const procedureStmt = ast.getContainer(
+    node,
+    ast.SyntaxKind.ProcedureStatement,
+  );
+  if (!procedureStmt) {
+    return undefined;
+  }
+  const index = procedureStmt.parameters.findIndex(
+    (param) => param.ref?.node === node,
+  );
+  if (index === -1) {
+    return undefined;
+  }
+  return {
+    procedure: procedureStmt,
+    index,
+    count: procedureStmt.parameters.length,
+  };
+}
+
+export function BUILTIN_NoMultipleVariadicParameters(
+  stmt: ast.ProcedureStatement,
+  acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
+) {
+  let foundVarArg = false;
+  for (const parameter of stmt.parameters) {
+    const description = compilationUnit.services.inferer.inferType(
+      parameter,
+      compilationUnit,
+    );
+    if (description.variadicArgument) {
+      if (foundVarArg) {
+        const token =
+          description.witnesses.witnesses[AttributeKind.VariadicArgument]
+            ?.token;
+        if (token) {
+          acceptor(
+            diagnosticFromCode(
+              InternalCodes.VariadicParameterMultiple,
+              token,
+              token.image,
+            ),
+          );
+        }
+      } else {
+        foundVarArg = true;
+      }
+    }
+  }
 }
