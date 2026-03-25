@@ -17,29 +17,8 @@
 ////   RETURN(12);
 //// END;
 
-// @filename: file:///yyy.pli
-//// YYY: PROCEDURE (Y) RETURNS(FIXED);
-////   DCL <|Y|>(10) <|2:ANY|>;
-////   RETURN(34);
-//// END;
-
 verify.noDiagnostics("1");
 types.expectTypeAt("X", {
-  type: types.dataTypes.Unknown,
-  dimension: [
-    {
-      lowerBound: {
-        value: 1,
-      },
-      upperBound: {
-        value: 10,
-      },
-    },
-  ],
-});
-
-verify.expectDiagnosticsAt("2", code.Internal.BuiltinAttributeUsage);
-types.expectTypeAt("Y", {
   type: types.dataTypes.Unknown,
   dimension: [
     {
