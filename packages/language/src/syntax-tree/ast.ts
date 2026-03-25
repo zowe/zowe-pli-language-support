@@ -290,15 +290,11 @@ export enum SimpleOptions {
 
 export enum DefaultAttribute {
   // special builtin attributes
-  /**
-   * Not part of the PL/I specification!
-   * Helps declaring parameters of any type for builtin procedures
-   */
+  // Not part of the PL/I specification!
+  // Helps declaring parameters of any type for builtin procedures
   ANY,
-  /**
-   * Not part of the PL/I specification!
-   * Helps declaring parameters of variadic nature for builtin procedures
-   */
+  // Not part of the PL/I specification!
+  // Helps declaring parameters of variadic nature for builtin procedures
   VARARG,
   // normal attributes
   INT,
