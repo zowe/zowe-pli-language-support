@@ -199,6 +199,29 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
     const type = attribute.type;
     switch (type) {
       /**
+       * Builtin attributes (only for builtin files, this is outside the PL/I specification
+       * in order to make it possible to declare builtin procedures with parameters of any type
+       * and variadic parameters)
+       */
+      case ast.DefaultAttribute.VARARG: {
+        this.addAttributeWitness(
+          AttributeKind.VariadicArgument,
+          true,
+          attribute,
+          token,
+        );
+        break;
+      }
+      case ast.DefaultAttribute.ANY: {
+        this.addAttributeWitness(
+          AttributeKind.DataType,
+          DataType.Unknown,
+          attribute,
+          token,
+        );
+        break;
+      }
+      /**
        * Data type attributes
        */
       case ast.DefaultAttribute.TASK:

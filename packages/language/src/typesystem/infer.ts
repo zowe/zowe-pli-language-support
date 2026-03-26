@@ -72,6 +72,11 @@ export class DefaultTypeInferer implements TypeInferer {
             compilationUnit,
           );
         }
+      } else if (
+        node.kind === ast.SyntaxKind.ProcedureParameter &&
+        node.ref?.node
+      ) {
+        return this.inferType(node.ref.node, compilationUnit);
       }
       return TypeDescriptions.Unknown();
     });
