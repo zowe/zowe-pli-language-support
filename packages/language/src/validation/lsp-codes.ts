@@ -59,4 +59,52 @@ export const LspCodes = {
         "Member must start with a letter, followed by letters, numbers, @, #, _, or $.",
     },
   },
+
+  UnknownIdentifier: {
+    code: "LSPUI001",
+    severity: Severity.E,
+    message: (name: string) => `Unknown identifier '${name}'`,
+  },
+
+  BuiltinAttributes: {
+    IsForbiddenUsage: {
+      code: "LSPTS001",
+      severity: Severity.E,
+      message: (attribute: string) =>
+        `The attribute '${attribute}' is a builtin attribute and cannot be used in non-builtin files.`,
+    },
+    //TODO @tag(#issue-656) Remove this group of errors once all builtin procedures signatures are setup
+    VariadicParameter: {
+      IsNotLastParameter: {
+        code: "LSPTS002",
+        severity: Severity.E,
+        message: (name: string) =>
+          `The variadic parameter '${name}' must be the last parameter in the parameter list.`,
+      },
+      HasMultipleParameters: {
+        code: "LSPTS003",
+        severity: Severity.E,
+        message: (name: string) =>
+          `The variadic parameter '${name}' cannot be used because there is already another variadic parameter in the parameter list.`,
+      },
+      IsAFixedArray: {
+        code: "LSPTS004",
+        severity: Severity.E,
+        message: (name: string) =>
+          `The variadic parameter '${name}' cannot be a fixed array. Variadic parameters must be declared with an assumed size (e.g. (*)) and cannot specify a size.`,
+      },
+      IsNotAnArray: {
+        code: "LSPTS005",
+        severity: Severity.E,
+        message: (name: string) =>
+          `The variadic parameter '${name}' must be an array. Variadic parameters must be declared with parentheses to indicate they are arrays (e.g. (*)).`,
+      },
+      IsNotAParameter: {
+        code: "LSPTS006",
+        severity: Severity.E,
+        message: (name: string) =>
+          `The variadic parameter '${name}' is not a parameter. Only parameters can be variadic.`,
+      },
+    },
+  },
 };

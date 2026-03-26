@@ -9,11 +9,15 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// %REPLACE A BY 67;
-//// %REPLACE B BY 34;
-//// %NOTE('A+B = ', (A+B));
+// @filename: /xxx.pli
+//// XXX: PROCEDURE (X) RETURNS(FIXED);
+////   DCL X(10) FIXED <|VARARG|>;
+////   RETURN(12);
+//// END;
 
-preprocessor.expectTokens("");
-verify.noDiagnostics(undefined, code.LSP.UnknownIdentifier);
+verify.expectDiagnosticsAt(
+  "VARARG",
+  code.LSP.BuiltinAttributes.IsForbiddenUsage,
+);

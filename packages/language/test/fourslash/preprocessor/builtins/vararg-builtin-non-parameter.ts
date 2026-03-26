@@ -9,11 +9,14 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// %REPLACE A BY 67;
-//// %REPLACE B BY 34;
-//// %NOTE('A+B = ', (A+B));
+//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
 
-preprocessor.expectTokens("");
-verify.noDiagnostics(undefined, code.LSP.UnknownIdentifier);
+// @filename: pli-builtin:///xxx.pli
+//// DCL X(*) FIXED <|VARARG|>;
+
+verify.expectDiagnosticsAt(
+  "VARARG",
+  code.LSP.BuiltinAttributes.VariadicParameter.IsNotAParameter,
+);

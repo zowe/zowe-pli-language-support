@@ -83,10 +83,10 @@ export type PrimitiveTypeExpectation =
   | EditComputedAttributes<TypeDescriptions.Ordinal>
   | EditComputedAttributes<TypeDescriptions.Picture>
   | EditComputedAttributes<TypeDescriptions.String>
-  | EditComputedAttributes<TypeDescriptions.Task>;
+  | EditComputedAttributes<TypeDescriptions.Task>
+  | EditComputedAttributes<TypeDescriptions.Unknown>;
 export type TypeExpectation =
   | Partial<PrimitiveTypeExpectation>
-  | Partial<TypeDescriptions.Unknown>
   | ({
       type: DataType.Structure;
       members: Record<string, TypeExpectation>;
