@@ -86,6 +86,7 @@ export enum InstructionKind {
   Goto,
   Note,
   SqlAttribute,
+  SqlHostVariable,
   CicsResponseCode,
   CicsExecStatement,
 
@@ -114,6 +115,7 @@ export type Instruction =
   | NoteInstruction
   | CallInstruction
   | SqlAttributeInstruction
+  | SqlHostVariableInstruction
   | CicsResponseInstruction
   | CicsExecInstruction;
 
@@ -148,10 +150,37 @@ export function createSqlExecInstruction(
   if (!content) {
     return undefined;
   }
-  if (content.kind === ast.SyntaxKind.IncludeDirective) {
-    return createIncludeInstruction(content.items, false);
+  switch (content.kind) {
+    case ast.SyntaxKind.IncludeDirective:
+      return createIncludeInstruction(content.items, false);
+    case ast.SyntaxKind.EmbeddedUnknownStatement:
+      const hostVarInstructions = content.hostVariables.map((token) =>
+        createSqlHostVariableInstruction(token),
+      );
+      if (hostVarInstructions.length === 1) {
+        return hostVarInstructions[0];
+      } else if (hostVarInstructions.length > 1) {
+        return createCompoundInstruction(hostVarInstructions);
+      } else {
+        return undefined;
+      }
+    default:
+      return undefined;
   }
-  return undefined;
+}
+
+export interface SqlHostVariableInstruction {
+  kind: InstructionKind.SqlHostVariable;
+  token: Token;
+}
+
+export function createSqlHostVariableInstruction(
+  token: Token,
+): SqlHostVariableInstruction {
+  return {
+    kind: InstructionKind.SqlHostVariable,
+    token,
+  };
 }
 
 export interface SqlAttributeInstruction {

@@ -224,6 +224,11 @@ function getReferenceTarget(token: Token): SyntaxNode | undefined {
         return token.element.type?.node ?? undefined;
       }
       break;
+    case CstNodeKind.SqlHostVariableReference_HostVariable:
+      if (token.element?.kind === SyntaxKind.SqlHostVariableReference) {
+        return token.element.ref?.node ?? undefined;
+      }
+      break;
   }
   return undefined;
 }
@@ -278,6 +283,7 @@ function isVariableType(token: Token): boolean {
     case CstNodeKind.LabelReference_LabelRef:
     case CstNodeKind.IncludeItem_FileID:
     case CstNodeKind.IncludeItem_MemberID:
+    case CstNodeKind.SqlHostVariableReference_HostVariable:
       return true;
   }
   return false;

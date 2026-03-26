@@ -232,6 +232,7 @@ export enum SyntaxKind {
   CicsResponseStatement,
   CicsExecStatement,
   SqlExecStatement,
+  SqlHostVariableReference,
   EmbeddedUnknownStatement,
 }
 
@@ -746,6 +747,7 @@ export type SyntaxNode =
   | DeactivateStatement
   | TokenStatement
   | SqlExecStatement
+  | SqlHostVariableReference
   | EmbeddedUnknownStatement
   | CicsExecStatement
   | CicsResponseStatement
@@ -1132,6 +1134,7 @@ export type Unit =
   | NoPrintDirective
   | SkipDirective
   | SqlAttributeStatement
+  | SqlHostVariableReference
   | CicsResponseStatement
   | CicsExecStatement
   | SqlExecStatement;
@@ -4377,11 +4380,35 @@ export type SqlEmbeddedStatement = IncludeDirective | EmbeddedUnknownStatement;
 
 export interface EmbeddedUnknownStatement extends AstNode {
   kind: SyntaxKind.EmbeddedUnknownStatement;
+  hostVariables: Token[];
 }
 
 export function createEmbeddedUnknownStatement(): EmbeddedUnknownStatement {
   return {
     kind: SyntaxKind.EmbeddedUnknownStatement,
     container: null,
+    hostVariables: [],
+  };
+}
+
+/**
+ * Reference to a host variable used in embedded SQL statements.
+ * This reference is a standalone statement in the syntax tree.
+ * This is because, even though SQL statements are part of the preprocessor,
+ * they reference variables that are part of the main syntax tree.
+ *
+ * SqlHostVariableReference nodes cannot be created,
+ * unless they are part of an EXEC SQL statement.
+ */
+export interface SqlHostVariableReference extends AstNode {
+  kind: SyntaxKind.SqlHostVariableReference;
+  ref: Reference<NamedVariable> | null;
+}
+
+export function createSqlHostVariableReference(): SqlHostVariableReference {
+  return {
+    kind: SyntaxKind.SqlHostVariableReference,
+    container: null,
+    ref: null,
   };
 }

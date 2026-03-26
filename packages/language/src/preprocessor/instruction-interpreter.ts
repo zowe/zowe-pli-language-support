@@ -15,7 +15,11 @@ import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
-import { Token } from "../parser/tokens";
+import {
+  createTokenInstance,
+  SQL_HOST_VARIABLE_MARKER,
+  Token,
+} from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI, UriUtils } from "../utils/uri";
@@ -532,6 +536,9 @@ function runInstructionSync(
     case inst.InstructionKind.SqlAttribute:
       runSqlAttributeInstruction(instruction, context);
       break;
+    case inst.InstructionKind.SqlHostVariable:
+      runSqlHostVariableInstruction(instruction, context);
+      break;
     case inst.InstructionKind.CicsResponseCode:
       runCicsResponseInstruction(instruction, context);
       break;
@@ -564,6 +571,31 @@ function getGenerationCacheEntry(
     context.generationCache.entries.set(offset, entry);
   }
   return entry;
+}
+
+function runSqlHostVariableInstruction(
+  instruction: inst.SqlHostVariableInstruction,
+  context: InterpreterContext,
+): void {
+  const token = instruction.token;
+  const { startOffset, startLine, startColumn } = token;
+  // Generate a marker token for the PL/I parser
+  // This token is used to identify the ID as a host variable
+  const varMarkerToken = createTokenInstance(
+    "",
+    "",
+    SQL_HOST_VARIABLE_MARKER,
+    startOffset,
+    startLine,
+    startColumn,
+    // Start and end position are the same
+    startOffset,
+    startLine,
+    startColumn,
+    undefined,
+  );
+  // Emit both tokens now
+  context.tokens.push(varMarkerToken, token);
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
