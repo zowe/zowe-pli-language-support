@@ -16,6 +16,7 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { ParserState } from "./parser-state";
+import { tokenMatcher } from "chevrotain";
 
 export function embeddedUnknownStatement(
   state: ParserState,
@@ -30,10 +31,25 @@ export function embeddedUnknownStatement(
     if (!token) {
       break;
     }
-    token.element = unknownStatement;
-    token.kind = kind;
-    // Advance manually
-    state.index++;
+    if (token.tokenTypeIdx === t.Colon.tokenTypeIdx) {
+      // Special handling for host variables
+      // IDs with a colon prefix
+      state.index++;
+      const nextToken = state.token;
+      if (tokenMatcher(nextToken, t.ID)) {
+        // IMPORTANT: set immediateFollow to false
+        // Otherwise, some token that might come later might be incorrectly merged into it
+        nextToken.immediateFollow = false;
+        unknownStatement.hostVariables.push(nextToken);
+        state.index++;
+      }
+    } else {
+      // All other tokens are simply consumed
+      token.element = unknownStatement;
+      token.kind = kind;
+      // Advance manually
+      state.index++;
+    }
   }
   return unknownStatement;
 }

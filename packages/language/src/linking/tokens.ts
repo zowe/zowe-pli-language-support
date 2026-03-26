@@ -66,6 +66,7 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.Exports_Procedure:
     case CstNodeKind.ProcedureParameter_Id:
     case CstNodeKind.TypeReference_Ref:
+    case CstNodeKind.SqlHostVariableReference_HostVariable:
       return true;
   }
   return false;
@@ -103,6 +104,8 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.entry?.ref ?? undefined;
     case SyntaxKind.ExportsItem:
       return node.reference ?? undefined;
+    case SyntaxKind.SqlHostVariableReference:
+      return node.ref ?? undefined;
   }
   return undefined;
 }
