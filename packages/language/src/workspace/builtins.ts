@@ -923,16 +923,149 @@ export const BuiltinsTextDocument = TextDocument.create(
 export const BuiltinsMacroFile = "builtins-macro.pli";
 export const BuiltinsMacroUri = `${BuiltinsUriSchema}:/${BuiltinsMacroFile}`;
 export const BuiltinsMacro = ` /* Preprocessor built-ins */
- COLLATE: PROC RETURNS(); END;
- COMMENT: PROC RETURNS(); END;
- COMPILEDATE: PROC RETURNS(); END;
- COMPILETIME: PROC RETURNS(); END;
- COPY: PROC RETURNS(); END;
- COUNTER: PROC RETURNS(); END;
- DIMENSION: DIM: PROC RETURNS(); END;
- HBOUND: PROC RETURNS(); END;
- INDEX: PROC RETURNS(); END;
- LBOUND: PROC RETURNS(); END;
+ /**
+  * \`COLLATE\` returns a \`CHARACTER\` string of length 256 comprising the 256 possible character
+  * values one time each in the collating order.
+  * @returns {CHARACTER} string of length 256 comprising the 256 possible character values one time each in the collating order
+  */
+ COLLATE: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`COMMENT\` converts a \`CHARACTER\` expression into a comment.
+  * @param {CHARACTER} text Expression that is to be converted to a comment. \`text\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @returns {CHARACTER} \`text\` is enclosed with a &#47;* and an *&#47; If \`text\` contains &#47;* or *&#47; composite symbols, they are replaced by &#47;> and <&#47;, respectively.
+  */
+ COMMENT: PROC(text) RETURNS(CHARACTER);
+   DECLARE text CHARACTER;
+ END;
+
+ /**
+  * \`COMPILEDATE\` returns a \`CHARACTER\` string of length 17 containing the date and the time of the compilation.
+  * The format of the string returned by \`COMPILEDATE\` is as follows:
+  * | Format | Meaning |
+  * |--------|---------|
+  * | yyyy | current year |
+  * | mm | current month |
+  * | dd | current day |
+  * | hh | current hour |
+  * | mm | current minute |
+  * | ss | current second |
+  * | ttt | current millisecond |
+  * 
+  * A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
+  * If no timing facility is available, the last 8 characters of the returned string are set to 00.00.00.
+  * @returns {CHARACTER} string of length 17 containing the date and the time of the compilation.
+  */
+ COMPILEDATE: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`COMPILETIME\` returns a \`CHARACTER\` string of length 18 containing the date and the time of compilation.
+  * The format of the string returned by \`COMPILETIME\` is as follows:
+  * | Format | Meaning |
+  * |--------|---------|
+  * | DD | Day of the month |
+  * | . | Period |
+  * | MMM | Month in the form JAN, FEB, MAR, and so on |
+  * | . | Period |
+  * | YY | Year |
+  * | b | Blank |
+  * | HH | Hour |
+  * | . | Period |
+  * | MM | Minute |
+  * | . | Period |
+  * | SS | Second |
+  * 
+  * @returns {CHARACTER} string of length 18 containing the date and the time of compilation.
+  */
+ COMPILETIME: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`COPY\` returns a \`CHARACTER\` string consisting of \`n\` concatenated copies of the string \`string\`.
+  * @param {CHARACTER} string Expression. \`string\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @param {FIXED} n Expression that specifies the number of repetitions.
+  *   \`n\` should have \`FIXED\` type, and if not, it is converted thereto.
+  *   \`n\` must be nonnegative.
+  *   If \`n\` is zero, the result is a null string.
+  * @returns {CHARACTER} string consisting of \`n\` concatenated copies of the string \`string\`.
+  */
+ COPY: PROC(string, n) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+   DECLARE n FIXED;
+ END;
+
+ /**
+  * \`COUNTER\` returns a \`CHARACTER\` string of length 5 containing a decimal number. The returned number is 00001 for the first invocation, and increments by one on each successive invocation.
+  * If \`COUNTER\` is invoked 99999 times, the next time it is invoked, a diagnostic message is issued and 00000 is returned. The next invocation after that is treated as the first.
+  * The \`COUNTER\` built-in function can be used to generate unique names, or for counting purposes.
+  * @returns {CHARACTER} string of length 5 containing a decimal number
+  */
+ COUNTER: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`DIMENSION\` returns a \`FIXED\` value specifying current extent of dimension \`d\` of \`array\`.
+  * @param {ANY(*)} array Array reference.
+  *   \`array\` must not have less than \`d\` dimensions.
+  * @param {FIXED} [d] Expression specifying a particular dimension of \`array\`.
+  *   \`d\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  *   \`d\` must be greater than or equal to 1.
+  *   If \`d\` is not supplied, the default is 1.
+  *   \`d\` can be omitted only if the array is one-dimensional.
+  * @returns {FIXED} value specifying current extent of dimension \`d\` of \`array\`.
+  */
+ DIMENSION: DIM: PROC(array, d) RETURNS(FIXED);
+   DECLARE array ANY(*);
+   DECLARE d FIXED OPTIONAL INITIAL(1);
+ END;
+
+ /**
+  * \`HBOUND\` returns a \`FIXED\` value specifying current upper bound of dimension \`d\` of \`array\`.
+  * @param {ANY(*)} array Array reference. \`array\` must not have less than \`d\` dimensions.
+  * @param {FIXED} [d] Expression specifying a particular dimension of \`array\`.
+  *   \`d\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  *   \`d\` must be greater than or equal to 1.
+  *   If \`d\` is not supplied, the default is 1.
+  *   \`d\` can be omitted only if the array is one-dimensional.
+  * @returns {FIXED} value specifying current upper bound of dimension \`d\` of \`array\`.
+  */
+ HBOUND: PROC(array, d) RETURNS(FIXED);
+   DECLARE array ANY(*);
+   DECLARE d FIXED OPTIONAL INITIAL(1);
+ END;
+
+ /**
+  * \`INDEX\` returns a \`FIXED\` value indicating the starting position within \`haystack\` of a substring identical to \`needle\`. You can also specify the location within \`haystack\` where processing begins.
+  * If \`needle\` does not occur in \`haystack\`, or if either \`haystack\` or \`needle\` have zero length, the value zero is returned.
+  * \`offset\` must be greater than \`0\` and no greater than \`1 + LENGTH(\`haystack\`)\`.
+  * If \`\`offset\` = LENGTH(\`haystack\`) + 1\`, the result is zero.
+  * @param {CHARACTER} haystack Expression to be searched.
+  *   \`haystack\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
+  * @param {CHARACTER} needle Target expression of the search.
+  *   \`needle\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
+  * @param {FIXED} [offset] \`offset\` specifies the location within \`haystack\` at which to begin processing.
+  *   \`offset\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * @returns {FIXED} value indicating the starting position within \`haystack\` of a substring identical to \`needle\`
+  */
+ INDEX: PROC(haystack, needle, offset) RETURNS(FIXED);
+   DECLARE haystack CHARACTER;
+   DECLARE needle CHARACTER;
+   DECLARE offset FIXED OPTIONAL INITIAL(1);
+ END;
+
+ /**
+  * \`LBOUND\` returns a \`FIXED\` value specifying current lower bound of dimension \`d\` of \`array\`.
+  * @param {ANY(*)} array Array reference. \`array\` must not have less than \`d\` dimensions.
+  * @param {FIXED} [d] Expression specifying a particular dimension of \`array\`.
+  *   \`d\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  *   \`d\` must be greater than or equal to 1.
+  *   If \`d\` is not supplied, the default is 1.
+  *   \`d\` can be omitted only if the array is one-dimensional.
+  * @returns {FIXED} value specifying current lower bound of dimension \`d\` of \`array\`.
+  */
+ LBOUND: PROC(array, d) RETURNS(FIXED);
+   DECLARE array ANY(*);
+   DECLARE d FIXED OPTIONAL INITIAL(1);
+ END;
+ 
  LENGTH: PROC RETURNS(); END;
  LOWERCASE: PROC RETURNS(); END;
  MACCOL: PROC RETURNS(); END;
