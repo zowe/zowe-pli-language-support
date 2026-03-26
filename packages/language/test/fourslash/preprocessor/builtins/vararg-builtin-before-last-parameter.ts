@@ -18,4 +18,7 @@
 ////   RETURN(12);
 //// END;
 
-verify.expectDiagnosticsAt("X", code.Internal.VariadicParameterNotLast);
+verify.expectDiagnosticsAt(
+  "X",
+  code.LSP.BuiltinAttributes.VariadicParameter.IsNotLastParameter,
+);

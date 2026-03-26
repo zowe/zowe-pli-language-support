@@ -14,4 +14,7 @@
 // @filename: pli-builtin:///xxx.pli
 //// DCL X(*) FIXED <|VARARG|>;
 
-verify.expectDiagnosticsAt("VARARG", code.Internal.VariadicNonParameter);
+verify.expectDiagnosticsAt(
+  "VARARG",
+  code.LSP.BuiltinAttributes.VariadicParameter.IsNotAParameter,
+);

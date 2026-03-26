@@ -17,4 +17,7 @@
 ////   RETURN(12);
 //// END;
 
-verify.expectDiagnosticsAt("VARARG", code.Internal.BuiltinAttributeUsage);
+verify.expectDiagnosticsAt(
+  "VARARG",
+  code.LSP.BuiltinAttributes.IsForbiddenUsage,
+);

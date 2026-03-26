@@ -20,11 +20,11 @@ import {
 } from "../typesystem/descriptions";
 import { BuiltinsUriSchema } from "../workspace/builtins";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { InternalCodes } from "./internal-codes";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
 import * as tokens from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
+import { LspCodes } from "./lsp-codes";
 
 export function typeCheck(
   stmt:
@@ -50,7 +50,7 @@ export function typeCheck(
         if (!parameter) {
           acceptor(
             diagnosticFromCode(
-              InternalCodes.VariadicNonParameter,
+              LspCodes.BuiltinAttributes.VariadicParameter.IsNotAParameter,
               token,
               token.image,
             ),
@@ -61,7 +61,7 @@ export function typeCheck(
             if (!description.dimension) {
               acceptor(
                 diagnosticFromCode(
-                  InternalCodes.VariadicParameterNotAnArray,
+                  LspCodes.BuiltinAttributes.VariadicParameter.IsNotAnArray,
                   stmt.nameToken,
                   stmt.nameToken.image,
                 ),
@@ -75,7 +75,7 @@ export function typeCheck(
               ) {
                 acceptor(
                   diagnosticFromCode(
-                    InternalCodes.VariadicParameterIsFixedArray,
+                    LspCodes.BuiltinAttributes.VariadicParameter.IsAFixedArray,
                     stmt.nameToken,
                     stmt.nameToken.image,
                   ),
@@ -85,7 +85,8 @@ export function typeCheck(
             if (parameter.index !== parameter.count - 1) {
               acceptor(
                 diagnosticFromCode(
-                  InternalCodes.VariadicParameterNotLast,
+                  LspCodes.BuiltinAttributes.VariadicParameter
+                    .IsNotLastParameter,
                   stmt.nameToken,
                   stmt.nameToken.image,
                 ),
@@ -102,7 +103,7 @@ export function typeCheck(
       if (token) {
         acceptor(
           diagnosticFromCode(
-            InternalCodes.BuiltinAttributeUsage,
+            LspCodes.BuiltinAttributes.IsForbiddenUsage,
             token,
             token.image,
           ),
@@ -114,7 +115,7 @@ export function typeCheck(
       if (witness?.token.tokenType === tokens.ANY) {
         acceptor(
           diagnosticFromCode(
-            InternalCodes.BuiltinAttributeUsage,
+            LspCodes.BuiltinAttributes.IsForbiddenUsage,
             witness.token,
             witness.token.image,
           ),
@@ -298,7 +299,8 @@ export function BUILTIN_NoMultipleVariadicParameters(
         if (token) {
           acceptor(
             diagnosticFromCode(
-              InternalCodes.VariadicParameterMultiple,
+              LspCodes.BuiltinAttributes.VariadicParameter
+                .HasMultipleParameters,
               token,
               token.image,
             ),

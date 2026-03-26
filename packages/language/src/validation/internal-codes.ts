@@ -19,47 +19,6 @@ export const InternalCodes = {
     message: (label: string, file: string, uri: string) =>
       `Expected diagnostic at label "${label}" to be in file "${file}" but received: ${uri}`,
   },
-  UnknownIdentifier: {
-    code: "UNKNOWN_IDENTIFIER",
-    severity: Severity.E,
-    message: (name: string) => `Unknown identifier '${name}'`,
-  },
-  BuiltinAttributeUsage: {
-    code: "BUILTIN_ATTRIBUTE_USAGE",
-    severity: Severity.E,
-    message: (attribute: string) =>
-      `The attribute '${attribute}' is a builtin attribute and cannot be used in non-builtin files.`,
-  },
-  VariadicParameterNotLast: {
-    code: "VARIADIC_PARAMETER_NOT_LAST",
-    severity: Severity.E,
-    message: (name: string) =>
-      `The variadic parameter '${name}' must be the last parameter in the parameter list.`,
-  },
-  VariadicParameterMultiple: {
-    code: "VARIADIC_PARAMETER_MULTIPLE",
-    severity: Severity.E,
-    message: (name: string) =>
-      `The variadic parameter '${name}' cannot be used because there is already another variadic parameter in the parameter list.`,
-  },
-  VariadicParameterIsFixedArray: {
-    code: "VARIADIC_PARAMETER_IS_FIXED_ARRAY",
-    severity: Severity.E,
-    message: (name: string) =>
-      `The variadic parameter '${name}' cannot be a fixed array. Variadic parameters must be declared with an assumed size (e.g. (*)) and cannot specify a size.`,
-  },
-  VariadicParameterNotAnArray: {
-    code: "VARIADIC_PARAMETER_NOT_AN_ARRAY",
-    severity: Severity.E,
-    message: (name: string) =>
-      `The variadic parameter '${name}' must be an array. Variadic parameters must be declared with parentheses to indicate they are arrays (e.g. (*)).`,
-  },
-  VariadicNonParameter: {
-    code: "VARIADIC_NON_PARAMETER",
-    severity: Severity.E,
-    message: (name: string) =>
-      `The variadic parameter '${name}' is not a parameter. Only parameters can be variadic.`,
-  },
 };
 
 export const TypeSystemCodes: PLICode[] = [

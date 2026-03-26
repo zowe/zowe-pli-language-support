@@ -17,7 +17,7 @@
 ////   RETURN(34);
 //// END;
 
-verify.expectDiagnosticsAt("1", code.Internal.BuiltinAttributeUsage);
+verify.expectDiagnosticsAt("1", code.LSP.BuiltinAttributes.IsForbiddenUsage);
 types.expectTypeAt("X", {
   type: types.dataTypes.Unknown,
   dimension: [

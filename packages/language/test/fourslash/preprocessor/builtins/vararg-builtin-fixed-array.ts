@@ -17,4 +17,7 @@
 ////   RETURN(12);
 //// END;
 
-verify.expectDiagnosticsAt("X", code.Internal.VariadicParameterIsFixedArray);
+verify.expectDiagnosticsAt(
+  "X",
+  code.LSP.BuiltinAttributes.VariadicParameter.IsAFixedArray,
+);

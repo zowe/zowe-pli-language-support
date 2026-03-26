@@ -19,7 +19,19 @@
 ////   RETURN(12);
 //// END;
 
-verify.expectDiagnosticsAt("X", code.Internal.VariadicParameterNotLast);
-verify.expectDiagnosticsAt("Y", code.Internal.VariadicParameterNotLast);
-verify.expectDiagnosticsAt("YArgs", code.Internal.VariadicParameterMultiple);
-verify.expectDiagnosticsAt("ZArgs", code.Internal.VariadicParameterMultiple);
+verify.expectDiagnosticsAt(
+  "X",
+  code.LSP.BuiltinAttributes.VariadicParameter.IsNotLastParameter,
+);
+verify.expectDiagnosticsAt(
+  "Y",
+  code.LSP.BuiltinAttributes.VariadicParameter.IsNotLastParameter,
+);
+verify.expectDiagnosticsAt(
+  "YArgs",
+  code.LSP.BuiltinAttributes.VariadicParameter.HasMultipleParameters,
+);
+verify.expectDiagnosticsAt(
+  "ZArgs",
+  code.LSP.BuiltinAttributes.VariadicParameter.HasMultipleParameters,
+);
