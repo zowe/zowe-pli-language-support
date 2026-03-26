@@ -1065,16 +1065,93 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
    DECLARE array ANY(*);
    DECLARE d FIXED OPTIONAL INITIAL(1);
  END;
+
+ /**
+  * \`LENGTH\` returns a \`FIXED\` value specifying the current length of a given character expression.
+  * @param {CHARACTER} string Expression. \`string\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
+  * @returns {FIXED} value specifying the current length of the character expression
+  */
+ LENGTH: PROC(string) RETURNS(FIXED);
+   DECLARE string CHARACTER;
+ END;
+
+ /**
+  * \`LOWERCASE\` returns a character string with all characters converted to their lowercase equivalent.
+  * \`LOWERCASE(string)\` is equivalent to \`TRANSLATE(string, 'a...z', 'A...Z')\` and \`LOWERCASE(string, codes)\` is equivalent to \`TRANSLATE(string, lowerc, upperc)\`.
+  * The values of \`lowerc\` and \`upperc\` are determined by the value of the code page \`codes\`.
+  * Specifying \`LOWERCASE(string, codes)\` will not only translate alphabetic characters 'A...Z' to 'a...z', but also translate characters such as uppercase Ä-umlaut('4a'x) to lowercase ä-umlaut('c0'x).
+  * @param {CHARACTER} string Expression. \`string\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
+  * @param {FIXED} [codes] Expression. Specifies the code page that will be lowercased.
+  * @returns {CHARACTER} character string with all characters converted to their lowercase equivalent
+  */
+ LOWERCASE: PROC(string, codes) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+   DECLARE codes FIXED OPTIONAL;
+ END;
+
+ /**
+  * \`MACCOL\` returns a \`FIXED\` value that represents the column where the outermost macro invocation starts in the source text that contains the macro invocation.
+  * @returns {FIXED} The value returned is not affected by nested macro invocations.
+  */
+ MACCOL: PROC RETURNS(FIXED); END;
+
+ /**
+  * \`MACLMAR\` returns a \`FIXED\` value that represents the column number of the left source margin in \`MARGINS\` compiler option.
+  * See the information about the \`MARGINS\` option in the Programming Guide.
+  * @returns {FIXED} column number of the left source margin in \`MARGINS\` compiler option
+  */
+ MACLMAR: PROC RETURNS(FIXED); END;
+
+ /**
+  * \`MACNAME\` returns the name of the preprocessor procedure within which it is invoked.
+  * It is invalid to invoke \`MACNAME\` outside of a preprocessor procedure.
+  * @returns {CHARACTER} name of the preprocessor procedure
+  */
+ MACNAME: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`MACRMAR\` returns a \`FIXED\` value that represents the column number of the right source margin in \`MARGINS\` compiler option.
+  * See the information about the MARGINS option in the Programming Guide.
+  * @returns {FIXED} column number of the right source margin in \`MARGINS\` compiler option
+  */
+ MACRMAR: PROC RETURNS(FIXED); END;
+
+ /**
+  * \`MAX\` returns the largest value from a set of two or more expressions.
+  * @param {FIXED} value1 First expression. \`value1\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * @param {FIXED} valueN Second and subsequent expressions. Each \`valueN\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * @returns {FIXED} largest value from a set of two or more expressions
+  */
+ MAX: PROC(value1, valueN) RETURNS(FIXED);
+   DECLARE value1 FIXED;
+   DECLARE valueN(*) FIXED VARARG;
+ END;
+
+ /**
+  * \`MIN\` returns the smallest value from a set of two or more expressions.
+  * @param {FIXED} value1 First expression. \`value1\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * @param {FIXED} valueN Second and subsequent expressions. Each \`valueN\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * @returns {FIXED} smallest value from a set of two or more expressions
+  */
+ MIN: PROC(value1, valueN) RETURNS(FIXED);
+   DECLARE value1 FIXED;
+   DECLARE valueN(*) FIXED VARARG;
+ END;
+
+ /**
+  * \`PARMSET\` returns a \`BIT\` value indicating if a specified parameter was set on invocation of the procedure.
+  * The \`PARMSET\` built-in function can be used only within a preprocessor procedure.
+  * \`PARMSET\` returns a bit value of \`'1'B\` if the parameter \`parameter\` was explicitly set by the function reference that invoked the procedure, and a bit value of \`'0'B\` if it was not—that is, if the corresponding argument was omitted from the function reference in a preprocessor expression, or was the null string in a function reference from input text.
+  * \`PARMSET\` can return \`'0'B\`, even if a matching argument does appear in the reference, but the reference is in another preprocessor procedure, as follows:
+  * - If the argument is not itself a parameter of the invoking procedure, \`PARMSET\` returns the value \`'1'B\`.
+  * - If the argument is a parameter of the invoking procedure, \`PARMSET\` returns the value for the specified parameter when the invoking procedure was itself invoked.
+  * @param {ANY} parameter Must be a parameter of the preprocessor procedure.
+  * @returns {FIXED} bit value indicating if a specified parameter was set on invocation of the procedure
+  */
+ PARMSET: PROC(parameter) RETURNS(FIXED);
+   DECLARE parameter ANY;
+ END;
  
- LENGTH: PROC RETURNS(); END;
- LOWERCASE: PROC RETURNS(); END;
- MACCOL: PROC RETURNS(); END;
- MACLMAR: PROC RETURNS(); END;
- MACNAME: PROC RETURNS(); END;
- MACRMAR: PROC RETURNS(); END;
- MAX: PROC RETURNS(); END;
- MIN: PROC RETURNS(); END;
- PARMSET: PROC RETURNS(); END;
  QUOTE: PROC RETURNS(); END;
  REPEAT: PROC RETURNS(); END;
  SUBSTR: PROC RETURNS(); END;
