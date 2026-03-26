@@ -293,11 +293,15 @@ function tryGetParameter(node: ast.SyntaxNode): ParameterResult | undefined {
   };
 }
 
+//TODO @tag(#issue-656) Remove this validation once all builtin procedures signatures are setup
 export function BUILTIN_NoMultipleVariadicParameters(
   stmt: ast.ProcedureStatement,
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ) {
+  if (compilationUnit.uri.scheme !== BuiltinsUriSchema) {
+    return;
+  }
   let foundVarArg = false;
   for (const parameter of stmt.parameters) {
     const description = compilationUnit.services.inferer.inferType(

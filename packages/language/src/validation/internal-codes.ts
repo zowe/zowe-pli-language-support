@@ -12,6 +12,10 @@
 import { Severity } from "../language-server/types";
 import { PLICode, Error, Severe } from "./pli-codes";
 
+/**
+ * InternalCodes are used for diagnostics that are not intended to be exposed to users, but are used internally for testing and other purposes.
+ * These codes will be never shown to users, and are not intended to be used in any user-facing diagnostics.
+ */
 export const InternalCodes = {
   DiagnosticURIMismatch: {
     code: "_TB0001", // TestBuilder diagnostic code
