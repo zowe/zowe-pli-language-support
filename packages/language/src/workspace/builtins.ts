@@ -1151,20 +1151,155 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  PARMSET: PROC(parameter) RETURNS(FIXED);
    DECLARE parameter ANY;
  END;
- 
- QUOTE: PROC RETURNS(); END;
- REPEAT: PROC RETURNS(); END;
- SUBSTR: PROC RETURNS(); END;
- SYSDIMSIZE: PROC RETURNS(); END;
- SYSOFFSETSIZE: PROC RETURNS(); END;
- SYSPARM: PROC RETURNS(); END;
- SYSPOINTERSIZE: PROC RETURNS(); END;
- SYSTEM: PROC RETURNS(); END;
- SYSVERSION: PROC RETURNS(); END;
- TRANSLATE: PROC RETURNS(); END;
- TRIM: PROC RETURNS(); END;
- UPPERCASE: PROC RETURNS(); END;
- VERIFY: PROC RETURNS(); END;
+
+ /**
+  * \`QUOTE\` returns a \`CHARACTER\` string that represents x as a valid quoted string.
+  * If \`string\` contains single quotation marks, each is replaced by two consecutive single quotation marks.
+  * @param {CHARACTER} string Expression that is converted to a quoted string.
+  *   \`string\` should have CHARACTER type, and if not, it is converted thereto.
+  * @returns {CHARACTER} A valid quoted string.
+  */
+ QUOTE: PROC(string) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+ END;
+
+ /**
+  * \`REPEAT\` returns a \`CHARACTER\` string consisting of \`(n + 1)\` concatenated copies of the string \`string\`.
+  * @param {CHARACTER} string Expression.
+  *   \`string\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @param {FIXED} n Expression that specifies the number of repetitions.
+  *   \`n\` should have \`FIXED\` type, and if not, it is converted thereto.
+  *   \`n\` must be nonnegative.
+  *   If \`n\` is zero, the result is \`string\` (converted to character as necessary).
+  * @returns {CHARACTER} A string consisting of \`(n + 1)\` concatenated copies of the string \`string\`.
+  */
+ REPEAT: PROC(string, n) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+   DECLARE n FIXED;
+ END;
+
+ /**
+  * \`SUBSTR\` returns a substring, specified by \`offset\` and \`length\`, of \`string\`.
+  * \`length\` must be nonnegative, and the values of \`offset\` and \`length\` must be such that the substring lies entirely within the current length of \`string\`.
+  * If \`offset = LENGTH(string)+1\` and \`length = 0\`, the null string is returned.
+  * @param {CHARACTER} string Expression specifies the string from which the substring is extracted.
+  *   \`string\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @param {FIXED} offset Expression that specifies the starting position of the substring in \`string\`.
+  *   \`offset\` should have \`FIXED\` type, and if not, it is converted thereto.
+  * @param {FIXED} length Expression that specifies the length of the substring in \`string\`.
+  *   \`length\` should have \`FIXED\` type, and if not, it is converted thereto.
+  * @return {CHARACTER} substring specified by \`offset\` and \`length\` of \`string\`
+  */
+ SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+   DECLARE offset FIXED;
+   DECLARE length FIXED OPTIONAL;
+ END;
+
+ /**
+  * \`SYSDIMSIZE\` returns a \`FIXED\` value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler \`CMPAT\` option.
+  * The possible return values are as follows:
+  * - \`4\` under \`CMPAT(V2)\` and \`CMPAT(LE)\`
+  * - \`8\` under \`CMPAT(V3)\`
+  * @returns {FIXED} value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler \`CMPAT\` option
+  */
+ SYSDIMSIZE: PROC RETURNS(FIXED); END;
+
+ /**
+  * \`SYSOFFSETSIZE\` returns a \`FIXED\` value that indicates the number of bytes needed to hold an \`OFFSET\`.
+  * Currently, \`SYSOFFSETSIZE\` returns 4.
+  * @returns {FIXED} value that indicates the number of bytes needed to hold an \`OFFSET\`
+  */
+ SYSOFFSETSIZE: PROC RETURNS(FIXED); END;
+
+ /**
+  * \`SYSPARM\` returns the \`CHARACTER\` string value of the \`SYSPARM\` compiler option.
+  * The value returned is not translated to uppercase; the exact value as specified in the compiler option is returned. See the information about the \`SYSPARM\` compiler option in the Programming Guide.
+  * \`SYSPARM\` allows information external to the program to be accessed without modifying the source program.
+  * @returns {CHARACTER} string value of the \`SYSPARM\` compiler option
+  */
+ SYSPARM: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`SYSPOINTERSIZE\` returns a \`FIXED\` value that indicates the number of bytes needed to hold a \`POINTER\`.
+  * Currently, \`SYSPOINTERSIZE\` returns 4. But under the \`LP(64)\` option, the \`SYSPOINTERSIZE\` returns 8.
+  * @returns {FIXED} value that indicates the number of bytes needed to hold a \`POINTER\`
+  */
+ SYSPOINTERSIZE: PROC RETURNS(FIXED); END;
+
+ /**
+  * \`SYSTEM\` returns a \`CHARACTER\` string that contains the value of the \`SYSTEM\` compiler option that is in effect.
+  * The value returned might contain leading and trailing blanks. You can apply the \`TRIM\` built-in function to that value to make it easier to test.
+  * See the information about the \`SYSTEM\` compiler option in the Programming Guide.
+  * @returns {CHARACTER} string value of the \`SYSTEM\` compiler option
+  */
+ SYSTEM: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`SYSVERSION\` returns a \`CHARACTER\` string containing the product name as well as the version, release, and modification level.
+  * The result that \`SYSVERSION\` returns is a string of length 22 in one of the following formats. Each string is padded with blanks on the right to make it 22 in length.
+  * @returns {CHARACTER} string containing the product name as well as the version, release, and modification level
+  */
+ SYSVERSION: PROC RETURNS(CHARACTER); END;
+
+ /**
+  * \`TRANSLATE\` returns a \`CHARACTER\` string of the same length as \`input\`, but with selected characters translated.
+  * \`TRANSLATE\` operates on each character of \`input\` as follows:
+  * If a character in \`input\` is found in \`search\`, the character in \`replacement\` that corresponds to that in \`search\` is copied to the result; otherwise, the character in \`input\` is copied directly to the result. If \`search\` contains duplicates, the leftmost occurrence is used.
+  * \`replacement\` is padded with blanks, or truncated, on the right to match the length of \`search\`.
+  * @param {CHARACTER} input Expression to be searched for possible translation of its characters.
+  *   \`input\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @param {CHARACTER} replacement Expression containing the translation values of characters.
+  *   \`replacement\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @param {CHARACTER} [search] Expression containing the characters that are to be translated. If \`search\` is omitted, the default is \`COLLATE\`.
+  *   \`search\` should have \`CHARACTER\` type, and if not, it is converted thereto.
+  * @returns {CHARACTER} string of the same length as \`input\`, but with selected characters translated
+  */
+ TRANSLATE: PROC(input, replacement, search) RETURNS(CHARACTER);
+   DECLARE input CHARACTER;
+   DECLARE replacement CHARACTER;
+   DECLARE search CHARACTER OPTIONAL;
+ END;
+
+ /**
+  * \`TRIM\` returns a \`CHARACTER\` string with characters trimmed from one or both ends of an input string.
+  * @param {CHARACTER} input is a \`CHARACTER\` string expression
+  * @param {CHARACTER} [left] is a \`CHARACTER\` string expression, that should be trimmed from the left end of \`input\`. If \`left\` is omitted, the default is a single blank character.
+  * @param {CHARACTER} [right] is a \`CHARACTER\` string expression, that should be trimmed from the right end of \`input\`. If \`right\` is omitted, the default is a single blank character.
+  * @returns {CHARACTER} string with characters trimmed from one or both ends of an input string
+  */
+ TRIM: PROC(input, left, right) RETURNS(CHARACTER);
+   DECLARE input CHARACTER;
+   DECLARE left CHARACTER OPTIONAL INITIAL(' ');
+   DECLARE right CHARACTER OPTIONAL INITIAL(' ');
+ END;
+
+ /**
+  * UPPERCASE returns a character string with all characters converted to their uppercase equivalent.
+  * @param {CHARACTER} string Expression. If necessary, \`string\` is converted to character.
+  * @param {FIXED} [codes] Expression. Specifies the code page that will be uppercased.
+  * @returns {CHARACTER} character string with all characters converted to their uppercase equivalent
+  */
+ UPPERCASE: PROC(string, codes) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+   DECLARE codes FIXED OPTIONAL;
+ END;
+
+ /**
+  * \`VERIFY\` returns a \`FIXED\` value indicating the position in \`input\` of the leftmost character that is not in \`compare\`. It also allows you to specify the location within \`input\` at which to begin processing.
+  * If all the characters in \`input\` do appear in \`compare\`, a value of zero is returned. If \`input\` is a null string, a value of zero is returned. If \`input\` is not a null string and \`compare\` is a null string, the value of \`offset\` is returned. The default value for \`offset\` is one.
+  * \`offset\` must be greater than \`0\` and no greater than \`1 + LENGTH(input)\`.
+  * If \`offset = LENGTH(input) + 1\`, the result is zero.
+  * @param {CHARACTER} input Expression. The string to be searched.
+  * @param {CHARACTER} compare Expression. The string containing the characters to be verified against.
+  * @param {FIXED} [offset] Expression. Specifies the position within \`input\` at which to begin processing.
+  * @returns {FIXED} position in \`input\` of the leftmost character that is not in \`compare\`
+  */
+ VERIFY: PROC(input, compare, offset) RETURNS(FIXED);
+   DECLARE input CHARACTER;
+   DECLARE compare CHARACTER;
+   DECLARE offset FIXED OPTIONAL;
+ END;
 `;
 
 export const BuiltinsMacroTextDocument = TextDocument.create(
