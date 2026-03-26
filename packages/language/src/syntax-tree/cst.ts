@@ -694,6 +694,8 @@ export enum CstNodeKind {
   UnaryExpression_Operator,
   StringLiteral_ValueString,
   NumberLiteral_ValueNumber,
+  SqlHostVariableReference_Marker,
+  SqlHostVariableReference_HostVariable,
   SqlAttributeStatement_SQL,
   SqlAttributeStatement_TYPE,
   SqlAttributeStatement_IS,

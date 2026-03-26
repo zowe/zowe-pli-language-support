@@ -741,6 +741,7 @@ const unit = orRule<ast.Unit, []>(
   () => writeStatement,
   () => procedureStatement,
   () => packageRule,
+  () => sqlHostVariableReference,
 );
 
 const allocateStatement = rule(
@@ -6538,6 +6539,31 @@ const numberLiteral = rule(
       element.value = numberToken.image;
     }
 
+    return element;
+  },
+);
+
+const sqlHostVariableReference = rule(
+  sequence(tokens.SQL_HOST_VARIABLE_MARKER),
+  (state: ParserState): ast.SqlHostVariableReference => {
+    const element = ast.createSqlHostVariableReference();
+    state.consume(
+      element,
+      CstNodeKind.SqlHostVariableReference_Marker,
+      tokens.SQL_HOST_VARIABLE_MARKER,
+    );
+    const id = state.consume(
+      element,
+      CstNodeKind.SqlHostVariableReference_HostVariable,
+      tokens.ID,
+    );
+    if (id) {
+      element.ref = ast.createReference(
+        element,
+        id,
+        ast.ReferenceType.Variable,
+      );
+    }
     return element;
   },
 );
