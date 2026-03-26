@@ -22,7 +22,7 @@ import {
 } from "./type-check-validator";
 import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
-import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
+import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/check-argument-count";
 import { IBM1352IE_declared_item_pli_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
 import {
   DeprecateStatements,

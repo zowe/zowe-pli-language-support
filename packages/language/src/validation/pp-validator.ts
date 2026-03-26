@@ -8,7 +8,10 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
-import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
+import {
+  IBM3323I_IBM3324I_check_argument_count,
+  MemberCall_checkArgumentCount,
+} from "./compiler/check-argument-count";
 import { IBM3970IS_IBM3971IS_check_pp_call_procedure } from "./compiler/IBM3970-IBM3971-call-procedure";
 import { MACRO_Deprecate } from "./macro/deprecate";
 import { MACRO_NamePrefix } from "./macro/nameprefix";
@@ -37,6 +40,7 @@ export function registerPreprocessorValidationChecks(): ValidationChecks {
       MACRO_NamePrefix,
       BUILTIN_NoMultipleVariadicParameters,
     ],
+    MemberCall: [MemberCall_checkArgumentCount],
     SkipDirective: [LSPIS001_standalone_skip_directive_not_supported],
   };
 }
