@@ -42,60 +42,8 @@ export function typeCheck(
   );
 
   if (compilationUnit.uri.scheme === BuiltinsUriSchema) {
-    if (description.variadicArgument) {
-      const token =
-        description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
-      if (token) {
-        const parameter = tryGetParameter(stmt);
-        if (!parameter) {
-          acceptor(
-            diagnosticFromCode(
-              LspCodes.BuiltinAttributes.VariadicParameter.IsNotAParameter,
-              token,
-              token.image,
-            ),
-          );
-        } else {
-          assertType<ast.DeclaredVariable>(stmt);
-          if (stmt.nameToken) {
-            if (!description.dimension) {
-              acceptor(
-                diagnosticFromCode(
-                  LspCodes.BuiltinAttributes.VariadicParameter.IsNotAnArray,
-                  stmt.nameToken,
-                  stmt.nameToken.image,
-                ),
-              );
-            } else {
-              if (
-                description.dimension.length >= 1 &&
-                description.dimension.some(
-                  (dim) => dim.upperBound.value !== "*" || dim.lowerBound.value,
-                )
-              ) {
-                acceptor(
-                  diagnosticFromCode(
-                    LspCodes.BuiltinAttributes.VariadicParameter.IsAFixedArray,
-                    stmt.nameToken,
-                    stmt.nameToken.image,
-                  ),
-                );
-              }
-            }
-            if (parameter.index !== parameter.count - 1) {
-              acceptor(
-                diagnosticFromCode(
-                  LspCodes.BuiltinAttributes.VariadicParameter
-                    .IsNotLastParameter,
-                  stmt.nameToken,
-                  stmt.nameToken.image,
-                ),
-              );
-            }
-          }
-        }
-      }
-    }
+    //TODO @tag(#issue-656) Remove the then branch once all builtin procedures signatures are setup
+    checkUsageForBuiltinFilesIsCorrect(description, stmt, acceptor);
   } else {
     if (description.variadicArgument) {
       const token =
@@ -184,6 +132,71 @@ export function typeCheck(
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2436I, witness.token));
         } else if (description.scale === ScaleMode.Float) {
           acceptor(diagnosticFromCode(PLICodes.Error.IBM2424I, witness.token));
+        }
+      }
+    }
+  }
+}
+
+function checkUsageForBuiltinFilesIsCorrect(
+  description: TypeDescriptions.Any,
+  stmt:
+    | ast.DeclaredVariable
+    | ast.DeclareStatement
+    | ast.DeclaredItem
+    | ast.DefineAliasStatement
+    | ast.DefineOrdinalStatement,
+  acceptor: ValidationAcceptor,
+) {
+  if (description.variadicArgument) {
+    const token =
+      description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
+    if (token) {
+      const parameter = tryGetParameter(stmt);
+      if (!parameter) {
+        acceptor(
+          diagnosticFromCode(
+            LspCodes.BuiltinAttributes.VariadicParameter.IsNotAParameter,
+            token,
+            token.image,
+          ),
+        );
+      } else {
+        assertType<ast.DeclaredVariable>(stmt);
+        if (stmt.nameToken) {
+          if (!description.dimension) {
+            acceptor(
+              diagnosticFromCode(
+                LspCodes.BuiltinAttributes.VariadicParameter.IsNotAnArray,
+                stmt.nameToken,
+                stmt.nameToken.image,
+              ),
+            );
+          } else {
+            if (
+              description.dimension.length >= 1 &&
+              description.dimension.some(
+                (dim) => dim.upperBound.value !== "*" || dim.lowerBound.value,
+              )
+            ) {
+              acceptor(
+                diagnosticFromCode(
+                  LspCodes.BuiltinAttributes.VariadicParameter.IsAFixedArray,
+                  stmt.nameToken,
+                  stmt.nameToken.image,
+                ),
+              );
+            }
+          }
+          if (parameter.index !== parameter.count - 1) {
+            acceptor(
+              diagnosticFromCode(
+                LspCodes.BuiltinAttributes.VariadicParameter.IsNotLastParameter,
+                stmt.nameToken,
+                stmt.nameToken.image,
+              ),
+            );
+          }
         }
       }
     }

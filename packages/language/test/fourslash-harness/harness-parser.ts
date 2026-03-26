@@ -213,7 +213,8 @@ class HarnessTestParser {
         const uri =
           fileName === UnnamedFile
             ? DEFAULT_FILE_URI
-            : URI.parse(fileName).toString();
+            : //TODO @tag(#issue-656) Change this back to `URI.file(fileName).toString()` once all builtin procedures signatures are setup
+              URI.parse(fileName).toString();
 
         if (files.get(uri) !== undefined) {
           throw new Error(`Duplicate file name: '${uri}'`);

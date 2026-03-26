@@ -11,6 +11,8 @@
 
 /// <reference path="../../framework.ts" />
 
+//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
+
 // @filename: pli-builtin:///xxx.pli
 //// XXX: PROCEDURE (X) RETURNS(FIXED);
 ////   DCL <|X|> <|1:ANY|>;
