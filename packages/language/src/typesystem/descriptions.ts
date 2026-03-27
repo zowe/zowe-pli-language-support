@@ -1599,6 +1599,7 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   toString(): string;
   witnesses: AttributeWitnesses;
   variadicArgument: boolean;
+  optional: boolean;
 }
 
 interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
@@ -1868,6 +1869,9 @@ export namespace TypeDescriptions {
       dimension:
         attributes[AttributeKind.Dimension]?.value ??
         DefaultValues[AttributeKind.Dimension],
+      optional:
+        attributes[AttributeKind.Optional]?.value ??
+        DefaultValues[AttributeKind.Optional],
       variableNode,
       variadicArgument:
         attributes[AttributeKind.VariadicArgument]?.value ??

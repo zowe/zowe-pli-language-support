@@ -152,7 +152,10 @@ function checkUsageForBuiltinFilesIsCorrect(
     const token =
       description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
     if (token) {
-      const parameter = tryGetParameter(stmt);
+      if (stmt.kind !== ast.SyntaxKind.DeclaredVariable) {
+        return;
+      }
+      const parameter = retrieveParameter(stmt);
       if (!parameter) {
         acceptor(
           diagnosticFromCode(
@@ -269,10 +272,9 @@ type ParameterResult = {
   count: number;
 };
 
-function tryGetParameter(node: ast.SyntaxNode): ParameterResult | undefined {
-  if (node.kind !== ast.SyntaxKind.DeclaredVariable) {
-    return undefined;
-  }
+function retrieveParameter(
+  node: ast.DeclaredVariable,
+): ParameterResult | undefined {
   const procedureStmt = ast.getContainer(
     node,
     ast.SyntaxKind.ProcedureStatement,

@@ -11,8 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
-//// %DCL XXX CHARACTER INITIAL("DCL B FIXED;");
-//// %DCL YYY FIXED INITIAL(0);
-//// %XXX = <|TRIM|>(XXX, " ", " ", " ");
+//// %DCL XXX FIXED;
+//// %XXX = <|MAX|>(1, 2, 3, 4, 5, 6);
 
-verify.expectDiagnosticsAt("TRIM", code.Error.IBM3639I);
+verify.noDiagnostics("MAX");
