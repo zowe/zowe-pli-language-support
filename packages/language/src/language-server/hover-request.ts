@@ -31,8 +31,8 @@ import {
   Wildcard,
 } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
-import { binaryTokenSearch } from "../utils/search";
-import { URI, UriUtils } from "../utils/uri";
+import { binaryTokenIndexSearch, binaryTokenSearch } from "../utils/search";
+import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
@@ -42,6 +42,7 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
+import * as tokens from "../parser/tokens";
 
 type MarkupResponse = string | null;
 
@@ -217,7 +218,7 @@ function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
-  const fileUri = UriUtils.toUri(node.filePath);
+  const fileUri = URI.parse(node.filePath);
   const doc = unit.services.files.getDocument(fileUri);
   if (!doc) {
     return null;
@@ -325,6 +326,12 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     if (!outerCall) {
       return null;
     }
+    if(ref.node.kind === SyntaxKind.LabelPrefix) {
+      const jsDocsComment = getJSDocsCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit);
+      if (jsDocsComment) {
+        return jsDocsComment;
+      }
+    }
     const type = unit.services.inferer.inferType(outerCall, unit);
     return (
       stringifyTypeDescription(token.image, type) ??
@@ -422,4 +429,41 @@ export function hoverRequest(
     },
     range: tokenToRange(token),
   };
+}
+
+export function getJSDocsCommentBeforeLabelPrefix(
+  labelPrefix: LabelPrefix,
+  compilationUnit: CompilationUnit,
+): string | null {
+  if(!labelPrefix.nameToken) {
+    return null;
+  }
+  const skipTokens = new Set([
+    tokens.Colon,
+    tokens.ID,
+  ]);
+  const commentTokens = new Set([
+    tokens.SL_COMMENT,
+    tokens.ML_COMMENT,
+  ]);
+  const uri = labelPrefix.nameToken.uri;
+  if(!uri) {
+    return null;
+  }
+  const fileTokens = compilationUnit.services.files.getTokens(uri);
+  if(!fileTokens) {
+    return null;
+  }
+  let index = binaryTokenIndexSearch(fileTokens, labelPrefix.nameToken.startOffset)
+  while(index >= 0) {
+    const token = fileTokens[index];
+    if(skipTokens.has(token.tokenType)) {
+      index--;
+    } else if (commentTokens.has(token.tokenType)) {
+      return token.image;
+    } else {
+      break;
+    }
+  }
+  return null;
 }
