@@ -20,7 +20,7 @@ import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { TypeDescriptions } from "../../typesystem/descriptions";
 
-export function IBM3323I_IBM3324I_check_argument_count(
+export function CallStatement_checkArgumentCount(
   node: CallStatement,
   acceptor: ValidationAcceptor,
 ): void {
@@ -43,7 +43,7 @@ export function IBM3323I_IBM3324I_check_argument_count(
   }
 }
 
-export function MemberCall_checkArgumentCount(
+export function MemberCall_checkArguments(
   node: MemberCall,
   acceptor: ValidationAcceptor,
   unit: CompilationUnit,
@@ -71,18 +71,20 @@ export function MemberCall_checkArgumentCount(
   ) {
     return;
   }
-  const parameterTypes = procedure.parameters.map((p) =>
+  const expectedTypes = procedure.parameters.map((p) =>
     unit.services.inferer.inferType(p, unit),
   );
   const lastParameterType =
-    parameterTypes[parameterTypes.length - 1] ?? TypeDescriptions.Unknown();
+    expectedTypes[expectedTypes.length - 1] ?? TypeDescriptions.Unknown();
   const minimumExpectedArgs =
-    parameterTypes.filter((t) => !t.optional).length -
+    expectedTypes.filter((t) => !t.optional).length -
     (lastParameterType?.variadicArgument ? 1 : 0);
   const maximumExpectedArgs = lastParameterType.variadicArgument
     ? Infinity
-    : parameterTypes.length;
+    : expectedTypes.length;
   const providedArgs = node.element.dimensions?.dimensions.length || 0;
+
+  //compare expected and provided argument counts
   if (providedArgs < minimumExpectedArgs) {
     acceptor(
       diagnosticFromCode(PLICodes.Severe.IBM3774I, callToken, callToken.image),
@@ -91,5 +93,35 @@ export function MemberCall_checkArgumentCount(
     acceptor(
       diagnosticFromCode(PLICodes.Error.IBM3639I, callToken, callToken.image),
     );
+  }
+
+  const providedTypes =
+    node.element.dimensions?.dimensions.map((d) =>
+      typeof d.upper?.expression === "object" && d.upper?.expression !== null
+        ? unit.services.inferer.inferType(d.upper.expression, unit)
+        : TypeDescriptions.Unknown(),
+    ) ?? [];
+
+  //compare expected and provided argument types
+  for (let index = 0; index < providedArgs; index++) {
+    const providedType = providedTypes[index];
+    if (index >= expectedTypes.length && !lastParameterType.variadicArgument) {
+      break;
+    }
+    const expectedType = expectedTypes[index] ?? lastParameterType;
+    if (
+      providedType &&
+      expectedType &&
+      !unit.services.inferer.isAssignable(providedType, expectedType, unit)
+    ) {
+      acceptor(
+        diagnosticFromCode(
+          PLICodes.Severe.IBM3948I,
+          callToken,
+          callToken.image,
+          "612",
+        ),
+      );
+    }
   }
 }

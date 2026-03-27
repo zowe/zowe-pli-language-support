@@ -313,6 +313,7 @@ export const AttributeIsValidForPreprocessor: {
   [AttributeKind.ScanMode]: () => true,
   [AttributeKind.Dimension]: () => true,
   [AttributeKind.VariadicArgument]: () => true,
+  [AttributeKind.Initial]: () => true,
 };
 
 export function isAttributeValidForPreprocessor<K extends AttributeKind>(

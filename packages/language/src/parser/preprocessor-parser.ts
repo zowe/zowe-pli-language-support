@@ -1595,7 +1595,7 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
       attributes.push(entryAttribute);
     } else if (state.canConsume(t.INITIAL)) {
       const initialAttribute = ast.createInitialAttribute();
-      state.consume(
+      initialAttribute.token = state.consume(
         initialAttribute,
         CstNodeKind.InitialAttribute_INITIAL,
         t.INITIAL,

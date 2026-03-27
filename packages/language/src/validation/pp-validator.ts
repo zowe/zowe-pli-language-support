@@ -9,9 +9,9 @@
  *
  */
 import {
-  IBM3323I_IBM3324I_check_argument_count,
-  MemberCall_checkArgumentCount,
-} from "./compiler/check-argument-count";
+  CallStatement_checkArgumentCount,
+  MemberCall_checkArguments,
+} from "./compiler/check-arguments";
 import { IBM3970IS_IBM3971IS_check_pp_call_procedure } from "./compiler/IBM3970-IBM3971-call-procedure";
 import { MACRO_Deprecate } from "./macro/deprecate";
 import { MACRO_NamePrefix } from "./macro/nameprefix";
@@ -28,7 +28,7 @@ import {
 export function registerPreprocessorValidationChecks(): ValidationChecks {
   return {
     CallStatement: [
-      IBM3323I_IBM3324I_check_argument_count,
+      CallStatement_checkArgumentCount,
       IBM3970IS_IBM3971IS_check_pp_call_procedure,
     ],
     DeclaredItem: [IBM1352IE_declared_item_pp_scan_repetition, typeCheck],
@@ -40,7 +40,7 @@ export function registerPreprocessorValidationChecks(): ValidationChecks {
       MACRO_NamePrefix,
       BUILTIN_NoMultipleVariadicParameters,
     ],
-    MemberCall: [MemberCall_checkArgumentCount],
+    MemberCall: [MemberCall_checkArguments],
     SkipDirective: [LSPIS001_standalone_skip_directive_not_supported],
   };
 }
