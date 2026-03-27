@@ -1925,6 +1925,9 @@ export namespace TypeDescriptions {
       variadicArgument:
         attributes[AttributeKind.VariadicArgument]?.value ??
         DefaultValues[AttributeKind.VariadicArgument],
+      optional:
+        attributes[AttributeKind.Optional]?.value ??
+        DefaultValues[AttributeKind.Optional],
       scanMode:
         attributes[AttributeKind.ScanMode]?.value ??
         DefaultValues[AttributeKind.ScanMode],
