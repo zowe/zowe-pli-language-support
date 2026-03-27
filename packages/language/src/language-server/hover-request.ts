@@ -47,6 +47,7 @@ import {
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
 import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
+import * as tokens from "../parser/tokens";
 
 type MarkupResponse = string | null;
 
@@ -222,7 +223,7 @@ function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
-  const fileUri = UriUtils.toUri(node.filePath);
+  const fileUri = URI.parse(node.filePath);
   const doc = unit.services.files.getDocument(fileUri);
   if (!doc) {
     return null;
