@@ -9,7 +9,7 @@
  *
  */
 
-import { UriUtils } from "../../utils/uri";
+import { URI, UriUtils } from "../../utils/uri";
 import { FileSystemProviderInstance } from "../../workspace/file-system-provider";
 import {
   CodeAction,
@@ -18,6 +18,7 @@ import {
   TextEdit,
 } from "vscode-languageserver-types";
 import {
+  PluginConfigUnresolvedLibData,
   PluginConfigurationProviderInstance,
   ProcessGroup,
 } from "../../workspace/plugin-configuration-provider";
@@ -26,6 +27,48 @@ import { Commands, PluginConfiguration } from "../constants";
 import { LspCodes } from "../../validation/lsp-codes";
 import { fullCode } from "../types";
 import { PLICodes } from "../../validation/pli-codes";
+import { jsoncApplyEdits, jsoncModify, type JSONPath } from "../../utils/jsonc";
+
+const JSONC_FORMAT = {
+  formattingOptions: { tabSize: 2, insertSpaces: true },
+} as const;
+
+function isProcGrpsDocumentUri(documentUri: string): boolean {
+  const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
+  if (!workspacePath) {
+    return false;
+  }
+  const expected = UriUtils.joinPath(
+    UriUtils.toUri(workspacePath),
+    ".pliplugin",
+    "proc_grps.json",
+  );
+  return UriUtils.equals(documentUri, expected);
+}
+
+async function readProcGrpsText(): Promise<
+  { uri: URI; text: string } | undefined
+> {
+  const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
+  if (!workspacePath) {
+    return undefined;
+  }
+  const procGrpsUri = UriUtils.joinPath(
+    UriUtils.toUri(workspacePath),
+    ".pliplugin",
+    "proc_grps.json",
+  );
+  try {
+    const content = await FileSystemProviderInstance.readFile(procGrpsUri);
+    if (content === undefined) {
+      return undefined;
+    }
+    return { uri: procGrpsUri, text: content };
+  } catch (err) {
+    console.error(err);
+    return undefined;
+  }
+}
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
@@ -250,8 +293,137 @@ export function quickFixResolveAmbiguousReference(
   }
 }
 
+export async function quickFixRemoveUnresolvedLib(
+  diagnostic: Diagnostic,
+): Promise<CodeAction | undefined> {
+  const data = diagnostic.data as PluginConfigUnresolvedLibData | undefined;
+  if (!data?.lib || !data?.pgroup) {
+    return undefined;
+  }
+  if (!data.path) {
+    return undefined;
+  }
+  const read = await readProcGrpsText();
+  if (!read) {
+    return undefined;
+  }
+  const { uri: procGrpsUri, text } = read;
+
+  let newContent: string;
+  try {
+    newContent = jsoncApplyEdits(
+      text,
+      jsoncModify(text, data.path, undefined, JSONC_FORMAT),
+    );
+  } catch (err) {
+    console.error("Failed to build proc_grps edit for remove lib:", err);
+    return undefined;
+  }
+
+  return {
+    title: `Remove unresolved library '${data.lib}'.`,
+    kind: CodeActionKind.QuickFix,
+    diagnostics: [diagnostic],
+    command: {
+      title: "Remove unresolved lib",
+      command: Commands.REMOVE_DEAD_LIB,
+      arguments: [procGrpsUri.toString(), newContent],
+    },
+  };
+}
+
+/**
+ * Removes every distinct (pgroup, lib) in one write.
+ * Applies removals right-to-left so array indices stay valid.
+ */
+export async function quickFixRemoveAllUnresolvedLibs(
+  pairs: readonly PluginConfigUnresolvedLibData[],
+  relatedDiagnostics: Diagnostic[],
+): Promise<CodeAction | undefined> {
+  const unique: (PluginConfigUnresolvedLibData & { path: JSONPath })[] = [];
+  const seen = new Set<string>();
+  for (const pair of pairs) {
+    if (!pair.path) {
+      continue;
+    }
+    const key = pair.path.join("/");
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    unique.push(pair as PluginConfigUnresolvedLibData & { path: JSONPath });
+  }
+  if (unique.length < 2) {
+    return undefined;
+  }
+
+  const read = await readProcGrpsText();
+  if (!read) {
+    return undefined;
+  }
+  const { uri, text: initialText } = read;
+  let text = initialText;
+
+  unique.sort((a, b) => {
+    // Sort from highest index first so earlier indices remain valid when removing right-to-left.
+    return Number(b.path.at(-1)) - Number(a.path.at(-1));
+  });
+
+  for (const { path } of unique) {
+    try {
+      text = jsoncApplyEdits(
+        text,
+        jsoncModify(text, path, undefined, JSONC_FORMAT),
+      );
+    } catch (err) {
+      console.error(
+        "Failed to build proc_grps edit from unresolved lib path:",
+        err,
+      );
+      return undefined;
+    }
+  }
+
+  return {
+    title: `Remove all ${unique.length} unresolved libraries`,
+    kind: CodeActionKind.QuickFix,
+    diagnostics: relatedDiagnostics,
+    command: {
+      title: "Remove all unresolved libs",
+      command: Commands.REMOVE_DEAD_LIB,
+      arguments: [uri.toString(), text],
+    },
+  };
+}
+
+async function handleMultipleUnresolvedLibs(
+  diagnostics: Diagnostic[],
+  unresolvedLibCode: string,
+  documentUri?: string,
+): Promise<CodeAction | undefined> {
+  const unresolvedInContext = diagnostics.filter(
+    (d) => d.code === unresolvedLibCode,
+  );
+  const procGrpsEntries =
+    documentUri &&
+    isProcGrpsDocumentUri(documentUri) &&
+    unresolvedInContext.length > 0
+      ? PluginConfigurationProviderInstance.getLastProcGrpsUnresolvedLibEntries()
+      : [];
+  if (!procGrpsEntries.length) {
+    return;
+  }
+
+  const action = await quickFixRemoveAllUnresolvedLibs(
+    procGrpsEntries,
+    unresolvedInContext,
+  );
+  return action;
+}
+
 export async function applyQuickFixes(
   diagnostics: Diagnostic[],
+  documentUri?: string,
 ): Promise<CodeAction[] | undefined> {
   const actions: CodeAction[] = [];
   // PLI CODES LIST
@@ -261,10 +433,19 @@ export async function applyQuickFixes(
     LspCodes.IncludeResolution.MissingConfiguration,
   ); // "Could not resolve include directive. Plugin configuration is missing"
   const CODE_MACRO_CASE = fullCode(LspCodes.UpperCase);
+  const CODE_UNRESOLVED_LIB = fullCode(
+    LspCodes.PluginConfiguration.UnresolvedEntry,
+  );
+  const hasHandledUnresolvedLibs = await handleMultipleUnresolvedLibs(
+    diagnostics,
+    CODE_UNRESOLVED_LIB,
+    documentUri,
+  );
+  if (hasHandledUnresolvedLibs) actions.push(hasHandledUnresolvedLibs);
 
   for (const diagnostic of diagnostics) {
     if (!diagnostic.code) {
-      return;
+      continue;
     }
     let action: CodeAction | undefined;
     switch (diagnostic.code) {
@@ -283,9 +464,15 @@ export async function applyQuickFixes(
         action = quickFixUppercaseText(diagnostic);
         if (action) actions.push(action);
         break;
+      case CODE_UNRESOLVED_LIB:
+        action = await quickFixRemoveUnresolvedLib(diagnostic);
+        if (action) actions.push(action);
+        break;
     }
   }
 
-  if (!actions.length) return undefined;
+  if (!actions.length) {
+    return undefined;
+  }
   return actions;
 }

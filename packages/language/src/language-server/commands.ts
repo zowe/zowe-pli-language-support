@@ -35,3 +35,15 @@ export async function commandCreateConfig(
   }
   await updateOrCreateConfig(programPath);
 }
+
+export async function commandRemoveUnresolvedLib(params: ExecuteCommandParams) {
+  const [uri, content] = params.arguments as string[];
+  if (!uri || content === undefined) {
+    return;
+  }
+  try {
+    await FileSystemProviderInstance.writeFile(UriUtils.toUri(uri), content);
+  } catch (err) {
+    console.error(`Failed to write file at URI: ${uri}`, err);
+  }
+}

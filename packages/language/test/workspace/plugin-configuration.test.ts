@@ -99,7 +99,7 @@ describe("Plugin Configuration Tests", () => {
 
     // should generate a diagnostic for the non-existing lib
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].code).toBe("COPC01");
+    expect(diagnostics[0].code).toBe("COPC01E");
     expect(diagnostics[0].message).toContain("nonexistent-libs");
     expect(diagnostics[0].severity).toBe(1); // err
   });
@@ -131,11 +131,11 @@ describe("Plugin Configuration Tests", () => {
     expect(diagnostics).toHaveLength(2);
 
     const d0 = diagnostics[0];
-    expect(d0.code).toBe("COPC01");
+    expect(d0.code).toBe("COPC01E");
     expect(diagnostics.some((d) => d.message.includes("invalid1"))).toBe(true);
 
     const d1 = diagnostics[1];
-    expect(d1.code).toBe("COPC01");
+    expect(d1.code).toBe("COPC01E");
     expect(diagnostics.some((d) => d.message.includes("invalid2"))).toBe(true);
   });
 

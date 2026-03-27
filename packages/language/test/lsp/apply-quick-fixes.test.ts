@@ -19,7 +19,9 @@ import {
   PluginConfigurationProvider,
   setPluginConfigurationProvider,
   deserializeProcessGroup,
+  type PluginConfigUnresolvedLibData,
 } from "../../src/workspace/plugin-configuration-provider";
+import type { JSONPath } from "../../src/utils/jsonc";
 import { UriUtils } from "../../src/utils/uri";
 import * as applyQuickFixes from "../../src/language-server/code-actions/apply-quick-fixes";
 import { PLICodes } from "../../src/validation/pli-codes";
@@ -61,6 +63,74 @@ beforeEach(async () => {
     { program: "main.pli", pgroup: "default" },
   ]);
 });
+
+const CODE_UNRESOLVED_LIB = fullCode(
+  LspCodes.PluginConfiguration.UnresolvedEntry,
+);
+
+function procGrpsDocumentUri(): string {
+  return UriUtils.joinPath(
+    UriUtils.toUri(pluginConfig.getWorkspacePath()),
+    ".pliplugin",
+    "proc_grps.json",
+  ).toString();
+}
+
+function unresolvedLibDiagnostic(
+  lib: string,
+  pgroup = "default",
+  path?: JSONPath,
+): Diagnostic {
+  return {
+    code: CODE_UNRESOLVED_LIB,
+    message: `unresolved ${lib}`,
+    range: {
+      start: { line: 0, character: 0 },
+      end: { line: 0, character: 1 },
+    },
+    data: { lib, pgroup, path } as PluginConfigUnresolvedLibData,
+  } as Diagnostic;
+}
+
+async function writeProcGrpsWithLibs(libs: string[]): Promise<void> {
+  await vfs.writeFile(
+    UriUtils.toUri("/workspace/.pliplugin/proc_grps.json"),
+    JSON.stringify(
+      {
+        pgroups: [
+          {
+            name: "default",
+            "include-extensions": [".inc"],
+            libs,
+          },
+        ],
+      },
+      undefined,
+      2,
+    ),
+  );
+}
+
+async function setupParsedProcGrps(libs: string[]): Promise<void> {
+  const procGrpsJson = JSON.stringify(
+    {
+      pgroups: [
+        {
+          name: "default",
+          "include-extensions": [".inc"],
+          libs,
+        },
+      ],
+    },
+    undefined,
+    2,
+  );
+  await vfs.writeFile(
+    UriUtils.toUri("/workspace/.pliplugin/proc_grps.json"),
+    procGrpsJson,
+  );
+  await pluginConfig.parseProcessGroupConfigs(procGrpsJson);
+}
 
 //
 // ----------------------------------------------------------
@@ -395,5 +465,383 @@ describe("applyQuickFixes", () => {
 
     const result = await applyQuickFixes.applyQuickFixes(diagnostics);
     expect(result).toHaveLength(2);
+  });
+});
+
+//
+// ----------------------------------------------------------
+// quickFixRemoveUnresolvedLib tests
+// ----------------------------------------------------------
+describe("quickFixRemoveUnresolvedLib", () => {
+  test("returns undefined when diagnostic data omits lib or pgroup", async () => {
+    expect(
+      await applyQuickFixes.quickFixRemoveUnresolvedLib({
+        code: CODE_UNRESOLVED_LIB,
+        data: { lib: "x" },
+      } as Diagnostic),
+    ).toBeUndefined();
+    expect(
+      await applyQuickFixes.quickFixRemoveUnresolvedLib({
+        code: CODE_UNRESOLVED_LIB,
+        data: { pgroup: "default" },
+      } as Diagnostic),
+    ).toBeUndefined();
+  });
+
+  test("returns undefined when diagnostic data omits path", async () => {
+    expect(
+      await applyQuickFixes.quickFixRemoveUnresolvedLib(
+        unresolvedLibDiagnostic("x"),
+      ),
+    ).toBeUndefined();
+  });
+
+  test("returns REMOVE_DEAD_LIB action that drops the matching libs entry", async () => {
+    await writeProcGrpsWithLibs(["keep-me", "drop-me", "also-keep"]);
+
+    const action = await applyQuickFixes.quickFixRemoveUnresolvedLib(
+      unresolvedLibDiagnostic("drop-me", "default", ["pgroups", 0, "libs", 1]),
+    );
+    expect(action).toBeDefined();
+    expect(action!.command!.command).toBe(Commands.REMOVE_DEAD_LIB);
+    const newContent = action!.command!.arguments![1] as string;
+    const parsed = JSON.parse(newContent) as {
+      pgroups: { name: string; libs: string[] }[];
+    };
+    expect(parsed.pgroups[0].libs).toEqual(["keep-me", "also-keep"]);
+  });
+});
+
+//
+// ----------------------------------------------------------
+// quickFixRemoveAllUnresolvedLibs tests
+// ----------------------------------------------------------
+describe("quickFixRemoveAllUnresolvedLibs", () => {
+  test("returns undefined when fewer than two unique entries", async () => {
+    expect(
+      await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+        [{ lib: "a", pgroup: "default", path: ["pgroups", 0, "libs", 0] }],
+        [],
+      ),
+    ).toBeUndefined();
+
+    expect(
+      await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+        [
+          {
+            lib: "same",
+            pgroup: "default",
+            path: ["pgroups", 0, "libs", 0],
+          },
+          {
+            lib: "same",
+            pgroup: "default",
+            path: ["pgroups", 0, "libs", 0],
+          },
+        ],
+        [],
+      ),
+    ).toBeUndefined();
+  });
+
+  test("returns undefined when entries have no paths", async () => {
+    expect(
+      await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+        [
+          { lib: "a", pgroup: "default" },
+          { lib: "b", pgroup: "default" },
+        ],
+        [],
+      ),
+    ).toBeUndefined();
+  });
+
+  test("removes every unique entry in one command and deduplicates input", async () => {
+    await writeProcGrpsWithLibs(["w", "x", "y", "z"]);
+
+    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+      [
+        { lib: "x", pgroup: "default", path: ["pgroups", 0, "libs", 1] },
+        { lib: "y", pgroup: "default", path: ["pgroups", 0, "libs", 2] },
+        { lib: "x", pgroup: "default", path: ["pgroups", 0, "libs", 1] },
+      ],
+      [],
+    );
+    expect(action).toBeDefined();
+    expect(action!.title).toContain("Remove all 2 unresolved libraries");
+    expect(action!.command!.command).toBe(Commands.REMOVE_DEAD_LIB);
+    const newContent = action!.command!.arguments![1] as string;
+    const parsed = JSON.parse(newContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsed.pgroups[0].libs).toEqual(["w", "z"]);
+  });
+
+  test("path-aware remove-all removes duplicate libs from right to left", async () => {
+    await writeProcGrpsWithLibs(["dup", "keep", "dup"]);
+
+    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+      [
+        { lib: "dup", pgroup: "default", path: ["pgroups", 0, "libs", 0] },
+        { lib: "dup", pgroup: "default", path: ["pgroups", 0, "libs", 2] },
+      ],
+      [],
+    );
+
+    expect(action).toBeDefined();
+    const newContent = action!.command!.arguments![1] as string;
+    const parsed = JSON.parse(newContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsed.pgroups[0].libs).toEqual(["keep"]);
+  });
+});
+
+//
+// ----------------------------------------------------------
+// applyQuickFixes (proc_grps.json + lastProcGrpsUnresolvedLibEntries)
+// ----------------------------------------------------------
+describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
+  test("with proc_grps documentUri and snapshot: yields bulk remove-all from snapshot plus individual removes from context diagnostics", async () => {
+    await setupParsedProcGrps(["bad-a", "bad-b", "bad-c"]);
+
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    expect(snapshot).toHaveLength(3);
+
+    const result = await applyQuickFixes.applyQuickFixes(
+      [unresolvedLibDiagnostic("bad-a", "default", snapshot[0].path)],
+      procGrpsDocumentUri(),
+    );
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(2);
+
+    const removeAll = result!.find((a) =>
+      a.title.startsWith("Remove all 3 unresolved"),
+    );
+    expect(removeAll).toBeDefined();
+    const single = result!.filter((a) =>
+      a.title.startsWith("Remove unresolved library"),
+    );
+    expect(single).toHaveLength(1);
+    expect(single[0].title).toEqual("Remove unresolved library 'bad-a'.");
+    const allContent = removeAll!.command!.arguments![1] as string;
+    expect(JSON.parse(allContent).pgroups[0].libs).toEqual([]);
+  });
+
+  test("with proc_grps documentUri and single snapshot entry: remove-all is omitted", async () => {
+    await setupParsedProcGrps(["only-bad"]);
+
+    expect(pluginConfig.getLastProcGrpsUnresolvedLibEntries()).toHaveLength(1);
+
+    const result = await applyQuickFixes.applyQuickFixes(
+      [
+        unresolvedLibDiagnostic("only-bad", "default", [
+          "pgroups",
+          0,
+          "libs",
+          0,
+        ]),
+      ],
+      procGrpsDocumentUri(),
+    );
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(1);
+    expect(result![0].title).toBe("Remove unresolved library 'only-bad'.");
+  });
+
+  test("without proc_grps documentUri: uses per-diagnostic path only", async () => {
+    await setupParsedProcGrps(["solo-bad"]);
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+
+    const result = await applyQuickFixes.applyQuickFixes([
+      unresolvedLibDiagnostic("solo-bad", "default", snapshot[0].path),
+    ]);
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(1);
+    expect(result![0].command!.command).toBe(Commands.REMOVE_DEAD_LIB);
+  });
+
+  test("with proc_grps URI but no unresolved lib in context: no unresolved-lib actions", async () => {
+    await setupParsedProcGrps(["bad-x"]);
+
+    const result = await applyQuickFixes.applyQuickFixes(
+      [
+        {
+          code: fullCode(LspCodes.IncludeResolution.MissingConfiguration),
+          data: { entryUri: "/workspace/foo.pli" },
+        } as Diagnostic,
+      ],
+      procGrpsDocumentUri(),
+    );
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(1);
+    expect(result![0].title).toContain("Create a startup configuration");
+  });
+});
+
+//
+// ----------------------------------------------------------
+// parseProcessGroupConfigs → metadata-driven quick fixes
+// These tests exercise the real parsing path to ensure
+// metadata paths are root-relative and quick fixes produce
+// actual content changes (not no-ops).
+// ----------------------------------------------------------
+describe("metadata-driven quick fixes via parseProcessGroupConfigs", () => {
+  test("parseProcessGroupConfigs stores root-relative paths in snapshot entries", async () => {
+    await setupParsedProcGrps(["nonexistent-a", "nonexistent-b"]);
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    expect(snapshot).toHaveLength(2);
+
+    for (const entry of snapshot) {
+      expect(entry.path).toBeDefined();
+      expect(entry.path![0]).toBe("pgroups");
+      expect(typeof entry.path![1]).toBe("number");
+      expect(entry.path![2]).toBe("libs");
+      expect(typeof entry.path![3]).toBe("number");
+    }
+  });
+
+  test("single remove via parsed metadata actually changes content", async () => {
+    await setupParsedProcGrps(["keep-me", "bad-lib"]);
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    const badEntry = snapshot.find((e) => e.lib === "bad-lib");
+    expect(badEntry).toBeDefined();
+    expect(badEntry!.path).toBeDefined();
+
+    const diag = unresolvedLibDiagnostic("bad-lib");
+    diag.data.path = badEntry!.path;
+
+    const action = await applyQuickFixes.quickFixRemoveUnresolvedLib(diag);
+    expect(action).toBeDefined();
+    expect(action!.command!.command).toBe(Commands.REMOVE_DEAD_LIB);
+
+    const newContent = action!.command!.arguments![1] as string;
+    const parsed = JSON.parse(newContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsed.pgroups[0].libs).toEqual(["keep-me"]);
+  });
+
+  test("remove-all via parsed metadata removes all invalid libs", async () => {
+    await setupParsedProcGrps(["bad-a", "bad-b", "bad-c"]);
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    expect(snapshot).toHaveLength(3);
+    expect(snapshot.every((e) => e.path !== undefined)).toBe(true);
+
+    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+      snapshot,
+      [],
+    );
+    expect(action).toBeDefined();
+    expect(action!.title).toContain("Remove all 3 unresolved");
+
+    const newContent = action!.command!.arguments![1] as string;
+    const parsed = JSON.parse(newContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsed.pgroups[0].libs).toEqual([]);
+  });
+
+  test("duplicate libs via parsed metadata get distinct root-relative paths", async () => {
+    await vfs.writeFile(UriUtils.toUri("/workspace/keep/.placeholder"), "");
+    await setupParsedProcGrps(["dup", "keep", "dup"]);
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    const dupEntries = snapshot.filter((e) => e.lib === "dup");
+    expect(dupEntries).toHaveLength(2);
+
+    expect(dupEntries[0].path).toEqual(["pgroups", 0, "libs", 0]);
+    expect(dupEntries[1].path).toEqual(["pgroups", 0, "libs", 2]);
+
+    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+      snapshot,
+      [],
+    );
+    expect(action).toBeDefined();
+
+    const newContent = action!.command!.arguments![1] as string;
+    const parsed = JSON.parse(newContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsed.pgroups[0].libs).toEqual(["keep"]);
+  });
+
+  test("end-to-end: applyQuickFixes with parsed metadata yields working quick fixes", async () => {
+    await setupParsedProcGrps(["valid-should-fail", "another-bad"]);
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    expect(snapshot).toHaveLength(2);
+
+    const diagA: Diagnostic = {
+      code: CODE_UNRESOLVED_LIB,
+      message: "unresolved valid-should-fail",
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 1 },
+      },
+      data: snapshot[0],
+    } as Diagnostic;
+
+    const result = await applyQuickFixes.applyQuickFixes(
+      [diagA],
+      procGrpsDocumentUri(),
+    );
+    expect(result).toBeDefined();
+
+    const removeAll = result!.find((a) => a.title.startsWith("Remove all"));
+    expect(removeAll).toBeDefined();
+    const removeAllContent = removeAll!.command!.arguments![1] as string;
+    const parsedAll = JSON.parse(removeAllContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsedAll.pgroups[0].libs).toEqual([]);
+
+    const single = result!.filter((a) =>
+      a.title.startsWith("Remove unresolved library"),
+    );
+    expect(single).toHaveLength(1);
+    const singleContent = single[0].command!.arguments![1] as string;
+    const parsedSingle = JSON.parse(singleContent) as {
+      pgroups: { libs: string[] }[];
+    };
+    expect(parsedSingle.pgroups[0].libs).toHaveLength(1);
+  });
+
+  test("multi-pgroup parsed metadata has correct root-relative paths", async () => {
+    const procGrpsJson = JSON.stringify(
+      {
+        pgroups: [
+          {
+            name: "group-a",
+            "include-extensions": [".inc"],
+            libs: ["valid-dir"],
+          },
+          {
+            name: "group-b",
+            "include-extensions": [".inc"],
+            libs: ["nonexistent"],
+          },
+        ],
+      },
+      undefined,
+      2,
+    );
+    await vfs.writeFile(
+      UriUtils.toUri("/workspace/.pliplugin/proc_grps.json"),
+      procGrpsJson,
+    );
+    await vfs.writeFile(
+      UriUtils.toUri("/workspace/valid-dir/.placeholder"),
+      "",
+    );
+    await pluginConfig.parseProcessGroupConfigs(procGrpsJson);
+    pluginConfig.setProgramConfigs("/workspace", [
+      { program: "main.pli", pgroup: "group-a" },
+      { program: "other.pli", pgroup: "group-b" },
+    ]);
+
+    const snapshot = pluginConfig.getLastProcGrpsUnresolvedLibEntries();
+    expect(snapshot).toHaveLength(1);
+    expect(snapshot[0].lib).toBe("nonexistent");
+    expect(snapshot[0].pgroup).toBe("group-b");
+    expect(snapshot[0].path).toEqual(["pgroups", 1, "libs", 0]);
   });
 });

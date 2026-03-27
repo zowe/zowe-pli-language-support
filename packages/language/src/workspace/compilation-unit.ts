@@ -104,6 +104,15 @@ const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
 const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 const FIVE_MINUTES = 1000 * 60 * 5;
 
+/**
+ * JSON under `.pliplugin/` is not PL/I source. The client attaches the LS there for code actions;
+ * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
+ */
+function isPluginConfigurationUri(uri: URI): boolean {
+  const path = uri.fsPath.replace(/\\/g, "/");
+  return path.includes("/.pliplugin/") && /\.json$/i.test(path);
+}
+
 function createBuiltinUnitGetter(
   builtinDocument: TextDocument,
 ): () => Promise<CompilationUnit> {
@@ -263,6 +272,9 @@ export class CompilationUnitHandler {
     if (this.compilationUnits.has(uri.toString())) {
       // existing compilation unit
       return this.compilationUnits.get(uri.toString());
+    }
+    if (isPluginConfigurationUri(uri)) {
+      return undefined;
     } else if (!PluginConfigurationProviderInstance.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
       const unit = await this.createAndStoreCompilationUnit(uri);

@@ -36,9 +36,6 @@ export const LspCodes = {
     },
   },
 
-  /**
-   * Member name validation codes
-   */
   MemberValidation: {
     /**
      * Member name exceeds 8 characters
@@ -72,6 +69,29 @@ export const LspCodes = {
       severity: Severity.E,
       message: (attribute: string) =>
         `The attribute '${attribute}' is a builtin attribute and cannot be used in non-builtin files.`,
+    },
+  },
+
+  PluginConfiguration: {
+    UnresolvedEntry: {
+      code: "COPC01",
+      severity: Severity.E,
+      message: (lib: string) =>
+        `Plugin Configuration failed to resolve library entry '${lib}'`,
+    },
+
+    ParseError: {
+      code: "COPC02",
+      severity: Severity.E,
+      message: (fileName: string, parseErrorCode: string) =>
+        `Plugin Configuration parse error in ${fileName}: ${parseErrorCode}`,
+    },
+
+    InvalidStructure: {
+      code: "COPC03",
+      severity: Severity.E,
+      message: (fileName: string, expected: string) =>
+        `Plugin Configuration expected '${expected}' in ${fileName}.`,
     },
   },
 };

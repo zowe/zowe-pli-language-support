@@ -68,9 +68,18 @@ export function tokenToUri(token: Token): string | undefined {
 }
 
 export function tokenToRange(token: Token): Range {
+  return offsetLengthToRange(
+    token.startOffset,
+    token.endOffset - token.startOffset + 1,
+  );
+}
+
+export function offsetLengthToRange(offset: number, length: number): Range {
+  const safeOffset = Math.max(0, offset);
+  const safeLength = Math.max(1, length);
   return {
-    start: token.startOffset,
-    end: token.endOffset + 1,
+    start: safeOffset,
+    end: safeOffset + safeLength,
   };
 }
 
@@ -178,6 +187,30 @@ export function diagnosticFromCode(
       code: fullCode(code),
     };
   }
+}
+
+export function diagnosticFromCodeAtRange(
+  code: SimplePLICode,
+  range: Range,
+): Diagnostic;
+export function diagnosticFromCodeAtRange<Code extends ParametricPLICode>(
+  code: Code,
+  range: Range,
+  ...args: Parameters<Code["message"]>
+): Diagnostic;
+export function diagnosticFromCodeAtRange(
+  code: SimplePLICode | ParametricPLICode,
+  range: Range,
+  ...args: unknown[]
+): Diagnostic {
+  const message =
+    typeof code.message === "string" ? code.message : code.message(...args);
+  return {
+    severity: code.severity,
+    range,
+    message,
+    code: fullCode(code),
+  };
 }
 
 export function diagnostic(
