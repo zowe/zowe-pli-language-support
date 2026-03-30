@@ -9,6 +9,7 @@
  *
  */
 
+import { Token } from "../parser/tokens";
 import {
   DeclarationAttribute,
   DeclaredItem,
@@ -35,6 +36,7 @@ export function getTypeExtendingAttribute(
 
 export interface ExtendingDeclaredItems {
   target: DeclaredVariable;
+  token: Token | null;
   extendingItems: DeclaredItem[];
 }
 
@@ -52,6 +54,7 @@ export function getExtendingDeclaredItems(
       if (declareStatement) {
         return {
           target: ref,
+          token: attr.likeToken,
           extendingItems: declareStatement.items,
         };
       }
@@ -66,6 +69,7 @@ export function getExtendingDeclaredItems(
       if (defineStructureStatement) {
         return {
           target: ref,
+          token: attr.typeToken,
           extendingItems: defineStructureStatement.items,
         };
       }
