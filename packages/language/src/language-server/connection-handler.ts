@@ -56,6 +56,8 @@ export { PluginConfiguration } from "./constants";
 export const WorkspaceDidChangePlipluginConfigNotification =
   "workspace/didChangePlipluginConfig";
 
+export const ExistingFileRequest = "pli/existingFileRequest";
+
 export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
@@ -342,6 +344,11 @@ export function startLanguageServer(connection: Connection): void {
       await compilationUnitHandler.reindex(connection, CancellationToken.None);
     },
   );
+  connection.onRequest(ExistingFileRequest, (uriString: string): boolean => {
+    const uri = URI.parse(uriString);
+    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+    return compilationUnit !== undefined;
+  });
 
   connection.onCodeAction(async (params) => {
     const requestedKinds = params.context.only;

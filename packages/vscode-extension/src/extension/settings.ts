@@ -47,11 +47,11 @@ export class Settings {
   }
 
   public get skippedCodeEnabled(): boolean {
-    return this.getConfiguration().get("skippedCode.enabled") ?? true;
+    return this.getConfiguration().get("skippedCode.enabled", true);
   }
 
   public get skippedCodeOpacity(): number {
-    return this.getConfiguration().get("skippedCode.opacity") ?? 0.55;
+    return this.getConfiguration().get("skippedCode.opacity", 0.55);
   }
 
   public get marginIndicatorRulersEnabled(): boolean {
@@ -59,6 +59,18 @@ export class Settings {
   }
 
   public get marginIndicatorRulers(): "off" | "default" | "automatic" {
-    return this.getConfiguration().get("marginIndicator.rulers") ?? "off";
+    return this.getConfiguration().get("marginIndicator.rulers", "off");
+  }
+
+  public get autoDetect(): boolean {
+    return this.getConfiguration().get("autoDetect", true);
+  }
+
+  public async setAutoDetect(value: boolean): Promise<void> {
+    await this.getConfiguration().update(
+      "autoDetect",
+      value,
+      vscode.ConfigurationTarget.Global,
+    );
   }
 }
