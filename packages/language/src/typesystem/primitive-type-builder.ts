@@ -63,12 +63,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
     const locatorCall =
       this.attributeWitnesses.witnesses[AttributeKind.SetLike];
     if (locatorCall && locatorCall.value) {
-      if (
-        !locatorCall.value.element ||
-        !locatorCall.value.element.element ||
-        !locatorCall.value.element.element.ref ||
-        !locatorCall.value.element.element.ref.node
-      ) {
+      if (!locatorCall.value.element?.element?.ref?.node) {
         this.diagnostics.push(
           diagnosticFromCode(PLICodes.Warning.IBM3330I, this.elementName),
         );
@@ -78,7 +73,7 @@ export class DefaultPrimitiveTypeBuilder implements PrimitiveTypeBuilder {
         };
       }
       const typeNode = this.unit.services.inferer.inferType(
-        locatorCall.value.element!.element!.ref!.node!,
+        locatorCall.value.element.element.ref.node,
         this.unit,
       );
       if (!TypeDescriptions.isComposite(typeNode)) {
