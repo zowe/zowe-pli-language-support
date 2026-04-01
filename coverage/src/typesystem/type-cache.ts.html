@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>18/18</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/18</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
@@ -114,16 +114,7 @@
 <a name='L49'></a><a href='#L49'>49</a>
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
-<a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L52'></a><a href='#L52'>52</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -147,40 +138,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1244x</span>
-<span class="cline-any cline-yes">1244x</span>
+<span class="cline-any cline-yes">1247x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">52223x</span>
-<span class="cline-any cline-yes">52223x</span>
+<span class="cline-any cline-yes">86925x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">69775x</span>
-<span class="cline-any cline-yes">35127x</span>
+<span class="cline-any cline-yes">69830x</span>
+<span class="cline-any cline-yes">35161x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34648x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">34669x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34647x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34646x</span>
-<span class="cline-any cline-yes">34646x</span>
-<span class="cline-any cline-yes">34646x</span>
-<span class="cline-any cline-yes">34646x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34669x</span>
+<span class="cline-any cline-yes">34669x</span>
+<span class="cline-any cline-yes">34669x</span>
+<span class="cline-any cline-yes">34669x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
@@ -207,7 +189,6 @@ export interface TypeCache {
 }
 &nbsp;
 export class DefaultTypeCache implements TypeCache {
-  private blocked = new Set&lt;ast.SyntaxNode&gt;();
   private cache = new Map&lt;ast.SyntaxNode, TypeDescriptions.Any&gt;();
 &nbsp;
   clear() {
@@ -216,7 +197,6 @@ export class DefaultTypeCache implements TypeCache {
 &nbsp;
   set(node: ast.SyntaxNode, description: TypeDescriptions.Any): void {
     this.cache.set(node, description);
-    this.blocked.delete(node);
   }
 &nbsp;
   get(
@@ -226,21 +206,14 @@ export class DefaultTypeCache implements TypeCache {
     if (this.cache.has(node)) {
       return this.cache.get(node)!;
     }
-    if (!getter) {
-      return TypeDescriptions.Unknown();
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!getter) {
+<span class="cstat-no" title="statement not covered" >      return TypeDescriptions.Unknown();</span>
     }
-    if (this.blocked.has(node)) {
-      // Cyclic dependency detected
-      const result = TypeDescriptions.Unknown();
-      this.cache.set(node, result);
-      this.blocked.delete(node);
-      return result;
-    } else {
-      this.blocked.add(node);
-      const description = getter();
-      this.set(node, description);
-      return description;
-    }
+    // Set a temporary value to prevent infinite recursion in case of circular references.
+    this.set(node, TypeDescriptions.Unknown());
+    const description = getter();
+    this.set(node, description);
+    return description;
   }
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -250,7 +223,7 @@ export class DefaultTypeCache implements TypeCache {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-26T14:04:24.799Z
+                at 2026-04-01T11:45:00.207Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
