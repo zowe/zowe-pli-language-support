@@ -22,7 +22,6 @@ export interface TypeCache {
 }
 
 export class DefaultTypeCache implements TypeCache {
-  private blocked = new Set<ast.SyntaxNode>();
   private cache = new Map<ast.SyntaxNode, TypeDescriptions.Any>();
 
   clear() {
@@ -31,7 +30,6 @@ export class DefaultTypeCache implements TypeCache {
 
   set(node: ast.SyntaxNode, description: TypeDescriptions.Any): void {
     this.cache.set(node, description);
-    this.blocked.delete(node);
   }
 
   get(
@@ -44,17 +42,10 @@ export class DefaultTypeCache implements TypeCache {
     if (!getter) {
       return TypeDescriptions.Unknown();
     }
-    if (this.blocked.has(node)) {
-      // Cyclic dependency detected
-      const result = TypeDescriptions.Unknown();
-      this.cache.set(node, result);
-      this.blocked.delete(node);
-      return result;
-    } else {
-      this.blocked.add(node);
-      const description = getter();
-      this.set(node, description);
-      return description;
-    }
+    // Set a temporary value to prevent infinite recursion in case of circular references.
+    this.set(node, TypeDescriptions.Unknown());
+    const description = getter();
+    this.set(node, description);
+    return description;
   }
 }

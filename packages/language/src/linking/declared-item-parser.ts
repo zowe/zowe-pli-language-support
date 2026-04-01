@@ -95,6 +95,7 @@ const LEVEL_START_INDEX = 1;
 function unrollFactorized(
   rolledItems: readonly DeclaredItemElement[],
   visited: Set<DeclaredVariable>,
+  reporter: LinkerErrorReporter,
 ): UnrolledItem[] {
   const items = rolledItems.slice(); // Explicitly make a copy of the items, to use `.shift()`
   const variables: UnrolledItem[] = [];
@@ -118,7 +119,7 @@ function unrollFactorized(
   for (const item of items) {
     if (item.kind === SyntaxKind.DeclaredItem) {
       const extended = getExtendingDeclaredItems(item);
-      const unrolled = unrollFactorized(item.elements, visited);
+      const unrolled = unrollFactorized(item.elements, visited, reporter);
       for (const unrolledItem of unrolled) {
         // Push the unrolled item to the results
         variables.push(unrolledItem);
@@ -126,8 +127,9 @@ function unrollFactorized(
           // If we've already visited this node, so we have a cyclic LIKE/TYPE extension.
           // We should not continue unrolling here to prevent infinite loops.
           if (visited.has(extended.target)) {
-            // Do not report the error here, since this could lead to multiple reports for the same token
-            // The error will be reported in the validation phase.
+            if (extended.token) {
+              reporter.reportCyclicLike(extended.token);
+            }
             continue;
           }
           variables.push(
@@ -138,6 +140,7 @@ function unrollFactorized(
               item.level ?? LEVEL_START_INDEX,
               // Create a copy of the visited set for each branch
               new Set(visited),
+              reporter,
             ),
           );
         }
@@ -166,9 +169,10 @@ function unrollSubtree(
   node: DeclaredVariable,
   level: number,
   visited: Set<DeclaredVariable>,
+  reporter: LinkerErrorReporter,
 ): UnrolledItem[] {
   visited.add(node);
-  const unrolled = unrollFactorized(items, visited);
+  const unrolled = unrollFactorized(items, visited, reporter);
   const result: UnrolledItem[] = [];
   let foundLevel: number | undefined = undefined;
   for (const item of unrolled) {
@@ -221,7 +225,7 @@ export class DeclaredItemParser {
     items: readonly DeclaredItem[],
     private reporter: LinkerErrorReporter,
   ) {
-    this.items = unrollFactorized(items, new Set());
+    this.items = unrollFactorized(items, new Set(), reporter);
   }
 
   static parse(

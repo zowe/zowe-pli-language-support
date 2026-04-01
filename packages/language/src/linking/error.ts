@@ -256,4 +256,8 @@ export class LinkerErrorReporter {
   reportPotentialUnsetVariable(token: Token, name: string) {
     this.accept(diagnosticFromCode(PLICodes.Warning.IBM1085I, token, name));
   }
+
+  reportCyclicLike(token: Token) {
+    this.accept(diagnosticFromCode(PLICodes.Severe.IBM1652I, token));
+  }
 }
