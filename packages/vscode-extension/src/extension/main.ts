@@ -23,15 +23,18 @@ import { registerCustomDecorators } from "./decorators";
 import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
 import { TelemetryReporter } from "@vscode/extension-telemetry";
 import { handleMissingConfig } from "../common/missing-config-handler";
+import { registerPliDocumentIdentifier } from "./document-identification";
 
 let client: LanguageClient;
 let settings: Settings;
 
 // This function is called when the extension is activated.
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(
+  context: vscode.ExtensionContext,
+): Promise<void> {
   BuiltinFileSystemProvider.register(context);
   settings = Settings.getInstance();
-  client = startLanguageClient(context);
+  client = await startLanguageClient(context);
 
   const telemetryReporter: TelemetryReporter | undefined =
     getTelemetryReporter(context);
@@ -39,6 +42,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     registerOnDidChangeActiveTextEditor(),
     registerOnDidOpenTextDocListener(telemetryReporter),
+    registerPliDocumentIdentifier(client),
   );
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -120,7 +124,9 @@ export async function deactivate(): Promise<void> {
   }
 }
 
-function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
+async function startLanguageClient(
+  context: vscode.ExtensionContext,
+): Promise<LanguageClient> {
   const serverModule = context.asAbsolutePath(
     path.join("out", "language", "main.cjs"),
   );
@@ -162,7 +168,7 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
   registerCustomDecorators(client, settings);
 
   // Start the client. This will also launch the server
-  client.start();
+  await client.start();
   return client;
 }
 

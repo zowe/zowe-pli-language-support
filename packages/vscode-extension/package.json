@@ -78,6 +78,11 @@
     "configuration": {
       "title": "PL/I Language Support",
       "properties": {
+        "pli.autoDetect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable automatic detection of PL/I files based on content."
+        },
         "pli.skippedCode.enabled": {
           "type": "boolean",
           "default": true,
