@@ -107,6 +107,15 @@ export const configure = async (
             vscode: "*",
           },
           contributes: {
+            configurationDefaults: {
+              "editor.semanticTokenColorCustomizations": {
+                rules: {
+                  "*.preprocessor:pli": {
+                    fontStyle: "italic",
+                  },
+                },
+              },
+            },
             languages: [
               {
                 id: "pli",

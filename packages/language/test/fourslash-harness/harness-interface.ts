@@ -9,7 +9,6 @@
  *
  */
 
-import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { Diagnostic, type Severity } from "../../src/language-server/types";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
@@ -50,8 +49,15 @@ import {
 import { LspCodes } from "../../src/validation/lsp-codes";
 import { PLICode, PLICodes } from "../../src/validation/pli-codes";
 import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
+import {
+  SemanticTokenModifiers,
+  SemanticTokenTypes,
+} from "../../src/language-server/semantic-tokens";
 
-type SemanticTokenTypesValues = `${SemanticTokenTypes}`;
+export type SemanticTokenTypesValues = keyof typeof SemanticTokenTypes;
+export type SemanticTokenModifiersValues =
+  | keyof typeof SemanticTokenModifiers
+  | "none";
 
 export type CompilerOptions = PliCompilerOptions & {
   macroOptions: MacroCompilerOptions;
@@ -339,6 +345,20 @@ export interface HarnessTesterInterface {
      * @param tokenType The token type to expect.
      */
     expectAt(label: Label, tokenType: SemanticTokenTypesValues): void;
+    /**
+     * Expect that the semantic tokens at the given label have the given token modifier.
+     * @param label The label to expect the semantic tokens at.
+     */
+    expectModifierAt(label: SemanticTokenModifiersValues): void;
+    /**
+     * Expect that the semantic tokens at the given label have the given token modifier.
+     * @param label The label to expect the semantic tokens at.
+     * @param modifier The token modifier to expect.
+     */
+    expectModifierAt(
+      label: Label,
+      modifier: SemanticTokenModifiersValues,
+    ): void;
   };
 
   preprocessor: {

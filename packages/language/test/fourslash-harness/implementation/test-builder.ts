@@ -10,10 +10,13 @@
  */
 
 import { MarkupKind } from "vscode-languageserver";
-import { SemanticTokenTypes } from "vscode-languageserver-types";
 import { formatPliCodeBlock } from "../../../src/utils/code-block";
 import { TestBuilder } from "../../test-builder";
-import { HarnessTesterInterface } from "../harness-interface";
+import {
+  HarnessTesterInterface,
+  SemanticTokenModifiersValues,
+  SemanticTokenTypesValues,
+} from "../harness-interface";
 import { HarnessCodes } from "./codes";
 import { HarnessConstants } from "./constants";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
@@ -104,7 +107,12 @@ export function createTestBuilderHarnessImplementation(
       expectAt: (label, tokenType = label.toString()) =>
         testBuilder.expectSemanticTokens(
           label.toString(),
-          tokenType as `${SemanticTokenTypes}`,
+          tokenType as SemanticTokenTypesValues,
+        ),
+      expectModifierAt: (label, modifier = label.toString()) =>
+        testBuilder.expectSemanticTokenModifiers(
+          label.toString(),
+          modifier as SemanticTokenModifiersValues,
         ),
     },
     preprocessor: {

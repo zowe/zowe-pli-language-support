@@ -2113,6 +2113,9 @@ function generateSyntheticRefItem(
   context: InterpreterContext,
 ): ast.ReferenceItem {
   const refItem = ast.createReferenceItem();
+  // Set the container to the preprocessor AST
+  // This ensures that the isPreprocessorNode check works correctly
+  refItem.container = context.unit.preprocessorAst;
   const ref = ast.createReference<ast.NamedVariable>(
     refItem,
     token,

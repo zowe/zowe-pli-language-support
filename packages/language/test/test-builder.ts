@@ -29,11 +29,7 @@ import { hoverRequest } from "../src/language-server/hover-request";
 import { semanticTokens } from "../src/language-server/semantic-tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
-import {
-  SemanticTokenTypes,
-  CodeAction,
-  TextEdit,
-} from "vscode-languageserver-types";
+import { CodeAction, TextEdit } from "vscode-languageserver-types";
 import { skippedCodeRanges } from "../src/language-server/skipped-code";
 import {
   PluginConfigurationProviderInstance,
@@ -48,7 +44,11 @@ import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
-import { TypeExpectation } from "./fourslash-harness/harness-interface";
+import {
+  SemanticTokenModifiersValues,
+  SemanticTokenTypesValues,
+  TypeExpectation,
+} from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
 import { PluginConfiguration } from "../src/language-server/constants";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
@@ -1130,7 +1130,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
    * `).expectSemanticTokens("1", "variable"); // Passes
    * ```
    */
-  expectSemanticTokens(label: string, tokenType: `${SemanticTokenTypes}`) {
+  expectSemanticTokens(label: string, tokenType: SemanticTokenTypesValues) {
     const ranges = this.getLabelRanges(label);
 
     for (const { uri, start, end } of ranges) {
@@ -1155,6 +1155,44 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
         matchingToken?.semanticTokenType,
         `Semantic token for label "${label}" (${this.createPositionMessage(start)}) has wrong token type`,
       ).toBe(tokenType);
+    }
+  }
+
+  expectSemanticTokenModifiers(
+    label: string,
+    tokenModifiers: SemanticTokenModifiersValues,
+  ) {
+    const ranges = this.getLabelRanges(label);
+
+    for (const { uri, start, end } of ranges) {
+      const file = this.files.get(uri);
+      if (!file) {
+        throw new Error(`File with URI ${uri} not found`);
+      }
+
+      const textDocument = file.textDocument;
+      const tokens = semanticTokens(textDocument, this.unit);
+      const decodedTokens = SemanticTokenDecoder.decode(tokens, textDocument);
+      const matchingToken = decodedTokens.find(
+        (t) => t.offsetStart === start && t.offsetEnd === end,
+      );
+
+      expect(
+        matchingToken,
+        `Semantic token for label "${label}" (${this.createPositionMessage(start)}) not found`,
+      ).toBeDefined();
+
+      if (tokenModifiers === "none") {
+        expect(
+          matchingToken?.tokenModifiers,
+          `Semantic token for label "${label}" (${this.createPositionMessage(start)}) has unexpected token modifiers`,
+        ).toHaveLength(0);
+      } else {
+        expect(
+          matchingToken?.tokenModifiers,
+          `Semantic token for label "${label}" (${this.createPositionMessage(start)}) has wrong token modifier`,
+        ).toContain(tokenModifiers);
+      }
     }
   }
 

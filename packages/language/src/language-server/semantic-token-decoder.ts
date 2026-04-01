@@ -10,14 +10,14 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { SemanticTokenTypes } from "./semantic-tokens";
+import { SemanticTokenModifiers, SemanticTokenTypes } from "./semantic-tokens";
 
 export namespace SemanticTokenDecoder {
   export interface DecodedSemanticToken {
     offsetStart: number;
     offsetEnd: number;
     semanticTokenType: string;
-    tokenModifiers: number;
+    tokenModifiers: string[];
     text: string;
   }
 
@@ -38,11 +38,18 @@ export namespace SemanticTokenDecoder {
       character += tokens[i + 1];
       const offset = textDocument.offsetAt({ line, character });
 
+      const modifiers = tokens[i + 4];
+      const tokenModifiers: string[] = [];
+      for (let bit = 0; bit < 32; bit++) {
+        if ((modifiers & (1 << bit)) !== 0) {
+          tokenModifiers.push(SemanticTokenModifiers[bit]);
+        }
+      }
       const decodedToken: DecodedSemanticToken = {
         offsetStart: offset,
         offsetEnd: offset + tokens[i + 2],
         semanticTokenType: SemanticTokenTypes[tokens[i + 3]],
-        tokenModifiers: tokens[i + 4],
+        tokenModifiers,
         text: textDocument.getText({
           start: { line, character },
           end: { line, character: character + tokens[i + 2] },
