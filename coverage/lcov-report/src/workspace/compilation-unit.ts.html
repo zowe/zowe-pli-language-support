@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50.81% </span>
+                <span class="strong">50.4% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>62/122</span>
+                <span class='fraction'>63/125</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">48.27% </span>
+                <span class="strong">45.16% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>14/29</span>
+                <span class='fraction'>14/31</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50.83% </span>
+                <span class="strong">50.81% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>61/120</span>
+                <span class='fraction'>62/122</span>
             </div>
         
             
@@ -485,8 +485,12 @@
 <a name='L420'></a><a href='#L420'>420</a>
 <a name='L421'></a><a href='#L421'>421</a>
 <a name='L422'></a><a href='#L422'>422</a>
-<a name='L423'></a><a href='#L423'>423</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L423'></a><a href='#L423'>423</a>
+<a name='L424'></a><a href='#L424'>424</a>
+<a name='L425'></a><a href='#L425'>425</a>
+<a name='L426'></a><a href='#L426'>426</a>
+<a name='L427'></a><a href='#L427'>427</a>
+<a name='L428'></a><a href='#L428'>428</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -907,6 +911,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -935,7 +945,6 @@ import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
 import {
-  BuiltinDocuments,
   EditorDocuments,
   TextDocuments,
 } from "../language-server/text-documents.js";
@@ -1283,8 +1292,8 @@ export class CompilationUnitHandler {
       }
       const <span class="cstat-no" title="statement not covered" >allDiagnostics = diagnosticsToLSP(unit, unit.diagnostics.getAll());</span>
 <span class="cstat-no" title="statement not covered" >      for (const file of unit.services.files.keys()) {</span>
-<span class="cstat-no" title="statement not covered" >        if (BuiltinDocuments.get(file) || !EditorDocuments.get(file)) {</span>
-          // do not report diagnostics for built-in files or files not currently open in the editor
+<span class="cstat-no" title="statement not covered" >        if (!EditorDocuments.get(file) || isVirtualFile(file)) {</span>
+          // do not report diagnostics for virtual files or files not currently open in the editor
 <span class="cstat-no" title="statement not covered" >          continue;</span>
         }
         const fileDiagnostics = <span class="cstat-no" title="statement not covered" >allDiagnostics.get(file);</span>
@@ -1329,6 +1338,12 @@ export class CompilationUnitHandler {
 <span class="cstat-no" title="statement not covered" >    return Promise.all(promises).then(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >u</span>ndefined)</span>;</span>
   }
 }
+&nbsp;
+const virtualSchemes = ["git", "untitled", BuiltinsUriSchema];
+&nbsp;
+function <span class="fstat-no" title="function not covered" >isVirtualFile(u</span>ri: string): boolean {
+<span class="cstat-no" title="statement not covered" >  return virtualSchemes.some(<span class="fstat-no" title="function not covered" >(s</span>cheme) =&gt; <span class="cstat-no" title="statement not covered" >uri.startsWith(`${scheme}:`))</span>;</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -1336,7 +1351,7 @@ export class CompilationUnitHandler {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-01T11:45:00.353Z
+                at 2026-04-01T12:54:43.502Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
