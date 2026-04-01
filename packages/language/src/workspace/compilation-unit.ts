@@ -26,7 +26,6 @@ import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
 import {
-  BuiltinDocuments,
   EditorDocuments,
   TextDocuments,
 } from "../language-server/text-documents.js";
@@ -374,8 +373,8 @@ export class CompilationUnitHandler {
       }
       const allDiagnostics = diagnosticsToLSP(unit, unit.diagnostics.getAll());
       for (const file of unit.services.files.keys()) {
-        if (BuiltinDocuments.get(file) || !EditorDocuments.get(file)) {
-          // do not report diagnostics for built-in files or files not currently open in the editor
+        if (!EditorDocuments.get(file) || isVirtualFile(file)) {
+          // do not report diagnostics for virtual files or files not currently open in the editor
           continue;
         }
         const fileDiagnostics = allDiagnostics.get(file);
@@ -419,4 +418,10 @@ export class CompilationUnitHandler {
     });
     return Promise.all(promises).then(() => undefined);
   }
+}
+
+const virtualSchemes = ["git", "untitled", BuiltinsUriSchema];
+
+function isVirtualFile(uri: string): boolean {
+  return virtualSchemes.some((scheme) => uri.startsWith(`${scheme}:`));
 }
