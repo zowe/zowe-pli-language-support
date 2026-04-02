@@ -122,6 +122,15 @@ export const configure = async (
                 path: "./grammar.json",
               },
             ],
+            semanticTokenScopes: [
+              {
+                language: "pli",
+                scopes: {
+                  keyword: ["keyword.control.pli"],
+                  modifier: ["keyword.storage.pli"],
+                },
+              },
+            ],
           },
         },
         filesOrContents: extensionFilesOrContents,

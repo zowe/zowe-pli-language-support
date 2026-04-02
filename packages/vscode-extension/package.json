@@ -65,6 +65,15 @@
         "path": "syntaxes/pli.merged.json"
       }
     ],
+    "semanticTokenScopes": [
+      {
+        "language": "pli",
+        "scopes": {
+          "keyword": ["keyword.control.pli"],
+          "modifier": ["keyword.storage.pli"]
+        }
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": "**/.pliplugin/pgm_conf.json",
