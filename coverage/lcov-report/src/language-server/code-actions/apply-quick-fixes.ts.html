@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.35% </span>
+                <span class="strong">90.17% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>103/114</span>
+                <span class='fraction'>101/112</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.24% </span>
+                <span class="strong">84.21% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>52/61</span>
+                <span class='fraction'>48/57</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.47% </span>
+                <span class="strong">90.38% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>95/105</span>
+                <span class='fraction'>94/104</span>
             </div>
         
             
@@ -354,17 +354,7 @@
 <a name='L289'></a><a href='#L289'>289</a>
 <a name='L290'></a><a href='#L290'>290</a>
 <a name='L291'></a><a href='#L291'>291</a>
-<a name='L292'></a><a href='#L292'>292</a>
-<a name='L293'></a><a href='#L293'>293</a>
-<a name='L294'></a><a href='#L294'>294</a>
-<a name='L295'></a><a href='#L295'>295</a>
-<a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a>
-<a name='L298'></a><a href='#L298'>298</a>
-<a name='L299'></a><a href='#L299'>299</a>
-<a name='L300'></a><a href='#L300'>300</a>
-<a name='L301'></a><a href='#L301'>301</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L292'></a><a href='#L292'>292</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -482,24 +472,16 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">42x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -674,9 +656,8 @@
  *
  */
 &nbsp;
-import { URI } from "../../utils/uri";
-import { FileSystemProviderInstance } from "../../workspace/file-system-provider";
 import { UriUtils } from "../../utils/uri";
+import { FileSystemProviderInstance } from "../../workspace/file-system-provider";
 import {
   CodeAction,
   CodeActionKind,
@@ -697,7 +678,7 @@ export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
 ): Promise&lt;CodeAction | undefined&gt; {
   const progConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    URI.parse(diagnostic.data.entryUri),
+    UriUtils.toUri(diagnostic.data.entryUri),
   );
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!progConfig) <span class="cstat-no" title="statement not covered" >return;</span>
   const procGrpsConfig =
@@ -709,13 +690,13 @@ export async function quickFixResolveInclude(
 &nbsp;
   const configExtensions = procGrpsConfig.includeExtensions;
   const unresolvedFilePath = await FileSystemProviderInstance.search({
-    path: URI.parse(unresolvedFile),
+    path: UriUtils.toUri(unresolvedFile),
     extensions: configExtensions,
     global: true,
   });
   if (!unresolvedFilePath) return undefined;
 &nbsp;
-  const workspaceFolderUri = URI.parse(
+  const workspaceFolderUri = UriUtils.toUri(
     PluginConfigurationProviderInstance.getWorkspacePath(),
   );
 &nbsp;
@@ -781,27 +762,19 @@ export async function quickFixCreateConfig(
   if (!workspace || !entryUri) {
     return;
   }
-  const resolvedEntry = entryUri.startsWith("file://")
-    ? URI.parse(entryUri).fsPath.replace(/\\/g, "/")
-    : entryUri.replace(/\\/g, "/");
+  const resolvedEntry = UriUtils.toFilePath(entryUri);
+  const workspacePath = UriUtils.toFilePath(workspace);
 &nbsp;
-  const workspaceParts = URI.parse(workspace)
-    .fsPath.replace(/\\/g, "/")
-    .split("/")
-    .filter((e) =&gt; e.length &gt; 0);
-  const entryParts = resolvedEntry.split("/").filter((e) =&gt; e.length &gt; 0);
+  const workspaceParts = UriUtils.parts(workspacePath);
+  const entryParts = UriUtils.parts(resolvedEntry);
 &nbsp;
   const isInsideWorkspace = workspaceParts.every(
     (part, index) =&gt; part === entryParts[index],
   );
 &nbsp;
-  const rawPath = isInsideWorkspace
+  const programPath = isInsideWorkspace
     ? entryParts.slice(workspaceParts.length).join("/")
     : resolvedEntry;
-&nbsp;
-  const programPath = UriUtils.processDriveLetter(rawPath).drive
-    ? rawPath[0].toUpperCase() + rawPath.slice(1)
-    : rawPath;
 &nbsp;
   const action: CodeAction = {
     title: `Create a startup configuration for this file.`,
@@ -970,7 +943,7 @@ export async function applyQuickFixes(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-02T07:33:11.629Z
+                at 2026-04-02T09:48:45.570Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
