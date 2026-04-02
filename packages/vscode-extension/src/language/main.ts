@@ -21,6 +21,7 @@ import {
   setFileSystemProvider,
   isPathSearch,
   Stats,
+  UriUtils,
 } from "pli-language";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -88,7 +89,7 @@ class NodeFileSystemProvider implements FileSystemProvider {
     if (!files.length) {
       return undefined;
     }
-    const result = URI.file(files[0]);
+    const result = UriUtils.toUri(files[0]);
     if (!result) {
       return undefined;
     }

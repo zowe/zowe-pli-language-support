@@ -10,7 +10,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import {
   FileSystemProviderInstance,
   setFileSystemProvider,
@@ -69,7 +69,7 @@ describe("Plugin Configuration Tests", () => {
 
     // create a virtual directory to satisfy the subsequent libs check
     await FileSystemProviderInstance.writeFile(
-      URI.parse("file:///libs/existing/dummy.pli"),
+      UriUtils.toUri("file:///libs/existing/dummy.pli"),
       "",
     );
 
@@ -87,7 +87,7 @@ describe("Plugin Configuration Tests", () => {
 
     // populate the virtual file system with at least one file so it's not empty
     await FileSystemProviderInstance.writeFile(
-      URI.parse("file:///dummy.pli"),
+      UriUtils.toUri("file:///dummy.pli"),
       "",
     );
 
@@ -108,11 +108,11 @@ describe("Plugin Configuration Tests", () => {
     await PluginConfigurationProviderInstance.init("file:///");
 
     await FileSystemProviderInstance.writeFile(
-      URI.parse("file:///libs/existing1/p1.pli"),
+      UriUtils.toUri("file:///libs/existing1/p1.pli"),
       "",
     );
     await FileSystemProviderInstance.writeFile(
-      URI.parse("file:///libs/existing2/p2.pli"),
+      UriUtils.toUri("file:///libs/existing2/p2.pli"),
       "",
     );
 
@@ -145,11 +145,11 @@ describe("Plugin Configuration Tests", () => {
     const uniqueLibs = Array.from(new Set(libs));
 
     await FileSystemProviderInstance.writeFile(
-      URI.parse("file:///lib1/dir1/p1.pli"),
+      UriUtils.toUri("file:///lib1/dir1/p1.pli"),
       "",
     );
     await FileSystemProviderInstance.writeFile(
-      URI.parse("file:///lib2/DDNAME(p2)"),
+      UriUtils.toUri("file:///lib2/DDNAME(p2)"),
       "",
     );
 

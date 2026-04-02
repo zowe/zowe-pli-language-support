@@ -16,7 +16,7 @@ import {
   PluginConfigurationProviderInstance,
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 
 async function setupConfig(testLibs: string[]) {
   const pluginConfig = new PluginConfigurationProvider();
@@ -32,7 +32,7 @@ async function setupConfig(testLibs: string[]) {
 describe("Process group library path matching", () => {
   test("matches library under workspace-relative lib directory", async () => {
     await setupConfig(["cpy"]);
-    const testUri = URI.parse("/workspace/cpy/a.pli");
+    const testUri = UriUtils.toUri("/workspace/cpy/a.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
@@ -41,7 +41,7 @@ describe("Process group library path matching", () => {
 
   test("matches absolute Windows-style library path", async () => {
     await setupConfig(["cpy", "C:/Users/mockUser/pgm"]);
-    const testUri = URI.parse("C:/Users/mockUser/pgm/ext-pgm.pli");
+    const testUri = UriUtils.toUri("C:/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
@@ -50,7 +50,7 @@ describe("Process group library path matching", () => {
 
   test("matches backslash Windows library path against normalized URI", async () => {
     await setupConfig(["cpy", "C:\\Users\\mockUser\\pgm"]);
-    const testUri = URI.parse("C:/Users/mockUser/pgm/ext-pgm.pli");
+    const testUri = UriUtils.toUri("C:/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 
@@ -59,7 +59,7 @@ describe("Process group library path matching", () => {
 
   test("matches absolute path lib for Unix environments", async () => {
     await setupConfig(["cpy", "/Users/mockUser/pgm"]);
-    const testUri = URI.parse("/Users/mockUser/pgm/ext-pgm.pli");
+    const testUri = UriUtils.toUri("/Users/mockUser/pgm/ext-pgm.pli");
     const config =
       PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
 

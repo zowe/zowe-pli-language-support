@@ -12,7 +12,7 @@
 import { describe, test, expect } from "vitest";
 import { replaceNamedIndices } from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import * as lifecycle from "../../src/workspace/lifecycle";
 import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
@@ -41,7 +41,12 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   }
 
   const textDocuments = outputs.map((output, i) =>
-    TextDocument.create(URI.file(`/test${i}.pli`).toString(), "pli", 1, output),
+    TextDocument.create(
+      UriUtils.toUri(`/test${i}.pli`).toString(),
+      "pli",
+      1,
+      output,
+    ),
   );
 
   const handler = new CompilationUnitHandler();
@@ -49,7 +54,7 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   await Promise.all(
     textDocuments.map(async (doc, i) => {
       const unit = await handler.createAndStoreCompilationUnit(
-        URI.file(`/test${i}.pli`),
+        UriUtils.toUri(`/test${i}.pli`),
       );
 
       if (!unit) {

@@ -9,9 +9,8 @@
  *
  */
 
-import { URI } from "../../utils/uri";
-import { FileSystemProviderInstance } from "../../workspace/file-system-provider";
 import { UriUtils } from "../../utils/uri";
+import { FileSystemProviderInstance } from "../../workspace/file-system-provider";
 import {
   CodeAction,
   CodeActionKind,
@@ -32,7 +31,7 @@ export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
 ): Promise<CodeAction | undefined> {
   const progConfig = PluginConfigurationProviderInstance.getProgramConfig(
-    URI.parse(diagnostic.data.entryUri),
+    UriUtils.toUri(diagnostic.data.entryUri),
   );
   if (!progConfig) return;
   const procGrpsConfig =
@@ -44,13 +43,13 @@ export async function quickFixResolveInclude(
 
   const configExtensions = procGrpsConfig.includeExtensions;
   const unresolvedFilePath = await FileSystemProviderInstance.search({
-    path: URI.parse(unresolvedFile),
+    path: UriUtils.toUri(unresolvedFile),
     extensions: configExtensions,
     global: true,
   });
   if (!unresolvedFilePath) return undefined;
 
-  const workspaceFolderUri = URI.parse(
+  const workspaceFolderUri = UriUtils.toUri(
     PluginConfigurationProviderInstance.getWorkspacePath(),
   );
 
@@ -116,27 +115,19 @@ export async function quickFixCreateConfig(
   if (!workspace || !entryUri) {
     return;
   }
-  const resolvedEntry = entryUri.startsWith("file://")
-    ? URI.parse(entryUri).fsPath.replace(/\\/g, "/")
-    : entryUri.replace(/\\/g, "/");
+  const resolvedEntry = UriUtils.toFilePath(entryUri);
+  const workspacePath = UriUtils.toFilePath(workspace);
 
-  const workspaceParts = URI.parse(workspace)
-    .fsPath.replace(/\\/g, "/")
-    .split("/")
-    .filter((e) => e.length > 0);
-  const entryParts = resolvedEntry.split("/").filter((e) => e.length > 0);
+  const workspaceParts = UriUtils.parts(workspacePath);
+  const entryParts = UriUtils.parts(resolvedEntry);
 
   const isInsideWorkspace = workspaceParts.every(
     (part, index) => part === entryParts[index],
   );
 
-  const rawPath = isInsideWorkspace
+  const programPath = isInsideWorkspace
     ? entryParts.slice(workspaceParts.length).join("/")
     : resolvedEntry;
-
-  const programPath = UriUtils.processDriveLetter(rawPath).drive
-    ? rawPath[0].toUpperCase() + rawPath.slice(1)
-    : rawPath;
 
   const action: CodeAction = {
     title: `Create a startup configuration for this file.`,

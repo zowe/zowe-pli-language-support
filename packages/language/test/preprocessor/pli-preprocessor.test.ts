@@ -16,7 +16,6 @@ import {
   ProgramConfig,
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
-import { URI } from "vscode-uri";
 import { parse } from "../utils";
 import {
   FileSystemProviderInstance,
@@ -26,6 +25,7 @@ import {
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 import { DiagnosticCategory } from "../../src/validation/diagnostics-store";
 import { Diagnostic } from "vscode-languageserver-types";
+import { UriUtils } from "../../src/utils/uri";
 
 /**
  * Helper to modify the program config & process group w/ a given lib for each os-specific test
@@ -62,7 +62,7 @@ async function init(libPath: string): Promise<Diagnostic[]> {
  * Helper for writing library files to the vfs
  */
 async function writeLibFile(path: string, content: string): Promise<void> {
-  await FileSystemProviderInstance.writeFile(URI.file(path), content);
+  await FileSystemProviderInstance.writeFile(UriUtils.toUri(path), content);
 }
 
 /**
@@ -86,7 +86,7 @@ async function expectTokensForWorkspace(
   // parse the main program
   const cu = await parse(mainFileContent, {
     validate: true,
-    uri: URI.file("/test/test.pli"),
+    uri: UriUtils.toUri("/test/test.pli"),
   });
 
   // ensure we have a clean result w/ the right tokens

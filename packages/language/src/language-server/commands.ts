@@ -9,15 +9,15 @@
  *
  */
 
-import { URI } from "vscode-uri";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { ExecuteCommandParams } from "vscode-languageserver";
 import { updateOrCreateConfig } from "../utils/config";
+import { UriUtils } from "../utils/uri";
 
 export async function commandResolveInclude(params: ExecuteCommandParams) {
   const [uri, content] = params.arguments as string[];
   try {
-    await FileSystemProviderInstance.writeFile(URI.parse(uri), content);
+    await FileSystemProviderInstance.writeFile(UriUtils.toUri(uri), content);
   } catch (err) {
     console.error(`Failed to write file at URI: ${uri}`, err);
   }
