@@ -16,6 +16,8 @@ export { URI };
 const WINDOWS_DRIVE_REGEX = /^[a-zA-Z]:[\\\/]/;
 /** Matches URI scheme prefixes, e.g. file:, memory:, https: */
 const SCHEME_REGEX = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+/** Schemes where '#' is always a literal path character, never a fragment delimiter */
+const FRAGMENTLESS_SCHEME_REGEX = /^(?:file|memory|git|untitled|pli-builtin):/i;
 
 export namespace UriUtils {
   export const basename = Utils.basename;
@@ -36,16 +38,17 @@ export namespace UriUtils {
   /**
    * Smart constructor: detects whether input is a URI string or a file path
    * and calls the correct vscode-uri factory.
-   * - URI objects are returned as-is (fragment merged if present)
+   *
+   * - URI objects pass through (with a defensive fragment-to-path merge)
    * - Strings starting with a Windows drive letter (e.g. C:\) go through URI.file
    * - Strings with a URI scheme (file://, memory://) go through URI.parse
    * - All other strings (bare paths) go through URI.file, which correctly
    *   encodes special characters like '#' and spaces
    *
-   * The returned URI is guaranteed to have an empty fragment. If the input
-   * has a fragment (e.g. from an unencoded '#' in a file:// URI string),
-   * it is merged back into the path so that PL/I filenames containing '#'
-   * are represented correctly.
+   * For file-like schemes (file://, memory://), any '#' in the URI string
+   * is escaped to '%23' before parsing, because these schemes never use
+   * URI fragments — '#' is always a literal path character (common in
+   * PL/I filenames like A1@#_$).
    */
   export function toUri(input: string | URI): URI {
     if (typeof input !== "string") {
@@ -60,13 +63,10 @@ export namespace UriUtils {
       return URI.file(input.replace(/\\/g, "/"));
     }
     if (SCHEME_REGEX.test(input)) {
-      const parsed = URI.parse(input);
-      return parsed.fragment
-        ? parsed.with({
-            path: parsed.path + "#" + parsed.fragment,
-            fragment: "",
-          })
-        : parsed;
+      const safeInput = FRAGMENTLESS_SCHEME_REGEX.test(input)
+        ? input.replace(/#/g, "%23")
+        : input;
+      return URI.parse(safeInput);
     }
     return URI.file(input);
   }

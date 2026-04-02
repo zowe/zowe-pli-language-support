@@ -58,24 +58,31 @@ describe("UriUtils.toUri", () => {
     expect(uri.path).toContain("#");
   });
 
-  test("merges fragment into path for URI strings with unencoded #", () => {
+  test("escapes # to %23 in file:// URI strings before parsing", () => {
     const uri = UriUtils.toUri("file:///path/A1@#_$");
+    expect(uri.path).toBe("/path/A1@#_$");
+    expect(uri.fragment).toBe("");
+    expect(uri.toString()).toContain("%23");
+  });
+
+  test("escapes # to %23 in memory:// URI strings before parsing", () => {
+    const uri = UriUtils.toUri("memory:///path/A1@#_$");
     expect(uri.path).toBe("/path/A1@#_$");
     expect(uri.fragment).toBe("");
   });
 
-  test("merges fragment into path for URI objects with fragment", () => {
+  test("preserves # as fragment delimiter for non-file schemes", () => {
+    const uri = UriUtils.toUri("https://example.com/page#section");
+    expect(uri.path).toBe("/page");
+    expect(uri.fragment).toBe("section");
+  });
+
+  test("defensively merges fragment for URI objects with stale fragment", () => {
     const raw = URI.parse("file:///path/A1@#_$");
     expect(raw.fragment).toBe("_$");
     const fixed = UriUtils.toUri(raw);
     expect(fixed.path).toBe("/path/A1@#_$");
     expect(fixed.fragment).toBe("");
-  });
-
-  test("produces correctly encoded toString after fragment merge", () => {
-    const uri = UriUtils.toUri("file:///path/A1@#_$");
-    expect(uri.toString()).toContain("%23");
-    expect(uri.toString()).not.toMatch(/#_\$/);
   });
 
   test("encodes spaces in bare paths", () => {
