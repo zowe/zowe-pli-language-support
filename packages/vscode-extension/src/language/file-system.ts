@@ -15,6 +15,7 @@ import {
   SearchOptions,
   Stats,
   URI,
+  UriUtils,
 } from "pli-language";
 import { Connection } from "vscode-languageserver";
 import { Messages } from "../common/messages";
@@ -71,7 +72,7 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
         return options.path.with({ path: result });
       } else {
         // not a path, take result as full URI
-        return URI.parse(result);
+        return UriUtils.toUri(result);
       }
     } else {
       return undefined;

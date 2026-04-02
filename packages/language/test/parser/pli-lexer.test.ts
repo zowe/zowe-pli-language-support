@@ -11,7 +11,7 @@
 
 import { beforeAll, describe, expect, test, afterAll } from "vitest";
 import { PliLexer } from "../../src/preprocessor/pli-lexer";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { createCompilationUnit } from "../../src/workspace/compilation-unit";
 import {
   PluginConfigurationProviderInstance,
@@ -32,7 +32,7 @@ describe("PL/1 Lexer", () => {
   beforeAll(async () => {
     const lexer = new PliLexer();
     tokenizeWithErrors = async (text: string) => {
-      const uri = URI.file("/test/test.pli");
+      const uri = UriUtils.toUri("/test/test.pli");
       const document = TextDocument.create(uri.toString(), "pli", 0, text);
       const unit = await createCompilationUnit(uri);
       await lexer.tokenize(unit, document, uri);
@@ -111,7 +111,7 @@ describe("PL/1 Lexer", () => {
 
     test("Inject process group compiler options after *PROCESS directive", async () => {
       const lexer = new PliLexer();
-      const uri = URI.file("/test/test.pli");
+      const uri = UriUtils.toUri("/test/test.pli");
       const inputText = `*PROCESS ARCH(10);
       DCL A fixed bin(31);`;
 
@@ -159,7 +159,7 @@ describe("PL/1 Lexer", () => {
 
     test("Missing process group configuration is OK", async () => {
       const lexer = new PliLexer();
-      const uri = URI.file("/test/test.pli");
+      const uri = UriUtils.toUri("/test/test.pli");
       const inputText = `*PROCESS ARCH(10);
       DCL A fixed bin(31);`;
 
@@ -184,7 +184,7 @@ describe("PL/1 Lexer", () => {
 
     test("Inject compiler options when *PROCESS directive is absent", async () => {
       const lexer = new PliLexer();
-      const uri = URI.file("/test/test.pli");
+      const uri = UriUtils.toUri("/test/test.pli");
       const inputText = " DCL A fixed bin(31);";
 
       const programConfig: ProgramConfig = {

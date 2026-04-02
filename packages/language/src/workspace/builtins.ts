@@ -10,7 +10,7 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { URI } from "../utils/uri";
+import { UriUtils } from "../utils/uri";
 
 export const KNOWN_BUILTINS = "/* Known Builtins */";
 
@@ -61,7 +61,7 @@ export const BuiltinsSqlca = ` DECLARE 1 SQLCA,
 `;
 
 export const BuiltinsSqlcaDocument = TextDocument.create(
-  URI.parse(BuiltinsSqlcaUri).toString(),
+  UriUtils.toUri(BuiltinsSqlcaUri).toString(),
   "pli",
   0,
   BuiltinsSqlca,
@@ -104,7 +104,7 @@ export const BuiltinsSqlda = ` DECLARE
 `;
 
 export const BuiltinsSqldaDocument = TextDocument.create(
-  URI.parse(BuiltinsSqldaUri).toString(),
+  UriUtils.toUri(BuiltinsSqldaUri).toString(),
   "pli",
   0,
   BuiltinsSqlda,
@@ -914,7 +914,7 @@ export const Builtins =
   BuiltinsTypeFunctions;
 
 export const BuiltinsTextDocument = TextDocument.create(
-  URI.parse(BuiltinsUri).toString(),
+  UriUtils.toUri(BuiltinsUri).toString(),
   "pli",
   0,
   Builtins,
@@ -1303,7 +1303,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
 `;
 
 export const BuiltinsMacroTextDocument = TextDocument.create(
-  URI.parse(BuiltinsMacroUri).toString(),
+  UriUtils.toUri(BuiltinsMacroUri).toString(),
   "pli",
   0,
   BuiltinsMacro,

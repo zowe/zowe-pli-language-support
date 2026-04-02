@@ -19,7 +19,7 @@ import {
   PluginConfigurationProvider,
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { parseAndLink } from "../utils";
 import { definitionRequest } from "../../src/language-server/definition-request";
 
@@ -32,7 +32,7 @@ async function setupIncludes(path: string, libEntry: string): Promise<void> {
   setFileSystemProvider(vfs);
   setPluginConfigurationProvider(pluginConfig);
 
-  const pathUri = URI.file(path);
+  const pathUri = UriUtils.toUri(path);
   await vfs.writeFile(pathUri, "");
 
   await pluginConfig.init("/workspace");
@@ -55,7 +55,7 @@ describe("Definition Source Ranges", () => {
     await setupIncludes("/workspace/lib/included.pli", "/workspace/lib/");
     const code = ' %INCLUDE "included.pli";';
     const index = code.indexOf("included.pli");
-    const uri = URI.file("/workspace/main.pli");
+    const uri = UriUtils.toUri("/workspace/main.pli");
     const unit = await parseAndLink(code, {
       uri,
     });
@@ -73,7 +73,7 @@ describe("Definition Source Ranges", () => {
     await setupIncludes("/workspace/lib/A.B.C(test).pli", "/workspace/lib");
     const code = " %INCLUDE A.B.C(test);";
     const index = code.indexOf("A.B.C(test)");
-    const uri = URI.file("/workspace/main.pli");
+    const uri = UriUtils.toUri("/workspace/main.pli");
     const unit = await parseAndLink(code, {
       uri,
     });
@@ -91,7 +91,7 @@ describe("Definition Source Ranges", () => {
     await setupIncludes("/workspace/lib/simple.pli", "/workspace/lib/");
     const code = " %INCLUDE simple;";
     const index = code.indexOf("simple");
-    const uri = URI.file("/workspace/main.pli");
+    const uri = UriUtils.toUri("/workspace/main.pli");
     const unit = await parseAndLink(code, {
       uri,
     });

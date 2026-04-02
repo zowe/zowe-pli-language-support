@@ -9,7 +9,6 @@
  *
  */
 
-import { URI } from "vscode-uri";
 import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
 import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { UriUtils } from "./uri";
@@ -43,7 +42,7 @@ export async function updateOrCreateConfig(programPath: string): Promise<void> {
     return;
   }
 
-  const workspaceFolderUri = URI.parse(
+  const workspaceFolderUri = UriUtils.toUri(
     PluginConfigurationProviderInstance.getWorkspacePath(),
   );
   const configFilePath = UriUtils.joinPath(

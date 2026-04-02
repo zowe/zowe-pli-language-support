@@ -11,7 +11,6 @@
 
 import { definitionRequest } from "../src/language-server/definition-request";
 import { CompilationUnit } from "../src/workspace/compilation-unit";
-import { URI } from "vscode-uri";
 import {
   Diagnostic,
   diagnosticToLSP,
@@ -52,7 +51,7 @@ import { TypeExpectation } from "./fourslash-harness/harness-interface";
 import { binaryTokenSearch } from "../src/utils/search";
 import { PluginConfiguration } from "../src/language-server/constants";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
-import { UriUtils } from "../src";
+import { UriUtils } from "../src/utils/uri";
 import { applyQuickFixes } from "../src/language-server/code-actions/apply-quick-fixes";
 
 export type Label = string | number | string[] | number[];
@@ -235,7 +234,7 @@ export class TestBuilder {
   private async init() {
     if (this.options.fs) {
       for (const [uri, file] of this.files) {
-        await this.options.fs.writeFile(URI.parse(uri), file.output);
+        await this.options.fs.writeFile(UriUtils.toUri(uri), file.output);
       }
     }
 
@@ -273,7 +272,7 @@ export class TestBuilder {
       );
     this.unit = await parseAndLink(this.output, {
       validate: this.options.validate,
-      uri: URI.parse(firstFileUri),
+      uri: UriUtils.toUri(firstFileUri),
     });
     this.diagnostics = this.unit.diagnostics.getAll();
     this.checkDiagnosticsURIs();
@@ -1046,7 +1045,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       label,
       offset: { uri, offset },
     } of requests) {
-      const result = definitionRequest(this.unit, URI.parse(uri), offset);
+      const result = definitionRequest(this.unit, UriUtils.toUri(uri), offset);
 
       expect(
         result,
@@ -1079,7 +1078,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       offset: { uri, offset },
       rangeIndex,
     } of requests) {
-      const result = definitionRequest(this.unit, URI.parse(uri), offset);
+      const result = definitionRequest(this.unit, UriUtils.toUri(uri), offset);
       const message = `Expected ${rangeIndex.length} definitions but received ${result.length} for label "${label}" (${this.createLabelPositionMessage(label)})`;
 
       expect(result, message).toHaveLength(rangeIndex.length);
@@ -1212,7 +1211,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     for (const { uri, offset } of indices) {
       const completionResult = completionRequest(
         this.unit,
-        URI.parse(uri),
+        UriUtils.toUri(uri),
         offset,
       )
         .toSorted((a, b) => {
@@ -1367,7 +1366,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     const indices = this.getLabelPositions(label);
 
     for (const { uri, offset } of indices) {
-      const hoverResult = hoverRequest(this.unit, URI.parse(uri), offset);
+      const hoverResult = hoverRequest(this.unit, UriUtils.toUri(uri), offset);
 
       const message = `Expected hover for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(hoverResult, message).toBeDefined();

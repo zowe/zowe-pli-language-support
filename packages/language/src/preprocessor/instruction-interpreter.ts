@@ -2207,7 +2207,7 @@ function setFilePath(
   item.filePath = filePath;
   if (!context.currentUri) return;
   const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-  item.relativeFilePath = UriUtils.relativeDisplayPath(workspace, filePath);
+  item.relativeFilePath = UriUtils.composeRelativePath(workspace, filePath);
 }
 
 /**
@@ -2451,15 +2451,13 @@ async function resolveIncludeFileUri(
   function resolveLibFileUri(path: string, fileName?: string): URI {
     const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
     if (!absPathRegex.test(path)) {
-      // relative lib path, combine w/ workspace
       return UriUtils.joinPath(
-        URI.parse(PluginConfigurationProviderInstance.getWorkspacePath()),
+        UriUtils.toUri(PluginConfigurationProviderInstance.getWorkspacePath()),
         path,
         fileName ?? "",
       );
     } else {
-      // use lib path over workspace
-      const libUri = URI.file(path).with({
+      const libUri = UriUtils.toUri(path).with({
         scheme: context.entryUri.scheme,
       });
       return UriUtils.joinPath(libUri, fileName ?? "");
@@ -2564,7 +2562,7 @@ async function resolveIncludeFileUri(
       // standalone member w/out an explicit ddname, search within ddlib for a match
       const ddLibUri = resolveLibFileUri(lib.ddLib);
       libMatch = await FileSystemProviderInstance.search({
-        path: URI.parse(ddLibUri.toString(true) + `(${fileNameOrPartial})`),
+        path: UriUtils.toUri(ddLibUri.toString() + `(${fileNameOrPartial})`),
         extensions: [],
       });
       if (libMatch) {
@@ -2600,9 +2598,9 @@ async function resolveIncludeFileUri(
     // Special handling for missing SQL includes
     // SQLCA and SQLDA are builtins that can be included, even if they are not present on disk
     if (item.fileName.toUpperCase() === BuiltinsSqlcaName) {
-      libMatch = URI.parse(BuiltinsSqlcaUri);
+      libMatch = UriUtils.toUri(BuiltinsSqlcaUri);
     } else if (item.fileName.toUpperCase() === BuiltinsSqldaName) {
-      libMatch = URI.parse(BuiltinsSqldaUri);
+      libMatch = UriUtils.toUri(BuiltinsSqldaUri);
     }
   }
 

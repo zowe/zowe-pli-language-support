@@ -9,7 +9,7 @@
  *
  */
 import { describe, test, expect } from "vitest";
-import { URI, UriUtils } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import path from "path";
 
 describe("setFilePath", () => {
@@ -17,8 +17,8 @@ describe("setFilePath", () => {
 
   test("returns absolute path when target file resolves to absolute (outside workspace rules)", async () => {
     const absolutePath = path.resolve("/absolute-folder/absolute.pli");
-    const abstFile = URI.file(absolutePath);
-    const actualPath = UriUtils.relativeDisplayPath(
+    const abstFile = UriUtils.toUri(absolutePath);
+    const actualPath = UriUtils.composeRelativePath(
       workspaceRoot,
       abstFile.path,
     );
@@ -37,8 +37,8 @@ describe("setFilePath", () => {
 
   test("returns './file.pli' when file is directly under workspace root", async () => {
     const relPath = path.join(workspaceRoot, "relative.pli");
-    const relFile = URI.file(relPath);
-    const actualPath = UriUtils.relativeDisplayPath(
+    const relFile = UriUtils.toUri(relPath);
+    const actualPath = UriUtils.composeRelativePath(
       workspaceRoot,
       relFile.path,
     );
@@ -51,8 +51,8 @@ describe("setFilePath", () => {
       "nested",
       "relative-nested.pli",
     );
-    const nestedFile = URI.file(nestedPath);
-    const actualPath = UriUtils.relativeDisplayPath(
+    const nestedFile = UriUtils.toUri(nestedPath);
+    const actualPath = UriUtils.composeRelativePath(
       workspaceRoot,
       nestedFile.path,
     );

@@ -15,7 +15,7 @@ import {
   PluginConfigurationProviderInstance,
   setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 
 async function setupConfig(
   programConfig: { program: string; pgroup: string }[],
@@ -28,7 +28,7 @@ async function setupConfig(
 describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retrieve proper values.", () => {
   (test("Matches workspace-relative program - most common use case", async () => {
     await setupConfig([{ program: "*.pli", pgroup: "default" }]);
-    const testUri = URI.file("workspace/a.pli");
+    const testUri = UriUtils.toUri("workspace/a.pli");
     const config =
       PluginConfigurationProviderInstance.getProgramConfig(testUri);
 
@@ -36,7 +36,7 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
   }),
     test("does NOT match absolute path outside workspace that isn't explicitely included as program", async () => {
       await setupConfig([{ program: "*.pli", pgroup: "default" }]);
-      const testUri = URI.file("C:/Users/pgm/ext-pgm.pli");
+      const testUri = UriUtils.toUri("C:/Users/pgm/ext-pgm.pli");
       const config =
         PluginConfigurationProviderInstance.getProgramConfig(testUri);
 
@@ -47,7 +47,7 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
         { program: "*.pli", pgroup: "default" },
         { program: "C:/Users/pgm/ext-pgm.pli", pgroup: "default" },
       ]);
-      const testUri = URI.file("C:/Users/pgm/ext-pgm.pli");
+      const testUri = UriUtils.toUri("C:/Users/pgm/ext-pgm.pli");
       const config =
         PluginConfigurationProviderInstance.getProgramConfig(testUri);
 
@@ -58,7 +58,7 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
         { program: "*.pli", pgroup: "default" },
         { program: "C:\\Users\\pgm\\ext-pgm.pli", pgroup: "default" },
       ]);
-      const testUri = URI.file("C:/Users/pgm/ext-pgm.pli");
+      const testUri = UriUtils.toUri("C:/Users/pgm/ext-pgm.pli");
       const config =
         PluginConfigurationProviderInstance.getProgramConfig(testUri);
 
@@ -69,7 +69,7 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
         { program: "*.pli", pgroup: "default" },
         { program: "/Users/pgm/ext-pgm.pli", pgroup: "default" },
       ]);
-      const testUri = URI.file("/Users/pgm/ext-pgm.pli");
+      const testUri = UriUtils.toUri("/Users/pgm/ext-pgm.pli");
       const config =
         PluginConfigurationProviderInstance.getProgramConfig(testUri);
 

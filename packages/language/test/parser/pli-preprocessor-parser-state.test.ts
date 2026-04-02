@@ -12,7 +12,7 @@
 import { describe, expect, test } from "vitest";
 import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-tokens";
 import { ParserState } from "../../src/parser/parser-state";
-import { URI } from "../../src/utils/uri";
+import { URI, UriUtils } from "../../src/utils/uri";
 import { tokenize } from "../../src/parser/tokenizer";
 
 function parserStateFromText(text: string, uri: URI) {
@@ -22,7 +22,7 @@ function parserStateFromText(text: string, uri: URI) {
 }
 
 namespace Fixtures {
-  const uri = URI.file("file:///test.pli");
+  const uri = UriUtils.toUri("file:///test.pli");
   export const Empty = () => parserStateFromText("", uri);
   export const OneToken = () => parserStateFromText("ABC", uri);
   export const TwoTokens = () => parserStateFromText("ABC 123", uri);

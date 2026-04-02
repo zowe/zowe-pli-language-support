@@ -10,7 +10,7 @@
  */
 
 import { afterEach, describe, expect, test } from "vitest";
-import { URI } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
 
@@ -21,7 +21,7 @@ describe("Compilation Unit Tests", () => {
   });
 
   test("Create", async () => {
-    const uri = URI.parse("memory:///test/test.pli");
+    const uri = UriUtils.toUri("memory:///test/test.pli");
     const ch = new CompilationUnitHandler();
 
     const unit0 = ch.getCompilationUnit(uri);
@@ -35,7 +35,7 @@ describe("Compilation Unit Tests", () => {
   });
 
   test("Delete", async () => {
-    const uri = URI.parse("memory:///test/test.pli");
+    const uri = UriUtils.toUri("memory:///test/test.pli");
     const ch = new CompilationUnitHandler();
 
     const unit1 = await ch.getOrCreateCompilationUnit(uri);
@@ -52,8 +52,8 @@ describe("Compilation Unit Tests", () => {
   });
 
   test("Create with config", async () => {
-    const uriEntry = URI.parse("file:///test/entry.pli");
-    const uriLib = URI.parse("file:///test/lib.pli");
+    const uriEntry = UriUtils.toUri("file:///test/entry.pli");
+    const uriLib = UriUtils.toUri("file:///test/lib.pli");
     const ch = new CompilationUnitHandler();
 
     // register configs
@@ -84,9 +84,9 @@ describe("Compilation Unit Tests", () => {
   });
 
   test("Create with wildcard config", async () => {
-    const uriEntry1 = URI.parse("file:///test/entry1.pli");
-    const uriEntry2 = URI.parse("file:///test/entry2.pli");
-    const uriOther = URI.parse("file:///other/entry3.pli");
+    const uriEntry1 = UriUtils.toUri("file:///test/entry1.pli");
+    const uriEntry2 = UriUtils.toUri("file:///test/entry2.pli");
+    const uriOther = UriUtils.toUri("file:///other/entry3.pli");
     const ch = new CompilationUnitHandler();
 
     // register wildcard config
@@ -152,9 +152,9 @@ describe("Compilation Unit Tests", () => {
     ]);
 
     // File in the cpy folder
-    const libUri = URI.parse("file:///cpy/b.inc");
+    const libUri = UriUtils.toUri("file:///cpy/b.inc");
     // File in the src folder (should be valid)
-    const mainUri = URI.parse("file:///src/a.pli");
+    const mainUri = UriUtils.toUri("file:///src/a.pli");
 
     // Should not create a compilation unit for a file in the cpy folder
     const libUnit = await ch.getOrCreateCompilationUnit(libUri);
