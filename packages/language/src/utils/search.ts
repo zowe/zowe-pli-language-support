@@ -81,7 +81,10 @@ export function completionTokenIndexSearch(
   return end;
 }
 
-export function binaryTokenIndexLeftMost(tokens: Token[], offset: number): number {
+export function binaryTokenIndexLeftMost(
+  tokens: Token[],
+  offset: number,
+): number {
   let low = 0;
   let high = tokens.length - 1;
   let result = -1;
@@ -98,7 +101,10 @@ export function binaryTokenIndexLeftMost(tokens: Token[], offset: number): numbe
   return result;
 }
 
-export function binaryTokenIndexRightMost(tokens: Token[], offset: number): number {
+export function binaryTokenIndexRightMost(
+  tokens: Token[],
+  offset: number,
+): number {
   let low = 0;
   let high = tokens.length - 1;
   let result = -1;

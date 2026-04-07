@@ -325,8 +325,11 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     if (!outerCall) {
       return null;
     }
-    if(ref.node.kind === SyntaxKind.LabelPrefix) {
-      const jsDocsComment = getJSDocsCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit);
+    if (ref.node.kind === SyntaxKind.LabelPrefix) {
+      const jsDocsComment = getJSDocsCommentBeforeLabelPrefix(
+        ref.node as LabelPrefix,
+        unit,
+      );
       if (jsDocsComment) {
         return jsDocsComment;
       }
@@ -434,20 +437,26 @@ export function getJSDocsCommentBeforeLabelPrefix(
   labelPrefix: LabelPrefix,
   compilationUnit: CompilationUnit,
 ): string | null {
-  if(!labelPrefix.nameToken) {
+  if (!labelPrefix.nameToken) {
     return null;
   }
   const uri = labelPrefix.nameToken.uri;
-  if(!uri) {
+  if (!uri) {
     return null;
   }
   const commentTokens = compilationUnit.services.files.getComments(uri);
-  if(!commentTokens) {
+  if (!commentTokens) {
     return null;
   }
-  const index = binaryTokenIndexRightMost(commentTokens, labelPrefix.nameToken.startOffset);
-  if(index > -1) {
-    return getNodeRepresentation(compilationUnit, labelPrefix.nameToken.element!);//commentTokens[index].image;
+  const index = binaryTokenIndexRightMost(
+    commentTokens,
+    labelPrefix.nameToken.startOffset,
+  );
+  if (index > -1) {
+    return getNodeRepresentation(
+      compilationUnit,
+      labelPrefix.nameToken.element!,
+    ); //commentTokens[index].image;
   }
   return null;
 }
