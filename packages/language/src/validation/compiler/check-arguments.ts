@@ -9,7 +9,7 @@
  *
  */
 import { diagnosticFromCode } from "../../language-server/types";
-import { CallStatement, MemberCall, SyntaxKind } from "../../syntax-tree/ast";
+import { CallStatement, MemberCall, ProcedureStatement, SyntaxKind } from "../../syntax-tree/ast";
 import { BuiltinsUriSchema } from "../../workspace/builtins";
 import { PLICodes } from "../pli-codes";
 import {
@@ -19,28 +19,39 @@ import {
 import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { TypeDescriptions } from "../../typesystem/descriptions";
+import { Token } from "../../parser/tokens";
 
 export function CallStatement_checkArgumentCount(
   node: CallStatement,
   acceptor: ValidationAcceptor,
+  unit: CompilationUnit,
 ): void {
   const procedure = resolveProcedureFromCall(node);
   if (!procedure) {
     return;
   }
   const callToken = node.call!.procedure!.token;
-  const expectedArgs = procedure.parameters.length;
+  const { minimumExpectedArgs, maximumExpectedArgs, expectedTypes, lastParameterType } = getParameterDetails(procedure, unit);
   const providedArgs = node.call?.args1?.list.length || 0;
 
-  if (providedArgs < expectedArgs) {
+  if (providedArgs < minimumExpectedArgs) {
     acceptor(
       diagnosticFromCode(PLICodes.Warning.IBM3323I, callToken, callToken.image),
     );
-  } else if (providedArgs > expectedArgs) {
+  } else if (providedArgs > maximumExpectedArgs) {
     acceptor(
       diagnosticFromCode(PLICodes.Warning.IBM3324I, callToken, callToken.image),
     );
   }
+
+  const providedTypes =
+    node.call?.args1?.list.map((d) => {
+      if(d === '*') {
+        return TypeDescriptions.Unknown();
+      }
+      return unit.services.inferer.inferType(d, unit);
+    }) ?? [];
+  checkArgumentTypes(providedArgs, providedTypes, expectedTypes, lastParameterType, unit, acceptor, callToken);
 }
 
 export function MemberCall_checkArguments(
@@ -64,24 +75,14 @@ export function MemberCall_checkArguments(
   if (!procedure) {
     return;
   }
-  //TODO remove me once ALL built-in procedures signatures are setup
+  //TODO @tag(#issue-656) remove me once ALL built-in procedures signatures are setup
   if (
     procedure.procToken?.uri?.scheme &&
     procedure.procToken.uri.scheme !== BuiltinsUriSchema
   ) {
     return;
   }
-  const expectedTypes = procedure.parameters.map((p) =>
-    unit.services.inferer.inferType(p, unit),
-  );
-  const lastParameterType =
-    expectedTypes[expectedTypes.length - 1] ?? TypeDescriptions.Unknown();
-  const minimumExpectedArgs =
-    expectedTypes.filter((t) => !t.optional).length -
-    (lastParameterType?.variadicArgument ? 1 : 0);
-  const maximumExpectedArgs = lastParameterType.variadicArgument
-    ? Infinity
-    : expectedTypes.length;
+  const { minimumExpectedArgs, maximumExpectedArgs, expectedTypes, lastParameterType } = getParameterDetails(procedure, unit);
   const providedArgs = node.element.dimensions?.dimensions.length || 0;
 
   //compare expected and provided argument counts
@@ -101,27 +102,39 @@ export function MemberCall_checkArguments(
         ? unit.services.inferer.inferType(d.upper.expression, unit)
         : TypeDescriptions.Unknown(),
     ) ?? [];
+  checkArgumentTypes(providedArgs, providedTypes, expectedTypes, lastParameterType, unit, acceptor, callToken);
+}
 
-  //compare expected and provided argument types
+function checkArgumentTypes(providedArgs: number, providedTypes: TypeDescriptions.Any[], expectedTypes: TypeDescriptions.Any[], lastParameterType: TypeDescriptions.Any, unit: CompilationUnit, acceptor: ValidationAcceptor, callToken: Token) {
   for (let index = 0; index < providedArgs; index++) {
     const providedType = providedTypes[index];
     if (index >= expectedTypes.length && !lastParameterType.variadicArgument) {
       break;
     }
     const expectedType = expectedTypes[index] ?? lastParameterType;
-    if (
-      providedType &&
+    if (providedType &&
       expectedType &&
-      !unit.services.inferer.isAssignable(providedType, expectedType, unit)
-    ) {
+      !unit.services.inferer.isAssignable(providedType, expectedType, unit)) {
       acceptor(
         diagnosticFromCode(
           PLICodes.Severe.IBM3948I,
           callToken,
           callToken.image,
-          "612",
-        ),
+          "612"
+        )
       );
     }
   }
+}
+
+function getParameterDetails(procedure: ProcedureStatement, unit: CompilationUnit) {
+  const expectedTypes = procedure.parameters.map((p) => unit.services.inferer.inferType(p, unit)
+  );
+  const lastParameterType = expectedTypes[expectedTypes.length - 1] ?? TypeDescriptions.Unknown();
+  const minimumExpectedArgs = expectedTypes.filter((t) => !t.optional).length -
+    (lastParameterType?.variadicArgument ? 1 : 0);
+  const maximumExpectedArgs = lastParameterType.variadicArgument
+    ? Infinity
+    : expectedTypes.length;
+  return { minimumExpectedArgs, maximumExpectedArgs, expectedTypes, lastParameterType };
 }
