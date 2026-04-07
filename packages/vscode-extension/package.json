@@ -84,6 +84,15 @@
         "url": "./schemas/proc_grps.schema.json"
       }
     ],
+    "configurationDefaults": {
+      "editor.semanticTokenColorCustomizations": {
+        "rules": {
+          "*.preprocessor:pli": {
+            "fontStyle": "italic"
+          }
+        }
+      }
+    },
     "configuration": {
       "title": "PL/I Language Support",
       "properties": {

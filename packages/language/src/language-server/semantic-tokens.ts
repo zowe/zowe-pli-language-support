@@ -17,6 +17,7 @@ import { SemanticTokensLegend } from "vscode-languageserver-types";
 import {
   DeclaredVariable,
   getContainer,
+  isPreprocessorNode,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
@@ -45,13 +46,17 @@ export enum SemanticTokenTypes {
   comment,
 }
 
-const tokenModifiers = new Map<string, number>([]);
+export enum SemanticTokenModifiers {
+  preprocessor,
+}
 
 export const semanticTokenLegend: SemanticTokensLegend = {
   tokenTypes: Object.keys(SemanticTokenTypes).filter((key) =>
     isNaN(Number(key)),
   ),
-  tokenModifiers: Array.from(tokenModifiers.keys()),
+  tokenModifiers: Object.keys(SemanticTokenModifiers).filter((key) =>
+    isNaN(Number(key)),
+  ),
 };
 
 export function semanticTokens(
@@ -77,12 +82,13 @@ export function semanticTokens(
     }
     const type = tokenType(token);
     if (type !== undefined) {
+      const modifier = tokenModifier(compilationUnit, token);
       semanticTokens.push(
         token.startLine,
         token.startColumn,
         token.image.length,
         type,
-        0,
+        modifier,
       );
     }
   }
@@ -130,6 +136,18 @@ function handleCommentTokens(
       tokenBuilder.push(line, startChar, length, SemanticTokenTypes.comment, 0);
     }
   }
+}
+
+function tokenModifier(unit: CompilationUnit, token: Token): number {
+  let modifier = 0;
+  const element = token.element;
+  if (!element) {
+    return 0;
+  }
+  if (isPreprocessorNode(unit, element)) {
+    modifier |= 1 << SemanticTokenModifiers.preprocessor;
+  }
+  return modifier;
 }
 
 function tokenType(token: Token): number | undefined {

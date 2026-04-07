@@ -89,6 +89,7 @@ async function createTestingHarnessImplementation(
     },
     semanticTokens: {
       expectAt: listen("semanticTokens.expectAt"),
+      expectModifierAt: listen("semanticTokens.expectModifierAt"),
     },
     preprocessor: {
       not: {
