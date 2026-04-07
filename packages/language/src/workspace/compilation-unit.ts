@@ -104,32 +104,42 @@ const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
 const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 const FIVE_MINUTES = 1000 * 60 * 5;
 
-function createBuiltinScopeGetter(builtinDocument: TextDocument) {
+function createBuiltinUnitGetter(builtinDocument: TextDocument): () => Promise<CompilationUnit> {
+  let builtinUnit: CompilationUnit | undefined = undefined;
+  return async () => {
+    if (!builtinUnit) {
+      const fileUri = URI.parse(builtinDocument.uri);
+      builtinUnit = await createCompilationUnit(fileUri);
+      await tokenize(builtinUnit, builtinDocument);
+      parse(builtinUnit);
+      generateSymbolTable(builtinUnit);
+      link(builtinUnit);
+    }
+    return builtinUnit;
+  };
+}
+
+function createBuiltinScopeGetter(unitGetter: () => Promise<CompilationUnit>) {
   let builtinFileScope: Scope | undefined;
   return async (uri: URI): Promise<Scope> => {
     if (isBuiltinFile(uri)) {
       return Scope.createRoot();
     }
     if (!builtinFileScope) {
-      const fileUri = UriUtils.toUri(builtinDocument.uri);
-      const builtinUnit = await createCompilationUnit(fileUri);
-      await tokenize(builtinUnit, builtinDocument);
-      parse(builtinUnit);
-      generateSymbolTable(builtinUnit);
-      link(builtinUnit);
-
+      const unit = await unitGetter();
       builtinFileScope =
-        builtinUnit.scopeCaches.regular.get(builtinUnit.ast) ??
+        unit.scopeCaches.regular.get(unit.ast) ??
         Scope.createRoot();
     }
     return builtinFileScope;
   };
 }
 
-const getBuiltinScope = createBuiltinScopeGetter(BuiltinsTextDocument);
-const getRootPreprocessorScope = createBuiltinScopeGetter(
-  BuiltinsMacroTextDocument,
-);
+const getBuiltinUnit = createBuiltinUnitGetter(BuiltinsTextDocument);
+const getBuiltinMacroUnit = createBuiltinUnitGetter(BuiltinsMacroTextDocument);
+
+const getBuiltinScope = createBuiltinScopeGetter(getBuiltinUnit);
+const getRootPreprocessorScope = createBuiltinScopeGetter(getBuiltinMacroUnit);
 
 export async function createCompilationUnit(
   uri: URI,
