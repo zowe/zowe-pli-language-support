@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>21/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>19/19</span>
             </div>
         
             
@@ -118,7 +118,14 @@
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -145,32 +152,39 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">89x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">82x</span>
-<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">89x</span>
+<span class="cline-any cline-yes">89x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">82x</span>
-<span class="cline-any cline-yes">1334x</span>
-<span class="cline-any cline-yes">1334x</span>
-<span class="cline-any cline-yes">361x</span>
+<span class="cline-any cline-yes">89x</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-yes">379x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1334x</span>
-<span class="cline-any cline-yes">1334x</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-yes">1410x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1334x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-yes">45120x</span>
+<span class="cline-any cline-yes">204x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1410x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1334x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1410x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">89x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
@@ -185,14 +199,14 @@
  */
 &nbsp;
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { SemanticTokenTypes } from "./semantic-tokens";
+import { SemanticTokenModifiers, SemanticTokenTypes } from "./semantic-tokens";
 &nbsp;
 export namespace SemanticTokenDecoder {
   export interface DecodedSemanticToken {
     offsetStart: number;
     offsetEnd: number;
     semanticTokenType: string;
-    tokenModifiers: number;
+    tokenModifiers: string[];
     text: string;
   }
 &nbsp;
@@ -213,11 +227,18 @@ export namespace SemanticTokenDecoder {
       character += tokens[i + 1];
       const offset = textDocument.offsetAt({ line, character });
 &nbsp;
+      const modifiers = tokens[i + 4];
+      const tokenModifiers: string[] = [];
+      for (let bit = 0; bit &lt; 32; bit++) {
+        if ((modifiers &amp; (1 &lt;&lt; bit)) !== 0) {
+          tokenModifiers.push(SemanticTokenModifiers[bit]);
+        }
+      }
       const decodedToken: DecodedSemanticToken = {
         offsetStart: offset,
         offsetEnd: offset + tokens[i + 2],
         semanticTokenType: SemanticTokenTypes[tokens[i + 3]],
-        tokenModifiers: tokens[i + 4],
+        tokenModifiers,
         text: textDocument.getText({
           start: { line, character },
           end: { line, character: character + tokens[i + 2] },
@@ -235,7 +256,7 @@ export namespace SemanticTokenDecoder {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-02T09:48:45.570Z
+                at 2026-04-07T10:22:04.931Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
