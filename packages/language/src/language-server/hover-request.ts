@@ -31,7 +31,7 @@ import {
   Wildcard,
 } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
-import { binaryTokenIndexSearch, binaryTokenSearch } from "../utils/search";
+import { binaryTokenIndexRightMost, binaryTokenSearch } from "../utils/search";
 import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -42,7 +42,6 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
-import * as tokens from "../parser/tokens";
 
 type MarkupResponse = string | null;
 
@@ -438,32 +437,17 @@ export function getJSDocsCommentBeforeLabelPrefix(
   if(!labelPrefix.nameToken) {
     return null;
   }
-  const skipTokens = new Set([
-    tokens.Colon,
-    tokens.ID,
-  ]);
-  const commentTokens = new Set([
-    tokens.SL_COMMENT,
-    tokens.ML_COMMENT,
-  ]);
   const uri = labelPrefix.nameToken.uri;
   if(!uri) {
     return null;
   }
-  const fileTokens = compilationUnit.services.files.getTokens(uri);
-  if(!fileTokens) {
+  const commentTokens = compilationUnit.services.files.getComments(uri);
+  if(!commentTokens) {
     return null;
   }
-  let index = binaryTokenIndexSearch(fileTokens, labelPrefix.nameToken.startOffset)
-  while(index >= 0) {
-    const token = fileTokens[index];
-    if(skipTokens.has(token.tokenType)) {
-      index--;
-    } else if (commentTokens.has(token.tokenType)) {
-      return token.image;
-    } else {
-      break;
-    }
+  const index = binaryTokenIndexRightMost(commentTokens, labelPrefix.nameToken.startOffset);
+  if(index > -1) {
+    return getNodeRepresentation(compilationUnit, labelPrefix.nameToken.element!);//commentTokens[index].image;
   }
   return null;
 }
