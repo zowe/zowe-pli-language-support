@@ -22,6 +22,11 @@ import { Token } from "../parser/tokens";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
+  isAssignable(
+    source: TypeDescriptions.Any,
+    target: TypeDescriptions.Any,
+    unit: CompilationUnit,
+  ): boolean;
 }
 
 export class DefaultTypeInferer implements TypeInferer {
@@ -202,7 +207,12 @@ export class DefaultTypeInferer implements TypeInferer {
         return bottomMostType;
       }
       case ast.SyntaxKind.LocatorCall:
-        //TODO implement
+        if (expression.element?.element?.ref?.node) {
+          return this.inferType(
+            expression.element.element.ref.node,
+            compilationUnit,
+          );
+        }
         return TypeDescriptions.Unknown();
       case ast.SyntaxKind.Parenthesis: {
         if (expression.expressions.length === 0) {
@@ -498,5 +508,56 @@ export class DefaultTypeInferer implements TypeInferer {
       assertType<ast.DeclareStatement | ast.DefineStructureStatement>(parent);
       this.inferType(parent, compilationUnit);
     }
+  }
+
+  isAssignable(
+    source: TypeDescriptions.Any,
+    target: TypeDescriptions.Any,
+    _unit: CompilationUnit,
+  ): boolean {
+    if (source.type === target.type) {
+      return true;
+    }
+    if (
+      TypeDescriptions.isArithmetic(source) &&
+      TypeDescriptions.isString(target)
+    ) {
+      return true;
+    }
+    if (
+      TypeDescriptions.isString(source) &&
+      TypeDescriptions.isArithmetic(target)
+    ) {
+      if (
+        !source.initial ||
+        source.initial.items.length === 0 ||
+        source.initial.items[0].kind !==
+          ast.SyntaxKind.InitialAttributeSpecification
+      ) {
+        return true;
+      }
+      const value = this.extractLiteralValue(
+        source.initial.items[0].expression,
+      );
+      if (value !== undefined) {
+        return !isNaN(Number(value)) && value.trim() !== "";
+      }
+      return true;
+    }
+    return true;
+  }
+
+  private extractLiteralValue(
+    expression: ast.Expression | undefined | null,
+  ): string | undefined {
+    if (
+      expression &&
+      expression.kind === ast.SyntaxKind.Literal &&
+      expression.value?.kind === ast.SyntaxKind.StringLiteral &&
+      typeof expression.value.value === "string"
+    ) {
+      return expression.value.value;
+    }
+    return undefined;
   }
 }

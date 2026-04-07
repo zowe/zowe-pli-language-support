@@ -11,15 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
-//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
+//// %DCL XXX CHARACTER;
+//// %XXX = <|TRIM|>();
 
-// @filename: pli-builtin:///xxx.pli
-//// XXX: PROCEDURE (X) RETURNS(FIXED);
-////   DCL <|X|>(20) FIXED VARARG;
-////   RETURN(12);
-//// END;
-
-verify.expectDiagnosticsAt(
-  "X",
-  code.LSP.BuiltinAttributes.VariadicParameter.IsAFixedArray,
-);
+verify.expectDiagnosticsAt("TRIM", code.Severe.IBM3774I);

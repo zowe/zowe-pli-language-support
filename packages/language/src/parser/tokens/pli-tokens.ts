@@ -160,14 +160,6 @@ export const ANY = registerKeyword({
   name: "ANY",
   categories: [[DefaultAttribute, ast.DefaultAttribute.ANY]],
 });
-/**
- * Not part of the PL/I specification!
- * Helps declaring parameters of variadic nature for builtin procedures
- */
-export const VARARG = registerKeyword({
-  name: "VARARG",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.VARARG]],
-});
 // Normal keywords
 export const SUBSCRIPTRANGE = registerKeyword({
   name: "SUBSCRIPTRANGE",

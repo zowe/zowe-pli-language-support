@@ -23,7 +23,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { PLICodes } from "./pli-codes";
 import { ValidationAcceptor } from "./validator";
 import * as tokens from "../parser/tokens";
-import { assertType } from "../preprocessor/util";
 import { LspCodes } from "./lsp-codes";
 
 export function typeCheck(
@@ -41,13 +40,9 @@ export function typeCheck(
     compilationUnit,
   );
 
-  if (compilationUnit.uri.scheme === BuiltinsUriSchema) {
-    //TODO @tag(#issue-656) Remove the then branch once all builtin procedures signatures are setup
-    checkUsageForBuiltinFilesIsCorrect(description, stmt, acceptor);
-  } else {
-    if (description.variadicArgument) {
-      const token =
-        description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
+  if (compilationUnit.uri.scheme !== BuiltinsUriSchema) {
+    if (description.list) {
+      const token = description.witnesses.witnesses[AttributeKind.List]?.token;
       if (token) {
         acceptor(
           diagnosticFromCode(
@@ -138,71 +133,6 @@ export function typeCheck(
   }
 }
 
-function checkUsageForBuiltinFilesIsCorrect(
-  description: TypeDescriptions.Any,
-  stmt:
-    | ast.DeclaredVariable
-    | ast.DeclareStatement
-    | ast.DeclaredItem
-    | ast.DefineAliasStatement
-    | ast.DefineOrdinalStatement,
-  acceptor: ValidationAcceptor,
-) {
-  if (description.variadicArgument) {
-    const token =
-      description.witnesses.witnesses[AttributeKind.VariadicArgument]?.token;
-    if (token) {
-      const parameter = tryGetParameter(stmt);
-      if (!parameter) {
-        acceptor(
-          diagnosticFromCode(
-            LspCodes.BuiltinAttributes.VariadicParameter.IsNotAParameter,
-            token,
-            token.image,
-          ),
-        );
-      } else {
-        assertType<ast.DeclaredVariable>(stmt);
-        if (stmt.nameToken) {
-          if (!description.dimension) {
-            acceptor(
-              diagnosticFromCode(
-                LspCodes.BuiltinAttributes.VariadicParameter.IsNotAnArray,
-                stmt.nameToken,
-                stmt.nameToken.image,
-              ),
-            );
-          } else {
-            if (
-              description.dimension.length >= 1 &&
-              description.dimension.some(
-                (dim) => dim.upperBound.value !== "*" || dim.lowerBound.value,
-              )
-            ) {
-              acceptor(
-                diagnosticFromCode(
-                  LspCodes.BuiltinAttributes.VariadicParameter.IsAFixedArray,
-                  stmt.nameToken,
-                  stmt.nameToken.image,
-                ),
-              );
-            }
-          }
-          if (parameter.index !== parameter.count - 1) {
-            acceptor(
-              diagnosticFromCode(
-                LspCodes.BuiltinAttributes.VariadicParameter.IsNotLastParameter,
-                stmt.nameToken,
-                stmt.nameToken.image,
-              ),
-            );
-          }
-        }
-      }
-    }
-  }
-}
-
 function validateBound(
   bound: Bound,
   acceptor: ValidationAcceptor,
@@ -263,37 +193,7 @@ function validateBound(
   return undefined;
 }
 
-type ParameterResult = {
-  procedure: ast.ProcedureStatement;
-  index: number;
-  count: number;
-};
-
-function tryGetParameter(node: ast.SyntaxNode): ParameterResult | undefined {
-  if (node.kind !== ast.SyntaxKind.DeclaredVariable) {
-    return undefined;
-  }
-  const procedureStmt = ast.getContainer(
-    node,
-    ast.SyntaxKind.ProcedureStatement,
-  );
-  if (!procedureStmt) {
-    return undefined;
-  }
-  const index = procedureStmt.parameters.findIndex(
-    (param) => param.ref?.node === node,
-  );
-  if (index === -1) {
-    return undefined;
-  }
-  return {
-    procedure: procedureStmt,
-    index,
-    count: procedureStmt.parameters.length,
-  };
-}
-
-//TODO @tag(#issue-656) Remove this validation once all builtin procedures signatures are setup
+//TODO @tag(#issue-656) Make this method valid only for PL/I not for preprocessor
 export function BUILTIN_NoMultipleVariadicParameters(
   stmt: ast.ProcedureStatement,
   acceptor: ValidationAcceptor,
@@ -308,20 +208,12 @@ export function BUILTIN_NoMultipleVariadicParameters(
       parameter,
       compilationUnit,
     );
-    if (description.variadicArgument) {
+    if (description.list) {
       if (foundVarArg) {
         const token =
-          description.witnesses.witnesses[AttributeKind.VariadicArgument]
-            ?.token;
+          description.witnesses.witnesses[AttributeKind.List]?.token;
         if (token) {
-          acceptor(
-            diagnosticFromCode(
-              LspCodes.BuiltinAttributes.VariadicParameter
-                .HasMultipleParameters,
-              token,
-              token.image,
-            ),
-          );
+          acceptor(diagnosticFromCode(PLICodes.Severe.IBM2049I, token));
         }
       } else {
         foundVarArg = true;

@@ -17,6 +17,7 @@ import { diagnosticsToLSP } from "../language-server/types.js";
 import {
   generateSymbolTable,
   lifecycle,
+  link,
   parse,
   tokenize,
 } from "./lifecycle.js";
@@ -115,6 +116,7 @@ function createBuiltinScopeGetter(builtinDocument: TextDocument) {
       await tokenize(builtinUnit, builtinDocument);
       parse(builtinUnit);
       generateSymbolTable(builtinUnit);
+      link(builtinUnit);
 
       builtinFileScope =
         builtinUnit.scopeCaches.regular.get(builtinUnit.ast) ??

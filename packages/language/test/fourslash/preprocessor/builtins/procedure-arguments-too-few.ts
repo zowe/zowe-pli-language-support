@@ -11,13 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-// @filename: /xxx.pli
-//// XXX: PROCEDURE (X) RETURNS(FIXED);
-////   DCL X(10) FIXED <|VARARG|>;
-////   RETURN(12);
-//// END;
+//// %XXX: PROC(A, B);
+////    DCL A FIXED;
+////    DCL B FIXED;
+//// %END XXX;
+//// %START: PROC RETURNS(FIXED);
+////   CALL <|XXX|>(1);
+////   RETURN(0);
+//// %END START;
 
-verify.expectDiagnosticsAt(
-  "VARARG",
-  code.LSP.BuiltinAttributes.IsForbiddenUsage,
-);
+verify.expectDiagnosticsAt("XXX", code.Warning.IBM3323I);
