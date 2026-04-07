@@ -26,7 +26,7 @@ import { CompilationUnit } from "../../workspace/compilation-unit";
 import { TypeDescriptions } from "../../typesystem/descriptions";
 import { Token } from "../../parser/tokens";
 
-export function CallStatement_checkArgumentCount(
+export function CallStatement_checkArguments(
   node: CallStatement,
   acceptor: ValidationAcceptor,
   unit: CompilationUnit,

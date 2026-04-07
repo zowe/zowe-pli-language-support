@@ -9,7 +9,7 @@
  *
  */
 import {
-  CallStatement_checkArgumentCount,
+  CallStatement_checkArguments,
   MemberCall_checkArguments,
 } from "./compiler/check-arguments";
 import { IBM3970IS_IBM3971IS_check_pp_call_procedure } from "./compiler/IBM3970-IBM3971-call-procedure";
@@ -28,7 +28,7 @@ import {
 export function registerPreprocessorValidationChecks(): ValidationChecks {
   return {
     CallStatement: [
-      CallStatement_checkArgumentCount,
+      CallStatement_checkArguments,
       IBM3970IS_IBM3971IS_check_pp_call_procedure,
     ],
     DeclaredItem: [IBM1352IE_declared_item_pp_scan_repetition, typeCheck],
