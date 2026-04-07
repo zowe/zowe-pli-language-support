@@ -16,7 +16,7 @@ import {
   SyntaxKind,
 } from "../../syntax-tree/ast";
 import { BuiltinsUriSchema } from "../../workspace/builtins";
-import { PLICodes } from "../pli-codes";
+import { ParametricPLICode, PLICodes } from "../pli-codes";
 import {
   resolveProcedureFromCall,
   retrieveProcedureFromLabelPrefix,
@@ -36,24 +36,6 @@ export function CallStatement_checkArguments(
     return;
   }
   const callToken = node.call!.procedure!.token;
-  const {
-    minimumExpectedArgs,
-    maximumExpectedArgs,
-    expectedTypes,
-    lastParameterType,
-  } = getParameterDetails(procedure, unit);
-  const providedArgs = node.call?.args1?.list.length || 0;
-
-  if (providedArgs < minimumExpectedArgs) {
-    acceptor(
-      diagnosticFromCode(PLICodes.Warning.IBM3323I, callToken, callToken.image),
-    );
-  } else if (providedArgs > maximumExpectedArgs) {
-    acceptor(
-      diagnosticFromCode(PLICodes.Warning.IBM3324I, callToken, callToken.image),
-    );
-  }
-
   const providedTypes =
     node.call?.args1?.list.map((d) => {
       if (d === "*") {
@@ -61,14 +43,16 @@ export function CallStatement_checkArguments(
       }
       return unit.services.inferer.inferType(d, unit);
     }) ?? [];
-  checkArgumentTypes(
-    providedArgs,
+  checkArguments(
+    procedure,
     providedTypes,
-    expectedTypes,
-    lastParameterType,
+    {
+      TooFewArgs: PLICodes.Warning.IBM3323I,
+      TooManyArgs: PLICodes.Warning.IBM3324I,
+    },
+    callToken,
     unit,
     acceptor,
-    callToken,
   );
 }
 
@@ -100,31 +84,50 @@ export function MemberCall_checkArguments(
   ) {
     return;
   }
-  const {
-    minimumExpectedArgs,
-    maximumExpectedArgs,
-    expectedTypes,
-    lastParameterType,
-  } = getParameterDetails(procedure, unit);
-  const providedArgs = node.element.dimensions?.dimensions.length || 0;
-
-  //compare expected and provided argument counts
-  if (providedArgs < minimumExpectedArgs) {
-    acceptor(
-      diagnosticFromCode(PLICodes.Severe.IBM3774I, callToken, callToken.image),
-    );
-  } else if (providedArgs > maximumExpectedArgs) {
-    acceptor(
-      diagnosticFromCode(PLICodes.Error.IBM3639I, callToken, callToken.image),
-    );
-  }
-
   const providedTypes =
     node.element.dimensions?.dimensions.map((d) =>
       typeof d.upper?.expression === "object" && d.upper?.expression !== null
         ? unit.services.inferer.inferType(d.upper.expression, unit)
         : TypeDescriptions.Unknown(),
     ) ?? [];
+  checkArguments(
+    procedure,
+    providedTypes,
+    {
+      TooFewArgs: PLICodes.Severe.IBM3774I,
+      TooManyArgs: PLICodes.Error.IBM3639I,
+    },
+    callToken,
+    unit,
+    acceptor,
+  );
+}
+
+type ErrorCodes = {
+  TooFewArgs: ParametricPLICode;
+  TooManyArgs: ParametricPLICode;
+};
+
+function checkArguments(
+  procedure: ProcedureStatement,
+  providedTypes: TypeDescriptions.Any[],
+  codes: ErrorCodes,
+  callToken: Token,
+  unit: CompilationUnit,
+  acceptor: ValidationAcceptor,
+) {
+  const {
+    minimumExpectedArgs,
+    maximumExpectedArgs,
+    expectedTypes,
+    lastParameterType,
+  } = getParameterDetails(procedure, unit);
+  const providedArgs = providedTypes.length;
+  if (providedArgs < minimumExpectedArgs) {
+    acceptor(diagnosticFromCode(codes.TooFewArgs, callToken, callToken.image));
+  } else if (providedArgs > maximumExpectedArgs) {
+    acceptor(diagnosticFromCode(codes.TooManyArgs, callToken, callToken.image));
+  }
   checkArgumentTypes(
     providedArgs,
     providedTypes,
