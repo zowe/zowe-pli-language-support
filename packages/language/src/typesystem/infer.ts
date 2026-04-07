@@ -513,7 +513,7 @@ export class DefaultTypeInferer implements TypeInferer {
   isAssignable(
     source: TypeDescriptions.Any,
     target: TypeDescriptions.Any,
-    unit: CompilationUnit,
+    _unit: CompilationUnit,
   ): boolean {
     if (source.type === target.type) {
       return true;
@@ -536,18 +536,28 @@ export class DefaultTypeInferer implements TypeInferer {
       ) {
         return true;
       }
-      const expression = source.initial.items[0].expression;
-      if (
-        expression &&
-        expression.kind === ast.SyntaxKind.Literal &&
-        expression.value?.kind === ast.SyntaxKind.StringLiteral &&
-        typeof expression.value.value === "string"
-      ) {
-        const value = expression.value.value;
+      const value = this.extractLiteralValue(
+        source.initial.items[0].expression,
+      );
+      if (value !== undefined) {
         return !isNaN(Number(value)) && value.trim() !== "";
       }
       return true;
     }
     return true;
+  }
+
+  private extractLiteralValue(
+    expression: ast.Expression | undefined | null,
+  ): string | undefined {
+    if (
+      expression &&
+      expression.kind === ast.SyntaxKind.Literal &&
+      expression.value?.kind === ast.SyntaxKind.StringLiteral &&
+      typeof expression.value.value === "string"
+    ) {
+      return expression.value.value;
+    }
+    return undefined;
   }
 }
