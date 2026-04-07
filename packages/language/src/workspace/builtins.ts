@@ -1124,7 +1124,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   */
  MAX: PROC(value1, valueN) RETURNS(FIXED);
    DECLARE value1 FIXED;
-   DECLARE valueN(*) FIXED VARARG;
+   DECLARE valueN FIXED LIST;
  END;
 
  /**
@@ -1135,7 +1135,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   */
  MIN: PROC(value1, valueN) RETURNS(FIXED);
    DECLARE value1 FIXED;
-   DECLARE valueN(*) FIXED VARARG;
+   DECLARE valueN FIXED LIST;
  END;
 
  /**

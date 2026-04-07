@@ -141,10 +141,6 @@ export enum AttributeKind {
    * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=attributes-variable-attribute
    */
   Variable,
-  /**
-   * Only for builtin procedure signatures
-   */
-  VariadicArgument,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-normal-abnormal-attributes */
   Volatility,
 }
@@ -184,7 +180,6 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.SetLike,
   AttributeKind.SetType,
   AttributeKind.Variable,
-  AttributeKind.VariadicArgument,
   AttributeKind.Volatility,
 ];
 
@@ -246,7 +241,6 @@ export type AttributeTypes = {
   [AttributeKind.StringBits]: StringBits;
   [AttributeKind.TransmissionDirection]: TransmissionDirection;
   [AttributeKind.Variable]: boolean;
-  [AttributeKind.VariadicArgument]: boolean;
   [AttributeKind.Volatility]: Volatility;
 };
 
@@ -290,7 +284,6 @@ export const AttributePropertyNames = {
   [AttributeKind.SetLike]: "like" as const,
   [AttributeKind.SetType]: "typeRef" as const,
   [AttributeKind.AttributeWitnesses]: "attributeWitnesses" as const,
-  [AttributeKind.VariadicArgument]: "variadicArgument" as const,
 } satisfies { [K in AttributeKind]: string };
 
 export type AttributePreprocessorValidator<K extends AttributeKind> = (
@@ -312,7 +305,7 @@ export const AttributeIsValidForPreprocessor: {
   [AttributeKind.Entry]: () => true,
   [AttributeKind.ScanMode]: () => true,
   [AttributeKind.Dimension]: () => true,
-  [AttributeKind.VariadicArgument]: () => true,
+  [AttributeKind.Initial]: () => true,
 };
 
 export function isAttributeValidForPreprocessor<K extends AttributeKind>(
@@ -330,11 +323,6 @@ export type AttributeStringifier<K extends AttributeKind> = (
 export const AttributeStringifiers: {
   [K in AttributeKind]: AttributeStringifier<K>;
 } = {
-  [AttributeKind.VariadicArgument]: function (
-    value: boolean,
-  ): string | undefined {
-    return undefined;
-  },
   [AttributeKind.BuiltIn]: function (value: boolean): string | undefined {
     return value ? "BUILTIN" : undefined;
   },
@@ -853,7 +841,6 @@ interface BaseTypeDescriptionProps {
   scope: Scope;
   storage: StorageClass;
   variable?: boolean;
-  variadicArgument: boolean;
   volatility: Volatility;
   witnesses: AttributeWitnesses;
   toString(): string;
@@ -982,7 +969,6 @@ function createBaseTypeDescription(
     optional,
     parameter,
     witnesses,
-    variadicArgument,
     toString,
   }: Partial<BaseTypeDescriptionProps>,
 ): BaseTypeDescriptionProps {
@@ -1009,8 +995,6 @@ function createBaseTypeDescription(
   parameter ??= TypeDescriptions.DefaultValues[AttributeKind.Parameter];
   initial ??= TypeDescriptions.DefaultValues[AttributeKind.Initial];
   scanMode ??= TypeDescriptions.DefaultValues[AttributeKind.ScanMode];
-  variadicArgument ??=
-    TypeDescriptions.DefaultValues[AttributeKind.VariadicArgument];
 
   if (!storage) {
     if (scope?.type === ScopeType.Internal) {
@@ -1037,7 +1021,6 @@ function createBaseTypeDescription(
     scope,
     storage,
     variable,
-    variadicArgument,
     volatility,
 
     witnesses: witnesses ?? { order: [], witnesses: {} },
@@ -1598,7 +1581,8 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   alignment?: Alignment;
   toString(): string;
   witnesses: AttributeWitnesses;
-  variadicArgument: boolean;
+  optional: boolean;
+  list: boolean;
 }
 
 interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
@@ -1716,7 +1700,6 @@ export namespace TypeDescriptions {
 
   //TODO check default values
   export const DefaultValues: AttributeTypes = {
-    [AttributeKind.VariadicArgument]: false,
     [AttributeKind.BuiltIn]: false,
     [AttributeKind.AttributeWitnesses]: {
       order: [],
@@ -1860,6 +1843,9 @@ export namespace TypeDescriptions {
       type,
       witnesses,
       level,
+      list:
+        attributes[AttributeKind.List]?.value ??
+        DefaultValues[AttributeKind.List],
       members: new Map(),
       membersMetadata: new Map(),
       parentType: undefined,
@@ -1868,10 +1854,10 @@ export namespace TypeDescriptions {
       dimension:
         attributes[AttributeKind.Dimension]?.value ??
         DefaultValues[AttributeKind.Dimension],
+      optional:
+        attributes[AttributeKind.Optional]?.value ??
+        DefaultValues[AttributeKind.Optional],
       variableNode,
-      variadicArgument:
-        attributes[AttributeKind.VariadicArgument]?.value ??
-        DefaultValues[AttributeKind.VariadicArgument],
       toString: () => stringifyAttributeWitnesses(witnesses),
     };
   }
@@ -1884,6 +1870,9 @@ export namespace TypeDescriptions {
     const common = {
       toString: () => stringifyAttributeWitnesses(witnesses),
       witnesses,
+      list:
+        attributes[AttributeKind.List]?.value ??
+        DefaultValues[AttributeKind.List],
       alignment:
         attributes[AttributeKind.Alignment]?.value ??
         DefaultValues[AttributeKind.Alignment],
@@ -1918,9 +1907,9 @@ export namespace TypeDescriptions {
       variable:
         attributes[AttributeKind.Variable]?.value ??
         DefaultValues[AttributeKind.Variable],
-      variadicArgument:
-        attributes[AttributeKind.VariadicArgument]?.value ??
-        DefaultValues[AttributeKind.VariadicArgument],
+      optional:
+        attributes[AttributeKind.Optional]?.value ??
+        DefaultValues[AttributeKind.Optional],
       scanMode:
         attributes[AttributeKind.ScanMode]?.value ??
         DefaultValues[AttributeKind.ScanMode],

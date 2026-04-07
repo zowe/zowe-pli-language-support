@@ -11,16 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
-//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
+//// %DCL XXX FIXED;
+//// %XXX = <|MAX|>(1, 2, 3, 4, 5, 6);
 
-// @filename: pli-builtin:///xxx.pli
-//// XXX: PROCEDURE (X, Y) RETURNS(FIXED);
-////   DCL <|X|>(*) FIXED VARARG;
-////   DCL Y FIXED;
-////   RETURN(12);
-//// END;
-
-verify.expectDiagnosticsAt(
-  "X",
-  code.LSP.BuiltinAttributes.VariadicParameter.IsNotLastParameter,
-);
+verify.noDiagnostics("MAX");

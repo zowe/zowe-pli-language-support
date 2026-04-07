@@ -22,7 +22,7 @@ import {
 } from "./type-check-validator";
 import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
-import { IBM3323I_IBM3324I_check_argument_count } from "./compiler/IBM3323I-IBM3324I-check-argument-count";
+import { CallStatement_checkArguments } from "./compiler/check-arguments";
 import { IBM1352IE_declared_item_pli_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
 import {
   DeprecateStatements,
@@ -39,7 +39,7 @@ import { IBM1213I_unreferenced_procedure } from "./compiler/IBM1213I-unreference
  */
 export function registerPliValidationChecks(): ValidationChecks {
   return {
-    CallStatement: [IBM3323I_IBM3324I_check_argument_count],
+    CallStatement: [CallStatement_checkArguments],
     DeclaredItem: [IBM1352IE_declared_item_pli_scan_repetition, typeCheck],
     DeclareStatement: [IBM1376IE_attributes_in_declaration_lists, typeCheck],
     DeclaredVariable: [DeprecateVariables, typeCheck],

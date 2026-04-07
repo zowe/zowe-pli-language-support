@@ -11,12 +11,14 @@
 
 /// <reference path="../../framework.ts" />
 
-//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
+//// XXX: PROC(A, B);
+////    DCL A FIXED;
+////    DCL B FIXED OPTIONAL;
+//// END XXX;
+//// START: PROC RETURNS(FIXED);
+////   CALL <|XXX|>(1);
+////   CALL <|XXX|>(1, 2);
+////   RETURN(0);
+//// END START;
 
-// @filename: pli-builtin:///xxx.pli
-//// DCL X(*) FIXED <|VARARG|>;
-
-verify.expectDiagnosticsAt(
-  "VARARG",
-  code.LSP.BuiltinAttributes.VariadicParameter.IsNotAParameter,
-);
+verify.noDiagnostics("XXX");
