@@ -147,7 +147,7 @@ function checkArgumentTypes(
 ) {
   for (let index = 0; index < providedArgs; index++) {
     const providedType = providedTypes[index];
-    if (index >= expectedTypes.length && !lastParameterType.variadicArgument) {
+    if (index >= expectedTypes.length && !lastParameterType.list) {
       break;
     }
     const expectedType = expectedTypes[index] ?? lastParameterType;
@@ -179,8 +179,8 @@ function getParameterDetails(
     expectedTypes[expectedTypes.length - 1] ?? TypeDescriptions.Unknown();
   const minimumExpectedArgs =
     expectedTypes.filter((t) => !t.optional).length -
-    (lastParameterType?.variadicArgument ? 1 : 0);
-  const maximumExpectedArgs = lastParameterType.variadicArgument
+    (lastParameterType?.list ? 1 : 0);
+  const maximumExpectedArgs = lastParameterType.list
     ? Infinity
     : expectedTypes.length;
   return {

@@ -11,13 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-//// %XXX: PROC(A, B);
+//// XXX: PROC(A, B);
 ////    DCL A FIXED;
 ////    DCL B FIXED LIST;
-//// %END XXX;
-//// %START: PROC RETURNS(FIXED);
+//// END XXX;
+//// START: PROC RETURNS(FIXED);
 ////   CALL <|XXX|>(1, 2, 3, 4, 5, 6);
 ////   RETURN(0);
-//// %END START;
+//// END START;
 
 verify.noDiagnostics("XXX");
