@@ -13,9 +13,10 @@
 
 //// %XXX: PROC(A, B);
 ////    DCL A FIXED;
-////    DCL B FIXED;
+////    DCL B FIXED OPTIONAL;
 //// %END XXX;
 //// %START: PROC RETURNS(FIXED);
+////   CALL <|XXX|>(1);
 ////   CALL <|XXX|>(1, 2);
 ////   RETURN(0);
 //// %END START;
