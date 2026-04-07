@@ -90,7 +90,7 @@ export interface CompilationUnit {
   /**
    * Resets all caches associated with this compilation unit.
    */
-  reset(): void;
+  reset(): Promise<void>;
 }
 
 export interface CompilationServices {
@@ -220,8 +220,14 @@ export async function createCompilationUnit(
       return cachedProcessGroup;
     },
     mutex: createMutex(),
-    reset() {
+    async reset() {
       services.files.clear();
+      if(uri.scheme !== BuiltinsUriSchema) {
+        const unit = await getBuiltinUnit();
+        const macroUnit = await getBuiltinMacroUnit();
+        services.files.set(unit.services.files.get(unit.uri)!);
+        services.files.set(macroUnit.services.files.get(macroUnit.uri)!);
+      }
       services.typeCache.clear();
       unit.statementOrderCache.clear();
       unit.referencesCache.clear();
