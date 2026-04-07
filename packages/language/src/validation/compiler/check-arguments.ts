@@ -9,7 +9,12 @@
  *
  */
 import { diagnosticFromCode } from "../../language-server/types";
-import { CallStatement, MemberCall, ProcedureStatement, SyntaxKind } from "../../syntax-tree/ast";
+import {
+  CallStatement,
+  MemberCall,
+  ProcedureStatement,
+  SyntaxKind,
+} from "../../syntax-tree/ast";
 import { BuiltinsUriSchema } from "../../workspace/builtins";
 import { PLICodes } from "../pli-codes";
 import {
@@ -31,7 +36,12 @@ export function CallStatement_checkArgumentCount(
     return;
   }
   const callToken = node.call!.procedure!.token;
-  const { minimumExpectedArgs, maximumExpectedArgs, expectedTypes, lastParameterType } = getParameterDetails(procedure, unit);
+  const {
+    minimumExpectedArgs,
+    maximumExpectedArgs,
+    expectedTypes,
+    lastParameterType,
+  } = getParameterDetails(procedure, unit);
   const providedArgs = node.call?.args1?.list.length || 0;
 
   if (providedArgs < minimumExpectedArgs) {
@@ -46,12 +56,20 @@ export function CallStatement_checkArgumentCount(
 
   const providedTypes =
     node.call?.args1?.list.map((d) => {
-      if(d === '*') {
+      if (d === "*") {
         return TypeDescriptions.Unknown();
       }
       return unit.services.inferer.inferType(d, unit);
     }) ?? [];
-  checkArgumentTypes(providedArgs, providedTypes, expectedTypes, lastParameterType, unit, acceptor, callToken);
+  checkArgumentTypes(
+    providedArgs,
+    providedTypes,
+    expectedTypes,
+    lastParameterType,
+    unit,
+    acceptor,
+    callToken,
+  );
 }
 
 export function MemberCall_checkArguments(
@@ -82,7 +100,12 @@ export function MemberCall_checkArguments(
   ) {
     return;
   }
-  const { minimumExpectedArgs, maximumExpectedArgs, expectedTypes, lastParameterType } = getParameterDetails(procedure, unit);
+  const {
+    minimumExpectedArgs,
+    maximumExpectedArgs,
+    expectedTypes,
+    lastParameterType,
+  } = getParameterDetails(procedure, unit);
   const providedArgs = node.element.dimensions?.dimensions.length || 0;
 
   //compare expected and provided argument counts
@@ -102,39 +125,68 @@ export function MemberCall_checkArguments(
         ? unit.services.inferer.inferType(d.upper.expression, unit)
         : TypeDescriptions.Unknown(),
     ) ?? [];
-  checkArgumentTypes(providedArgs, providedTypes, expectedTypes, lastParameterType, unit, acceptor, callToken);
+  checkArgumentTypes(
+    providedArgs,
+    providedTypes,
+    expectedTypes,
+    lastParameterType,
+    unit,
+    acceptor,
+    callToken,
+  );
 }
 
-function checkArgumentTypes(providedArgs: number, providedTypes: TypeDescriptions.Any[], expectedTypes: TypeDescriptions.Any[], lastParameterType: TypeDescriptions.Any, unit: CompilationUnit, acceptor: ValidationAcceptor, callToken: Token) {
+function checkArgumentTypes(
+  providedArgs: number,
+  providedTypes: TypeDescriptions.Any[],
+  expectedTypes: TypeDescriptions.Any[],
+  lastParameterType: TypeDescriptions.Any,
+  unit: CompilationUnit,
+  acceptor: ValidationAcceptor,
+  callToken: Token,
+) {
   for (let index = 0; index < providedArgs; index++) {
     const providedType = providedTypes[index];
     if (index >= expectedTypes.length && !lastParameterType.variadicArgument) {
       break;
     }
     const expectedType = expectedTypes[index] ?? lastParameterType;
-    if (providedType &&
+    if (
+      providedType &&
       expectedType &&
-      !unit.services.inferer.isAssignable(providedType, expectedType, unit)) {
+      !unit.services.inferer.isAssignable(providedType, expectedType, unit)
+    ) {
       acceptor(
         diagnosticFromCode(
           PLICodes.Severe.IBM3948I,
           callToken,
           callToken.image,
-          "612"
-        )
+          "612",
+        ),
       );
     }
   }
 }
 
-function getParameterDetails(procedure: ProcedureStatement, unit: CompilationUnit) {
-  const expectedTypes = procedure.parameters.map((p) => unit.services.inferer.inferType(p, unit)
+function getParameterDetails(
+  procedure: ProcedureStatement,
+  unit: CompilationUnit,
+) {
+  const expectedTypes = procedure.parameters.map((p) =>
+    unit.services.inferer.inferType(p, unit),
   );
-  const lastParameterType = expectedTypes[expectedTypes.length - 1] ?? TypeDescriptions.Unknown();
-  const minimumExpectedArgs = expectedTypes.filter((t) => !t.optional).length -
+  const lastParameterType =
+    expectedTypes[expectedTypes.length - 1] ?? TypeDescriptions.Unknown();
+  const minimumExpectedArgs =
+    expectedTypes.filter((t) => !t.optional).length -
     (lastParameterType?.variadicArgument ? 1 : 0);
   const maximumExpectedArgs = lastParameterType.variadicArgument
     ? Infinity
     : expectedTypes.length;
-  return { minimumExpectedArgs, maximumExpectedArgs, expectedTypes, lastParameterType };
+  return {
+    minimumExpectedArgs,
+    maximumExpectedArgs,
+    expectedTypes,
+    lastParameterType,
+  };
 }
