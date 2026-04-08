@@ -222,7 +222,7 @@ export async function createCompilationUnit(
     mutex: createMutex(),
     async reset() {
       services.files.clear();
-      if(uri.scheme !== BuiltinsUriSchema) {
+      if (uri.scheme !== BuiltinsUriSchema) {
         const unit = await getBuiltinUnit();
         const macroUnit = await getBuiltinMacroUnit();
         services.files.set(unit.services.files.get(unit.uri)!);
