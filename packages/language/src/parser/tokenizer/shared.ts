@@ -61,7 +61,7 @@ export class TokenizerContext {
         this.funcs = cicsFuncs;
         break;
       case TokenizerMode.SQL:
-        this.funcs = sqlFuncs; // switch to sqlFuncs when implemented
+        this.funcs = sqlFuncs;
         break;
     }
   }

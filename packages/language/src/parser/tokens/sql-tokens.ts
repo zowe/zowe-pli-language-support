@@ -995,14 +995,3 @@ export const QuestionMark = createToken({
   name: "?",
   pattern: Lexer.NA,
 });
-
-// Literal tokens (beyond the standard string and numeric literals)
-// TODO
-export const TIMESTAMPLITERAL = createToken({
-  name: "TIMESTAMPLITERAL",
-  pattern: Lexer.NA,
-});
-export const DATELITERAL = createToken({
-  name: "DATELITERAL",
-  pattern: Lexer.NA,
-});

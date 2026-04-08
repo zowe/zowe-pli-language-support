@@ -52,18 +52,25 @@ function longestCommonPrefix(words: string[]): string {
       j < prefix.length &&
       j < words[i].length &&
       prefix[j] === words[i][j]
-    )
+    ) {
       j++;
+    }
     prefix = prefix.slice(0, j);
-    if (!prefix) break;
+    if (!prefix) {
+      break;
+    }
   }
   return prefix;
 }
 
 function isSingleAtom(pattern: string): boolean {
-  if (pattern.length === 1) return true;
-  if (pattern.length === 2 && pattern[0] === "\\") return true;
-  if (pattern.startsWith("(?:") && pattern.endsWith(")")) return true;
+  if (pattern.length === 1) {
+    return true;
+  } else if (pattern.length === 2 && pattern[0] === "\\") {
+    return true;
+  } else if (pattern.startsWith("(?:") && pattern.endsWith(")")) {
+    return true;
+  }
   return false;
 }
 
@@ -123,7 +130,7 @@ function toPattern(keywords: string[]) {
   }
 
   const parts = [...groups.values()].map(buildAlternation);
-  return `(?i)\\b(${parts.join("|")})\\b`;
+  return `(?i)\\b(?:${parts.join("|")})\\b`;
 }
 
 const controlPattern = toPattern(controlKeywords);
