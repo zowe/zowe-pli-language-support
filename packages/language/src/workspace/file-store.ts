@@ -45,7 +45,7 @@ export class FileStore {
     return this.get(uri)?.comments;
   }
 
-  *getAllTokens(): IterableIterator<Token> {
+  *getAllTokens(includeBuiltins = false): IterableIterator<Token> {
     for (const file of this.map.values()) {
       if (this.baseFileUris.has(file.uri.toString())) {
         continue;
