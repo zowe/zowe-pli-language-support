@@ -13,6 +13,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { Token } from "../parser/tokens";
 import { URI } from "../utils/uri";
 import { BuiltinDocuments } from "../language-server/text-documents";
+import { BuiltinsUriSchema } from "./builtins";
 
 export interface CompilationUnitFile {
   readonly uri: URI;
@@ -36,8 +37,11 @@ export class FileStore {
     return this.get(uri)?.comments;
   }
 
-  *getAllTokens(): IterableIterator<Token> {
+  *getAllTokens(includeBuiltins = false): IterableIterator<Token> {
     for (const file of this.map.values()) {
+      if (!includeBuiltins && file.uri.scheme === BuiltinsUriSchema) {
+        continue;
+      }
       yield* file.tokens;
     }
   }
