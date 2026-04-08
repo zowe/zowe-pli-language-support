@@ -46,6 +46,11 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
+import {
+  isJSDocParagraph,
+  JSDocParagraph,
+  parseJSDoc,
+} from "../documentation/jsdoc";
 import * as tokens from "../parser/tokens";
 import { takeWhile } from "lodash-es";
 import { isJSDocParagraph, JSDocParagraph, parseJSDoc } from "../documentation/jsdoc";
