@@ -47,6 +47,7 @@ import {
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
 import {
+  isJSDoc,
   isJSDocParagraph,
   JSDocParagraph,
   parseJSDoc,
