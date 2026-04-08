@@ -104,7 +104,9 @@ const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
 const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 const FIVE_MINUTES = 1000 * 60 * 5;
 
-function createBuiltinUnitGetter(builtinDocument: TextDocument): () => Promise<CompilationUnit> {
+function createBuiltinUnitGetter(
+  builtinDocument: TextDocument,
+): () => Promise<CompilationUnit> {
   let builtinUnit: CompilationUnit | undefined = undefined;
   return async () => {
     if (!builtinUnit) {
@@ -128,8 +130,7 @@ function createBuiltinScopeGetter(unitGetter: () => Promise<CompilationUnit>) {
     if (!builtinFileScope) {
       const unit = await unitGetter();
       builtinFileScope =
-        unit.scopeCaches.regular.get(unit.ast) ??
-        Scope.createRoot();
+        unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot();
     }
     return builtinFileScope;
   };
@@ -215,7 +216,7 @@ export async function createCompilationUnit(
     mutex: createMutex(),
     async reset() {
       services.files.clear();
-      if(uri.scheme !== BuiltinsUriSchema) {
+      if (uri.scheme !== BuiltinsUriSchema) {
         const unit = await getBuiltinUnit();
         const macroUnit = await getBuiltinMacroUnit();
         services.files.set(unit.services.files.get(unit.uri)!);
