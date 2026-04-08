@@ -95,9 +95,19 @@ export function updateSqlTokenizer(): void {
   }
 
   sqlFuncs["_".charCodeAt(0)] = id;
+
+  const sid = sqlId(id);
+  // Special literals (like hexnumbers, graphicchar, etc) have id-like start chars, but are actually strings
+  for (const char of ["x", "b", "u", "g"]) {
+    sqlFuncs[char.toUpperCase().charCodeAt(0)] = sid;
+    sqlFuncs[char.toLowerCase().charCodeAt(0)] = sid;
+  }
 }
 
-function tokenizeMinusWithComment(context: TokenizerContext): Token | undefined {
+function tokenizeMinusWithComment(
+  context: TokenizerContext,
+): Token | undefined {
+  // We already know that the first character is a "-", so we can check if the next character is also a "-"
   const nextChar = context.input[context.index + 1];
   if (nextChar === "-") {
     // Single-line comment
@@ -120,4 +130,31 @@ function tokenizeMinusWithComment(context: TokenizerContext): Token | undefined 
     context.advance(1, false);
     return context.createTokenInstance(pliTokens.Minus);
   }
+}
+
+function sqlId(id: TokenizeFunc): TokenizeFunc {
+  return function (context: TokenizerContext): Token | undefined {
+    const startChar = context.char.toLowerCase();
+    if (startChar === "x") {
+      // Hexadecimal string literal
+      const nextChar = context.input[context.index + 1];
+      if (nextChar === "'" || nextChar === '"') {
+        // Consume the "x"
+        context.advance(1, false);
+        return tokenizeString(context);
+      }
+    } else if (startChar === "b" || startChar === "u" || startChar === "g") {
+      // binary, unicode or graphic string literal
+      const nextChar = context.input[context.index + 1];
+      if (nextChar === "x" || nextChar === "X") {
+        const stringChar = context.input[context.index + 2];
+        if (stringChar === "'" || stringChar === '"') {
+          // Consume the "b"/"u"/"g" and the "x"
+          context.advance(2, false);
+          return tokenizeString(context);
+        }
+      }
+    }
+    return id(context);
+  };
 }

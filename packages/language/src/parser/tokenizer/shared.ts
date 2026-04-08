@@ -364,9 +364,12 @@ export function tokenizeSemicolon(
   }
   return context.createTokenInstance(tokens.Semicolon);
 }
+
 const numberRegex = tokens.NUMBER.PATTERN as RegExp;
 export const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
-export function tokenizeIdentifier(keywords: Map<bigint, KeywordToken>): TokenizeFunc {
+export function tokenizeIdentifier(
+  keywords: Map<bigint, KeywordToken>,
+): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
     const start = context.index;
     let hash = FNV_OFFSET_BASIS;
@@ -386,7 +389,9 @@ export function tokenizeIdentifier(keywords: Map<bigint, KeywordToken>): Tokeniz
       i++;
     }
     const originalImage = context.input.substring(start, i);
-    const image = context.caseUpper ? originalImage.toUpperCase() : originalImage;
+    const image = context.caseUpper
+      ? originalImage.toUpperCase()
+      : originalImage;
     const previousToken = context.tokens[context.tokens.length - 1];
     // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
     if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
@@ -406,6 +411,10 @@ export function tokenizeIdentifier(keywords: Map<bigint, KeywordToken>): Tokeniz
       tokenType = keyword.kind;
     }
     context.advance(i - start, false);
-    return context.createTokenInstanceWithImage(image, originalImage, tokenType);
-  }
+    return context.createTokenInstanceWithImage(
+      image,
+      originalImage,
+      tokenType,
+    );
+  };
 }

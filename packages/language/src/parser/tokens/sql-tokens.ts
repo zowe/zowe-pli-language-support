@@ -11,7 +11,7 @@
 
 import { Lexer } from "chevrotain";
 import { createToken } from "../token-type-factory";
-import { createKeywordRegistry } from "./shared";
+import { createKeywordRegistry, KeywordType } from "./shared";
 
 // Based on:
 // https://github.com/eclipse-che4z/che-che4z-lsp-for-cobol/blob/development/server/engine/src/main/antlr4/org/eclipse/lsp/cobol/implicitDialects/sql/Db2SqlExecLexer.g4
@@ -36,9 +36,15 @@ export const AGE = registerKeyword({ name: "AGE" });
 export const ALGORITHM = registerKeyword({ name: "ALGORITHM" });
 export const ALIAS = registerKeyword({ name: "ALIAS" });
 export const ALL = registerKeyword({ name: "ALL" });
-export const ALLOCATE = registerKeyword({ name: "ALLOCATE" });
+export const ALLOCATE = registerKeyword({
+  name: "ALLOCATE",
+  type: KeywordType.Control,
+});
 export const ALLOW = registerKeyword({ name: "ALLOW" });
-export const ALTER = registerKeyword({ name: "ALTER" });
+export const ALTER = registerKeyword({
+  name: "ALTER",
+  type: KeywordType.Control,
+});
 export const ALTERIN = registerKeyword({ name: "ALTERIN" });
 export const ALWAYS = registerKeyword({ name: "ALWAYS" });
 export const AND = registerKeyword({ name: "AND" });
@@ -54,7 +60,10 @@ export const AS = registerKeyword({ name: "AS" });
 export const ASC = registerKeyword({ name: "ASC" });
 export const ASCII = registerKeyword({ name: "ASCII" });
 export const ASENSITIVE = registerKeyword({ name: "ASENSITIVE" });
-export const ASSOCIATE = registerKeyword({ name: "ASSOCIATE" });
+export const ASSOCIATE = registerKeyword({
+  name: "ASSOCIATE",
+  type: KeywordType.Control,
+});
 export const ASUTIME = registerKeyword({ name: "ASUTIME" });
 export const AT = registerKeyword({ name: "AT" });
 export const ATOMIC = registerKeyword({ name: "ATOMIC" });
@@ -68,11 +77,17 @@ export const AUXILIARY = registerKeyword({ name: "AUXILIARY" });
 export const AVG = registerKeyword({ name: "AVG" });
 export const BASED = registerKeyword({ name: "BASED" });
 export const BEFORE = registerKeyword({ name: "BEFORE" });
-export const BEGIN = registerKeyword({ name: "BEGIN" });
+export const BEGIN = registerKeyword({
+  name: "BEGIN",
+  type: KeywordType.Control,
+});
 export const BETWEEN = registerKeyword({ name: "BETWEEN" });
 export const BIGINT = registerKeyword({ name: "BIGINT" });
 export const BINARY = registerKeyword({ name: "BINARY" });
-export const BIND = registerKeyword({ name: "BIND" });
+export const BIND = registerKeyword({
+  name: "BIND",
+  type: KeywordType.Control,
+});
 export const BINDADD = registerKeyword({ name: "BINDADD" });
 export const BINDAGENT = registerKeyword({ name: "BINDAGENT" });
 export const BIT = registerKeyword({ name: "BIT" });
@@ -84,7 +99,10 @@ export const BUFFERPOOLS = registerKeyword({ name: "BUFFERPOOLS" });
 export const BUSINESS_TIME = registerKeyword({ name: "BUSINESS_TIME" });
 export const BY = registerKeyword({ name: "BY" });
 export const CACHE = registerKeyword({ name: "CACHE" });
-export const CALL = registerKeyword({ name: "CALL" });
+export const CALL = registerKeyword({
+  name: "CALL",
+  type: KeywordType.Control,
+});
 export const CALLED = registerKeyword({ name: "CALLED" });
 export const CALLER = registerKeyword({ name: "CALLER" });
 export const CAPTURE = registerKeyword({ name: "CAPTURE" });
@@ -112,7 +130,10 @@ export const CLIENT_USERID = registerKeyword({ name: "CLIENT_USERID" });
 export const CLIENT_WRKSTNNAME = registerKeyword({ name: "CLIENT_WRKSTNNAME" });
 export const CLOB = registerKeyword({ name: "CLOB" });
 export const CLONE = registerKeyword({ name: "CLONE" });
-export const CLOSE = registerKeyword({ name: "CLOSE" });
+export const CLOSE = registerKeyword({
+  name: "CLOSE",
+  type: KeywordType.Control,
+});
 export const CLUSTER = registerKeyword({ name: "CLUSTER" });
 export const COALESCE = registerKeyword({ name: "COALESCE" });
 export const COLLECTION = registerKeyword({ name: "COLLECTION" });
@@ -120,7 +141,10 @@ export const COLLID = registerKeyword({ name: "COLLID" });
 export const COLUMN = registerKeyword({ name: "COLUMN" });
 export const COLUMNS = registerKeyword({ name: "COLUMNS" });
 export const COMMENT = registerKeyword({ name: "COMMENT" });
-export const COMMIT = registerKeyword({ name: "COMMIT" });
+export const COMMIT = registerKeyword({
+  name: "COMMIT",
+  type: KeywordType.Control,
+});
 export const COMMITTED = registerKeyword({ name: "COMMITTED" });
 export const COMPATIBILITY = registerKeyword({ name: "COMPATIBILITY" });
 export const COMPRESS = registerKeyword({ name: "COMPRESS" });
@@ -129,7 +153,10 @@ export const CONCENTRATE = registerKeyword({ name: "CONCENTRATE" });
 export const CONCURRENT = registerKeyword({ name: "CONCURRENT" });
 export const CONDITION = registerKeyword({ name: "CONDITION" });
 export const CONDITION_NUMBER = registerKeyword({ name: "CONDITION_NUMBER" });
-export const CONNECT = registerKeyword({ name: "CONNECT" });
+export const CONNECT = registerKeyword({
+  name: "CONNECT",
+  type: KeywordType.Control,
+});
 export const CONNECTION = registerKeyword({ name: "CONNECTION" });
 export const CONSTRAINT = registerKeyword({ name: "CONSTRAINT" });
 export const CONTAINS = registerKeyword({ name: "CONTAINS" });
@@ -142,7 +169,10 @@ export const CORRELATION = registerKeyword({ name: "CORRELATION" });
 export const COUNT = registerKeyword({ name: "COUNT" });
 export const COUNT_BIG = registerKeyword({ name: "COUNT_BIG" });
 export const COVARIANCE = registerKeyword({ name: "COVARIANCE" });
-export const CREATE = registerKeyword({ name: "CREATE" });
+export const CREATE = registerKeyword({
+  name: "CREATE",
+  type: KeywordType.Control,
+});
 export const CREATEALIAS = registerKeyword({ name: "CREATEALIAS" });
 export const CREATEDBA = registerKeyword({ name: "CREATEDBA" });
 export const CREATEDBC = registerKeyword({ name: "CREATEDBC" });
@@ -276,13 +306,19 @@ export const DBCTRL = registerKeyword({ name: "DBCTRL" });
 export const DBINFO = registerKeyword({ name: "DBINFO" });
 export const DBMAINT = registerKeyword({ name: "DBMAINT" });
 export const DEACTIVATE = registerKeyword({ name: "DEACTIVATE" });
-export const DEALLOCATE = registerKeyword({ name: "DEALLOCATE" });
+export const DEALLOCATE = registerKeyword({
+  name: "DEALLOCATE",
+  type: KeywordType.Control,
+});
 export const DEBUG = registerKeyword({ name: "DEBUG" });
 export const DEBUGSESSION = registerKeyword({ name: "DEBUGSESSION" });
 export const DEC = registerKeyword({ name: "DEC" });
 export const DECFLOAT = registerKeyword({ name: "DECFLOAT" });
 export const DECIMAL = registerKeyword({ name: "DECIMAL" });
-export const DECLARE = registerKeyword({ name: "DECLARE" });
+export const DECLARE = registerKeyword({
+  name: "DECLARE",
+  type: KeywordType.Control,
+});
 export const DEC_ROUND_CEILING = registerKeyword({ name: "DEC_ROUND_CEILING" });
 export const DEC_ROUND_DOWN = registerKeyword({ name: "DEC_ROUND_DOWN" });
 export const DEC_ROUND_FLOOR = registerKeyword({ name: "DEC_ROUND_FLOOR" });
@@ -303,22 +339,37 @@ export const DEFINEBIND = registerKeyword({ name: "DEFINEBIND" });
 export const DEFINER = registerKeyword({ name: "DEFINER" });
 export const DEFINERUN = registerKeyword({ name: "DEFINERUN" });
 export const DEGREE = registerKeyword({ name: "DEGREE" });
-export const DELETE = registerKeyword({ name: "DELETE" });
+export const DELETE = registerKeyword({
+  name: "DELETE",
+  type: KeywordType.Control,
+});
 export const DENSE_RANK = registerKeyword({ name: "DENSE_RANK" });
 export const DEPENDENT = registerKeyword({ name: "DEPENDENT" });
 export const DESC = registerKeyword({ name: "DESC" });
-export const DESCRIBE = registerKeyword({ name: "DESCRIBE" });
+export const DESCRIBE = registerKeyword({
+  name: "DESCRIBE",
+  type: KeywordType.Control,
+});
 export const DESCRIPTOR = registerKeyword({ name: "DESCRIPTOR" });
 export const DETERMINISTIC = registerKeyword({ name: "DETERMINISTIC" });
 export const DIAGNOSTICS = registerKeyword({ name: "DIAGNOSTICS" });
 export const DISABLE = registerKeyword({ name: "DISABLE" });
 export const DISALLOW = registerKeyword({ name: "DISALLOW" });
 export const DISPATCH = registerKeyword({ name: "DISPATCH" });
-export const DISPLAY = registerKeyword({ name: "DISPLAY" });
-export const DISPLAYDB = registerKeyword({ name: "DISPLAYDB" });
+export const DISPLAY = registerKeyword({
+  name: "DISPLAY",
+  type: KeywordType.Control,
+});
+export const DISPLAYDB = registerKeyword({
+  name: "DISPLAYDB",
+  type: KeywordType.Control,
+});
 export const DISTINCT = registerKeyword({ name: "DISTINCT" });
 export const DOUBLE = registerKeyword({ name: "DOUBLE" });
-export const DROP = registerKeyword({ name: "DROP" });
+export const DROP = registerKeyword({
+  name: "DROP",
+  type: KeywordType.Control,
+});
 export const DROPIN = registerKeyword({ name: "DROPIN" });
 export const DSSIZE = registerKeyword({ name: "DSSIZE" });
 export const DYNAMIC = registerKeyword({ name: "DYNAMIC" });
@@ -333,7 +384,7 @@ export const EMPTY = registerKeyword({ name: "EMPTY" });
 export const ENABLE = registerKeyword({ name: "ENABLE" });
 export const ENCODING = registerKeyword({ name: "ENCODING" });
 export const ENCRYPTION = registerKeyword({ name: "ENCRYPTION" });
-export const END = registerKeyword({ name: "END" });
+export const END = registerKeyword({ name: "END", type: KeywordType.Control });
 export const ENDING = registerKeyword({ name: "ENDING" });
 export const ENFORCED = registerKeyword({ name: "ENFORCED" });
 export const ENVIRONMENT = registerKeyword({ name: "ENVIRONMENT" });
@@ -346,10 +397,19 @@ export const EXCHANGE = registerKeyword({ name: "EXCHANGE" });
 export const EXCLUDE = registerKeyword({ name: "EXCLUDE" });
 export const EXCLUDING = registerKeyword({ name: "EXCLUDING" });
 export const EXCLUSIVE = registerKeyword({ name: "EXCLUSIVE" });
-export const EXECUTE = registerKeyword({ name: "EXECUTE" });
+export const EXECUTE = registerKeyword({
+  name: "EXECUTE",
+  type: KeywordType.Control,
+});
 export const EXISTS = registerKeyword({ name: "EXISTS" });
-export const EXIT = registerKeyword({ name: "EXIT" });
-export const EXPLAIN = registerKeyword({ name: "EXPLAIN" });
+export const EXIT = registerKeyword({
+  name: "EXIT",
+  type: KeywordType.Control,
+});
+export const EXPLAIN = registerKeyword({
+  name: "EXPLAIN",
+  type: KeywordType.Control,
+});
 export const EXTERNAL = registerKeyword({ name: "EXTERNAL" });
 export const EXTRA = registerKeyword({ name: "EXTRA" });
 export const EXTRACT = registerKeyword({ name: "EXTRACT" });
@@ -357,7 +417,10 @@ export const FAILBACK = registerKeyword({ name: "FAILBACK" });
 export const FAILURE = registerKeyword({ name: "FAILURE" });
 export const FAILURES = registerKeyword({ name: "FAILURES" });
 export const FENCED = registerKeyword({ name: "FENCED" });
-export const FETCH = registerKeyword({ name: "FETCH" });
+export const FETCH = registerKeyword({
+  name: "FETCH",
+  type: KeywordType.Control,
+});
 export const FIELDPROC = registerKeyword({ name: "FIELDPROC" });
 export const FINAL = registerKeyword({ name: "FINAL" });
 export const FIRST = registerKeyword({ name: "FIRST" });
@@ -367,7 +430,10 @@ export const FOR = registerKeyword({ name: "FOR" });
 export const FOREIGN = registerKeyword({ name: "FOREIGN" });
 export const FORMAT = registerKeyword({ name: "FORMAT" });
 export const FOUND = registerKeyword({ name: "FOUND" });
-export const FREE = registerKeyword({ name: "FREE" });
+export const FREE = registerKeyword({
+  name: "FREE",
+  type: KeywordType.Control,
+});
 export const FREEPAGE = registerKeyword({ name: "FREEPAGE" });
 export const FROM = registerKeyword({ name: "FROM" });
 export const FULL = registerKeyword({ name: "FULL" });
@@ -380,12 +446,18 @@ export const GENERAL = registerKeyword({ name: "GENERAL" });
 export const GENERATE = registerKeyword({ name: "GENERATE" });
 export const GENERATED = registerKeyword({ name: "GENERATED" });
 export const GENERIC = registerKeyword({ name: "GENERIC" });
-export const GET = registerKeyword({ name: "GET" });
+export const GET = registerKeyword({ name: "GET", type: KeywordType.Control });
 export const GET_ACCEL_ARCHIVE = registerKeyword({ name: "GET_ACCEL_ARCHIVE" });
 export const GLOBAL = registerKeyword({ name: "GLOBAL" });
 export const GO = registerKeyword({ name: "GO" });
-export const GOTO = registerKeyword({ name: "GOTO" });
-export const GRANT = registerKeyword({ name: "GRANT" });
+export const GOTO = registerKeyword({
+  name: "GOTO",
+  type: KeywordType.Control,
+});
+export const GRANT = registerKeyword({
+  name: "GRANT",
+  type: KeywordType.Control,
+});
 export const GRAPHIC = registerKeyword({ name: "GRAPHIC" });
 export const GROUP = registerKeyword({ name: "GROUP" });
 export const GROUPING = registerKeyword({ name: "GROUPING" });
@@ -403,11 +475,17 @@ export const HUFFMAN = registerKeyword({ name: "HUFFMAN" });
 export const ID = registerKeyword({ name: "ID" });
 export const IDENTITY = registerKeyword({ name: "IDENTITY" });
 export const IGNORE = registerKeyword({ name: "IGNORE" });
-export const IMAGCOPY = registerKeyword({ name: "IMAGCOPY" });
+export const IMAGCOPY = registerKeyword({
+  name: "IMAGCOPY",
+  type: KeywordType.Control,
+});
 export const IMMEDIATE = registerKeyword({ name: "IMMEDIATE" });
 export const IMPLICITLY = registerKeyword({ name: "IMPLICITLY" });
 export const IN = registerKeyword({ name: "IN" });
-export const INCLUDE = registerKeyword({ name: "INCLUDE" });
+export const INCLUDE = registerKeyword({
+  name: "INCLUDE",
+  type: KeywordType.Control,
+});
 export const INCLUDING = registerKeyword({ name: "INCLUDING" });
 export const INCLUSIVE = registerKeyword({ name: "INCLUSIVE" });
 export const INCREMENT = registerKeyword({ name: "INCREMENT" });
@@ -421,7 +499,10 @@ export const INNER = registerKeyword({ name: "INNER" });
 export const INOUT = registerKeyword({ name: "INOUT" });
 export const INPUT = registerKeyword({ name: "INPUT" });
 export const INSENSITIVE = registerKeyword({ name: "INSENSITIVE" });
-export const INSERT = registerKeyword({ name: "INSERT" });
+export const INSERT = registerKeyword({
+  name: "INSERT",
+  type: KeywordType.Control,
+});
 export const INSTEAD = registerKeyword({ name: "INSTEAD" });
 export const INT = registerKeyword({ name: "INT" });
 export const INTEGER = registerKeyword({ name: "INTEGER" });
@@ -454,14 +535,20 @@ export const LEVEL = registerKeyword({ name: "LEVEL" });
 export const LIKE = registerKeyword({ name: "LIKE" });
 export const LIMIT = registerKeyword({ name: "LIMIT" });
 export const LITERALS = registerKeyword({ name: "LITERALS" });
-export const LOAD = registerKeyword({ name: "LOAD" });
+export const LOAD = registerKeyword({
+  name: "LOAD",
+  type: KeywordType.Control,
+});
 export const LOB = registerKeyword({ name: "LOB" });
 export const LOCAL = registerKeyword({ name: "LOCAL" });
 export const LOCALE = registerKeyword({ name: "LOCALE" });
 export const LOCATION = registerKeyword({ name: "LOCATION" });
 export const LOCATOR = registerKeyword({ name: "LOCATOR" });
 export const LOCATORS = registerKeyword({ name: "LOCATORS" });
-export const LOCK = registerKeyword({ name: "LOCK" });
+export const LOCK = registerKeyword({
+  name: "LOCK",
+  type: KeywordType.Control,
+});
 export const LOCKED = registerKeyword({ name: "LOCKED" });
 export const LOCKMAX = registerKeyword({ name: "LOCKMAX" });
 export const LOCKS = registerKeyword({ name: "LOCKS" });
@@ -480,7 +567,10 @@ export const MAXPARTITIONS = registerKeyword({ name: "MAXPARTITIONS" });
 export const MAXROWS = registerKeyword({ name: "MAXROWS" });
 export const MAXVALUE = registerKeyword({ name: "MAXVALUE" });
 export const MEMBER = registerKeyword({ name: "MEMBER" });
-export const MERGE = registerKeyword({ name: "MERGE" });
+export const MERGE = registerKeyword({
+  name: "MERGE",
+  type: KeywordType.Control,
+});
 export const MESSAGE_TEXT = registerKeyword({ name: "MESSAGE_TEXT" });
 export const MGMTCLAS = registerKeyword({ name: "MGMTCLAS" });
 export const MICROSECOND = registerKeyword({ name: "MICROSECOND" });
@@ -529,7 +619,10 @@ export const OLD_TABLE = registerKeyword({ name: "OLD_TABLE" });
 export const ON = registerKeyword({ name: "ON" });
 export const ONCE = registerKeyword({ name: "ONCE" });
 export const ONLY = registerKeyword({ name: "ONLY" });
-export const OPEN = registerKeyword({ name: "OPEN" });
+export const OPEN = registerKeyword({
+  name: "OPEN",
+  type: KeywordType.Control,
+});
 export const OPERATION = registerKeyword({ name: "OPERATION" });
 export const OPTHINT = registerKeyword({ name: "OPTHINT" });
 export const OPTIMIZE = registerKeyword({ name: "OPTIMIZE" });
@@ -580,7 +673,10 @@ export const PORTION = registerKeyword({ name: "PORTION" });
 export const POSITION = registerKeyword({ name: "POSITION" });
 export const POSITIONING = registerKeyword({ name: "POSITIONING" });
 export const PRECISION = registerKeyword({ name: "PRECISION" });
-export const PREPARE = registerKeyword({ name: "PREPARE" });
+export const PREPARE = registerKeyword({
+  name: "PREPARE",
+  type: KeywordType.Control,
+});
 export const PRESERVE = registerKeyword({ name: "PRESERVE" });
 export const PREVIOUS = registerKeyword({ name: "PREVIOUS" });
 export const PRIMARY = registerKeyword({ name: "PRIMARY" });
@@ -601,21 +697,42 @@ export const RANK = registerKeyword({ name: "RANK" });
 export const READ = registerKeyword({ name: "READ" });
 export const READS = registerKeyword({ name: "READS" });
 export const REAL = registerKeyword({ name: "REAL" });
-export const RECOVER = registerKeyword({ name: "RECOVER" });
-export const RECOVERDB = registerKeyword({ name: "RECOVERDB" });
+export const RECOVER = registerKeyword({
+  name: "RECOVER",
+  type: KeywordType.Control,
+});
+export const RECOVERDB = registerKeyword({
+  name: "RECOVERDB",
+  type: KeywordType.Control,
+});
 export const REF = registerKeyword({ name: "REF" });
 export const REFERENCES = registerKeyword({ name: "REFERENCES" });
 export const REFERENCING = registerKeyword({ name: "REFERENCING" });
-export const REFRESH = registerKeyword({ name: "REFRESH" });
+export const REFRESH = registerKeyword({
+  name: "REFRESH",
+  type: KeywordType.Control,
+});
 export const REGENERATE = registerKeyword({ name: "REGENERATE" });
 export const REGISTERS = registerKeyword({ name: "REGISTERS" });
 export const RELATIVE = registerKeyword({ name: "RELATIVE" });
-export const RELEASE = registerKeyword({ name: "RELEASE" });
+export const RELEASE = registerKeyword({
+  name: "RELEASE",
+  type: KeywordType.Control,
+});
 export const REMOVE = registerKeyword({ name: "REMOVE" });
-export const RENAME = registerKeyword({ name: "RENAME" });
+export const RENAME = registerKeyword({
+  name: "RENAME",
+  type: KeywordType.Control,
+});
 export const REOPT = registerKeyword({ name: "REOPT" });
-export const REORG = registerKeyword({ name: "REORG" });
-export const REPAIR = registerKeyword({ name: "REPAIR" });
+export const REORG = registerKeyword({
+  name: "REORG",
+  type: KeywordType.Control,
+});
+export const REPAIR = registerKeyword({
+  name: "REPAIR",
+  type: KeywordType.Control,
+});
 export const REPEAT = registerKeyword({ name: "REPEAT" });
 export const REPLACE = registerKeyword({ name: "REPLACE" });
 export const REQUIRED = registerKeyword({ name: "REQUIRED" });
@@ -627,15 +744,24 @@ export const RESTART = registerKeyword({ name: "RESTART" });
 export const RESTRICT = registerKeyword({ name: "RESTRICT" });
 export const RESULT = registerKeyword({ name: "RESULT" });
 export const RETAIN = registerKeyword({ name: "RETAIN" });
-export const RETURN = registerKeyword({ name: "RETURN" });
+export const RETURN = registerKeyword({
+  name: "RETURN",
+  type: KeywordType.Control,
+});
 export const RETURNED_SQLSTATE = registerKeyword({ name: "RETURNED_SQLSTATE" });
 export const RETURNING = registerKeyword({ name: "RETURNING" });
 export const RETURNS = registerKeyword({ name: "RETURNS" });
 export const REUSE = registerKeyword({ name: "REUSE" });
-export const REVOKE = registerKeyword({ name: "REVOKE" });
+export const REVOKE = registerKeyword({
+  name: "REVOKE",
+  type: KeywordType.Control,
+});
 export const RIGHT = registerKeyword({ name: "RIGHT" });
 export const ROLE = registerKeyword({ name: "ROLE" });
-export const ROLLBACK = registerKeyword({ name: "ROLLBACK" });
+export const ROLLBACK = registerKeyword({
+  name: "ROLLBACK",
+  type: KeywordType.Control,
+});
 export const ROLLUP = registerKeyword({ name: "ROLLUP" });
 export const ROTATE = registerKeyword({ name: "ROTATE" });
 export const ROUNDING = registerKeyword({ name: "ROUNDING" });
@@ -657,7 +783,10 @@ export const RR = registerKeyword({ name: "RR" });
 export const RS = registerKeyword({ name: "RS" });
 export const RULES = registerKeyword({ name: "RULES" });
 export const RUN = registerKeyword({ name: "RUN" });
-export const SAVEPOINT = registerKeyword({ name: "SAVEPOINT" });
+export const SAVEPOINT = registerKeyword({
+  name: "SAVEPOINT",
+  type: KeywordType.Control,
+});
 export const SBCS = registerKeyword({ name: "SBCS" });
 export const SCHEMA = registerKeyword({ name: "SCHEMA" });
 export const SCHEME = registerKeyword({ name: "SCHEME" });
@@ -670,7 +799,10 @@ export const SECTION = registerKeyword({ name: "SECTION" });
 export const SECURED = registerKeyword({ name: "SECURED" });
 export const SECURITY = registerKeyword({ name: "SECURITY" });
 export const SEGSIZE = registerKeyword({ name: "SEGSIZE" });
-export const SELECT = registerKeyword({ name: "SELECT" });
+export const SELECT = registerKeyword({
+  name: "SELECT",
+  type: KeywordType.Control,
+});
 export const SELECTIVITY = registerKeyword({ name: "SELECTIVITY" });
 export const SENSITIVE = registerKeyword({ name: "SENSITIVE" });
 export const SEQUENCE = registerKeyword({ name: "SEQUENCE" });
@@ -679,13 +811,15 @@ export const SERVER = registerKeyword({ name: "SERVER" });
 export const SERVER_NAME = registerKeyword({ name: "SERVER_NAME" });
 export const SESSION = registerKeyword({ name: "SESSION" });
 export const SESSION_USER = registerKeyword({ name: "SESSION_USER" });
-export const SET = registerKeyword({ name: "SET" });
+export const SET = registerKeyword({ name: "SET", type: KeywordType.Control });
 export const SETS = registerKeyword({ name: "SETS" });
 export const SHARE = registerKeyword({ name: "SHARE" });
-export const SIGNAL = registerKeyword({ name: "SIGNAL" });
+export const SIGNAL = registerKeyword({
+  name: "SIGNAL",
+  type: KeywordType.Control,
+});
 export const SIZE = registerKeyword({ name: "SIZE" });
-// Token is named SKIPCHAR in the G4 to avoid conflicts; matches keyword "SKIP"
-export const SKIPCHAR = registerKeyword({ name: "SKIP" });
+export const SKIP = registerKeyword({ name: "SKIP" });
 export const SMALLINT = registerKeyword({ name: "SMALLINT" });
 export const SOME = registerKeyword({ name: "SOME" });
 export const SOURCE = registerKeyword({ name: "SOURCE" });
@@ -703,8 +837,14 @@ export const SQLSTATE = registerKeyword({ name: "SQLSTATE" });
 export const SQLWARNING = registerKeyword({ name: "SQLWARNING" });
 export const STABILIZED = registerKeyword({ name: "STABILIZED" });
 export const STACKED = registerKeyword({ name: "STACKED" });
-export const START = registerKeyword({ name: "START" });
-export const STARTDB = registerKeyword({ name: "STARTDB" });
+export const START = registerKeyword({
+  name: "START",
+  type: KeywordType.Control,
+});
+export const STARTDB = registerKeyword({
+  name: "STARTDB",
+  type: KeywordType.Control,
+});
 export const STARTING = registerKeyword({ name: "STARTING" });
 export const STATEMENT = registerKeyword({ name: "STATEMENT" });
 export const STATEMENTS = registerKeyword({ name: "STATEMENTS" });
@@ -716,13 +856,22 @@ export const STMTCACHE = registerKeyword({ name: "STMTCACHE" });
 export const STMTID = registerKeyword({ name: "STMTID" });
 export const STMTTOKEN = registerKeyword({ name: "STMTTOKEN" });
 export const STOGROUP = registerKeyword({ name: "STOGROUP" });
-export const STOP = registerKeyword({ name: "STOP" });
+export const STOP = registerKeyword({
+  name: "STOP",
+  type: KeywordType.Control,
+});
 export const STOPALL = registerKeyword({ name: "STOPALL" });
-export const STOPDB = registerKeyword({ name: "STOPDB" });
+export const STOPDB = registerKeyword({
+  name: "STOPDB",
+  type: KeywordType.Control,
+});
 export const STORAGE = registerKeyword({ name: "STORAGE" });
 export const STORCLAS = registerKeyword({ name: "STORCLAS" });
 export const STORES = registerKeyword({ name: "STORES" });
-export const STOSPACE = registerKeyword({ name: "STOSPACE" });
+export const STOSPACE = registerKeyword({
+  name: "STOSPACE",
+  type: KeywordType.Control,
+});
 export const STRUCTURE = registerKeyword({ name: "STRUCTURE" });
 export const STYLE = registerKeyword({ name: "STYLE" });
 export const SUB = registerKeyword({ name: "SUB" });
@@ -747,7 +896,10 @@ export const TIMESTAMP = registerKeyword({ name: "TIMESTAMP" });
 export const TIMEZONE = registerKeyword({ name: "TIMEZONE" });
 export const TO = registerKeyword({ name: "TO" });
 export const TOKEN = registerKeyword({ name: "TOKEN" });
-export const TRACE = registerKeyword({ name: "TRACE" });
+export const TRACE = registerKeyword({
+  name: "TRACE",
+  type: KeywordType.Control,
+});
 export const TRACKMOD = registerKeyword({ name: "TRACKMOD" });
 export const TRANSACTION = registerKeyword({ name: "TRANSACTION" });
 export const TRANSFER = registerKeyword({ name: "TRANSFER" });
@@ -755,7 +907,10 @@ export const TRANSLATE = registerKeyword({ name: "TRANSLATE" });
 export const TRIGGER = registerKeyword({ name: "TRIGGER" });
 export const TRIGGERS = registerKeyword({ name: "TRIGGERS" });
 export const TRIM = registerKeyword({ name: "TRIM" });
-export const TRUNCATE = registerKeyword({ name: "TRUNCATE" });
+export const TRUNCATE = registerKeyword({
+  name: "TRUNCATE",
+  type: KeywordType.Control,
+});
 export const TRUSTED = registerKeyword({ name: "TRUSTED" });
 export const TYPE = registerKeyword({ name: "TYPE" });
 export const TYPES = registerKeyword({ name: "TYPES" });
@@ -764,7 +919,10 @@ export const UNION = registerKeyword({ name: "UNION" });
 export const UNIQUE = registerKeyword({ name: "UNIQUE" });
 export const UNNEST = registerKeyword({ name: "UNNEST" });
 export const UNPACK = registerKeyword({ name: "UNPACK" });
-export const UPDATE = registerKeyword({ name: "UPDATE" });
+export const UPDATE = registerKeyword({
+  name: "UPDATE",
+  type: KeywordType.Control,
+});
 export const UPON = registerKeyword({ name: "UPON" });
 export const UPPER = registerKeyword({ name: "UPPER" });
 export const UR = registerKeyword({ name: "UR" });
@@ -795,7 +953,10 @@ export const VOLUMES = registerKeyword({ name: "VOLUMES" });
 export const WAIT = registerKeyword({ name: "WAIT" });
 export const WAITFORDATA = registerKeyword({ name: "WAITFORDATA" });
 export const WHEN = registerKeyword({ name: "WHEN" });
-export const WHENEVER = registerKeyword({ name: "WHENEVER" });
+export const WHENEVER = registerKeyword({
+  name: "WHENEVER",
+  type: KeywordType.Control,
+});
 export const WHERE = registerKeyword({ name: "WHERE" });
 export const WITH = registerKeyword({ name: "WITH" });
 export const WITHOUT = registerKeyword({ name: "WITHOUT" });

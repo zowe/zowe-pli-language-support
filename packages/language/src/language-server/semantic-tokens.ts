@@ -24,12 +24,14 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import {
   controlTokens,
+  ID,
   modifierTokens,
   NUMBER,
   STRING_TERM,
   Token,
 } from "../parser/tokens";
 import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
+import { tokenMatcher } from "chevrotain";
 
 export enum SemanticTokenTypes {
   variable,
@@ -200,15 +202,19 @@ function tokenType(token: Token): number | undefined {
     return SemanticTokenTypes.number;
   }
 
-  // Temporary solution for semantic EXEC tokens
-  if (token.kind === CstNodeKind.EmbeddedUnknownStatement_Token) {
-    return SemanticTokenTypes.modifier;
-  }
-
   // If the token has no semantic meaning based on the CST, check if it's a keyword
   if (controlTokens.has(token.tokenType)) {
     return SemanticTokenTypes.keyword;
   } else if (modifierTokens.has(token.tokenType)) {
+    return SemanticTokenTypes.modifier;
+  }
+
+  // Temporary solution for semantic EXEC tokens
+  // Remove, once we support parsing CICS and SQL statements properly
+  if (
+    token.kind === CstNodeKind.EmbeddedUnknownStatement_Token &&
+    tokenMatcher(token, ID)
+  ) {
     return SemanticTokenTypes.modifier;
   }
 

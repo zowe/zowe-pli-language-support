@@ -186,7 +186,7 @@ export function updatePliTokenizer(compilerOptions: CompilerOptions): void {
   // Letters
   for (let i = 97; i <= 122; i++) {
     // a-z
-    pliFuncs[i] = id
+    pliFuncs[i] = id;
   }
   for (let i = 65; i <= 90; i++) {
     // A-Z
@@ -206,6 +206,4 @@ export function updatePliTokenizer(compilerOptions: CompilerOptions): void {
       TwoCharTokens["^"],
     );
   }
-
-  
 }
