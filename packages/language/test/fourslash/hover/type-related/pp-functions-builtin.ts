@@ -16,7 +16,8 @@
 
 hover.expectMarkdownAt(
   1,
-  hover.codeBlock(`SUBSTR: PROC(STRING,OFFSET,LENGTH) RETURNS(CHARACTER);`)+`
+  hover.codeBlock(`SUBSTR: PROC(STRING,OFFSET,LENGTH) RETURNS(CHARACTER);`) +
+    `
 
 ---
 
