@@ -43,6 +43,7 @@ import {
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
 import {
+  isJSDoc,
   isJSDocParagraph,
   JSDocParagraph,
   parseJSDoc,
@@ -459,15 +460,18 @@ export function getJSDocsCommentBeforeLabelPrefix(
     labelPrefix.nameToken.startOffset,
   );
   if (index > -1) {
-    const jsDoc = parseJSDoc(commentTokens[index]);
-    const description = takeWhile(jsDoc.elements, isJSDocParagraph)
-      .flatMap((p) => (p as JSDocParagraph).inlines)
-      .map((inline) => inline.toMarkdown())
-      .join("\n");
+    let description: string | null = null;
+    const commentToken = commentTokens[index];
+    if (isJSDoc(commentToken)) {
+      const jsDoc = parseJSDoc(commentToken);
+      description = takeWhile(jsDoc.elements, isJSDocParagraph)
+        .flatMap((p) => (p as JSDocParagraph).inlines)
+        .map((inline) => inline.toMarkdown())
+        .join("\n");
+    }
     return (
       getNodeRepresentation(compilationUnit, labelPrefix.nameToken.element!) +
-      "\n\n---\n\n" +
-      description
+      (description ? "\n\n---\n\n" + description : "")
     );
   }
   return null;

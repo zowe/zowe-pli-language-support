@@ -23,7 +23,7 @@ describe("JSDoc parsing", () => {
     test("Correctly deals with the default JSDoc symbols", () => {
       const defaultText = "/** A \n * B \n */";
       const parsed = parseJSDoc(defaultText);
-      expect(parsed.toString()).toBe("A\n B");
+      expect(parsed.toString()).toBe("A\nB");
     });
 
     test("Ignores missing symbols", () => {
@@ -63,9 +63,9 @@ describe("JSDoc parsing", () => {
         start: { line: 0, character: 3 },
         end: { line: 0, character: 5 },
       });
-      expect(lines[1]).toHaveProperty("text", "   B");
+      expect(lines[1]).toHaveProperty("text", "B");
       expectRange(lines[1].range, {
-        start: { line: 1, character: 4 },
+        start: { line: 1, character: 7 },
         end: { line: 1, character: 8 },
       });
       expect(lines[2]).toHaveProperty("text", "C");
@@ -98,7 +98,7 @@ describe("JSDoc parsing", () => {
       expect(text.inlines[0]).toHaveProperty("text", " A");
       const bTag = parsed.elements[1] as JSDocTag;
       expectRange(bTag.range, {
-        start: { line: 1, character: 4 },
+        start: { line: 1, character: 6 },
         end: { line: 1, character: 8 },
       });
       expect(bTag).toHaveProperty("name", "B");
@@ -227,11 +227,11 @@ describe("JSDoc rendering", () => {
 
   test("Renders paragraphs in markdown", () => {
     const parsed = parseJSDoc("/**\n * A\n * B\n * \n * C\n */");
-    expect(parsed.toMarkdown()).toBe("A\n B\n\n C");
+    expect(parsed.toMarkdown()).toBe("A\nB\n\nC");
   });
 
   test("Renders paragraphs in plain text", () => {
     const parsed = parseJSDoc("/**\n * A\n * B\n * \n * C\n */");
-    expect(parsed.toString()).toBe("A\n B\n\n C");
+    expect(parsed.toString()).toBe("A\nB\n\nC");
   });
 });
