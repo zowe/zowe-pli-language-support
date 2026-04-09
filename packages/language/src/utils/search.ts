@@ -81,26 +81,6 @@ export function completionTokenIndexSearch(
   return end;
 }
 
-export function binaryTokenIndexLeftMost(
-  tokens: Token[],
-  offset: number,
-): number {
-  let low = 0;
-  let high = tokens.length - 1;
-  let result = -1;
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const token = tokens[mid];
-    if (token.endOffset < offset) {
-      low = mid + 1;
-    } else {
-      result = mid;
-      high = mid - 1;
-    }
-  }
-  return result;
-}
-
 export function binaryTokenIndexRightMost(
   tokens: Token[],
   offset: number,
