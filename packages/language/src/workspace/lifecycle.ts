@@ -32,7 +32,7 @@ export async function lifecycle(
   document: TextDocument,
   cancellation: CancellationToken,
 ): Promise<void> {
-  await compilationUnit.reset();
+  compilationUnit.reset();
   await interruptAndCheck(cancellation);
   await tokenize(compilationUnit, document);
   await interruptAndCheck(cancellation);
