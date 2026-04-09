@@ -13,9 +13,10 @@ import { TokenType } from "chevrotain";
 import * as tokens from "../tokens";
 import { URI } from "../../utils/uri";
 import { Diagnostic, diagnosticFromCode } from "../../language-server/types";
-import { pliFuncs, pliKeywords } from "./pli-tokenizer";
+import { pliFuncs } from "./pli-tokenizer";
 import { PLICodes } from "../../validation/pli-codes";
-import { cicsFuncs, cicsKeywords } from "./cics-tokenizer";
+import { cicsFuncs } from "./cics-tokenizer";
+import { sqlFuncs } from "./sql-tokenizer";
 
 export enum TokenizerMode {
   Default,
@@ -37,7 +38,6 @@ export class TokenizerContext {
   public caseUpper: boolean;
   public mode: TokenizerMode = TokenizerMode.Default;
   public funcs: TokenizeFunc[] = [];
-  public keywords: Map<bigint, KeywordToken> = new Map();
 
   private storedIndex: number = 0;
   private storedLine: number = 0;
@@ -49,7 +49,6 @@ export class TokenizerContext {
     this.uri = uri;
     this.caseUpper = caseUpper;
     this.funcs = pliFuncs;
-    this.keywords = pliKeywords;
   }
 
   switchMode(mode: TokenizerMode) {
@@ -57,15 +56,12 @@ export class TokenizerContext {
     switch (mode) {
       case TokenizerMode.Default:
         this.funcs = pliFuncs;
-        this.keywords = pliKeywords;
         break;
       case TokenizerMode.CICS:
         this.funcs = cicsFuncs;
-        this.keywords = cicsKeywords;
         break;
       case TokenizerMode.SQL:
-        this.funcs = pliFuncs; // switch to sqlFuncs when implemented
-        this.keywords = pliKeywords; // switch to sqlKeywords when implemented
+        this.funcs = sqlFuncs;
         break;
     }
   }
@@ -156,7 +152,7 @@ export interface TwoCharToken {
 }
 
 export function generateDoubleCharFunc(
-  tokenType: TokenType,
+  tokenType: TokenType | undefined,
   others: TwoCharToken[],
 ): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
@@ -169,6 +165,9 @@ export function generateDoubleCharFunc(
           return context.createTokenInstance(follow.tokenType);
         }
       }
+    }
+    if (tokenType === undefined) {
+      return undefined;
     }
     context.advance(1, false);
     return context.createTokenInstance(tokenType);
@@ -275,7 +274,7 @@ export function generateKeywords(
   }
   return keywords;
 }
-export function tokenizeSlash(
+export function tokenizeSlashWithComment(
   context: TokenizerContext,
 ): tokens.Token | undefined {
   if (context.index + 1 < context.length) {
@@ -365,48 +364,57 @@ export function tokenizeSemicolon(
   }
   return context.createTokenInstance(tokens.Semicolon);
 }
+
 const numberRegex = tokens.NUMBER.PATTERN as RegExp;
 export const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
 export function tokenizeIdentifier(
-  context: TokenizerContext,
-): tokens.Token | undefined {
-  const start = context.index;
-  let hash = FNV_OFFSET_BASIS;
-  let i = context.index;
-  let charCode: number;
-  while (i < context.length) {
-    charCode = context.input.charCodeAt(i);
-    if (!isIdChar(charCode)) {
-      break;
+  keywords: Map<bigint, KeywordToken>,
+): TokenizeFunc {
+  return function (context: TokenizerContext): tokens.Token | undefined {
+    const start = context.index;
+    let hash = FNV_OFFSET_BASIS;
+    let i = context.index;
+    let charCode: number;
+    while (i < context.length) {
+      charCode = context.input.charCodeAt(i);
+      if (!isIdChar(charCode)) {
+        break;
+      }
+      if (context.caseUpper && charCode >= 97 && charCode <= 122) {
+        // Lowercase character, must be uppercased
+        charCode &= ~0x20;
+      }
+      hash ^= BigInt(charCode);
+      hash *= FNV_PRIME;
+      i++;
     }
-    if (context.caseUpper && charCode >= 97 && charCode <= 122) {
-      // Lowercase character, must be uppercased
-      charCode &= ~0x20;
+    const originalImage = context.input.substring(start, i);
+    const image = context.caseUpper
+      ? originalImage.toUpperCase()
+      : originalImage;
+    const previousToken = context.tokens[context.tokens.length - 1];
+    // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
+    if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
+      if (image === "SQL") {
+        context.advance(3, false);
+        context.switchMode(TokenizerMode.SQL);
+        return context.createTokenInstance(tokens.SQL);
+      } else if (image === "CICS") {
+        context.advance(4, false);
+        context.switchMode(TokenizerMode.CICS);
+        return context.createTokenInstance(tokens.CICS);
+      }
     }
-    hash ^= BigInt(charCode);
-    hash *= FNV_PRIME;
-    i++;
-  }
-  const originalImage = context.input.substring(start, i);
-  const image = context.caseUpper ? originalImage.toUpperCase() : originalImage;
-  const previousToken = context.tokens[context.tokens.length - 1];
-  // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
-  if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
-    if (image === "SQL") {
-      context.advance(3, false);
-      context.switchMode(TokenizerMode.SQL);
-      return context.createTokenInstance(tokens.SQL);
-    } else if (image === "CICS") {
-      context.advance(4, false);
-      context.switchMode(TokenizerMode.CICS);
-      return context.createTokenInstance(tokens.CICS);
+    let tokenType = tokens.ID;
+    const keyword = keywords.get(hash);
+    if (keyword && keyword.image === image) {
+      tokenType = keyword.kind;
     }
-  }
-  let tokenType = tokens.ID;
-  const keyword = context.keywords.get(hash);
-  if (keyword && keyword.image === image) {
-    tokenType = keyword.kind;
-  }
-  context.advance(i - start, false);
-  return context.createTokenInstanceWithImage(image, originalImage, tokenType);
+    context.advance(i - start, false);
+    return context.createTokenInstanceWithImage(
+      image,
+      originalImage,
+      tokenType,
+    );
+  };
 }

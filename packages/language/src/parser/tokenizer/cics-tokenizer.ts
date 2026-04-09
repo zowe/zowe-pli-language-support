@@ -17,7 +17,7 @@ import {
   tokenizeIdentifier,
   tokenizeNumber,
   tokenizeSemicolon,
-  tokenizeSlash,
+  tokenizeSlashWithComment,
   tokenizeString,
   tokenizeWhitespace,
 } from "./shared";
@@ -28,8 +28,11 @@ export let cicsFuncs: TokenizeFunc[] = [];
 export let cicsKeywords: Map<bigint, KeywordToken> = new Map();
 
 export function updateCicsTokenizer(): void {
+  if (cicsKeywords.size === 0) {
+    cicsKeywords = generateKeywords(cicsTokens.keywordMap);
+  }
   cicsFuncs = new Array(256);
-  cicsFuncs["/".charCodeAt(0)] = tokenizeSlash;
+  cicsFuncs["/".charCodeAt(0)] = tokenizeSlashWithComment;
   cicsFuncs['"'.charCodeAt(0)] = tokenizeString;
   cicsFuncs["'".charCodeAt(0)] = tokenizeString;
   cicsFuncs["(".charCodeAt(0)] = generateSingleCharFunc(pliTokens.OpenParen);
@@ -51,23 +54,20 @@ export function updateCicsTokenizer(): void {
     cicsFuncs[i.toString().charCodeAt(0)] = tokenizeNumber;
   }
 
+  const id = tokenizeIdentifier(cicsKeywords);
   // Letters
   for (let i = 97; i <= 122; i++) {
     // a-z
-    cicsFuncs[i] = tokenizeIdentifier;
+    cicsFuncs[i] = id;
   }
   for (let i = 65; i <= 90; i++) {
     // A-Z
-    cicsFuncs[i] = tokenizeIdentifier;
+    cicsFuncs[i] = id;
   }
 
   //TODO verify if these are valid identifier characters in CICS, and if so, add them back
-  // cicsFuncs["_".charCodeAt(0)] = tokenizeIdentifier;
-  // cicsFuncs["@".charCodeAt(0)] = tokenizeIdentifier;
-  // cicsFuncs["$".charCodeAt(0)] = tokenizeIdentifier;
-  // cicsFuncs["#".charCodeAt(0)] = tokenizeIdentifier;
-
-  if (cicsKeywords.size === 0) {
-    cicsKeywords = generateKeywords(cicsTokens.keywordMap);
-  }
+  // cicsFuncs["_".charCodeAt(0)] = id;
+  // cicsFuncs["@".charCodeAt(0)] = id;
+  // cicsFuncs["$".charCodeAt(0)] = id;
+  // cicsFuncs["#".charCodeAt(0)] = id;
 }

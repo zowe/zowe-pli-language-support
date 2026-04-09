@@ -11,6 +11,7 @@
 
 import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
+import * as sql from "./tokens/sql-tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { embeddedUnknownStatement } from "./unknown-parser";
@@ -20,7 +21,7 @@ export function sqlExecStatement(state: ParserState): ast.SqlExecStatement {
   const execStatement = ast.createSqlExecStatement();
   state.consume(execStatement, CstNodeKind.ExecSqlStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecSqlStatement_SQL, t.SQL);
-  if (state.canConsume(t.INCLUDE)) {
+  if (state.canConsume(sql.INCLUDE)) {
     execStatement.content = parseSqlIncludeStatement(state);
   } else {
     // Use unknown SQL statement for now - we will get to more of the SQL spec later.
@@ -42,7 +43,7 @@ function parseSqlIncludeStatement(state: ParserState): ast.IncludeDirective {
   state.consume(
     includeDirective,
     CstNodeKind.IncludeDirective_INCLUDE,
-    t.INCLUDE,
+    sql.INCLUDE,
   );
   const item = ast.createIncludeItemFile();
   item.sql = true;
