@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.25% </span>
+                <span class="strong">89.43% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>108/121</span>
+                <span class='fraction'>110/123</span>
             </div>
         
             
@@ -405,7 +405,15 @@
 <a name='L340'></a><a href='#L340'>340</a>
 <a name='L341'></a><a href='#L341'>341</a>
 <a name='L342'></a><a href='#L342'>342</a>
-<a name='L343'></a><a href='#L343'>343</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L343'></a><a href='#L343'>343</a>
+<a name='L344'></a><a href='#L344'>344</a>
+<a name='L345'></a><a href='#L345'>345</a>
+<a name='L346'></a><a href='#L346'>346</a>
+<a name='L347'></a><a href='#L347'>347</a>
+<a name='L348'></a><a href='#L348'>348</a>
+<a name='L349'></a><a href='#L349'>349</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -489,8 +497,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2448x</span>
 <span class="cline-any cline-yes">2448x</span>
-<span class="cline-any cline-yes">1384x</span>
-<span class="cline-any cline-yes">1384x</span>
+<span class="cline-any cline-yes">1380x</span>
+<span class="cline-any cline-yes">1380x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -546,15 +554,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1384x</span>
-<span class="cline-any cline-yes">1384x</span>
-<span class="cline-any cline-yes">1384x</span>
+<span class="cline-any cline-yes">1380x</span>
+<span class="cline-any cline-yes">1380x</span>
+<span class="cline-any cline-yes">1380x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1379x</span>
-<span class="cline-any cline-yes">204x</span>
+<span class="cline-any cline-yes">1375x</span>
+<span class="cline-any cline-yes">200x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1379x</span>
+<span class="cline-any cline-yes">1375x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -609,17 +617,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1882x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">196x</span>
+<span class="cline-any cline-yes">1686x</span>
+<span class="cline-any cline-yes">612x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1866x</span>
-<span class="cline-any cline-yes">192x</span>
-<span class="cline-any cline-yes">1674x</span>
-<span class="cline-any cline-yes">610x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1074x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1064x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1068x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -773,12 +785,14 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import {
   controlTokens,
+  ID,
   modifierTokens,
   NUMBER,
   STRING_TERM,
   Token,
 } from "../parser/tokens";
 import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
+import { tokenMatcher } from "chevrotain";
 &nbsp;
 export enum SemanticTokenTypes {
   variable,
@@ -949,15 +963,19 @@ function tokenType(token: Token): number | undefined {
     return SemanticTokenTypes.number;
   }
 &nbsp;
-  // Temporary solution for semantic EXEC tokens
-  if (token.kind === CstNodeKind.EmbeddedUnknownStatement_Token) {
-    return SemanticTokenTypes.modifier;
-  }
-&nbsp;
   // If the token has no semantic meaning based on the CST, check if it's a keyword
   if (controlTokens.has(token.tokenType)) {
     return SemanticTokenTypes.keyword;
   } else if (modifierTokens.has(token.tokenType)) {
+    return SemanticTokenTypes.modifier;
+  }
+&nbsp;
+  // Temporary solution for semantic EXEC tokens
+  // Remove, once we support parsing CICS and SQL statements properly
+  if (
+    token.kind === CstNodeKind.EmbeddedUnknownStatement_Token &amp;&amp;
+    tokenMatcher(token, ID)
+  ) {
     return SemanticTokenTypes.modifier;
   }
 &nbsp;
@@ -1096,7 +1114,7 @@ function isFirstStructureItem(element: DeclaredVariable): boolean {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-07T14:56:13.832Z
+                at 2026-04-09T12:00:51.476Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
