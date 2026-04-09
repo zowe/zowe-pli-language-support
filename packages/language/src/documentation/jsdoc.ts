@@ -1,13 +1,8 @@
-/**
- * This program and the accompanying materials are made available under the terms of the
- * Eclipse Public License v2.0 which accompanies this distribution, and is available at
- * https://www.eclipse.org/legal/epl-v20.html
- *
- * SPDX-License-Identifier: EPL-2.0
- *
- * Copyright Contributors to the Zowe Project.
- *
- */
+/******************************************************************************
+ * Copyright 2023 TypeFox GmbH
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License, which is available in the project root.
+ ******************************************************************************/
 
 import { Position, Range } from "vscode-languageserver-types";
 import { escapeRegExp, Token } from "../parser/tokens";
@@ -28,7 +23,7 @@ export type JSDocInline = JSDocTag | JSDocLine;
 export interface JSDocValue {
   /**
    * Represents the range that this JSDoc element occupies.
-   * If the JSDoc was parsed from a `CstNode`, the range will represent the location in the source document.
+   * If the JSDoc was parsed from a `Token`, the range will represent the location in the source document.
    */
   readonly range: Range;
   /**
@@ -98,9 +93,9 @@ export interface JSDocRenderOptions {
 }
 
 /**
- * Parses a JSDoc from a `CstNode` containing a comment.
+ * Parses a JSDoc from a `Token` containing a comment.
  *
- * @param node A `CstNode` from a parsed Langium document.
+ * @param token A `Token` from a parsed document.
  * @param options Parsing options specialized to your language. See {@link JSDocParseOptions}.
  */
 export function parseJSDoc(
