@@ -450,7 +450,9 @@ export function getJSDocsCommentBeforeLabelPrefix(
     return null;
   }
   const uri = labelPrefix.nameToken.uri;
-  if (!uri) {
+  if (!uri || uri.scheme !== BuiltinsUriSchema) {
+    //if it's not a builtin, we can skip the work of looking for comments entirely
+    //only JSDoc on builtins is currently supported
     return null;
   }
   const tokens = compilationUnit.services.files.getTokens(uri);
