@@ -14,7 +14,6 @@ import * as fs from "fs/promises";
 import * as tokens from "../packages/language/src/parser/tokens.js";
 import * as sqlTokens from "../packages/language/src/parser/tokens/sql-tokens.js";
 import * as cicsTokens from "../packages/language/src/parser/tokens/cics-tokens.generated.js";
-import { toPattern } from "./pattern-trie.js";
 
 const manual = JSON.parse(
   await fs.readFile(
@@ -39,6 +38,18 @@ for (const [text, type] of mergedMap.entries()) {
   } else {
     storageKeywords.push(lowerText);
   }
+}
+
+function toPattern(keywords: string[]) {
+  const patterns: string[] = [];
+  for (const keyword of keywords) {
+    let keywordPattern = "";
+    for (const char of keyword) {
+      keywordPattern += tokens.escapeRegExp(char);
+    }
+    patterns.push(keywordPattern);
+  }
+  return `(?i)\\b(${patterns.join("|")})\\b`;
 }
 
 const controlPattern = toPattern(controlKeywords);
