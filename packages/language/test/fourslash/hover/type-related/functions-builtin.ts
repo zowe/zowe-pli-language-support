@@ -15,4 +15,7 @@
 //// STR = <|1>SUBSTR('Hello, World!', 1, 5);
 
 //TODO fix the SUBSTR builtin signature, it is actually just a forward declaration
-hover.expectMarkdownAt(1, hover.codeBlock(`SUBSTR: PROC(VALUE) RETURNS();`));
+hover.expectMarkdownAt(
+  1,
+  hover.codeBlock(`SUBSTR: PROC (value) RETURNS (); END;`),
+);
