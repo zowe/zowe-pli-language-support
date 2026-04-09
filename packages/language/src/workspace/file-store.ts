@@ -33,6 +33,10 @@ export class FileStore {
     this.clear();
   }
 
+  constructor(private baseFiles: CompilationUnit[]) {
+    this.clear();
+  }
+
   get(uri: URI | string): CompilationUnitFile | undefined {
     return this.map.get(uri.toString());
   }
@@ -45,7 +49,10 @@ export class FileStore {
     return this.get(uri)?.comments;
   }
 
-  *getAllTokens(includeBuiltins = false): IterableIterator<Token> {
+  *getAllTokens(): IterableIterator<Token> {
+    const baseFileUris = new Set(
+      this.baseFiles.map((file) => file.uri.toString()),
+    );
     for (const file of this.map.values()) {
       if (this.baseFileUris.has(file.uri.toString())) {
         continue;
