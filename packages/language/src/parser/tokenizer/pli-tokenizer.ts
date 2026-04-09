@@ -21,7 +21,7 @@ import {
   tokenizeNumber,
   TokenizerContext,
   tokenizeSemicolon,
-  tokenizeSlash,
+  tokenizeSlashWithComment,
   tokenizeString,
   tokenizeWhitespace,
   TwoCharToken,
@@ -121,11 +121,14 @@ let notSymbols = defaultNot;
 let includeAlt: string | undefined = undefined;
 
 export function updatePliTokenizer(compilerOptions: CompilerOptions): void {
+  if (pliKeywords.size === 0) {
+    pliKeywords = generateKeywords(tokens.keywordMap);
+  }
   orSymbols = compilerOptions.or ?? defaultOr;
   notSymbols = compilerOptions.not ?? defaultNot;
   includeAlt = compilerOptions.pp?.ppInclude?.value;
   pliFuncs = new Array(256);
-  pliFuncs["/".charCodeAt(0)] = tokenizeSlash;
+  pliFuncs["/".charCodeAt(0)] = tokenizeSlashWithComment;
   pliFuncs['"'.charCodeAt(0)] = tokenizeString;
   pliFuncs["'".charCodeAt(0)] = tokenizeString;
   pliFuncs["*".charCodeAt(0)] = tokenizeAsterisk;
@@ -179,19 +182,20 @@ export function updatePliTokenizer(compilerOptions: CompilerOptions): void {
     pliFuncs[i.toString().charCodeAt(0)] = tokenizeNumber;
   }
 
+  const id = tokenizeIdentifier(pliKeywords);
   // Letters
   for (let i = 97; i <= 122; i++) {
     // a-z
-    pliFuncs[i] = tokenizeIdentifier;
+    pliFuncs[i] = id;
   }
   for (let i = 65; i <= 90; i++) {
     // A-Z
-    pliFuncs[i] = tokenizeIdentifier;
+    pliFuncs[i] = id;
   }
-  pliFuncs["_".charCodeAt(0)] = tokenizeIdentifier;
-  pliFuncs["@".charCodeAt(0)] = tokenizeIdentifier;
-  pliFuncs["$".charCodeAt(0)] = tokenizeIdentifier;
-  pliFuncs["#".charCodeAt(0)] = tokenizeIdentifier;
+  pliFuncs["_".charCodeAt(0)] = id;
+  pliFuncs["@".charCodeAt(0)] = id;
+  pliFuncs["$".charCodeAt(0)] = id;
+  pliFuncs["#".charCodeAt(0)] = id;
 
   for (const orSymbolChar of orSymbols.split("")) {
     pliFuncs[orSymbolChar.charCodeAt(0)] = tokenizeOrSymbol;
@@ -201,9 +205,5 @@ export function updatePliTokenizer(compilerOptions: CompilerOptions): void {
       tokens.Not,
       TwoCharTokens["^"],
     );
-  }
-
-  if (pliKeywords.size === 0) {
-    pliKeywords = generateKeywords(tokens.keywordMap);
   }
 }

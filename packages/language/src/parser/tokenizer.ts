@@ -24,6 +24,7 @@ import {
   updatePliTokenizer,
 } from "./tokenizer/pli-tokenizer";
 import { updateCicsTokenizer } from "./tokenizer/cics-tokenizer";
+import { updateSqlTokenizer } from "./tokenizer/sql-tokenizer";
 
 export interface TokenizationResult {
   tokens: tokens.Token[];
@@ -96,3 +97,4 @@ export function tokenize(
 
 updatePliTokenizer(getDefaultCompilerOptions());
 updateCicsTokenizer();
+updateSqlTokenizer();
