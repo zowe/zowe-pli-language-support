@@ -56,21 +56,6 @@ export interface JSDocTag extends JSDocValue {
   readonly inline: boolean;
 }
 
-export interface JSDocParseOptions {
-  /**
-   * The start symbol of your comment format. Defaults to `/**`.
-   */
-  readonly start?: RegExp | string;
-  /**
-   * The symbol that start a line of your comment format. Defaults to `*`.
-   */
-  readonly line?: RegExp | string;
-  /**
-   * The end symbol of your comment format. Defaults to `*\/`.
-   */
-  readonly end?: RegExp | string;
-}
-
 export interface JSDocRenderOptions {
   /**
    * Determines the style for rendering tags. Defaults to `italic`.
@@ -96,52 +81,39 @@ export interface JSDocRenderOptions {
  * Parses a JSDoc from a `Token` containing a comment.
  *
  * @param token A `Token` from a parsed document.
- * @param options Parsing options specialized to your language. See {@link JSDocParseOptions}.
  */
-export function parseJSDoc(
-  token: Token,
-  options?: JSDocParseOptions,
-): JSDocComment;
+export function parseJSDoc(token: Token): JSDocComment;
 /**
  * Parses a JSDoc from a string comment.
  *
  * @param content A string containing the source of the JSDoc comment.
  * @param start The start position the comment occupies in the source document.
- * @param options Parsing options specialized to your language. See {@link JSDocParseOptions}.
  */
-export function parseJSDoc(
-  content: string,
-  start?: Position,
-  options?: JSDocParseOptions,
-): JSDocComment;
+export function parseJSDoc(content: string, start?: Position): JSDocComment;
 export function parseJSDoc(
   node: Token | string,
-  start?: Position | JSDocParseOptions,
-  options?: JSDocParseOptions,
+  start?: Position,
 ): JSDocComment {
-  let opts: JSDocParseOptions | undefined;
+  const opts = DefaultOptions;
   let position: Position | undefined;
   if (typeof node === "string") {
     position = start as Position | undefined;
-    opts = options as JSDocParseOptions | undefined;
   } else {
     position = {
       line: node.startLine,
       character: node.startColumn,
     };
-    opts = start as JSDocParseOptions | undefined;
   }
   if (!position) {
     position = Position.create(0, 0);
   }
 
   const lines = getLines(node);
-  const normalizedOptions = normalizeOptions(opts);
 
   const tokens = tokenize({
     lines,
     position,
-    options: normalizedOptions,
+    options: opts,
   });
 
   return parseJSDocComment({
@@ -151,11 +123,7 @@ export function parseJSDoc(
   });
 }
 
-export function isJSDoc(
-  node: Token | string,
-  options?: JSDocParseOptions,
-): boolean {
-  const normalizedOptions = normalizeOptions(options);
+export function isJSDoc(node: Token | string): boolean {
   const lines = getLines(node);
   if (lines.length === 0) {
     return false;
@@ -163,8 +131,8 @@ export function isJSDoc(
 
   const first = lines[0];
   const last = lines[lines.length - 1];
-  const firstRegex = normalizedOptions.start;
-  const lastRegex = normalizedOptions.end;
+  const firstRegex = DefaultOptions.start;
+  const lastRegex = DefaultOptions.end;
 
   return Boolean(firstRegex?.exec(first)) && Boolean(lastRegex?.exec(last));
 }
@@ -513,21 +481,11 @@ interface ParseContext {
   index: number;
 }
 
-function normalizeOptions(options?: JSDocParseOptions): NormalizedOptions {
-  if (!options) {
-    return normalizeOptions({
-      start: "/**",
-      end: "*/",
-      line: /\* */,
-    });
-  }
-  const { start, end, line } = options;
-  return {
-    start: normalizeOption(start, true),
-    end: normalizeOption(end, false),
-    line: normalizeOption(line, true),
-  };
-}
+const DefaultOptions: NormalizedOptions = {
+  start: normalizeOption(/\/\*\* */, true),
+  end: normalizeOption("*/", false),
+  line: normalizeOption(/\* */, true),
+};
 
 function normalizeOption(
   option: RegExp | string | undefined,
