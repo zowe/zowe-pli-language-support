@@ -332,19 +332,17 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     if (!outerCall) {
       return null;
     }
+    let jsDocsComment = "";
     if (ref.node.kind === SyntaxKind.LabelPrefix) {
-      const jsDocsComment = getJSDocsCommentBeforeLabelPrefix(
-        ref.node as LabelPrefix,
-        unit,
-      );
-      if (jsDocsComment) {
-        return jsDocsComment;
-      }
+      jsDocsComment =
+        getJSDocsCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit) ?? "";
+      jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
     }
     const type = unit.services.inferer.inferType(outerCall, unit);
     return (
-      stringifyTypeDescription(token.image, type) ??
-      stringifyDeclaration(ref.node as DeclaredVariable, unit)
+      (stringifyTypeDescription(token.image, type) ??
+        stringifyDeclaration(ref.node as DeclaredVariable, unit)) +
+      jsDocsComment
     );
   }
 
@@ -460,19 +458,14 @@ export function getJSDocsCommentBeforeLabelPrefix(
     labelPrefix.nameToken.startOffset,
   );
   if (index > -1) {
-    let description: string | null = null;
     const commentToken = commentTokens[index];
     if (isJSDoc(commentToken)) {
       const jsDoc = parseJSDoc(commentToken);
-      description = takeWhile(jsDoc.elements, isJSDocParagraph)
+      return takeWhile(jsDoc.elements, isJSDocParagraph)
         .flatMap((p) => (p as JSDocParagraph).inlines)
         .map((inline) => inline.toMarkdown())
         .join("\n");
     }
-    return (
-      getNodeRepresentation(compilationUnit, labelPrefix.nameToken.element!) +
-      (description ? "\n\n---\n\n" + description : "")
-    );
   }
   return null;
 }

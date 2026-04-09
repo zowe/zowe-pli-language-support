@@ -16,11 +16,13 @@
 
 hover.expectMarkdownAt(
   1,
-  hover.codeBlock(`SUBSTR: PROC(STRING,OFFSET,LENGTH) RETURNS(CHARACTER);`) +
+  hover.codeBlock(`SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
+   DECLARE string CHARACTER;
+   DECLARE offset FIXED;
+   DECLARE length FIXED OPTIONAL;
+ END;`) +
     `
-
 ---
-
 \`SUBSTR\` returns a substring, specified by \`offset\` and
 \`length\`, of \`string\`.
 
