@@ -31,7 +31,11 @@ import {
   Wildcard,
 } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
-import { binaryTokenIndexRightMost, binaryTokenSearch } from "../utils/search";
+import {
+  binaryTokenIndexRightMost,
+  binaryTokenIndexSearch,
+  binaryTokenSearch,
+} from "../utils/search";
 import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -449,16 +453,33 @@ export function getJSDocsCommentBeforeLabelPrefix(
   if (!uri) {
     return null;
   }
+  const tokens = compilationUnit.services.files.getTokens(uri);
   const commentTokens = compilationUnit.services.files.getComments(uri);
-  if (!commentTokens) {
+  if (!tokens || !commentTokens) {
     return null;
   }
-  const index = binaryTokenIndexRightMost(
+  const tokenIndex = binaryTokenIndexSearch(
+    tokens,
+    labelPrefix.nameToken.startOffset,
+  );
+  const commentIndex = binaryTokenIndexRightMost(
     commentTokens,
     labelPrefix.nameToken.startOffset,
   );
-  if (index > -1) {
-    const commentToken = commentTokens[index];
+  if (commentIndex > -1) {
+    const commentToken = commentTokens[commentIndex];
+    if (tokenIndex > 0) {
+      /*
+       * Edge case: two declarations, only first has comment, second gets hovered:
+       * /** comment *\/
+       * DCL1
+       * DCL2 //<-- hover here: no comment included
+       */
+      const tokenBeforeLabelPrefix = tokens[tokenIndex - 1];
+      if (tokenBeforeLabelPrefix.startOffset > commentToken.endOffset) {
+        return null;
+      }
+    }
     if (isJSDoc(commentToken)) {
       const jsDoc = parseJSDoc(commentToken);
       return takeWhile(jsDoc.elements, isJSDocParagraph)
