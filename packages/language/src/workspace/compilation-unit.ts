@@ -146,8 +146,14 @@ export async function createCompilationUnit(
   uri: URI,
 ): Promise<CompilationUnit> {
   const compilerOptions = getDefaultCompilerOptions();
+  const baseFiles: CompilationUnit[] = [];
+  if (uri.scheme !== BuiltinsUriSchema) {
+    const unit = await getBuiltinUnit();
+    const macroUnit = await getBuiltinMacroUnit();
+    baseFiles.push(unit, macroUnit);
+  }
   const services: CompilationServices = {
-    files: new FileStore(),
+    files: new FileStore(baseFiles),
     typeCache: new DefaultTypeCache(),
     includeCache: new LRUCache({
       max: 500,
@@ -216,12 +222,6 @@ export async function createCompilationUnit(
     mutex: createMutex(),
     async reset() {
       services.files.clear();
-      if (uri.scheme !== BuiltinsUriSchema) {
-        const unit = await getBuiltinUnit();
-        const macroUnit = await getBuiltinMacroUnit();
-        services.files.set(unit.services.files.get(unit.uri)!);
-        services.files.set(macroUnit.services.files.get(macroUnit.uri)!);
-      }
       services.typeCache.clear();
       unit.statementOrderCache.clear();
       unit.referencesCache.clear();

@@ -14,6 +14,7 @@ import { Token } from "../parser/tokens";
 import { URI } from "../utils/uri";
 import { BuiltinDocuments } from "../language-server/text-documents";
 import { BuiltinsUriSchema } from "./builtins";
+import { CompilationUnit } from "./compilation-unit";
 
 export interface CompilationUnitFile {
   readonly uri: URI;
@@ -24,6 +25,10 @@ export interface CompilationUnitFile {
 
 export class FileStore {
   private map = new Map<string, CompilationUnitFile>();
+
+  constructor(private baseFiles: CompilationUnit[]) {
+    this.clear();
+  }
 
   get(uri: URI | string): CompilationUnitFile | undefined {
     return this.map.get(uri.toString());
@@ -37,9 +42,12 @@ export class FileStore {
     return this.get(uri)?.comments;
   }
 
-  *getAllTokens(includeBuiltins = false): IterableIterator<Token> {
+  *getAllTokens(): IterableIterator<Token> {
+    const baseFileUris = new Set(
+      this.baseFiles.map((file) => file.uri.toString()),
+    );
     for (const file of this.map.values()) {
-      if (!includeBuiltins && file.uri.scheme === BuiltinsUriSchema) {
+      if (baseFileUris.has(file.uri.toString())) {
         continue;
       }
       yield* file.tokens;
@@ -62,6 +70,9 @@ export class FileStore {
 
   clear(): void {
     this.map.clear();
+    for (const file of this.baseFiles) {
+      this.map.set(file.uri.toString(), file.services.files.get(file.uri)!);
+    }
   }
 
   has(uri: URI | string): boolean {
