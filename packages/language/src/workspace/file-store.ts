@@ -13,7 +13,6 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { Token } from "../parser/tokens";
 import { URI } from "../utils/uri";
 import { BuiltinDocuments } from "../language-server/text-documents";
-import { BuiltinsUriSchema } from "./builtins";
 import { CompilationUnit } from "./compilation-unit";
 
 export interface CompilationUnitFile {

@@ -90,7 +90,7 @@ export interface CompilationUnit {
   /**
    * Resets all caches associated with this compilation unit.
    */
-  reset(): Promise<void>;
+  reset(): void;
 }
 
 export interface CompilationServices {
@@ -220,7 +220,7 @@ export async function createCompilationUnit(
       return cachedProcessGroup;
     },
     mutex: createMutex(),
-    async reset() {
+    reset() {
       services.files.clear();
       services.typeCache.clear();
       unit.statementOrderCache.clear();
@@ -231,7 +231,6 @@ export async function createCompilationUnit(
       cachedProgramConfig = null;
     },
   };
-  await unit.reset();
   return unit;
 }
 
