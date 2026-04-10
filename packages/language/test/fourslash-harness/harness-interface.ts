@@ -323,6 +323,16 @@ export interface HarnessTesterInterface {
     include(type: string, filePath: string, content: string): string;
   };
 
+  signatureHelp: {
+    /**
+     * Expect that the signature help at the given label is the given markdown.
+     *
+     * @param label The label to expect the signature help at.
+     * @param markdown The expected signature help markdown.
+     */
+    expectMarkdownAt(label: Label, markdown: string): void;
+  }
+
   completion: {
     /**
      * Expect that the completion items at the given label contains the given content.

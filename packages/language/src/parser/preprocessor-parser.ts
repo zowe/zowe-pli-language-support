@@ -1512,12 +1512,25 @@ function dimensions(state: ParserState): ast.Dimensions {
     // Return early if we found a close parenthesis immediately after open
     return dimensions;
   }
+  let startToken = dimensions.token;
+  let endtoken: t.Token | null = null;
   dimensions.dimensions.push(parseBound(state));
-  while (state.tryConsume(dimensions, CstNodeKind.Dimensions_Comma, t.Comma)) {
+  while (endtoken = state.tryConsume(dimensions, CstNodeKind.Dimensions_Comma, t.Comma)) {
+    applyToLastBound();
+    startToken = endtoken;
     dimensions.dimensions.push(parseBound(state));
   }
-  state.consume(dimensions, CstNodeKind.Dimensions_CloseParen, t.CloseParen);
+  endtoken = state.consume(dimensions, CstNodeKind.Dimensions_CloseParen, t.CloseParen);
+  applyToLastBound();
   return dimensions;
+
+  function applyToLastBound() {
+    const last = dimensions.dimensions[dimensions.dimensions.length - 1];
+    if (last) {
+      last.startToken = startToken;
+      last.endToken = endtoken;
+    }
+  }
 }
 
 function parseBound(state: ParserState): ast.DimensionBound {

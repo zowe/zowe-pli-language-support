@@ -32,6 +32,7 @@ import {
   performAssignmentLookahead,
   performEndStatementLookahead,
 } from "./parser-lookahead";
+import { Token } from "./tokens";
 
 export function parsePli(input: tokens.Token[]): {
   tree: ast.Program;
@@ -5522,26 +5523,41 @@ const dimensions = rule(
       tokens.OpenParen,
     );
     element.token = openToken;
+    let startToken = openToken;
+    let endToken: Token | null = null;
 
     // Optional dimension bounds
     if (state.canConsumeFirst(dimensionBound.first())) {
-      const lhs = dimensionBound.rule(state, ast.ReferenceType.Variable);
-      lhs && element.dimensions.push(lhs);
+      let current = dimensionBound.rule(state, ast.ReferenceType.Variable);
+      current && element.dimensions.push(current);
       const { inc } = state.createLoopContext("Dimensions");
       while (
-        state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+        endToken = state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
       ) {
         inc();
-        const rhs = dimensionBound.rule(state, ast.ReferenceType.Variable);
-        rhs && element.dimensions.push(rhs);
+        if(current) {
+          current.startToken = startToken;
+          current.endToken = endToken;
+        }
+        startToken = endToken;
+        current = dimensionBound.rule(state, ast.ReferenceType.Variable);
+        current && element.dimensions.push(current);
       }
     }
 
-    state.consume(
+    endToken = state.consume(
       element,
       CstNodeKind.Dimensions_CloseParen,
       tokens.CloseParen,
     );
+
+    if(element.dimensions.length > 0) {
+      const lastBound = element.dimensions[element.dimensions.length - 1];
+      if(lastBound) {
+        lastBound.startToken = startToken;
+        lastBound.endToken = endToken;
+      }
+    }
 
     return element;
   },
@@ -5558,29 +5574,44 @@ const dimensionsWithTypes = rule(
       tokens.OpenParenColon,
     );
     element.token = openToken;
+    let startToken = openToken;
+    let endToken: Token | null = null;
 
     // Optional dimension bounds
     if (state.canConsumeFirst(dimensionBound.first())) {
-      const lhs = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
-      lhs && element.dimensions.push(lhs);
+      let current = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
+      current && element.dimensions.push(current);
       const { inc } = state.createLoopContext("DimensionsWithTypes");
       while (
-        state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+        endToken = state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
       ) {
         inc();
-        const rhs = dimensionBound.rule(
+        if(current) {
+          current.startToken = startToken;
+          current.endToken = endToken;
+        }
+        startToken = endToken;
+        current = dimensionBound.rule(
           state,
           ast.ReferenceType.TypeOrVariable,
         );
-        rhs && element.dimensions.push(rhs);
+        current && element.dimensions.push(current);
       }
     }
 
-    state.consume(
+    endToken = state.consume(
       element,
       CstNodeKind.Dimensions_CloseParenColon,
       tokens.CloseParenColon,
     );
+
+    if(element.dimensions.length > 0) {
+      const lastBound = element.dimensions[element.dimensions.length - 1];
+      if(lastBound) {
+        lastBound.startToken = startToken;
+        lastBound.endToken = endToken;
+      }
+    }
 
     return element;
   },

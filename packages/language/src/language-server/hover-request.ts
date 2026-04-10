@@ -49,6 +49,7 @@ import { BuiltinsUriSchema } from "../workspace/builtins";
 import {
   isJSDoc,
   isJSDocParagraph,
+  JSDocComment,
   JSDocParagraph,
   parseJSDoc,
 } from "../documentation/jsdoc";
@@ -341,9 +342,14 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     }
     let jsDocsComment = "";
     if (ref.node.kind === SyntaxKind.LabelPrefix) {
-      jsDocsComment =
-        getJSDocsCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit) ?? "";
-      jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
+      const jsDoc = getJSDocCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit);
+      if(jsDoc) {
+        jsDocsComment = takeWhile(jsDoc.elements, isJSDocParagraph)
+          .flatMap((p) => (p as JSDocParagraph).inlines)
+          .map((inline) => inline.toMarkdown())
+          .join("\n");
+        jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
+      }
     }
     const type = unit.services.inferer.inferType(outerCall, unit);
     return (
@@ -445,10 +451,10 @@ export function hoverRequest(
   };
 }
 
-export function getJSDocsCommentBeforeLabelPrefix(
+export function getJSDocCommentBeforeLabelPrefix(
   labelPrefix: LabelPrefix,
   compilationUnit: CompilationUnit,
-): string | null {
+): JSDocComment | null {
   if (!labelPrefix.nameToken) {
     return null;
   }

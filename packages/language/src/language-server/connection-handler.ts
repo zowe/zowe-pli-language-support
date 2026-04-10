@@ -48,7 +48,7 @@ import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
 import { Commands, PluginConfiguration } from "./constants";
-import { signatureHelp } from "./signature-help";
+import { signatureHelpRequest } from "./signature-help-request";
 export { PluginConfiguration } from "./constants";
 
 /**
@@ -181,7 +181,7 @@ export function startLanguageServer(connection: Connection): void {
           return null;
         }
         const offset = textDocument.offsetAt(position);
-        return signatureHelp(compilationUnit, uri, offset);
+        return signatureHelpRequest(compilationUnit, uri, offset);
       },
     );
   });

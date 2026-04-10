@@ -53,6 +53,7 @@ import { PluginConfiguration } from "../src/language-server/constants";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 import { UriUtils } from "../src/utils/uri";
 import { applyQuickFixes } from "../src/language-server/code-actions/apply-quick-fixes";
+import { signatureHelpRequest } from "../src/language-server/signature-help-request";
 
 export type Label = string | number | string[] | number[];
 
@@ -1410,6 +1411,18 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       expect(hoverResult, message).toBeDefined();
       expect(hoverResult?.contents, message).toEqual(content);
       // TODO: Also test the range
+    }
+  }
+
+  expectSignatureHelp(label: string, text: { kind: "markdown"; value: string; }): void {
+    const indices = this.getLabelPositions(label);
+
+    for (const { uri, offset } of indices) {
+      const signatureHelpResult = signatureHelpRequest(this.unit, UriUtils.toUri(uri), offset);
+      const message = `Expected signature help for label "${label}" (${this.createLabelPositionMessage(label)})`;
+      expect(signatureHelpResult, message).toBeDefined();
+      expect(signatureHelpResult?.activeSignature, message).toBeDefined();
+      expect(signatureHelpResult?.signatures[signatureHelpResult.activeSignature!].documentation, message).toEqual(text.value);
     }
   }
 
