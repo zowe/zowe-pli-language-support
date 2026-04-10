@@ -377,10 +377,20 @@ function parseJSDocComment(context: ParseContext): JSDocComment {
     return new JSDocCommentImpl([], Range.create(startPosition, startPosition));
   }
   const elements: JSDocElement[] = [];
+  let lastTagElement: JSDocTag | undefined = undefined;
   while (context.index < context.tokens.length) {
     const element = parseJSDocElement(context, elements[elements.length - 1]);
     if (element) {
-      elements.push(element);
+      if(isJSDocParagraph(element)) {
+        if(!lastTagElement) {
+          elements.push(element);
+        } else {
+          lastTagElement.content.inlines.push(...element.inlines);
+        }
+      } else {
+        lastTagElement = element;
+        elements.push(element);
+      }
     }
   }
   const start = elements[0]?.range.start ?? startPosition;

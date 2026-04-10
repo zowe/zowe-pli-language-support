@@ -54,6 +54,7 @@ import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 import { UriUtils } from "../src/utils/uri";
 import { applyQuickFixes } from "../src/language-server/code-actions/apply-quick-fixes";
 import { signatureHelpRequest } from "../src/language-server/signature-help-request";
+import { assertType } from "../src/preprocessor/util";
 
 export type Label = string | number | string[] | number[];
 
@@ -1422,7 +1423,12 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       const message = `Expected signature help for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(signatureHelpResult, message).toBeDefined();
       expect(signatureHelpResult?.activeSignature, message).toBeDefined();
-      expect(signatureHelpResult?.signatures[signatureHelpResult.activeSignature!].documentation, message).toEqual(text.value);
+      const activeSignature = signatureHelpResult?.signatures[signatureHelpResult.activeSignature!];
+      const activeDocumentation = activeSignature?.documentation;
+      expect(activeDocumentation, message).toBeTypeOf("object");
+      assertType<MarkupContent>(activeDocumentation);
+      expect(activeDocumentation.kind, message).toEqual("markdown");
+      expect(activeDocumentation.value, message).toEqual(text.value);
     }
   }
 

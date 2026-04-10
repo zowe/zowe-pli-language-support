@@ -44,12 +44,18 @@ export function signatureHelpRequest(
   const signatureHelp: SignatureHelp = {
     signatures: [{
       label: memberCall.element.ref.text,
-      documentation: stringifyDeclaration(memberCall.element.ref.node, unit) ?? "",
+      documentation: {
+        kind: "markdown",
+        value: stringifyDeclaration(memberCall.element.ref.node, unit) ?? ""
+      },
       parameters: procedure.parameters.map(p => {
         const name = p.ref?.text?.toUpperCase();
         return {
           label: name ?? "unknown",
-          documentation: name ? parameterDocumentation.get(name) : undefined,
+          documentation: name && parameterDocumentation.has(name) ? {
+            kind: "markdown",
+            value: parameterDocumentation.get(name)!
+          } : undefined,
         };
       }),
     }],
@@ -65,9 +71,9 @@ function getParameterIndexByOffset(dimensions: DimensionBound[] | undefined, off
   }
   for (let index = 0; index < dimensions.length; index++) {
     const dim = dimensions[index];
-    if (dim.startToken && dim.endToken && offset >= dim.startToken.startOffset && offset <= dim.endToken.endOffset) {
+    if (dim.startToken && dim.endToken && offset > dim.startToken.endOffset && offset <= dim.endToken.endOffset) {
       return index;
     }
   }
-  return dimensions.length - 1;
+  return 0;
 }
