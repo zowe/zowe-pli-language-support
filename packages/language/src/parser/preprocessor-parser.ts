@@ -1515,12 +1515,22 @@ function dimensions(state: ParserState): ast.Dimensions {
   let startToken = dimensions.token;
   let endtoken: t.Token | null = null;
   dimensions.dimensions.push(parseBound(state));
-  while (endtoken = state.tryConsume(dimensions, CstNodeKind.Dimensions_Comma, t.Comma)) {
+  while (
+    (endtoken = state.tryConsume(
+      dimensions,
+      CstNodeKind.Dimensions_Comma,
+      t.Comma,
+    ))
+  ) {
     applyToLastBound();
     startToken = endtoken;
     dimensions.dimensions.push(parseBound(state));
   }
-  endtoken = state.consume(dimensions, CstNodeKind.Dimensions_CloseParen, t.CloseParen);
+  endtoken = state.consume(
+    dimensions,
+    CstNodeKind.Dimensions_CloseParen,
+    t.CloseParen,
+  );
   applyToLastBound();
   return dimensions;
 

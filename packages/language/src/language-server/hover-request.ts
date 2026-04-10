@@ -342,8 +342,11 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     }
     let jsDocsComment = "";
     if (ref.node.kind === SyntaxKind.LabelPrefix) {
-      const jsDoc = getJSDocCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit);
-      if(jsDoc) {
+      const jsDoc = getJSDocCommentBeforeLabelPrefix(
+        ref.node as LabelPrefix,
+        unit,
+      );
+      if (jsDoc) {
         jsDocsComment = takeWhile(jsDoc.elements, isJSDocParagraph)
           .flatMap((p) => (p as JSDocParagraph).inlines)
           .map((inline) => inline.toMarkdown())

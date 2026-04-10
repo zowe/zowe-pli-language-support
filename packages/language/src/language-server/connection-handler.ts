@@ -127,7 +127,7 @@ export function startLanguageServer(connection: Connection): void {
         signatureHelpProvider: {
           triggerCharacters: ["("],
           retriggerCharacters: [","],
-        }
+        },
       },
     };
   });

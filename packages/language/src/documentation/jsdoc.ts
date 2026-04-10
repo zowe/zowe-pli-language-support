@@ -381,8 +381,8 @@ function parseJSDocComment(context: ParseContext): JSDocComment {
   while (context.index < context.tokens.length) {
     const element = parseJSDocElement(context, elements[elements.length - 1]);
     if (element) {
-      if(isJSDocParagraph(element)) {
-        if(!lastTagElement) {
+      if (isJSDocParagraph(element)) {
+        if (!lastTagElement) {
           elements.push(element);
         } else {
           lastTagElement.content.inlines.push(...element.inlines);

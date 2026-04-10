@@ -14,7 +14,8 @@
 //// %DCL A STRING;
 //// %A = SUBSTR("hallo", <|1>1, 2);
 
-const expectedMarkdown = hover.codeBlock(`SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
+const expectedMarkdown =
+  hover.codeBlock(`SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
    DECLARE offset FIXED;
    DECLARE length FIXED OPTIONAL;

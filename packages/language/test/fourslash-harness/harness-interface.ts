@@ -331,7 +331,7 @@ export interface HarnessTesterInterface {
      * @param markdown The expected signature help markdown.
      */
     expectMarkdownAt(label: Label, markdown: string): void;
-  }
+  };
 
   completion: {
     /**

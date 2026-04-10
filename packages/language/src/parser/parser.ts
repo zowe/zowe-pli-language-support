@@ -5532,10 +5532,14 @@ const dimensions = rule(
       current && element.dimensions.push(current);
       const { inc } = state.createLoopContext("Dimensions");
       while (
-        endToken = state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+        (endToken = state.tryConsume(
+          element,
+          CstNodeKind.Dimensions_Comma,
+          tokens.Comma,
+        ))
       ) {
         inc();
-        if(current) {
+        if (current) {
           current.startToken = startToken;
           current.endToken = endToken;
         }
@@ -5551,9 +5555,9 @@ const dimensions = rule(
       tokens.CloseParen,
     );
 
-    if(element.dimensions.length > 0) {
+    if (element.dimensions.length > 0) {
       const lastBound = element.dimensions[element.dimensions.length - 1];
-      if(lastBound) {
+      if (lastBound) {
         lastBound.startToken = startToken;
         lastBound.endToken = endToken;
       }
@@ -5579,22 +5583,26 @@ const dimensionsWithTypes = rule(
 
     // Optional dimension bounds
     if (state.canConsumeFirst(dimensionBound.first())) {
-      let current = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
+      let current = dimensionBound.rule(
+        state,
+        ast.ReferenceType.TypeOrVariable,
+      );
       current && element.dimensions.push(current);
       const { inc } = state.createLoopContext("DimensionsWithTypes");
       while (
-        endToken = state.tryConsume(element, CstNodeKind.Dimensions_Comma, tokens.Comma)
+        (endToken = state.tryConsume(
+          element,
+          CstNodeKind.Dimensions_Comma,
+          tokens.Comma,
+        ))
       ) {
         inc();
-        if(current) {
+        if (current) {
           current.startToken = startToken;
           current.endToken = endToken;
         }
         startToken = endToken;
-        current = dimensionBound.rule(
-          state,
-          ast.ReferenceType.TypeOrVariable,
-        );
+        current = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
         current && element.dimensions.push(current);
       }
     }
@@ -5605,9 +5613,9 @@ const dimensionsWithTypes = rule(
       tokens.CloseParenColon,
     );
 
-    if(element.dimensions.length > 0) {
+    if (element.dimensions.length > 0) {
       const lastBound = element.dimensions[element.dimensions.length - 1];
-      if(lastBound) {
+      if (lastBound) {
         lastBound.startToken = startToken;
         lastBound.endToken = endToken;
       }

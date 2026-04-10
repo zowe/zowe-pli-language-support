@@ -1415,15 +1415,23 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     }
   }
 
-  expectSignatureHelp(label: string, text: { kind: "markdown"; value: string; }): void {
+  expectSignatureHelp(
+    label: string,
+    text: { kind: "markdown"; value: string },
+  ): void {
     const indices = this.getLabelPositions(label);
 
     for (const { uri, offset } of indices) {
-      const signatureHelpResult = signatureHelpRequest(this.unit, UriUtils.toUri(uri), offset);
+      const signatureHelpResult = signatureHelpRequest(
+        this.unit,
+        UriUtils.toUri(uri),
+        offset,
+      );
       const message = `Expected signature help for label "${label}" (${this.createLabelPositionMessage(label)})`;
       expect(signatureHelpResult, message).toBeDefined();
       expect(signatureHelpResult?.activeSignature, message).toBeDefined();
-      const activeSignature = signatureHelpResult?.signatures[signatureHelpResult.activeSignature!];
+      const activeSignature =
+        signatureHelpResult?.signatures[signatureHelpResult.activeSignature!];
       const activeDocumentation = activeSignature?.documentation;
       expect(activeDocumentation, message).toBeTypeOf("object");
       assertType<MarkupContent>(activeDocumentation);
