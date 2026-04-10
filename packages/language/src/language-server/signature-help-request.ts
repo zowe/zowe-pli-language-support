@@ -13,46 +13,45 @@ import { URI } from "vscode-uri";
 import type { SignatureHelp } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenIndexRightMost } from "../utils/search";
-import { DimensionBound, getContainer, SyntaxKind } from "../syntax-tree/ast";
+import {
+  CallStatement,
+  DimensionBound,
+  getContainer,
+  LabelPrefix,
+  MemberCall,
+  ProcedureStatement,
+  SyntaxKind,
+} from "../syntax-tree/ast";
 import { stringifyDeclaration } from "../typesystem/stringify";
 import { getJSDocCommentBeforeLabelPrefix } from "./hover-request";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
+import { Token } from "../parser/tokens";
+import { assertType } from "../preprocessor/util";
+
+type ArgumentInfo = {
+  label: string;
+  startToken: Token | null;
+  endToken: Token | null;
+};
+
+type CallInfo = {
+  procedure: ProcedureStatement;
+  arguments: ArgumentInfo[];
+  labelPrefix: LabelPrefix;
+  argumentIndex: number;
+};
 
 export function signatureHelpRequest(
   unit: CompilationUnit,
   uri: URI,
   offset: number,
 ): SignatureHelp | null {
-  const tokens = unit.services.files.getTokens(uri);
-  if (!tokens) {
+  const callInfo = tryGetCallInfo(unit, uri, offset);
+  if (!callInfo) {
     return null;
   }
-  const tokenIndex = binaryTokenIndexRightMost(tokens, offset);
-  if (tokenIndex === -1) {
-    return null;
-  }
-  const token = tokens[tokenIndex];
-  if (!token) {
-    return null;
-  }
-  const memberCall = getContainer(token.element, SyntaxKind.MemberCall);
-  if (
-    !memberCall ||
-    !memberCall.element?.ref?.text ||
-    !memberCall.element.ref.node ||
-    memberCall.element.ref.node.kind !== SyntaxKind.LabelPrefix
-  ) {
-    return null;
-  }
-  const jsDoc = getJSDocCommentBeforeLabelPrefix(
-    memberCall.element.ref.node,
-    unit,
-  );
+  const jsDoc = getJSDocCommentBeforeLabelPrefix(callInfo.labelPrefix, unit);
   const parameterDocumentation = new Map<string, string>();
-  const parameterIndex = getParameterIndexByOffset(
-    memberCall.element.dimensions?.dimensions,
-    offset,
-  );
   if (jsDoc) {
     const paramPattern = /^ *\{[^}]+\} *(\w+)/; // extracts the parameter name
     for (const paramTag of jsDoc.getTags("param")) {
@@ -63,22 +62,16 @@ export function signatureHelpRequest(
       }
     }
   }
-  const procedure = retrieveProcedureFromLabelPrefix(
-    memberCall.element.ref.node,
-  );
-  if (!procedure) {
-    return null;
-  }
   const signatureHelp: SignatureHelp = {
     signatures: [
       {
-        label: memberCall.element.ref.text,
+        label: callInfo.labelPrefix.name ?? "<unknown>",
         documentation: {
           kind: "markdown",
-          value: stringifyDeclaration(memberCall.element.ref.node, unit) ?? "",
+          value: stringifyDeclaration(callInfo.labelPrefix, unit) ?? "",
         },
-        parameters: procedure.parameters.map((p) => {
-          const name = p.ref?.text?.toUpperCase();
+        parameters: callInfo.arguments.map((p) => {
+          const name = p.label.toUpperCase();
           return {
             label: name ?? "unknown",
             documentation:
@@ -93,12 +86,137 @@ export function signatureHelpRequest(
       },
     ],
     activeSignature: 0,
-    activeParameter: parameterIndex,
+    activeParameter: callInfo.argumentIndex,
   };
   return signatureHelp;
 }
 
-function getParameterIndexByOffset(
+function tryGetCallInfo(
+  unit: CompilationUnit,
+  uri: URI,
+  offset: number,
+): CallInfo | null {
+  const tokens = unit.services.files.getTokens(uri);
+  if (!tokens) {
+    return null;
+  }
+  const tokenIndex = binaryTokenIndexRightMost(tokens, offset);
+  if (tokenIndex === -1) {
+    return null;
+  }
+  const token = tokens[tokenIndex];
+  if (!token) {
+    return null;
+  }
+  const memberCall = getContainer(token.element, SyntaxKind.MemberCall);
+  const callStatement = getContainer(token.element, SyntaxKind.CallStatement);
+  if (!memberCall && !callStatement) {
+    return null;
+  }
+  if (memberCall && !callStatement) {
+    return getCallInfoFromMemberCall(memberCall, offset);
+  }
+  if (callStatement && !memberCall) {
+    return getCallInfoFromCallStatement(callStatement, offset);
+  }
+  assertType<MemberCall>(memberCall);
+  assertType<CallStatement>(callStatement);
+  const callStatementOffset = callStatement.call?.procedure?.token.startOffset;
+  const memberCallOffset = memberCall.element?.ref?.token.startOffset;
+  if (callStatementOffset === undefined || memberCallOffset === undefined) {
+    return null;
+  }
+  if (callStatementOffset > memberCallOffset) {
+    return getCallInfoFromCallStatement(callStatement, offset);
+  } else {
+    return getCallInfoFromMemberCall(memberCall, offset);
+  }
+}
+
+function getCallInfoFromCallStatement(
+  callStatement: CallStatement,
+  offset: number,
+): CallInfo | null {
+  if (
+    !callStatement.call?.procedure?.text ||
+    !callStatement.call.procedure.node ||
+    callStatement.call.procedure.node.kind !== SyntaxKind.LabelPrefix
+  ) {
+    return null;
+  }
+  const procedure = retrieveProcedureFromLabelPrefix(
+    callStatement.call.procedure.node,
+  );
+  if (!procedure) {
+    return null;
+  }
+  const argumentsInfo: ArgumentInfo[] = [];
+  /*if (callStatement.call.args1) {
+    for (let index = 0; index < callStatement.call.args1.list.length; index++) {
+      const parameter = procedure.parameters[index];
+      const arg = callStatement.call.args1.list[index];
+      argumentsInfo.push({
+        label: parameter?.ref?.text ?? "<unknown>",
+        startToken: arg.startToken,
+        endToken: arg.endToken,
+      });
+    }
+  }*/
+  const argumentIndex = getArgumentIndexByOffset([], offset);
+  return {
+    procedure,
+    arguments: argumentsInfo,
+    labelPrefix: callStatement.call.procedure.node,
+    argumentIndex,
+  };
+}
+
+function getCallInfoFromMemberCall(
+  memberCall: MemberCall,
+  offset: number,
+): CallInfo | null {
+  if (
+    !memberCall.element?.ref?.text ||
+    !memberCall.element.ref.node ||
+    memberCall.element.ref.node.kind !== SyntaxKind.LabelPrefix
+  ) {
+    return null;
+  }
+  const procedure = retrieveProcedureFromLabelPrefix(
+    memberCall.element.ref.node,
+  );
+  if (!procedure) {
+    return null;
+  }
+  const argumentsInfo: ArgumentInfo[] = [];
+  if (memberCall.element.dimensions) {
+    for (
+      let index = 0;
+      index < memberCall.element.dimensions.dimensions.length;
+      index++
+    ) {
+      const parameter = procedure.parameters[index];
+      const dim = memberCall.element.dimensions.dimensions[index];
+      argumentsInfo.push({
+        label: parameter?.ref?.text ?? "<unknown>",
+        startToken: dim.startToken,
+        endToken: dim.endToken,
+      });
+    }
+  }
+  const argumentIndex = getArgumentIndexByOffset(
+    memberCall.element.dimensions?.dimensions,
+    offset,
+  );
+  return {
+    procedure,
+    arguments: argumentsInfo,
+    labelPrefix: memberCall.element.ref.node,
+    argumentIndex,
+  };
+}
+
+function getArgumentIndexByOffset(
   dimensions: DimensionBound[] | undefined,
   offset: number,
 ) {
