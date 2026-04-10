@@ -905,6 +905,7 @@ export type SyntaxNode =
   | PrintDirective
   | ProcedureCall
   | ProcedureCallArgs
+  | ProcedureCallArgumentBounds
   | ProcedureParameter
   | ProcedureStatement
   | ProcessDirective

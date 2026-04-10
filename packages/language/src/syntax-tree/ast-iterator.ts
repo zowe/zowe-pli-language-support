@@ -770,6 +770,11 @@ export function forEachNode(
           action(arg);
         }
       }
+      for (const bound of node.bounds) {
+        action(bound);
+      }
+      break;
+    case SyntaxKind.ProcedureCallArgumentBounds:
       break;
     case SyntaxKind.ProcedureParameter:
       break;
