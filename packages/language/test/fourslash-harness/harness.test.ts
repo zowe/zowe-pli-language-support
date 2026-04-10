@@ -88,7 +88,14 @@ async function createTestingHarnessImplementation(
       expectTextAt: listen("hover.expectTextAt"),
     },
     signatureHelp: {
-      expectMarkdownAt: listen("signatureHelp.expectMarkdownAt"),
+      expectNoHelp: listen("signatureHelp.expectNoHelp"),
+      expectMarkdownSignatureAt: listen(
+        "signatureHelp.expectMarkdownSignatureAt",
+      ),
+      expectMarkdownParameterAt: listen(
+        "signatureHelp.expectMarkdownParameterAt",
+      ),
+      expectParameterIndexAt: listen("signatureHelp.expectParameterIndexAt"),
     },
     semanticTokens: {
       expectAt: listen("semanticTokens.expectAt"),

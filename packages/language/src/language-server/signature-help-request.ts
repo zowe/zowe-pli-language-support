@@ -12,7 +12,7 @@
 import { URI } from "vscode-uri";
 import type { SignatureHelp } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { binaryTokenSearch } from "../utils/search";
+import { binaryTokenIndexRightMost } from "../utils/search";
 import { DimensionBound, getContainer, SyntaxKind } from "../syntax-tree/ast";
 import { stringifyDeclaration } from "../typesystem/stringify";
 import { getJSDocCommentBeforeLabelPrefix } from "./hover-request";
@@ -27,7 +27,11 @@ export function signatureHelpRequest(
   if (!tokens) {
     return null;
   }
-  const token = binaryTokenSearch(tokens, offset);
+  const tokenIndex = binaryTokenIndexRightMost(tokens, offset);
+  if (tokenIndex === -1) {
+    return null;
+  }
+  const token = tokens[tokenIndex];
   if (!token) {
     return null;
   }

@@ -1415,10 +1415,21 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     }
   }
 
-  expectSignatureHelp(
-    label: string,
-    text: { kind: "markdown"; value: string },
-  ): void {
+  expectNoSignatureHelp(label: string): void {
+    const indices = this.getLabelPositions(label);
+
+    for (const { uri, offset } of indices) {
+      const signatureHelpResult = signatureHelpRequest(
+        this.unit,
+        UriUtils.toUri(uri),
+        offset,
+      );
+      const message = `Expected no signature help for label "${label}" (${this.createLabelPositionMessage(label)})`;
+      expect(signatureHelpResult, message).toBeNull();
+    }
+  }
+
+  expectMarkdownSignatureAt(label: string, text: string): void {
     const indices = this.getLabelPositions(label);
 
     for (const { uri, offset } of indices) {
@@ -1428,7 +1439,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
         offset,
       );
       const message = `Expected signature help for label "${label}" (${this.createLabelPositionMessage(label)})`;
-      expect(signatureHelpResult, message).toBeDefined();
+      expect(signatureHelpResult, message).not.toBeNull();
       expect(signatureHelpResult?.activeSignature, message).toBeDefined();
       const activeSignature =
         signatureHelpResult?.signatures[signatureHelpResult.activeSignature!];
@@ -1436,7 +1447,48 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       expect(activeDocumentation, message).toBeTypeOf("object");
       assertType<MarkupContent>(activeDocumentation);
       expect(activeDocumentation.kind, message).toEqual("markdown");
-      expect(activeDocumentation.value, message).toEqual(text.value);
+      expect(activeDocumentation.value, message).toEqual(text);
+    }
+  }
+
+  expectMarkdownParameterAt(label: string, markdown: string): void {
+    const indices = this.getLabelPositions(label);
+
+    for (const { uri, offset } of indices) {
+      const signatureHelpResult = signatureHelpRequest(
+        this.unit,
+        UriUtils.toUri(uri),
+        offset,
+      );
+      const message = `Expected parameter help for label "${label}" (${this.createLabelPositionMessage(label)})`;
+      expect(signatureHelpResult, message).not.toBeNull();
+      expect(signatureHelpResult?.activeSignature, message).toBeDefined();
+      const activeSignature =
+        signatureHelpResult?.signatures[signatureHelpResult.activeSignature!];
+      expect(signatureHelpResult?.activeParameter, message).toBeDefined();
+      expect(activeSignature?.parameters, message).toBeDefined();
+      const activeParameter =
+        activeSignature!.parameters![signatureHelpResult!.activeParameter!];
+      const activeDocumentation = activeParameter?.documentation;
+      expect(activeDocumentation, message).toBeTypeOf("object");
+      assertType<MarkupContent>(activeDocumentation);
+      expect(activeDocumentation.kind, message).toEqual("markdown");
+      expect(activeDocumentation.value, message).toEqual(markdown);
+    }
+  }
+
+  expectParameterIndexAt(label: string, index: number): void {
+    const indices = this.getLabelPositions(label);
+
+    for (const { uri, offset } of indices) {
+      const signatureHelpResult = signatureHelpRequest(
+        this.unit,
+        UriUtils.toUri(uri),
+        offset,
+      );
+      const message = `Expected parameter index for label "${label}" (${this.createLabelPositionMessage(label)})`;
+      expect(signatureHelpResult, message).not.toBeNull();
+      expect(signatureHelpResult!.activeParameter, message).toEqual(index);
     }
   }
 

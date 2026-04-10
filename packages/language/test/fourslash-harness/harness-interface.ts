@@ -325,12 +325,29 @@ export interface HarnessTesterInterface {
 
   signatureHelp: {
     /**
+     * Expect that there is no signature help at the given label.
+     * @param label The label to expect no signature help at.
+     */
+    expectNoHelp(label: Label): void;
+    /**
      * Expect that the signature help at the given label is the given markdown.
      *
      * @param label The label to expect the signature help at.
      * @param markdown The expected signature help markdown.
      */
-    expectMarkdownAt(label: Label, markdown: string): void;
+    expectMarkdownSignatureAt(label: Label, markdown: string): void;
+    /**
+     * Expect that the parameter help at the given label is the given text.
+     * @param label The label to expect the parameter help at.
+     * @param markdown The expected parameter help markdown.
+     */
+    expectMarkdownParameterAt(label: Label, markdown: string): void;
+    /**
+     * Expect that the active parameter index at the given label is the given index.
+     * @param label The label to expect the active parameter index at.
+     * @param index The expected active parameter index.
+     */
+    expectParameterIndexAt(label: Label, index: number): void;
   };
 
   completion: {

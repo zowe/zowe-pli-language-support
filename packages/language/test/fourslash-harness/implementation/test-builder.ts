@@ -104,11 +104,14 @@ export function createTestBuilderHarnessImplementation(
       include: generateIncludeItemMarkup,
     },
     signatureHelp: {
-      expectMarkdownAt: (label, markdown) =>
-        testBuilder.expectSignatureHelp(label.toString(), {
-          kind: MarkupKind.Markdown,
-          value: markdown,
-        }),
+      expectNoHelp: (label) =>
+        testBuilder.expectNoSignatureHelp(label.toString()),
+      expectMarkdownSignatureAt: (label, markdown) =>
+        testBuilder.expectMarkdownSignatureAt(label.toString(), markdown),
+      expectMarkdownParameterAt: (label, markdown) =>
+        testBuilder.expectMarkdownParameterAt(label.toString(), markdown),
+      expectParameterIndexAt: (label, index) =>
+        testBuilder.expectParameterIndexAt(label.toString(), index),
     },
     semanticTokens: {
       expectAt: (label, tokenType = label.toString()) =>
