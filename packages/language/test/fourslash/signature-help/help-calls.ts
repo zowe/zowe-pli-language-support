@@ -27,6 +27,17 @@
 ////   CALL XXX(<|0>"abc", <|1>1, <|2>2);
 //// %END;
 
+signatureHelp.expectMarkdownSignatureAt(
+  1,
+  hover.codeBlock(`XXX: PROC(A, B, C);
+   DECLARE A CHARACTER;
+   DECLARE B FIXED;
+   DECLARE C FIXED OPTIONAL;
+ %END;`),
+);
 signatureHelp.expectParameterIndexAt(0, 0);
+signatureHelp.expectMarkdownParameterAt(0, "{CHARACTER} a Description of a");
 signatureHelp.expectParameterIndexAt(1, 1);
+signatureHelp.expectMarkdownParameterAt(1, "{FIXED} b Description of b");
 signatureHelp.expectParameterIndexAt(2, 2);
+signatureHelp.expectMarkdownParameterAt(2, "{FIXED} [c] Description of c");

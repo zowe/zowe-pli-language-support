@@ -15,7 +15,6 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenIndexRightMost } from "../utils/search";
 import {
   CallStatement,
-  DimensionBound,
   getContainer,
   LabelPrefix,
   MemberCall,
@@ -53,7 +52,7 @@ export function signatureHelpRequest(
   const jsDoc = getJSDocCommentBeforeLabelPrefix(callInfo.labelPrefix, unit);
   const parameterDocumentation = new Map<string, string>();
   if (jsDoc) {
-    const paramPattern = /^ *\{[^}]+\} *(\w+)/; // extracts the parameter name
+    const paramPattern = /^ *\{[^}]+\} *\[?(\w+)/; // extracts the parameter name
     for (const paramTag of jsDoc.getTags("param")) {
       const match = paramTag.content.toString().match(paramPattern);
       if (match) {
@@ -151,18 +150,22 @@ function getCallInfoFromCallStatement(
     return null;
   }
   const argumentsInfo: ArgumentInfo[] = [];
-  /*if (callStatement.call.args1) {
-    for (let index = 0; index < callStatement.call.args1.list.length; index++) {
+  if (callStatement.call.args1) {
+    for (
+      let index = 0;
+      index < callStatement.call.args1.bounds.length;
+      index++
+    ) {
       const parameter = procedure.parameters[index];
-      const arg = callStatement.call.args1.list[index];
+      const bounds = callStatement.call.args1.bounds[index];
       argumentsInfo.push({
         label: parameter?.ref?.text ?? "<unknown>",
-        startToken: arg.startToken,
-        endToken: arg.endToken,
+        startToken: bounds.startToken,
+        endToken: bounds.endToken,
       });
     }
-  }*/
-  const argumentIndex = getArgumentIndexByOffset([], offset);
+  }
+  const argumentIndex = getArgumentIndexByOffset(argumentsInfo, offset);
   return {
     procedure,
     arguments: argumentsInfo,
@@ -204,10 +207,7 @@ function getCallInfoFromMemberCall(
       });
     }
   }
-  const argumentIndex = getArgumentIndexByOffset(
-    memberCall.element.dimensions?.dimensions,
-    offset,
-  );
+  const argumentIndex = getArgumentIndexByOffset(argumentsInfo, offset);
   return {
     procedure,
     arguments: argumentsInfo,
@@ -217,7 +217,7 @@ function getCallInfoFromMemberCall(
 }
 
 function getArgumentIndexByOffset(
-  dimensions: DimensionBound[] | undefined,
+  dimensions: ArgumentInfo[] | undefined,
   offset: number,
 ) {
   if (!dimensions || dimensions.length === 0) {

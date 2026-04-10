@@ -6432,12 +6432,15 @@ const procedureCallArgs = rule(
   sequence(tokens.OpenParen),
   (state: ParserState): ast.ProcedureCallArgs => {
     const element = ast.createProcedureCallArgs();
+    const bounds: ast.ProcedureCallArgumentBounds[] = [];
+    element.bounds = bounds;
 
-    state.consume(
+    let startToken = state.consume(
       element,
       CstNodeKind.ProcedureCallArgs_OpenParen,
       tokens.OpenParen,
     );
+    let endToken: Token | null = null;
 
     // Optional argument list
     if (!state.canConsume(tokens.CloseParen)) {
@@ -6457,11 +6460,11 @@ const procedureCallArgs = rule(
       // Parse additional comma-separated arguments
       const { inc } = state.createLoopContext("ProcedureCallArgs");
       while (
-        state.tryConsume(
+        (endToken = state.tryConsume(
           element,
           CstNodeKind.ProcedureCallArgs_Comma,
           tokens.Comma,
-        )
+        ))
       ) {
         inc();
         if (state.canConsume(tokens.Star)) {
@@ -6475,16 +6478,25 @@ const procedureCallArgs = rule(
           const expr = expression.rule(state);
           expr && element.list.push(expr);
         }
+        applyBounds();
+        startToken = endToken;
       }
     }
 
-    state.consume(
+    endToken = state.consume(
       element,
       CstNodeKind.ProcedureCallArgs_CloseParen,
       tokens.CloseParen,
     );
-
+    applyBounds();
     return element;
+
+    function applyBounds() {
+      const item = ast.createProcedureCallArgumentBounds();
+      item.startToken = startToken;
+      item.endToken = endToken;
+      bounds.push(item);
+    }
   },
 );
 
