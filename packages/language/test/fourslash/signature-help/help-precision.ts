@@ -11,7 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
-//// %DCL A STRING;
+//// %DCL A CHARACTER;
 //// %A = SUBSTR<|a>(<|b>
 ////    <|c>    <|d>"NU<|e>LL"<|f>,
 ////        <|g>1  <|h>,<|i>

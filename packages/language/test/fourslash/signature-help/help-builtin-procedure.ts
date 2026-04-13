@@ -11,7 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
-//// %DCL A STRING;
+//// %DCL A CHARACTER;
 //// %A = SUBSTR<|left>(<|0>"hallo", <|1>1, <|2>2); <|outside>
 
 const expectedSignatureMarkdown =

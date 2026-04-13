@@ -28,13 +28,19 @@ import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 
 type ArgumentInfo = {
-  label: string;
   startToken: Token | null;
   endToken: Token | null;
+  parameterIndex: number;
+};
+
+type ParameterInfo = {
+  label: string;
+  variadic: boolean;
 };
 
 type CallInfo = {
   procedure: ProcedureStatement;
+  parameters: ParameterInfo[];
   arguments: ArgumentInfo[];
   labelPrefix: LabelPrefix;
   argumentIndex: number;
@@ -69,8 +75,8 @@ export function signatureHelpRequest(
           kind: "markdown",
           value: stringifyDeclaration(callInfo.labelPrefix, unit) ?? "",
         },
-        parameters: callInfo.arguments.map((p) => {
-          const name = p.label.toUpperCase();
+        parameters: callInfo.parameters.map((parameter) => {
+          const name = parameter.label.toUpperCase();
           return {
             label: name ?? "unknown",
             documentation:
@@ -85,7 +91,7 @@ export function signatureHelpRequest(
       },
     ],
     activeSignature: 0,
-    activeParameter: callInfo.argumentIndex,
+    activeParameter: callInfo.arguments[callInfo.argumentIndex].parameterIndex,
   };
   return signatureHelp;
 }
@@ -113,10 +119,10 @@ function tryGetCallInfo(
     return null;
   }
   if (memberCall && !callStatement) {
-    return getCallInfoFromMemberCall(memberCall, offset);
+    return getCallInfoFromMemberCall(memberCall, offset, unit);
   }
   if (callStatement && !memberCall) {
-    return getCallInfoFromCallStatement(callStatement, offset);
+    return getCallInfoFromCallStatement(callStatement, offset, unit);
   }
   assertType<MemberCall>(memberCall);
   assertType<CallStatement>(callStatement);
@@ -126,15 +132,16 @@ function tryGetCallInfo(
     return null;
   }
   if (callStatementOffset > memberCallOffset) {
-    return getCallInfoFromCallStatement(callStatement, offset);
+    return getCallInfoFromCallStatement(callStatement, offset, unit);
   } else {
-    return getCallInfoFromMemberCall(memberCall, offset);
+    return getCallInfoFromMemberCall(memberCall, offset, unit);
   }
 }
 
 function getCallInfoFromCallStatement(
   callStatement: CallStatement,
   offset: number,
+  unit: CompilationUnit,
 ): CallInfo | null {
   if (
     !callStatement.call?.procedure?.text ||
@@ -149,6 +156,17 @@ function getCallInfoFromCallStatement(
   if (!procedure) {
     return null;
   }
+  const parameterInfo: ParameterInfo[] = [];
+  if (procedure.parameters) {
+    for (const parameter of procedure.parameters) {
+      const parameterType = unit.services.inferer.inferType(parameter, unit);
+      parameterInfo.push({
+        label: parameter?.ref?.text ?? "<unknown>",
+        variadic: parameterType.list,
+      });
+    }
+  }
+  let parameterIndex = 0;
   const argumentsInfo: ArgumentInfo[] = [];
   if (callStatement.call.args1) {
     for (
@@ -156,19 +174,25 @@ function getCallInfoFromCallStatement(
       index < callStatement.call.args1.bounds.length;
       index++
     ) {
-      const parameter = procedure.parameters[index];
       const bounds = callStatement.call.args1.bounds[index];
       argumentsInfo.push({
-        label: parameter?.ref?.text ?? "<unknown>",
         startToken: bounds.startToken,
         endToken: bounds.endToken,
+        parameterIndex,
       });
+      if (
+        parameterIndex < parameterInfo.length &&
+        !parameterInfo[parameterIndex].variadic
+      ) {
+        parameterIndex++;
+      }
     }
   }
   const argumentIndex = getArgumentIndexByOffset(argumentsInfo, offset);
   return {
     procedure,
     arguments: argumentsInfo,
+    parameters: parameterInfo,
     labelPrefix: callStatement.call.procedure.node,
     argumentIndex,
   };
@@ -177,6 +201,7 @@ function getCallInfoFromCallStatement(
 function getCallInfoFromMemberCall(
   memberCall: MemberCall,
   offset: number,
+  unit: CompilationUnit,
 ): CallInfo | null {
   if (
     !memberCall.element?.ref?.text ||
@@ -191,6 +216,17 @@ function getCallInfoFromMemberCall(
   if (!procedure) {
     return null;
   }
+  const parameterInfo: ParameterInfo[] = [];
+  if (procedure.parameters) {
+    for (const parameter of procedure.parameters) {
+      const parameterType = unit.services.inferer.inferType(parameter, unit);
+      parameterInfo.push({
+        label: parameter?.ref?.text ?? "<unknown>",
+        variadic: parameterType.list,
+      });
+    }
+  }
+  let parameterIndex = 0;
   const argumentsInfo: ArgumentInfo[] = [];
   if (memberCall.element.dimensions) {
     for (
@@ -198,18 +234,24 @@ function getCallInfoFromMemberCall(
       index < memberCall.element.dimensions.dimensions.length;
       index++
     ) {
-      const parameter = procedure.parameters[index];
       const dim = memberCall.element.dimensions.dimensions[index];
       argumentsInfo.push({
-        label: parameter?.ref?.text ?? "<unknown>",
         startToken: dim.startToken,
         endToken: dim.endToken,
+        parameterIndex,
       });
+      if (
+        parameterIndex < parameterInfo.length &&
+        !parameterInfo[parameterIndex].variadic
+      ) {
+        parameterIndex++;
+      }
     }
   }
   const argumentIndex = getArgumentIndexByOffset(argumentsInfo, offset);
   return {
     procedure,
+    parameters: parameterInfo,
     arguments: argumentsInfo,
     labelPrefix: memberCall.element.ref.node,
     argumentIndex,
