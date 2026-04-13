@@ -454,7 +454,7 @@ export function getJSDocsCommentBeforeLabelPrefix(
   if (!tokens || !commentTokens) {
     return null;
   }
-  const tokenIndex = binaryTokenIndexSearch(
+  let tokenIndex = binaryTokenIndexSearch(
     tokens,
     labelPrefix.nameToken.startOffset,
   );
@@ -464,9 +464,22 @@ export function getJSDocsCommentBeforeLabelPrefix(
   );
   if (commentIndex > -1) {
     const commentToken = commentTokens[commentIndex];
+    while (
+      tokenIndex >= 2 &&
+      tokens[tokenIndex - 1].tokenType === t.Colon &&
+      tokens[tokenIndex - 2].tokenType === t.ID
+    ) {
+      /*
+       * Edge case 1: alias declaration with comment on original, hover on alias:
+       * /** comment *\/
+       * PROC1:
+       * PROC2: PROCEDURE; <-- hover PROC2: comment should be included
+       */
+      tokenIndex -= 2;
+    }
     if (tokenIndex > 0) {
       /*
-       * Edge case: two declarations, only first has comment, second gets hovered:
+       * Edge case 2: two declarations, only first has comment, second gets hovered:
        * /** comment *\/
        * DCL1
        * DCL2 //<-- hover here: no comment included
