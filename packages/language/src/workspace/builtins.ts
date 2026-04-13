@@ -924,23 +924,31 @@ export const BuiltinsMacroFile = "builtins-macro.pli";
 export const BuiltinsMacroUri = `${BuiltinsUriSchema}:/${BuiltinsMacroFile}`;
 export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
-  * \`COLLATE\` returns a \`CHARACTER\` string of length 256 comprising the 256 possible character
-  * values one time each in the collating order.
-  * @returns {CHARACTER} string of length 256 comprising the 256 possible character values one time each in the collating order
+  * \`COLLATE\` returns a \`CHARACTER\` string of length 256 comprising
+  * the 256 possible character values one time each in the collating
+  * order.
+  * @returns {CHARACTER} string of length 256 comprising the
+  *   256 possible character values one time each in the collating 
+  *   order
   */
  COLLATE: PROC RETURNS(CHARACTER); END;
 
  /**
   * \`COMMENT\` converts a \`CHARACTER\` expression into a comment.
-  * @param {CHARACTER} text Expression that is to be converted to a comment. \`text\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @returns {CHARACTER} \`text\` is enclosed with a &#47;* and an *&#47; If \`text\` contains &#47;* or *&#47; composite symbols, they are replaced by &#47;> and <&#47;, respectively.
+  * @param {CHARACTER} text Expression that is to be converted to a
+  *   comment. \`text\` should have \`CHARACTER\` type, and if not,
+  *   it is converted thereto.
+  * @returns {CHARACTER} \`text\` is enclosed with a &#47;* and an 
+  *   *&#47; If \`text\` contains &#47;* or *&#47; composite symbols,
+  *   they are replaced by &#47;> and <&#47;, respectively.
   */
  COMMENT: PROC(text) RETURNS(CHARACTER);
    DECLARE text CHARACTER;
  END;
 
  /**
-  * \`COMPILEDATE\` returns a \`CHARACTER\` string of length 17 containing the date and the time of the compilation.
+  * \`COMPILEDATE\` returns a \`CHARACTER\` string of length 17
+  * containing the date and the time of the compilation.
   * The format of the string returned by \`COMPILEDATE\` is as follows:
   * | Format | Meaning |
   * |--------|---------|
@@ -952,14 +960,20 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * | ss | current second |
   * | ttt | current millisecond |
   * 
-  * A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
-  * If no timing facility is available, the last 8 characters of the returned string are set to 00.00.00.
-  * @returns {CHARACTER} string of length 17 containing the date and the time of the compilation.
+  * A leading zero in the day of the month field is replaced by a
+  * blank; no other leading zeros are suppressed.
+  * 
+  * If no timing facility is available, the last 8 characters of the
+  * returned string are set to 00.00.00.
+  * @returns {CHARACTER} string of length 17 containing the date and
+  * the time of the compilation.
   */
  COMPILEDATE: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`COMPILETIME\` returns a \`CHARACTER\` string of length 18 containing the date and the time of compilation.
+  * \`COMPILETIME\` returns a \`CHARACTER\` string of length 18
+  * containing the date and the time of compilation.
+  * 
   * The format of the string returned by \`COMPILETIME\` is as follows:
   * | Format | Meaning |
   * |--------|---------|
@@ -975,18 +989,27 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * | . | Period |
   * | SS | Second |
   * 
-  * @returns {CHARACTER} string of length 18 containing the date and the time of compilation.
+  * @returns {CHARACTER} string of length 18 containing the date and
+  *   the time of compilation.
   */
  COMPILETIME: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`COPY\` returns a \`CHARACTER\` string consisting of \`n\` concatenated copies of the string \`string\`.
-  * @param {CHARACTER} string Expression. \`string\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @param {FIXED} n Expression that specifies the number of repetitions.
-  *   \`n\` should have \`FIXED\` type, and if not, it is converted thereto.
+  * \`COPY\` returns a \`CHARACTER\` string consisting of
+  * \`n\` concatenated copies of the string \`string\`.
+  * @param {CHARACTER} string Expression. \`string\` should have 
+  *   \`CHARACTER\` type, and if not, it is converted thereto.
+  * @param {FIXED} n Expression that specifies the number of 
+  *   repetitions.
+  * 
+  *   \`n\` should have \`FIXED\` type, and if not, it is converted
+  *   thereto.
+  * 
   *   \`n\` must be nonnegative.
+  * 
   *   If \`n\` is zero, the result is a null string.
-  * @returns {CHARACTER} string consisting of \`n\` concatenated copies of the string \`string\`.
+  * @returns {CHARACTER} string consisting of \`n\` concatenated copies
+  *   of the string \`string\`.
   */
  COPY: PROC(string, n) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
@@ -994,23 +1017,38 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`COUNTER\` returns a \`CHARACTER\` string of length 5 containing a decimal number. The returned number is 00001 for the first invocation, and increments by one on each successive invocation.
-  * If \`COUNTER\` is invoked 99999 times, the next time it is invoked, a diagnostic message is issued and 00000 is returned. The next invocation after that is treated as the first.
-  * The \`COUNTER\` built-in function can be used to generate unique names, or for counting purposes.
+  * \`COUNTER\` returns a \`CHARACTER\` string of length 5 containing a
+  * decimal number. The returned number is 00001 for the first
+  * invocation, and increments by one on each successive invocation.
+  * 
+  * If \`COUNTER\` is invoked 99999 times, the next time it is invoked,
+  * a diagnostic message is issued and 00000 is returned. The next
+  * invocation after that is treated as the first.
+  * 
+  * The \`COUNTER\` built-in function can be used to generate unique
+  * names, or for counting purposes.
   * @returns {CHARACTER} string of length 5 containing a decimal number
   */
  COUNTER: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`DIMENSION\` returns a \`FIXED\` value specifying current extent of dimension \`d\` of \`array\`.
+  * \`DIMENSION\` returns a \`FIXED\` value specifying current extent
+  * of dimension \`d\` of \`array\`.
   * @param {ANY(*)} array Array reference.
   *   \`array\` must not have less than \`d\` dimensions.
-  * @param {FIXED} [d] Expression specifying a particular dimension of \`array\`.
-  *   \`d\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * @param {FIXED} [d] Expression specifying a particular dimension 
+  *   of \`array\`.
+  * 
+  *   \`d\` should have \`FIXED\` type, and if not, it will be
+  *   converted thereto.
+  * 
   *   \`d\` must be greater than or equal to 1.
+  * 
   *   If \`d\` is not supplied, the default is 1.
+  * 
   *   \`d\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED} value specifying current extent of dimension \`d\` of \`array\`.
+  * @returns {FIXED} value specifying current extent of dimension
+  *   \`d\` of \`array\`.
   */
  DIMENSION: DIM: PROC(array, d) RETURNS(FIXED);
    DECLARE array ANY(*);
@@ -1018,14 +1056,23 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`HBOUND\` returns a \`FIXED\` value specifying current upper bound of dimension \`d\` of \`array\`.
-  * @param {ANY(*)} array Array reference. \`array\` must not have less than \`d\` dimensions.
-  * @param {FIXED} [d] Expression specifying a particular dimension of \`array\`.
-  *   \`d\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * \`HBOUND\` returns a \`FIXED\` value specifying current upper bound
+  * of dimension \`d\` of \`array\`.
+  * @param {ANY(*)} array Array reference. \`array\` must not have less
+  *   than \`d\` dimensions.
+  * @param {FIXED} [d] Expression specifying a particular dimension
+  *   of \`array\`.
+  * 
+  *   \`d\` should have \`FIXED\` type, and if not, it will be
+  *   converted thereto.
+  * 
   *   \`d\` must be greater than or equal to 1.
+  * 
   *   If \`d\` is not supplied, the default is 1.
+  * 
   *   \`d\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED} value specifying current upper bound of dimension \`d\` of \`array\`.
+  * @returns {FIXED} value specifying current upper bound of
+  *   dimension \`d\` of \`array\`.
   */
  HBOUND: PROC(array, d) RETURNS(FIXED);
    DECLARE array ANY(*);
@@ -1033,17 +1080,32 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`INDEX\` returns a \`FIXED\` value indicating the starting position within \`haystack\` of a substring identical to \`needle\`. You can also specify the location within \`haystack\` where processing begins.
-  * If \`needle\` does not occur in \`haystack\`, or if either \`haystack\` or \`needle\` have zero length, the value zero is returned.
-  * \`offset\` must be greater than \`0\` and no greater than \`1 + LENGTH(\`haystack\`)\`.
+  * \`INDEX\` returns a \`FIXED\` value indicating the starting position
+  * within \`haystack\` of a substring identical to \`needle\`. You can
+  * also specify the location within \`haystack\` where processing
+  * begins.
+  * 
+  * If \`needle\` does not occur in \`haystack\`, or if either
+  * \`haystack\` or \`needle\` have zero length, the value zero is
+  * returned.
+  * 
+  * \`offset\` must be greater than \`0\` and no greater than
+  * \`1 + LENGTH(\`haystack\`)\`.
+  * 
   * If \`\`offset\` = LENGTH(\`haystack\`) + 1\`, the result is zero.
   * @param {CHARACTER} haystack Expression to be searched.
-  *   \`haystack\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
+  *   \`haystack\` should have \`CHARACTER\` type, and if not, it will
+  *   be converted thereto.
   * @param {CHARACTER} needle Target expression of the search.
-  *   \`needle\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
-  * @param {FIXED} [offset] \`offset\` specifies the location within \`haystack\` at which to begin processing.
-  *   \`offset\` should have \`FIXED\` type, and if not, it will be converted thereto.
-  * @returns {FIXED} value indicating the starting position within \`haystack\` of a substring identical to \`needle\`
+  *   \`needle\` should have \`CHARACTER\` type, and if not, it will
+  *   be converted thereto.
+  * @param {FIXED} [offset] \`offset\` specifies the location within
+  *   \`haystack\` at which to begin processing.
+  * 
+  *   \`offset\` should have \`FIXED\` type, and if not, it will
+  *   be converted thereto.
+  * @returns {FIXED} value indicating the starting position within
+  *   \`haystack\` of a substring identical to \`needle\`
   */
  INDEX: PROC(haystack, needle, offset) RETURNS(FIXED);
    DECLARE haystack CHARACTER;
@@ -1052,14 +1114,23 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`LBOUND\` returns a \`FIXED\` value specifying current lower bound of dimension \`d\` of \`array\`.
-  * @param {ANY(*)} array Array reference. \`array\` must not have less than \`d\` dimensions.
-  * @param {FIXED} [d] Expression specifying a particular dimension of \`array\`.
-  *   \`d\` should have \`FIXED\` type, and if not, it will be converted thereto.
+  * \`LBOUND\` returns a \`FIXED\` value specifying current lower bound
+  * of dimension \`d\` of \`array\`.
+  * @param {ANY(*)} array Array reference. \`array\` must not have less
+  *   than \`d\` dimensions.
+  * @param {FIXED} [d] Expression specifying a particular dimension
+  *   of \`array\`.
+  * 
+  *   \`d\` should have \`FIXED\` type, and if not, it will
+  *   be converted thereto.
+  * 
   *   \`d\` must be greater than or equal to 1.
+  * 
   *   If \`d\` is not supplied, the default is 1.
+  * 
   *   \`d\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED} value specifying current lower bound of dimension \`d\` of \`array\`.
+  * @returns {FIXED} value specifying current lower bound of
+  *   dimension \`d\` of \`array\`.
   */
  LBOUND: PROC(array, d) RETURNS(FIXED);
    DECLARE array ANY(*);
@@ -1067,22 +1138,39 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`LENGTH\` returns a \`FIXED\` value specifying the current length of a given character expression.
-  * @param {CHARACTER} string Expression. \`string\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
-  * @returns {FIXED} value specifying the current length of the character expression
+  * \`LENGTH\` returns a \`FIXED\` value specifying the current length
+  * of a given character expression.
+  * @param {CHARACTER} string Expression. \`string\` should have
+  *   \`CHARACTER\` type, and if not, it will be converted thereto.
+  * @returns {FIXED} value specifying the current length of the
+  *   character expression
   */
  LENGTH: PROC(string) RETURNS(FIXED);
    DECLARE string CHARACTER;
  END;
 
  /**
-  * \`LOWERCASE\` returns a character string with all characters converted to their lowercase equivalent.
-  * \`LOWERCASE(string)\` is equivalent to \`TRANSLATE(string, 'a...z', 'A...Z')\` and \`LOWERCASE(string, codes)\` is equivalent to \`TRANSLATE(string, lowerc, upperc)\`.
-  * The values of \`lowerc\` and \`upperc\` are determined by the value of the code page \`codes\`.
-  * Specifying \`LOWERCASE(string, codes)\` will not only translate alphabetic characters 'A...Z' to 'a...z', but also translate characters such as uppercase Ä-umlaut('4a'x) to lowercase ä-umlaut('c0'x).
-  * @param {CHARACTER} string Expression. \`string\` should have \`CHARACTER\` type, and if not, it will be converted thereto.
-  * @param {FIXED} [codes] Expression. Specifies the code page that will be lowercased.
-  * @returns {CHARACTER} character string with all characters converted to their lowercase equivalent
+  * \`LOWERCASE\` returns a character string with all characters
+  * converted to their lowercase equivalent.
+  * 
+  * \`LOWERCASE(string)\` is equivalent to
+  * \`TRANSLATE(string, 'a...z', 'A...Z')\` and
+  * \`LOWERCASE(string, codes)\` is equivalent to
+  * \`TRANSLATE(string, lowerc, upperc)\`.
+  * 
+  * The values of \`lowerc\` and \`upperc\` are determined by the value
+  * of the code page \`codes\`.
+  * 
+  * Specifying \`LOWERCASE(string, codes)\` will not only translate
+  * alphabetic characters 'A...Z' to 'a...z', but also translate
+  * characters such as uppercase Ä-umlaut('4a'x) to
+  * lowercase ä-umlaut('c0'x).
+  * @param {CHARACTER} string Expression. \`string\` should have
+  *   \`CHARACTER\` type, and if not, it will be converted thereto.
+  * @param {FIXED} [codes] Expression. Specifies the code page that
+  *   will be lowercased.
+  * @returns {CHARACTER} character string with all characters 
+  *   converted to their lowercase equivalent
   */
  LOWERCASE: PROC(string, codes) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
@@ -1090,37 +1178,56 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`MACCOL\` returns a \`FIXED\` value that represents the column where the outermost macro invocation starts in the source text that contains the macro invocation.
-  * @returns {FIXED} The value returned is not affected by nested macro invocations.
+  * \`MACCOL\` returns a \`FIXED\` value that represents the column
+  * where the outermost macro invocation starts in the source text that
+  * contains the macro invocation.
+  * @returns {FIXED} The value returned is not affected by nested
+  *   macro invocations.
   */
  MACCOL: PROC RETURNS(FIXED); END;
 
  /**
-  * \`MACLMAR\` returns a \`FIXED\` value that represents the column number of the left source margin in \`MARGINS\` compiler option.
-  * See the information about the \`MARGINS\` option in the Programming Guide.
-  * @returns {FIXED} column number of the left source margin in \`MARGINS\` compiler option
+  * \`MACLMAR\` returns a \`FIXED\` value that represents the column
+  * number of the left source margin in \`MARGINS\` compiler option.
+  * 
+  * See the information about the \`MARGINS\` option in the
+  * Programming Guide.
+  * @returns {FIXED} column number of the left source margin in
+  *   \`MARGINS\` compiler option
   */
  MACLMAR: PROC RETURNS(FIXED); END;
 
  /**
-  * \`MACNAME\` returns the name of the preprocessor procedure within which it is invoked.
-  * It is invalid to invoke \`MACNAME\` outside of a preprocessor procedure.
+  * \`MACNAME\` returns the name of the preprocessor procedure within
+  * which it is invoked.
+  * 
+  * It is invalid to invoke \`MACNAME\` outside of a preprocessor
+  * procedure.
   * @returns {CHARACTER} name of the preprocessor procedure
   */
  MACNAME: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`MACRMAR\` returns a \`FIXED\` value that represents the column number of the right source margin in \`MARGINS\` compiler option.
-  * See the information about the MARGINS option in the Programming Guide.
-  * @returns {FIXED} column number of the right source margin in \`MARGINS\` compiler option
+  * \`MACRMAR\` returns a \`FIXED\` value that represents the column
+  * number of the right source margin in \`MARGINS\` compiler option.
+  * 
+  * See the information about the \`MARGINS\` option in the
+  * Programming Guide.
+  * @returns {FIXED} column number of the right source margin in
+  *   \`MARGINS\` compiler option
   */
  MACRMAR: PROC RETURNS(FIXED); END;
 
  /**
-  * \`MAX\` returns the largest value from a set of two or more expressions.
-  * @param {FIXED} value1 First expression. \`value1\` should have \`FIXED\` type, and if not, it will be converted thereto.
-  * @param {FIXED} valueN Second and subsequent expressions. Each \`valueN\` should have \`FIXED\` type, and if not, it will be converted thereto.
-  * @returns {FIXED} largest value from a set of two or more expressions
+  * \`MAX\` returns the largest value from a set of two or more
+  * expressions.
+  * @param {FIXED} value1 First expression. \`value1\` should have
+  *   \`FIXED\` type, and if not, it will be converted thereto.
+  * @param {FIXED} valueN Second and subsequent expressions.
+  *   Each \`valueN\` should have \`FIXED\` type, and if not, it will
+  *   be converted thereto.
+  * @returns {FIXED} largest value from a set of two or more
+  *   expressions
   */
  MAX: PROC(value1, valueN) RETURNS(FIXED);
    DECLARE value1 FIXED;
@@ -1128,10 +1235,15 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`MIN\` returns the smallest value from a set of two or more expressions.
-  * @param {FIXED} value1 First expression. \`value1\` should have \`FIXED\` type, and if not, it will be converted thereto.
-  * @param {FIXED} valueN Second and subsequent expressions. Each \`valueN\` should have \`FIXED\` type, and if not, it will be converted thereto.
-  * @returns {FIXED} smallest value from a set of two or more expressions
+  * \`MIN\` returns the smallest value from a set of two or more
+  * expressions.
+  * @param {FIXED} value1 First expression. \`value1\` should have
+  *   \`FIXED\` type, and if not, it will be converted thereto.
+  * @param {FIXED} valueN Second and subsequent expressions.
+  *   Each \`valueN\` should have \`FIXED\` type, and if not, it will
+  *   be converted thereto.
+  * @returns {FIXED} smallest value from a set of two or
+  *   more expressions
   */
  MIN: PROC(value1, valueN) RETURNS(FIXED);
    DECLARE value1 FIXED;
@@ -1139,24 +1251,48 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`PARMSET\` returns a \`BIT\` value indicating if a specified parameter was set on invocation of the procedure.
-  * The \`PARMSET\` built-in function can be used only within a preprocessor procedure.
-  * \`PARMSET\` returns a bit value of \`'1'B\` if the parameter \`parameter\` was explicitly set by the function reference that invoked the procedure, and a bit value of \`'0'B\` if it was not—that is, if the corresponding argument was omitted from the function reference in a preprocessor expression, or was the null string in a function reference from input text.
-  * \`PARMSET\` can return \`'0'B\`, even if a matching argument does appear in the reference, but the reference is in another preprocessor procedure, as follows:
-  * - If the argument is not itself a parameter of the invoking procedure, \`PARMSET\` returns the value \`'1'B\`.
-  * - If the argument is a parameter of the invoking procedure, \`PARMSET\` returns the value for the specified parameter when the invoking procedure was itself invoked.
-  * @param {ANY} parameter Must be a parameter of the preprocessor procedure.
-  * @returns {FIXED} bit value indicating if a specified parameter was set on invocation of the procedure
+  * \`PARMSET\` returns a \`BIT\` value indicating if a specified
+  * parameter was set on invocation of the procedure.
+  * 
+  * The \`PARMSET\` built-in function can be used only within a
+  * preprocessor procedure.
+  * 
+  * \`PARMSET\` returns a bit value of \`'1'B\` if the parameter
+  * \`parameter\` was explicitly set by the function reference that
+  * invoked the procedure, and a bit value of \`'0'B\` if it was
+  * not—that is, if the corresponding argument was omitted from the
+  * function reference in a preprocessor expression, or was the null
+  * string in a function reference from input text.
+  * 
+  * \`PARMSET\` can return \`'0'B\`, even if a matching argument does
+  * appear in the reference, but the reference is in another
+  * preprocessor procedure, as follows:
+  * 
+  * - If the argument is not itself a parameter of the invoking
+  *   procedure, \`PARMSET\` returns the value \`'1'B\`.
+  * - If the argument is a parameter of the invoking procedure,
+  *   \`PARMSET\` returns the value for the specified parameter when
+  *   the invoking procedure was itself invoked.
+  * @param {ANY} parameter Must be a parameter of the preprocessor
+  *   procedure.
+  * @returns {FIXED} bit value indicating if a specified parameter
+  *   was set on invocation of the procedure
   */
  PARMSET: PROC(parameter) RETURNS(FIXED);
    DECLARE parameter ANY;
  END;
 
  /**
-  * \`QUOTE\` returns a \`CHARACTER\` string that represents x as a valid quoted string.
-  * If \`string\` contains single quotation marks, each is replaced by two consecutive single quotation marks.
-  * @param {CHARACTER} string Expression that is converted to a quoted string.
-  *   \`string\` should have CHARACTER type, and if not, it is converted thereto.
+  * \`QUOTE\` returns a \`CHARACTER\` string that represents x as a
+  * valid quoted string.
+  * 
+  * If \`string\` contains single quotation marks, each is replaced by
+  * two consecutive single quotation marks.
+  * @param {CHARACTER} string Expression that is converted to a
+  *   quoted string.
+  * 
+  *   \`string\` should have CHARACTER type, and if not, it is
+  *   converted thereto.
   * @returns {CHARACTER} A valid quoted string.
   */
  QUOTE: PROC(string) RETURNS(CHARACTER);
@@ -1164,14 +1300,24 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`REPEAT\` returns a \`CHARACTER\` string consisting of \`(n + 1)\` concatenated copies of the string \`string\`.
+  * \`REPEAT\` returns a \`CHARACTER\` string consisting of
+  * \`(n + 1)\` concatenated copies of the string \`string\`.
   * @param {CHARACTER} string Expression.
-  *   \`string\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @param {FIXED} n Expression that specifies the number of repetitions.
-  *   \`n\` should have \`FIXED\` type, and if not, it is converted thereto.
+  * 
+  *   \`string\` should have \`CHARACTER\` type, and if not,
+  *   it is converted thereto.
+  * @param {FIXED} n Expression that specifies the number of
+  *   repetitions.
+  * 
+  *   \`n\` should have \`FIXED\` type, and if not, it is
+  *   converted thereto.
+  * 
   *   \`n\` must be nonnegative.
-  *   If \`n\` is zero, the result is \`string\` (converted to character as necessary).
-  * @returns {CHARACTER} A string consisting of \`(n + 1)\` concatenated copies of the string \`string\`.
+  * 
+  *   If \`n\` is zero, the result is \`string\`
+  *   (converted to character as necessary).
+  * @returns {CHARACTER} A string consisting of
+  *   \`(n + 1)\` concatenated copies of the string \`string\`.
   */
  REPEAT: PROC(string, n) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
@@ -1179,16 +1325,32 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`SUBSTR\` returns a substring, specified by \`offset\` and \`length\`, of \`string\`.
-  * \`length\` must be nonnegative, and the values of \`offset\` and \`length\` must be such that the substring lies entirely within the current length of \`string\`.
-  * If \`offset = LENGTH(string)+1\` and \`length = 0\`, the null string is returned.
-  * @param {CHARACTER} string Expression specifies the string from which the substring is extracted.
-  *   \`string\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @param {FIXED} offset Expression that specifies the starting position of the substring in \`string\`.
-  *   \`offset\` should have \`FIXED\` type, and if not, it is converted thereto.
-  * @param {FIXED} length Expression that specifies the length of the substring in \`string\`.
-  *   \`length\` should have \`FIXED\` type, and if not, it is converted thereto.
-  * @return {CHARACTER} substring specified by \`offset\` and \`length\` of \`string\`
+  * \`SUBSTR\` returns a substring, specified by \`offset\` and
+  * \`length\`, of \`string\`.
+  * 
+  * \`length\` must be nonnegative, and the values of \`offset\` and
+  * \`length\` must be such that the substring lies entirely within
+  * the current length of \`string\`.
+  * 
+  * If \`offset = LENGTH(string)+1\` and \`length = 0\`, the null
+  * string is returned.
+  * @param {CHARACTER} string Expression specifies the string from
+  *   which the substring is extracted.
+  * 
+  *   \`string\` should have \`CHARACTER\` type, and if not, it is
+  *   converted thereto.
+  * @param {FIXED} offset Expression that specifies the starting
+  *   position of the substring in \`string\`.
+  * 
+  *   \`offset\` should have \`FIXED\` type, and if not, it is
+  *   converted thereto.
+  * @param {FIXED} length Expression that specifies the length of the
+  *   substring in \`string\`.
+  * 
+  *   \`length\` should have \`FIXED\` type, and if not, it is
+  *   converted thereto.
+  * @returns {CHARACTER} substring specified by \`offset\` and
+  *   \`length\` of \`string\`
   */
  SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
@@ -1197,63 +1359,115 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`SYSDIMSIZE\` returns a \`FIXED\` value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler \`CMPAT\` option.
+  * \`SYSDIMSIZE\` returns a \`FIXED\` value that indicates the maximum
+  * number of bytes that is needed to hold an index for an array
+  * permitted under the compiler \`CMPAT\` option.
+  * 
   * The possible return values are as follows:
   * - \`4\` under \`CMPAT(V2)\` and \`CMPAT(LE)\`
   * - \`8\` under \`CMPAT(V3)\`
-  * @returns {FIXED} value that indicates the maximum number of bytes that is needed to hold an index for an array permitted under the compiler \`CMPAT\` option
+  * @returns {FIXED} value that indicates the maximum number of bytes
+  *   that is needed to hold an index for an array permitted under the
+  *   compiler \`CMPAT\` option
   */
  SYSDIMSIZE: PROC RETURNS(FIXED); END;
 
  /**
-  * \`SYSOFFSETSIZE\` returns a \`FIXED\` value that indicates the number of bytes needed to hold an \`OFFSET\`.
+  * \`SYSOFFSETSIZE\` returns a \`FIXED\` value that indicates the
+  * number of bytes needed to hold an \`OFFSET\`.
+  * 
   * Currently, \`SYSOFFSETSIZE\` returns 4.
-  * @returns {FIXED} value that indicates the number of bytes needed to hold an \`OFFSET\`
+  * @returns {FIXED} value that indicates the number of bytes needed
+  *   to hold an \`OFFSET\`
   */
  SYSOFFSETSIZE: PROC RETURNS(FIXED); END;
 
  /**
-  * \`SYSPARM\` returns the \`CHARACTER\` string value of the \`SYSPARM\` compiler option.
-  * The value returned is not translated to uppercase; the exact value as specified in the compiler option is returned. See the information about the \`SYSPARM\` compiler option in the Programming Guide.
-  * \`SYSPARM\` allows information external to the program to be accessed without modifying the source program.
-  * @returns {CHARACTER} string value of the \`SYSPARM\` compiler option
+  * \`SYSPARM\` returns the \`CHARACTER\` string value of the
+  * \`SYSPARM\` compiler option.
+  * 
+  * The value returned is not translated to uppercase; the exact value
+  * as specified in the compiler option is returned. See the
+  * information about the \`SYSPARM\` compiler option in the
+  * Programming Guide.
+  * 
+  * \`SYSPARM\` allows information external to the program to be
+  * accessed without modifying the source program.
+  * @returns {CHARACTER} string value of the \`SYSPARM\`
+  *   compiler option
   */
  SYSPARM: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`SYSPOINTERSIZE\` returns a \`FIXED\` value that indicates the number of bytes needed to hold a \`POINTER\`.
-  * Currently, \`SYSPOINTERSIZE\` returns 4. But under the \`LP(64)\` option, the \`SYSPOINTERSIZE\` returns 8.
-  * @returns {FIXED} value that indicates the number of bytes needed to hold a \`POINTER\`
+  * \`SYSPOINTERSIZE\` returns a \`FIXED\` value that indicates the
+  * number of bytes needed to hold a \`POINTER\`.
+  * 
+  * Currently, \`SYSPOINTERSIZE\` returns 4. But under the
+  * \`LP(64)\` option, the \`SYSPOINTERSIZE\` returns 8.
+  * @returns {FIXED} value that indicates the number of bytes needed
+  *   to hold a \`POINTER\`
   */
  SYSPOINTERSIZE: PROC RETURNS(FIXED); END;
 
  /**
-  * \`SYSTEM\` returns a \`CHARACTER\` string that contains the value of the \`SYSTEM\` compiler option that is in effect.
-  * The value returned might contain leading and trailing blanks. You can apply the \`TRIM\` built-in function to that value to make it easier to test.
-  * See the information about the \`SYSTEM\` compiler option in the Programming Guide.
+  * \`SYSTEM\` returns a \`CHARACTER\` string that contains the
+  * value of the \`SYSTEM\` compiler option that is in effect.
+  * 
+  * The value returned might contain leading and trailing blanks.
+  * You can apply the \`TRIM\` built-in function to that value to make
+  * it easier to test.
+  * 
+  * See the information about the \`SYSTEM\` compiler option in the
+  * Programming Guide.
   * @returns {CHARACTER} string value of the \`SYSTEM\` compiler option
   */
  SYSTEM: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`SYSVERSION\` returns a \`CHARACTER\` string containing the product name as well as the version, release, and modification level.
-  * The result that \`SYSVERSION\` returns is a string of length 22 in one of the following formats. Each string is padded with blanks on the right to make it 22 in length.
-  * @returns {CHARACTER} string containing the product name as well as the version, release, and modification level
+  * \`SYSVERSION\` returns a \`CHARACTER\` string containing the
+  * product name as well as the version, release, and
+  * modification level.
+  * 
+  * The result that \`SYSVERSION\` returns is a string of
+  * length 22 in one of the following formats. Each string is
+  * padded with blanks on the right to make it 22 in length.
+  * @returns {CHARACTER} string containing the product name as well 
+  *   as the version, release, and modification level
   */
  SYSVERSION: PROC RETURNS(CHARACTER); END;
 
  /**
-  * \`TRANSLATE\` returns a \`CHARACTER\` string of the same length as \`input\`, but with selected characters translated.
+  * \`TRANSLATE\` returns a \`CHARACTER\` string of the same length
+  * as \`input\`, but with selected characters translated.
+  * 
   * \`TRANSLATE\` operates on each character of \`input\` as follows:
-  * If a character in \`input\` is found in \`search\`, the character in \`replacement\` that corresponds to that in \`search\` is copied to the result; otherwise, the character in \`input\` is copied directly to the result. If \`search\` contains duplicates, the leftmost occurrence is used.
-  * \`replacement\` is padded with blanks, or truncated, on the right to match the length of \`search\`.
-  * @param {CHARACTER} input Expression to be searched for possible translation of its characters.
-  *   \`input\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @param {CHARACTER} replacement Expression containing the translation values of characters.
-  *   \`replacement\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @param {CHARACTER} [search] Expression containing the characters that are to be translated. If \`search\` is omitted, the default is \`COLLATE\`.
-  *   \`search\` should have \`CHARACTER\` type, and if not, it is converted thereto.
-  * @returns {CHARACTER} string of the same length as \`input\`, but with selected characters translated
+  * 
+  * If a character in \`input\` is found in \`search\`, the character
+  * in \`replacement\` that corresponds to that in \`search\` is copied
+  * to the result; otherwise, the character in \`input\` is copied
+  * directly to the result. If \`search\` contains duplicates, the
+  * leftmost occurrence is used.
+  * 
+  * \`replacement\` is padded with blanks, or truncated, on the
+  * right to match the length of \`search\`.
+  * @param {CHARACTER} input Expression to be searched for possible 
+  *   translation of its characters.
+  * 
+  *   \`input\` should have \`CHARACTER\` type, and if not, it is
+  *   converted thereto.
+  * @param {CHARACTER} replacement Expression containing the
+  *   translation values of characters.
+  * 
+  *   \`replacement\` should have \`CHARACTER\` type, and if not,
+  *   it is converted thereto.
+  * @param {CHARACTER} [search] Expression containing the characters
+  *   that are to be translated. If \`search\` is omitted, the default
+  *   is \`COLLATE\`.
+  * 
+  *   \`search\` should have \`CHARACTER\` type, and if not, it
+  *   is converted thereto.
+  * @returns {CHARACTER} string of the same length as \`input\`,
+  *   but with selected characters translated
   */
  TRANSLATE: PROC(input, replacement, search) RETURNS(CHARACTER);
    DECLARE input CHARACTER;
@@ -1262,11 +1476,17 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`TRIM\` returns a \`CHARACTER\` string with characters trimmed from one or both ends of an input string.
+  * \`TRIM\` returns a \`CHARACTER\` string with characters trimmed
+  * from one or both ends of an input string.
   * @param {CHARACTER} input is a \`CHARACTER\` string expression
-  * @param {CHARACTER} [left] is a \`CHARACTER\` string expression, that should be trimmed from the left end of \`input\`. If \`left\` is omitted, the default is a single blank character.
-  * @param {CHARACTER} [right] is a \`CHARACTER\` string expression, that should be trimmed from the right end of \`input\`. If \`right\` is omitted, the default is a single blank character.
-  * @returns {CHARACTER} string with characters trimmed from one or both ends of an input string
+  * @param {CHARACTER} [left] is a \`CHARACTER\` string expression,
+  *   that should be trimmed from the left end of \`input\`.
+  *   If \`left\` is omitted, the default is a single blank character.
+  * @param {CHARACTER} [right] is a \`CHARACTER\` string expression,
+  *   that should be trimmed from the right end of \`input\`.
+  *   If \`right\` is omitted, the default is a single blank character.
+  * @returns {CHARACTER} string with characters trimmed from one or
+  *   both ends of an input string
   */
  TRIM: PROC(input, left, right) RETURNS(CHARACTER);
    DECLARE input CHARACTER;
@@ -1275,10 +1495,14 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * UPPERCASE returns a character string with all characters converted to their uppercase equivalent.
-  * @param {CHARACTER} string Expression. If necessary, \`string\` is converted to character.
-  * @param {FIXED} [codes] Expression. Specifies the code page that will be uppercased.
-  * @returns {CHARACTER} character string with all characters converted to their uppercase equivalent
+  * UPPERCASE returns a character string with all characters converted
+  * to their uppercase equivalent.
+  * @param {CHARACTER} string Expression. If necessary, \`string\
+  *   is converted to character.
+  * @param {FIXED} [codes] Expression. Specifies the code page that
+  *   will be uppercased.
+  * @returns {CHARACTER} character string with all characters
+  *   converted to their uppercase equivalent
   */
  UPPERCASE: PROC(string, codes) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
@@ -1286,14 +1510,28 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  END;
 
  /**
-  * \`VERIFY\` returns a \`FIXED\` value indicating the position in \`input\` of the leftmost character that is not in \`compare\`. It also allows you to specify the location within \`input\` at which to begin processing.
-  * If all the characters in \`input\` do appear in \`compare\`, a value of zero is returned. If \`input\` is a null string, a value of zero is returned. If \`input\` is not a null string and \`compare\` is a null string, the value of \`offset\` is returned. The default value for \`offset\` is one.
-  * \`offset\` must be greater than \`0\` and no greater than \`1 + LENGTH(input)\`.
+  * \`VERIFY\` returns a \`FIXED\` value indicating the position
+  * in \`input\` of the leftmost character that is not in \`compare\`.
+  * It also allows you to specify the location within \`input\` at
+  * which to begin processing.
+  * 
+  * If all the characters in \`input\` do appear in \`compare\`,
+  * a value of zero is returned. If \`input\` is a null string,
+  * a value of zero is returned. If \`input\` is not a null string
+  * and \`compare\` is a null string, the value of \`offset\` is
+  * returned. The default value for \`offset\` is one.
+  * 
+  * \`offset\` must be greater than \`0\` and no greater
+  * than \`1 + LENGTH(input)\`.
+  * 
   * If \`offset = LENGTH(input) + 1\`, the result is zero.
   * @param {CHARACTER} input Expression. The string to be searched.
-  * @param {CHARACTER} compare Expression. The string containing the characters to be verified against.
-  * @param {FIXED} [offset] Expression. Specifies the position within \`input\` at which to begin processing.
-  * @returns {FIXED} position in \`input\` of the leftmost character that is not in \`compare\`
+  * @param {CHARACTER} compare Expression. The string containing the
+  *   characters to be verified against.
+  * @param {FIXED} [offset] Expression. Specifies the position
+  *   within \`input\` at which to begin processing.
+  * @returns {FIXED} position in \`input\` of the leftmost character
+  *   that is not in \`compare\`
   */
  VERIFY: PROC(input, compare, offset) RETURNS(FIXED);
    DECLARE input CHARACTER;
