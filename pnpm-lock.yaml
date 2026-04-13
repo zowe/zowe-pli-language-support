@@ -7,6 +7,7 @@ settings:
 overrides:
   isexe: 3.1.1
   minimatch: 10.2.4
+  lodash-es: 4.18.1
 
 importers:
 
@@ -52,8 +53,8 @@ importers:
         specifier: ^11.1.1
         version: 11.1.1
       lodash-es:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: 4.18.1
+        version: 4.18.1
       lru-cache:
         specifier: ^11.2.5
         version: 11.2.5
@@ -1961,8 +1962,8 @@ packages:
   linkify-it@5.0.0:
     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
 
-  lodash-es@4.17.23:
-    resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
+  lodash-es@4.18.1:
+    resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
@@ -2839,12 +2840,12 @@ snapshots:
     dependencies:
       '@chevrotain/gast': 11.1.1
       '@chevrotain/types': 11.1.1
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   '@chevrotain/gast@11.1.1':
     dependencies:
       '@chevrotain/types': 11.1.1
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   '@chevrotain/regexp-to-ast@11.1.1': {}
 
@@ -4560,7 +4561,7 @@ snapshots:
       '@chevrotain/regexp-to-ast': 11.1.1
       '@chevrotain/types': 11.1.1
       '@chevrotain/utils': 11.1.1
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   chownr@1.1.4:
     optional: true
@@ -5071,7 +5072,7 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
-  lodash-es@4.17.23: {}
+  lodash-es@4.18.1: {}
 
   lodash.includes@4.3.0: {}
 
