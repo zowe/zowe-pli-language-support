@@ -152,7 +152,6 @@ function extractStartEndToken(
   };
 }
 
-
 export function stringifyDeclaration(
   node: NamedElement,
   unit: CompilationUnit,

@@ -48,6 +48,7 @@ import {
 import { BuiltinsUriSchema } from "../workspace/builtins";
 import { JSDocComment } from "../documentation/jsdoc";
 import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
+import { tokenMatcher } from "chevrotain";
 
 type MarkupResponse = string | null;
 
@@ -480,8 +481,8 @@ export function getJSDocCommentBeforeLabelPrefix(
     }
     while (
       tokenIndex >= 2 &&
-      tokens[tokenIndex - 1].tokenType === t.Colon &&
-      tokens[tokenIndex - 2].tokenType === t.ID
+      tokenMatcher(tokens[tokenIndex - 1], t.Colon) &&
+      tokenMatcher(tokens[tokenIndex - 2], t.ID)
     ) {
       /*
        * Edge case 1: alias declaration with comment on original, hover on alias:

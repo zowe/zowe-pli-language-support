@@ -45,7 +45,7 @@ type CallInfo = {
   parameters: ParameterInfo[];
   arguments: ArgumentInfo[];
   labelPrefix: LabelPrefix;
-  argumentIndex: number|null;
+  argumentIndex: number | null;
 };
 
 export function signatureHelpRequest(
@@ -60,12 +60,17 @@ export function signatureHelpRequest(
   const jsDoc = getJSDocCommentBeforeLabelPrefix(callInfo.labelPrefix, unit);
   const parameterDocumentation = new Map<string, string>();
   if (jsDoc) {
-    const paramPattern = /^ *\{[^}]+\} *\[?(\w+)/; // extracts the parameter name
+    const paramPattern = /^ *\{([^}]+)\} *\[?(\w+)\]? */; // extracts the parameter name
     for (const paramTag of jsDoc.getTags("param")) {
       const match = paramTag.content.toString().match(paramPattern);
       if (match) {
-        const paramName = match[1].toUpperCase();
-        parameterDocumentation.set(paramName, paramTag.content.toMarkdown());
+        const trimLeftLength = match[0].length;
+        const paramType = match[1];
+        const paramName = match[2];
+        parameterDocumentation.set(
+          paramName.toUpperCase(),
+          `\`${paramName}: ${paramType}\`\n\n${paramTag.content.toMarkdown().substring(trimLeftLength)}`,
+        );
       }
     }
   }
@@ -83,7 +88,7 @@ export function signatureHelpRequest(
           const name = parameter.label.toUpperCase();
           const from = extracted?.startOffset ?? 0;
           const start = parameter.token?.startOffset ?? 0;
-          const end = (parameter.token?.endOffset ?? 0)  + 1;
+          const end = (parameter.token?.endOffset ?? 0) + 1;
           return {
             label: [start - from, end - from],
             documentation:
