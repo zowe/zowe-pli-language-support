@@ -36,7 +36,7 @@ import {
   binaryTokenIndexSearch,
   binaryTokenSearch,
 } from "../utils/search";
-import { URI } from "../utils/uri";
+import { URI, UriUtils } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
@@ -222,7 +222,7 @@ function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
-  const fileUri = URI.parse(node.filePath);
+  const fileUri = UriUtils.toUri(node.filePath);
   const doc = unit.services.files.getDocument(fileUri);
   if (!doc) {
     return null;
