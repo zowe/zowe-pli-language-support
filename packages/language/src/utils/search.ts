@@ -81,6 +81,26 @@ export function completionTokenIndexSearch(
   return end;
 }
 
+/**
+ * Find the rightmost token whose start offset is less than or equal to the given offset.
+ * @param tokens The array of tokens to search.
+ * @param offset The offset to compare against token start offsets.
+ * @returns The index of the rightmost token whose start offset is less than or equal to the given offset, or -1 if no such token exists.
+ * @example Imagine you want to find a token index in a list of tokens that represents a line of code,
+ * and you want to find the token that is closest to a certain position in the line.
+ * You can use this function to efficiently find the rightmost token that starts before or at that position.
+ *
+ * ```
+ * MAX(2, <|x> 3)
+ * ```
+ *
+ * Index x represents the offset you want to find the token for.
+ * The function will return the index of the token that starts at or before that offset,
+ * which in this case would be the token representing the comma after the number 2, since it is the rightmost
+ * token that starts before or at the offset of index x.
+ * This is needed because we act one a filtered list of tokens (Whitespace tokens are filtered out)
+ * and we want to find the token that is closest to a certain position in the line.
+ */
 export function binaryTokenIndexRightMost(
   tokens: Token[],
   offset: number,

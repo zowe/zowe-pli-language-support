@@ -46,13 +46,7 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
-import {
-  isJSDoc,
-  isJSDocParagraph,
-  JSDocParagraph,
-  parseJSDoc,
-} from "../documentation/jsdoc";
-import { takeWhile } from "lodash-es";
+import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
 
 type MarkupResponse = string | null;
 
@@ -484,10 +478,7 @@ export function getJSDocsCommentBeforeLabelPrefix(
     }
     if (isJSDoc(commentToken)) {
       const jsDoc = parseJSDoc(commentToken);
-      return takeWhile(jsDoc.elements, isJSDocParagraph)
-        .flatMap((p) => (p as JSDocParagraph).inlines)
-        .map((inline) => inline.toMarkdown())
-        .join("\n");
+      return jsDoc.toMarkdown();
     }
   }
   return null;

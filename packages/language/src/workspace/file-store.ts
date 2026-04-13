@@ -24,8 +24,12 @@ export interface CompilationUnitFile {
 
 export class FileStore {
   private map = new Map<string, CompilationUnitFile>();
+  private baseFileUris: Set<string>;
 
   constructor(private baseFiles: CompilationUnit[]) {
+    this.baseFileUris = new Set(
+      this.baseFiles.map((file) => file.uri.toString()),
+    );
     this.clear();
   }
 
@@ -42,11 +46,8 @@ export class FileStore {
   }
 
   *getAllTokens(): IterableIterator<Token> {
-    const baseFileUris = new Set(
-      this.baseFiles.map((file) => file.uri.toString()),
-    );
     for (const file of this.map.values()) {
-      if (baseFileUris.has(file.uri.toString())) {
+      if (this.baseFileUris.has(file.uri.toString())) {
         continue;
       }
       yield* file.tokens;
