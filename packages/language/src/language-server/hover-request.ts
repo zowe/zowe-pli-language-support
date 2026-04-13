@@ -36,7 +36,7 @@ import {
   binaryTokenIndexSearch,
   binaryTokenSearch,
 } from "../utils/search";
-import { URI, UriUtils } from "../utils/uri";
+import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
@@ -46,16 +46,7 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
-import {
-  isJSDoc,
-  isJSDocParagraph,
-  JSDocComment,
-  JSDocParagraph,
-  parseJSDoc,
-} from "../documentation/jsdoc";
-import * as tokens from "../parser/tokens";
-import { takeWhile } from "lodash-es";
-import { isJSDocParagraph, JSDocParagraph, parseJSDoc } from "../documentation/jsdoc";
+import { JSDocComment } from "../documentation/jsdoc";
 import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
 
 type MarkupResponse = string | null;
@@ -347,10 +338,7 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
         unit,
       );
       if (jsDoc) {
-        jsDocsComment = takeWhile(jsDoc.elements, isJSDocParagraph)
-          .flatMap((p) => (p as JSDocParagraph).inlines)
-          .map((inline) => inline.toMarkdown())
-          .join("\n");
+        jsDocsComment = jsDoc.toMarkdown();
         jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
       }
     }
@@ -483,6 +471,14 @@ export function getJSDocCommentBeforeLabelPrefix(
   if (commentIndex > -1) {
     const commentToken = commentTokens[commentIndex];
     while (
+      //skip any preprocessor directives between the comment and the label prefix
+      tokenIndex > 0 &&
+      tokens[tokenIndex - 1] &&
+      tokens[tokenIndex - 1].image === "%"
+    ) {
+      tokenIndex--;
+    }
+    while (
       tokenIndex >= 2 &&
       tokens[tokenIndex - 1].tokenType === t.Colon &&
       tokens[tokenIndex - 2].tokenType === t.ID
@@ -508,8 +504,7 @@ export function getJSDocCommentBeforeLabelPrefix(
       }
     }
     if (isJSDoc(commentToken)) {
-      const jsDoc = parseJSDoc(commentToken);
-      return jsDoc.toMarkdown();
+      return parseJSDoc(commentToken);
     }
   }
   return null;
