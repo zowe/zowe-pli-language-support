@@ -31,7 +31,11 @@ import {
   Wildcard,
 } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
-import { binaryTokenSearch } from "../utils/search";
+import {
+  binaryTokenIndexRightMost,
+  binaryTokenIndexSearch,
+  binaryTokenSearch,
+} from "../utils/search";
 import { URI, UriUtils } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
@@ -42,6 +46,7 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
+import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
 
 type MarkupResponse = string | null;
 
@@ -325,10 +330,17 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     if (!outerCall) {
       return null;
     }
+    let jsDocsComment = "";
+    if (ref.node.kind === SyntaxKind.LabelPrefix) {
+      jsDocsComment =
+        getJSDocsCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit) ?? "";
+      jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
+    }
     const type = unit.services.inferer.inferType(outerCall, unit);
     return (
-      stringifyTypeDescription(token.image, type) ??
-      stringifyDeclaration(ref.node as DeclaredVariable, unit)
+      (stringifyTypeDescription(token.image, type) ??
+        stringifyDeclaration(ref.node as DeclaredVariable, unit)) +
+      jsDocsComment
     );
   }
 
@@ -422,4 +434,65 @@ export function hoverRequest(
     },
     range: tokenToRange(token),
   };
+}
+
+export function getJSDocsCommentBeforeLabelPrefix(
+  labelPrefix: LabelPrefix,
+  compilationUnit: CompilationUnit,
+): string | null {
+  if (!labelPrefix.nameToken) {
+    return null;
+  }
+  const uri = labelPrefix.nameToken.uri;
+  if (!uri || uri.scheme !== BuiltinsUriSchema) {
+    //if it's not a builtin, we can skip the work of looking for comments entirely
+    //only JSDoc on builtins is currently supported
+    return null;
+  }
+  const tokens = compilationUnit.services.files.getTokens(uri);
+  const commentTokens = compilationUnit.services.files.getComments(uri);
+  if (!tokens || !commentTokens) {
+    return null;
+  }
+  let tokenIndex = binaryTokenIndexSearch(
+    tokens,
+    labelPrefix.nameToken.startOffset,
+  );
+  const commentIndex = binaryTokenIndexRightMost(
+    commentTokens,
+    labelPrefix.nameToken.startOffset,
+  );
+  if (commentIndex > -1) {
+    const commentToken = commentTokens[commentIndex];
+    while (
+      tokenIndex >= 2 &&
+      tokens[tokenIndex - 1].tokenType === t.Colon &&
+      tokens[tokenIndex - 2].tokenType === t.ID
+    ) {
+      /*
+       * Edge case 1: alias declaration with comment on original, hover on alias:
+       * /** comment *\/
+       * PROC1:
+       * PROC2: PROCEDURE; <-- hover PROC2: comment should be included
+       */
+      tokenIndex -= 2;
+    }
+    if (tokenIndex > 0) {
+      /*
+       * Edge case 2: two declarations, only first has comment, second gets hovered:
+       * /** comment *\/
+       * DCL1
+       * DCL2 //<-- hover here: no comment included
+       */
+      const tokenBeforeLabelPrefix = tokens[tokenIndex - 1];
+      if (tokenBeforeLabelPrefix.startOffset > commentToken.endOffset) {
+        return null;
+      }
+    }
+    if (isJSDoc(commentToken)) {
+      const jsDoc = parseJSDoc(commentToken);
+      return jsDoc.toMarkdown();
+    }
+  }
+  return null;
 }
