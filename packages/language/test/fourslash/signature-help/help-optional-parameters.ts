@@ -14,6 +14,6 @@
 //// %DCL A CHARACTER;
 //// %A = TRIM<|0>(<|1>"  hallo ", <|2>" ");
 
-signatureHelp.expectParameterIndexAt("0", 0);
+signatureHelp.expectNoHelp("0");
 signatureHelp.expectParameterIndexAt("1", 0);
 signatureHelp.expectParameterIndexAt("2", 1);

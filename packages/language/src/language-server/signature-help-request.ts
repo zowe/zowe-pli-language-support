@@ -21,11 +21,12 @@ import {
   ProcedureStatement,
   SyntaxKind,
 } from "../syntax-tree/ast";
-import { stringifyDeclaration } from "../typesystem/stringify";
+import { extractDeclaration } from "../typesystem/stringify";
 import { getJSDocCommentBeforeLabelPrefix } from "./hover-request";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
+import { formatCodeBlock } from "../utils/code-block";
 
 type ArgumentInfo = {
   startToken: Token | null;
@@ -36,6 +37,7 @@ type ArgumentInfo = {
 type ParameterInfo = {
   label: string;
   variadic: boolean;
+  token: Token | null;
 };
 
 type CallInfo = {
@@ -43,7 +45,7 @@ type CallInfo = {
   parameters: ParameterInfo[];
   arguments: ArgumentInfo[];
   labelPrefix: LabelPrefix;
-  argumentIndex: number;
+  argumentIndex: number|null;
 };
 
 export function signatureHelpRequest(
@@ -52,7 +54,7 @@ export function signatureHelpRequest(
   offset: number,
 ): SignatureHelp | null {
   const callInfo = tryGetCallInfo(unit, uri, offset);
-  if (!callInfo) {
+  if (!callInfo || callInfo.argumentIndex === null) {
     return null;
   }
   const jsDoc = getJSDocCommentBeforeLabelPrefix(callInfo.labelPrefix, unit);
@@ -67,18 +69,23 @@ export function signatureHelpRequest(
       }
     }
   }
-  const signatureHelp: SignatureHelp = {
+  const extracted = extractDeclaration(callInfo.labelPrefix, unit);
+  const signature = extracted?.signature ?? "";
+  return {
     signatures: [
       {
-        label: callInfo.labelPrefix.name ?? "<unknown>",
+        label: signature.split("\n")[0] ?? "<unknown>",
         documentation: {
           kind: "markdown",
-          value: stringifyDeclaration(callInfo.labelPrefix, unit) ?? "",
+          value: formatCodeBlock("pli")(signature),
         },
         parameters: callInfo.parameters.map((parameter) => {
           const name = parameter.label.toUpperCase();
+          const from = extracted?.startOffset ?? 0;
+          const start = parameter.token?.startOffset ?? 0;
+          const end = (parameter.token?.endOffset ?? 0)  + 1;
           return {
-            label: name ?? "unknown",
+            label: [start - from, end - from],
             documentation:
               name && parameterDocumentation.has(name)
                 ? {
@@ -93,7 +100,6 @@ export function signatureHelpRequest(
     activeSignature: 0,
     activeParameter: callInfo.arguments[callInfo.argumentIndex].parameterIndex,
   };
-  return signatureHelp;
 }
 
 function tryGetCallInfo(
@@ -163,6 +169,7 @@ function getCallInfoFromCallStatement(
       parameterInfo.push({
         label: parameter?.ref?.text ?? "<unknown>",
         variadic: parameterType.list,
+        token: parameter?.ref?.token ?? null,
       });
     }
   }
@@ -223,6 +230,7 @@ function getCallInfoFromMemberCall(
       parameterInfo.push({
         label: parameter?.ref?.text ?? "<unknown>",
         variadic: parameterType.list,
+        token: parameter?.ref?.token ?? null,
       });
     }
   }
@@ -263,7 +271,7 @@ function getArgumentIndexByOffset(
   offset: number,
 ) {
   if (!dimensions || dimensions.length === 0) {
-    return 0;
+    return null;
   }
   for (let index = 0; index < dimensions.length; index++) {
     const dim = dimensions[index];
@@ -276,5 +284,5 @@ function getArgumentIndexByOffset(
       return index;
     }
   }
-  return 0;
+  return null;
 }

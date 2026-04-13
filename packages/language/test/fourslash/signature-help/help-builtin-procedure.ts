@@ -28,7 +28,7 @@ converted thereto.`;
 signatureHelp.expectMarkdownSignatureAt(1, expectedSignatureMarkdown);
 signatureHelp.expectMarkdownParameterAt(1, expectedParameterMarkdown);
 signatureHelp.expectNoHelp("outside");
-signatureHelp.expectParameterIndexAt("left", 0);
+signatureHelp.expectNoHelp("left");
 signatureHelp.expectParameterIndexAt(0, 0);
 signatureHelp.expectParameterIndexAt(1, 1);
 signatureHelp.expectParameterIndexAt(2, 2);

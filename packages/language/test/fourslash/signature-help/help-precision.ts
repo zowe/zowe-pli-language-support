@@ -18,7 +18,7 @@
 ////      <|j>  2
 //// <|k>)<|l>;<|m>
 
-signatureHelp.expectParameterIndexAt("a", 0);
+signatureHelp.expectNoHelp("a");
 signatureHelp.expectParameterIndexAt("b", 0);
 signatureHelp.expectParameterIndexAt("c", 0);
 signatureHelp.expectParameterIndexAt("d", 0);

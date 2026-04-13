@@ -98,10 +98,15 @@ export function stringifyTypeDescription(
   return formatPliCodeBlock(`DCL ${str.replaceAll(/\n/g, ",\n    ")}`);
 }
 
-export function stringifyDeclaration(
+type ExtractedDeclaration = {
+  signature: string;
+  startOffset: number;
+};
+
+export function extractDeclaration(
   node: NamedElement,
   unit: CompilationUnit,
-): string | null {
+): ExtractedDeclaration | null {
   if (node.kind === SyntaxKind.DeclaredVariable) {
     let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
     do {
@@ -112,20 +117,20 @@ export function stringifyDeclaration(
         break;
       }
     } while (declaredItem);
-    return stringifyStartEndToken(declaredItem, unit);
+    return extractStartEndToken(declaredItem, unit);
   } else if (node.kind === SyntaxKind.LabelPrefix) {
     const statement = getContainer(node, SyntaxKind.Statement);
-    return stringifyStartEndToken(statement, unit);
+    return extractStartEndToken(statement, unit);
   } else {
     const statement = getContainer(node, SyntaxKind.DefineOrdinalStatement);
-    return stringifyStartEndToken(statement, unit);
+    return extractStartEndToken(statement, unit);
   }
 }
 
-function stringifyStartEndToken(
+function extractStartEndToken(
   item: { startToken: Token | null; endToken: Token | null } | null,
   unit: CompilationUnit,
-): string | null {
+): ExtractedDeclaration | null {
   if (!item || !item.startToken || !item.endToken) {
     return null;
   }
@@ -141,5 +146,20 @@ function stringifyStartEndToken(
     item.startToken.startOffset,
     item.endToken.endOffset + 1,
   );
-  return formatPliCodeBlock(snippet);
+  return {
+    signature: snippet,
+    startOffset: item.startToken.startOffset,
+  };
+}
+
+
+export function stringifyDeclaration(
+  node: NamedElement,
+  unit: CompilationUnit,
+): string | null {
+  const declaration = extractDeclaration(node, unit);
+  if (!declaration) {
+    return null;
+  }
+  return formatPliCodeBlock(declaration.signature);
 }
