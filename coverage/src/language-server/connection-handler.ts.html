@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.35% </span>
+                <span class="strong">1.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/148</span>
+                <span class='fraction'>2/156</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/64</span>
+                <span class='fraction'>0/68</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/34</span>
+                <span class='fraction'>0/36</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.36% </span>
+                <span class="strong">1.29% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/146</span>
+                <span class='fraction'>2/154</span>
             </div>
         
             
@@ -449,7 +449,27 @@
 <a name='L384'></a><a href='#L384'>384</a>
 <a name='L385'></a><a href='#L385'>385</a>
 <a name='L386'></a><a href='#L386'>386</a>
-<a name='L387'></a><a href='#L387'>387</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L387'></a><a href='#L387'>387</a>
+<a name='L388'></a><a href='#L388'>388</a>
+<a name='L389'></a><a href='#L389'>389</a>
+<a name='L390'></a><a href='#L390'>390</a>
+<a name='L391'></a><a href='#L391'>391</a>
+<a name='L392'></a><a href='#L392'>392</a>
+<a name='L393'></a><a href='#L393'>393</a>
+<a name='L394'></a><a href='#L394'>394</a>
+<a name='L395'></a><a href='#L395'>395</a>
+<a name='L396'></a><a href='#L396'>396</a>
+<a name='L397'></a><a href='#L397'>397</a>
+<a name='L398'></a><a href='#L398'>398</a>
+<a name='L399'></a><a href='#L399'>399</a>
+<a name='L400'></a><a href='#L400'>400</a>
+<a name='L401'></a><a href='#L401'>401</a>
+<a name='L402'></a><a href='#L402'>402</a>
+<a name='L403'></a><a href='#L403'>403</a>
+<a name='L404'></a><a href='#L404'>404</a>
+<a name='L405'></a><a href='#L405'>405</a>
+<a name='L406'></a><a href='#L406'>406</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -577,6 +597,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -613,6 +637,20 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -885,6 +923,7 @@ import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
 import { Commands, PluginConfiguration } from "./constants";
+import { signatureHelpRequest } from "./signature-help-request";
 export { PluginConfiguration } from "./constants";
 &nbsp;
 /**
@@ -960,6 +999,10 @@ export function <span class="fstat-no" title="function not covered" >startLangua
         experimental: {
           skippedPliCode: true,
         },
+        signatureHelpProvider: {
+          triggerCharacters: ["("],
+          retriggerCharacters: [","],
+        },
       },
     };
   });
@@ -1000,6 +1043,20 @@ export function <span class="fstat-no" title="function not covered" >startLangua
         }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        return hoverResponseToLSP(textDocument, response);</span>
+      },
+    );
+  });
+<span class="cstat-no" title="statement not covered" >  connection.onSignatureHelp(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
+    const position = <span class="cstat-no" title="statement not covered" >params.position;</span>
+<span class="cstat-no" title="statement not covered" >    return withReadMutex(</span>
+      params.textDocument.uri,
+<span class="fstat-no" title="function not covered" >      async (u</span>ri, compilationUnit) =&gt; {
+        const textDocument = <span class="cstat-no" title="statement not covered" >compilationUnit?.services.files.getDocument(uri);</span>
+<span class="cstat-no" title="statement not covered" >        if (!textDocument || !compilationUnit) {</span>
+<span class="cstat-no" title="statement not covered" >          return null;</span>
+        }
+        const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
+<span class="cstat-no" title="statement not covered" >        return signatureHelpRequest(compilationUnit, uri, offset);</span>
       },
     );
   });
@@ -1228,7 +1285,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-13T14:41:36.960Z
+                at 2026-04-14T11:39:25.385Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
