@@ -815,8 +815,8 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.ReferenceItem:
-      if (node.dimensions) {
-        action(node.dimensions);
+      for (const dimension of node.dimensions) {
+        action(dimension);
       }
       break;
     case SyntaxKind.ReinitStatement:

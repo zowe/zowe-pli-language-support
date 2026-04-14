@@ -188,13 +188,13 @@ function getCallInfoFromReferenceItem(
   }
   let parameterIndex = 0;
   const argumentsInfo: ArgumentInfo[] = [];
-  if (referenceItem.dimensions) {
+  if (referenceItem.dimensions.length === 1) {
     for (
       let index = 0;
-      index < referenceItem.dimensions.dimensions.length;
+      index < referenceItem.dimensions[0].dimensions.length;
       index++
     ) {
-      const dim = referenceItem.dimensions.dimensions[index];
+      const dim = referenceItem.dimensions[0].dimensions[index];
       argumentsInfo.push({
         startToken: dim.startToken,
         endToken: dim.endToken,

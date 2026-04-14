@@ -227,7 +227,10 @@ function generateCallInstruction(
   if (!node.call?.ref?.text) {
     return undefined; // No procedure to call
   }
-  const args = (node.call.dimensions?.dimensions ?? []).map((arg) => {
+  if (node.call.dimensions.length !== 1) {
+    return undefined; // Only support one dimension for CALL statements
+  }
+  const args = (node.call.dimensions[0].dimensions ?? []).map((arg) => {
     assertType<ast.Expression>(arg.upper?.expression);
     return (
       generateExpressionInstruction(arg.upper.expression) ??
@@ -861,8 +864,8 @@ function generateReferenceItemInstruction(
   node: ast.ReferenceItem,
 ): inst.ReferenceItemInstruction {
   const args: inst.ExpressionInstruction[] = [];
-  if (node.dimensions) {
-    for (const dimension of node.dimensions.dimensions) {
+  if (node.dimensions.length === 1) {
+    for (const dimension of node.dimensions[0].dimensions) {
       const def: inst.StringInstruction = {
         kind: inst.InstructionKind.String,
         value: "",

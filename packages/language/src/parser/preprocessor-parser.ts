@@ -361,7 +361,9 @@ function callStatement(state: ParserState): ast.CallStatement {
       ast.ReferenceType.Variable,
     );
   }
-  statement.call.dimensions = dimensions(state);
+  while (state.canConsume(t.OpenParen)) {
+    statement.call.dimensions.push(dimensions(state));
+  }
   state.consume(statement, CstNodeKind.CallStatement_Semicolon, t.Semicolon);
   return statement;
 }
@@ -1245,8 +1247,10 @@ function parseReferenceItem(
     variable,
     ast.ReferenceType.Variable,
   );
-  if (withDimensions && state.canConsume(t.OpenParen)) {
-    reference.dimensions = dimensions(state);
+  if (withDimensions) {
+    while (state.canConsume(t.OpenParen)) {
+      reference.dimensions.push(dimensions(state));
+    }
   }
   return reference;
 }

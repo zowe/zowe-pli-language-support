@@ -3693,14 +3693,14 @@ export function createReadStatementOption(): ReadStatementOption {
 export interface ReferenceItem extends AstNode {
   kind: SyntaxKind.ReferenceItem;
   ref: Reference<NamedElement> | null;
-  dimensions: Dimensions | null;
+  dimensions: Dimensions[];
 }
 export function createReferenceItem(): ReferenceItem {
   return {
     kind: SyntaxKind.ReferenceItem,
     container: null,
     ref: null,
-    dimensions: null,
+    dimensions: [],
   };
 }
 export interface ReinitStatement extends AstNode {
