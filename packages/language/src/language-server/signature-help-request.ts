@@ -103,7 +103,10 @@ export function signatureHelpRequest(
       },
     ],
     activeSignature: 0,
-    activeParameter: callInfo.arguments[callInfo.argumentIndex].parameterIndex,
+    activeParameter:
+      callInfo.argumentIndex < callInfo.arguments.length
+        ? callInfo.arguments[callInfo.argumentIndex].parameterIndex
+        : 0,
   };
 }
 
@@ -275,8 +278,11 @@ function getArgumentIndexByOffset(
   dimensions: ArgumentInfo[] | undefined,
   offset: number,
 ) {
-  if (!dimensions || dimensions.length === 0) {
+  if (!dimensions) {
     return null;
+  }
+  if (dimensions.length === 0) {
+    return 0;
   }
   for (let index = 0; index < dimensions.length; index++) {
     const dim = dimensions[index];
@@ -285,6 +291,14 @@ function getArgumentIndexByOffset(
       dim.endToken &&
       offset > dim.startToken.endOffset &&
       offset <= dim.endToken.endOffset
+    ) {
+      return index;
+    }
+    //for incomplete signatures, where the endToken is missing
+    if (
+      dim.endToken === null &&
+      dim.startToken &&
+      offset > dim.startToken.endOffset
     ) {
       return index;
     }

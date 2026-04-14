@@ -23,10 +23,14 @@ signatureHelp.expectParameterIndexAt("5", 1);
 signatureHelp.expectParameterIndexAt("6", 1);
 signatureHelp.expectMarkdownParameterAt(
   "1",
-  `{FIXED} value1 First expression. \`value1\` should have
+  `\`value1: FIXED\`
+
+First expression. \`value1\` should have
 \`FIXED\` type, and if not, it will be converted thereto.`,
 );
-const parameter2Documentation = `{FIXED} valueN Second and subsequent expressions.
+const parameter2Documentation = `\`valueN: FIXED\`
+
+Second and subsequent expressions.
 Each \`valueN\` should have \`FIXED\` type, and if not, it will
 be converted thereto.`;
 signatureHelp.expectMarkdownParameterAt("3", parameter2Documentation);

@@ -20,7 +20,9 @@ const expectedSignatureMarkdown =
    DECLARE offset FIXED;
    DECLARE length FIXED OPTIONAL;
  END;`);
-const expectedParameterMarkdown = `{FIXED} offset Expression that specifies the starting
+const expectedParameterMarkdown = `\`offset: FIXED\`
+
+Expression that specifies the starting
 position of the substring in \`string\`.
 
 \`offset\` should have \`FIXED\` type, and if not, it is

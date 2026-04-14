@@ -36,8 +36,11 @@ signatureHelp.expectMarkdownSignatureAt(
  %END;`),
 );
 signatureHelp.expectParameterIndexAt(0, 0);
-signatureHelp.expectMarkdownParameterAt(0, "{CHARACTER} a Description of a");
+signatureHelp.expectMarkdownParameterAt(
+  0,
+  "\`a: CHARACTER\`\n\nDescription of a",
+);
 signatureHelp.expectParameterIndexAt(1, 1);
-signatureHelp.expectMarkdownParameterAt(1, "{FIXED} b Description of b");
+signatureHelp.expectMarkdownParameterAt(1, "\`b: FIXED\`\n\nDescription of b");
 signatureHelp.expectParameterIndexAt(2, 2);
-signatureHelp.expectMarkdownParameterAt(2, "{FIXED} [c] Description of c");
+signatureHelp.expectMarkdownParameterAt(2, "\`c: FIXED\`\n\nDescription of c");
