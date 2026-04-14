@@ -5539,10 +5539,7 @@ const dimensions = rule(
         ))
       ) {
         inc();
-        if (current) {
-          current.startToken = startToken;
-          current.endToken = endToken;
-        }
+        applyBoundsTokens(current);
         startToken = endToken;
         current = dimensionBound.rule(state, ast.ReferenceType.Variable);
         current && element.dimensions.push(current);
@@ -5556,14 +5553,17 @@ const dimensions = rule(
     );
 
     if (element.dimensions.length > 0) {
-      const lastBound = element.dimensions[element.dimensions.length - 1];
-      if (lastBound) {
-        lastBound.startToken = startToken;
-        lastBound.endToken = endToken;
-      }
+      applyBoundsTokens(element.dimensions[element.dimensions.length - 1]);
     }
 
     return element;
+
+    function applyBoundsTokens(bounds: ast.DimensionBound | null) {
+      if (bounds) {
+        bounds.startToken = startToken;
+        bounds.endToken = endToken;
+      }
+    }
   },
 );
 
@@ -5597,10 +5597,7 @@ const dimensionsWithTypes = rule(
         ))
       ) {
         inc();
-        if (current) {
-          current.startToken = startToken;
-          current.endToken = endToken;
-        }
+        applyBoundsTokens(current);
         startToken = endToken;
         current = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
         current && element.dimensions.push(current);
@@ -5614,14 +5611,17 @@ const dimensionsWithTypes = rule(
     );
 
     if (element.dimensions.length > 0) {
-      const lastBound = element.dimensions[element.dimensions.length - 1];
-      if (lastBound) {
-        lastBound.startToken = startToken;
-        lastBound.endToken = endToken;
-      }
+      applyBoundsTokens(element.dimensions[element.dimensions.length - 1]);
     }
 
     return element;
+
+    function applyBoundsTokens(bounds: ast.DimensionBound | null) {
+      if (bounds) {
+        bounds.startToken = startToken;
+        bounds.endToken = endToken;
+      }
+    }
   },
 );
 
