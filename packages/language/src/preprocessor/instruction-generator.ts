@@ -224,19 +224,19 @@ function generateCallInstruction(
   node: ast.CallStatement,
   context: GenerateInstructionContext,
 ): inst.CallInstruction | undefined {
-  if (!node.call?.procedure?.text) {
+  if (!node.call?.ref?.text) {
     return undefined; // No procedure to call
   }
-  const args = (node.call.args1?.list ?? []).map((arg) => {
-    assertType<ast.Expression>(arg);
+  const args = (node.call.dimensions?.dimensions ?? []).map((arg) => {
+    assertType<ast.Expression>(arg.upper?.expression);
     return (
-      generateExpressionInstruction(arg) ??
+      generateExpressionInstruction(arg.upper.expression) ??
       <inst.NumberInstruction>{ kind: inst.InstructionKind.Number, value: "0" }
     );
   });
   return {
     kind: inst.InstructionKind.Call,
-    procedureName: node.call.procedure.text,
+    procedureName: node.call.ref.text,
     args,
     node,
   };

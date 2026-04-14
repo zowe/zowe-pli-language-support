@@ -19,6 +19,7 @@ import {
   LabelPrefix,
   MemberCall,
   ProcedureStatement,
+  ReferenceItem,
   SyntaxKind,
 } from "../syntax-tree/ast";
 import { extractDeclaration } from "../typesystem/stringify";
@@ -135,41 +136,42 @@ function tryGetCallInfo(
   if (!memberCall && !callStatement) {
     return null;
   }
-  if (memberCall && !callStatement) {
-    return getCallInfoFromMemberCall(memberCall, offset, unit);
+  if (memberCall && memberCall.element && !callStatement) {
+    return getCallInfoFromReferenceItem(memberCall.element, offset, unit);
   }
-  if (callStatement && !memberCall) {
-    return getCallInfoFromCallStatement(callStatement, offset, unit);
+  if (callStatement && callStatement.call && !memberCall) {
+    return getCallInfoFromReferenceItem(callStatement.call, offset, unit);
   }
   assertType<MemberCall>(memberCall);
   assertType<CallStatement>(callStatement);
-  const callStatementOffset = callStatement.call?.procedure?.token.startOffset;
+  if (memberCall.element === null || callStatement.call === null) {
+    return null;
+  }
+  const callStatementOffset = callStatement.call?.ref?.token.startOffset;
   const memberCallOffset = memberCall.element?.ref?.token.startOffset;
   if (callStatementOffset === undefined || memberCallOffset === undefined) {
     return null;
   }
   if (callStatementOffset > memberCallOffset) {
-    return getCallInfoFromCallStatement(callStatement, offset, unit);
+    return getCallInfoFromReferenceItem(callStatement.call, offset, unit);
   } else {
-    return getCallInfoFromMemberCall(memberCall, offset, unit);
+    return getCallInfoFromReferenceItem(memberCall.element, offset, unit);
   }
 }
 
-function getCallInfoFromCallStatement(
-  callStatement: CallStatement,
+function getCallInfoFromReferenceItem(
+  referenceItem: ReferenceItem,
   offset: number,
   unit: CompilationUnit,
 ): CallInfo | null {
   if (
-    !callStatement.call?.procedure?.text ||
-    !callStatement.call.procedure.node ||
-    callStatement.call.procedure.node.kind !== SyntaxKind.LabelPrefix
+    !referenceItem.ref?.text ||
+    !referenceItem.ref.node ||
+    referenceItem.ref.node.kind !== SyntaxKind.LabelPrefix
   ) {
     return null;
   }
-  const procedure = retrieveProcedureFromLabelPrefix(
-    callStatement.call.procedure.node,
-  );
+  const procedure = retrieveProcedureFromLabelPrefix(referenceItem.ref.node);
   if (!procedure) {
     return null;
   }
@@ -186,74 +188,13 @@ function getCallInfoFromCallStatement(
   }
   let parameterIndex = 0;
   const argumentsInfo: ArgumentInfo[] = [];
-  if (callStatement.call.args1) {
+  if (referenceItem.dimensions) {
     for (
       let index = 0;
-      index < callStatement.call.args1.bounds.length;
+      index < referenceItem.dimensions.dimensions.length;
       index++
     ) {
-      const bounds = callStatement.call.args1.bounds[index];
-      argumentsInfo.push({
-        startToken: bounds.startToken,
-        endToken: bounds.endToken,
-        parameterIndex,
-      });
-      if (
-        parameterIndex < parameterInfo.length &&
-        !parameterInfo[parameterIndex].variadic
-      ) {
-        parameterIndex++;
-      }
-    }
-  }
-  const argumentIndex = getArgumentIndexByOffset(argumentsInfo, offset);
-  return {
-    procedure,
-    arguments: argumentsInfo,
-    parameters: parameterInfo,
-    labelPrefix: callStatement.call.procedure.node,
-    argumentIndex,
-  };
-}
-
-function getCallInfoFromMemberCall(
-  memberCall: MemberCall,
-  offset: number,
-  unit: CompilationUnit,
-): CallInfo | null {
-  if (
-    !memberCall.element?.ref?.text ||
-    !memberCall.element.ref.node ||
-    memberCall.element.ref.node.kind !== SyntaxKind.LabelPrefix
-  ) {
-    return null;
-  }
-  const procedure = retrieveProcedureFromLabelPrefix(
-    memberCall.element.ref.node,
-  );
-  if (!procedure) {
-    return null;
-  }
-  const parameterInfo: ParameterInfo[] = [];
-  if (procedure.parameters) {
-    for (const parameter of procedure.parameters) {
-      const parameterType = unit.services.inferer.inferType(parameter, unit);
-      parameterInfo.push({
-        label: parameter?.ref?.text ?? "<unknown>",
-        variadic: parameterType.list,
-        token: parameter?.ref?.token ?? null,
-      });
-    }
-  }
-  let parameterIndex = 0;
-  const argumentsInfo: ArgumentInfo[] = [];
-  if (memberCall.element.dimensions) {
-    for (
-      let index = 0;
-      index < memberCall.element.dimensions.dimensions.length;
-      index++
-    ) {
-      const dim = memberCall.element.dimensions.dimensions[index];
+      const dim = referenceItem.dimensions.dimensions[index];
       argumentsInfo.push({
         startToken: dim.startToken,
         endToken: dim.endToken,
@@ -272,7 +213,7 @@ function getCallInfoFromMemberCall(
     procedure,
     parameters: parameterInfo,
     arguments: argumentsInfo,
-    labelPrefix: memberCall.element.ref.node,
+    labelPrefix: referenceItem.ref.node,
     argumentIndex,
   };
 }

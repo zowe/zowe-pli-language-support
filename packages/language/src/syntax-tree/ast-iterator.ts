@@ -756,26 +756,6 @@ export function forEachNode(
       break;
     case SyntaxKind.PrintDirective:
       break;
-    case SyntaxKind.ProcedureCall:
-      if (node.args1) {
-        action(node.args1);
-      }
-      if (node.args2) {
-        action(node.args2);
-      }
-      break;
-    case SyntaxKind.ProcedureCallArgs:
-      for (const arg of node.list) {
-        if (arg !== "*") {
-          action(arg);
-        }
-      }
-      for (const bound of node.bounds) {
-        action(bound);
-      }
-      break;
-    case SyntaxKind.ProcedureCallArgumentBounds:
-      break;
     case SyntaxKind.ProcedureParameter:
       break;
     case SyntaxKind.ProcedureStatement:

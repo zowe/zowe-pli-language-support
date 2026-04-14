@@ -35,10 +35,10 @@ export function CallStatement_checkArguments(
   if (!procedure) {
     return;
   }
-  const callToken = node.call!.procedure!.token;
+  const callToken = node.call!.ref!.token;
   const providedTypes =
-    node.call?.args1?.list.map((d) => {
-      if (d === "*") {
+    node.call?.dimensions?.dimensions.map((d) => {
+      if (d.upper?.expression === "*") {
         return TypeDescriptions.Unknown();
       }
       return unit.services.inferer.inferType(d, unit);
