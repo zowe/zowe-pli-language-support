@@ -14,12 +14,15 @@
 //// %DCL A CHARACTER;
 //// %A = SUBSTR<|left>(<|0>"hallo", <|1>1, <|2>2); <|outside>
 
-const expectedSignatureMarkdown =
-  hover.codeBlock(`SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
-   DECLARE string CHARACTER;
-   DECLARE offset FIXED;
-   DECLARE length FIXED OPTIONAL;
- END;`);
+const expectedSignatureMarkdown = `\`SUBSTR\` returns a substring, specified by \`offset\` and
+\`length\`, of \`string\`.
+
+\`length\` must be nonnegative, and the values of \`offset\` and
+\`length\` must be such that the substring lies entirely within
+the current length of \`string\`.
+
+If \`offset = LENGTH(string)+1\` and \`length = 0\`, the null
+string is returned.`;
 const expectedParameterMarkdown = `\`offset: FIXED\`
 
 Expression that specifies the starting

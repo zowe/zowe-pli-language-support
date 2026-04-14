@@ -29,11 +29,7 @@
 
 signatureHelp.expectMarkdownSignatureAt(
   1,
-  hover.codeBlock(`XXX: PROC(A, B, C);
-   DECLARE A CHARACTER;
-   DECLARE B FIXED;
-   DECLARE C FIXED OPTIONAL;
- %END;`),
+  "Description",
 );
 signatureHelp.expectParameterIndexAt(0, 0);
 signatureHelp.expectMarkdownParameterAt(

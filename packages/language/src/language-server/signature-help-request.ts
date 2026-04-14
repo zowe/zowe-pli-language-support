@@ -26,7 +26,8 @@ import { getJSDocCommentBeforeLabelPrefix } from "./hover-request";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
-import { formatCodeBlock } from "../utils/code-block";
+import { takeWhile } from "lodash-es";
+import { isJSDocParagraph } from "../documentation/jsdoc";
 
 type ArgumentInfo = {
   startToken: Token | null;
@@ -82,7 +83,9 @@ export function signatureHelpRequest(
         label: signature.split("\n")[0] ?? "<unknown>",
         documentation: {
           kind: "markdown",
-          value: formatCodeBlock("pli")(signature),
+          value: takeWhile(jsDoc?.elements, isJSDocParagraph)
+            .map((p) => p.toMarkdown())
+            .join("\n"),
         },
         parameters: callInfo.parameters.map((parameter) => {
           const name = parameter.label.toUpperCase();
