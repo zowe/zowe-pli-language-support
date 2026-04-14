@@ -135,6 +135,8 @@ export function commonStatement(
   options: StatementParseOptions,
 ): ast.Statement | ast.EndStatement | null {
   const statement = ast.createStatement();
+  statement.startToken = state.token ?? null;
+
   let startPercent: t.Token | null = null;
   if (state.isInProcedure() || options.startPercent) {
     // In some cases, we enter this function with the current token being a `%`
@@ -315,6 +317,8 @@ export function commonStatement(
   }
 
   statement.value = unit;
+
+  statement.endToken = state.last ?? null;
   return statement;
 }
 
@@ -357,29 +361,49 @@ function callStatement(state: ParserState): ast.CallStatement {
       ast.ReferenceType.Variable,
     );
   }
-  state.consume(
+  let startToken = state.consume(
     statement,
     CstNodeKind.ProcedureCallArgs_OpenParen,
     t.OpenParen,
   );
+  let endToken: t.Token | null = null;
+  const bounds: ast.ProcedureCallArgumentBounds[] = [];
+
   if (!state.canConsume(t.CloseParen)) {
     statement.call.args1 = ast.createProcedureCallArgs();
+    statement.call.args1.bounds = bounds;
     do {
+      if (endToken) {
+        applyBounds();
+        startToken = endToken;
+      }
       const argument = expression(state);
       if (argument) {
         statement.call.args1.list.push(argument);
       }
     } while (
-      state.tryConsume(statement, CstNodeKind.ProcedureCallArgs_Comma, t.Comma)
+      (endToken = state.tryConsume(
+        statement,
+        CstNodeKind.ProcedureCallArgs_Comma,
+        t.Comma,
+      ))
     );
   }
-  state.consume(
+  endToken = state.consume(
     statement,
     CstNodeKind.ProcedureCallArgs_CloseParen,
     t.CloseParen,
   );
+  applyBounds();
   state.consume(statement, CstNodeKind.CallStatement_Semicolon, t.Semicolon);
   return statement;
+
+  function applyBounds() {
+    const item = ast.createProcedureCallArgumentBounds();
+    item.startToken = startToken;
+    item.endToken = endToken;
+    bounds.push(item);
+  }
 }
 
 function procedureStatement(state: ParserState): ast.ProcedureStatement {
@@ -1512,12 +1536,35 @@ function dimensions(state: ParserState): ast.Dimensions {
     // Return early if we found a close parenthesis immediately after open
     return dimensions;
   }
+  let startToken = dimensions.token;
+  let endtoken: t.Token | null = null;
   dimensions.dimensions.push(parseBound(state));
-  while (state.tryConsume(dimensions, CstNodeKind.Dimensions_Comma, t.Comma)) {
+  while (
+    (endtoken = state.tryConsume(
+      dimensions,
+      CstNodeKind.Dimensions_Comma,
+      t.Comma,
+    ))
+  ) {
+    applyToLastBound();
+    startToken = endtoken;
     dimensions.dimensions.push(parseBound(state));
   }
-  state.consume(dimensions, CstNodeKind.Dimensions_CloseParen, t.CloseParen);
+  endtoken = state.consume(
+    dimensions,
+    CstNodeKind.Dimensions_CloseParen,
+    t.CloseParen,
+  );
+  applyToLastBound();
   return dimensions;
+
+  function applyToLastBound() {
+    const last = dimensions.dimensions[dimensions.dimensions.length - 1];
+    if (last) {
+      last.startToken = startToken;
+      last.endToken = endtoken;
+    }
+  }
 }
 
 function parseBound(state: ParserState): ast.DimensionBound {

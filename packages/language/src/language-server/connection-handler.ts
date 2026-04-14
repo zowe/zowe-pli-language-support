@@ -48,6 +48,7 @@ import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig, commandResolveInclude } from "./commands";
 import { Commands, PluginConfiguration } from "./constants";
+import { signatureHelpRequest } from "./signature-help-request";
 export { PluginConfiguration } from "./constants";
 
 /**
@@ -123,6 +124,10 @@ export function startLanguageServer(connection: Connection): void {
         experimental: {
           skippedPliCode: true,
         },
+        signatureHelpProvider: {
+          triggerCharacters: ["("],
+          retriggerCharacters: [","],
+        },
       },
     };
   });
@@ -163,6 +168,20 @@ export function startLanguageServer(connection: Connection): void {
         }
 
         return hoverResponseToLSP(textDocument, response);
+      },
+    );
+  });
+  connection.onSignatureHelp(async (params) => {
+    const position = params.position;
+    return withReadMutex(
+      params.textDocument.uri,
+      async (uri, compilationUnit) => {
+        const textDocument = compilationUnit?.services.files.getDocument(uri);
+        if (!textDocument || !compilationUnit) {
+          return null;
+        }
+        const offset = textDocument.offsetAt(position);
+        return signatureHelpRequest(compilationUnit, uri, offset);
       },
     );
   });
