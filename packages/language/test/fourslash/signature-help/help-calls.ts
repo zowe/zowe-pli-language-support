@@ -27,10 +27,7 @@
 ////   CALL XXX(<|0>"abc", <|1>1, <|2>2);
 //// %END;
 
-signatureHelp.expectMarkdownSignatureAt(
-  1,
-  "Description",
-);
+signatureHelp.expectMarkdownSignatureAt(1, "Description");
 signatureHelp.expectParameterIndexAt(0, 0);
 signatureHelp.expectMarkdownParameterAt(
   0,
