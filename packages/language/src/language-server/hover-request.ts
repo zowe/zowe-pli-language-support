@@ -36,7 +36,7 @@ import {
   binaryTokenIndexSearch,
   binaryTokenSearch,
 } from "../utils/search";
-import { URI, UriUtils } from "../utils/uri";
+import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { HoverResponse, tokenToRange } from "./types";
@@ -46,7 +46,9 @@ import {
   stringifyTypeDescription,
 } from "../typesystem/stringify";
 import { BuiltinsUriSchema } from "../workspace/builtins";
+import { JSDocComment } from "../documentation/jsdoc";
 import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
+import { tokenMatcher } from "chevrotain";
 
 type MarkupResponse = string | null;
 
@@ -222,7 +224,7 @@ function getIncludeItemRepresentation(
   if (!node.filePath || !node.relativeFilePath) {
     return null;
   }
-  const fileUri = UriUtils.toUri(node.filePath);
+  const fileUri = URI.parse(node.filePath);
   const doc = unit.services.files.getDocument(fileUri);
   if (!doc) {
     return null;
@@ -332,9 +334,14 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     }
     let jsDocsComment = "";
     if (ref.node.kind === SyntaxKind.LabelPrefix) {
-      jsDocsComment =
-        getJSDocsCommentBeforeLabelPrefix(ref.node as LabelPrefix, unit) ?? "";
-      jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
+      const jsDoc = getJSDocCommentBeforeLabelPrefix(
+        ref.node as LabelPrefix,
+        unit,
+      );
+      if (jsDoc) {
+        jsDocsComment = jsDoc.toMarkdown();
+        jsDocsComment = jsDocsComment ? `\n---\n${jsDocsComment}` : "";
+      }
     }
     const type = unit.services.inferer.inferType(outerCall, unit);
     return (
@@ -436,10 +443,10 @@ export function hoverRequest(
   };
 }
 
-export function getJSDocsCommentBeforeLabelPrefix(
+export function getJSDocCommentBeforeLabelPrefix(
   labelPrefix: LabelPrefix,
   compilationUnit: CompilationUnit,
-): string | null {
+): JSDocComment | null {
   if (!labelPrefix.nameToken) {
     return null;
   }
@@ -465,9 +472,17 @@ export function getJSDocsCommentBeforeLabelPrefix(
   if (commentIndex > -1) {
     const commentToken = commentTokens[commentIndex];
     while (
+      //skip any preprocessor directives between the comment and the label prefix
+      tokenIndex > 0 &&
+      tokens[tokenIndex - 1] &&
+      tokens[tokenIndex - 1].image === "%"
+    ) {
+      tokenIndex--;
+    }
+    while (
       tokenIndex >= 2 &&
-      tokens[tokenIndex - 1].tokenType === t.Colon &&
-      tokens[tokenIndex - 2].tokenType === t.ID
+      tokenMatcher(tokens[tokenIndex - 1], t.Colon) &&
+      tokenMatcher(tokens[tokenIndex - 2], t.ID)
     ) {
       /*
        * Edge case 1: alias declaration with comment on original, hover on alias:
@@ -490,8 +505,7 @@ export function getJSDocsCommentBeforeLabelPrefix(
       }
     }
     if (isJSDoc(commentToken)) {
-      const jsDoc = parseJSDoc(commentToken);
-      return jsDoc.toMarkdown();
+      return parseJSDoc(commentToken);
     }
   }
   return null;

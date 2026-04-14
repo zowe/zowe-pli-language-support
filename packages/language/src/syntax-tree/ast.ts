@@ -171,6 +171,7 @@ export enum SyntaxKind {
   PrefixedAttribute,
   PrintDirective,
   ProcedureCall,
+  ProcedureCallArgumentBounds,
   ProcedureCallArgs,
   ProcedureParameter,
   ProcedureStatement,
@@ -904,6 +905,7 @@ export type SyntaxNode =
   | PrintDirective
   | ProcedureCall
   | ProcedureCallArgs
+  | ProcedureCallArgumentBounds
   | ProcedureParameter
   | ProcedureStatement
   | ProcessDirective
@@ -1979,6 +1981,16 @@ export interface DimensionBound extends AstNode {
    * It can never be null, unless a parser error occurs.
    */
   upper: Bound | null;
+  /**
+   * Token after the start of the dimension bound, which is usually the opening parenthesis or a comma.
+   * Used for signature help requests.
+   */
+  startToken: Token | null;
+  /**
+   * Token before the end of the dimension bound, which is usually the closing parenthesis or a comma.
+   * Used for signature help requests.
+   */
+  endToken: Token | null;
 }
 export function createDimensionBound(): DimensionBound {
   return {
@@ -1986,6 +1998,8 @@ export function createDimensionBound(): DimensionBound {
     container: null,
     lower: null,
     upper: null,
+    startToken: null,
+    endToken: null,
   };
 }
 export interface Dimensions extends AstNode {
@@ -3494,9 +3508,25 @@ export function createProcedureCall(): ProcedureCall {
   };
 }
 
+export interface ProcedureCallArgumentBounds extends AstNode {
+  kind: SyntaxKind.ProcedureCallArgumentBounds;
+  startToken: Token | null;
+  endToken: Token | null;
+}
+
+export function createProcedureCallArgumentBounds(): ProcedureCallArgumentBounds {
+  return {
+    kind: SyntaxKind.ProcedureCallArgumentBounds,
+    container: null,
+    startToken: null,
+    endToken: null,
+  };
+}
+
 export interface ProcedureCallArgs extends AstNode {
   kind: SyntaxKind.ProcedureCallArgs;
   list: Wildcard<Expression>[];
+  bounds: ProcedureCallArgumentBounds[];
 }
 
 export function createProcedureCallArgs(): ProcedureCallArgs {
@@ -3504,6 +3534,7 @@ export function createProcedureCallArgs(): ProcedureCallArgs {
     kind: SyntaxKind.ProcedureCallArgs,
     container: null,
     list: [],
+    bounds: [],
   };
 }
 

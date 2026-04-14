@@ -103,6 +103,16 @@ export function createTestBuilderHarnessImplementation(
       codeBlock: formatPliCodeBlock,
       include: generateIncludeItemMarkup,
     },
+    signatureHelp: {
+      expectNoHelp: (label) =>
+        testBuilder.expectNoSignatureHelp(label.toString()),
+      expectMarkdownSignatureAt: (label, markdown) =>
+        testBuilder.expectMarkdownSignatureAt(label.toString(), markdown),
+      expectMarkdownParameterAt: (label, markdown) =>
+        testBuilder.expectMarkdownParameterAt(label.toString(), markdown),
+      expectParameterIndexAt: (label, index) =>
+        testBuilder.expectParameterIndexAt(label.toString(), index),
+    },
     semanticTokens: {
       expectAt: (label, tokenType = label.toString()) =>
         testBuilder.expectSemanticTokens(
