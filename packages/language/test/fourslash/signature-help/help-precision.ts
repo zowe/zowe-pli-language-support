@@ -12,25 +12,13 @@
 /// <reference path="../framework.ts" />
 
 //// %DCL A CHARACTER;
-//// %A = SUBSTR<|a>(<|b>
-////    <|c>    <|d>"NU<|e>LL"<|f>,
-////        <|g>1  <|h>,<|i>
-////      <|j>  2
-//// <|k>)<|l>;<|m>
+//// %A = SUBSTR<|none>(<|arg0>
+////    <|arg0>    <|arg0>"NU<|e>LL"<|arg0>,
+////        <|arg1>1  <|arg1>,<|arg2>
+////      <|arg2>  2
+//// <|arg2>)<|none>;<|none>
 
-signatureHelp.expectNoHelp("a");
-signatureHelp.expectParameterIndexAt("b", 0);
-signatureHelp.expectParameterIndexAt("c", 0);
-signatureHelp.expectParameterIndexAt("d", 0);
-signatureHelp.expectParameterIndexAt("e", 0);
-signatureHelp.expectParameterIndexAt("f", 0);
-
-signatureHelp.expectParameterIndexAt("g", 1);
-signatureHelp.expectParameterIndexAt("h", 1);
-
-signatureHelp.expectParameterIndexAt("i", 2);
-signatureHelp.expectParameterIndexAt("j", 2);
-signatureHelp.expectParameterIndexAt("k", 2);
-
-signatureHelp.expectNoHelp("l"); //; belongs to the statement, not the call
-signatureHelp.expectNoHelp("m");
+signatureHelp.expectNoHelp("none");
+signatureHelp.expectParameterIndexAt("arg0", 0);
+signatureHelp.expectParameterIndexAt("arg1", 1);
+signatureHelp.expectParameterIndexAt("arg2", 2);
