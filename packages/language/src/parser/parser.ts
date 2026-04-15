@@ -6149,21 +6149,22 @@ const referenceItem = rule(
       );
     }
 
+    let withoutType = false;
+    let withType = false;
     while (
-      state.canConsumeFirst(dimensions.first()) ||
-      state.canConsumeFirst(dimensionsWithTypes.first())
+      (withoutType = state.canConsumeFirst(dimensions.first())) ||
+      (withType = state.canConsumeFirst(dimensionsWithTypes.first()))
     ) {
-      if (state.canConsumeFirst(dimensions.first())) {
+      if (withoutType) {
         // "Normal" dimensions, that simply target variables in their references
         const dim = dimensions.rule(state);
         dim && element.dimensions.push(dim);
-      } else if (state.canConsumeFirst(dimensionsWithTypes.first())) {
+      } else if (withType) {
         // Dimensions that can also target types in their references
         const dim = dimensionsWithTypes.rule(state);
         dim && element.dimensions.push(dim);
       }
     }
-
     return element;
   },
 );
