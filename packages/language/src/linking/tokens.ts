@@ -94,8 +94,6 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.type ?? undefined;
     case SyntaxKind.LabelReference:
       return node.label ?? undefined;
-    case SyntaxKind.ProcedureCall:
-      return node.procedure ?? undefined;
     case SyntaxKind.ReferenceItem:
       return node.ref ?? undefined;
     case SyntaxKind.TypeAttribute:

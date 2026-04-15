@@ -1225,7 +1225,7 @@ const callStatement = rule(
   (state: ParserState): ast.CallStatement => {
     const element = ast.createCallStatement();
     state.consume(element, CstNodeKind.CallStatement_CALL, tokens.CALL);
-    element.call = procedureCall.rule(state);
+    element.call = referenceItem.rule(state);
     state.consume(
       element,
       CstNodeKind.CallStatement_Semicolon,
@@ -4478,7 +4478,7 @@ const initialAttribute = rule(
       ) {
         // INITIAL CALL variant
         element.call = true;
-        element.procedureCall = procedureCall.rule(state);
+        element.procedureCall = referenceItem.rule(state);
       } else if (
         state.tryConsume(element, CstNodeKind.InitialAttribute_To, tokens.TO)
       ) {
@@ -5539,10 +5539,7 @@ const dimensions = rule(
         ))
       ) {
         inc();
-        if (current) {
-          current.startToken = startToken;
-          current.endToken = endToken;
-        }
+        applyBoundsTokens(current);
         startToken = endToken;
         current = dimensionBound.rule(state, ast.ReferenceType.Variable);
         current && element.dimensions.push(current);
@@ -5556,14 +5553,17 @@ const dimensions = rule(
     );
 
     if (element.dimensions.length > 0) {
-      const lastBound = element.dimensions[element.dimensions.length - 1];
-      if (lastBound) {
-        lastBound.startToken = startToken;
-        lastBound.endToken = endToken;
-      }
+      applyBoundsTokens(element.dimensions[element.dimensions.length - 1]);
     }
 
     return element;
+
+    function applyBoundsTokens(bounds: ast.DimensionBound | null) {
+      if (bounds) {
+        bounds.startToken = startToken;
+        bounds.endToken = endToken;
+      }
+    }
   },
 );
 
@@ -5597,10 +5597,7 @@ const dimensionsWithTypes = rule(
         ))
       ) {
         inc();
-        if (current) {
-          current.startToken = startToken;
-          current.endToken = endToken;
-        }
+        applyBoundsTokens(current);
         startToken = endToken;
         current = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
         current && element.dimensions.push(current);
@@ -5614,14 +5611,17 @@ const dimensionsWithTypes = rule(
     );
 
     if (element.dimensions.length > 0) {
-      const lastBound = element.dimensions[element.dimensions.length - 1];
-      if (lastBound) {
-        lastBound.startToken = startToken;
-        lastBound.endToken = endToken;
-      }
+      applyBoundsTokens(element.dimensions[element.dimensions.length - 1]);
     }
 
     return element;
+
+    function applyBoundsTokens(bounds: ast.DimensionBound | null) {
+      if (bounds) {
+        bounds.startToken = startToken;
+        bounds.endToken = endToken;
+      }
+    }
   },
 );
 
@@ -6149,15 +6149,22 @@ const referenceItem = rule(
       );
     }
 
-    // Optional dimensions
-    if (state.canConsumeFirst(dimensions.first())) {
-      // "Normal" dimensions, that simply target variables in their references
-      element.dimensions = dimensions.rule(state);
-    } else if (state.canConsumeFirst(dimensionsWithTypes.first())) {
-      // Dimensions that can also target types in their references
-      element.dimensions = dimensionsWithTypes.rule(state);
+    let withoutType = false;
+    let withType = false;
+    while (
+      (withoutType = state.canConsumeFirst(dimensions.first())) ||
+      (withType = state.canConsumeFirst(dimensionsWithTypes.first()))
+    ) {
+      if (withoutType) {
+        // "Normal" dimensions, that simply target variables in their references
+        const dim = dimensions.rule(state);
+        dim && element.dimensions.push(dim);
+      } else if (withType) {
+        // Dimensions that can also target types in their references
+        const dim = dimensionsWithTypes.rule(state);
+        dim && element.dimensions.push(dim);
+      }
     }
-
     return element;
   },
 );
@@ -6366,137 +6373,6 @@ const locatorCall = rule(
     }
 
     return element;
-  },
-);
-
-const procedureCall = rule(
-  sequence(tokens.ID),
-  (state: ParserState): ast.ProcedureCall => {
-    const element = ast.createProcedureCall();
-
-    const idToken = state.consume(
-      element,
-      CstNodeKind.ProcedureCall_ProcedureRef,
-      tokens.ID,
-    );
-    if (idToken) {
-      element.procedure = ast.createReference(
-        element,
-        idToken,
-        ast.ReferenceType.Variable,
-      );
-    }
-
-    /* //TODO was this correctly translated?
-        
-        let i = 0;
-            // Use MANY to prevent grammar ambiguity
-            MANY({
-              DEF: () => {
-                SUBRULE_ASSIGN(ProcedureCallArgs, {
-                  assign: (result) => {
-                    if (i === 0) {
-                      element.args1 = result;
-                    } else {
-                      element.args2 = result;
-                    }
-                  },
-                });
-                i++;
-              },
-              // Use a gate to prevent parsing this more than twice
-              GATE: () => i < 2,
-            });
-        
-        */
-
-    // Parse optional argument lists (up to 2)
-    let argCount = 0;
-    const { inc } = state.createLoopContext("ProcedureCall");
-    while (argCount < 2 && state.canConsumeFirst(procedureCallArgs.first())) {
-      inc();
-      const args = procedureCallArgs.rule(state);
-      if (argCount === 0) {
-        element.args1 = args;
-      } else {
-        element.args2 = args;
-      }
-      argCount++;
-    }
-
-    return element;
-  },
-);
-
-const procedureCallArgs = rule(
-  sequence(tokens.OpenParen),
-  (state: ParserState): ast.ProcedureCallArgs => {
-    const element = ast.createProcedureCallArgs();
-    const bounds: ast.ProcedureCallArgumentBounds[] = [];
-    element.bounds = bounds;
-
-    let startToken = state.consume(
-      element,
-      CstNodeKind.ProcedureCallArgs_OpenParen,
-      tokens.OpenParen,
-    );
-    let endToken: Token | null = null;
-
-    // Optional argument list
-    if (!state.canConsume(tokens.CloseParen)) {
-      // Parse first argument (expression or star)
-      if (state.canConsume(tokens.Star)) {
-        state.consume(
-          element,
-          CstNodeKind.ProcedureCallArgs_Star0,
-          tokens.Star,
-        );
-        element.list.push("*");
-      } else {
-        const expr = expression.rule(state);
-        expr && element.list.push(expr);
-      }
-
-      // Parse additional comma-separated arguments
-      const { inc } = state.createLoopContext("ProcedureCallArgs");
-      while (
-        (endToken = state.tryConsume(
-          element,
-          CstNodeKind.ProcedureCallArgs_Comma,
-          tokens.Comma,
-        ))
-      ) {
-        inc();
-        if (state.canConsume(tokens.Star)) {
-          state.consume(
-            element,
-            CstNodeKind.ProcedureCallArgs_Star1,
-            tokens.Star,
-          );
-          element.list.push("*");
-        } else {
-          const expr = expression.rule(state);
-          expr && element.list.push(expr);
-        }
-        applyBounds();
-        startToken = endToken;
-      }
-    }
-
-    endToken = state.consume(
-      element,
-      CstNodeKind.ProcedureCallArgs_CloseParen,
-      tokens.CloseParen,
-    );
-    applyBounds();
-    return element;
-
-    function applyBounds() {
-      const item = ast.createProcedureCallArgumentBounds();
-      item.startToken = startToken;
-      item.endToken = endToken;
-      bounds.push(item);
-    }
   },
 );
 

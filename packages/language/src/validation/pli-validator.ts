@@ -29,6 +29,7 @@ import {
   DeprecateVariables,
 } from "./compiler/IBM2444Iff-deprecate";
 import { IBM1213I_unreferenced_procedure } from "./compiler/IBM1213I-unreferenced-procedure";
+import { checkProcedureCallsDimensions } from "./language-server/call-dimensions";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -56,7 +57,7 @@ export function registerPliValidationChecks(): ValidationChecks {
       IBM1213I_unreferenced_procedure,
       BUILTIN_NoMultipleVariadicParameters,
     ],
-    ReferenceItem: [checkImplicitBuiltins],
+    ReferenceItem: [checkImplicitBuiltins, checkProcedureCallsDimensions],
     SelectStatement: [IBM1059I_select_without_otherwise],
     Statement: [DeprecateStatements],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
