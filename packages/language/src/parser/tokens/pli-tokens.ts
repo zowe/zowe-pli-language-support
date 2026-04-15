@@ -22,6 +22,10 @@ import {
 const { registerKeyword, keywordMap, keywords } = createKeywordRegistry();
 export { keywordMap, keywords };
 
+// used for ANY attribute (used for builtin procedures with parameters of any type)
+export const DataTypes =
+  registerCombination<ast.DataType>("DataTypes");
+
 // Combination tokens (parser optimization)
 export const DefineOrdinalAttribute =
   registerCombination<ast.DefineOrdinalAttribute>("DefineOrdinalAttribute");
@@ -158,8 +162,20 @@ export const SL_COMMENT = createToken({
  */
 export const ANY = registerKeyword({
   name: "ANY",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.ANY]],
 });
+export const ARITHMETIC = registerKeyword({
+  name: "ARITHMETIC",
+  categories: [[DataTypes, ast.DataType.Arithmetic]],
+});
+export const NUMBER_KEYWORD = registerKeyword({
+  name: "NUMBER",
+  categories: [[DataTypes, ast.DataType.Arithmetic]],
+});
+export const UNKNOWN = registerKeyword({
+  name: "UNKNOWN",
+  categories: [[DataTypes, ast.DataType.Unknown]],
+});
+
 // Normal keywords
 export const SUBSCRIPTRANGE = registerKeyword({
   name: "SUBSCRIPTRANGE",
@@ -466,6 +482,7 @@ export const STATEMENT = registerKeyword({
 export const CHARACTER = registerKeyword({
   name: ["CHARACTER", "CHAR"],
   categories: [
+    [DataTypes, ast.DataType.String],
     [DefaultAttribute, ast.DefaultAttribute.CHARACTER],
     [AllocateAttributeType, ast.AllocateAttributeType.CHARACTER],
     [CharType, ast.CharType.CHARACTER],
@@ -512,7 +529,10 @@ export const PRECISION = registerKeyword({
 });
 export const STRUCTURE = registerKeyword({
   name: ["STRUCTURE", "STRUCT"],
-  categories: [[DefaultAttribute, ast.DefaultAttribute.STRUCTURE]],
+  categories: [
+    [DataTypes, ast.DataType.Structure],
+    [DefaultAttribute, ast.DefaultAttribute.STRUCTURE],
+  ],
 });
 export const TRANSIENT = registerKeyword({
   name: "TRANSIENT",
@@ -838,7 +858,10 @@ export const VARYING = registerKeyword({
 });
 export const ORDINAL = registerKeyword({
   name: "ORDINAL",
-  categories: [[TypeOrOrdinal, ast.TypeOrOrdinal.ORDINAL]],
+  categories: [
+    [DataTypes, ast.DataType.Ordinal],
+    [TypeOrOrdinal, ast.TypeOrOrdinal.ORDINAL]
+  ],
 });
 export const DISPLAY = registerKeyword({
   name: "DISPLAY",
@@ -895,6 +918,7 @@ export const DECLARE = registerKeyword({
 });
 export const PICTURE = registerKeyword({
   name: ["PICTURE", "PIC"],
+  categories: [[DataTypes, ast.DataType.Picture]],
 });
 export const WIDEPIC = registerKeyword({
   name: "WIDEPIC",
@@ -958,7 +982,10 @@ export const VARBINARY = registerKeyword({
 });
 export const FORMAT = registerKeyword({
   name: "FORMAT",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.FORMAT]],
+  categories: [
+    [DataTypes, ast.DataType.Format],
+    [DefaultAttribute, ast.DefaultAttribute.FORMAT]
+  ],
 });
 export const NOINIT = registerKeyword({
   name: "NOINIT",
@@ -1049,6 +1076,9 @@ export const COLUMN = registerKeyword({
 });
 export const STRING = registerKeyword({
   name: "STRING",
+  categories: [
+    [DataTypes, ast.DataType.String],
+  ],
 });
 export const NOSCAN = registerKeyword({
   name: "NOSCAN",
@@ -1134,6 +1164,7 @@ export const INTER = registerKeyword({
 });
 export const ENTRY = registerKeyword({
   name: "ENTRY",
+  categories: [[DataTypes, ast.DataType.Entry]],
 });
 export const UCHAR = registerKeyword({
   name: "UCHAR",
@@ -1194,7 +1225,10 @@ export const KEYED = registerKeyword({
 });
 export const LABEL = registerKeyword({
   name: "LABEL",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.LABEL]],
+  categories: [
+    [DataTypes, ast.DataType.Label],
+    [DefaultAttribute, ast.DefaultAttribute.LABEL]
+  ],
 });
 export const PRINT = registerKeyword({
   name: "PRINT",
@@ -1205,7 +1239,10 @@ export const PRINT = registerKeyword({
 });
 export const UNION = registerKeyword({
   name: "UNION",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.UNION]],
+  categories: [
+    [DataTypes, ast.DataType.Union],
+    [DefaultAttribute, ast.DefaultAttribute.UNION]
+  ],
 });
 export const ALIAS = registerKeyword({
   name: "ALIAS",
@@ -1279,6 +1316,7 @@ export const RENT = registerKeyword({
 export const AREA = registerKeyword({
   name: "AREA",
   categories: [
+    [DataTypes, ast.DataType.Area],
     [DefaultAttribute, ast.DefaultAttribute.AREA],
     [AllocateAttributeType, ast.AllocateAttributeType.AREA],
     [KeywordConditions, ast.KeywordConditions.AREA],
@@ -1301,6 +1339,7 @@ export const CALL = registerKeyword({
 export const FILE = registerKeyword({
   name: "FILE",
   categories: [
+    [DataTypes, ast.DataType.File],
     [DefaultAttribute, ast.DefaultAttribute.FILE],
     [PutAttribute, ast.PutAttribute.FILE],
     [ReadStatementType, ast.ReadStatementType.FILE],
@@ -1324,7 +1363,10 @@ export const REAL = registerKeyword({
 });
 export const TASK = registerKeyword({
   name: "TASK",
-  categories: [[DefaultAttribute, ast.DefaultAttribute.TASK]],
+  categories: [
+    [DataTypes, ast.DataType.Task],
+    [DefaultAttribute, ast.DefaultAttribute.TASK],
+  ],
 });
 export const DESC = registerKeyword({
   name: "DESC",
@@ -1826,6 +1868,7 @@ export const TABLE = registerKeyword({
 });
 export const LOCATOR = registerKeyword({
   name: "LOCATOR",
+  categories: [[DataTypes, ast.DataType.Locator]],
 });
 export const RESULT_SET_LOCATOR = registerKeyword({
   name: "RESULT_SET_LOCATOR",

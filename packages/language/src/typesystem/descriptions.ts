@@ -11,10 +11,13 @@
 
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
+import { DataType } from "../syntax-tree/ast";
 import { assertUnreachable } from "../utils/common";
 import { stringifyAttributeWitnesses } from "./stringify";
 
 /** @see https://www.ibm.com/docs/en/epfz/6.1?topic=attributes-nondata#ndatts__vari */
+
+export { DataType };
 
 export type Value = {
   type: TypeDescriptions.Any;
@@ -24,23 +27,6 @@ export type Value = {
 /** Makes T partial except for properties P, they are required */
 export type PartialPartial<T, P extends keyof T> = Partial<Omit<T, P>> &
   Required<Omit<T, Exclude<keyof T, P>>>;
-
-export enum DataType {
-  Area,
-  Arithmetic,
-  Entry,
-  File,
-  Format,
-  Label,
-  Locator,
-  Ordinal,
-  Picture,
-  String,
-  Structure,
-  Task,
-  Union,
-  Unknown = -1,
-}
 
 export const DataTypesArray = [
   DataType.Area,
@@ -79,6 +65,8 @@ export enum AttributeKind {
   Connection,
   /** This is a meta type that can be set by different attributes. */
   DataType,
+  /** A flag indicating whether the data type is generic. If a DataType is generic, only the data type is relevant for assignability checks */
+  DataTypeIsGeneric,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=arrays-dimension-attribute */
   Dimension,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-bigendian-littleendian-attributes */
@@ -154,6 +142,7 @@ export const AttributeKinds: AttributeKind[] = [
   AttributeKind.BufferMode,
   AttributeKind.Connection,
   AttributeKind.DataType,
+  AttributeKind.DataTypeIsGeneric,
   AttributeKind.Dimension,
   AttributeKind.Endianess,
   AttributeKind.FileUsage,
@@ -213,6 +202,7 @@ export type AttributeTypes = {
   [AttributeKind.BuiltIn]: boolean;
   [AttributeKind.Connection]: StorageConnection;
   [AttributeKind.DataType]: DataType;
+  [AttributeKind.DataTypeIsGeneric]: boolean;
   [AttributeKind.Dimension]: DimensionBound[] | undefined;
   [AttributeKind.Endianess]: Endianess;
   [AttributeKind.Entry]: EntryData | undefined;
@@ -254,6 +244,7 @@ export const AttributePropertyNames = {
   [AttributeKind.BuiltIn]: "builtIn" as const,
   [AttributeKind.Connection]: "connection" as const,
   [AttributeKind.DataType]: "dataType" as const,
+  [AttributeKind.DataTypeIsGeneric]: "isDataTypeGeneric" as const,
   [AttributeKind.Dimension]: "dimension" as const,
   [AttributeKind.Endianess]: "endianess" as const,
   [AttributeKind.FileUsage]: "fileUsage" as const,
@@ -300,6 +291,7 @@ export const AttributeIsValidForPreprocessor: {
     return value.kind === StringKind.Character && value.length === undefined;
   },
   [AttributeKind.DataType]: (value) => value === DataType.Entry,
+  [AttributeKind.DataTypeIsGeneric]: () => true,
   [AttributeKind.Scope]: () => true,
   [AttributeKind.BuiltIn]: () => true,
   [AttributeKind.Entry]: () => true,
@@ -391,6 +383,9 @@ export const AttributeStringifiers: {
     }
   },
   [AttributeKind.DataType]: function (value: DataType): string | undefined {
+    return undefined;
+  },
+  [AttributeKind.DataTypeIsGeneric]: function (value: boolean): string | undefined {
     return undefined;
   },
   [AttributeKind.Dimension]: function (
@@ -831,6 +826,7 @@ interface BaseTypeDescriptionProps {
   connection: StorageConnection;
   dimension?: DimensionBound[];
   initial?: ast.InitialAttribute;
+  isDataTypeGeneric: boolean;
   list: boolean;
   optional: boolean;
   parameter: boolean;
@@ -968,6 +964,7 @@ function createBaseTypeDescription(
     initial,
     optional,
     parameter,
+    isDataTypeGeneric,
     witnesses,
     toString,
   }: Partial<BaseTypeDescriptionProps>,
@@ -995,6 +992,7 @@ function createBaseTypeDescription(
   parameter ??= TypeDescriptions.DefaultValues[AttributeKind.Parameter];
   initial ??= TypeDescriptions.DefaultValues[AttributeKind.Initial];
   scanMode ??= TypeDescriptions.DefaultValues[AttributeKind.ScanMode];
+  isDataTypeGeneric ??= TypeDescriptions.DefaultValues[AttributeKind.DataTypeIsGeneric];
 
   if (!storage) {
     if (scope?.type === ScopeType.Internal) {
@@ -1011,6 +1009,7 @@ function createBaseTypeDescription(
     connection,
     dimension,
     initial,
+    isDataTypeGeneric,
     list,
     optional,
     parameter,
@@ -1583,6 +1582,7 @@ interface CompositeTypeDescriptionProps extends WithMembers, WithParentType {
   witnesses: AttributeWitnesses;
   optional: boolean;
   list: boolean;
+  isDataTypeGeneric: boolean;
 }
 
 interface CompositeTypeDescription extends CompositeTypeDescriptionProps {}
@@ -1715,6 +1715,7 @@ export namespace TypeDescriptions {
     [AttributeKind.Endianess]: Endianess.Big,
     [AttributeKind.Entry]: undefined,
     [AttributeKind.DataType]: DataType.Area,
+    [AttributeKind.DataTypeIsGeneric]: false,
     [AttributeKind.Dimension]: undefined,
     [AttributeKind.Initial]: undefined,
     [AttributeKind.Alignment]: {
@@ -1841,6 +1842,9 @@ export namespace TypeDescriptions {
     const attributes = witnesses.witnesses;
     return {
       type,
+      isDataTypeGeneric:
+        attributes[AttributeKind.DataTypeIsGeneric]?.value ??
+        DefaultValues[AttributeKind.DataTypeIsGeneric],
       witnesses,
       level,
       list:
@@ -1913,6 +1917,9 @@ export namespace TypeDescriptions {
       scanMode:
         attributes[AttributeKind.ScanMode]?.value ??
         DefaultValues[AttributeKind.ScanMode],
+      isDataTypeGeneric:
+        attributes[AttributeKind.DataTypeIsGeneric]?.value ??
+        DefaultValues[AttributeKind.DataTypeIsGeneric],
     };
     switch (type) {
       case DataType.Area:
