@@ -35,10 +35,13 @@ export function CallStatement_checkArguments(
   if (!procedure) {
     return;
   }
-  const callToken = node.call!.procedure!.token;
+  const callToken = node.call!.ref!.token;
+  if (node.call?.dimensions.length !== 1) {
+    return;
+  }
   const providedTypes =
-    node.call?.args1?.list.map((d) => {
-      if (d === "*") {
+    node.call?.dimensions[0].dimensions.map((d) => {
+      if (d.upper?.expression === "*") {
         return TypeDescriptions.Unknown();
       }
       return unit.services.inferer.inferType(d, unit);
@@ -84,8 +87,11 @@ export function MemberCall_checkArguments(
   ) {
     return;
   }
+  if (node.element.dimensions.length !== 1) {
+    return;
+  }
   const providedTypes =
-    node.element.dimensions?.dimensions.map((d) =>
+    node.element.dimensions[0].dimensions.map((d) =>
       typeof d.upper?.expression === "object" && d.upper?.expression !== null
         ? unit.services.inferer.inferType(d.upper.expression, unit)
         : TypeDescriptions.Unknown(),

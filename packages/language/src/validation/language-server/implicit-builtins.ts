@@ -31,7 +31,7 @@ export function checkImplicitBuiltins(
   compilationUnit: CompilationUnit,
 ): void {
   // When using dimensions, the builtin is automatically contextually declared, so we can skip the check.
-  if (node.dimensions) {
+  if (node.dimensions.length > 0) {
     return;
   }
 

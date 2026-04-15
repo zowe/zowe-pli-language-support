@@ -353,57 +353,19 @@ function callStatement(state: ParserState): ast.CallStatement {
     CstNodeKind.ProcedureCall_ProcedureRef,
     t.ID,
   );
-  statement.call = ast.createProcedureCall();
+  statement.call = ast.createReferenceItem();
   if (nameToken) {
-    statement.call.procedure = ast.createReference(
+    statement.call.ref = ast.createReference(
       statement,
       nameToken,
       ast.ReferenceType.Variable,
     );
   }
-  let startToken = state.consume(
-    statement,
-    CstNodeKind.ProcedureCallArgs_OpenParen,
-    t.OpenParen,
-  );
-  let endToken: t.Token | null = null;
-  const bounds: ast.ProcedureCallArgumentBounds[] = [];
-
-  if (!state.canConsume(t.CloseParen)) {
-    statement.call.args1 = ast.createProcedureCallArgs();
-    statement.call.args1.bounds = bounds;
-    do {
-      if (endToken) {
-        applyBounds();
-        startToken = endToken;
-      }
-      const argument = expression(state);
-      if (argument) {
-        statement.call.args1.list.push(argument);
-      }
-    } while (
-      (endToken = state.tryConsume(
-        statement,
-        CstNodeKind.ProcedureCallArgs_Comma,
-        t.Comma,
-      ))
-    );
+  while (state.canConsume(t.OpenParen)) {
+    statement.call.dimensions.push(dimensions(state));
   }
-  endToken = state.consume(
-    statement,
-    CstNodeKind.ProcedureCallArgs_CloseParen,
-    t.CloseParen,
-  );
-  applyBounds();
   state.consume(statement, CstNodeKind.CallStatement_Semicolon, t.Semicolon);
   return statement;
-
-  function applyBounds() {
-    const item = ast.createProcedureCallArgumentBounds();
-    item.startToken = startToken;
-    item.endToken = endToken;
-    bounds.push(item);
-  }
 }
 
 function procedureStatement(state: ParserState): ast.ProcedureStatement {
@@ -1285,8 +1247,10 @@ function parseReferenceItem(
     variable,
     ast.ReferenceType.Variable,
   );
-  if (withDimensions && state.canConsume(t.OpenParen)) {
-    reference.dimensions = dimensions(state);
+  if (withDimensions) {
+    while (state.canConsume(t.OpenParen)) {
+      reference.dimensions.push(dimensions(state));
+    }
   }
   return reference;
 }

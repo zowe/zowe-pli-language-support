@@ -170,9 +170,6 @@ export enum SyntaxKind {
   PopDirective,
   PrefixedAttribute,
   PrintDirective,
-  ProcedureCall,
-  ProcedureCallArgumentBounds,
-  ProcedureCallArgs,
   ProcedureParameter,
   ProcedureStatement,
   ProcedureOrderOption,
@@ -903,9 +900,6 @@ export type SyntaxNode =
   | PopDirective
   | PrefixedAttribute
   | PrintDirective
-  | ProcedureCall
-  | ProcedureCallArgs
-  | ProcedureCallArgumentBounds
   | ProcedureParameter
   | ProcedureStatement
   | ProcessDirective
@@ -1459,7 +1453,7 @@ export function createBound(): Bound {
 }
 export interface CallStatement extends AstNode {
   kind: SyntaxKind.CallStatement;
-  call: ProcedureCall | null;
+  call: ReferenceItem | null;
 }
 
 export function createCallStatement(): CallStatement {
@@ -2897,7 +2891,7 @@ export interface InitialAttribute extends AstNode {
   direct: boolean;
   items: InitialAttributeItem[];
   call: boolean;
-  procedureCall: ProcedureCall | null;
+  procedureCall: ReferenceItem | null;
   to: boolean;
   content: InitialToContent | null;
   token: Token | null;
@@ -3479,64 +3473,6 @@ export function createPrintDirective(): PrintDirective {
     container: null,
   };
 }
-export interface ProcedureCall extends AstNode {
-  kind: SyntaxKind.ProcedureCall;
-  /**
-   * Call to a known procedure or external declaration (via a named element), does not necessarily require an arg list
-   */
-  procedure: Reference<NamedVariable> | null;
-  /**
-   * First argument list of the CALL statement.
-   * In case of a procedure array, this is the index!
-   * Use `args2` for the actual arguments (assuming there are any).
-   */
-  args1: ProcedureCallArgs | null;
-  /**
-   * Second argument list of the CALL statement.
-   * Likely empty. Only filled if the linked procedure is an array!
-   */
-  args2: ProcedureCallArgs | null;
-}
-
-export function createProcedureCall(): ProcedureCall {
-  return {
-    kind: SyntaxKind.ProcedureCall,
-    container: null,
-    procedure: null,
-    args1: null,
-    args2: null,
-  };
-}
-
-export interface ProcedureCallArgumentBounds extends AstNode {
-  kind: SyntaxKind.ProcedureCallArgumentBounds;
-  startToken: Token | null;
-  endToken: Token | null;
-}
-
-export function createProcedureCallArgumentBounds(): ProcedureCallArgumentBounds {
-  return {
-    kind: SyntaxKind.ProcedureCallArgumentBounds,
-    container: null,
-    startToken: null,
-    endToken: null,
-  };
-}
-
-export interface ProcedureCallArgs extends AstNode {
-  kind: SyntaxKind.ProcedureCallArgs;
-  list: Wildcard<Expression>[];
-  bounds: ProcedureCallArgumentBounds[];
-}
-
-export function createProcedureCallArgs(): ProcedureCallArgs {
-  return {
-    kind: SyntaxKind.ProcedureCallArgs,
-    container: null,
-    list: [],
-    bounds: [],
-  };
-}
 
 export interface ProcedureParameter extends AstNode {
   kind: SyntaxKind.ProcedureParameter;
@@ -3757,14 +3693,14 @@ export function createReadStatementOption(): ReadStatementOption {
 export interface ReferenceItem extends AstNode {
   kind: SyntaxKind.ReferenceItem;
   ref: Reference<NamedElement> | null;
-  dimensions: Dimensions | null;
+  dimensions: Dimensions[];
 }
 export function createReferenceItem(): ReferenceItem {
   return {
     kind: SyntaxKind.ReferenceItem,
     container: null,
     ref: null,
-    dimensions: null,
+    dimensions: [],
   };
 }
 export interface ReinitStatement extends AstNode {
