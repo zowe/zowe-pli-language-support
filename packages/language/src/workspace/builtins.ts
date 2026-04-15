@@ -168,31 +168,321 @@ export const Builtins =
    DECLARE value ANY<NUMBER>;
  END;
 
- COMPLEX: CPLX:  PROC (real, imag) RETURNS (ANY);
+ /**
+  * COMPLEX returns the complex value \`x\` + \`y\`.
+  *
+  * Abbreviation: CPLX
+  *
+  * If fixed-point, the precision of the result is given by the
+  * following:
+  * 
+  * \`\`\`
+  *   (min(N,max(p1-q1,p2-q2)+max(q1,q2)),max(q1,q2))
+  * \`\`\`
+  * 
+  * In this example, (p1,q1) and (p2,q2) are the precisions of \`x\`
+  * and \`y\`, respectively, and N is the maximum number of digits
+  * allowed.
+  *
+  * After any necessary conversions have been performed, if the
+  * arguments are floating-point, the result has the precision of
+  * the longer argument.
+  *
+  * @param {ANY<NUMBER>} x Real expressions.
+  *
+  *   If \`x\` and \`y\` differ in base, the decimal argument is
+  *   converted to binary. If they differ in scale, the fixed-point
+  *   argument is converted to floating-point. The result has the
+  *   common base and scale.
+  * 
+  * @param {ANY<NUMBER>} y Real expressions.
+  *
+  *   If \`x\` and \`y\` differ in base, the decimal argument is
+  *   converted to binary. If they differ in scale, the fixed-point
+  *   argument is converted to floating-point. The result has the
+  *   common base and scale.
+  * 
+  * @returns {ANY<NUMBER>} complex value \`x\` + \`y\` * \`i\`
+  */
+ COMPLEX: CPLX:  PROC (x, y) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
+   DECLARE y ANY<NUMBER>;
  END;
 
- CONJG: PROC (value) RETURNS (COMPLEX);
+ /**
+  * CONJG returns the conjugate of \`x\`, that is, the value of the
+  * expression with the sign of the imaginary part reversed.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  *
+  *   If \`x\` is real, it is converted to complex. The result has
+  *   the base, scale, mode, and precision of \`x\`.
+  * 
+  * @returns {ANY<NUMBER>} conjugate of \`x\`
+  */
+ CONJG: PROC (x) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
  END;
 
- FLOOR: PROC (value) RETURNS ();
+ /**
+  * FLOOR returns the largest integer value less than or equal to
+  * \`x\`.
+  *
+  * The mode, base, scale, and precision of the result match the
+  * argument. Except when \`x\` is fixed-point with precision
+  * (\`p,q\`), the precision of the result is given by:
+  * 
+  * \`\`\`
+  *   (min(n,max(p-q+1,1)),0)
+  * \`\`\`
+  *
+  * where n is the maximum number of digits allowed and is N for
+  * FIXED DECIMAL or M for FIXED BINARY.
+  *
+  * If the expression \`x\` has the form (\`y\`/\`z\`) where \`y\`
+  * is an unscaled FIXED BIN expression and \`z\` is an unscaled
+  * FIXED expression, then FLOOR(\`x\`) will be evaluated by
+  * computing the integral quotient and then rounding it down by one
+  * if the following conditions are met:
+  * 
+  * - The quotient is not positive.
+  * - The remainder of (\`y\`/\`z\`) is not zero.
+  *
+  * If the expression \`x\` has the form (\`y\`/\`z\`) where \`y\`
+  * is an unscaled FIXED BIN expression and \`z\` is an unscaled
+  * FIXED expression, then TRUNC(\`x\`) will be evaluated by
+  * computing the integral quotient and then rounding it according
+  * to the following conditions:
+  * 
+  * Round it down if both conditions are met: 
+  *   - The quotient is nonnegative.
+  *   - The remainder of (\`y\`/\`z\`) is not zero.
+  * 
+  * Round it up if both conditions are met: 
+  *   - The quotient is not positive.
+  *   - The remainder of (\`y\`/\`z\`) is not zero.
+  *
+  * If the expression \`x\` has the attributes FIXED BIN(\`p,q\`)
+  * but does not have the form above, then \`q\` must be positive.
+  *
+  * @param {ANY<NUMBER>} x Real expression.
+  * 
+  * @returns {ANY<NUMBER>} largest integer value less than or equal to
+  * \`x\`
+  */
+ FLOOR: PROC (x) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
  END;
 
- IMAG: PROC (value) RETURNS ();
+ /**
+  * IMAG returns the imaginary part of \`x\`. The mode of the result
+  * is real and has the base, scale, and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it is
+  *   converted to complex, and an appropriate zero value is returned.
+  * 
+  * @returns {ANY<NUMBER>} imaginary part of \`x\`
+  */
+ IMAG: PROC (x) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
  END;
 
- MAX: PROC (value1, value2) RETURNS ();
+ /**
+  * MAX returns the largest value from a set of two or more
+  * expressions.
+  *
+  * All the arguments must be real. The result is real, with the
+  * common base and scale of the arguments.
+  *
+  * If the arguments are fixed-point with precisions:
+  * 
+  * \`\`\`
+  *   (p1,q1),(p2,q2),...,(pn,qn)
+  * \`\`\`
+  * 
+  * then the precision of the result is given by:
+  * 
+  * \`\`\`
+  *   (min(N,max(p1-q1,p2-q2,...,pn-qn)
+  *    + max(q1,q2,...,qn)),max(q1,q2,...,qn))
+  * \`\`\`
+  * 
+  * where N is the maximum number of digits allowed.
+  *
+  * If the arguments are floating-point with precisions:
+  * 
+  * \`\`\`
+  *   p1,p2,p3,...pn
+  * \`\`\`
+  * 
+  * then the precision of the result is given by:
+  * 
+  * \`\`\`
+  *   max(p1,p2,p3,...pn)
+  * \`\`\`
+  *
+  * The maximum number of arguments allowed is 64.
+  *
+  * If all the arguments are UNSIGNED FIXED BIN, then the result is
+  * UNSIGNED FIXED BIN.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER> LIST} y Expression.
+  * @returns {ANY<NUMBER>} largest value from a set of two or more
+  *   expressions
+  */
+ MAX: PROC (x, y) RETURNS (ANY<NUMBER>);
+    DECLARE x ANY<NUMBER>;
+    DECLARE y ANY<NUMBER> LIST;
  END;
 
- MAXVAL: PROC (array) RETURNS ();
+ /**
+  * MAXVAL returns the maximum value that its numeric operand could
+  * assume.
+  *
+  * MAXVAL(x) >= x and MINVAL(x) <= x are always true.
+  *
+  * The following table shows the relations among MAXVAL(x),
+  * MINVAL(x) and HUGE(x), when x is FLOAT.
+  * 
+  * | Built-in functions | Same as |
+  * | --- | --- |
+  * | MAXVAL(x) | HUGE(x) |
+  * | MINVAL(x) | -HUGE(x) |
+  * 
+  * For more information, see HUGE and TINY.
+  *
+  * MAXVAL(x) is a constant and can be used in restricted
+  * expressions.
+  *
+  * @param {ANY<NUMBER> REAL} x An expression. \`x\` must have the REAL
+  *   attribute.
+  * @returns {ANY<NUMBER>} maximum value that its numeric operand could
+  *   assume.
+  */
+ MAXVAL: PROC (x) RETURNS (ANY<NUMBER>);
+   DCL x ANY<NUMBER> REAL;
  END;
 
- MIN: PROC (value1, value2) RETURNS ();
+ /**
+  * MIN returns the smallest value from a set of one or more
+  * expressions.
+  *
+  * All the arguments must be real. The result is real with the
+  * common base and scale of the arguments.
+  *
+  * The precision of the result is the same as that described in
+  * MAX.
+  *
+  * The maximum number of arguments allowed is 64.
+  *
+  * If all the arguments are UNSIGNED FIXED BIN, then the result is
+  * UNSIGNED FIXED BIN.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} y Expression.
+  * @returns {ANY<NUMBER>} smallest value from a set of one or more
+  *   expressions
+  */
+ MIN: PROC (x, y) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
+   DECLARE y ANY<NUMBER> LIST;
  END;
 
- MINVAL: PROC (array) RETURNS ();
+ /**
+  * MINVAL returns the minimum value that its numeric operand could
+  * assume.
+  *
+  * MAXVAL(x) >= x and MINVAL(x) <= x are always true.
+  *
+  * The following table shows the relations among MAXVAL(x),
+  * MINVAL(x) and HUGE(x), when x is FLOAT.
+  * 
+  * | Built-in functions | Same as |
+  * | --- | --- |
+  * | MAXVAL(x) | HUGE(x) |
+  * | MINVAL(x) | -HUGE(x) |
+  * 
+  * For more information, see HUGE and TINY.
+  *
+  * MINVAL(x) is a constant and can be used in restricted
+  * expressions.
+  *
+  * @param {ANY<NUMBER> REAL} x An expression. \`x\` must have the REAL
+  *   attribute.
+  * @returns {ANY<NUMBER>} minimum value that its numeric operand could
+  *   assume.
+  */
+ MINVAL: PROC (x) RETURNS (ANY<NUMBER>);
+   DCL x ANY<NUMBER> REAL;
  END;
 
- MOD: PROC (value1, value2) RETURNS ();
+ /**
+  * MOD returns the modular equivalent of the remainder of one value
+  * divided by another.
+  *
+  * MOD returns the smallest nonnegative value, R, such that (x -
+  * R)/y = n.
+  *
+  * In this example, the value for \`n\` is an integer value. That
+  * is, R is the smallest nonnegative value that must be subtracted
+  * from \`x\` to make it divisible by \`y\`.
+  *
+  * The result, R, is real with the common base and scale of the
+  * arguments. If the result is floating-point, the precision is the
+  * greater of those of \`x\` and \`y\`. If the result is
+  * fixed-point, the precision is given by the following:
+  * 
+  * \`\`\`
+  *   (min(n,p2-q2+max(q1,q2)),max(q1,q2))
+  * \`\`\`
+  *
+  * In this example, (p1,q1) and (p2,q2) are the precisions of \`x\`
+  * and \`y\`, respectively, and n is N for FIXED DECIMAL or M for
+  * FIXED BINARY.
+  *
+  * If \`x\` and \`y\` are fixed-point with different scaling
+  * factors, the argument with the smaller scaling factor is
+  * converted to the larger scaling factor before R is calculated.
+  * If the conversion fails, the result is unpredictable.
+  *
+  * If the result has the attributes FIXED BIN and all of the
+  * operands have the attributes UNSIGNED FIXED BIN, then the result
+  * has the UNSIGNED attribute. If only some of the operands are
+  * UNSIGNED, then each UNSIGNED operand is converted to SIGNED. If
+  * the operand is too large, the conversion would:
+  * 
+  * - Raise the SIZE condition if SIZE is enabled.
+  * - Produce a negative value if SIZE is not enabled.
+  *
+  * **Example**
+  * 
+  * The following example contrasts the MOD and REM built-in
+  * functions.
+  * 
+  * \`\`\`
+  *   rem( +10, +8 ) = 2
+  *   mod( +10, +8 ) = 2
+  * 
+  *   rem( +10, -8 ) = 2
+  *   mod( +10, -8 ) = 2
+  * 
+  *   rem( -10, +8 ) = -2
+  *   mod( -10, +8 ) = 6
+  * 
+  *   rem( -10, -8 ) = -2
+  *   mod( -10, -8 ) = 6
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Real expression.
+  * @param {ANY<NUMBER>} y Real expression. If \`y\` = 0,
+  *   the ZERODIVIDE condition is raised.
+  * @returns {ANY<NUMBER>} modular equivalent of the remainder of one 
+  *   value
+  */
+ MOD: PROC (x, y) RETURNS (ANY<NUMBER>);
+    DECLARE x ANY<NUMBER>;
+    DECLARE y ANY<NUMBER>;
  END;
 
  RANDOM: PROC () RETURNS ();

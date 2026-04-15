@@ -1,0 +1,19 @@
+ DCL (A,B,C) FIXED;
+ DCL (D, E, F) CHAR;
+
+ A = ABS(B);
+ A = CEIL(B);
+ A = COMPLEX(B, C);
+ A = CONJG(B);
+ A = FLOOR(C);
+ A = IMAG(C);
+ A = MAX(A, B, C);
+ A = MAXVAL(A);
+ A = MIN(A, B, C);
+ A = MINVAL(A);
+ A = MOD(B, C);
+
+ 
+
+
+
