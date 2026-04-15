@@ -123,15 +123,51 @@ export const BuiltinsTypeFunctions = `
 
 export const BuiltinsFile = "builtins.pli";
 export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
-export const Builtins =
-  ` /* Arithmetic built-in functions */
- ABS: PROC (value) RETURNS ();
+export const Builtins = `
+ /**
+  * \`ABS\` returns the absolute value of \`value\`. It is the positive
+  * value of \`value\`.
+  * The mode of the result is \`REAL\`. The result has the base, scale,
+  * and precision of \`value\`, except when \`value\` is
+  * \`COMPLEX FIXED(p,q)\`. In the latter case, the result is 
+  * \`REAL FIXED(min(n,p+1),q)\` where \`n\` is \`N\` for \`DECIMAL\`
+  * and \`M\` for \`BINARY\`.
+  * @param {arithmetic} value Expression.
+  * @returns {arithmetic} absolute value of \`value\`
+  */
+ ABS: PROC (value) RETURNS (ANY);
+   DECLARE value ANY;
  END;
 
- CEIL: PROC (value) RETURNS ();
+ /**
+  * \`CEIL\` determines the smallest integer value greater than or
+  * equal to \`value\`, and assigns this value to the result.
+  * 
+  * The result has the mode, base, scale, and precision of \`value\`,
+  * except when \`value\` is fixed-point with precision \`(p,q)\`.
+  * The precision of the result is then given by: 
+  * 
+  * \`(min(N,max(p-q+1,1)),0)\`
+  * 
+  * where \`N\` is the maximum number of digits allowed.
+  * If the expression \`value\` has the form \`(y/z)\` where \`y\` is 
+  * an unscaled \`FIXED BIN\` expression and \`z\` is an unscaled
+  * \`FIXED\` expression, then \`CEIL(value)\` will be evaluated by
+  * computing the integral quotient and then rounding it up by one if
+  * the following conditions are met: The quotient is non negative.
+  * The remainder of \`(y/z)\` is not zero.
+  * If the expression \`value\` has the attributes \`FIXED BIN(p,q)\`
+  * but does not have the form above, then \`q\` must be positive.
+  * 
+  * @param {arithmetic} value Real expression.
+  * @returns {arithmetic} smallest integer value greater than or
+  *   equal to \`value\`.
+  */
+ CEIL: PROC (value) RETURNS (ANY);
+   DECLARE value ANY;
  END;
 
- COMPLEX: CPLX:  PROC (real, imag) RETURNS (COMPLEX);
+ COMPLEX: CPLX:  PROC (real, imag) RETURNS (ANY);
  END;
 
  CONJG: PROC (value) RETURNS (COMPLEX);
