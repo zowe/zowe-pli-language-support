@@ -1022,7 +1022,10 @@ export type DefaultDeclarationAttribute =
  * A list of all the possible attributes that can be used in a declaration.
  * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
  */
-export type DeclarationAttribute = CommonDeclarationAttribute | ValueAttribute | AnyAttribute;
+export type DeclarationAttribute =
+  | CommonDeclarationAttribute
+  | ValueAttribute
+  | AnyAttribute;
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
   | EntryParameterDescription
@@ -1576,7 +1579,7 @@ export interface CompilerOptionText extends AstNode {
 /**
  * Not part of the PL/I specification!
  * Helps declaring parameters of any type for builtin procedures
- */ 
+ */
 export interface AnyAttribute extends AstNode {
   kind: SyntaxKind.AnyAttribute;
   token: Token | null;

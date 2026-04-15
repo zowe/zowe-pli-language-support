@@ -83,7 +83,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
        * in order to make it possible to declare builtin procedures with parameters of any type)
        */
       case ast.SyntaxKind.AnyAttribute: {
-        if(attribute.token) {
+        if (attribute.token) {
           this.addAttributeWitness(
             AttributeKind.DataType,
             attribute.dataType,
@@ -96,7 +96,7 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
             attribute,
             attribute.token,
           );
-          if(attribute.dimensions && attribute.dimensions.token) {
+          if (attribute.dimensions && attribute.dimensions.token) {
             this.addAttributeWitness(
               AttributeKind.Dimension,
               computeDimensions(attribute.dimensions),

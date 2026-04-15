@@ -123,7 +123,8 @@ export const BuiltinsTypeFunctions = `
 
 export const BuiltinsFile = "builtins.pli";
 export const BuiltinsUri = `${BuiltinsUriSchema}:/${BuiltinsFile}`;
-export const Builtins = `
+export const Builtins =
+  `
  /**
   * \`ABS\` returns the absolute value of \`value\`. It is the positive
   * value of \`value\`.
@@ -132,11 +133,11 @@ export const Builtins = `
   * \`COMPLEX FIXED(p,q)\`. In the latter case, the result is 
   * \`REAL FIXED(min(n,p+1),q)\` where \`n\` is \`N\` for \`DECIMAL\`
   * and \`M\` for \`BINARY\`.
-  * @param {arithmetic} value Expression.
-  * @returns {arithmetic} absolute value of \`value\`
+  * @param {ANY<NUMBER>} value Expression.
+  * @returns {ANY<NUMBER>} absolute value of \`value\`
   */
- ABS: PROC (value) RETURNS (ANY);
-   DECLARE value ANY;
+ ABS: PROC (value) RETURNS (ANY<NUMBER>);
+   DECLARE value ANY<NUMBER>;
  END;
 
  /**
@@ -159,12 +160,12 @@ export const Builtins = `
   * If the expression \`value\` has the attributes \`FIXED BIN(p,q)\`
   * but does not have the form above, then \`q\` must be positive.
   * 
-  * @param {arithmetic} value Real expression.
-  * @returns {arithmetic} smallest integer value greater than or
+  * @param {ANY<NUMBER>} value Real expression.
+  * @returns {ANY<NUMBER>} smallest integer value greater than or
   *   equal to \`value\`.
   */
- CEIL: PROC (value) RETURNS (ANY);
-   DECLARE value ANY;
+ CEIL: PROC (value) RETURNS (ANY<NUMBER>);
+   DECLARE value ANY<NUMBER>;
  END;
 
  COMPLEX: CPLX:  PROC (real, imag) RETURNS (ANY);

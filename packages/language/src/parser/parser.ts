@@ -5224,12 +5224,28 @@ const anyAttribute = rule(
       CstNodeKind.AnyAttribute_ANY,
       tokens.ANY,
     );
-    if(state.tryConsume(element, CstNodeKind.AnyAttribute_OpenAngle, tokens.LessThan)) {
-      const dataTypeToken = state.consume(element, CstNodeKind.AnyAttribute_DataType, tokens.DataTypes);
-      element.dataType = tokens.DataTypes.mapToEnumLiteral(dataTypeToken!.tokenTypeIdx);
-      state.consume(element, CstNodeKind.AnyAttribute_CloseAngle, tokens.GreaterThan);
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AnyAttribute_OpenAngle,
+        tokens.LessThan,
+      )
+    ) {
+      const dataTypeToken = state.consume(
+        element,
+        CstNodeKind.AnyAttribute_DataType,
+        tokens.DataTypes,
+      );
+      element.dataType = tokens.DataTypes.mapToEnumLiteral(
+        dataTypeToken!.tokenTypeIdx,
+      );
+      state.consume(
+        element,
+        CstNodeKind.AnyAttribute_CloseAngle,
+        tokens.GreaterThan,
+      );
     }
-    if(state.canConsumeFirst(dimensions.first())) {
+    if (state.canConsumeFirst(dimensions.first())) {
       element.dimensions = dimensions.rule(state);
     }
     return element;

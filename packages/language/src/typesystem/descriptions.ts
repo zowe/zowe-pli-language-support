@@ -385,7 +385,9 @@ export const AttributeStringifiers: {
   [AttributeKind.DataType]: function (value: DataType): string | undefined {
     return undefined;
   },
-  [AttributeKind.DataTypeIsGeneric]: function (value: boolean): string | undefined {
+  [AttributeKind.DataTypeIsGeneric]: function (
+    value: boolean,
+  ): string | undefined {
     return undefined;
   },
   [AttributeKind.Dimension]: function (
@@ -992,7 +994,8 @@ function createBaseTypeDescription(
   parameter ??= TypeDescriptions.DefaultValues[AttributeKind.Parameter];
   initial ??= TypeDescriptions.DefaultValues[AttributeKind.Initial];
   scanMode ??= TypeDescriptions.DefaultValues[AttributeKind.ScanMode];
-  isDataTypeGeneric ??= TypeDescriptions.DefaultValues[AttributeKind.DataTypeIsGeneric];
+  isDataTypeGeneric ??=
+    TypeDescriptions.DefaultValues[AttributeKind.DataTypeIsGeneric];
 
   if (!storage) {
     if (scope?.type === ScopeType.Internal) {

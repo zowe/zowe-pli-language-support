@@ -23,8 +23,7 @@ const { registerKeyword, keywordMap, keywords } = createKeywordRegistry();
 export { keywordMap, keywords };
 
 // used for ANY attribute (used for builtin procedures with parameters of any type)
-export const DataTypes =
-  registerCombination<ast.DataType>("DataTypes");
+export const DataTypes = registerCombination<ast.DataType>("DataTypes");
 
 // Combination tokens (parser optimization)
 export const DefineOrdinalAttribute =
@@ -860,7 +859,7 @@ export const ORDINAL = registerKeyword({
   name: "ORDINAL",
   categories: [
     [DataTypes, ast.DataType.Ordinal],
-    [TypeOrOrdinal, ast.TypeOrOrdinal.ORDINAL]
+    [TypeOrOrdinal, ast.TypeOrOrdinal.ORDINAL],
   ],
 });
 export const DISPLAY = registerKeyword({
@@ -984,7 +983,7 @@ export const FORMAT = registerKeyword({
   name: "FORMAT",
   categories: [
     [DataTypes, ast.DataType.Format],
-    [DefaultAttribute, ast.DefaultAttribute.FORMAT]
+    [DefaultAttribute, ast.DefaultAttribute.FORMAT],
   ],
 });
 export const NOINIT = registerKeyword({
@@ -1076,9 +1075,7 @@ export const COLUMN = registerKeyword({
 });
 export const STRING = registerKeyword({
   name: "STRING",
-  categories: [
-    [DataTypes, ast.DataType.String],
-  ],
+  categories: [[DataTypes, ast.DataType.String]],
 });
 export const NOSCAN = registerKeyword({
   name: "NOSCAN",
@@ -1227,7 +1224,7 @@ export const LABEL = registerKeyword({
   name: "LABEL",
   categories: [
     [DataTypes, ast.DataType.Label],
-    [DefaultAttribute, ast.DefaultAttribute.LABEL]
+    [DefaultAttribute, ast.DefaultAttribute.LABEL],
   ],
 });
 export const PRINT = registerKeyword({
@@ -1241,7 +1238,7 @@ export const UNION = registerKeyword({
   name: "UNION",
   categories: [
     [DataTypes, ast.DataType.Union],
-    [DefaultAttribute, ast.DefaultAttribute.UNION]
+    [DefaultAttribute, ast.DefaultAttribute.UNION],
   ],
 });
 export const ALIAS = registerKeyword({
