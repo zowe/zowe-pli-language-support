@@ -16,7 +16,13 @@
 
 signatureHelp.expectParameterIndexAt("arg0", 0);
 signatureHelp.expectNoHelp("none");
-signatureHelp.expectMarkdownSignatureAt("arg0", "ABS(value: ANY<NUMBER>): ANY<NUMBER>");
+signatureHelp.expectMarkdownSignatureAt("arg0", `\`ABS\` returns the absolute value of \`value\`. It is the positive
+value of \`value\`.
+The mode of the result is \`REAL\`. The result has the base, scale,
+and precision of \`value\`, except when \`value\` is
+\`COMPLEX FIXED(p,q)\`. In the latter case, the result is
+\`REAL FIXED(min(n,p+1),q)\` where \`n\` is \`N\` for \`DECIMAL\`
+and \`M\` for \`BINARY\`.`);
 
 
  
