@@ -152,11 +152,13 @@ function tryGetCallInfo(
   if (callStatementOffset === undefined || memberCallOffset === undefined) {
     return null;
   }
-  if (callStatementOffset > memberCallOffset) {
-    return getCallInfoFromReferenceItem(callStatement.call, offset, unit);
-  } else {
-    return getCallInfoFromReferenceItem(memberCall.element, offset, unit);
+  if (callStatementOffset < memberCallOffset) {
+    const help = getCallInfoFromReferenceItem(memberCall.element, offset, unit);
+    return help && help.argumentIndex !== null
+      ? help
+      : getCallInfoFromReferenceItem(callStatement.call, offset, unit);
   }
+  return null;
 }
 
 function getCallInfoFromReferenceItem(
