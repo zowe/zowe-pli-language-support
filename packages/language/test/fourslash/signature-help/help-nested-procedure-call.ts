@@ -22,11 +22,11 @@
 //// /**
 ////  * YYY Description
 ////  */
-//// %YYY: PROC(A, B);
+//// %YYY: PROC(A, B) RETURNS(CHARACTER);
 ////   DECLARE A CHARACTER;
 ////   DECLARE B CHARACTER;
 //// %END;
-//// %YYY: PROC;
+//// %ZZZ: PROC;
 ////   CALL XXX(<|x0>"hallo", <|x1>YYY(<|y0>"abc", <|y1>1));
 //// %END;
 

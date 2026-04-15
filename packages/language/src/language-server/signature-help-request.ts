@@ -137,7 +137,7 @@ function tryGetCallInfo(
     return null;
   }
   if (memberCall && memberCall.element && !callStatement) {
-    return getCallInfoFromReferenceItem(memberCall.element, offset, unit);
+    return getCallInfoFromMemberCall(memberCall, offset, unit);
   }
   if (callStatement && callStatement.call && !memberCall) {
     return getCallInfoFromReferenceItem(callStatement.call, offset, unit);
@@ -153,10 +153,26 @@ function tryGetCallInfo(
     return null;
   }
   if (callStatementOffset < memberCallOffset) {
-    const help = getCallInfoFromReferenceItem(memberCall.element, offset, unit);
+    const help = getCallInfoFromMemberCall(memberCall, offset, unit);
     return help && help.argumentIndex !== null
       ? help
       : getCallInfoFromReferenceItem(callStatement.call, offset, unit);
+  }
+  return null;
+}
+
+function getCallInfoFromMemberCall(
+  memberCall: MemberCall,
+  offset: number,
+  unit: CompilationUnit,
+): CallInfo | null {
+  let call: MemberCall | null = memberCall;
+  while (call && call.element) {
+    const callInfo = getCallInfoFromReferenceItem(call.element, offset, unit);
+    if (callInfo && callInfo.argumentIndex !== null) {
+      return callInfo;
+    }
+    call = getContainer(call.container, SyntaxKind.MemberCall);
   }
   return null;
 }
