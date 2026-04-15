@@ -12,8 +12,14 @@
  A = MIN(A, B, C);
  A = MINVAL(A);
  A = MOD(B, C);
-
+ A = RANDOM();
+ A = RANDOM(123);
+ A = REAL(C);
+ A = REM(B, C);
  
+ A = ROUND(B, C);
+
+
 
 
 
