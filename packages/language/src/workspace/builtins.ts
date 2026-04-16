@@ -6102,33 +6102,1010 @@ export const Builtins =
  END;
 
  /* Integer manipulation built-in functions */
- IAND: PROC (value) RETURNS (); END;
- ICLZ: PROC (value) RETURNS (); END;
- IEOR: PROC (value) RETURNS (); END;
- INOT: PROC (value) RETURNS (); END;
- IOR: PROC (value) RETURNS (); END;
- ISIGNED: PROC (value) RETURNS (); END;
- ISLL: PROC (value) RETURNS (); END;
- ISRL: PROC (value) RETURNS (); END;
- IUNSIGNED: PROC (value) RETURNS (); END;
- LOWER2: PROC (value) RETURNS (); END;
- RAISE2: PROC (value) RETURNS (); END;
+ /**
+  * IAND returns the logical AND of its arguments
+  *
+  * If any argument is not REAL FIXED BIN(p,0), then it is converted
+  * to SIGNED REAL FIXED BIN(p,0).
+  *
+  * If any argument is SIGNED, then any UNSIGNED arguments are
+  * converted to SIGNED.
+  *
+  * The result is REAL FIXED BIN( max(p1,p2,...), 0 ). It is
+  * UNSIGNED if all the arguments are UNSIGNED.
+  *
+  * @param {ANY<NUMBER>} x Expression that must have a
+  *   computational type.
+  * @param {ANY<NUMBER> LIST} y Expression that must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The logical AND of its arguments.
+  */
+ IAND: PROC (x, y) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER> LIST;
+ END;
+ /**
+  * ICLZ returns a FIXED BIN(31) value that indicates the number of
+  * leading zeros in a FIXED BIN value.
+  *
+  * The value returned is relative to the number of bits that x
+  * occupies.
+  *
+  * So, if x is SIGNED with precision p, then
+  *
+  * - when(p < 8), the value returned is between 0 and 8
+  * - when(p < 16), the value returned is between 0 and 16
+  * - when(p < 32), the value returned is between 0 and 32
+  * - otherwise, the value returned is between 0 and 64
+  *
+  * And if x is UNSIGNED with precision p, then
+  *
+  * - when(p <= 8), the value returned is between 0 and 8
+  * - when(p <= 16), the value returned is between 0 and 16
+  * - when(p <= 32), the value returned is between 0 and 32
+  * - otherwise, the value returned is between 0 and 64
+  *
+  * @param {ANY<NUMBER>} x Specifies a REAL FIXED BIN value with a
+  *   scale factor of zero.
+  * @returns {FIXED BINARY} The number of leading zeros in x.
+  */
+ ICLZ: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * IEOR returns the logical exclusive-OR of \`x\` and \`y\`. The
+  * result is unsigned if all arguments are unsigned.
+  *
+  * If any argument is not REAL FIXED BIN(p,0), then it is converted
+  * to SIGNED REAL FIXED BIN(p,0).
+  *
+  * If any argument is SIGNED, then any UNSIGNED arguments are
+  * converted to SIGNED.
+  *
+  * The result is REAL FIXED BIN( max(p1,p2,...), 0 ). It is
+  * UNSIGNED if all the arguments are UNSIGNED.
+  *
+  * @param {ANY<NUMBER>} x Expression that must have a
+  *   computational type.
+  * @param {ANY<NUMBER>} y Expression that must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The logical exclusive-OR of \`x\` and \`y\`.
+  */
+ IEOR: PROC (x, y) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER>;
+ END;
+ /**
+  * INOT returns the logical NOT of \`x\`.
+  *
+  * If \`x\` is REAL FIXED BIN(p,0), the result is REAL FIXED
+  * BIN(p,0) and it is UNSIGNED if \`x\` is UNSIGNED. Otherwise,
+  * \`x\` is converted to SIGNED REAL FIXED BIN(p,0) and the result
+  * has the same attributes.
+  *
+  * Although INOT(x) has the opposite sign of \`x\`, INOT(x) is not
+  * the same as \`-x\`.
+  *
+  * **Examples**
+  *
+  * \`\`\`
+  *   inot(0)        //  produces -1
+  *   inot(-1)       //  produces  0
+  *   inot(+1)       //  produces -2
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The logical NOT of \`x\`.
+  */
+ INOT: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * IOR returns the logical OR of its arguments.
+  *
+  * If any argument is not REAL FIXED BIN(p,0), then it is converted
+  * to SIGNED REAL FIXED BIN(p,0).
+  *
+  * If any argument is SIGNED, then any UNSIGNED arguments are
+  * converted to SIGNED.
+  *
+  * The result is REAL FIXED BIN( max(p1,p2,...), 0 ). It is
+  * UNSIGNED if all the arguments are UNSIGNED.
+  *
+  * @param {ANY<NUMBER>} x Expression that must have a
+  *   computational type.
+  * @param {ANY<NUMBER> LIST} y Expression that must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The logical OR of its arguments.
+  */
+ IOR: PROC (x, y) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER> LIST;
+ END;
+ /**
+  * ISIGNED(\`x\`) returns the result of casting \`x\` to a signed
+  * integer value without changing its bit pattern.
+  *
+  * If \`x\` is not an integer, that is, if \`x\` is not REAL FIXED
+  * BIN with zero scale factor, it is converted to REAL FIXED
+  * BIN(p,0).
+  *
+  * ISIGNED( \`x\` ) returns, for integer \`x\`, a value with the
+  * same bit pattern as \`x\` but with the attributes SIGNED FIXED
+  * BIN(p).
+  *
+  * If \`x\` is UNSIGNED, p is given as follows:
+  *
+  * - If precision(\`x\`) = 8, 16, 32, or 64, p = precision(\`x\`) -
+  * 1; otherwise, p = precision(\`x\`).
+  * - If \`x\` is SIGNED, p = precision(\`x\`).
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *    ISIGNED('ff_ff_ff_ff'xu) equals the SIGNED FIXED BIN(31)
+  *    value -1.
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The result of casting \`x\` to a signed
+  *   integer value without changing its bit pattern.
+  */
+ ISIGNED: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * ISLL(\`x\`,\`n\`) returns the result of logically shifting \`x\`
+  * to the left by \`n\` places, and padding on the right with
+  * zeroes.
+  *
+  * If \`x\` is REAL FIXED BIN(p,0) and SIGNED, the result is SIGNED
+  * REAL FIXED BIN(\`r\`,0) where if p <= M1, r = M1; if p > M1, r =
+  * M2.
+  *
+  * If \`x\` is REAL FIXED BIN(p,0) and UNSIGNED, the result is
+  * UNSIGNED REAL FIXED BIN(r+1,0) where if p <= (M1+1), r = (M1+1);
+  * if p > (M1+1), r = (M2+1).
+  *
+  * Otherwise, \`x\` is converted to SIGNED REAL FIXED BIN(p,0) and
+  * the result has the same attributes as above.
+  *
+  * If \`n\` is negative or if \`n\` is greater than r, the result
+  * is undefined.
+  *
+  * Note: Unlike RAISE2(\`x\`,\`n\`), ISLL(\`x\`,\`n\`) can have a
+  * different sign from that of \`x\`.
+  *
+  * **Examples**
+  *
+  * \`\`\`
+  *   isll(+6,1)               //  produces 12
+  *   isll(2147483645,1)       //  produces  -6
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The result of logically shifting \`x\`
+  *   to the left by \`n\` places.
+  */
+ ISLL: PROC (x, n) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * ISRL(\`x\`,\`n\`) returns the result of logically shifting \`x\`
+  * to the right by \`n\` places, and padding on the left with
+  * zeroes.
+  *
+  * The attributes of the result are determined as follows:
+  *
+  * - If \`x\` is REAL FIXED BIN(p,0) and SIGNED, the result is
+  * SIGNED REAL FIXED BIN(p,0).
+  * - If \`x\` is REAL FIXED BIN(p,0) and UNSIGNED, the result is
+  * UNSIGNED REAL FIXED BIN(p,0).
+  * - Otherwise, \`x\` is converted to SIGNED REAL FIXED BIN(p,0)
+  * and the result has the same attributes.
+  *
+  * The result is undefined if \`n\` is negative or if \`n\` is
+  * greater than M.
+  *
+  * If \`x\` is nonnegative, ISRL(x,n) is equivalent to LOWER2(x,n);
+  * if \`x\` is negative, ISRL(x,n) is positive, unless \`n\`=0.
+  *
+  * **Examples**
+  *
+  * \`\`\`
+  *   isrl(+6,1)            //  produces 3
+  *   isrl(-6,1)            //  produces 2147483645
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The result of logically shifting \`x\`
+  *   to the right by \`n\` places.
+  */
+ ISRL: PROC (x, n) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * IUNSIGNED(\`x\`) returns the result of casting \`x\` to an
+  * unsigned integer value without changing its bit pattern.
+  *
+  * If \`x\` is not an integer, that is, if \`x\` is not REAL FIXED
+  * BIN with zero scale factor, it is converted to REAL FIXED
+  * BIN(p,0).
+  *
+  * IUNSIGNED(\`x\`) returns, for integer \`x\`, a value with the
+  * same bit pattern as \`x\` but with the attributes UNSIGNED FIXED
+  * BIN(p).
+  *
+  * If \`x\` is SIGNED, p is given as follows:
+  *
+  * - If precision(\`x\`) = 7, 15, 31 or 63, p = precision(\`x\`) +
+  * 1; otherwise, p = precision(\`x\`).
+  * - If \`x\` is UNSIGNED, p = precision(\`x\`).
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *    IUNSIGNED('ff_ff_ff_ff'xn) equals the largest UNSIGNED
+  *    FIXED BIN(32) value.
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The result of casting \`x\` to an
+  *   unsigned integer value without changing its bit pattern.
+  */
+ IUNSIGNED: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * LOWER2(\`x\`,\`n\`) returns the value:
+  *
+  * Note: LOWER2(\`x\`,\`n\`) is equivalent to the assembler
+  * SRA(x,n).
+  *
+  * If \`x\` is SIGNED REAL FIXED BIN(p,0), then the result has the
+  * same attributes. Otherwise, \`x\` is converted to SIGNED REAL
+  * FIXED BIN(p,0) and the result has the same attributes.
+  *
+  * The result is undefined if \`n\` is negative or if \`n\` is
+  * greater than M.
+  *
+  * **Examples**
+  *
+  * \`\`\`
+  *   lower2 (+6,1)                       //  Produces 3
+  *
+  *   lower2 (-6,1)                       //  Produces -3
+  *
+  *   lower2 (-7,1)                       //  Produces -4
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The result of arithmetic right-shifting
+  *   \`x\` by \`n\` places.
+  */
+ LOWER2: PROC (x, n) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * RAISE2(\`x\`,\`n\`) returns the value x*(2**n).
+  *
+  * If \`x\` is REAL FIXED BIN(p,0) and SIGNED, the result is SIGNED
+  * REAL FIXED BIN(r,0) where if p <= M1, r = M1; if p > M1, r = M2.
+  *
+  * If \`x\` is REAL FIXED BIN(p,0) and UNSIGNED, the result is
+  * UNSIGNED REAL FIXED BIN(r+1,0) where if p <= (M1+1), r = (M1+1);
+  * if p > (M1+1), r = (M2+1).
+  *
+  * Otherwise, \`x\` is converted to SIGNED REAL FIXED BIN(p,0) and
+  * the result has the same attributes as above.
+  *
+  * If \`n\` is negative or if \`n\` is greater than r, the result
+  * is undefined.
+  *
+  * Note: RAISE2(\`x\`,\`n\`) is equivalent to the assembler
+  * SLA(\`x\`,\`n\`).
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   raise2(6,1)                    //  produces 12
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type.
+  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  *   computational type.
+  * @returns {FIXED BINARY} The value x*(2**n).
+  */
+ RAISE2: PROC (x, n) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL n ANY<NUMBER>;
+ END;
 
  /* JSON built-in functions */
- JSONGETARRAYEND: PROC (value) RETURNS (); END;
- JSONGETARRAYSTART: PROC (value) RETURNS (); END;
- JSONGETCOLON: PROC (value) RETURNS (); END;
- JSONGETCOMMA: PROC (value) RETURNS (); END;
- JSONGETMEMBER: PROC (value) RETURNS (); END;
- JSONGETOBJECTEND: PROC (value) RETURNS (); END;
- JSONGETOBJECTSTART: PROC (value) RETURNS (); END;
- JSONGETVALUE: PROC (value) RETURNS (); END;
- JSONPUTARRAYEND: PROC (value) RETURNS (); END;
- JSONPUTARRAYSTART: PROC (value) RETURNS (); END;
- JSONPUTCOLON: PROC (value) RETURNS (); END;
- JSONPUTCOMMA: PROC (value) RETURNS (); END;
- JSONPUTMEMBER: PROC (value) RETURNS (); END;
- JSONPUTOBJECTEND: PROC (value) RETURNS (); END;
+ /**
+  * JSONGETARRAYEND(p,n) checks whether the next character,
+  * ignoring whitespace, in a piece of JSON text is a closing
+  * bracket ]. This function returns a size_t 1 value that is
+  * equal to the number of bytes read.
+  *
+  * If the number of available bytes n is greater than zero,
+  * JSONGETARRAYEND(p,n) attempts to read a closing bracket ] from
+  * the buffer.
+  *
+  * - When the first character after any whitespace is the desired
+  * character ], the number of bytes read includes 1 byte for the
+  * desired character plus any bytes of whitespace preceding it.
+  * - When the first character after any whitespace is not the
+  * desired character ], a value of zero is returned.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} The number of bytes read.
+  */
+ JSONGETARRAYEND: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONGETARRAYSTART(p,n) checks whether the next character,
+  * ignoring whitespace, in a piece of JSON text is an opening
+  * bracket [. This function returns a size_t 1 value that is
+  * equal to the number of bytes read.
+  *
+  * If the number of available bytes n is greater than zero,
+  * JSONGETARRAYSTART(p,n) attempts to read an opening bracket [
+  * from the buffer.
+  *
+  * - When the first character after any whitespace is the desired
+  * character [, the number of bytes read includes 1 byte for the
+  * desired character plus any bytes of whitespace preceding it.
+  * - When the first character after any whitespace is not the
+  * desired character [, a value of zero is returned.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} The number of bytes read.
+  */
+ JSONGETARRAYSTART: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONGETCOLON(p,n) checks whether the next character, ignoring
+  * whitespace, in a piece of JSON text is a colon. This function
+  * returns a size_t 1 value that is equal to the number of bytes
+  * read.
+  *
+  * If the number of available bytes n is greater than zero,
+  * JSONGETCOLON(p,n) attempts to read a colon from the buffer.
+  *
+  * - When the first character after any whitespace is the desired
+  * character, a colon, the number of bytes read includes 1 byte
+  * for the desired character plus any bytes of whitespace
+  * preceding it.
+  * - When the first character after any whitespace is not the
+  * desired character, a value of zero is returned.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} The number of bytes read.
+  */
+ JSONGETCOLON: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONGETCOMMA(p,n) checks whether the next character, ignoring
+  * whitespace, in a piece of JSON text is a comma. This function
+  * returns a size_t 1 value that is equal to the number of bytes
+  * read.
+  *
+  * If the number of available bytes n is greater than zero,
+  * JSONGETCOMMA(p,n) attempts to read a comma from the buffer.
+  *
+  * - When the first character after any whitespace is the desired
+  * character, a comma, the number of bytes read includes 1 byte
+  * for the desired character plus any bytes of whitespace
+  * preceding it.
+  * - When the first character after any whitespace is not the
+  * desired character, a value of zero is returned.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} The number of bytes read.
+  */
+ JSONGETCOMMA: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONGETMEMBER reads a member (or name-value pair) from a piece
+  * of JSON text. This function returns a size_t 1 value that
+  * specifies the number of bytes read from the buffer.
+  *
+  * Whitespace is permitted anywhere in the JSON text, but is
+  * ignored except for contributing to the total number of bytes
+  * read.
+  *
+  * If the JSON text contains invalid JSON, the ERROR condition is
+  * raised and the ONSUBCODE built-in function gives the index of
+  * the invalid character.
+  *
+  * If the third argument of JSONGETMEMBER is omitted, the
+  * name-value pair is simply read over.
+  *
+  * If any element in the target has the CHARACTER type, the
+  * conversion from the UTF-8 source in the JSON text is based on
+  * the CODEPAGE compiler option.
+  *
+  * Under the compiler option JSON(PARSE(V1)):
+  *
+  * - If the JSON source specifies more values for an array than in
+  * the target declaration, then the ERROR condition will be raised
+  * (reporting that a closing bracket ] was not found when
+  * expected).
+  * - If the third argument is a structure, then the names in the
+  * JSON text must match those in the structure. If not, the ERROR
+  * condition is raised.
+  *
+  * Note: It is not necessary to specify name-value pairs for all
+  * the elements in the structure, but any names specified must be
+  * in the same order as they are in the structure.
+  *
+  * Under the compiler option JSON(PARSE(V2)):
+  *
+  * - If the JSON source specifies more values for an array than in
+  * the target declaration:
+  *   - If SUBSCRIPTRANGE is enabled, then the SUBSCRIPTRANGE
+  *   condition will be raised
+  *   - Otherwise, the excess values will be ignored
+  * - If the third argument is a structure and a name in the JSON
+  * text does not match any name in the structure:
+  *   - If CONFORMANCE is enabled, then the CONFORMANCE condition
+  *   will be raised and the ONJSONNAME built-in function will
+  *   return the unmatched name
+  *   - Otherwise, the name and its JSON-value will be ignored
+  *
+  * Note: It is not necessary to specify name-value pairs for all
+  * the elements in the structure, and it is not necessary that the
+  * names are specified in the same order as they are in the
+  * structure.
+  *
+  * The name-value pair must consist of the variable's name as a
+  * JSON string followed by a colon and the variable's value.
+  *
+  * The value may be specified as null, in which case the target
+  * variable is unchanged.
+  *
+  * **Examples**
+  *
+  * Suppose a buffer contains the following JSON text, and the
+  * buffer address is in P and its length is in N.
+  *
+  * \`\`\`
+  *    { "passes" : 3,
+  *      "data" :
+  *        [
+  *             { "name" : "Mather",     "elevation" : 12100 }
+  *           , { "name" : "Pinchot",    "elevation" : 12130 }
+  *           , { "name" : "Glenn",      "elevation" : 11940 }
+  *        ]
+  *    }
+  * \`\`\`
+  *
+  * When compiled with the option JSON(CASE(ASIS)), the following
+  * code allocates an appropriately sized structure and then fills
+  * it in. The JSON compiler option is needed so that the names are
+  * accepted in lower case.
+  *
+  * \`\`\`
+  *    dcl
+  *      1 info based(q),
+  *        2 count        fixed bin(31),
+  *        2 data( passes refer(count) ),
+  *          3 name       char(20) varying,
+  *          3 elevation  fixed bin(31);
+  *
+  *    read = 0;
+  *    read += jsonGetObjectStart(p+read,n-read);
+  *    read += jsonGetMember(p+read,n-read,passes);
+  *    allocate info;
+  *    read += jsonGetComma(p+read,n-read);
+  *    read += jsonGetValue(p+read,n-read);
+  *    read += jsonGetColon(p+read,n-read);
+  *    read += jsonGetValue(p+read,n-read,data);
+  * \`\`\`
+  *
+  * Note that this code works equally well if the buffer contains
+  * more data. See the following example:
+  *
+  * \`\`\`
+  *  { "passes" : 5,
+  *      "data" :
+  *        [
+  *             { "name" : "Muir",       "elevation" : 11980 }
+  *           , { "name" : "Mather",     "elevation" : 12100 }
+  *           , { "name" : "Pinchot",    "elevation" : 12130 }
+  *           , { "name" : "Glenn",      "elevation" : 11940 }
+  *           , { "name" : "Forester",   "elevation" : 13100 }
+  *        ]
+  *    }
+  * \`\`\`
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @param {ANY} [x] A variable reference whose name-value pair is
+  *   to be read from the buffer. The variable reference must not
+  *   contain any of these elements:
+  *
+  *   - UNIONs
+  *   - Noncomputational elements
+  *   - GRAPHIC elements
+  *   - COMPLEX elements
+  *   - FIXED(p,q) elements with q < 0 or q > p
+  *   - Unnamed elements
+  *
+  *   x may have STRUCTURE type.
+  * @returns {FIXED BINARY} The number of bytes read from the
+  *   buffer.
+  */
+ JSONGETMEMBER: PROC (p, n, x) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+    DCL x ANY OPTIONAL;
+ END;
+ /**
+  * JSONGETOBJECTEND(p,n) checks whether the next character,
+  * ignoring whitespace, in a piece of JSON text is a closing brace
+  * }. This function returns a size_t 1 value that is equal to the
+  * number of bytes read.
+  *
+  * If the number of available bytes n is greater than zero,
+  * JSONGETOBJECTEND(p,n) attempts to read a closing brace } from
+  * the buffer.
+  *
+  * - When the first character after any whitespace is the desired
+  * character }, the number of bytes read includes 1 byte for the
+  * desired character plus any bytes of whitespace preceding it.
+  * - When the first character after any whitespace is not the
+  * desired character }, a value of zero is returned.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} The number of bytes read.
+  */
+ JSONGETOBJECTEND: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONGETOBJECTSTART(p,n) checks whether the next character,
+  * ignoring whitespace, in a piece of JSON text is an opening brace
+  * {. This function returns a size_t 1 value that is equal to the
+  * number of bytes read.
+  *
+  * If the number of available bytes n is greater than zero,
+  * JSONGETOBJECTSTART(p,n) attempts to read an opening brace { from
+  * the buffer.
+  *
+  * - When the first character after any whitespace is the desired
+  * character {, the number of bytes read includes 1 byte for the
+  * desired character plus any bytes of whitespace preceding it.
+  * - When the first character after any whitespace is not the
+  * desired character {, a value of zero is returned.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} The number of bytes read.
+  */
+ JSONGETOBJECTSTART: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONGETVALUE reads a value from a piece of JSON text. This
+  * function returns a size_t 1 value that specifies the number of
+  * bytes read from the buffer.
+  *
+  * Whitespace is permitted anywhere in the JSON text, but is
+  * ignored except for contributing to the total number of bytes
+  * read.
+  *
+  * If the JSON text contains invalid JSON, the ERROR condition is
+  * raised and the ONSUBCODE built-in function gives the index of
+  * the invalid character.
+  *
+  * If the third argument of JSONGETVALUE is omitted, the value is
+  * simply read over.
+  *
+  * If the third argument is an array, array values can be omitted,
+  * in which case the corresponding elements of the target array are
+  * unchanged.
+  *
+  * If any element in the target has the CHARACTER type, the
+  * conversion from the UTF-8 source in the JSON text is based on
+  * the CODEPAGE compiler option.
+  *
+  * Under the compiler option JSON(PARSE(V1)):
+  *
+  * - If the JSON source specifies more values for an array than in
+  * the target declaration, then the ERROR condition will be raised
+  * (reporting that a closing bracket ] was not found when expected)
+  * - If the third argument is a structure, then the names in the
+  * JSON text must match those in the structure. If not, the ERROR
+  * condition is raised.
+  *
+  * Note: It is not necessary to specify name-value pairs for all
+  * the elements in the structure, but any names specified must be
+  * in the same order as they are in the structure.
+  *
+  * Under the compiler option JSON(PARSE(V2)):
+  *
+  * - If the JSON source specifies more values for an array than in
+  * the target declaration:
+  *   - If SUBSCRIPTRANGE is enabled, then the SUBSCRIPTRANGE
+  *   condition will be raised
+  *   - Otherwise, the excess values will be ignored
+  * - If the third argument is a structure and a name in the JSON
+  * text does not match any name in the structure:
+  *   - If CONFORMANCE is enabled, then the CONFORMANCE condition
+  *   will be raised and the ONJSONNAME built-in function will
+  *   return the unmatched name
+  *   - Otherwise, the name and its JSON-value will be ignored
+  *
+  * Note: It is not necessary to specify name-value pairs for all
+  * the elements in the structure, and it is not necessary that the
+  * names are specified in the same order as they are in the
+  * structure.
+  *
+  * The value may be specified as null, in which case the target
+  * variable is unchanged.
+  *
+  * **Example 1**
+  *
+  * The following code assigns the values 2, 3, and 5 to the array
+  * B. The value returned would be 7 plus the count of whitespace
+  * characters before the closing bracket, ].
+  *
+  * \`\`\`
+  *   dcl b(3)    fixed bin;
+  *   dcl buffer  char(1000) var;
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *
+  *   buffer = utf8( ' [ 2, 3, 5 ]' );
+  *   p = addrdata(buffer);
+  *   n = length(buffer);
+  *   read = jsonGetValue( p, n, b );
+  * \`\`\`
+  *
+  * **Example 2**
+  *
+  * The following code assigns the values 2 to B(1), 3 to B(2), and
+  * leaves B(3) unchanged. The value returned would be 5 plus the
+  * count of whitespace characters before the closing bracket, ].
+  *
+  * \`\`\`
+  *   dcl b(3)    fixed bin;
+  *   dcl buffer  char(1000) var;
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *
+  *   buffer = utf8( ' [ 2, 3 ]' );
+  *   p = addrdata(buffer);
+  *   n = length(buffer);
+  *   read = jsonGetValue( p, n, b );
+  * \`\`\`
+  *
+  * **Example 3**
+  *
+  * The following code assigns 2 to C.D and 3 to C.E. It returns a
+  * value greater than or equal to 13.
+  *
+  * \`\`\`
+  *   dcl 1 c, 2 d fixed bin, 2 e fixed bin;
+  *   dcl buffer  char(1000) var;
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   buffer = utf8( ' { "D" : 2, "E" : 3 } ' );
+  *   p = addrdata(buffer);
+  *   n = length(buffer);
+  *   read = jsonGetValue( p, n, c );
+  * \`\`\`
+  *
+  * **Example 4**
+  *
+  * Suppose that a buffer contains the following JSON text, and that
+  * the buffer address is P and its length is in N.
+  *
+  * \`\`\`
+  *    { "PASSES" : 3,
+  *      "DATA" :
+  *        [
+  *             { "NAME" : "Mather",  "ELEVATION" : 12100 }
+  *           , { "NAME" : "Pinchot", "ELEVATION" : 12130 }
+  *           , { "NAME" : "Glenn",   "ELEVATION" : 11940 }
+  *        ]
+  *    }
+  * \`\`\`
+  *
+  * Then the single invocation of JSONGETVALUE in the following code
+  * will fill in the entire structure.
+  *
+  * \`\`\`
+  *    dcl
+  *      1 info,
+  *        2 passes       fixed bin(31),
+  *        2 data(3),
+  *          3 name       char(20) varying,
+  *          3 elevation  fixed bin(31);
+  *
+  *    read = jsonGetValue( p, n, info );
+  * \`\`\`
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be read
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer
+  * @param {ANY} [x] A variable reference whose value is to be
+  *   read from the buffer
+  *
+  *   The variable reference must not contain any of these elements:
+  *
+  *   - UNIONs
+  *   - Noncomputational elements
+  *   - GRAPHIC elements
+  *   - COMPLEX elements
+  *   - FIXED(p,q) elements with q < 0 or q > p
+  *   - Unnamed elements
+  *
+  *   x may have STRUCTURE type.
+  * @returns {FIXED BINARY} The number of bytes read from the
+  *   buffer.
+  */
+ JSONGETVALUE: PROC (p, n, x) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+    DCL x ANY OPTIONAL;
+ END;
+ /**
+  * JSONPUTARRAYEND(p,n) writes a closing bracket ] to the buffer
+  * if the number of available bytes n is greater than zero. The
+  * function returns a size_t 1 value equal to 1.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} 1.
+  */
+ JSONPUTARRAYEND: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONPUTARRAYSTART(p,n) writes an opening bracket [ to the
+  * buffer if the number of available bytes n is greater than zero.
+  * The function returns a size_t 1 value equal to 1.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} 1.
+  */
+ JSONPUTARRAYSTART: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONPUTCOLON(p,n) writes a colon to the buffer if the number of
+  * available bytes n is greater than zero. The function returns a
+  * size_t 1 value equal to 1.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of available bytes in the buffer.
+  * @returns {FIXED BINARY} 1.
+  */
+ JSONPUTCOLON: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONPUTCOMMA(p,n) writes a comma to the buffer if the number of
+  * available bytes n is greater than zero. The function returns a
+  * size_t 1 value equal to 1.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t that specifies the number of
+  *   available bytes in the buffer.
+  * @returns {FIXED BINARY} 1.
+  */
+ JSONPUTCOMMA: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONPUTMEMBER appends a member (or name-value pair), as UTF-8,
+  * to the JSON text. This function returns a size_t 1 value that
+  * specifies the number of bytes that are written to the buffer;
+  * or if the specified buffer size is zero, it returns a size_t
+  * value that specifies the number of bytes that would be needed
+  * for all the JSON text to be written.
+  *
+  * **Example 1**
+  *
+  * \`\`\`
+  *   dcl b(3)    fixed bin init(2,3,5);
+  *   dcl buffer  char(1000);
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   p = addr(buffer);
+  *   n = length(buffer);
+  *   written = jsonPutMember( p, n, b );
+  * \`\`\`
+  *
+  * The above code writes the following UTF-8 string to the buffer,
+  * and assigns the value 11 to the variable written.
+  *
+  * \`\`\`
+  * "B":[2,3,5]
+  * \`\`\`
+  *
+  * **Example 2**
+  *
+  * \`\`\`
+  *   dcl 1 c, 2 d fixed bin init(2), 2 e fixed bin init(3);
+  *   dcl buffer  char(1000);
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   p = addr(buffer);
+  *   n = length(buffer);
+  *   written = jsonPutMember( p, n, c );
+  * \`\`\`
+  *
+  * The above code writes the following UTF-8 string to the buffer,
+  * and assigns the value 17 to the variable written.
+  *
+  * \`\`\`
+  * "C":{"D":2,"E":3}
+  * \`\`\`
+  *
+  * **Example 3**
+  *
+  * \`\`\`
+  *   dcl 1 c(2), 2 d fixed bin init(2,3), 2 d fixed bin init(5,7);
+  *   dcl buffer  char(1000);
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   p = addr(buffer);
+  *   n = length(buffer);
+  *   written = jsonPutMember( p, n, c );
+  * \`\`\`
+  *
+  * The above code writes the following UTF-8 string to the buffer,
+  * and assigns the value 33 to the variable written.
+  *
+  * \`\`\`
+  * "C":[{"D":2,"E":5},{"D":3,"E":7}]
+  * \`\`\`
+  *
+  * **Example 4**
+  *
+  * \`\`\`
+  *   dcl x       fixed bin(31) init(11);
+  *   dcl y       fixed bin(31) init(13);
+  *   dcl buffer  char(1000);
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   p = addr(buffer);
+  *   n = length(buffer);
+  *   written = 0;
+  *   written += jsonPutObjectStart( p+written, n-written );
+  *   written += jsonPutMember( p+written, n-written, x );
+  *   written += jsonPutComma( p+written, n-written );
+  *   written += jsonPutMember( p+written, n-written, y );
+  *   written += jsonPutObjectEnd( p+written, n-written );
+  * \`\`\`
+  *
+  * The above code writes the following UTF-8 string to the buffer,
+  * and assigns the value 15 to the variable written.
+  *
+  * \`\`\`
+  * {"X":11,"Y":13}
+  * \`\`\`
+  *
+  * Unlike the previous examples, this buffer contains complete,
+  * valid JSON text.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t that specifies the number of
+  *   available bytes in the buffer.
+  * @param {ANY} x A variable reference whose value is to be
+  *   written to the buffer. The variable reference must not contain
+  *   any of these elements:
+  *
+  *   - UNIONs
+  *   - Noncomputational elements
+  *   - GRAPHIC elements
+  *   - COMPLEX elements
+  *   - FIXED(p,q) elements with q < 0 or q > p
+  *   - Unnamed elements
+  *
+  *   x may have STRUCTURE type.
+  * @param {ANY<CHARACTER>} [y] An optional parameter that
+  *   specifies whether names should be written in lowercase,
+  *   uppercase, or asis.
+  *
+  *   y must be a character constant with one of the values LOWER,
+  *   UPPER, or ASIS. These values can themselves be specified in
+  *   any case. If not specified, it will default to the value in
+  *   JSON(CASE) option.
+  * @returns {FIXED BINARY} The number of bytes written to the
+  *   buffer, or the number of bytes needed if n is zero.
+  */
+ JSONPUTMEMBER: PROC (p, n, x, y) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+    DCL x ANY;
+    DCL y ANY<CHARACTER> OPTIONAL;
+ END;
+ /**
+  * JSONPUTOBJECTEND(p,n) writes a closing brace } to the buffer if
+  * the number of available bytes n is greater than zero. The
+  * function returns a size_t 1 value equal to 1.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t that specifies the number of
+  *   available bytes in the buffer.
+  * @returns {FIXED BINARY} 1.
+  */
+ JSONPUTOBJECTEND: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
  JSONPUTOBJECTSTART: PROC (value) RETURNS (); END;
  JSONPUTVALUE: PROC (value) RETURNS (); END;
  JSONVALID: PROC (value) RETURNS (); END;
