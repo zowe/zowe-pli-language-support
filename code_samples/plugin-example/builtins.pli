@@ -16,7 +16,6 @@
  A = RANDOM(123);
  A = REAL(C);
  A = REM(B, C);
- 
  A = ROUND(B, C);
 
 

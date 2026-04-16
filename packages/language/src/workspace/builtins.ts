@@ -553,9 +553,157 @@ export const Builtins =
    DECLARE y ANY<NUMBER>;
  END;
 
+ /**
+  * ROUND returns the value of \`x\` rounded at a digit specified by
+  * \`n\`. The result has the mode, base, and scale of \`x\`.
+  *
+  * **ROUND of FIXED**
+  * 
+  * The precision of a FIXED result is:
+  * 
+  * \`\`\`
+  *   (max(1,min(p-q+1+n,N)),n)
+  * \`\`\`
+  * 
+  * Where (\`p,q\`) is the precision of \`x\`, and N is the maximum
+  * number of digits allowed. Hence, \`n\` specifies the scaling
+  * factor of the result.
+  * 
+  * \`n\` must conform to the limits of scaling-factors for FIXED
+  * data. If \`n\` is greater than 0, rounding occurs at the
+  * (\`n\`)th digit to the right of the point. If \`n\` is zero or
+  * negative, rounding occurs at the (1-\`n\`)th digit to the left
+  * of the point.
+  * 
+  * In ROUND(\`x\`,\`n\`), \`n\` must not specify a digit too far to
+  * the right or too far to the left. To express this in
+  * mathematical terms: \`n\` <= q and 0 <= (p - q) + n must be
+  * true.
+  * 
+  * The value of the result is given by the following formula, where
+  * b = 10 if \`x\` is DECIMAL:
+  * 
+  * \`\`\`
+  * round(x,n) = sign(x)*(b-n)* floor(abs(x)* (bn) + 1/2)
+  * \`\`\`
+  * 
+  * So, in the following example, the value 6.67 is output:
+  * 
+  * \`\`\`
+  *     dcl X fixed dec(5,4) init(6.6666);
+  * 
+  *     put skip list( round(X,2) );
+  * \`\`\`
+  *
+  * **ROUND of IEEE decimal floating point**
+  * 
+  * The precision of an IEEE DECIMAL FLOAT result is the same as
+  * that of the source argument.
+  * 
+  * The value of the result is given by the following formula, where
+  * where b = 10 (=radix(x)) and e = exponent(x):
+  * 
+  * \`\`\`
+  * round(x,n) = sign(x)*(b(e-n))* floor(abs(x)* (b(n-e)) + 1/2)
+  * \`\`\`
+  * 
+  * So, if the FLOAT(DFP) compiler option is in effect, these
+  * successive roundings of 3.1415926d0 would produce the following
+  * values:
+  * 
+  * \`\`\`
+  *     dcl x float dec(16) init( 3.1415926d0 );
+  * 
+  *     display( round(x,1) );  // 3.000000000000000E+0000
+  *     display( round(x,2) );  // 3.100000000000000E+0000
+  *     display( round(x,3) );  // 3.140000000000000E+0000
+  *     display( round(x,4) );  // 3.142000000000000E+0000
+  *     display( round(x,5) );  // 3.141600000000000E+0000
+  *     display( round(x,6) );  // 3.141590000000000E+0000
+  * \`\`\`
+  *
+  * **ROUND of IEEE binary floating point**
+  * 
+  * The precision of an IEEE binary floating point result is the
+  * same as that of the source argument.
+  * 
+  * Under the compiler option USAGE(ROUND(IBM)), the value of the
+  * result is the same as the source except on z/OS where if the
+  * source is not zero, then the result is obtained by turning on
+  * the rightmost bit in the source.
+  * 
+  * Under the compiler option USAGE(ROUND(ANS)), the value of the
+  * result is given by the following formula, where where b = 2
+  * (=radix(x)) and e = exponent(x):
+  * 
+  * \`\`\`
+  * round(x,n) = sign(x)*(b(e-n))* floor(abs(x)* (b(n-e)) + 1/2)
+  * \`\`\`
+  * 
+  * Note that under USAGE(ROUND(ANS)), the rounding is a base 2
+  * rounding, and the results may not be what a naive user expects.
+  * For example, if compiled with USAGE(ROUND(ANS)) and IEEE binary
+  * floating point instructions are used, these successive roundings
+  * of 3.1415926d0 would produce the following values:
+  * 
+  * \`\`\`
+  *     dcl x float bin(53) init( 3.1415926d0 );
+  * 
+  *     display( round(x,1) );  //  4.000000000000000E+0000
+  *     display( round(x,2) );  //  3.000000000000000E+0000
+  *     display( round(x,3) );  //  3.000000000000000E+0000
+  *     display( round(x,4) );  //  3.250000000000000E+0000
+  *     display( round(x,5) );  //  3.125000000000000E+0000
+  *     display( round(x,6) );  //  3.125000000000000E+0000
+  *     display( round(x,7) );  //  3.156250000000000E+0000
+  * \`\`\`
+  *
+  * **ROUND of IBM hexadecimal floating point**
+  * 
+  * The precision of an IBM hexadecimal floating point result is the
+  * same as that of the source argument.
+  * 
+  * Under the compiler option USAGE(ROUND(IBM)), the value of the
+  * result is the same as the source except on z/OS where if the
+  * source is not zero, then the result is obtained by turning on
+  * the rightmost bit in the source.
+  * 
+  * Under the compiler option USAGE(ROUND(ANS)), the value of the
+  * result is given by the following formula, where where b = 16
+  * (=radix(x)) and e = exponent(x):
+  * 
+  * \`\`\`
+  * round(x,n) = sign(x)*(b(e-n))* floor(abs(x)* (b(n-e)) + 1/2)
+  * \`\`\`
+  * 
+  * Note that under USAGE(ROUND(ANS)), the rounding is a base 16
+  * rounding, and the results may not be what a naive user expects.
+  * For example, if compiled with USAGE(ROUND(ANS)) and IBM
+  * hexadecimal floating point instructions are used, these
+  * successive roundings of 3.1415926d0 would produce the following
+  * values:
+  * 
+  * \`\`\`
+  *     dcl x float bin(53) init( 3.1415926d0 );
+  * 
+  *     display( round(x,1) );  //  3.000000000000000E+00
+  *     display( round(x,2) );  //  3.125000000000000E+00
+  *     display( round(x,3) );  //  3.140625000000000E+00
+  *     display( round(x,4) );  //  3.141601562500000E+00
+  *     display( round(x,5) );  //  3.141586303710938E+00
+  *     display( round(x,6) );  //  3.141592979431152E+00
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Real expression. If \`x\` is negative, the
+  *   absolute value is rounded and the sign is restored.
+  * @param {ANY<NUMBER>} n Optionally-signed integer. It specifies the
+  *   digit at which rounding is to occur.
+  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified 
+  *   by \`n\`.
+  */
  ROUND: PROC (x, n) RETURNS (ANY<NUMBER>);
-    DECLARE x ANY<NUMBER>;
-    DECLARE n ANY<NUMBER>;
+   DECLARE x ANY<NUMBER>;
+   DECLARE n ANY<NUMBER>;
  END;
 
  // ROUNDDEC is a deprecated name for ROUNDAWAYFROMZERO
