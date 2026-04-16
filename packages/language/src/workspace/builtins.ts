@@ -8379,7 +8379,6 @@ export const Builtins =
   * @returns {CHARACTER(*)} Hexadecimal representation of the
   *   storage containing \`x\`.
   */
- //TODO has overloads
  HEX: PROC (x, z) RETURNS (CHARACTER(*));
     DCL x ANY;
     DCL z CHARACTER(1) OPTIONAL;
@@ -8458,7 +8457,6 @@ export const Builtins =
   * @returns {CHARACTER(*)} UTF-8 hexadecimal representation of
   *   the storage containing \`x\`.
   */
- //TODO has overloads
  HEX8: PROC (x, z) RETURNS (CHARACTER(*));
     DCL x ANY;
     DCL z CHARACTER(1) OPTIONAL;
@@ -8506,31 +8504,564 @@ export const Builtins =
     DCL y ANY;
     DCL z ANY;
  END;
- INDICATORS: PROC (value) RETURNS (); END;
- INLIST: PROC (value) RETURNS (); END;
- ISJCLSYMBOL: PROC (value) RETURNS (); END;
- ISMAIN: PROC (value) RETURNS (); END;
- MAINNAME: PROC (value) RETURNS (); END;
- OMITTED: PROC (value) RETURNS (); END;
- PACKAGENAME: PROC (value) RETURNS (); END;
- PLIRETV: PROC (value) RETURNS (); END;
- POPCNT: PROC (value) RETURNS (); END;
- PRESENT: PROC (value) RETURNS (); END;
- PROCEDURENAME: PROCNAME: PROC (value) RETURNS (); END;
- PUTENV: PROC (value) RETURNS (); END;
- RANK: PROC (value) RETURNS (); END;
- SOURCEFILE: PROC (value) RETURNS (); END;
- SOURCELINE: PROC (value) RETURNS (); END;
- STACKADDR: PROC (value) RETURNS (); END;
- STRING: PROC (value) RETURNS (); END;
- SYSTEM: PROC () RETURNS (); END;
- SYSPARM: PROC () RETURNS (); END;
- THREADID: PROC (value) RETURNS (); END;
- UNHEX: PROC (value) RETURNS (); END;
- UNSPEC: PROC (value) RETURNS (); END;
- UUID: PROC (value) RETURNS (); END;
- UUID4: PROC (value) RETURNS (); END;
- VALID: PROC (value) RETURNS (); END;
+ /**
+  * INDICATORS returns a FIXED BIN value giving the number of
+  * the elements at the next logical level in a structure \`x\`.
+  *
+  * INDICATORS(x) always forms a restricted expression.
+  *
+  * The INDICATORS built-in function is useful in declaring an
+  * indicator array for use in SQL statements.
+  *
+  * @param {ANY<STRUCTURE>} x Expression. x must be a structure
+  *   reference.
+  * @returns {FIXED BINARY} Number of elements at the next
+  *   logical level in the structure.
+  */
+ INDICATORS: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<STRUCTURE>;
+ END;
+ /**
+  * INLIST returns a bit(1) value that indicates whether \`x\` is
+  * equal to any of the remaining arguments.
+  *
+  * INLIST(x,y1,y2,y3,...,yn) is equivalent to (x=y1) | (x=y2)
+  * | (x=y3) | ... | (x=yn), where n is in the range 2 to 511
+  * inclusive.
+  *
+  * After the evaluation of the first argument \`x\`, the
+  * evaluation of the remaining arguments must not change the
+  * address or value of the first argument. This condition is
+  * true when all but the first argument are constants. It is
+  * also true if the second and subsequent arguments do not rely
+  * on the invocation of any user functions that change storage
+  * associated with the first argument.
+  *
+  * @param {ANY} x Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} y Expressions. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @returns {BIT(1)} Whether x is equal to any of the
+  *   remaining arguments.
+  */
+ INLIST: PROC (x, y) RETURNS (BIT(1));
+    DCL x ANY;
+    DCL y ANY LIST;
+ END;
+ /**
+  * ISJCLSYMBOL returns '1'B if the argument is a valid
+  * exported JCL symbol. Otherwise it returns '0'B.
+  *
+  * When GETJCLSYMBOL returns a null string, you can use the
+  * ISJCLSYMBOL built-in function to determine whether it is
+  * because the symbol is not an exported JCL symbol or because
+  * the symbol has been set to a null string value.
+  *
+  * @param {ANY<CHARACTER>} x Character expression. Specifies
+  *   the symbol name to be tested.
+  * @returns {BIT(1)} '1'B if x is a valid exported JCL
+  *   symbol, '0'B otherwise.
+  */
+ ISJCLSYMBOL: PROC (x) RETURNS (BIT(1));
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * ISMAIN() returns a '1'B if the procedure in which it is
+  * invoked has the OPTIONS(MAIN) attribute. Otherwise it
+  * returns a '0'B.
+  *
+  * @returns {BIT(1)} '1'B if the containing procedure has
+  *   OPTIONS(MAIN), '0'B otherwise.
+  */
+ ISMAIN: PROC() RETURNS (BIT(1));
+ END;
+ /**
+  * MAINNAME returns a CHARACTER string that is the name of the
+  * MAIN function on the current call stack.
+  *
+  * @returns {CHARACTER(*)} Name of the MAIN function on the
+  *   current call stack.
+  */
+ MAINNAME: PROC() RETURNS (CHARACTER(*));
+ END;
+ /**
+  * OMITTED returns a BIT(1) value that is '1'B if the
+  * parameter named \`x\` was omitted in the invocation to its
+  * containing procedure.
+  *
+  * Note: This argument must be declared as OPTIONAL in the
+  * corresponding ENTRY declaration in the calling code.
+  *
+  * @param {ANY} x Level-1 unsubscripted parameter with the
+  *   BYADDR attribute.
+  * @returns {BIT(1)} '1'B if the parameter was omitted,
+  *   '0'B otherwise.
+  */
+ OMITTED: PROC (x) RETURNS (BIT(1));
+    DCL x ANY;
+ END;
+ /**
+  * PACKAGENAME returns a nonvarying character string
+  * containing the name of the package in which it is invoked.
+  *
+  * If there is no package in the current compilation unit,
+  * PACKAGENAME returns the name of the outermost procedure.
+  *
+  * @returns {CHARACTER(*)} Name of the package in which the
+  *   function is invoked.
+  */
+ PACKAGENAME: PROC() RETURNS (CHARACTER(*));
+ END;
+ /**
+  * PLIRETV returns a FIXED BINARY(31,0) value that is the
+  * PL/I return code.
+  *
+  * The value of the PL/I return code is the most recent value
+  * specified by a CALL PLIRETC statement.
+  *
+  * @returns {FIXED BINARY(31)} The PL/I return code.
+  */
+ PLIRETV: PROC() RETURNS (FIXED BINARY(31));
+ END;
+ /**
+  * POPCNT returns a FIXED BIN value holding in each byte the
+  * number of bits equal to 1 in the corresponding byte of x.
+  *
+  * The result has the same precision as \`x\`.
+  *
+  * The result has the same (UN)SIGNED attribute as \`x\`.
+  *
+  * See the following examples of using POPCNT:
+  *
+  * - POPCNT( '01020304'xn ) returns '01010201'xn.
+  * - POPCNT( '05060708'xn ) returns '02020301'xn.
+  * - If \`x\` has the attributes FIXED BIN(31),
+  * ISRL(POPCNT(x)*'01010101'xn,24) returns the number of bits
+  * equal to 1 in x.
+  *
+  * On z/OS, the POPCNT(\`x\`) built-in function requires an
+  * ARCH level of 9 or higher.
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have the
+  *   attributes REAL FIXED BIN with a scale factor of zero.
+  * @returns {ANY<NUMBER>} FIXED BIN value with the bit count
+  *   per byte; same precision as \`x\`.
+  */
+ POPCNT: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * PRESENT(x) returns a BIT(1) value that is '1'B if the
+  * parameter \`x\` was present in the invocation of its
+  * containing procedure.
+  *
+  * Note: This argument must be declared as OPTIONAL in the
+  * corresponding ENTRY declaration in the calling code.
+  *
+  * @param {ANY} x Level-1 unsubscripted BYADDR parameter.
+  * @returns {BIT(1)} '1'B if the parameter was present,
+  *   '0'B otherwise.
+  */
+ PRESENT: PROC (x) RETURNS (BIT(1));
+    DCL x ANY;
+ END;
+ /**
+  * PROCEDURENAME returns a nonvarying character string
+  * containing the name of the procedure in which this
+  * built-in function is invoked.
+  *
+  * Abbreviation: PROCNAME
+  *
+  * PROCEDURENAME always returns the leftmost name of a
+  * multiple label specification, regardless of which name
+  * appears in the CALL or GOTO statement.
+  *
+  * @returns {CHARACTER(*)} Name of the current procedure.
+  */
+ PROCEDURENAME: PROCNAME: PROC() RETURNS (CHARACTER(*));
+ END;
+ /**
+  * PUTENV adds new environment variables or modifies the
+  * values of existing environment variables.
+  *
+  * PUTENV returns true ('1'B) if successful and false ('0'B)
+  * otherwise.
+  *
+  * @param {ANY<CHARACTER>} string A character string of the
+  *   form \`envvarname=value\`.
+  * @returns {BIT(1)} '1'B if successful, '0'B otherwise.
+  */
+ PUTENV: PROC (string) RETURNS (BIT(1));
+    DCL string ANY<CHARACTER>;
+ END;
+ /**
+  * RANK returns the integer value corresponding to a character
+  * or widechar.
+  *
+  * If x is character, RANK(x) is defined as
+  * index(collate(),x)-1, and RANK is the inverse of CHARVAL.
+  *
+  * If xx is widechar, RANK(x) is equal to UNSPEC(y) where y
+  * is x stored in bigendian format.
+  *
+  * @param {ANY<CHARACTER>} x Must have the attributes CHAR (1)
+  *   NONVARYING or WCHAR (1) NONVARYING.
+  * @returns {ANY<NUMBER>} Integer value corresponding to
+  *   the character.
+  */
+ RANK: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * SOURCEFILE returns a nonvarying character string containing
+  * the name of the file that contains the statement where this
+  * function is invoked.
+  *
+  * The SOURCEFILE built-in function can be used in restricted
+  * expressions.
+  *
+  * The string returned is system dependent and should be used
+  * for tracing and debugging purposes only.
+  *
+  * @returns {CHARACTER(*)} Name of the source file containing
+  *   the invoking statement.
+  */
+ SOURCEFILE: PROC() RETURNS (CHARACTER(*));
+ END;
+ /**
+  * SOURCELINE returns a FIXED BINARY(31,0) value that is the
+  * line number of the statement where this function is
+  * invoked, within the file that contains that statement. If
+  * the statement extends over several source lines, the number
+  * returned is that of the line on which the statement starts.
+  *
+  * The SOURCELINE built-in function can be used in restricted
+  * expressions.
+  *
+  * @returns {FIXED BINARY(31)} Line number of the invoking
+  *   statement.
+  */
+ SOURCELINE: PROC() RETURNS (FIXED BINARY(31));
+ END;
+ /**
+  * STACKADDR returns the address of the dynamic save area
+  * (DSA) for the procedure (or BEGIN block) in which it is
+  * invoked.
+  *
+  * If the STACKADDR built-in function is used to change
+  * storage, unpredictable results may occur.
+  *
+  * @returns {ANY<LOCATOR>} Address of the DSA for the current
+  *   procedure or BEGIN block.
+  */
+ STACKADDR: PROC() RETURNS (ANY<LOCATOR>);
+ END;
+ /**
+  * STRING returns a string that is the concatenation of all
+  * the elements of \`x\`.
+  *
+  * STRING is restricted as follows:
+  *
+  * - It cannot be applied to unions or structures containing
+  * unions.
+  * - If applied to a scalar, the scalar must be a bit string,
+  * a character string, a pictured character string, a pictured
+  * numeric string, a graphic string, a uchar string, or a
+  * widechar string.
+  * - If applied to a structure, the structure must contain no
+  * padding bytes and the elements of the structure must be
+  * either:
+  *   - All unaligned bit strings
+  *   - All character strings, each of which is either a
+  *   character string, a pictured string, or a pictured
+  *   numeric string
+  *   - All graphic strings
+  *   - All uchar strings
+  *   - All widechar strings
+  * - If applied to an array, all elements in the array are
+  * subject to the restrictions as described previously.
+  *
+  * The type of string returned has the same type as one of
+  * these base elements with these exceptions:
+  *
+  * - If any of the base elements are PICTUREs, then the type
+  * returned has CHARACTER type.
+  * - If any of the base elements have the GRAPHIC type, then
+  * the type returned is GRAPHIC unless the
+  * STRINGOFGRAPHIC compiler options specifies that it should
+  * be CHARACTER.
+  *
+  * The following are valid STRING targets:
+  *
+  * \`\`\`
+  *   dcl
+  *     1 A,
+  *       2 B  bit(8),
+  *       2 C  bit(2),
+  *       2 D  bit(8);
+  *
+  *   dcl
+  *     1 W,
+  *       2 X  char(2),
+  *       2 Y  pic'aa',
+  *       2 Z  char(6);
+  *
+  *   dcl
+  *     1 W,
+  *       2 X  char(2),
+  *       2 Y  pic'99',
+  *       2 Z char(6);
+  * \`\`\`
+  *
+  * The following are invalid STRING targets:
+  *
+  * \`\`\`
+  *   dcl
+  *     1 A,
+  *       2 B  bit(8) aligned,
+  *       2 C  bit(2),
+  *       2 D  bit(8) aligned;
+  * \`\`\`
+  *
+  * @param {ANY} x Aggregate or element reference.
+  * @returns {ANY<CHARACTER>} Concatenation of all elements
+  *   of x.
+  */
+ STRING: PROC (x) RETURNS (ANY<CHARACTER>);
+    DCL x ANY;
+ END;
+ /**
+  * SYSTEM returns a FIXED BIN(31,0) value that is the return
+  * value from the command processor when it is invoked with
+  * the command contained in \`x\`.
+  *
+  * @param {ANY<CHARACTER>} [x] Must have a computational type
+  *   and should have character type. If not, \`x\` is converted
+  *   to character.
+  * @returns {FIXED BINARY(31)} Return value from the command
+  *   processor.
+  */
+ SYSTEM: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY<CHARACTER> OPTIONAL;
+ END;
+ SYSPARM: PROC() RETURNS (CHARACTER(*));
+ END;
+ /**
+  * THREADID (short for thread identifier) returns a POINTER
+  * value that is the address of the operating system thread
+  * identifier for an attached thread.
+  *
+  * The value returned by this built-in function can be used to
+  * invoke system functions, such as DosSetPriority, on
+  * Windows, or posix functions on z/OS.
+  *
+  * To obtain the system thread identifier for the currently
+  * executing thread, you must invoke the function appropriate
+  * for the platform on which that thread is running. So, on
+  * Windows, you should invoke GetCurrentThreadId, and on
+  * z/OS, you should invoke pthread_self.
+  *
+  * @param {ANY<TASK>} x Task reference. The value of \`x\`
+  *   should have been set previously in the THREAD option of
+  *   the ATTACH statement.
+  * @returns {POINTER} Address of the OS thread identifier for
+  *   the attached thread.
+  */
+ THREADID: PROC (x) RETURNS (POINTER);
+    DCL x ANY<TASK>;
+ END;
+ /**
+  * UNHEX returns a character string that is the decoded value
+  * of a hex input string.
+  *
+  * UNHEX(x) is the reverse of HEX(y), and UNHEX(x, c) is the
+  * reverse of HEX(y, c).
+  *
+  * If x contains non-hex characters, the CONVERSION condition
+  * will be raised.
+  *
+  * @param {ANY<CHARACTER>} x An expression that must have
+  *   CHARACTER type.
+  * @param {CHARACTER(1)} [c] An expression that must have
+  *   CHARACTER(1) NONVARYING type. If specified, it is the
+  *   character that separates every 8 characters in x.
+  * @returns {CHARACTER(*)} Decoded value of the hex input
+  *   string.
+  */
+ UNHEX: PROC (x, c) RETURNS (CHARACTER(*));
+    DCL x ANY<CHARACTER>;
+    DCL c CHARACTER(1) OPTIONAL;
+ END;
+ /**
+  * UNSPEC returns a bit string that is the internal coded form
+  * of \`x\`.
+  *
+  * The UNSPEC built-in function is subject to the following
+  * rules:
+  *
+  * - Under the compiler option USAGE( UNSPEC(IBM) ),
+  *   - UNSPEC of structure references and expressions is not
+  *   allowed.
+  *   - UNSPEC of an array yields an array of BIT.
+  * - Under the compiler option USAGE( UNSPEC(ANS) ),
+  *   - For aggregates, UNSPEC is allowed only for those that
+  *   contain no padding bytes or bits.
+  *   - The result will always be BIT scalar. UNSPEC of an
+  *   array does not yield an array of BIT.
+  *
+  * Note: Use of UNSPEC can affect the portability of your
+  * program.
+  *
+  * The length of the returned bit string depends on the
+  * attributes of \`x\`, as shown in Table 1.
+  *
+  * | Bit string length | Attribute of \`x\` |
+  * | --- | --- |
+  * | 8 | SIGNED FIXED BINARY(p,q), 1 <= p <= 7 UNSIGNED FIXED
+  * BINARY(p,q), 1 <= p <= 8 ORDINAL SIGNED PRECISION(p), 1
+  * <= p <= 7 ORDINAL UNSIGNED PRECISION(p), 1 <= p <= 8 |
+  * | 16 | SIGNED FIXED BINARY(p,q), 8 <= p <= 15 UNSIGNED
+  * FIXED BINARY(p,q), 9 <= p <= 16 ORDINAL SIGNED
+  * PRECISION(p), 8 <= p <= 15 ORDINAL UNSIGNED PRECISION(p),
+  * 9 <= p <= 16 |
+  * | 32 | ENTRY LIMITED, under LP(32) SIGNED FIXED
+  * BINARY(p,q), 16 <= p <= 31 UNSIGNED FIXED BINARY(p,q),
+  * 17 <= p <= 32 ORDINAL SIGNED PRECISION(p), 16 <= p <= 31
+  * ORDINAL UNSIGNED PRECISION(p), 17 <= p<= 32 FLOAT
+  * BINARY(p), 1 <= p <= 21 FLOAT DECIMAL(p), 1 <= p <= 6 if
+  * not DFP FLOAT DECIMAL(p), 1 <= p <= 7 if DFP OFFSET,
+  * under OFFSETSIZE(4) FILE constant or variable, under
+  * LP(32) POINTER(32) HANDLE(32) |
+  * | 64 | ENTRY LIMITED, under LP(64) SIGNED FIXED BINARY(p),
+  * 31 < p UNSIGNED FIXED BINARY(p), 32 < p FLOAT BINARY(p),
+  * 21 < p < 53 FLOAT DECIMAL(p), 7 <= p <= 16 if not DFP
+  * FLOAT DECIMAL(p), 8 <= p <= 16 if DFP OFFSET, under
+  * OFFSETSIZE(8) FILE constant or variable, under LP(64)
+  * LABEL constant or variable ENTRY constant or variable
+  * POINTER(64) HANDLE (64) |
+  * | 128 | FLOAT BINARY(p), 54 <= p FLOAT DECIMAL(p),
+  * 17 <= p TASK |
+  * | n | BIT(n) |
+  * | 8*n | CHARACTER(n) PICTURE (with character-string-value
+  * length of \`n\`) |
+  * | 16*n | GRAPHIC(n) WIDECHAR(n) |
+  * | 32*n | UCHAR(n) |
+  * | 16+n | BIT(n) VARYING where \`n\` is the maximum length
+  * of \`x\` |
+  * | 32+n | BIT(n) VARYING4 where \`n\` is the maximum length
+  * of \`x\` |
+  * | 16+(8*n) | CHARACTER(n) VARYING where \`n\` is the
+  * maximum length of \`x\` |
+  * | 32+(8*n) | CHARACTER(n) VARYING4 where \`n\` is the
+  * maximum length of \`x\` |
+  * | 8+(8*n) | CHARACTER(n) VARYINGZ where \`n\` is the
+  * maximum length of \`x\` |
+  * | 16+(16*n) | GRAPHIC(n) VARYING where \`n\` is the maximum
+  * length of \`x\` WIDECHAR(n) VARYING where \`n\` is the
+  * maximum length of \`x\` |
+  * | 32+(16*n) | GRAPHIC(n) VARYING4 where \`n\` is the
+  * maximum length of \`x\` WIDECHAR(n) VARYING4 where n is
+  * the maximum length of \`x\` |
+  * | 8+(16*n) | GRAPHIC(n) VARYINGZ where \`n\` is the maximum
+  * length of \`x\` WIDECHAR(n) VARYINGZ where \`n\` is the
+  * maximum length of \`x\` |
+  * | 16+(32*n) | UCHAR(n) VARYING where \`n\` is the maximum
+  * length of \`x\` |
+  * | 32+(32*n) | UCHAR(n) VARYING4 where \`n\` is the maximum
+  * length of \`x\` |
+  * | 8+(32*n) | UCHAR(n) VARYINGZ where \`n\` is the maximum
+  * length of \`x\` |
+  * | 8*(n+16) | AREA (n) under LP(32) |
+  * | 8*(n+32) | AREA (n) under LP(64) |
+  * | 8*FLOOR(n) | FIXED DECIMAL (p,q) where n = (p+2)/2 |
+  *
+  * Alignment and storage requirements for program-control
+  * data can vary across supported systems.
+  *
+  * If \`x\` is a VARYING or VARYING4 string, its length prefix
+  * is included in the returned bit string. If \`x\` is an
+  * area, the returned value includes the control information.
+  *
+  * @param {ANY} x Scalar, array, structure, or union
+  *   expression.
+  * @returns {BIT(*)} Internal coded form of \`x\`.
+  */
+ UNSPEC: PROC (x) RETURNS (BIT(*));
+    DCL x ANY;
+ END;
+ /**
+  * UUID returns a CHARACTER(36) string that is a universally
+  * unique identifier that is in version 5 format.
+  *
+  * The UUID generated by PL/I is a version 5 format UUID per
+  * RFC 4122.
+  *
+  * The name-space information used to construct the UUID
+  * consists of:
+  *
+  * 1. System information:
+  *   - CPU count
+  *   - MVS name
+  *   - storage size
+  *   - model and serial
+  * 2. Runtime 64 bit TOD value.
+  * 3. Job name or, if possible, the PID.
+  *
+  * The UUID is a SHA1 hash of the above.
+  *
+  * If the USAGE(UUID(LOWER)) compiler option is in effect,
+  * all alphabetic characters in the returned string will be
+  * in lowercase. If the USAGE(UUID(UPPER)) compiler option is
+  * in effect, all alphabetic characters in the returned
+  * string will be in uppercase.
+  *
+  * @returns {CHARACTER(36)} A version 5 universally unique
+  *   identifier.
+  */
+ UUID: PROC() RETURNS (CHARACTER(36));
+ END;
+ /**
+  * UUID4 returns a CHARACTER(36) string that is a version 4
+  * universally unique identifier.
+  *
+  * The UUID4 generated by PL/I is a version 4 UUID per RFC
+  * 4122. It is meant for generating UUIDs from truly-random
+  * or pseudo-random numbers.
+  *
+  * If the USAGE(UUID(LOWER)) compiler option is in effect,
+  * all alphabetic characters in the returned string will be
+  * in lowercase. If the USAGE(UUID(UPPER)) compiler option is
+  * in effect, all alphabetic characters in the returned
+  * string will be in uppercase.
+  *
+  * @returns {CHARACTER(36)} A version 4 universally unique
+  *   identifier.
+  */
+ UUID4: PROC() RETURNS (CHARACTER(36));
+ END;
+ /**
+  * VALID returns a BIT(1) value that indicates if the
+  * contents of a reference are valid for its data type.
+  *
+  * VALID(x) returns '1'b if:
+  *
+  * - x is PICTURE or WIDEPIC and its contents are valid for
+  * x's picture specification.
+  * - x is FIXED DECIMAL and the data in x is valid packed
+  * decimal data.
+  * - x is ORDINAL and the data in x is one of the defined
+  * values for that ordinal type.
+  *
+  * Otherwise it returns '0'b.
+  *
+  * @param {ANY} x Reference with either PICTURE, FIXED DEC,
+  *   or ORDINAL type.
+  * @returns {BIT(1)} '1'b if the contents are valid for the
+  *   data type, '0'b otherwise.
+  */
+ VALID: PROC (x) RETURNS (BIT(1));
+    DCL x ANY;
+ END;
  VALIDVALUE: PROC (value) RETURNS (); END;
  WCHARVAL: PROC (value) RETURNS (); END;
 
