@@ -45,9 +45,16 @@
  D = HEXIMAGE8(P1, 1, "x");
  A = MEMCONVERT(P1, 8, 1, P2, 16, 1, 1);
  A = MEMCOLLAPSE(P1, 8, P2, 16, "1", 1);
+ A = MEMCU12(P1, 1, P2, 2);
+ A = MEMCU14(P1, 1, P2, 2);
+ A = MEMCU21(P1, 1, P2, 2);
+ A = MEMCU24(P1, 1, P2, 2);
+ A = MEMCU41(P1, 1, P2, 2);
+ A = MEMCU42(P1, 1, P2, 2);
 
-
-
+ //TODO overloads
+ A = MEMINDEX(P1, 1, "x");
+ A = MEMINDEX(P1, 1, P2, 2);
 
  //TODO ARGCOUNT bei MemberCall
  //TODO HOVER comment docu for CallStatement

@@ -1502,25 +1502,228 @@ export const Builtins =
     DCL i ANY<NUMBER> OPTIONAL;
  END;
 
- MEMCU12: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMCU12 converts the data in a source buffer from UTF-8 to
+  * UTF-16, stores the result in a target buffer, and returns a
+  * size_t 1 value that indicates the number of bytes that are
+  * written to the target buffer.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If the target buffer is too small or if the source UTF-8 is
+  * invalid, a value of -1 is returned.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer, or -1 if the target buffer
+  *   is not large enough or if the source UTF-8 is invalid.
+  */
+ MEMCU12: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
  END;
 
- MEMCU14: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMCU14 converts the data in a source buffer from UTF-8 to
+  * UTF-32, stores the result in a target buffer, and returns a
+  * size_t 1 value that indicates the number of bytes that are
+  * written to the target buffer.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If the target buffer is too small or if the source UTF-8 is
+  * invalid, a value of -1 is returned.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @return {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer, or -1 if the target buffer
+  *   is not large enough or if the source UTF-8 is invalid.
+  */
+ MEMCU14: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
  END;
 
- MEMCU21: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMCU21 converts the data in a source buffer from UTF-16 to
+  * UTF-8, stores the result in a target buffer, and returns a
+  * size_t 1 value that indicates the number of bytes that are
+  * written to the target buffer.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If the target buffer is too small, a value of -1 is returned.
+  * The source must contain valid UTF-16, and the behavior of this
+  * function when it does not is unspecified.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer, or -1 if the target buffer
+  *   is not large enough or if the source UTF-16 is invalid.
+  */
+ MEMCU21: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
  END;
 
- MEMCU24: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMCU24 converts the data in a source buffer from UTF-16 to
+  * UTF-32, stores the result in a target buffer, and returns a
+  * size_t 1 value that indicates the number of bytes that are
+  * written to the target buffer.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If the target buffer is too small, a value of -1 is returned.
+  * The source must contain valid UTF-16, and the behavior of this
+  * function when it does not is unspecified.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer, or -1 if the target buffer
+  *   is not large enough or if the source UTF-16 is invalid.
+  */
+ MEMCU24: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
  END;
 
- MEMCU41: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMCU41 converts the data in a source buffer from UTF-32 to
+  * UTF-8, stores the result in a target buffer, and returns a
+  * size_t 1 value that indicates the number of bytes that are
+  * written to the target buffer.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If the target buffer is too small or if the source UTF-32 is
+  * invalid, a value of -1 is returned.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer, or -1 if the target buffer
+  *   is not large enough or if the source UTF-32 is invalid.
+  */
+ MEMCU41: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
  END;
 
- MEMCU42: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMCU42 converts the data in a source buffer from UTF-32 to
+  * UTF-16, stores the result in a target buffer, and returns a
+  * size_t 1 value that indicates the number of bytes that are
+  * written to the target buffer.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If the target buffer is too small or if the source UTF-32 is
+  * invalid, a value of -1 is returned.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer, or -1 if the target buffer
+  *   is not large enough or if the source UTF-32 is invalid.
+  */
+ MEMCU42: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
  END;
 
- MEMINDEX: PROC (buffer, value) RETURNS ();
+  /**
+  * MEMINDEX returns a size_t 1 value that indicates the starting
+  * position within a buffer of a specified substring.
+  *
+  * With three arguments, the function's syntax is as follows:
+  *
+  * With four arguments, the function's syntax is as follows:
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * With three arguments, the target string-expression must have
+  * type CHARACTER (including PICTURE), GRAPHIC, UCHAR, or WIDECHAR.
+  * The buffer length is interpreted as the number of units of that
+  * string type.
+  *
+  * With four arguments, the buffer lengths specify a number of
+  * bytes and the search performed is a character search.
+  *
+  * For a VARYING, VARYING4, or VARYINGZ string \`X\` and string
+  * \`Y\`, the function MEMINDEX(ADDRDATA(X), LENGTH(X), Y) will
+  * return the same value as INDEX(X, Y).
+  *
+  * **Example**
+  * 
+  * \`\`\`
+  *   dcl cb(128*1024) char(1);
+  *   dcl wb(128*1024) widechar(1);
+  *   dcl pos fixed bin(31);
+  *   // 128K bytes searched for the character string 'test'
+  *   pos = memindex( addr(cb), stg(cb), 'test' );
+  *   // 256K bytes searched for the string 'test' as widechar
+  *   pos = memindex( addr(wb), stg(wb), wchar('test') );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Address of buffer to be searched.
+  * @param {ANY<NUMBER>} n Length of buffer to be searched.
+  * @param {ANY<STRING>} x String-expression to use as the target of the
+  *   search.
+  * @param {ANY<LOCATOR>} p Address of first buffer to be searched.
+  * @param {ANY<NUMBER>} n Length of first buffer to be searched.
+  * @param {ANY<LOCATOR>} q Address of second buffer to use as the target of
+  *   the search.
+  * @param {ANY<NUMBER>} m Length of second buffer to use as the target of
+  *   the search.
+  * @returns {ANY<NUMBER>} value that indicates the starting position within
+  *   the buffer of a specified substring, or zero if the substring is not
+  *   found.
+  */
+ //TODO has overloads
+ MEMINDEX: PROC () RETURNS ();
  END;
 
  MEMREPLACE: PROC (buffer, value, replacement) RETURNS ();
