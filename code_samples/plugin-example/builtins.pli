@@ -1,5 +1,7 @@
  DCL (A,B,C) FIXED;
  DCL (D, E, F) CHAR;
+ DCL G(100) FIXED;
+ DCL BITS BIT(32);
 
  A = ABS(B);
  A = CEIL(B);
@@ -17,7 +19,16 @@
  A = REAL(C);
  A = REM(B, C);
  A = ROUND(B, C);
-
+ A = ROUNDAWAYFROMZERO(B, C);
+ A = ROUNDTOEVEN(B, C);
+ A = SIGN(-1);
+ A = TRUNC(B);
+ BITS = ALL(G);
+ BITS = ANY(G);
+ A = DIMENSION(G, 1);
+ A = HBOUND(G, 1);
+ A = HBOUNDACROSS(G);
+ A = INARRAY(1, G);
 
 
 

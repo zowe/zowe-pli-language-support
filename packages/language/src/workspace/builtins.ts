@@ -706,36 +706,295 @@ export const Builtins =
    DECLARE n ANY<NUMBER>;
  END;
 
- // ROUNDDEC is a deprecated name for ROUNDAWAYFROMZERO
- ROUNDAWAYFROMZERO: ROUNDDEC: PROC (value) RETURNS ();
+ /**
+  * ROUNDAWAYFROMZERO returns the value of \`x\` rounded at a digit
+  * specified by \`n\`, following the rule of round half away from
+  * zero. The result has the mode, base, and scale of \`x\`.
+  *
+  * Note: The ROUNDAWAYFROMZERO built-in function used to be named
+  * as ROUNDDEC.
+  *
+  * If \`x\` is FIXED DECIMAL or PICTURE FIXED DECIMAL,
+  * ROUNDAWAYFROMZERO produces the same results as ROUND.
+  *
+  * If \`x\` is FLOAT DECIMAL or PICTURE FLOAT DECIMAL and the
+  * FLOAT(DFP) compiler option is in effect, ROUNDAWAYFROMZERO
+  * rounds \`x\` at the nth decimal place rather than at the nth
+  * digit (as would the ROUND built-in function in accordance with
+  * the ANSI definition). For example, these successive roundings of
+  * 3141.592653589793d0 would produce the following values:
+  * 
+  * \`\`\`
+  *     dcl x float dec(16) init( 3141.592653589793d0 );
+  * 
+  *     display( fixed(roundawayfromzero(x,1),15,7) );  // 3141.6000000
+  *     display( fixed(roundawayfromzero(x,2),15,7) );  // 3141.5900000
+  *     display( fixed(roundawayfromzero(x,3),15,7) );  // 3141.5930000
+  *     display( fixed(roundawayfromzero(x,4),15,7) );  // 3141.5927000
+  *     display( fixed(roundawayfromzero(x,5),15,7) );  // 3141.5926500
+  *     display( fixed(roundawayfromzero(x,6),15,7) );  // 3141.5926540
+  *     display( fixed(roundawayfromzero(x,7),15,7) );  // 3141.5926536
+  * \`\`\`
+  *
+  * ROUNDAWAYFROMZERO complements the CEIL, FLOOR, and TRUNC
+  * built-in functions.
+  * 
+  * - ROUNDAWAYFROMZERO(x,0) rounds away from zero.
+  * - CEIL(x) rounds toward positive infinity.
+  * - FLOOR(x) rounds toward negative infinity.
+  * - TRUNC(x) rounds toward zero.
+  *
+  * @param {ANY<NUMBER>} x A real expression that is FIXED DECIMAL or 
+  *   DFP FLOAT. If \`x\` is negative, the absolute value is rounded and
+  *   the sign is restored.
+  * @param {ANY<NUMBER>} n An optionally-signed integer that specifies
+  *   the digit at which rounding is to occur.
+  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified
+  *   by \`n\`, following the rule of round half away from zero.
+  */
+ ROUNDAWAYFROMZERO: ROUNDDEC: PROC (x, n) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
+   DECLARE n ANY<NUMBER>;
  END;
 
- ROUNDTOEVEN: PROC (value) RETURNS ();
+ /**
+  * ROUNDTOEVEN returns the value of \`x\` rounded at a digit
+  * specified by \`n\` following the rounding rule of round half to
+  * even.
+  *
+  * The ROUNDTOEVEN built-in function is basically same as the
+  * ROUNDAWAYFROMZERO built-in function except that the
+  * ROUNDAWAYFROMZERO function rounds ties away from the zero. For
+  * example, under the ROUNDAWAYFROMZERO function, 24.5 gets rounded
+  * to 25 and -24.5 gets rounded to -25. However, under the
+  * ROUNDTOEVEN function, both 23.5 and 24.5 get rounded to 24 and
+  * both -23.5 and -24.5 get rounded to -24.
+  *
+  * @param {ANY<NUMBER>} x A real expression that is FIXED DECIMAL or
+  *   DFP FLOAT. If \`x\` is negative, the nearest even value is rounded
+  *   and the sign is restored.
+  * @param {ANY<NUMBER>} n An optionally-signed integer that specifies
+  *   the digit at which rounding is to occur.
+  * @return {ANY<NUMBER>} value of \`x\` rounded at a digit specified by
+  *   \`n\` following the rounding rule of round half to even.
+  */
+ ROUNDTOEVEN: PROC (x, n) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
+   DECLARE n ANY<NUMBER>;
  END;
 
- SIGN: PROC (value) RETURNS ();
+ /**
+  * SIGN returns an unscaled REAL FIXED BINARY value that indicates
+  * whether \`x\` is positive, zero, or negative.
+  *
+  * The returned value is given by:
+  *
+  * | Value of x | Value Returned |
+  * | --- | --- |
+  * | x > 0 | +1 |
+  * | x = 0 | 0 |
+  * | x < 0 | -1 |
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * @param {ANY<NUMBER>} x Real expression.
+  * @returns {ANY<NUMBER>} unscaled REAL FIXED BINARY value that 
+  *   indicates whether \`x\` is positive, zero, or negative.
+  */
+ SIGN: PROC (x) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
  END;
 
- TRUNC: PROC (value) RETURNS ();
+ /**
+  * TRUNC returns an integer value that is the truncated value of
+  * \`x\`. If \`x\` is positive or 0, this is the largest integer
+  * value less than or equal to \`x\`. If \`x\` is negative, this is
+  * the smallest integer value greater than or equal to \`x\`.
+  *
+  * The base, mode, scale, and precision of the result match those
+  * of \`x\`. Except when x is fixed-point with precision (\`p,q\`),
+  * the precision of the result is given by:
+  * 
+  * \`\`\`
+  *   (min(N,max(p-q+1,1)),0)
+  * \`\`\`
+  *
+  * where N is the maximum number of digits allowed.
+  *
+  * If the expression \`x\` has the attributes FIXED BIN(\`p,q\`)
+  * but does not have the form above, then \`q\` must be positive.
+  *
+  * @param {ANY<NUMBER>} x Real expression.
+  * @return {ANY<NUMBER>} integer value that is the truncated value of
+  *  \`x\`
+  */
+ TRUNC: PROC (x) RETURNS (ANY<NUMBER>);
+   DECLARE x ANY<NUMBER>;
  END;
 
  /* Array handling functions */
- ALL: PROC (array) RETURNS ();
+ /**
+  * ALL returns a bit string in which each bit is 1 if the
+  * corresponding bit in each element of \`x\` exists and is 1. The
+  * length of the result is equal to that of the longest element.
+  *
+  * @param {ANY(*)} x Computational array expression. If \`x\` is not
+  *   a bit string array, then \`x\` is converted to a bit string
+  *   array.
+  * @return {BIT(*)} bit string in which each bit is 1 if the
+  *   corresponding bit in each element of \`x\` exists and is 1
+  */
+ ALL: PROC (x) RETURNS (BIT(*));
+   DCL x ANY(*);
  END;
 
- ANY: PROC (array) RETURNS ();
+ /**
+  * ANY returns a bit string in which each bit is 1 if the
+  * corresponding bit in any element of \`x\` exists and is 1. The
+  * length of the result is equal to that of the longest element.
+  *
+  * @param {ANY(*)} x Computational array expression. If \`x\` is not
+  *   a bit string array, then \`x\` is converted to a bit string
+  *   array.
+  * @return {BIT(*)} bit string in which each bit is 1 if the
+  *   corresponding bit in any element of \`x\` exists and is 1
+  */
+ ANY: PROC (x) RETURNS (BIT(*));
+   DCL x ANY(*);
  END;
 
- DIMENSION: DIM: PROC (array) RETURNS ();
+ /**
+  * DIMENSION returns a FIXED BINARY value that specifies the
+  * current extent of dimension \`y\` of \`x\`.
+  *
+  * Abbreviation: DIM
+  *
+  * If \`y\` exceeds the number of dimensions of \`x\`, the
+  * DIMENSION function returns an undefined value.
+  *
+  * Under the CMPAT(V3) compiler option, DIMENSION returns a FIXED
+  * BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
+  * options, DIMENSION returns a FIXED BIN(31) value.
+  *
+  * Using LBOUND and HBOUND instead of DIMENSION is recommended.
+  *
+  * @param {ANY(*)} x Array reference. \`x\` must not have less than
+  *   \`y\` dimensions.
+  * @param {ANY<NUMBER>} [y] Expression specifying a particular dimension of
+  *   \`x\`. If necessary, \`y\` is converted to a FIXED
+  *   BINARY(31,0). \`y\` must be greater than or equal to 1. If
+  *   \`y\` is not supplied, it defaults to 1.
+  *
+  *   \`y\` can be omitted only if the array is one-dimensional.
+  * 
+  * @returns {ANY<NUMBER>} FIXED BINARY value that specifies the current
+  *   extent of dimension \`y\` of \`x\`
+  */
+ DIMENSION: DIM: PROC (x, y) RETURNS ();
+   DCL x ANY(*);
+   DCL y ANY<NUMBER> OPTIONAL;
  END;
 
- HBOUND: PROC (array) RETURNS ();
+ /**
+  * HBOUND returns a FIXED BINARY value that specifies the current
+  * upper bound of dimension \`y\` of \`x\`.
+  *
+  * Under the CMPAT(V3) compiler option, HBOUND returns a FIXED
+  * BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
+  * options, HBOUND returns a FIXED BIN(31) value.
+  *
+  * @param {ANY(*)} x Array reference. \`x\` must not have less than
+  *   \`y\` dimensions.
+  * @param {ANY<NUMBER>} [y] Expression specifying a particular dimension of
+  *   \`x\`. If necessary, \`y\` is converted to FIXED BINARY(31,0).
+  *   \`y\` must be greater than or equal to 1. If \`y\` is not
+  *   supplied, it defaults to 1.
+  *
+  *   \`y\` can be omitted only if the array is one-dimensional.
+  * @returns {ANY<NUMBER>} FIXED BINARY value that specifies the current
+  *  upper bound of dimension \`y\` of \`x\`
+  */
+ HBOUND: PROC (x, y) RETURNS ();
+   DCL x ANY(*);
+   DCL y ANY<NUMBER> OPTIONAL;
  END;
 
- HBOUNDACROSS: PROC (array) RETURNS ();
+ /**
+  * HBOUNDACROSS returns a FIXED BINARY value that specifies the
+  * current upper bound of a DIMACROSS reference \`x\`.
+  *
+  * Under the CMPAT(V3) compiler option, HBOUNDACROSS returns a
+  * FIXED BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
+  * options, HBOUNDACROSS returns a FIXED BIN(31) value.
+  *
+  * **Example**
+  * 
+  * The following example shows the use of HBOUNDACROSS:
+  * 
+  * \`\`\`
+  *      dcl jx fixed bin(31);
+  * 
+  *      dcl
+  *        1 a,                            
+  *          2 b fixed bin,                
+  *          2 c fixed bin;                
+  *      dcl 1 xa( 100 ) like a dimacross; 
+  *     
+  *      ... 
+  * 
+  *      do jx = 1 to hboundacross(xa);  
+  *        a = xa, by dimacross(jx);     
+  *        ...                           
+  *      end;                            
+  * \`\`\`
+  *
+  * @param {ANY(*) DIMACROSS} x DIMACROSS reference
+  * @returns {FIXED BINARY} value that specifies the current upper
+  *   bound of a DIMACROSS reference \`x\`
+  */
+ HBOUNDACROSS: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY(*) DIMACROSS;
  END;
 
- INARRAY: PROC (array, value) RETURNS ();
+ /**
+  * INARRAY returns a BIT(1) value that indicates whether an
+  * expression is equal to any of the elements of an array.
+  *
+  * @param {ANY} x Scalar expression. x must have a type that is
+  *   comparable with the type of the elements of y.
+  * @param {ANY(*)} y Array expression.
+  *
+  *   When y is a reference to a one-dimensional STATIC
+  *   NONASSIGNABLE array with a simple INITIAL list, the compiler
+  *   assumes the elements of y are constant and processes INARRAY(
+  *   x, y ) as if it were INLIST( x, ... ) where ... denotes the
+  *   elements of y.
+  *
+  *   For example, given
+  *
+  *   \`\`\`
+  *   dcl countryCode char(2);
+  *   dcl ccs(3) char(2) static nonasgn init( 'AT', 'DE', 'CH' );
+  *   \`\`\`
+  *
+  *   then
+  *
+  *   \`\`\`
+  *   INARRAY( countryCode, ccs )
+  *   \`\`\`
+  *
+  *   is the same as
+  *
+  *   \`\`\`
+  *   INLIST( countryCode, 'AT', 'DE', 'CH' )
+  *   \`\`\`
+  * @returns {BIT(1)} value that indicates whether an expression is
+  *   equal to any of the elements of an array.
+  */
+ INARRAY: PROC (x, y) RETURNS (BIT(1));
+   DCL x ANY;
+   DCL y ANY(*);
  END;
 
  LBOUND: PROC (array) RETURNS ();
