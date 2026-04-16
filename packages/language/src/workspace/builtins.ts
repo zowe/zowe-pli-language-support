@@ -7580,34 +7580,932 @@ export const Builtins =
  TAN: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
  END;
- TAND: PROC (value) RETURNS (); END;
- TANH: PROC (value) RETURNS (); END;
+ /**
+  * TAND returns a real floating-point value that is an
+  * approximation of the tangent of \`x\`. It has the base and
+  * precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression whose value is in
+  *   degrees.
+  * @returns {FLOAT} An approximation of the tangent of \`x\`.
+  */
+ TAND: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * TANH returns a floating-point value that is an approximation
+  * of the hyperbolic tangent of \`x\`. It has the base, mode,
+  * and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression whose value is in radians.
+  * @returns {FLOAT} An approximation of the hyperbolic tangent
+  *   of \`x\`.
+  */
+ TANH: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
 
  /* Miscellaneous built-in functions */
- ALLCOMPARE: PROC (value) RETURNS (); END;
- BETWEEN: PROC (value) RETURNS (); END;
- BETWEENEXCLUSIVE: PROC (value) RETURNS (); END;
- BETWEENLEFTEXCLUSIVE: PROC (value) RETURNS (); END;
- BETWEENRIGHTEXCLUSIVE: PROC (value) RETURNS (); END;
- BINSEARCH: PROC (value) RETURNS (); END;
- BINSEARCHX: PROC (value) RETURNS (); END;
- BYTELENGTH: PROC (value) RETURNS (); END;
- CDS: PROC (value) RETURNS (); END;
+ /**
+  * ALLCOMPARE(x, y, z) returns a BIT(1) value that indicates
+  * the result of comparing all the elements of two structures.
+  *
+  * x and y must be similar structure references.
+  *
+  * The corresponding elements of x and y must be comparable.
+  *
+  * For example, ALLCOMPARE(x, y, 'lt') returns '1'B if every
+  * leaf element of x is less than the corresponding leaf
+  * element of y.
+  *
+  * @param {ANY<STRUCTURE>} x Structure reference.
+  * @param {ANY<STRUCTURE>} y Structure reference.
+  * @param {CHARACTER(2)} [z] A CHAR(2) constant. When
+  *   uppercased, the constant must have one of these values:
+  *   EQ, LE, LT, GT, GE, or NE. If you do not specify z, EQ
+  *   is the default value.
+  *
+  *   EQ Equal to LE Less than or equal to LT Less than GT
+  *   Greater than GE Greater than or equal to NE Not equal to
+  * @returns {BIT(1)} Result of comparing all elements of the
+  *   two structures.
+  */
+ ALLCOMPARE: PROC (x, y, z) RETURNS (BIT(1));
+    DCL x ANY<STRUCTURE>;
+    DCL y ANY<STRUCTURE>;
+    DCL z CHARACTER(2) OPTIONAL;
+ END;
+ /**
+  * BETWEEN returns a bit(1) value that indicates whether x is
+  * in the closed interval as defined by a and b.
+  *
+  * BETWEEN(x,a,b) is equivalent to the test (a <= x) &
+  * (x <= b). Thus, if any of the arguments are numeric, they
+  * must all be REAL.
+  *
+  * In BETWEEN(x,a,b), a <= b must be true, and if not, the
+  * program is in error and its behavior is undefined.
+  *
+  * @param {ANY} x Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} a Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} b Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @returns {BIT(1)} Whether x is in the closed interval
+  *   defined by a and b.
+  */
+ BETWEEN: PROC (x, a, b) RETURNS (BIT(1));
+    DCL x ANY;
+    DCL a ANY;
+    DCL b ANY;
+ END;
+ /**
+  * BETWEENEXCLUSIVE returns a bit(1) value that indicates
+  * whether the first argument x is in the open interval as
+  * defined by the second argument a and the third argument b.
+  *
+  * BETWEENEXCLUSIVE(x,a,b) is equivalent to the test (a < x )
+  * & (x < b). Therefore, if any of the arguments are numeric,
+  * they must be REAL.
+  *
+  * In BETWEENEXCLUSIVE(x,a,b) , a < b must be true, and if
+  * not, the program is in error and its behavior is undefined.
+  *
+  * @param {ANY} x Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} a Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} b Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @returns {BIT(1)} Whether x is in the open interval defined
+  *   by a and b.
+  */
+ BETWEENEXCLUSIVE: PROC (x, a, b) RETURNS (BIT(1));
+    DCL x ANY;
+    DCL a ANY;
+    DCL b ANY;
+ END;
+ /**
+  * BETWEENLEFTEXCLUSIVE returns a bit(1) value that indicates
+  * whether the first argument x is in the left-open interval
+  * as defined by the second argument a and the third argument
+  * b.
+  *
+  * BETWEENLEFTEXCLUSIVE(x,a,b) is equivalent to the test
+  * (a < x ) & (x <= b). Therefore, if any of the arguments
+  * are numeric, they must be REAL.
+  *
+  * In BETWEENLEFTEXCLUSIVE(x,a,b) , a < b must be true, and
+  * if not, the program is in error and its behavior is
+  * undefined.
+  *
+  * @param {ANY} x Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} a Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} b Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @returns {BIT(1)} Whether x is in the left-open interval
+  *   defined by a and b.
+  */
+ BETWEENLEFTEXCLUSIVE: PROC (x, a, b) RETURNS (BIT(1));
+    DCL x ANY;
+    DCL a ANY;
+    DCL b ANY;
+ END;
+ /**
+  * The BETWEENRIGHTEXCLUSIVE built-in function returns a
+  * bit(1) value that indicates whether the first argument x is
+  * in the right-open interval as defined by the second
+  * argument a and the third argument b.
+  *
+  * BETWEENRIGHTEXCLUSIVE(x,a,b) is equivalent to the test
+  * (a <= x ) & (x < b). Therefore, if any of the arguments
+  * are numeric, they must be REAL.
+  *
+  * In BETWEENRIGHTEXCLUSIVE(x,a,b) , a < b must be true, and
+  * if not, the program is in error and its behavior is
+  * undefined.
+  *
+  * @param {ANY} x Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} a Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @param {ANY} b Expression. Must be either all ORDINAL with
+  *   the same type or all computational.
+  * @returns {BIT(1)} Whether x is in the right-open interval
+  *   defined by a and b.
+  */
+ BETWEENRIGHTEXCLUSIVE: PROC (x, a, b) RETURNS (BIT(1));
+    DCL x ANY;
+    DCL a ANY;
+    DCL b ANY;
+ END;
+ /**
+  * BINSEARCH performs a binary search of an array for a
+  * specified key value by using a simple compare and returns a
+  * size_t value.
+  *
+  * The elements of the array x and the key value must satisfy
+  * one of the following:
+  *
+  * - Both must be computational and neither are COMPLEX
+  * - Both must be POINTERs
+  * - Both must be HANDLEs to the same structure type
+  * - Both must be ORDINALs of the same type
+  *
+  * The returned value is the relative index of the key value
+  * in this array. If the key value y is not found in the
+  * array, the returned size_t value is zero.
+  *
+  * The relative index is the index if the array has a lower
+  * bound of 1. Therefore, the true index would be calculated
+  * as: the returned value + LBOUND(x) \u2013 1. For example:
+  *
+  * - If the array x has a lower bound of 0 and upper bound of
+  * 11, then the returned value will range from 0 to 12
+  * inclusive. If the returned value is non-zero, then the true
+  * index of the found value is the returned value minus 1.
+  * - If the array x has a lower bound of -12 and an upper
+  * bound of 12, then the returned value will range from 0 to
+  * 25 inclusive. If the returned value is non-zero, the true
+  * index of the found value is the returned value minus 13.
+  *
+  * @param {ANY(*)} x An expression that specifies the target
+  *   array that would be searched within. x must be a
+  *   one-dimensional array of scalars and the elements of x
+  *   must be in ascending order. If x is an array of
+  *   NONVARYING BIT, it must be aligned.
+  * @param {ANY} y An expression that specifies the key value
+  *   to be searched for.
+  * @param {ANY<NUMBER>} [n] An expression that specifies the
+  *   index of the first array element to be examined. It
+  *   defaults to LBOUND(x).
+  * @param {ANY<NUMBER>} [m] An expression that specifies the
+  *   number of to-be-examined array elements. The counting
+  *   starts with the nth and defaults to HBOUND(x) \u2013 n + 1.
+  * @returns {FIXED BINARY(31)} Relative index of the key value
+  *   in the array, or zero if not found.
+  */
+ BINSEARCH: PROC (x, y, n, m) RETURNS (FIXED BINARY(31));
+    DCL x ANY(*);
+    DCL y ANY;
+    DCL n ANY<NUMBER> OPTIONAL;
+    DCL m ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * BINSEARCHX performs a binary search of an array for a
+  * specified key value by using a specified compare function
+  * and returns a size_t value.
+  *
+  * The function f must have the OPTLINK linkage and it is
+  * passed 2 POINTER BYVALUE arguments:
+  *
+  * - The address of an array element.
+  * - The address of the key value to be searched for (the
+  * value of p).
+  *
+  * The function f must have the attributes RETURNS( BYVALUE
+  * FIXED BINARY(31) ), and it must return one of the values
+  * -1, 0 or +1:
+  *
+  * - If the value of the array element is less than the value
+  * of the key element, then the returned value must be -1.
+  * - If the value of the array element is equal to the value
+  * of the key element, then the returned value must be 0.
+  * - If the value of the array element is greater than the
+  * value of the key element, then the returned value must be
+  * +1.
+  *
+  * The value returned by the BINSEARCHX built-in function
+  * itself is the relative index of the key value in this
+  * array. If the key value y is not found in the array, the
+  * returned size_t value is zero.
+  *
+  * The relative index is the index if the array has a lower
+  * bound of 1. Therefore, the true index would be calculated
+  * as: the returned value + LBOUND(x) \u2013 1. For example:
+  *
+  * - If the array x has a lower bound of 0 and upper bound of
+  * 11, then the returned value will range from 0 to 12
+  * inclusive. If the returned value is non-zero, then the true
+  * index of the found value is the returned value minus 1.
+  * - If the array x has a lower bound of -12 and an upper
+  * bound of 12, then the returned value will range from 0 to
+  * 25 inclusive. If the returned value is non-zero, the true
+  * index of the found value is the returned value minus 13.
+  *
+  * @param {ANY(*)} x An expression that specifies the target
+  *   array that would be searched within. x must be a
+  *   one-dimensional array and the elements of x must be in
+  *   ascending order. If x is an array of NONVARYING BIT, it
+  *   must be aligned.
+  * @param {POINTER} p An expression that specifies the address
+  *   of the key value to be searched for.
+  * @param {ANY<ENTRY>} f An expression that specifies the
+  *   function that will be invoked to perform all the required
+  *   comparisons.
+  * @param {ANY<NUMBER>} [n] An expression that specifies the
+  *   index of the first array element to be examined. It
+  *   defaults to LBOUND(x).
+  * @param {ANY<NUMBER>} [m] An expression that specifies the
+  *   number of to-be-examined array elements. The counting
+  *   starts with the nth and defaults to HBOUND(x) \u2013 n + 1.
+  * @returns {FIXED BINARY(31)} Relative index of the key value
+  *   in the array, or zero if not found.
+  */
+ BINSEARCHX: PROC (x, p, f, n, m) RETURNS (FIXED BINARY(31));
+    DCL x ANY(*);
+    DCL p POINTER;
+    DCL f ANY<ENTRY>;
+    DCL n ANY<NUMBER> OPTIONAL;
+    DCL m ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * BYTELENGTH returns a FIXED BINARY(31) value that is the
+  * number of bytes used by a UCHAR string.
+  *
+  * If x has UCHAR VARYING or UCHAR VARYING4 type, the value
+  * returned by BYTELENGTH(x) does not count the number of
+  * prefix bytes. If x has UCHAR VARYINGZ type, the value
+  * returned by BYTELENGTH(x) does not count the terminating
+  * null byte.
+  *
+  * The value returned by BYTELENGTH(x) is always greater than
+  * the value returned by LENGTH(x), but no greater than four
+  * times the value returned by LENGTH(x).
+  *
+  * Example 1:
+  *
+  * Given DCL X UCHAR(1), then LENGTH(X) = 1 and STG(X) = 4,
+  * but after:
+  *
+  * \`\`\`
+  * 	X = 'A';
+  * 	BYTELENGTH(X) = 1 (since X holds '41'ux )
+  * 	X = '\u00c4';
+  * 	BYTELENGTH(X) = 2 (since X holds  'C3_84'ux )
+  * 	X = '\u20ac';
+  * 	BYTELENGTH(x) = 3 (since X holds 'E2_82_AC'ux )
+  * \`\`\`
+  *
+  * Example 2:
+  *
+  * Given DCL X UCHAR(6), then LENGTH(X) = 6 and STG(X) = 24,
+  * but after:
+  *
+  * \`\`\`
+  * 	X = 'Stra\u00dfe' ;
+  * 	BYTELENGTH(X) = 7 (since X holds '53_74_72_C39F_61_65'ux )
+  * \`\`\`
+  *
+  * Example 3:
+  *
+  * Given DCL X UCHAR(8) VARYING, then STG(X) = 34, but after:
+  *
+  * \`\`\`
+  * 	X = 'Stra\u00dfe' ;
+  * 	LENGTH(X) = 6
+  * 	BYTELENGTH(X) = 7 (since X holds '53_74_72_C39F_61_65'ux )
+  * 	CSTG(X) = 9
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR
+  *   type.
+  * @returns {FIXED BINARY(31)} Number of bytes used by the
+  *   UCHAR string.
+  */
+ BYTELENGTH: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * CDS returns a FIXED BINARY(31) value that indicates if the
+  * old and current values in a compare double and swap were
+  * equal.
+  *
+  * CDS compares the "current" and "old" values. If they are
+  * equal, the "new" value is copied over the "current", and a
+  * value of 0 is returned. If they are unequal, the "current"
+  * value is copied over the "old", and a value of 1 is
+  * returned.
+  *
+  * On z/OS, the CDS built-in function implements the CDS
+  * instruction. For a detailed description of this function,
+  * read the appendices in the Principles of Operations manual.
+  *
+  * On Intel, the CDS built-in function uses the Intel
+  * cmpxchg8 instruction in the same manner that the CS
+  * built-in function uses the cmpxchg4 instruction.
+  *
+  * @param {POINTER} p Address of the old FIXED BINARY(63)
+  *   value.
+  * @param {POINTER} q Address of the current FIXED BINARY(63)
+  *   value.
+  * @param {FIXED BINARY(63)} x The new FIXED BINARY(63) value.
+  * @returns {FIXED BINARY(31)} 0 if the old and current values
+  *   were equal, 1 otherwise.
+  */
+ CDS: PROC (p, q, x) RETURNS (FIXED BINARY(31));
+    DCL p POINTER;
+    DCL q POINTER;
+    DCL x FIXED BINARY(63);
+ END;
+ /**
+  * CHARVAL returns the CHARACTER(1) value corresponding to an
+  * integer.
+  *
+  * CHARVAL(n) has the same bit value as n (that is,
+  * UNSPEC(CHARVAL(n)) is equal to UNSPEC(n)), but it has the
+  * attributes CHARACTER(1).
+  *
+  * CHARVAL is the inverse of RANK (when applied to character).
+  *
+  * @param {ANY<NUMBER>} n Expression converted to UNSIGNED
+  *   FIXED BIN(8) if necessary.
+  * @returns {CHARACTER(1)} CHARACTER(1) value corresponding
+  *   to n.
+  */
  // BYTE is a synonym for CHARVAL
- CHARVAL: BYTE: PROC (value) RETURNS (); END;
- CODEPAGE: PROC (value) RETURNS (); END;
- COLLATE: PROC (value) RETURNS (); END;
- CS: PROC (value) RETURNS (); END;
- FOLDEDFULLMATCH: PROC (value) RETURNS (); END;
- FOLDEDSIMPLEMATCH: PROC (value) RETURNS (); END;
- GETENV: PROC (value) RETURNS (); END;
- GETJCLSYMBOL: PROC (value) RETURNS (); END;
- GETSYSINT: PROC (value) RETURNS (); END;
- GETSYSWORD: PROC (value) RETURNS (); END;
- GTCA: PROC (value) RETURNS (); END;
- HEX: PROC (value) RETURNS (); END;
- HEX8: PROC (value) RETURNS (); END;
- IFTHENELSE: PROC (value) RETURNS (); END;
+ CHARVAL: BYTE: PROC (n) RETURNS (CHARACTER(1));
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * CODEPAGE returns a FIXED BINARY(31) value that holds the
+  * value of the CODEPAGE compiler option. It has no arguments
+  * and is a restricted expression.
+  *
+  * @returns {FIXED BINARY(31)} Value of the CODEPAGE compiler
+  *   option.
+  */
+ CODEPAGE: PROC() RETURNS (FIXED BINARY(31));
+ END;
+ /**
+  * COLLATE returns a CHARACTER(256) string comprising the 256
+  * possible CHARACTER(1) values one time each in the collating
+  * order.
+  *
+  * @returns {CHARACTER(256)} All 256 CHARACTER(1) values in
+  *   collating order.
+  */
+ COLLATE: PROC() RETURNS (CHARACTER(256));
+ END;
+ /**
+  * CS returns a FIXED BINARY(31) value that indicates if the
+  * old and current values in a compare and swap were equal.
+  *
+  * CS compares the "current" and "old" values. If they are
+  * equal, the "new" value is copied over the "current", and a
+  * value of 0 is returned. If they are unequal, the "current"
+  * value is copied over the "old", and a value of 1 is
+  * returned.
+  *
+  * So, CS could be implemented as the following PL/I function,
+  * but then it would not be atomic at all. :
+  *
+  * \`\`\`
+  *   cs: proc( old_Addr, current_Addr, new )
+  *    returns( fixed bin(31) byvalue )
+  *    options( byvalue );
+  *
+  *    dcl old_Addr     pointer;
+  *    dcl current_Addr pointer;
+  *    dcl new          fixed bin(31);
+  *
+  *    dcl old          fixed bin(31) based(old_addr);
+  *    dcl current      fixed bin(31) based(current_addr);
+  *
+  *    if current = old then
+  *      do;
+  *        current = new;
+  *        return( 0 );
+  *      end;
+  *    else
+  *      do;
+  *        old = current;
+  *        return( 1 );
+  *      end;
+  *  end;
+  * \`\`\`
+  *
+  * On z/OS, the CS built-in function implements the CS
+  * instruction. For a detailed description of this function,
+  * read the appendices in the Principles of Operations manual.
+  *
+  * On Intel, the CDS built-in function uses the Intel
+  * cmpxchg4 instruction. The cmpxchg4 instruction takes the
+  * address of a "current" value, a "new" value and an "old"
+  * value. It returns the original "current" value and updates
+  * it with the "new" value only if it equaled the "old" value.
+  *
+  * So, on Intel, the CS built-in function is implemented via
+  * the following inline function:
+  *
+  * \`\`\`
+  *   cs: proc( old_Addr, current_Addr, new )
+  *    returns( fixed bin(31) byvalue )
+  *    options( byvalue );
+  *
+  *    dcl old_Addr     pointer;
+  *    dcl current_Addr pointer;
+  *    dcl new          fixed bin(31);
+  *
+  *    dcl old          fixed bin(31) based(old_addr);
+  *    dcl current      fixed bin(31) based(current_addr);
+  *
+  *    if cmpxchg4( current_Addr, new, old ) = old then
+  *      do;
+  *        return( 0 );
+  *      end;
+  *    else
+  *      do;
+  *        old = current;
+  *        return( 1 );
+  *      end;
+  *  end;
+  * \`\`\`
+  *
+  * @param {POINTER} p Address of the old FIXED BINARY(31)
+  *   value.
+  * @param {POINTER} q Address of the current FIXED BINARY(31)
+  *   value.
+  * @param {FIXED BINARY(31)} x The new FIXED BINARY(31) value.
+  * @returns {FIXED BINARY(31)} 0 if the old and current values
+  *   were equal, 1 otherwise.
+  */
+ CS: PROC (p, q, x) RETURNS (FIXED BINARY(31));
+    DCL p POINTER;
+    DCL q POINTER;
+    DCL x FIXED BINARY(31);
+ END;
+ /**
+  * FOLDEDFULLMATCH returns a FIXED BINARY(31) value that
+  * indicates whether two strings are identical when folded to
+  * lowercase according to the Unicode full case folding rules.
+  * If two strings are identical, the return value is 0.
+  * Otherwise, the returned value is non-zero.
+  *
+  * When you use the FOLDEDFULLMATCH built-in function, all
+  * UTF-8 data items from all code blocks will be folded as
+  * necessary.
+  *
+  * In full case folding, the lengths of x and y do not need to
+  * be the same. For example, not only Haus and HAUS would
+  * match, but Stra\u00dfe and STRASSE would also match.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have
+  *   computational type and is converted to UCHAR type if
+  *   necessary.
+  * @param {ANY<CHARACTER>} y Expression. y must have
+  *   computational type and is converted to UCHAR type if
+  *   necessary.
+  * @returns {FIXED BINARY(31)} 0 if strings are identical when
+  *   folded, nonzero otherwise.
+  */
+ FOLDEDFULLMATCH: PROC (x, y) RETURNS (FIXED BINARY(31));
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+ END;
+ /**
+  * FOLDEDSIMPLEMATCH returns a FIXED BINARY(31) value that
+  * indicates whether two strings are identical when folded to
+  * lowercase according to the Unicode simple case folding
+  * rules. If two strings are identical, the return value is 0.
+  * Otherwise, the returned value is nonzero.
+  *
+  * When you use the FOLDEDSIMPLEMATCH built-in function, all
+  * UTF-8 data items from all code blocks will be folded as
+  * necessary.
+  *
+  * In simple case folding, the lengths of x and y must be
+  * equal. For example, Haus and HAUS would match, but
+  * Stra\u00dfe and STRASSE would not match.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have
+  *   computational type and is converted to UCHAR type if
+  *   necessary.
+  * @param {ANY<CHARACTER>} y Expression. y must have
+  *   computational type and is converted to UCHAR type if
+  *   necessary.
+  * @returns {FIXED BINARY(31)} 0 if strings are identical when
+  *   folded, nonzero otherwise.
+  */
+ FOLDEDSIMPLEMATCH: PROC (x, y) RETURNS (FIXED BINARY(31));
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+ END;
+ /**
+  * GETENV returns a character value representing a specified
+  * environment variable.
+  *
+  * @param {ANY<CHARACTER>} x Expression naming an environment
+  *   variable.
+  * @returns {CHARACTER(*)} Character value of the specified
+  *   environment variable.
+  */
+ GETENV: PROC (x) RETURNS (CHARACTER(*));
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * GETJCLSYMBOL returns a CHARACTER string value that
+  * represents the requested exported JCL symbol.
+  *
+  * If there is no JCL symbol with the same value as x, a null
+  * string is returned.
+  *
+  * **Example**
+  *
+  * With the JCL statements shown below, specifying
+  * GETJCLSYMBOL('S1') will return STEWART.
+  *
+  * \`\`\`
+  * //EX1 EXPORT SYMLIST=(S1,L1)
+  * //SET1 SET S1=STEWART,L1=LAGUARDIA
+  * //EX2 EXEC PGM=GETSYM   // PLI program call GETJCLSYMBOL
+  * \`\`\`
+  *
+  * .
+  *
+  * @param {ANY<CHARACTER>} x Specifies the name of the
+  *   exported JCL symbol.
+  * @returns {CHARACTER(*)} Character string value of the
+  *   requested JCL symbol.
+  */
+ GETJCLSYMBOL: PROC (x) RETURNS (CHARACTER(*));
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * GETSYSINT returns a size_t value that is the value of the
+  * requested system information.
+  *
+  * The MAXACTINFO keyword returns the number of job accounting
+  * fields in the JOB accounting information as specified in
+  * the jobcard. In combination with the ACTINFO of the
+  * GETSYSWORD built-in function, you can obtain the individual
+  * job accounting field information.
+  *
+  * @param {ANY<CHARACTER>} x The requested system information.
+  *   The following is the valid keyword for \`x\`:
+  *
+  *   - MAXACTINFO
+  * @returns {FIXED BINARY(31)} Value of the requested system
+  *   information.
+  */
+ GETSYSINT: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * GETSYSWORD returns a CHARACTER string that is the value of
+  * the requested system information.
+  *
+  * The ASID keyword returns the Address Space Identifier value
+  * in hexadecimal of the program that calls the built-in
+  * function.
+  *
+  * The ACTINFO keyword returns a comma-delimited string that
+  * is the JOB accounting information specified in the jobcard.
+  * In combination with the MAXACTINFO keyword of the GETSYSINT
+  * built-in function, you can obtain the individual job
+  * accounting field information. The returned account
+  * information has a maximum length of 144 bytes. If the
+  * subparameter is enclosed in apostrophes, the apostrophes
+  * will not be included in the accounting information string.
+  * For example, given the jobcard:
+  *
+  * \`\`\`
+  * //JOB44  JOB  (D548-8686,'12/8/85',PGMBIN)
+  * \`\`\`
+  *
+  * GETSYSWORD(ACTINFO) will return the string:
+  *
+  * \`\`\`
+  * D548-8686,12/8/85,PGMBIN
+  * \`\`\`
+  *
+  * For more information about the JOB accounting information
+  * parameter, see the z/OS MVS JCL Reference.
+  *
+  * The JESNODE keyword returns the JES node name of the system
+  * for the program that calls the built-in function.
+  *
+  * The JOBCLASS keyword returns the Job Class that is assigned
+  * to the batch job for the program that calls the built-in
+  * function.
+  *
+  * The JOBNAME keyword returns the JOB or TASK name that calls
+  * the built-in function.
+  *
+  * The JOBNUMBER keyword returns the JES JOBID that is
+  * assigned to the batch job for the program that calls the
+  * built-in function.
+  *
+  * The MSGCLASS keyword returns the message class of the job
+  * for the program that calls the built-in function.
+  *
+  * The PROCSTEP keyword returns the job step name that calls
+  * the JCL procedure, which has the step that executes the
+  * PL/I program. If it is not called from a JCL procedure, a
+  * null string is returned.
+  *
+  * The SMFID keyword returns the SMFID (system identifier) of
+  * the system for the program that calls the built-in
+  * function.
+  *
+  * The STEPNAME keyword returns the step name that calls the
+  * PL/I program.
+  *
+  * The SYSNAME keyword returns the LPAR name of the system
+  * installation of the TSO/USS/Batch job that calls the
+  * built-in function.
+  *
+  * The SYSNODE keyword returns the JES node name of the system
+  * for the program that calls the built-in function. The
+  * result is the same as using keyword JESNODE.
+  *
+  * The SYSPLEX keyword returns the SYSPLEX name of the system
+  * installation of the TSO/USS/batch job that calls the
+  * built-in function.
+  *
+  * If the GETSYSWORD built-in function is called from a CICS
+  * transaction, the JOB or TASK name that starts the CICS
+  * control region is returned for the JOBNAME, and the step
+  * that initializes the CICS control region is returned for
+  * the STEPNAME.
+  *
+  * @param {ANY<CHARACTER>} x A character expression that
+  *   specifies the requested system information. The following
+  *   are valid keywords for \`x\`:
+  *
+  *   - ASID
+  *   - ACTINFO
+  *   - JESNODE
+  *   - JOBCLASS
+  *   - JOBNAME
+  *   - JOBNUMBER
+  *   - MSGCLASS
+  *   - PROCSTEP
+  *   - SMFID
+  *   - STEPNAME
+  *   - SYSNAME
+  *   - SYSNODE
+  *   - SYSPLEX
+  * @returns {CHARACTER(*)} Character string of the requested
+  *   system information.
+  */
+ GETSYSWORD: PROC (x) RETURNS (CHARACTER(*));
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * GTCA returns a pointer to the LE control block.
+  *
+  * If the GTCA built-in function is used to change storage,
+  * unpredictable results may occur.
+  *
+  * The GTCA built-in function is supported only on z/OS.
+  *
+  * @returns {POINTER} Pointer to the LE control block.
+  */
+ GTCA: PROC() RETURNS (POINTER);
+ END;
+ /**
+  * HEX returns a character string that is the hexadecimal
+  * representation of the storage that contains \`x\`.
+  *
+  * HEX(x) returns a character string of length 2 * size(x).
+  *
+  * HEX(x,z) returns a character string that contains \`x\`
+  * with the character \`z\` inserted between every set of
+  * eight characters in the output string. Its length is
+  * 2 * size(x) + ((size(x) - 1)/4).
+  *
+  * Under the compiler option USAGE(HEX(CSTG)), the length
+  * used in the above calculations is based, for VARYING,
+  * VARYING4, and VARYINGZ strings, on cstg(x) rather than on
+  * stg(x).
+  *
+  * Integer, offset and pointer values will be presented in
+  * bigendian form.
+  *
+  * If the number of bytes to be converted to hex is not known
+  * at compile time, then no more than 32767 bytes will be
+  * converted.
+  *
+  * Note: This function does not return an exact image of \`x\`
+  * in storage. If an exact image is required, use the
+  * HEXIMAGE built-in function.
+  *
+  * **Example 1**
+  *
+  * \`\`\`
+  *   dcl Sweet char(5) init('Sweet');
+  *   dcl Sixteen fixed bin(31) init(16) littleendian;
+  *   dcl XSweet char(size(Sweet)*2+(size(Sweet)-1)/4);
+  *   dcl XSixteen char(size(Sixteen)*2+(size(Sixteen)-1)/4);
+  *
+  *   XSweet = hex(Sweet,'-');
+  *              // '53776565-74'
+  *
+  *   XSweet = heximage(addr(Sweet),length(Sweet),'-');
+  *              // '53776565-74'
+  *
+  *   XSixteen = hex(Sixteen,'-');
+  *              // '00000010' - bytes reversed
+  *
+  *   XSixteen = heximage(addr(Sixteen),stg(Sixteen),'-');
+  *              // '10000000' - bytes NOT reversed
+  * \`\`\`
+  *
+  * **Example 2**
+  *
+  * \`\`\`
+  *   dcl X fixed bin(15) littleendian;
+  *   dcl Y fixed bin(15) bigendian;
+  *
+  *   X = 258;  // stored as '0201'B4
+  *   Y = 258;  // stored as '0102'B4
+  *
+  *   display (hex(X));          // displays 0102
+  *   display (hex(Y));          // displays 0102
+  *
+  *   display (heximage( addr(X), stg(X) ));  // displays 0201
+  *   display (heximage( addr(Y), stg(Y) ));  // displays 0102
+  * \`\`\`
+  *
+  * @param {ANY} x Expression that represents any variable.
+  *   The whole number of bytes that contain \`x\` is converted
+  *   to hexadecimal.
+  * @param {CHARACTER(1)} [z] Expression. If specified, \`z\`
+  *   must have the type CHARACTER(1) NONVARYING.
+  * @returns {CHARACTER(*)} Hexadecimal representation of the
+  *   storage containing \`x\`.
+  */
+ //TODO has overloads
+ HEX: PROC (x, z) RETURNS (CHARACTER(*));
+    DCL x ANY;
+    DCL z CHARACTER(1) OPTIONAL;
+ END;
+ /**
+  * HEX8 returns a character string that is the UTF-8
+  * hexadecimal representation of the storage that contains
+  * \`x\`.
+  *
+  * HEX8(x) returns a character string of length 2 * size(x).
+  *
+  * HEX8(x,z) returns a character string that contains \`x\`
+  * with the character \`z\` inserted between every set of
+  * eight characters in the output string. Its length is
+  * 2 * size(x) + ((size(x) - 1)/4).
+  *
+  * Under the compiler option USAGE(HEX(CSTG)), the length
+  * used in the above calculations is based, for VARYING,
+  * VARYING4, and VARYINGZ strings, on cstg(x) rather than on
+  * stg(x).
+  *
+  * Integer, offset and pointer values will be presented in
+  * big endian form.
+  *
+  * If the number of bytes to be converted to hex is not known
+  * at compile time, then no more than 32767 bytes will be
+  * converted.
+  *
+  * Note: This function does not return an exact image of \`x\`
+  * in storage. If an exact image is required, use the
+  * HEXIMAGE8 built-in function.
+  *
+  * **Example 1**
+  *
+  * \`\`\`
+  *   dcl Sweet char(5) init('Sweet');
+  *   dcl Sixteen fixed bin(31) init(16) littleendian;
+  *   dcl XSweet char(size(Sweet)*2+(size(Sweet)-1)/4);
+  *   dcl XSixteen char(size(Sixteen)*2+(size(Sixteen)-1)/4);
+  *
+  *   XSweet = hex8(Sweet,'-');
+  *              // '53776565-74'a
+  *
+  *   XSweet = heximage8(addr(Sweet),length(Sweet),'-');
+  *              // '53776565-74'a
+  *
+  *   XSixteen = hex8(Sixteen,'-');
+  *              // '00000010' - bytes reversed
+  *
+  *   XSixteen = heximage8(addr(Sixteen),stg(Sixteen),'-');
+  *              // '10000000' - bytes NOT reversed
+  * \`\`\`
+  *
+  * **Example 2**
+  *
+  * \`\`\`
+  *   dcl X fixed bin(15) littleendian;
+  *   dcl Y fixed bin(15) bigendian;
+  *
+  *   X = 258;  // stored as '0201'B4
+  *   Y = 258;  // stored as '0102'B4
+  *
+  *   display (hex8(X));          // displays 0102
+  *   display (hex8(Y));          // displays 0102
+  *
+  *   display (heximage8( addr(X), stg(X) ));  // displays 0201
+  *   display (heximage8( addr(Y), stg(Y) ));  // displays 0102
+  * \`\`\`
+  *
+  * @param {ANY} x An expression that represents any variable.
+  *   The whole number of bytes that contain \`x\` is converted
+  *   to hexadecimal.
+  * @param {CHARACTER(1)} [z] An expression. If specified, \`z\`
+  *   must have the type CHARACTER(1) NONVARYING and must be a
+  *   valid 1-byte UTF-8 character.
+  * @returns {CHARACTER(*)} UTF-8 hexadecimal representation of
+  *   the storage containing \`x\`.
+  */
+ //TODO has overloads
+ HEX8: PROC (x, z) RETURNS (CHARACTER(*));
+    DCL x ANY;
+    DCL z CHARACTER(1) OPTIONAL;
+ END;
+ /**
+  * IFTHENELSE returns its second or third argument according
+  * to the true or false value, respectively, of its first
+  * argument. It provides an equivalent for the C conditional
+  * expression (x?y:z).
+  *
+  * Given IFTHENELSE(x, y, z ), the following rules apply:
+  *
+  * - The first operand is evaluated, and its value determines
+  * whether the second or third operand is evaluated:
+  *   - If the value is true, the second operand is evaluated.
+  *   - If the value is false, the third operand is evaluated.
+  *   The result is the value of the second or third operand.
+  * - If y and z are computational, the result type is the
+  * common type of y and z.
+  * - If either y or z is arithmetic, the result is arithmetic
+  * with the same precision as MAX(y, z) and with the common
+  * base, mode, and scale of y and z. Otherwise, the result is
+  * string with the same type as for a concatenation of y and
+  * z and with length equal to the maximum of the length of y
+  * and z.
+  * - If y and z are non-computational, the result type has
+  * the same type.
+  *
+  * @param {BIT(1)} x An operand that can be converted to bit.
+  *   x is true if any bit in the converted bit string has the
+  *   value '1'b.
+  * @param {ANY} y Operand. Must be computational (and if a
+  *   string, must be NONVARYING with a constant length), a
+  *   pointer, an ordinal with the same type as z, or a handle
+  *   to the same structure type as z.
+  * @param {ANY} z Operand. Must be computational (and if a
+  *   string, must be NONVARYING with a constant length), a
+  *   pointer, an ordinal with the same type as y, or a handle
+  *   to the same structure type as y.
+  * @returns {ANY} Value of y if x is true, value of z if x is
+  *   false.
+  */
+ IFTHENELSE: PROC (x, y, z) RETURNS (ANY);
+    DCL x BIT(1);
+    DCL y ANY;
+    DCL z ANY;
+ END;
  INDICATORS: PROC (value) RETURNS (); END;
  INLIST: PROC (value) RETURNS (); END;
  ISJCLSYMBOL: PROC (value) RETURNS (); END;
