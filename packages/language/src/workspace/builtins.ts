@@ -7106,33 +7106,480 @@ export const Builtins =
     DCL p POINTER;
     DCL n FIXED BINARY;
  END;
- JSONPUTOBJECTSTART: PROC (value) RETURNS (); END;
- JSONPUTVALUE: PROC (value) RETURNS (); END;
- JSONVALID: PROC (value) RETURNS (); END;
+ /**
+  * JSONPUTOBJECTSTART(p,n) writes an opening brace to the buffer if
+  * the number of available bytes n is greater than zero. The
+  * function returns a size_t 1 value equal to 1.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t that specifies the number of
+  *   available bytes in the buffer.
+  * @returns {FIXED BINARY} 1.
+  */
+ JSONPUTOBJECTSTART: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * JSONPUTVALUE appends a value, as UTF-8, to the JSON text. This
+  * function returns a size_t 1 value that specifies the number of
+  * bytes that are written to the buffer; or if the specified buffer
+  * size is zero, it returns a size_t value that specifies the
+  * number of bytes that would be needed for all the JSON text to be
+  * written.
+  *
+  * **Example 1**
+  *
+  * \`\`\`
+  *   dcl b(3)    fixed bin init(2,3,5);
+  *   dcl buffer  char(1000);
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   p = addr(buffer);
+  *   n = length(buffer);
+  *   written = jsonPutValue( p, n, b );
+  * \`\`\`
+  *
+  * The above code writes the following UTF-8 string to the buffer,
+  * and assigns the value 7 to the variable written.
+  *
+  * \`\`\`
+  * [2,3,5]
+  * \`\`\`
+  *
+  * **Example 2**
+  *
+  * \`\`\`
+  *   dcl 1 c, 2 d fixed bin init(2), 2 e fixed bin init(3);
+  *   dcl buffer  char(1000);
+  *   dcl p       pointer;
+  *   dcl n       fixed bin(31);
+  *
+  *   p = addr(buffer);
+  *   n = length(buffer);
+  *   written = jsonPutValue( p, n, c );
+  * \`\`\`
+  *
+  * The above code writes the following UTF-8 string to the buffer,
+  * and assigns the value 13 to the variable written.
+  *
+  * \`\`\`
+  * {"D":2,"E":3}
+  * \`\`\`
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be written.
+  * @param {FIXED BINARY} n A size_t that specifies the number of
+  *   available bytes in the buffer.
+  * @param {ANY} x A variable reference whose value is to be
+  *   written to the buffer. The variable reference must not contain
+  *   any of these elements:
+  *
+  *   - UNIONs
+  *   - Noncomputational elements
+  *   - GRAPHIC elements
+  *   - COMPLEX elements
+  *   - FIXED(p,q) elements with q < 0 or q > p
+  *   - Unnamed elements
+  *
+  *   x may have STRUCTURE type.
+  * @param {ANY<CHARACTER>} [y] An optional parameter that
+  *   specifies whether names should be written in lowercase,
+  *   uppercase, or asis.
+  *
+  *   y must be a character constant with one of the values LOWER,
+  *   UPPER, or ASIS. These values can themselves be specified in
+  *   any case. If not specified, it will default to the value in
+  *   JSON(CASE) option.
+  * @returns {FIXED BINARY} The number of bytes written to the
+  *   buffer, or the number of bytes needed if n is zero.
+  */
+ JSONPUTVALUE: PROC (p, n, x, y) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+    DCL x ANY;
+    DCL y ANY<CHARACTER> OPTIONAL;
+ END;
+ /**
+  * JSONVALID determines whether a buffer contains valid JSON text.
+  * This function returns a size_t 1 value of zero if the JSON text
+  * is valid; otherwise, it returns the index of the first invalid
+  * byte.
+  *
+  * @param {POINTER} p A pointer that specifies the address of a
+  *   buffer to be tested.
+  * @param {FIXED BINARY} n A size_t value that specifies the
+  *   number of bytes in the buffer.
+  * @returns {FIXED BINARY} Zero if the JSON text is valid;
+  *   otherwise, the index of the first invalid byte.
+  */
+ JSONVALID: PROC (p, n) RETURNS (FIXED BINARY);
+    DCL p POINTER;
+    DCL n FIXED BINARY;
+ END;
 
  /* Mathematical built-in functions */
- ACOS: PROC (value) RETURNS (); END;
- ASIN: PROC (value) RETURNS (); END;
- ATAN: PROC (value) RETURNS (); END;
- ATAND: PROC (value) RETURNS (); END;
- ATANH: PROC (value) RETURNS (); END;
- COS: PROC (value) RETURNS (); END;
- COSD: PROC (value) RETURNS (); END;
- COSH: PROC (value) RETURNS (); END;
- ERF: PROC (value) RETURNS (); END;
- ERFC: PROC (value) RETURNS (); END;
- EXP: PROC (value) RETURNS (); END;
- GAMMA: PROC (value) RETURNS (); END;
- LOG: PROC (value) RETURNS (); END;
- LOG10: PROC (value) RETURNS (); END;
- LOG2: PROC (value) RETURNS (); END;
- LOGGAMMA: PROC (value) RETURNS (); END;
- SIN: PROC (value) RETURNS (); END;
- SIND: PROC (value) RETURNS (); END;
- SINH: PROC (value) RETURNS (); END;
- SQRT: PROC (value) RETURNS (); END;
- SQRTF: PROC (value) RETURNS (); END;
- TAN: PROC (value) RETURNS (); END;
+ /**
+  * ACOS returns a real floating-point value that is an
+  * approximation of the inverse (arc) cosine in radians of \`x\`.
+  *
+  * The result is in the range:
+  *
+  * \`\`\`
+  *   0 ≤ ACOS(x) ≤ π
+  * \`\`\`
+  *
+  * and has the base and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression, where ABS(x) <= 1.
+  * @returns {FLOAT} An approximation of the inverse (arc) cosine
+  *   in radians of \`x\`.
+  */
+ ACOS: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * ASIN returns a real floating-point value that is an
+  * approximation of the inverse (arc) sine in radians of \`x\`.
+  *
+  * The result is in the range:
+  *
+  * \`\`\`
+  *   -π/2 ≤ ASIN(x) ≤ π/2
+  * \`\`\`
+  *
+  * The result has the base and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression, where ABS(x) <= 1.
+  * @returns {FLOAT} An approximation of the inverse (arc) sine
+  *   in radians of \`x\`.
+  */
+ ASIN: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * ATAN returns a floating-point value that is an approximation of
+  * the inverse (arc) tangent in radians of \`x\` or of a ratio
+  * \`x/y\`.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  *
+  *   If \`x\` alone is specified, the result has the base and
+  *   precision of \`x\`, and is in the range:
+  *
+  *   \`\`\`
+  *     -π/2 < ATAN(x) < π/2
+  *   \`\`\`
+  *
+  *   If \`x\` and \`y\` are specified, each must be real. An error
+  *   exists if \`x\` and \`y\` are both zero. The result for all
+  *   other values of \`x\` and \`y\` has the precision of the
+  *   longer argument, a base determined by the rules for
+  *   expressions, and a value given by:
+  *
+  *   |  | ATAN(x/y) | for y>0 |
+  *   | --- | --- | --- |
+  *   |  | π/2 | for y=0 and x>0 |
+  *   |  | -π/2 | for y=0 and x<0 |
+  *   |  | π + ATAN(x/y) | for y<0 and x>=0 |
+  *   |  | -π + ATAN(x/y) | for y<0 and x<0 |
+  * @param {ANY<NUMBER>} [y] Expression.
+  * @returns {FLOAT} An approximation of the inverse (arc) tangent
+  *   in radians of \`x\` or of \`x/y\`.
+  */
+ ATAN: PROC (x, y) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * ATAND returns a real floating-point value that is an
+  * approximation of the inverse (arc) tangent in degrees of \`x\`
+  * or of a ratio \`x/y\`.
+  *
+  * For argument requirements and attributes of the result, see
+  * ATAN.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  *
+  *   If \`x\` alone is specified it must be real. The result has
+  *   the base and precision of \`x\`, and is in the range:
+  *
+  *   \`\`\`
+  *     -90 < ATAND(x) < 90
+  *   \`\`\`
+  *
+  *   If \`x\` and \`y\` are specified, each must be real. The value
+  *   of the result is given by:
+  *
+  *   \`\`\`
+  *     (180/π) * ATAN(x,y)
+  *   \`\`\`
+  * @param {ANY<NUMBER>} [y] Expression.
+  * @returns {FLOAT} An approximation of the inverse (arc) tangent
+  *   in degrees of \`x\` or of \`x/y\`.
+  */
+ ATAND: PROC (x, y) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * ATANH returns a floating-point value that has the base, mode,
+  * and precision of \`x\`, and is an approximation of the inverse
+  * (arc) hyperbolic tangent of \`x\`.
+  *
+  * The result has a value given by:
+  *
+  * \`\`\`
+  *   LOG((1 + x)/(1 - x))/2
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. ABS(x)<1.
+  * @returns {FLOAT} An approximation of the inverse (arc)
+  *   hyperbolic tangent of \`x\`.
+  */
+ ATANH: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * COS returns a floating-point value that has the base, precision,
+  * and mode of \`x\`, and is an approximation of the cosine of
+  * \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression with a value in radians.
+  * @returns {FLOAT} An approximation of the cosine of \`x\`.
+  */
+ COS: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * COSD returns a real floating-point value that has the base and
+  * precision of \`x\`, and is an approximation of the cosine of
+  * \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression with a value in degrees.
+  * @returns {FLOAT} An approximation of the cosine of \`x\`.
+  */
+ COSD: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * COSH returns a floating-point value that has the base,
+  * precision, and mode of \`x\`, and is an approximation of the
+  * hyperbolic cosine of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @returns {FLOAT} An approximation of the hyperbolic cosine
+  *   of \`x\`.
+  */
+ COSH: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * ERF returns a real floating-point value that is an approximation
+  * of the error function of \`x\`.
+  *
+  * The result has the base and precision of \`x\`, and a value
+  * given by:
+  *
+  * \`\`\`
+  * (2/ √(π) ) ∫x0 EXP(-(t2 ))dt
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Real expression.
+  * @returns {FLOAT} An approximation of the error function of \`x\`.
+  */
+ ERF: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * ERFC returns a real floating-point value that is an
+  * approximation of the complement of the error function of \`x\`.
+  *
+  * The result has the base and precision of \`x\`, and a value
+  * given by:
+  *
+  * \`\`\`
+  *   1 - ERF(x)
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Real expression.
+  * @returns {FLOAT} An approximation of the complement of the
+  *   error function of \`x\`.
+  */
+ ERFC: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * EXP returns a floating-point value that is an approximation of
+  * the base, e, of the natural logarithm system raised to the power
+  * \`x\`.
+  *
+  * The result has the base, mode, and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @returns {FLOAT} An approximation of e raised to the power \`x\`.
+  */
+ EXP: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * GAMMA returns a floating-point value that has the base, mode,
+  * and precision of \`x\`.
+  *
+  * GAMMA is an approximation of the gamma of \`x\`, as given by the
+  * following equation:
+  *
+  * \`\`\`
+  * gamma(x) =  ∫∞0 (ux-1)(e-x)du
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Real expression. The value of \`x\` must
+  *   be greater than zero.
+  * @returns {FLOAT} An approximation of the gamma of \`x\`.
+  */
+ GAMMA: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * LOG returns a floating-point value that is an approximation of
+  * the natural logarithm (the logarithm to the base e) of \`x\`. It
+  * has the base, mode, and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must be greater than
+  *   zero.
+  * @returns {FLOAT} An approximation of the natural logarithm
+  *   of \`x\`.
+  */
+ LOG: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * LOG10 returns a real floating-point value that is an
+  * approximation of the common logarithm (the logarithm to the
+  * base 10) of \`x\`. It has the base and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression. It must be greater than
+  *   zero.
+  * @returns {FLOAT} An approximation of the common logarithm
+  *   of \`x\`.
+  */
+ LOG10: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * LOG2 returns a real floating-point value that is an
+  * approximation of the binary logarithm (the logarithm to the
+  * base 2) of \`x\`. It has the base and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression. The value of \`x\` must
+  *   be greater than zero.
+  * @returns {FLOAT} An approximation of the binary logarithm
+  *   of \`x\`.
+  */
+ LOG2: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * LOGGAMMA returns a floating-point value that is an approximation
+  * of the log of gamma of \`x\`.
+  *
+  * The gamma of \`x\` is given by the following equation:
+  *
+  * \`\`\`
+  * gamma(x) =  ∫∞0 (ux-1)(e-x)du
+  * \`\`\`
+  *
+  * LOGGAMMA has the base, mode, and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression. The value of \`x\` must
+  *   be greater than 0.
+  * @returns {FLOAT} An approximation of the log of gamma of \`x\`.
+  */
+ LOGGAMMA: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * SIN returns a floating-point value that is an approximation of
+  * the sine of \`x\`. It has the base, mode, and precision of
+  * \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression whose value is in radians.
+  * @returns {FLOAT} An approximation of the sine of \`x\`.
+  */
+ SIN: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * SIND returns a real floating-point value that is an
+  * approximation of the sine of \`x\`. It has the base and
+  * precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Real expression whose value is in
+  *   degrees.
+  * @returns {FLOAT} An approximation of the sine of \`x\`.
+  */
+ SIND: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * SINH returns a floating-point value that represents an
+  * approximation of the hyperbolic sine of \`x\`. It has the base,
+  * mode, and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression whose value is in radians.
+  * @returns {FLOAT} An approximation of the hyperbolic sine of
+  *   \`x\`.
+  */
+ SINH: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * SQRT returns a floating-point value that is an approximation of
+  * the positive square root of \`x\`. It has the base, mode, and
+  * precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it must not
+  *   be less than zero.
+  * @returns {FLOAT} An approximation of the positive square root
+  *   of \`x\`.
+  */
+ SQRT: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * SQRTF is the same as SQRT except for some differences.
+  *
+  * Differences between SQRTF and SQRT:
+  *
+  * - SQRTF calculates its result inline if hardware architecture
+  * permits.
+  * - The argument must be real.
+  * - Invalid arguments will generate hardware exceptions.
+  * - The accuracy of the result is set by the hardware.
+  *
+  * The SQRTF built-in function is not supported for DFP.
+  *
+  * For the definition and syntax, see SQRT.
+  * @param {ANY<NUMBER>} x Real expression.
+  * @returns {FLOAT} An approximation of the positive square root
+  *   of \`x\`.
+  */
+ SQRTF: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * TAN returns a floating-point value that is an approximation of
+  * the tangent of \`x\`. It has the base, mode, and precision of
+  * \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression whose value is in radians.
+  * @returns {FLOAT} An approximation of the tangent of \`x\`.
+  */
+ TAN: PROC (x) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+ END;
  TAND: PROC (value) RETURNS (); END;
  TANH: PROC (value) RETURNS (); END;
 
