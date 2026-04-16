@@ -5688,23 +5688,418 @@ export const Builtins =
  END;
 
  /* INPUT/OUTPUT functions */
- COUNT: PROC (value) RETURNS (); END;
- ENDFILE: PROC (value) RETURNS (); END;
- FILEDDINT: PROC (value) RETURNS (); END;
- FILEDDTEST: PROC (value) RETURNS (); END;
- FILEDDWORD: PROC (value) RETURNS (); END;
- FILEID: PROC (value) RETURNS (); END;
- FILENEW: PROC (value) RETURNS (); END;
- FILEOPEN: PROC (value) RETURNS (); END;
- FILEREAD: PROC (value) RETURNS (); END;
- FILESEEK: PROC (value) RETURNS (); END;
- FILETELL: PROC (value) RETURNS (); END;
- FILEWRITE: PROC (value) RETURNS (); END;
- LINENO: PROC (value) RETURNS (); END;
- ONSUBCODE: PROC (value) RETURNS (); END;
- ONSUBCODE2: PROC (value) RETURNS (); END;
- PAGENO: PROC (value) RETURNS (); END;
- SAMEKEY: PROC (value) RETURNS (); END;
+ /**
+  * COUNT returns an unscaled REAL FIXED BINARY value specifying
+  * the number of data items transmitted during the last GET or
+  * PUT operation on \`x\`.
+  *
+  * The count of transmitted items for a GET or PUT operation on
+  * \`x\` is initialized to zero before the first data item is
+  * transmitted, and is incremented by one after the transmission
+  * of each data item in the list. If \`x\` is not open in the
+  * current program, a value of zero is returned.
+  *
+  * If an ON-unit or procedure is entered during a GET or PUT
+  * operation, and within that ON-unit or procedure, a GET or PUT
+  * operation is executed for \`x\`, the value of COUNT is reset
+  * for the new operation. It is restored when the original GET
+  * or PUT is continued.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * @param {ANY<FILE>} x File-reference. The file must be open
+  *   and have the STREAM attribute.
+  * @returns {FIXED BINARY} An unscaled REAL FIXED BINARY value
+  *   specifying the number of data items transmitted during the
+  *   last GET or PUT operation on \`x\`.
+  */
+ COUNT: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * ENDFILE returns a '1'B when the end of the file is reached;
+  * '0'B if the end is not reached. If the file is not open, the
+  * ERROR condition is raised.
+  *
+  * ENDFILE can be used to detect the end-of-file condition for
+  * bytestream files; for example, files that require the use of
+  * the FILEREAD built-in function.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @returns {BIT} A '1'B when the end of the file is reached;
+  *   '0'B if the end is not reached.
+  */
+ ENDFILE: PROC (x) RETURNS (BIT);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * FILEDDINT returns a size_t value that is the value of
+  * attribute \`c\` for file \`x\`.
+  *
+  * When using FILEDDINT, the following are valid values for \`c\`:
+  *
+  * | blksize bufsize delay filesize | keylen keyloc recsize retry |
+  * | --- | --- |
+  *
+  * The ERROR condition with oncode 1010 is raised when the file
+  * is not open or the attribute is invalid for the file being
+  * queried.
+  *
+  * FILEDDINT(x,'BLKSIZE') is valid only on z/OS.
+  * FILEDDINT(x,'BLKSIZE') will return the blocksize for a
+  * CONSECUTIVE file. It will return 0 for an zFS file and will
+  * return 0 for a VSAM file.
+  *
+  * FILEDDINT(x,'FILESIZE') will, on z/OS, return a value of 0
+  * except for zFS files.
+  *
+  * FILEDDINT(x,'KEYLOC') and FILEDDINT(x,'KEYLEN') are valid
+  * only for VSAM KSDS files.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @param {ANY<CHARACTER>} c Character string that holds the
+  *   attribute to be queried.
+  * @returns {FIXED BINARY} A size_t value that is the value of
+  *   attribute \`c\` for file \`x\`.
+  */
+ FILEDDINT: PROC (x, c) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+    DCL c ANY<CHARACTER>;
+ END;
+ /**
+  * FILEDDTEST returns a FIXED BIN(31) value that holds the value
+  * 1 if the attribute \`c\` applies to file \`x\`. Otherwise, a
+  * value of 0 is returned.
+  *
+  * When using FILEDDTEST, the following are valid values for \`c\`:
+  *
+  * | append bkwd ctlasa delimit descendkey genkey | graphic lrmskip
+  * print prompt scalarvarying skip0 |
+  * | --- | --- |
+  *
+  * The ERROR condition with oncode 1010 is raised when the file
+  * is not open or the attribute is invalid for the file being
+  * queried.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @param {ANY<CHARACTER>} c Character string that holds the
+  *   attribute to be queried.
+  * @returns {FIXED BINARY} A FIXED BIN(31) value that holds the
+  *   value 1 if the attribute \`c\` applies to file \`x\`.
+  *   Otherwise, a value of 0 is returned.
+  */
+ FILEDDTEST: PROC (x, c) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+    DCL c ANY<CHARACTER>;
+ END;
+ /**
+  * FILEDDWORD returns a character string that is the value of
+  * the attribute \`c\` for the file \`x\`.
+  *
+  * When using FILEDDWORD, the following options are valid for
+  * \`c\`:
+  *
+  * | ACCESS AMTHD ACTION CHARSET DSORG FILENAME | ORGANIZATION
+  * PUTPAGE RECFM SHARE TYPE TYPEF |
+  * | --- | --- |
+  *
+  * These options return the following values:
+  *
+  * - ACCESS returns SEQUENTIAL or DIRECT.
+  * - ACTION returns INPUT, OUTPUT, or UPDATE.
+  * - AMTHD returns VSAM KSDS, VSAM ESDS or VSAM RRDS on the z/OS
+  * platform and FILESYS, DDM, BTRIEVE or ISAM on the Windows or AIX
+  * platforms.
+  * - CHARSET returns ASCII or EBCDIC.
+  * - DSORG returns the data set organization of the file reference.
+  * This option is only valid on the z/OS platform. Currently the
+  * following data set organizations are available:
+  *   - PS (Physical sequential data set)
+  *   - PSU (Physical sequential data set that contains
+  *   location-dependent information)
+  *   - DA (Direct access data set)
+  *   - DAU (Direct access data set that contains location-dependent
+  *   information)
+  *   - PO (Partitioned data set (PDS or PDSE))
+  *   - POU (Partitioned data set (PDS) that contains
+  *   location-dependent information)
+  *   - GS (Graphic data control block)
+  *   - zFS (UNIX system file)
+  *   - VSAM (Virtual Storage Access Method data set) If the file
+  *   organization is not supported, the FILEDDWORD for DSORG will
+  *   return a blank value.
+  * - On the z/OS platform, FILENAME returns the fully qualified
+  * path name for zFS files and the MVS data set name for all other
+  * files except it returns the value 'NULLFILE' for files specified
+  * with either DSN=NULLFILE and DD DUMMY. For a MVS data set that
+  * is a member of a PDS or PDSE, the name returned includes the
+  * member name. On the Windows and AIX platforms, it returns the
+  * fully qualified path name of the file .
+  * - ORGANIZATION returns CONSECUTIVE, RELATIVE, REGIONAL(1) or
+  * INDEXED.
+  * - RECFM returns the appropriate record format setting for the
+  * file, and U for VSAM files. This option is only valid on z/OS.
+  * - SHARE returns NONE, READ or ALL.
+  * - TYPE returns RECORD or STREAM.
+  * - TYPEF returns the type of the native file.
+  *
+  * The ERROR condition with oncode 1010 is raised when the file is
+  * not open or the attribute is invalid for the file being queried.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @param {ANY<CHARACTER>} c Character string that holds the
+  *   attribute to be queried.
+  * @returns {CHARACTER} A character string that is the value of
+  *   the attribute \`c\` for the file \`x\`.
+  */
+ FILEDDWORD: PROC (x, c) RETURNS (CHARACTER);
+    DCL x ANY<FILE>;
+    DCL c ANY<CHARACTER>;
+ END;
+ /**
+  * FILEID returns a size_t 1 value that is the system token for
+  * a PL/I file constant or variable.
+  *
+  * This token should not be used for any purpose that could be
+  * accomplished by a PL/I statement.
+  *
+  * On z/OS, the token holds the address of the DCB associated
+  * with a RECORD or STREAM file or of the ACB associated with a
+  * VSAM RECORD file. The token is not valid for other files.
+  *
+  * Note: The DCB or ACB address is provided so that applications
+  * can read the DCB or ACB. The DCB and ACB must not be altered.
+  *
+  * The ERROR condition with oncode 1010 is raised when the file
+  * is not open.
+  *
+  * @param {ANY<FILE>} x File reference
+  * @returns {FIXED BINARY} A size_t 1 value that is the system
+  *   token for a PL/I file constant or variable.
+  */
+ FILEID: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * FILENEW returns a FILE variable that points to a new file
+  * constant in automatic storage.
+  *
+  * The new file variable has default file attributes unless an
+  * argument is specified. If x has been specified, the attributes
+  * in the declaration of that file are used. The new file remains
+  * valid and usable only until the termination of the block in
+  * which the FILENEW function is invoked.
+  *
+  * @param {ANY<FILE>} [x] Restricted expression. x must be a
+  *   file constant or an initialized file variable.
+  * @returns {ANY<FILE>} A FILE variable that points to a new
+  *   file constant in automatic storage.
+  */
+ FILENEW: PROC (x) RETURNS (ANY<FILE>);
+    DCL x ANY<FILE> OPTIONAL;
+ END;
+ /**
+  * FILEOPEN returns '1'B if the file \`x\` is open and '0'B if
+  * the file is not open.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @returns {BIT} '1'B if the file \`x\` is open and '0'B if the
+  *   file is not open.
+  */
+ FILEOPEN: PROC (x) RETURNS (BIT);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * FILEREAD attempts to read \`z\` storage units (bytes) from
+  * file \`x\` into location \`y\`. It returns the number of
+  * storage units actually read.
+  *
+  * FILEREAD can read only zFS TYPE(U) files.
+  *
+  * @param {ANY<FILE>} x File reference
+  * @param {ANY<LOCATOR>} y Expression with type POINTER or
+  *   OFFSET. If the type is OFFSET, the expression must be an
+  *   OFFSET variable declared with the AREA attribute.
+  * @param {ANY<NUMBER>} z Expression. It must have a
+  *   computational type and is converted to type size_t.1
+  * @returns {FIXED BINARY} The number of storage units actually
+  *   read.
+  */
+ FILEREAD: PROC (x, y, z) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * FILESEEK changes the current file position associated with
+  * file x to a new location within the file. The next operation
+  * on the file takes place at the new location. FILESEEK is
+  * equivalent to the fseek function in C.
+  *
+  * FILESEEK returns a FIXED BIN(31) value. The value is 0 if
+  * the change in file position is successful; it is nonzero
+  * otherwise.
+  *
+  * FILESEEK can be used only on zFS TYPE(U) files.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @param {ANY<NUMBER>} y A size_t value that indicates the
+  *   number of positions the file pointer is to be moved
+  *   relative to \`z\`.
+  * @param {ANY<NUMBER>} z A FIXED BINARY(31) value that
+  *   indicates the origin from which the file pointer is to be
+  *   moved. The following values are valid:
+  *
+  *   **-1**: Beginning of the file
+  *   **0**: Current position of the file pointer
+  *   **1**: End of the file
+  * @returns {FIXED BINARY} A FIXED BIN(31) value. The value is
+  *   0 if the change in file position is successful; it is
+  *   nonzero otherwise.
+  */
+ FILESEEK: PROC (x, y, z) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+    DCL y ANY<NUMBER>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * FILETELL returns a size_t 1 value that indicates the current
+  * position of the file x. The return value is an offset
+  * relative to the beginning of the file. FILETELL is equivalent
+  * to the ftell function in C.
+  *
+  * FILETELL can be used only on zFS TYPE(U) files.
+  *
+  * @param {ANY<FILE>} x File reference
+  * @returns {FIXED BINARY} A size_t 1 value that indicates the
+  *   current position of the file x.
+  */
+ FILETELL: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * FILEWRITE attempts to write \`z\` storage units (bytes) to
+  * file \`x\` from location \`y\` It returns the number of
+  * storage units actually written.
+  *
+  * FILEWRITE can write only to zFS TYPE(U) files.
+  *
+  * @param {ANY<FILE>} x File reference.
+  * @param {ANY<LOCATOR>} y Expression with type POINTER or
+  *   OFFSET. If the type is OFFSET, the expression must be an
+  *   OFFSET variable declared with the AREA attribute.
+  * @param {ANY<NUMBER>} z Expression. It must have a
+  *   computational type and is converted to type size_t.1
+  * @returns {FIXED BINARY} The number of storage units actually
+  *   written.
+  */
+ FILEWRITE: PROC (x, y, z) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * LINENO returns an unscaled REAL FIXED BINARY specifying the
+  * current line number of \`x\`.
+  *
+  * The file must be open and have the PRINT attribute. If the
+  * file is not open or does not have the PRINT attribute, 0 is
+  * returned.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * @param {ANY<FILE>} x File-reference.
+  * @returns {FIXED BINARY} An unscaled REAL FIXED BINARY
+  *   specifying the current line number of \`x\`.
+  */
+ LINENO: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * ONSUBCODE returns a FIXED BINARY(31,0) value that gives more
+  * information about an I/O, JSON, or conversion error that
+  * occurred.
+  *
+  * For an I/O error, ONSUBCODE corresponds to the SUBCODE1
+  * values documented for messages IBM0236I and IBM0265I. The
+  * SUBCODE1 values are defined in Messages and Codes.
+  *
+  * For JSON built-in functions, when the ERROR condition is
+  * raised, ONSUBCODE returns the index of the invalid character.
+  *
+  * If a JSON or Unicode CONVERSION condition is raised,
+  * ONSUBCODE returns the index of the invalid character.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that gives
+  *   more information about an I/O, JSON, or conversion error
+  *   that occurred.
+  */
+ ONSUBCODE: PROC () RETURNS (FIXED BINARY);
+ END;
+ /**
+  * ONSUBCODE2 returns a FIXED BIN(31) value that gives more
+  * information about an I/O error that has occurred.
+  *
+  * ONSUBCODE2 corresponds to the SUBCODE2 values documented for
+  * messages IBM0236I and IBM0265I. These SUBCODE2 values are
+  * defined in Messages and Codes.
+  *
+  * A SUBCODE2 value consists of eight hexadecimal digits
+  * xxxxyyyy, where xxxx is Register 15 and yyyy is the reason
+  * code. The return and reason codes are documented in VSAM
+  * Macro Instructions.
+  * @returns {FIXED BINARY} A FIXED BIN(31) value that gives more
+  *   information about an I/O error that has occurred.
+  */
+ ONSUBCODE2: PROC () RETURNS (FIXED BINARY);
+ END;
+ /**
+  * PAGENO returns an unscaled REAL FIXED BIN(31) value that is
+  * the current page number associated with file \`x\`.
+  *
+  * If the file is not a PRINT file, the ERROR condition is
+  * raised.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * @param {ANY<FILE>} x File reference. The file must be open
+  *   and have the PRINT attribute.
+  * @returns {FIXED BINARY} An unscaled REAL FIXED BIN(31) value
+  *   that is the current page number associated with file \`x\`.
+  */
+ PAGENO: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<FILE>;
+ END;
+ /**
+  * SAMEKEY returns a bit string of length 1 indicating whether
+  * a record that has been accessed is followed by another with
+  * the same key.
+  *
+  * Upon successful completion of an input/output operation on
+  * file \`x\`, or immediately before the RECORD condition is
+  * raised, the value accessed by SAMEKEY is set to '1'B if the
+  * record processed is followed by another record with the same
+  * key, and set to '0'B if it is not.
+  *
+  * The value accessed by SAMEKEY is also set to '0'B if:
+  *
+  * - An input/output operation that raises a condition other
+  * than RECORD also causes file positioning to be changed or
+  * lost
+  * - The file is not open
+  * - No current cursor position exists in the file.
+  *
+  * @param {ANY<FILE>} x File reference. The file must have the
+  *   RECORD attribute.
+  * @returns {BIT} A bit string of length 1 indicating whether a
+  *   record that has been accessed is followed by another with
+  *   the same key.
+  */
+ SAMEKEY: PROC (x) RETURNS (BIT);
+    DCL x ANY<FILE>;
+ END;
 
  /* Integer manipulation built-in functions */
  IAND: PROC (value) RETURNS (); END;
