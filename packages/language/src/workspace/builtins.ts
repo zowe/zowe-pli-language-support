@@ -3908,89 +3908,1339 @@ export const Builtins =
     DCL q ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
  END;
- BASE64ENCODE: PROC (buffer) RETURNS ();
+ /**
+  * BASE64ENCODE encodes a source buffer into a buffer holding its
+  * base 64 value in the character set specified by the ASCII or
+  * EBCDIC suboption of the DEFAULT compiler option. It returns a
+  * size_t value that indicates the number of bytes that are written
+  * into the target buffer.
+  *
+  * The returned value depends on the address of the target buffer
+  * or the size of the target buffer:
+  *
+  * - If the address of the target buffer p is zero, the number of
+  * bytes that would be written is returned.
+  * - If the target buffer is not large enough, a value of -1 is
+  * returned.
+  * - If the target buffer is large enough, the number of bytes that
+  * are written to the buffer is returned.
+  *
+  * Note: Some arguments or return values are of type size_t. If the
+  * LP(32) compiler option is in effect, size_t is FIXED BIN(31); if
+  * the LP(64) compiler option is in effect, size_t is FIXED
+  * BIN(63).
+  *
+  * **Convention for encoding a source buffer into base 64 as
+  * EBCDIC**
+  *
+  * This encoding uses the following set of base 64 "digits":
+  *
+  * \`\`\`
+  * ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+  * \`\`\`
+  *
+  * Each 6 bits of the source is converted to the corresponding
+  * EBCDIC "digit" in this base 64 string. If the source length in
+  * bits is not a multiple of 6, the result concludes with one or
+  * two '='e symbols as needed.
+  *
+  * Because the source buffer is treated as a bit string, the result
+  * in the target buffer varies with the code page of the source.
+  *
+  * The following table shows the example of the sources and the
+  * corresponding results when converting source buffer into base 64
+  * that is encoded as EBCDIC by using BASE64ENCODE:
+  *
+  * | Source length | Source value | Result length | Result value |
+  * | --- | --- | --- | --- |
+  * | 6 | 'please'A | 8 | cGxlYXNl |
+  * | 5 | 'pleas'A | 8 | cGxlYXM= |
+  * | 4 | 'plea'A | 8 | cGxlYQ== |
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ BASE64ENCODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- BASE64ENCODE8: PROC (buffer) RETURNS ();
+ /**
+  * BASE64ENCODE8 encodes the source buffer into base 64 that is
+  * encoded as UTF-8. It returns a size_t 1 value that indicates the
+  * number of bytes that are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * **Convention for encoding a source buffer into base 64 as
+  * UTF-8**
+  *
+  * This encoding uses the following set of base 64 "digits":
+  *
+  * \`\`\`
+  * ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+  * \`\`\`
+  *
+  * Each 6 bits of the source is converted to the corresponding
+  * UTF-8 "digit" in this base 64 string. If the source length in
+  * bits is not a multiple of 6, the result concludes with one or
+  * two = symbols as needed, and the = symbol is UTF-8.
+  *
+  * The source buffer is treated as a bit string, so the result in
+  * the target buffer varies with the code page of the source. In
+  * particular, when the source is in EBCDIC, the result differs
+  * when the source is in ASCII.
+  *
+  * The following table shows the example of the sources and the
+  * corresponding results when converting source buffer into base 64
+  * that is encoded as UTF-8 by using BASE64ENCODE8:
+  *
+  * | Source length | Source value | Result length | Result value |
+  * | --- | --- | --- | --- |
+  * | 6 | 'please'A | 8 | UTF8('cGxlYXNl') |
+  * | 5 | 'pleas'A | 8 | UTF8('cGxlYXM=') |
+  * | 4 | 'plea'A | 8 | UTF8('cGxlYQ==') |
+  * | 6 | 'please'E | 8 | UTF8('l5OFgaKF') |
+  * | 5 | 'pleas'E | 8 | UTF8('l5OFgaI=') |
+  * | 4 | 'plea'E | 8 | UTF8('l5OFgQ==) |
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ BASE64ENCODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- BASE64ENCODE16: PROC (buffer) RETURNS ();
+ /**
+  * BASE64ENCODE16 encodes the source buffer into base 64 that is
+  * encoded as UTF-16. It returns a size_t 1 value that indicates
+  * the number of bytes that are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * **Convention for encoding a source buffer into base 64 as
+  * UTF-16**
+  *
+  * This encoding uses the following set of base 64 "digits":
+  *
+  * \`\`\`
+  * ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+  * \`\`\`
+  *
+  * Each 6 bits of the source is converted to the corresponding
+  * UTF-16 "digit" in the base 64 string. If the source length in
+  * bits is not a multiple of 6, the result concludes with one or
+  * two = symbols as needed, and the = symbol is UTF-16.
+  *
+  * The source buffer is treated as a bit string, so the result in
+  * the target buffer varies with the code page of the source. In
+  * particular, when the source is in EBCDIC, the result differs
+  * when the source is in ASCII.
+  *
+  * The following table shows examples of the sources and the
+  * corresponding results when converting the source buffer into
+  * base 64 that is encoded as UTF-16 by using BASE64ENCODE16.
+  *
+  * | Source length | Source value | Result length | Result value |
+  * | --- | --- | --- | --- |
+  * | 6 | 'please'A | 16 | WCHAR('cGxlYXNl') |
+  * | 5 | 'pleas'A | 16 | WCHAR('cGxlYXM=') |
+  * | 4 | 'plea'A | 16 | WCHAR('cGxlYQ==') |
+  * | 6 | 'please'E | 16 | WCHAR('l5OFgaKF') |
+  * | 5 | 'pleas'E | 16 | WCHAR('l5OFgaI=') |
+  * | 4 | 'plea'E | 16 | WCHAR('l5OFgQ==') |
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ BASE64ENCODE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- CHECKSUM: PROC (buffer) RETURNS ();
+ /**
+  * CHECKSUM returns an UNSIGNED FIXED BIN(32) value that is the
+  * checksum value for a specified buffer.
+  *
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.1
+  * @returns {ANY<NUMBER>} An UNSIGNED FIXED BIN(32) value that is
+  *   the checksum value for a specified buffer.
+  */
+ CHECKSUM: PROC (q, n) RETURNS (ANY<NUMBER>);
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- HEXDECODE: PROC (buffer) RETURNS ();
+ /**
+  * HEXDECODE decodes a source buffer from base 16 that is encoded
+  * in the character set specified by the ASCII/EBCDIC suboption of
+  * the DEFAULT compiler option. This function returns a size_t 1
+  * value that indicates the number of bytes that are written into
+  * the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * If the source contains characters other than hexadecimal digits,
+  * the CONVERSION condition is raised.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ HEXDECODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- HEXDECODE8: PROC (buffer) RETURNS ();
+ /**
+  * HEXDECODE8 decodes a source buffer from base 16 that is encoded
+  * in UTF-8. This function returns a size_t 1 value that indicates
+  * the number of bytes that are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * If the source contains characters other than hexadecimal digits,
+  * the CONVERSION condition is raised.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ HEXDECODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA1DIGEST: PROC (buffer) RETURNS ();
+ /**
+  * Performs a SHA-1 hash of the text specified by an address and
+  * length and returns a CHAR(20) string with that hash value.
+  *
+  * SHA1DIGEST returns a CHAR(20) value.
+  *
+  * This function generates code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a SHA-1 hash of the text in a
+  * CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(20);
+  *
+  *         encoded = sha1digest(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR(20) string with the SHA-1 hash
+  *   value.
+  */
+ SHA1DIGEST: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA1FINAL: PROC (buffer) RETURNS ();
+ /**
+  * Uses a token initialized by the corresponding SHA1INIT function
+  * to complete a SHA-1 hash of a series of texts and returns a
+  * CHAR(20) string with that hash value.
+  *
+  * SHA1FINAL returns a CHAR(20) value.
+  *
+  * This function generates code that executes the KIMD and KLMD
+  * assembler instructions.
+  *
+  * **Examples**
+  *
+  * The following example performs a SHA-1 hash of a file that is
+  * read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(20);
+  *         token = sha1init();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha1update(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha1final(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In the example, all the SHA function calls are in the same block
+  * of code. This is not necessary: the calls can occur in a set of
+  * routines as long as they all use the same token created by the
+  * SHA1INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA1INIT or SHA1UPDATE.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR(20) string with the SHA-1 hash
+  *   value.
+  */
+ SHA1FINAL: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA1INIT: PROC (buffer) RETURNS ();
+ /**
+  * Returns a token (of type POINTER) that can be used with the
+  * corresponding SHA1UPDATE and SHA1FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA1FINAL function for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA1UPDATE and SHA1FINAL.
+  */
+ SHA1INIT: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA1UPDATE: PROC (buffer) RETURNS ();
+ /**
+  * Uses a token initialized by the corresponding SHA1INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * This function returns a token (of type POINTER) that can be used
+  * with further SHA1UPDATE function and the concluding SHA1FINAL
+  * function.
+  *
+  * See the description of the SHA1FINAL function for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA1INIT or SHA1UPDATE.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA1UPDATE and SHA1FINAL.
+  */
+ SHA1UPDATE: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2DIGEST224: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-2 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-2 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(64);
+  *
+  *         encoded = sha2digest512(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2DIGEST224: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2DIGEST256: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-2 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-2 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(64);
+  *
+  *         encoded = sha2digest512(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2DIGEST256: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2DIGEST384: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-2 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-2 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(64);
+  *
+  *         encoded = sha2digest512(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2DIGEST384: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2DIGEST512: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-2 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-2 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(64);
+  *
+  *         encoded = sha2digest512(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2DIGEST512: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2FINAL224: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to complete a SHA-2 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2FINAL256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KIMD and KLMD
+  * assembler instructions.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-2 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(32);
+  *         token = sha2init256();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha2update256(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha2final256(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In the example, all the SHA function calls are in the same block
+  * of code. This is not necessary: the calls can occur in a set of
+  * routines as long as they all use the same token created by the
+  * SHA2INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2FINAL224: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2FINAL256: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to complete a SHA-2 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2FINAL256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KIMD and KLMD
+  * assembler instructions.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-2 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(32);
+  *         token = sha2init256();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha2update256(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha2final256(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In the example, all the SHA function calls are in the same block
+  * of code. This is not necessary: the calls can occur in a set of
+  * routines as long as they all use the same token created by the
+  * SHA2INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2FINAL256: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2FINAL384: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to complete a SHA-2 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2FINAL256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KIMD and KLMD
+  * assembler instructions.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-2 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(32);
+  *         token = sha2init256();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha2update256(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha2final256(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In the example, all the SHA function calls are in the same block
+  * of code. This is not necessary: the calls can occur in a set of
+  * routines as long as they all use the same token created by the
+  * SHA2INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2FINAL384: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2FINAL512: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to complete a SHA-2 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA2FINAL256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KIMD and KLMD
+  * assembler instructions.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-2 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(32);
+  *         token = sha2init256();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha2update256(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha2final256(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In the example, all the SHA function calls are in the same block
+  * of code. This is not necessary: the calls can occur in a set of
+  * routines as long as they all use the same token created by the
+  * SHA2INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  */
+ SHA2FINAL512: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2INIT224: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA2UPDATE and SHA2FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2INIT224: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA2INIT256: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA2UPDATE and SHA2FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2INIT256: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA2INIT384: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA2UPDATE and SHA2FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2INIT384: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA2INIT512: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA2UPDATE and SHA2FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2INIT512: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA2UPDATE224: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA2UPDATE functions and the concluding
+  * SHA2FINAL function.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2UPDATE224: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2UPDATE256: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA2UPDATE functions and the concluding
+  * SHA2FINAL function.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2UPDATE256: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2UPDATE384: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA2UPDATE functions and the concluding
+  * SHA2FINAL function.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2UPDATE384: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA2UPDATE512: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA2INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA2UPDATE functions and the concluding
+  * SHA2FINAL function.
+  *
+  * See the description of the SHA2FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA2INITx or SHA2UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA2UPDATE and SHA2FINAL.
+  */
+ SHA2UPDATE512: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3DIGEST224: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-3 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA3DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-3 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(32);
+  *
+  *         encoded = sha3digest256(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3DIGEST224: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3DIGEST256: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-3 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA3DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-3 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(32);
+  *
+  *         encoded = sha3digest256(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3DIGEST256: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3DIGEST384: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-3 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA3DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-3 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(32);
+  *
+  *         encoded = sha3digest256(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3DIGEST384: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3DIGEST512: PROC (buffer) RETURNS ();
+ /**
+  * Perform a SHA-3 hash of the text specified by an address and
+  * length and return a CHAR string with that hash value.
+  *
+  * The length returned is one eighth of the bit length in the
+  * function name, so, for example, SHA3DIGEST256 returns a CHAR(32)
+  * value.
+  *
+  * These functions generate code that executes the KLMD assembler
+  * instruction.
+  *
+  * **Examples**
+  *
+  * The following example performs a 256-bit SHA-3 hash of the text
+  * in a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl encoded   char(32);
+  *
+  *         encoded = sha3digest256(addrdata(c), length(c));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be hashed.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3DIGEST512: PROC (p, n) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3FINAL224: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to complete a SHA-3 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-3 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(64);
+  *         token = sha3init512();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha3update512(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha3final512(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In above example, all the SHA function calls are in the same
+  * block of code. This is not necessary: the calls can occur in a
+  * set of routines as long as they all use the same token created
+  * by the SHA3INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  *
+  *   The length returned is one eighth of the bit length in the
+  *   function name, so, for example, SHA3FINAL256 returns a
+  *   CHAR(32) value.
+  *
+  *   These functions generate code that executes the KIMD and KLMD
+  *   assembler instructions.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3FINAL224: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3FINAL256: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to complete a SHA-3 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-3 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(64);
+  *         token = sha3init512();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha3update512(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha3final512(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In above example, all the SHA function calls are in the same
+  * block of code. This is not necessary: the calls can occur in a
+  * set of routines as long as they all use the same token created
+  * by the SHA3INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  *
+  *   The length returned is one eighth of the bit length in the
+  *   function name, so, for example, SHA3FINAL256 returns a
+  *   CHAR(32) value.
+  *
+  *   These functions generate code that executes the KIMD and KLMD
+  *   assembler instructions.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3FINAL256: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3FINAL384: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to complete a SHA-3 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-3 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(64);
+  *         token = sha3init512();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha3update512(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha3final512(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In above example, all the SHA function calls are in the same
+  * block of code. This is not necessary: the calls can occur in a
+  * set of routines as long as they all use the same token created
+  * by the SHA3INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  *
+  *   The length returned is one eighth of the bit length in the
+  *   function name, so, for example, SHA3FINAL256 returns a
+  *   CHAR(32) value.
+  *
+  *   These functions generate code that executes the KIMD and KLMD
+  *   assembler instructions.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3FINAL384: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3FINAL512: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to complete a SHA-3 hash of a series of texts and return a CHAR
+  * string with that hash value.
+  *
+  * **Examples**
+  *
+  * The following example performs a 512-bit SHA-3 hash of a file
+  * that is read one line at a time into a CHARACTER variable c.
+  *
+  * \`\`\`
+  *         dcl token     pointer;
+  *         dcl encoded   char(64);
+  *         token = sha3init512();
+  *         on endfile(input);
+  *         do loop;
+  *           read file(input) into(c);
+  *           if endfile(input) then leave;
+  *           token = sha3update512(token, addrdata(c), length(c));
+  *         end;
+  *         encoded = sha3final512(token, sysnull(), 0);
+  * \`\`\`
+  *
+  * In above example, all the SHA function calls are in the same
+  * block of code. This is not necessary: the calls can occur in a
+  * set of routines as long as they all use the same token created
+  * by the SHA3INIT call.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  *
+  *   The length returned is one eighth of the bit length in the
+  *   function name, so, for example, SHA3FINAL256 returns a
+  *   CHAR(32) value.
+  *
+  *   These functions generate code that executes the KIMD and KLMD
+  *   assembler instructions.
+  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  */
+ SHA3FINAL512: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3INIT224: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA3UPDATE and SHA3FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3INIT224: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA3INIT256: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA3UPDATE and SHA3FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3INIT256: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA3INIT384: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA3UPDATE and SHA3FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3INIT384: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA3INIT512: PROC (buffer) RETURNS ();
+ /**
+  * Return a token (of type POINTER) that can be used with the
+  * corresponding SHA3UPDATE and SHA3FINAL functions to hash a
+  * series of texts.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3INIT512: PROC () RETURNS (ANY<LOCATOR>);
  END;
- SHA3UPDATE224: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA3UPDATE functions and the concluding
+  * SHA3FINAL function.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3UPDATE224: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3UPDATE256: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA3UPDATE functions and the concluding
+  * SHA3FINAL function.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3UPDATE256: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3UPDATE384: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA3UPDATE functions and the concluding
+  * SHA3FINAL function.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3UPDATE384: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- SHA3UPDATE512: PROC (buffer) RETURNS ();
+ /**
+  * Use a token initialized by the corresponding SHA3INIT function
+  * to perform an intermediate hash of an element in a series of
+  * texts.
+  *
+  * These functions return a token (of type POINTER) that can be
+  * used with further SHA3UPDATE functions and the concluding
+  * SHA3FINAL function.
+  *
+  * See the description of the SHA3FINAL functions for an example.
+  *
+  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  *   of SHA3INITx or SHA3UPDATEx.
+  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  *   of a buffer to be added to the hash.
+  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  *   (in bytes) of that buffer. It must have a computational type
+  *   and will be converted to type size_t.
+  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  *   used with further SHA3UPDATE and SHA3FINAL.
+  */
+ SHA3UPDATE512: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
+    DCL t ANY<LOCATOR>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
 
  /* Floating point inquiry functions */
