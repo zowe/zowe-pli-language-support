@@ -2,6 +2,8 @@
  DCL (D, E, F) CHAR;
  DCL G(100) FIXED;
  DCL BITS BIT(32);
+ DCL FUNC ENTRY;
+ DCL (P1,P2) POINTER;
 
  A = ABS(B);
  A = CEIL(B);
@@ -29,6 +31,31 @@
  A = HBOUND(G, 1);
  A = HBOUNDACROSS(G);
  A = INARRAY(1, G);
+ A = LBOUND(G, 1);
+ A = LBOUNDACROSS(G);
+ A = POLY(G, 123);
+ A = PROD(G);
+ CALL QUICKSORT(G, 1, 100);
+ CALL QUICKSORTX(G, FUNC, 1, 100);
+ A = SUM(G);
+ A = COMPARE(G, G, 2);
+ A = HEXENCODE(P1, 8, P2, 16);
+ A = HEXENCODE8(P1, 8, P2, 16);
+ D = HEXIMAGE(P1, 1, "x");
+ D = HEXIMAGE8(P1, 1, "x");
+ A = MEMCONVERT(P1, 8, 1, P2, 16, 1, 1);
+ A = MEMCOLLAPSE(P1, 8, P2, 16, "1", 1);
+
+
+
+
+ //TODO ARGCOUNT bei MemberCall
+ //TODO HOVER comment docu for CallStatement
+
+
+
+
+
 
 
 

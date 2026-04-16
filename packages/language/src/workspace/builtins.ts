@@ -799,10 +799,10 @@ export const Builtins =
   * result returned.
   *
   * @param {ANY<NUMBER>} x Real expression.
-  * @returns {ANY<NUMBER>} unscaled REAL FIXED BINARY value that 
+  * @returns {FIXED BINARY} unscaled REAL FIXED BINARY value that 
   *   indicates whether \`x\` is positive, zero, or negative.
   */
- SIGN: PROC (x) RETURNS (ANY<NUMBER>);
+ SIGN: PROC (x) RETURNS (FIXED BINARY);
    DECLARE x ANY<NUMBER>;
  END;
 
@@ -888,10 +888,10 @@ export const Builtins =
   *
   *   \`y\` can be omitted only if the array is one-dimensional.
   * 
-  * @returns {ANY<NUMBER>} FIXED BINARY value that specifies the current
+  * @returns {FIXED BINARY} value that specifies the current
   *   extent of dimension \`y\` of \`x\`
   */
- DIMENSION: DIM: PROC (x, y) RETURNS ();
+ DIMENSION: DIM: PROC (x, y) RETURNS (FIXED BINARY);
    DCL x ANY(*);
    DCL y ANY<NUMBER> OPTIONAL;
  END;
@@ -912,10 +912,10 @@ export const Builtins =
   *   supplied, it defaults to 1.
   *
   *   \`y\` can be omitted only if the array is one-dimensional.
-  * @returns {ANY<NUMBER>} FIXED BINARY value that specifies the current
+  * @returns {FIXED BINARY} FIXED BINARY value that specifies the current
   *  upper bound of dimension \`y\` of \`x\`
   */
- HBOUND: PROC (x, y) RETURNS ();
+ HBOUND: PROC (x, y) RETURNS (FIXED BINARY);
    DCL x ANY(*);
    DCL y ANY<NUMBER> OPTIONAL;
  END;
@@ -997,47 +997,509 @@ export const Builtins =
    DCL y ANY(*);
  END;
 
- LBOUND: PROC (array) RETURNS ();
+ /**
+  * LBOUND returns a FIXED BINARY value that specifies the current
+  * lower bound of dimension \`y\` of \`x\`.
+  *
+  * Under the CMPAT(V3) compiler option, LBOUND returns a FIXED
+  * BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
+  * options, LBOUND returns a FIXED BIN(31) value.
+  *
+  * @param {ANY(*)} x Array reference. \`x\` must not have less than
+  *   \`y\` dimensions.
+  * @param {ANY<NUMBER>} [y] Expression specifying a particular
+  *   dimension of \`x\`. If necessary, \`y\` is converted to
+  *   FIXED BINARY(31,0).
+  *   The value for \`y\` must be greater than or equal to 1. and if
+  *   \`y\` is not supplied, it defaults to 1.
+  *
+  *   The value for \`y\` can be omitted only if the array is
+  *   one-dimensional.
+  * @returns {FIXED BINARY} value that specifies the current
+  *   lower bound of dimension \`y\` of \`x\`
+  */
+ LBOUND: PROC (x, y) RETURNS (FIXED BINARY);
+   DCL x ANY(*);
+   DCL y ANY<NUMBER> OPTIONAL;
  END;
 
- LBOUNDACROSS: PROC (array) RETURNS ();
+ /**
+  * LBOUNDACROSS returns a FIXED BINARY value that specifies the
+  * current lower bound of a DIMACROSS reference \`x\`.
+  *
+  * Under the CMPAT(V3) compiler option, LBOUNDACROSS returns a
+  * FIXED BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
+  * options, LBOUNDACROSS returns a FIXED BIN(31) value.
+  *
+  * @param {ANY(*) DIMACROSS} x DIMACROSS reference
+  * @returns {FIXED BINARY} value that specifies the current lower
+  *   bound of a DIMACROSS reference \`x\`
+  */
+ LBOUNDACROSS: PROC (x) RETURNS (FIXED BINARY);
+   DCL x ANY(*) DIMACROSS;
  END;
 
- POLY: PROC (array, value) RETURNS ();
+ /**
+  * POLY returns a floating-point value that is an approximation of
+  * a polynomial formed from an one-dimensional array expressions x.
+  * The returned value has the same attributes as the first
+  * argument.
+  *
+  * x must be REAL FLOAT and y is converted to the attributes of x,
+  * if necessary.
+  *
+  * If x has lower bound 0 and upper bound n, the result is a
+  * classic polynomial of degree n in y with coefficients given by
+  * x, i.e. the result is
+  * 
+  * \`\`\`
+  *       x(0) + x(1)*y + x(2)*y**2 + ... + x(n)*y**n
+  * \`\`\`
+  *
+  * In the general case, where x has lower bound m and upper bound
+  * n, the result is the polynomial
+  * 
+  * \`\`\`
+  *       x(m) + x(m+1)*y + x(m+2)*y**2 + ... + x(n)*y**(n-m)
+  * \`\`\`
+  *
+  * @param {ANY(*)} x An array expression.
+  * @param {ANY} y An element expression.
+  * @return {FLOAT} floating-point value that is an approximation of a
+  *   polynomial formed from an one-dimensional array expressions x.
+  */
+ POLY: PROC (x, y) RETURNS (FLOAT);
+   DCL x ANY(*);
+   DCL y ANY;
  END;
 
- PROD: PROC (array) RETURNS ();
+ /**
+  * PROD returns the product of all the elements in \`x\`.
+  *
+  * The result has the precision of \`x\`, except that the result
+  * for fixed-point integer values and strings is fixed-point with
+  * precision (n,0), where \`n\` is the maximum number of digits
+  * allowed. The base and mode match the converted argument \`x\`.
+  *
+  * @param {ANY(*)} x Array expression. If the elements of \`x\` are
+  *   strings, they are converted to fixed-point integer values.
+  *
+  *   If the elements of \`x\` are not fixed-point integer values or
+  *   strings, they are converted to floating-point and the result
+  *   is floating-point.
+  * @returns {ANY<NUMBER>} product of all the elements in \`x\`
+  */
+ PROD: PROC (x) RETURNS (ANY<NUMBER>);
+   DCL x ANY(*);
  END;
 
- QUICKSORT: PROC (array) RETURNS ();
+ /**
+  * QUICKSORT performs a quick-sort of an array by using a simple
+  * compare.
+  *
+  * The sorted array elements are stored in increasing order, in
+  * accordance with the result of a simple compare. If two elements
+  * are equal, their order in the sorted array is unspecified.
+  *
+  * QUICKSORT overwrites the contents of x with the sorted elements.
+  * When the quick-sort is finished, for elements j and k:
+  * 
+  * - if j < k, then x(j) < = x(k)
+  *
+  * @param {ANY(*)} x An array expression. x must be a one-dimensional
+  *   array of scalars. If x is an array of NONVARYING BIT, it must
+  *   be aligned.
+  *
+  *   The elements of the array x must satisfy one of the following:
+  *
+  *   - They must be computational and not COMPLEX
+  *   - They must be POINTERs
+  *   - They must be HANDLEs
+  *   - They must be ORDINALs
+  * @param {ANY<NUMBER>} [n] An expression that specifies the index of 
+  *   the first array element to be examined. It defaults to LBOUND(x).
+  * @param {ANY<NUMBER>} [m] An expression that specifies the number of
+  *   to-be-examined array elements. The counting starts with the
+  *   nth and defaults to HBOUND(x) – n + 1.
+  */
+ QUICKSORT: PROC (x, n, m);
+   DCL x ANY(*);
+   DCL n ANY<NUMBER> OPTIONAL;
+   DCL m ANY<NUMBER> OPTIONAL;
  END;
 
- QUICKSORTX: PROC (array, fn) RETURNS ();
+ /**
+  * QUICKSORTX performs a quick-sort of an array by using a
+  * specified compare function.
+  *
+  * The function f must have the OPTLINK linkage and it is passed 2
+  * POINTER BYVALUE arguments that hold the addresses of two
+  * elements from the array x.
+  *
+  * The function f must have the attributes RETURNS( BYVALUE FIXED
+  * BINARY(31) ), and it must return one of the values -1, 0 or +1:
+  * 
+  * - If the value of the first array element is less than the value
+  * of the second array element, then the returned value must be -1.
+  * - If the value of the first array element is equal to the value
+  * of the second array element, then the returned value must be 0.
+  * - If the value of the first array element is greater than the
+  * value of the second array element, then the returned value must
+  * be +1.
+  *
+  * The sorted array elements are stored in increasing order, in
+  * accordance with the result of the comparison function.
+  *
+  * You can sort in reverse order by reversing the greater than and
+  * less than logic in the comparison function. If two elements are
+  * equal, their order in the sorted array is unspecified.
+  *
+  * QUICKSORTX overwrites the contents of x with the sorted
+  * elements. When the quick-sort is finished, for elements j and k:
+  * 
+  * - if j < k, thenf( addr(x(j)), addr(x(k)) ) < = 0
+  *
+  * @param {ANY(*)} x An array expression. x must be a one-dimensional
+  *   array. If x is an array of NONVARYING BIT, it must be aligned.
+  * @param {ANY<ENTRY>} f Expression. Specifies the function that will be
+  *   invoked to perform all the required comparisons.
+  * @param {ANY<NUMBER>} [n] An expression that specifies the index of the
+  *   first array element to be examined. It defaults to LBOUND(x).
+  * @param {ANY<NUMBER>} [m] An expression that specifies the number of
+  *   to-be-examined array elements. The counting starts with the
+  *   nth and defaults to HBOUND(x) – n + 1.
+  */
+ QUICKSORTX: PROC (x, f, n, m);
+   DCL x ANY(*);
+   DCL f ANY(ENTRY);
+   DCL n ANY<NUMBER> OPTIONAL;
+   DCL m ANY<NUMBER> OPTIONAL;
  END;
 
- SUM: PROC (array) RETURNS ();
+ /**
+  * SUM returns the sum of all the elements in \`x\`. The base,
+  * mode, and scale of the result match those of \`x\`.
+  *
+  * @param {ANY(*)} x Array expression. If the elements of \`x\` are
+  *   strings, they are converted to fixed-point integer values.
+  *
+  *   If the elements of \`x\` are fixed-point, the precision of the
+  *   result is (\`N,q\`), where N is the maximum number of digits
+  *   allowed, and \`q\` is the scaling factor of \`x\`.
+  *
+  *   If the elements of \`x\` are floating-point, the precision of
+  *   the result matches \`x\`.
+  * @returns {ANY<NUMBER>} sum of all the elements in \`x\`
+  */
+ SUM: PROC (x) RETURNS (ANY<NUMBER>);
+   DCL x ANY(*);
  END;
 
  /* Buffer management functions */
- COMPARE: PROC (buffer1, buffer2) RETURNS ();
+  /**
+  * COMPARE compares the z bytes of two buffers at the addresses x
+  * and y.
+  *
+  * COMPARE returns a FIXED BINARY(31,0) value. It can be any of the
+  * following values:
+  *
+  * **Zero**: The z bytes at the addresses x and y are identical.
+  * **Negative**: The z bytes at x are less than those at y.
+  * **Positive**: The z bytes at x are greater than those at y.
+  *
+  * If the two buffers are different, the COMPARE built-in function
+  * does not indicate where that difference is. If you want to know
+  * where they differ, use the WHEREDIFF built-in function instead.
+  *
+  * **Example**
+  * 
+  * \`\`\`
+  *   dcl Result fixed bin;
+  *   dcl 1 Str1,
+  *         2 B fixed bin(31),
+  *         2 C pointer,
+  *         2 * union,
+  *           3 D char(4),
+  *           3 E fixed bin(31),
+  *           3 *,
+  *             4 * char(3),
+  *             4 F fixed bin(8) unsigned,
+  *         2 * char(0);
+  *   dcl 1 Template nonasgn static,
+  *         2 * fixed bin(31) init(16),     // ''X 
+  *         2 * pointer init(sysnull()),
+  *         2 * char(4) init(''),
+  *         2 * char(0);
+  * 
+  *   call plimove(addr(Str1), addr(Template), stg(Str1));
+  *   Result = compare(addr(Str1), addr(Template), stg(Str1));   //  0
+  *   D = 'DSA ';
+  *   Result = compare(addr(Str1), addr(Template), stg(Str1));   //  1
+  *   B = 15;      // '00000F00'X
+  *   D = 'DSA ';
+  *   Result = compare(addr(Str1), addr(Template), stg(Str1));   // -1
+  * \`\`\`
+  *
+  * @param {ANY(*)} x Expression. Both must have the POINTER or
+  *   OFFSET type. If OFFSET, the expression must be declared with
+  *   the AREA qualification.
+  * @param {ANY(*)} y Expression. Both must have the POINTER or
+  *   OFFSET type. If OFFSET, the expression must be declared with
+  *   the AREA qualification.
+  * @param {ANY} z Expression. It is converted to size_t 1.
+  * @returns {FIXED BINARY(31,0)} value that indicates the relationship
+  *   of the z bytes at the addresses x and y
+  */
+ COMPARE: PROC (x, y, z) RETURNS ();
+   DCL x ANY(*);
+   DCL y ANY(*);
+   DCL z ANY;
  END;
 
- HEXENCODE: PROC (buffer) RETURNS ();
+  /**
+  * HEXENCODE encodes a source buffer into a buffer holding its base
+  * 16 value in the character set specified by the ASCII or EBCDIC
+  * suboption of the DEFAULT compiler option. It returns a size_t
+  * value that indicates the number of bytes that are written into
+  * the target buffer.
+  *
+  * The returned value depends on the address of the target buffer
+  * or the size of the target buffer:
+  * 
+  * - If the address of the target buffer p is zero, the number of
+  * bytes that would be written is returned.
+  * - If the target buffer is not large enough, a value of -1 is
+  * returned.
+  * - If the target buffer is large enough, the number of bytes that
+  * are written to the buffer is returned.
+  *
+  * Note: Some arguments or return values are of type size_t. If the
+  * LP(32) compiler option is in effect, size_t is FIXED BIN(31); if
+  * the LP(64) compiler option is in effect, size_t is FIXED
+  * BIN(63).
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes that
+  *   are written into the target buffer, or -1 if the target buffer is
+  *   not large enough, or the number of bytes that would be written if
+  *   the address of the target buffer is zero.
+  */
+ HEXENCODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
  END;
 
- HEXENCODE8: PROC (buffer) RETURNS ();
+ /**
+  * HEXENCODE8 encodes the source buffer into base 16 that is
+  * encoded as UTF-8. It returns a size_t 1 value that indicates the
+  * number of bytes that are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes that
+  *   are written into the target buffer, or -1 if the target buffer is
+  *   not large enough, or the number of bytes that would be written if
+  *   the address of the target buffer is zero.
+  */
+ HEXENCODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
  END;
 
- HEXIMAGE: PROC (buffer) RETURNS ();
+ /**
+  * HEXIMAGE returns a character string that is the hexadecimal
+  * representation of the storage at a specified location.
+  *
+  * HEXIMAGE(p,n) returns a character string that is the hexadecimal
+  * representation of \`n\` bytes of storage at location \`p\`. Its
+  * length is 2 * n.
+  *
+  * HEXIMAGE(p,n,z) returns a character string that is the
+  * hexadecimal representation of \`n\` bytes of storage at location
+  * \`p\` with character \`z\` inserted between every set of eight
+  * characters in the output string. Its length is (2 * n) + ((n -
+  * 1)/4).
+  *
+  * If the number of bytes to be converted to hex is not known at
+  * compile time, then no more than 32767 bytes will be converted.
+  *
+  * For examples of the HEXIMAGE built-in function, see HEX.
+  *
+  * @param {ANY<LOCATOR>} p Restricted expression that must have a 
+  *   locator type (POINTER or OFFSET). If \`p\` is OFFSET, it must 
+  *   have the AREA attribute.
+  * @param {ANY<NUMBER>} n Expression. \`n\` must have a computational
+  *   type and is converted to FIXED BINARY(31,0).
+  * @param {CHARACTER(1) NONVARYING} [z] If specified, \`z\` must have
+  *   the type CHARACTER(1) NONVARYING.
+  * @returns {CHARACTER(*)} character string that is the hexadecimal
+  *   representation of the storage at a specified location.
+  */
+ HEXIMAGE: PROC (p, n, z) RETURNS (CHARACTER(*));
+   DCL p ANY(LOCATOR);
+   DCL n ANY<NUMBER>;
+   DCL z CHARACTER(1) NONVARYING OPTIONAL;
  END;
 
- HEXIMAGE8: PROC (buffer) RETURNS ();
+  /**
+  * HEXIMAGE8 returns a character string that is the UTF-8
+  * hexadecimal representation of the storage at a specified
+  * location.
+  *
+  * HEXIMAGE8(p,n) returns a character string that is the
+  * hexadecimal representation of \`n\` bytes of storage at location
+  * \`p\`. Its length is 2 * n.
+  *
+  * HEXIMAGE8(p,n,z) returns a character string that is the
+  * hexadecimal representation of \`n\` bytes of storage at location
+  * \`p\` with character \`z\` inserted between every set of eight
+  * characters in the output string. Its length is (2 * n) + ((n -
+  * 1)/4).
+  *
+  * If the number of bytes to be converted to hex is not known at
+  * compile time, then no more than 32767 bytes will be converted.
+  *
+  * For examples of the HEXIMAGE8 built-in function, see HEX8.
+  *
+  * @param {ANY<LOCATOR>} p A restricted expression that must have a
+  *   locator type (POINTER or OFFSET). If \`p\` is OFFSET, it must have
+  *   the AREA attribute.
+  * @param {ANY<NUMBER>} n An expression. \`n\` must have a
+  *   computational type and is converted to FIXED BINARY(31,0).
+  * @param {CHARACTER(1) NONVARYING} [z] An expression. If specified,
+  *   \`z\` must have the type CHARACTER(1) NONVARYING and must be a
+  *   valid 1-byte UTF-8 character.
+  */
+ HEXIMAGE8: PROC (p, n, z) RETURNS (CHARACTER(*));
+   DCL p ANY(LOCATOR);
+   DCL n ANY<NUMBER>;
+   DCL z CHARACTER(1) NONVARYING OPTIONAL;
  END;
 
- MEMCONVERT: PROC (buffer, from, to) RETURNS ();
+ /**
+  * MEMCONVERT converts the data in a source buffer from the
+  * specified source codepage to a specified target codepage, stores
+  * the result in a target buffer, and returns a size_t 1 value that
+  * indicates the number of bytes that are written to the target
+  * buffer. It will also take an optional parameter t that specifies
+  * the technique to use in the conversion.
+  *
+  * The buffer lengths must be nonnegative and must have a
+  * computational type. The buffer lengths are converted to type
+  * size_t.
+  *
+  * If either buffer length is zero, the result is zero.
+  *
+  * The code page must have a computational type and is converted to
+  * type FIXED BINARY (31,0). The code page must specify a valid,
+  * supported code page.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @param {ANY} c Target code page.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {ANY<NUMBER>} m Length of the source buffer.
+  * @param {ANY} d Source code page.
+  * @param {ANY} [t] A character string or variable that names the
+  *   technique to use in the conversion. t is of length 8 or less.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  *   that are written to the target buffer.
+  */
+ MEMCONVERT: PROC (p, n, c, q, m, d, t) RETURNS (ANY<NUMBER>);
+   DCL p ANY(LOCATOR);
+   DCL n ANY<NUMBER>;
+   DCL c ANY;
+   DCL q ANY(LOCATOR);
+   DCL m ANY<NUMBER>;
+   DCL d ANY;
+   DCL t ANY CHARACTER(8) OPTIONAL;
  END;
 
- MEMCOLLAPSE: PROC (buffer) RETURNS ();
+ /**
+  * MEMCOLLAPSE fills a target buffer with the contents of a source
+  * buffer with all multiple occurrences of a specified character
+  * replaced by one, while the leading and trailing instances of
+  * that character are also trimmed. It returns a size_t value that
+  * indicates the number of bytes written to the target buffer.
+  *
+  * The returned value depends on the address of the target buffer
+  * or the size of the target buffer:
+  * 
+  * - If the address of the target buffer is zero (null), the number
+  * of bytes that would be written is returned.
+  * - If the target buffer is not large enough, a value of -1 is
+  * returned.
+  * - If the target buffer is large enough, the number of bytes that
+  * are written to the buffer is returned.
+  * - The target buffer will include all the characters in the
+  * source buffer before the ith character (without any collapsing)
+  * and then all characters from the nth position onwards, squeezed
+  * and trimmed as appropriate.
+  *
+  * **Example**
+  * 
+  * \`\`\`
+  * dcl s  char(20);
+  * dcl t  char(20);
+  * dcl cx fixed bin(31);
+  *  
+  * s  = '...abc....def...gh..';
+  * cx = memcollapse(sysnull(), 0, addr(s), stg(s), '.');
+  *        // cx = 10
+  * cx = memcollapse(addr(t), stg(t), addr(s), stg(s), '.');
+  *        // cx = 10
+  *        // t = 'abc.def.gh'
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t. It must be non-negative.
+  * @param {CHARACTER(1) NONVARYING} z An expression that must have the type
+  *   CHARACTER(1) NONVARYING.
+  * @param {ANY<NUMBER>} [i] An optional expression that must be
+  *   computational and will be converted to size_t as necessary. If
+  *   not specified, the default value for i is 1. If i < 1, default
+  *   value of 1 is used.
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes that
+  *   are written to the target buffer, or -1 if the target buffer is
+  *   not large enough, or the number of bytes that would be written if
+  *   the address of the target buffer is zero.
+  */
+ MEMCOLLAPSE: PROC (p, m, q, n, z, i) RETURNS (ANY<NUMBER>);
+    DCL p ANY(LOCATOR);
+    DCL m ANY<NUMBER>;
+    DCL q ANY(LOCATOR);
+    DCL n ANY<NUMBER>;
+    DCL z CHARACTER(1) NONVARYING;
+    DCL i ANY<NUMBER> OPTIONAL;
  END;
 
  MEMCU12: PROC (buffer, target) RETURNS ();
