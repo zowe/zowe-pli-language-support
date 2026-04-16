@@ -5244,37 +5244,447 @@ export const Builtins =
  END;
 
  /* Floating point inquiry functions */
- EPSILON: PROC () RETURNS ();
+ /**
+  * EPSILON returns a floating-point value that is the spacing
+  * between \`x\` and the next positive number when \`x\` is 1. It
+  * has the base, mode, and precision of \`x\`.
+  *
+  * EPSILON(x) is a constant and can be used in restricted
+  * expressions.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT expression.
+  * @returns {ANY<NUMBER>} A floating-point value that is the spacing
+  *   between \`x\` and the next positive number when \`x\` is 1.
+  */
+ EPSILON: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
  END;
- HUGE: PROC () RETURNS ();
+ /**
+  * HUGE returns a floating-point value that is the largest positive
+  * value \`x\` can assume. It has the base, mode, and precision of
+  * \`x\`.
+  *
+  * HUGE(x) is a constant and can be used in restricted expressions.
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have the attributes
+  *   REAL FLOAT.
+  * @returns {ANY<NUMBER>} A floating-point value that is the largest
+  *   positive value \`x\` can assume.
+  */
+ HUGE: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
  END;
- ISFINITE: PROC (value) RETURNS ();
+ /**
+  * ISFINITE returns a '1'B if if the argument with which it is
+  * invoked is not a NAN and not positive or negative infinity.
+  * Otherwise it returns a '0'B.
+  *
+  * The FLOAT(DFP) compiler option must be in effect.
+  *
+  * No floating-point exceptions will be raised no matter what the
+  * format of the argument.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
+  * @returns {BIT} '1'B if the argument is not a NAN and not
+  *   positive or negative infinity; '0'B otherwise.
+  */
+ ISFINITE: PROC (x) RETURNS (BIT);
+    DCL x ANY<NUMBER>;
  END;
- ISINF: PROC (value) RETURNS ();
+ /**
+  * ISINF returns a '1'B if if the argument with which it is invoked
+  * is an infinity. Otherwise it returns a '0'B.
+  *
+  * The FLOAT(DFP) compiler option must be in effect.
+  *
+  * No floating-point exceptions will be raised no matter what the
+  * format of the argument.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
+  * @returns {BIT} '1'B if the argument is an infinity; '0'B
+  *   otherwise.
+  */
+ ISINF: PROC (x) RETURNS (BIT);
+    DCL x ANY<NUMBER>;
  END;
- ISNAN: PROC (value) RETURNS ();
+ /**
+  * ISNAN returns a '1'B if if the argument with which it is invoked
+  * is a NAN. Otherwise it returns a '0'B.
+  *
+  * The FLOAT(DFP) compiler option must be in effect.
+  *
+  * No floating-point exceptions will be raised no matter what the
+  * format of the argument.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
+  * @returns {BIT} '1'B if the argument is a NAN; '0'B otherwise.
+  */
+ ISNAN: PROC (x) RETURNS (BIT);
+    DCL x ANY<NUMBER>;
  END;
- ISNORMAL: PROC (value) RETURNS ();
+ /**
+  * ISNORMAL returns a '1'B if if the argument with which it is
+  * invoked is not a zero, subnormal, infinity or NaN. Otherwise it
+  * returns a '0'B.
+  *
+  * The FLOAT(DFP) compiler option must be in effect.
+  *
+  * No floating-point exceptions will be raised no matter what the
+  * format of the argument.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
+  * @returns {BIT} '1'B if the argument is not a zero, subnormal,
+  *   infinity or NaN; '0'B otherwise.
+  */
+ ISNORMAL: PROC (x) RETURNS (BIT);
+    DCL x ANY<NUMBER>;
  END;
- ISZERO: PROC (value) RETURNS ();
+ /**
+  * ISZERO returns a '1'B if if the argument with which it is
+  * invoked is a zero. Otherwise it returns a '0'B.
+  *
+  * The FLOAT(DFP) compiler option must be in effect.
+  *
+  * No floating-point exceptions will be raised no matter what the
+  * format of the argument.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
+  * @returns {BIT} '1'B if the argument is a zero; '0'B otherwise.
+  */
+ ISZERO: PROC (x) RETURNS (BIT);
+    DCL x ANY<NUMBER>;
  END;
- MAXEXP: PROC () RETURNS ();
+ /**
+  * MAXEXP returns a FIXED BINARY(31,0) value that is the maximum
+  * value that EXPONENT(x) can assume.
+  *
+  * MAXEXP(x) is a constant and can be used in restricted
+  * expressions.
+  *
+  * **Example (Intel values)**
+  *
+  * \`\`\`
+  *   maxexp(x) = 128      for x float bin(p), p <= 21
+  *   maxexp(x) = 1024      for x float bin(p), 21 < p <= 53
+  *   maxexp(x) = 16384      for x float bin(p), 53 < p
+  *
+  *   maxexp(x) = 128      for x float dec(p), p <= 6
+  *   maxexp(x) = 1024      for x float dec(p), 6 < p <= 16
+  *   maxexp(x) = 16384      for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (AIX values)**
+  *
+  * \`\`\`
+  *   maxexp(x) = 128      for x float bin(p), p <= 21
+  *   maxexp(x) = 1024      for x float bin(p), 21 < p <= 53
+  *   maxexp(x) = 1024      for x float bin(p), 53 < p
+  *
+  *   maxexp(x) = 128      for x float dec(p), p <= 6
+  *   maxexp(x) = 1024      for x float dec(p), 6 < p <= 16
+  *   maxexp(x) = 1024      for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS hexadecimal values)**
+  *
+  * \`\`\`
+  *   maxexp(x) = 63      for x float bin(p), p <= 21
+  *   maxexp(x) = 63      for x float bin(p), 21 < p <= 53
+  *   maxexp(x) = 63      for x float bin(p), 53 < p
+  *
+  *   maxexp(x) = 63      for x float dec(p), p <= 6
+  *   maxexp(x) = 63      for x float dec(p), 6 < p <= 16
+  *   maxexp(x) = 63      for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS IEEE Binary Floating Point values)**
+  *
+  * \`\`\`
+  *   maxexp(x) = 128     for x float bin(p), p <= 21
+  *   maxexp(x) = 1024    for x float bin(p), 21 < p <= 53
+  *   maxexp(x) = 16384   for x float bin(p), 53 < p
+  *
+  *   maxexp(x) = 128     for x float dec(p), p <= 6
+  *   maxexp(x) = 1024    for x float dec(p), 6 < p <= 16
+  *   maxexp(x) = 16384   for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS IEEE Decimal Floating Point Values)**
+  *
+  * \`\`\`
+  *   maxexp(x) = 97      for x float dec(p), p <= 7
+  *   maxexp(x) = 385     for x float dec(p), 7 < p <= 16
+  *   maxexp(x) = 6145    for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have the REAL and
+  *   FLOAT attributes.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   maximum value that EXPONENT(x) can assume.
+  */
+ MAXEXP: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
- MINEXP: PROC () RETURNS ();
+ /**
+  * MINEXP returns a FIXED BINARY(31,0) value that is the minimum
+  * value that EXPONENT(x) can assume.
+  *
+  * MINEXP(x) is a constant and can be used in restricted
+  * expressions.
+  *
+  * **Example (Intel values)**
+  *
+  * \`\`\`
+  *   minexp(x) = -125    for x float bin(p), p <= 21
+  *   minexp(x) = -1021    for x float bin(p), 21 < p <= 53
+  *   minexp(x) = -16831    for x float bin(p), 53 < p
+  *
+  *   minexp(x) = -125    for x float dec(p), p <= 6
+  *   minexp(x) = -1021    for x float dec(p), 6 < p <= 16
+  *   minexp(x) = -16831    for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (AIX values)**
+  *
+  * \`\`\`
+  *   minexp(x) = -125     for x float bin(p), p <= 21
+  *   minexp(x) = -1021     for x float bin(p), 21 < p <= 53
+  *   minexp(x) = -968     for x float bin(p), 53 < p
+  *
+  *   minexp(x) = -125     for x float dec(p), p <= 6
+  *   minexp(x) = -1021     for x float dec(p), 6 < p <= 16
+  *   minexp(x) = -968     for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS Hexadecimal values)**
+  *
+  * \`\`\`
+  *   minexp(x) = -64    for x float bin(p), p <= 21
+  *   minexp(x) = -64    for x float bin(p), 21 < p <= 53
+  *   minexp(x) = -50    for x float bin(p), 53 < p
+  *
+  *   minexp(x) = -64    for x float dec(p), p <= 6
+  *   minexp(x) = -64    for x float dec(p), 6 < p <= 16
+  *   minexp(x) = -50    for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS IEEE Binary Floating Point values)**
+  *
+  * \`\`\`
+  *   minexp(x) = -125    for x float bin(p), p <= 21
+  *   minexp(x) = -1021   for x float bin(p), 21 < p <= 53
+  *   minexp(x) = -16381  for x float bin(p), 53 < p
+  *
+  *   minexp(x) = -125    for x float dec(p), p <= 6
+  *   minexp(x) = -1021   for x float dec(p), 6 < p <= 16
+  *   minexp(x) = -16381  for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS IEEE Decimal Floating Point values)**
+  *
+  * \`\`\`
+  *   minexp(x) = -94       for x float dec(p), p <= 7
+  *   minexp(x) = -382      for x float dec(p), 7 < p <= 16
+  *   minexp(x) = -6142     for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have the REAL and
+  *   FLOAT attributes.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   minimum value that EXPONENT(x) can assume.
+  */
+ MINEXP: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
- PLACES: PROC (value) RETURNS ();
+ /**
+  * PLACES returns a FIXED BINARY(31,0) value that is the
+  * model-precision used to represent the floating-point expression
+  * \`x\`.
+  *
+  * PLACES(x) is a constant and can be used in restricted
+  * expressions.
+  *
+  * **Example (Intel values)**
+  *
+  * \`\`\`
+  *   places(x) = 24        for x float bin(p), p <= 21
+  *   places(x) = 53        for x float bin(p), 21 < p <= 53
+  *   places(x) = 64        for x float bin(p), 53 < p
+  *
+  *   places(x) = 24        for x float dec(p), p <= 6
+  *   places(x) = 53        for x float dec(p), 6 < p <= 16
+  *   places(x) = 64        for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (AIX values)**
+  *
+  * \`\`\`
+  *   places(x) = 024        for x float bin(p), p <= 21
+  *   places(x) = 053        for x float bin(p), 21 < p <= 53
+  *   places(x) = 106        for x float bin(p), 53 < p
+  *
+  *   places(x) = 024        for x float dec(p), p <= 6
+  *   places(x) = 053        for x float dec(p), 6 < p <= 16
+  *   places(x) = 106        for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS Hexadecimal values)**
+  *
+  * \`\`\`
+  *   places(x) = 6         for x float bin(p), p <= 21
+  *   places(x) = 14        for x float bin(p), 21 < p <= 53
+  *   places(x) = 28        for x float bin(p), 53 < p
+  *
+  *   places(x) = 6         for x float dec(p), p <= 6
+  *   places(x) = 14        for x float dec(p), 6 < p <= 16
+  *   places(x) = 28        for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS IEEE Binary Floating Point values)**
+  *
+  * \`\`\`
+  *   places(x) = 24        for x float bin(p), p <= 21
+  *   places(x) = 53        for x float bin(p), 21 < p <= 53
+  *   places(x) = 113       for x float bin(p), 53 < p
+  *
+  *   places(x) = 24        for x float dec(p), p <= 6
+  *   places(x) = 53        for x float dec(p), 6 < p <= 16
+  *   places(x) = 113       for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * **Example (z/OS IEEE Decimal Floating Point values)**
+  *
+  * \`\`\`
+  *   places(x) = 7         for x float dec(p), p <= 7
+  *   places(x) = 16        for x float dec(p), 7 < p <= 16
+  *   places(x) = 34        for x float dec(p), 16 < p
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must be declared REAL
+  *   FLOAT.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   model-precision used to represent \`x\`.
+  */
+ PLACES: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
- RADIX: PROC (value) RETURNS ();
+ /**
+  * RADIX returns a FIXED BINARY(31,0) value that is the model-base
+  * used to represent the floating-point expression \`x\`.
+  *
+  * RADIX(x) depends on the floating-point format used to represent
+  * \`x\`. It is:
+  *
+  * - 2 if \`x\` is held in IEEE binary floating point format
+  * - 10 if \`x\` is held in IEEE decimal floating point format
+  * - 16 if \`x\` is held in z/OS hexadecimal format
+  *
+  * RADIX(x) can be used in restricted expressions.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT expression.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   model-base used to represent \`x\`.
+  */
+ RADIX: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
- TINY: PROC () RETURNS ();
+ /**
+  * TINY returns a floating-point value that is the smallest
+  * positive value \`x\` can assume. It has the base, mode, and
+  * precision, of \`x\`.
+  *
+  * TINY(x) is a constant and can be used in restricted expressions.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT expression.
+  * @returns {ANY<NUMBER>} A floating-point value that is the
+  *   smallest positive value \`x\` can assume.
+  */
+ TINY: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
  END;
- EXPONENT: PROC (value) RETURNS ();
+ /**
+  * EXPONENT returns a FIXED BINARY(31,0) value that is the exponent
+  * part of x.
+  *
+  * EXPONENT(x) is not the mathematical exponent of \`x\`. If \`x\`
+  * = 0, EXPONENT(x) = 0. For other values of \`x\`, EXPONENT(x) is
+  * the unique number \`e\` such that:
+  *
+  * \`\`\`
+  *        (e-1)                      e
+  * radix(x)      <= abs(x) < radix(x)
+  * \`\`\`
+  *
+  * Consequently, EXPONENT(1e0) equals 1 and not 0.
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must be declared as REAL
+  *   FLOAT.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   exponent part of x.
+  */
+ EXPONENT: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
- PRED: PROC (value) RETURNS ();
+ /**
+  * PRED returns a floating-point value that is the biggest
+  * representable number smaller than \`x\`. It has the base, mode,
+  * and precision of x. OVERFLOW will be raised if there is no such
+  * number.
+  *
+  * PRED(TINY(X)) will return zero and will not raise UNDERFLOW.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT expression.
+  * @returns {ANY<NUMBER>} A floating-point value that is the biggest
+  *   representable number smaller than \`x\`.
+  */
+ PRED: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
  END;
- SCALE: PROC (value, radix) RETURNS ();
+ /**
+  * SCALE multiplies a floating-point number by an integral power of
+  * the radix.
+  *
+  * SCALE returns a floating-point value based on the following
+  * formula:
+  *
+  * \`\`\`
+  *                n
+  *   x*(radix(x) )
+  * \`\`\`
+  *
+  * The result has the base, mode, and precision of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT expression.
+  * @param {ANY<NUMBER>} n Expression. It must have a computational
+  *   type and is converted to FIXED BINARY(31,0).
+  * @returns {ANY<NUMBER>} A floating-point value equal to
+  *   x*(radix(x)^n).
+  */
+ SCALE: PROC (x, n) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL n ANY<NUMBER>;
  END;
- SUCC: PROC (value) RETURNS ();
+ /**
+  * SUCC returns a floating-point value that is the smallest
+  * representable number larger than \`x\`. It is the base, mode,
+  * and precision of \`x\`. The OVERFLOW condition is raised if
+  * there is no such number.
+  *
+  * SUCC satisfies the following relationships:
+  *
+  * \`\`\`
+  *   pred(succ(x)) = x
+  *   succ(pred(x)) = x
+  *   succ(x)       = -pred(-x)
+  *   succ(0d0)     = tiny(0d0)
+  * \`\`\`
+  *
+  * @param {ANY<NUMBER>} x REAL FLOAT expression.
+  * @returns {ANY<NUMBER>} A floating-point value that is the
+  *   smallest representable number larger than \`x\`.
+  */
+ SUCC: PROC (x) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
  END;
 
  /* INPUT/OUTPUT functions */
