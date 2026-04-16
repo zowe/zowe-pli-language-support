@@ -9062,33 +9062,576 @@ export const Builtins =
  VALID: PROC (x) RETURNS (BIT(1));
     DCL x ANY;
  END;
- VALIDVALUE: PROC (value) RETURNS (); END;
- WCHARVAL: PROC (value) RETURNS (); END;
+ /**
+  * VALIDVALUE returns a value that indicates whether the value
+  * of an expression matches one of the elements in a
+  * variable's value set.
+  *
+  * VALIDVALUE returns a BIT(1) value '1'B if:
+  *
+  * - x has the VALUELIST attribute and its contents are one
+  * of the elements in that list.
+  * - x has the VALUERANGE attribute and its contents are
+  * within that range.
+  *
+  * Otherwise, it returns '0'B.
+  *
+  * If x has the VALUERANGE attribute , the VALIDVALUE test
+  * includes the two endpoint values. For example given the
+  * declare
+  *
+  * \`\`\`
+  * dcl x  fixed dec(5) valuerange( 1900, 2100 );
+  * \`\`\`
+  *
+  * the test
+  *
+  * \`\`\`
+  * if validvalue( x ) then
+  * \`\`\`
+  *
+  * is equivalent to
+  *
+  * \`\`\`
+  * if (1900 <= x) & (x <= 2100) then
+  * \`\`\`
+  *
+  * @param {ANY} x A reference that must have the VALUELIST or
+  *   VALUERANGE attribute.
+  * @param {ANY} [y] An expression that is to be tested
+  *   against the value set for x. If x has a computational
+  *   type, then y must also have a computational type and
+  *   will be converted, if necessary, to the same type as x;
+  *
+  *   If x has an ordinal type, then y must have the same
+  *   ordinal type.
+  *
+  *   If y is omitted, it defaults to x. VALIDVALUE(x) is
+  *   equivalent to VALIDVALUE(x,x).
+  * @returns {BIT(1)} '1'B if the value matches the value
+  *   set, '0'B otherwise.
+  */
+ //TODO has overloads
+ VALIDVALUE: PROC (x, y) RETURNS (BIT(1));
+    DCL x ANY;
+    DCL y ANY OPTIONAL;
+ END;
+ /**
+  * WCHARVAL returns the WIDECHAR(1) value corresponding to an
+  * integer.
+  *
+  * If n is in bigendian format, WCHARVAL(n) has the same bit
+  * value as n (that is, UNSPEC(WCHARVAL(n)) is equal to
+  * UNSPEC(n)), but it has the attributes WIDECHAR(1).
+  *
+  * WCHARVAL is the inverse of RANK (when applied to
+  * widechar).
+  *
+  * @param {ANY<NUMBER>} n Expression converted to UNSIGNED
+  *   FIXED BIN(16) if necessary.
+  * @returns {WIDECHAR(1)} WIDECHAR(1) value corresponding
+  *   to n.
+  */
+ WCHARVAL: PROC (n) RETURNS (WIDECHAR(1));
+    DCL n ANY<NUMBER>;
+ END;
 
  /* Ordinal-handling built-in functions */
- ORDINALNAME: PROC (value) RETURNS (); END;
- ORDINALPRED: PROC (value) RETURNS (); END;
- ORDINALSUCC: PROC (value) RETURNS (); END;
+ /**
+  * ORDINALNAME returns a nonvarying character string that is
+  * the member of the set associated with the ordinal \`x\`.
+  *
+  * ORDINALs cannot be used in computational expressions and
+  * cannot be converted to character, but ORDINALNAME provides
+  * a way to obtain a displayable value for an ORDINAL and can
+  * be very useful in debugging.
+  *
+  * @param {ANY<ORDINAL>} x Reference. It must have ordinal
+  *   type.
+  * @returns {CHARACTER(*)} Name of the ordinal member
+  *   associated with x.
+  */
+ ORDINALNAME: PROC (x) RETURNS (CHARACTER(*));
+    DCL x ANY<ORDINAL>;
+ END;
+ /**
+  * ORDINALPRED returns an ordinal that is the next lower
+  * value that the ordinal \`x\` could assume.
+  *
+  * The returned ordinal has the same type as ordinal \`x\`.
+  *
+  * @param {ANY<ORDINAL>} x Reference. It must have ordinal
+  *   type.
+  * @returns {ANY<ORDINAL>} Next lower ordinal value of the
+  *   same type as x.
+  */
+ ORDINALPRED: PROC (x) RETURNS (ANY<ORDINAL>);
+    DCL x ANY<ORDINAL>;
+ END;
+ /**
+  * ORDINALSUCC returns an ordinal that is the next higher
+  * value the ordinal \`x\` could assume.
+  *
+  * The returned ordinal has the same type as ordinal \`x\`.
+  *
+  * @param {ANY<ORDINAL>} x Reference. It must have ordinal
+  *   type.
+  * @returns {ANY<ORDINAL>} Next higher ordinal value of the
+  *   same type as x.
+  */
+ ORDINALSUCC: PROC (x) RETURNS (ANY<ORDINAL>);
+    DCL x ANY<ORDINAL>;
+ END;
 
  /* Precision-handling built-in functions */
- ADD: PROC (value) RETURNS (); END;
- BINARY: PROC (value) RETURNS (); END;
- BIN: PROC (value) RETURNS (); END;
- DECIMAL: DEC: PROC (value) RETURNS (); END;
- DIVIDE: PROC (value) RETURNS (); END;
- FIXED: PROC (value) RETURNS (); END;
- FIXEDBIN: PROC (value) RETURNS (); END;
- FIXEDDEC: PROC (value) RETURNS (); END;
- FLOAT: PROC (value) RETURNS (); END;
- FLOATBIN: PROC (value) RETURNS (); END;
- FLOATDEC: PROC (value) RETURNS (); END;
- MULTIPLY: PROC (value) RETURNS (); END;
- PRECVAL: PROC (value) RETURNS (); END;
- PRECISION: PREC: PROC (value) RETURNS (); END;
- SCALEVAL: PROC (value) RETURNS (); END;
- SIGNED: PROC (value) RETURNS (); END;
- SUBTRACT: PROC (value) RETURNS (); END;
- UNSIGNED: PROC (value) RETURNS (); END;
+ /**
+  * ADD returns the sum of \`x\` and \`y\` with a precision
+  * specified by \`p\` and \`q\`. If both operands are FIXED and
+  * at least one is FIXED BIN, then the base, precision, and
+  * scale are determined by the PRECTYPE compiler option.
+  * Otherwise, the base, precision, and scale are determined
+  * by the rules for expression evaluation. The mode is REAL
+  * if both operands are REAL; otherwise, it is COMPLEX.
+  *
+  * ADD can be used for subtraction by prefixing a minus sign
+  * to the operand to be subtracted.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} y Expression.
+  * @param {ANY<NUMBER>} p Restricted expression. It specifies
+  *   the number of digits to be maintained throughout the
+  *   operation.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor of the result. For a fixed-point
+  *   result, if \`q\` is omitted, a scaling factor of zero is
+  *   the default, and if not omitted, it must be nonnegative.
+  *   For a floating-point result, \`q\` must be omitted.
+  * @returns {ANY<NUMBER>} Sum of x and y with the specified
+  *   precision.
+  */
+ ADD: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER>;
+    DCL p ANY<NUMBER>;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * BINARY returns the binary value of \`x\`, with a precision
+  * specified by \`p\` and \`q\`. The result has the mode and
+  * scale of \`x\`.
+  *
+  * Abbreviation: BIN
+  *
+  * If both \`p\` and \`q\` are omitted, the precision of the
+  * result is determined from the rules for base conversion.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression. Specifies
+  *   the number of digits to be maintained throughout the
+  *   operation; it must not exceed the implementation limit.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor of the result. For a fixed-point
+  *   result, if \`q\` is omitted, a scaling factor of zero is
+  *   the default, and if not omitted, it must be nonnegative.
+  *   For a floating-point result, \`q\` must be omitted.
+  * @returns {ANY<NUMBER>} Binary value of x with the
+  *   specified precision.
+  */
+ BINARY: BIN: PROC (x, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * DECIMAL returns the decimal value of \`x\`, with a
+  * precision specified by \`p\` and \`q\`. The result has the
+  * mode and scale of \`x\`.
+  *
+  * Abbreviation: DEC
+  *
+  * If both \`p\` and \`q\` are omitted, the precision of the
+  * result is determined from the rules for base conversion.
+  *
+  * @param {ANY<NUMBER>} x Reference.
+  * @param {ANY<NUMBER>} [p] Restricted expression specifying
+  *   the number of digits to be maintained throughout the
+  *   operation.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor of the result. For a fixed-point
+  *   result, if \`q\` is omitted, a scaling factor of zero is
+  *   the default, and if not omitted, it must be nonnegative.
+  *   For a floating-point result, \`q\` must be omitted.
+  * @returns {ANY<NUMBER>} Decimal value of x with the
+  *   specified precision.
+  */
+ DECIMAL: DEC: PROC (x, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * DIVIDE returns the quotient of \`x/y\` with a precision
+  * specified by \`p\` and \`q\`. If both operands are FIXED and
+  * at least one is FIXED BIN, then the base, precision, and
+  * scale are determined by the PRECTYPE compiler option.
+  * Otherwise, the base, precision, and scale are determined
+  * by the rules for expression evaluation. The mode is REAL
+  * if both operands are REAL; otherwise, it is COMPLEX.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} y Expression. If \`y\` = 0, the
+  *   ZERODIVIDE condition is raised.
+  * @param {ANY<NUMBER>} p Restricted expression specifying
+  *   the number of digits to be maintained throughout the
+  *   operation.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor of the result. For a fixed-point
+  *   result, if \`q\` is omitted, a scaling factor of zero is
+  *   the default, and if not omitted, it must be nonnegative.
+  *   For a floating-point result, \`q\` must be omitted.
+  * @returns {ANY<NUMBER>} Quotient of x/y with the specified
+  *   precision.
+  */
+ DIVIDE: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER>;
+    DCL p ANY<NUMBER>;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * FIXED returns the fixed-point value of \`x\`, with a
+  * precision specified by \`p\` and \`q\`. The result has the
+  * base and mode of \`x\`.
+  *
+  * If both p and q are omitted, the default values, (15,0)
+  * for a binary result or (5,0) for a decimal result, are
+  * used.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the total number of digits in the result. It
+  *   must not exceed the implementation limit.
+  * @param {ANY<NUMBER>} [q] Restricted expression that
+  *   specifies the scaling factor of the result. If \`q\` is
+  *   omitted, a scaling factor of zero is assumed. If \`q\` is
+  *   specified, it must be nonnegative.
+  * @returns {ANY<NUMBER>} Fixed-point value of x with the
+  *   specified precision.
+  */
+ FIXED: PROC (x, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * FIXEDBIN returns a FIXED BIN value with precision and
+  * scale derived from the source unless explicitly specified
+  * as parameters to the function.
+  *
+  * If both \`p\` and \`q\` are omitted, the precision of the
+  * result is determined from the source according to this
+  * table:
+  *
+  * | source | result |
+  * | --- | --- |
+  * | FIXED BIN(p,q) | FIXED BIN(p,q) |
+  * | FIXED DEC(p,q) | FIXED BIN(r,s) where r =
+  * min(M,1+CEIL(p*3.32)) and s = CEIL(ABS(q*3.32))*SIGN(q) |
+  * | FLOAT BIN(p) | FIXED BIN(p,0) |
+  * | FLOAT DEC(p) | FIXED BIN(r,0) where r =
+  * min(M,CEIL(p*3.32)) |
+  * | BIT | FIXED BIN(M,0) |
+  * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FIXED BIN(r,0)
+  * where r = min(M,1+CEIL(N*3.32)) |
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the total number of digits in the result. It
+  *   must not exceed the implementation limit.
+  * @param {ANY<NUMBER>} [q] Restricted expression that
+  *   specifies the scaling factor of the result. If \`q\` is
+  *   omitted, a scaling factor of zero is assumed. If \`q\` is
+  *   specified, it must be nonnegative.
+  * @returns {FIXED BINARY} FIXED BIN value of x with the
+  *   specified precision and scale.
+  */
+ FIXEDBIN: PROC (x, p, q) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * FIXEDDEC returns a FIXED DEC value with precision and
+  * scale derived from the source unless explicitly specified
+  * as parameters to the function.
+  *
+  * If both \`p\` and \`q\` are omitted, the precision of the
+  * result is determined from the source according to this
+  * table:
+  *
+  * | source | result |
+  * | --- | --- |
+  * | FIXED BIN(p,q) | FIXED DEC(r,s) where r =
+  * min(N,1+CEIL(p/3.32)) and s=CEIL(ABS(q/3.32))*SIGN(q) |
+  * | FIXED DEC(p,q) | FIXED DEC(p,q) |
+  * | FLOAT BIN(p) | FIXED DEC(r,0) where r =
+  * min(N,CEIL(p/3.32) |
+  * | FLOAT DEC(p) | FIXED DEC(p,0) |
+  * | BIT | FIXED DEC(r,0) where where r =
+  * min(N,1+CEIL(M/3.32)) |
+  * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FIXED DEC(N,0) |
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the total number of digits in the result. It
+  *   must not exceed the implementation limit.
+  * @param {ANY<NUMBER>} [q] Restricted expression that
+  *   specifies the scaling factor of the result. If \`q\` is
+  *   omitted, a scaling factor of zero is assumed. If \`q\` is
+  *   specified, it must be nonnegative.
+  * @returns {FIXED DECIMAL} FIXED DEC value of x with the
+  *   specified precision and scale.
+  */
+ FIXEDDEC: PROC (x, p, q) RETURNS (FIXED DECIMAL);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * FLOAT returns the approximate floating-point value of
+  * \`x\`, with a precision specified by \`p\`. The result has
+  * the base and mode of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the minimum number of digits in the result.
+  *
+  *   If \`p\` is omitted, the precision of the result is
+  *   determined from the rules for base conversion.
+  *
+  *   If \`p\` is omitted, the default value, 15 for a binary
+  *   result or 5 for a decimal result, is used.
+  * @returns {FLOAT} Approximate floating-point value of x
+  *   with the specified precision.
+  */
+ FLOAT: PROC (x, p) RETURNS (FLOAT);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * FLOATBIN returns a FLOAT BIN value with precision derived
+  * from the source unless explicitly specified as a parameter
+  * to the function.
+  *
+  * If \`p\` is omitted, the precision of the result is
+  * determined from the source according to this table:
+  *
+  * | source | result |
+  * | --- | --- |
+  * | FIXED BIN(p,q) | FLOAT BIN(p) |
+  * | FIXED DEC(p,q) | FLOAT BIN(r) where r = CEIL(p*3.32) |
+  * | FLOAT BIN(p) | FLOAT BIN(p) |
+  * | FLOAT DEC(p) | FLOAT BIN(r) where r = CEIL(p*3.32) |
+  * | BIT | FLOAT BIN(M) |
+  * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FLOAT BIN(r) where
+  * r = CEIL(N*3.32) |
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the total number of digits in the result. It
+  *   must not exceed the implementation limit.
+  * @returns {FLOAT BINARY} FLOAT BIN value of x with the
+  *   specified precision.
+  */
+ FLOATBIN: PROC (x, p) RETURNS (FLOAT BINARY);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * FLOATDEC returns a FLOAT DEC value with precision derived
+  * from the source unless explicitly specified as a parameter
+  * to the function.
+  *
+  * If \`p\` is omitted, the precision of the result is
+  * determined from the source according to this table:
+  *
+  * | source | result |
+  * | --- | --- |
+  * | FIXED BIN(p,q) | FLOAT DEC(r) where r = CEIL(p/3.32) |
+  * | FIXED DEC(p,q) | FLOAT DEC(p) |
+  * | FLOAT BIN(p) | FLOAT DEC(r) where r = CEIL(p/3.32) |
+  * | FLOAT DEC(p) | FLOAT DEC(p) |
+  * | BIT | FLOAT DEC(r) where r = CEIL(M/3.32) |
+  * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FLOAT DEC(N) |
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the total number of digits in the result. It
+  *   must not exceed the implementation limit.
+  * @returns {FLOAT DECIMAL} FLOAT DEC value of x with the
+  *   specified precision.
+  */
+ FLOATDEC: PROC (x, p) RETURNS (FLOAT DECIMAL);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * MULTIPLY returns the product of \`x\` and \`y\`, with a
+  * precision specified by \`p\` and \`q\`.
+  *
+  * If both operands are FIXED and at least one is FIXED BIN,
+  * then the base, precision, and scale are determined by the
+  * PRECTYPE compiler option. Otherwise, the base, precision,
+  * and scale are determined by the rules for expression
+  * evaluation. The mode is REAL if both operands are REAL;
+  * otherwise, it is COMPLEX.
+  *
+  * Note that when applied to FIXED DECIMAL, then if the
+  * mathematical result is too big for the specified precision
+  * \`p\` but less than the maximum implementation value,
+  *
+  * - if SIZE is disabled, the FIXEDOVERFLOW condition will
+  * not be raised and the result will be truncated
+  * - if SIZE is enabled, the SIZE condition will be raised
+  *
+  * Note that the above text is false when the non-default
+  * compiler option DECIMAL(FOFLONMULT) is in effect. In that
+  * case, FIXEDOVERFLOW will be raised if SIZE is disabled
+  * (and the result is too big).
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} y Expression.
+  * @param {ANY<NUMBER>} p Restricted expression that
+  *   specifies the number of digits to be maintained
+  *   throughout the operation.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor of the result. For a fixed-point
+  *   result, if \`q\` is omitted, a scaling factor of zero is
+  *   the default, and if not omitted, it must be nonnegative.
+  *   For a floating-point result, \`q\` must be omitted.
+  * @returns {ANY<NUMBER>} Product of x and y with the
+  *   specified precision.
+  */
+ MULTIPLY: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER>;
+    DCL p ANY<NUMBER>;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * PRECVAL returns a FIXED BINARY(31) value giving the
+  * precision for a numeric expression.
+  *
+  * For example, if x is declared as FIXED DEC(9,3), PRECVAL(x)
+  * returns 9.
+  *
+  * @param {ANY<NUMBER>} x A numeric expression.
+  * @returns {FIXED BINARY(31)} Precision of the numeric
+  *   expression.
+  */
+ PRECVAL: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * PRECISION returns the value of \`x\`, with a precision
+  * specified by \`p\` and \`q\`. The base, mode, and scale of
+  * the returned value are the same as that of \`x\`.
+  *
+  * Abbreviation: PREC
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} p Restricted expression. \`p\` specifies
+  *   the number of digits that the value of the expression
+  *   \`x\` is to have after conversion.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor of the result. For a fixed-point
+  *   result, if \`q\` is omitted, a scaling factor of zero is
+  *   the default, and if not omitted, it must be nonnegative.
+  *   For a floating-point result, \`q\` must be omitted.
+  * @returns {ANY<NUMBER>} Value of x with the specified
+  *   precision.
+  */
+ PRECISION: PREC: PROC (x, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER>;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * SCALEVAL returns a FIXED BINARY(31) value giving the scale
+  * factor for a numeric expression.
+  *
+  * If x is FLOAT, the value returned is 0.
+  *
+  * For example, if x is declared as FIXED DEC(9,3), SCALEVAL(x)
+  * returns 3.
+  *
+  * @param {ANY<NUMBER>} x A numeric expression.
+  * @returns {FIXED BINARY(31)} Scale factor of the numeric
+  *   expression.
+  */
+ SCALEVAL: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * SIGNED returns a signed FIXED BINARY value of \`x\`, with a
+  * precision specified by \`p\` and \`q\`.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Restricted expression that
+  *   specifies the number of digits to be maintained
+  *   throughout the operation.
+  * @param {ANY<NUMBER>} [q] Restricted expression that
+  *   specifies the scaling factor of the result. If \`q\` is
+  *   omitted, a scaling factor of zero is assumed. If \`q\` is
+  *   specified, it must be nonnegative.
+  * @returns {FIXED BINARY} Signed FIXED BINARY value of x
+  *   with the specified precision.
+  */
+ SIGNED: PROC (x, p, q) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * SUBTRACT is equivalent to ADD(x,-y,p,q).
+  *
+  * For details about arguments, see ADD for argument
+  * descriptions.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} y Expression.
+  * @param {ANY<NUMBER>} p Restricted expression specifying
+  *   the number of digits to be maintained.
+  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  *   the scaling factor. Omit for floating-point results.
+  * @returns {ANY<NUMBER>} Difference of x and y with the
+  *   specified precision.
+  */
+ SUBTRACT: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
+    DCL x ANY<NUMBER>;
+    DCL y ANY<NUMBER>;
+    DCL p ANY<NUMBER>;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * UNSIGNED returns an unsigned FIXED BINARY value of \`x\`,
+  * with a precision specified by \`p\` and \`q\`.
+  *
+  * @param {ANY<NUMBER>} x Expression.
+  * @param {ANY<NUMBER>} [p] Integer. It specifies the number
+  *   of digits to be maintained throughout the operation.
+  * @param {ANY<NUMBER>} [q] Restricted expression that
+  *   specifies the scaling factor of the result. If \`q\` is
+  *   omitted, a scaling factor of zero is assumed. If \`q\` is
+  *   specified, it must be nonnegative.
+  * @returns {FIXED BINARY} Unsigned FIXED BINARY value of x
+  *   with the specified precision.
+  */
+ UNSIGNED: PROC (x, p, q) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<NUMBER> OPTIONAL;
+    DCL q ANY<NUMBER> OPTIONAL;
+ END;
 
  /* Pseudovariables: THESE ARE ALREADY DEFINED IN OTHER PLACES */
  /* ENTRYADDR: PROC (value) RETURNS (); END;
