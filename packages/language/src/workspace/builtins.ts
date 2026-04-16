@@ -1171,7 +1171,7 @@ export const Builtins =
   */
  QUICKSORTX: PROC (x, f, n, m);
    DCL x ANY(*);
-   DCL f ANY(ENTRY);
+   DCL f ANY<ENTRY>;
    DCL n ANY<NUMBER> OPTIONAL;
    DCL m ANY<NUMBER> OPTIONAL;
  END;
@@ -1292,9 +1292,9 @@ export const Builtins =
   *   the address of the target buffer is zero.
   */
  HEXENCODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
  END;
 
@@ -1323,9 +1323,9 @@ export const Builtins =
   *   the address of the target buffer is zero.
   */
  HEXENCODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
  END;
 
@@ -1359,7 +1359,7 @@ export const Builtins =
   *   representation of the storage at a specified location.
   */
  HEXIMAGE: PROC (p, n, z) RETURNS (CHARACTER(*));
-   DCL p ANY(LOCATOR);
+   DCL p ANY<LOCATOR>;
    DCL n ANY<NUMBER>;
    DCL z CHARACTER(1) NONVARYING OPTIONAL;
  END;
@@ -1394,7 +1394,7 @@ export const Builtins =
   *   valid 1-byte UTF-8 character.
   */
  HEXIMAGE8: PROC (p, n, z) RETURNS (CHARACTER(*));
-   DCL p ANY(LOCATOR);
+   DCL p ANY<LOCATOR>;
    DCL n ANY<NUMBER>;
    DCL z CHARACTER(1) NONVARYING OPTIONAL;
  END;
@@ -1429,10 +1429,10 @@ export const Builtins =
   *   that are written to the target buffer.
   */
  MEMCONVERT: PROC (p, n, c, q, m, d, t) RETURNS (ANY<NUMBER>);
-   DCL p ANY(LOCATOR);
+   DCL p ANY<LOCATOR>;
    DCL n ANY<NUMBER>;
    DCL c ANY;
-   DCL q ANY(LOCATOR);
+   DCL q ANY<LOCATOR>;
    DCL m ANY<NUMBER>;
    DCL d ANY;
    DCL t ANY CHARACTER(8) OPTIONAL;
@@ -1494,9 +1494,9 @@ export const Builtins =
   *   the address of the target buffer is zero.
   */
  MEMCOLLAPSE: PROC (p, m, q, n, z, i) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
     DCL z CHARACTER(1) NONVARYING;
     DCL i ANY<NUMBER> OPTIONAL;
@@ -1524,9 +1524,9 @@ export const Builtins =
   *   is not large enough or if the source UTF-8 is invalid.
   */
  MEMCU12: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
  END;
 
@@ -1552,9 +1552,9 @@ export const Builtins =
   *   is not large enough or if the source UTF-8 is invalid.
   */
  MEMCU14: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
  END;
 
@@ -1581,9 +1581,9 @@ export const Builtins =
   *   is not large enough or if the source UTF-16 is invalid.
   */
  MEMCU21: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
  END;
 
@@ -1610,9 +1610,9 @@ export const Builtins =
   *   is not large enough or if the source UTF-16 is invalid.
   */
  MEMCU24: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
  END;
 
@@ -1638,9 +1638,9 @@ export const Builtins =
   *   is not large enough or if the source UTF-32 is invalid.
   */
  MEMCU41: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
  END;
 
@@ -1666,9 +1666,9 @@ export const Builtins =
   *   is not large enough or if the source UTF-32 is invalid.
   */
  MEMCU42: PROC (p, n, q, m) RETURNS (ANY<NUMBER>);
-    DCL p ANY(LOCATOR);
+    DCL p ANY<LOCATOR>;
     DCL n ANY<NUMBER>;
-    DCL q ANY(LOCATOR);
+    DCL q ANY<LOCATOR>;
     DCL m ANY<NUMBER>;
  END;
 
