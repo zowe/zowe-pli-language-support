@@ -9651,51 +9651,967 @@ export const Builtins =
  UNSPEC: PROC (value) RETURNS (); END; */
 
  /* Storage control built-in functions */
- ADDR: PROC (value) RETURNS (); END;
- ADDRDATA: PROC (value) RETURNS (); END;
- ALLOC31: PROC (value) RETURNS (); END;
- ALLOCATE: PROC (value) RETURNS (); END;
- ALLOC: PROC (value) RETURNS (); END;
- ALLOCATION: PROC (value) RETURNS (); END;
- ALLOCN: PROC (value) RETURNS (); END;
- ALLOCNEXT: PROC (value) RETURNS (); END;
- ALLOCSIZE: PROC (value) RETURNS (); END;
- AUTOMATIC: PROC (value) RETURNS (); END;
- AUTO: PROC (value) RETURNS (); END;
- AVAILABLEAREA: PROC (value) RETURNS (); END;
- BINARYVALUE: PROC (value) RETURNS (); END;
- BINVALUE: PROC (value) RETURNS (); END;
- BITLOCATION: PROC (value) RETURNS (); END;
- BITLOC: PROC (value) RETURNS (); END;
- CHECKSTG: PROC (value) RETURNS (); END;
- CURRENTSIZE: PROC (value) RETURNS (); END;
- CURRENTSTORAGE: CSTG:  PROC (value) RETURNS (); END;
- CSTG: PROC (value) RETURNS (); END;
- EMPTY: PROC (value) RETURNS (); END;
- ENTRYADDR: PROC (value) RETURNS (); END;
- HANDLE: PROC (value) RETURNS (); END;
- LOCATION: LOC: PROC (value) RETURNS (); END;
- LOCSTG: PROC (value) RETURNS (); END;
- LOCVAL: PROC (value) RETURNS (); END;
- NULL: PROC (value) RETURNS (); END;
- NULLENTRY: PROC (value) RETURNS (); END;
- OFFSET: PROC (value) RETURNS (); END;
- OFFSETADD: PROC (value) RETURNS (); END;
- OFFSETDIFF: PROC (value) RETURNS (); END;
- OFFSETSUBTRACT: PROC (value) RETURNS (); END;
- OFFSETVALUE: PROC (value) RETURNS (); END;
- POINTER: PTR: PROC (value) RETURNS (); END;
- POINTERADD: PTRADD: PROC (value) RETURNS (); END;
- POINTERDIFF: PTRDIFF: PROC (value) RETURNS (); END;
- POINTERSUBTRACT: PTRSUBTRACT: PROC (value) RETURNS (); END;
- POINTERVALUE: PTRVALUE: PROC (value) RETURNS (); END;
- SIZE: PROC (value) RETURNS (); END;
- STORAGE: STG: PROC (value) RETURNS (); END;
- SYSNULL: PROC (value) RETURNS (); END; 
- TYPE: PROC (value) RETURNS (); END;
- UNALLOCATED: PROC (value) RETURNS (); END;
- VARGLIST: PROC (value) RETURNS (); END;
- VARGSIZE: PROC (value) RETURNS (); END;
+ /**
+  * ADDR returns the pointer value that identifies the generation of
+  * \`x\`.
+  *
+  * @param {ANY} x Reference. It refers to a variable of any data
+  *   type, data organization, alignment, and storage class except:
+  *
+  *   - A subscripted reference to a variable that is an unaligned
+  *   fixed-length bit string
+  *   - A reference to a DEFINED or BASED variable or simple
+  *   parameter, which is an unaligned fixed-length bit string
+  *   - A minor structure or union whose first base element is an
+  *   unaligned fixed-length bit string (except where it is also
+  *   the first element of the containing major structure or union)
+  *   - A major structure or union that has the DEFINED attribute or
+  *   is a parameter, and that has an unaligned fixed-length bit
+  *   string as its first element
+  *   - A reference that is not to connected storage
+  *
+  *   If \`x\` is a reference to:
+  *
+  *   - An aggregate parameter, it must have the CONNECTED attribute
+  *   - An aggregate, the returned value identifies the first
+  *   element
+  *   - A component or cross section of an aggregate, the returned
+  *   value takes into account subscripting and structure or union
+  *   qualification
+  *   - A VARYING string, the returned value identifies the 2-byte
+  *   prefix
+  *   - A VARYING4 string, the returned value identifies the 4-byte
+  *   prefix
+  *   - An area, the returned value identifies the control
+  *   information
+  *   - A controlled variable that is not allocated in the current
+  *   program, the null pointer value is returned
+  *   - A based variable, the result is the value of the pointer
+  *   explicitly qualifying \`x\` (if it appears), or associated
+  *   with \`x\` in its declaration (if it exists), or a null
+  *   pointer
+  *   - A parameter, and a dummy argument has been created, the
+  *   returned value identifies the dummy argument
+  * @returns {ANY<LOCATOR>} The pointer value that identifies the
+  *   generation of \`x\`.
+  */
+ ADDR: PROC (x) RETURNS (ANY<LOCATOR>);
+    DCL x ANY;
+ END;
+ /**
+  * ADDRDATA returns the pointer value that identifies the
+  * generation of \`x\`.
+  *
+  * ADDRDATA behaves the same as the ADDR built-in function except
+  * in the following instance:
+  *
+  * - When applied to a varying string, ADDRDATA returns the address
+  * of the first data byte of the string (rather than of the length
+  * field).
+  * - When applied to an OFFSET reference with the LOCATES attribute
+  * and implicit AREA qualification:
+  *   - If the OFFSET reference is not null, ADDRDATA returns the
+  *   address of the located data.
+  *   - If the OFFSET reference is null, ADDRDATA returns SYSNULL.
+  *
+  * @param {ANY} x Reference.
+  * @returns {ANY<LOCATOR>} The pointer value that identifies the
+  *   generation of \`x\`.
+  */
+ ADDRDATA: PROC (x) RETURNS (ANY<LOCATOR>);
+    DCL x ANY;
+ END;
+ /**
+  * ALLOC31 allocates storage of size n in heap storage below the
+  * bar and returns the pointer to the allocated storage.
+  *
+  * @param {ANY<NUMBER>} n Expression. Nonnegative value that
+  *   represents the storage size to be allocated. If necessary, n
+  *   is converted to type size_t 1.
+  *
+  *   If the requested amount of storage is not available, the
+  *   STORAGE condition is raised.
+  * @returns {ANY<LOCATOR>} The pointer to the allocated storage.
+  */
+ ALLOC31: PROC (n) RETURNS (ANY<LOCATOR>);
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * ALLOCATE allocates storage of size \`n\` in heap storage and
+  * returns the pointer to the allocated storage. You can also use
+  * ALLOCATE to allocate the specified size in the specified area.
+  *
+  * Abbreviation: ALLOC
+  *
+  * @param {ANY<NUMBER>} n Expression. Nonnegative value that
+  *   represents the storage size to be allocated. If necessary,
+  *   \`n\` is converted to type size_t 1.
+  *
+  *   If the requested amount of storage is not available, the
+  *   STORAGE condition is raised.
+  * @param {ANY<AREA>} [x] AREA reference. When you specify
+  *   ALLOCATE(n, x), the specified number of bytes n is allocated
+  *   within that area. The number is rounded up to a multiple of 8.
+  *
+  *   If there is insufficient space within the specified area, the
+  *   AREA condition is raised.
+  * @returns {ANY<LOCATOR>} The pointer to the allocated storage.
+  */
+ ALLOCATE: ALLOC: PROC (n, x) RETURNS (ANY<LOCATOR>);
+    DCL n ANY<NUMBER>;
+    DCL x ANY<AREA> OPTIONAL;
+ END;
+ /**
+  * ALLOCATION returns a FIXED BINARY(31,0) specifying the number of
+  * generations that can be accessed in the current program for
+  * \`x\`.
+  *
+  * Abbreviation: ALLOCN
+  *
+  * If \`x\` is not allocated in the current program, the result is
+  * zero.
+  *
+  * @param {ANY} x Level-1 unsubscripted controlled variable.
+  * @returns {FIXED BINARY(31)} The number of generations of \`x\`
+  *   that can be accessed in the current program.
+  */
+ ALLOCATION: ALLOCN: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY;
+ END;
+ /**
+  * ALLOCNEXT allocates storage of the specified size in an AREA if
+  * there is enough space in the first available chunk and returns a
+  * pointer to the allocated storage (or if there is not enough
+  * space, it returns sysnull).
+  *
+  * If the first available chunk in x is large enough, the storage
+  * is allocated from x and a pointer to the allocated storage is
+  * returned.
+  *
+  * If the first available chunk is not large enough, sysnull is
+  * returned. Unlike the ALLOCATE built-in function, neither the
+  * STORAGE nor the AREA condition is raised.
+  *
+  * ALLOCNEXT(n,x) generates much shorter and faster code than
+  * ALLOCATE(n,x), but the user must check that a non-null pointer
+  * is returned. It is best suited when repeated allocations are
+  * made from an AREA without any FREEs or when all the FREEs from
+  * an AREA are in reverse order from all the ALLOCATEs.
+  *
+  * @param {ANY<NUMBER>} n Expression. A nonnegative value that
+  *   represents the storage size to be allocated. It is rounded up
+  *   to the nearest multiple of 8. If necessary, n is converted to
+  *   a size_t value.
+  * @param {ANY<AREA>} x AREA reference.
+  * @returns {ANY<LOCATOR>} Pointer to the allocated storage, or
+  *   sysnull if there is not enough space.
+  */
+ ALLOCNEXT: PROC (n, x) RETURNS (ANY<LOCATOR>);
+    DCL n ANY<NUMBER>;
+    DCL x ANY<AREA>;
+ END;
+ /**
+  * ALLOCSIZE returns a FIXED BIN(31,0) value giving the amount of
+  * storage allocated with a specified pointer. To use this built-in
+  * function, you must also specify the CHECK(STORAGE) compile-time
+  * option.
+  *
+  * ALLOCSIZE returns 0 if the pointer does not point to the start
+  * of a piece of allocated storage.
+  *
+  * Note that the pointer passed to ALLOCSIZE is "rounded down" to
+  * the nearest doubleword and that rounded value is compared
+  * against all allocated addresses when similarly rounded down.
+  *
+  * @param {ANY<LOCATOR>} p Pointer expression.
+  * @returns {FIXED BINARY(31)} The amount of storage allocated with
+  *   the specified pointer.
+  */
+ ALLOCSIZE: PROC (p) RETURNS (FIXED BINARY(31));
+    DCL p ANY<LOCATOR>;
+ END;
+ /**
+  * AUTOMATIC allocates storage of size \`n\` automatic storage and
+  * returns the pointer to the allocated storage.
+  *
+  * Abbreviation: AUTO
+  *
+  * The storage acquired cannot be explicitly freed; the storage is
+  * automatically freed when the block terminates.
+  *
+  * @param {ANY<NUMBER>} n Expression. n must be nonnegative. If
+  *   necessary, n is converted to type size_t 1.
+  * @returns {ANY<LOCATOR>} The pointer to the allocated storage.
+  */
+ AUTOMATIC: AUTO: PROC (n) RETURNS (ANY<LOCATOR>);
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * AVAILABLEAREA returns a size_t 1 value that indicates the size
+  * of the largest single allocation that can be obtained from the
+  * area x.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Uarea area(1000);
+  *   dcl Pz ptr;
+  *   dcl C99z char(99) varyingz based(Pz);
+  *   dcl (SizeBefore, SizeAfter) fixed bin(31);
+  *   SizeBefore = availablearea(Uarea);         // returns 1000
+  *   Alloc C99z in(Uarea);
+  *   SizeAfter = availablearea(Uarea);          // returns 896
+  *   dcl C9 char(896) based(Pz);
+  *   Alloc C9 in(Uarea);
+  * \`\`\`
+  *
+  * @param {ANY<AREA>} x A reference with the AREA attribute
+  * @returns {FIXED BINARY} The size of the largest single
+  *   allocation that can be obtained from the area \`x\`.
+  */
+ AVAILABLEAREA: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<AREA>;
+ END;
+ /**
+  * BINARYVALUE converts \`x\`, which can be a pointer, offset, or
+  * ordinal, to an integer. The function returns a FIXED BIN value
+  * that is the converted value.
+  *
+  * If x is a pointer, the return value has type size_t 1. If x is
+  * an ordinal, the return value has type FIXED BIN(31). If x is an
+  * offset, the return value has type FIXED BIN(31) under
+  * OFFSETSIZE(4) and FIXED BIN(63) under OFFSETSIZE(8).
+  *
+  * Abbreviation: BINVALUE
+  *
+  * @param {ANY} x Expression
+  * @returns {FIXED BINARY} The converted integer value.
+  */
+ BINARYVALUE: BINVALUE: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * BITLOCATION returns a FIXED BINARY(31,0) result that is the
+  * location of bit \`x\` within the byte that contains \`x\`. The
+  * value returned is always between 0 and 7 (0 ≤ value ≤ 7).
+  *
+  * Abbreviation: BITLOC
+  *
+  * BITLOCATION can be used in restricted expressions, with the
+  * following limitations. If BITLOC(x) is used to set:
+  *
+  * - The extent of a variable \`y\` that must have constant
+  * extents, or
+  * - The value of a variable \`y\` that must have a constant value,
+  *
+  * then \`x\` must be declared before \`y\`.
+  *
+  * For examples, see LOCATION.
+  *
+  * @param {ANY} x Reference of type unaligned bit. If \`x\` does
+  *   not have type unaligned bit, a value of 0 is returned.
+  *
+  *   \`x\` must not be subscripted.
+  * @returns {FIXED BINARY(31)} The location of bit \`x\` within the
+  *   byte that contains \`x\`.
+  */
+ BITLOCATION: BITLOC: PROC (x) RETURNS (FIXED BINARY(31));
+    DCL x ANY;
+ END;
+ /**
+  * CHECKSTG returns a bit(1) value which indicates whether a
+  * specified pointer value is the start of a piece of uncorrupted
+  * allocated storage. If no pointer value is supplied, CHECKSTG
+  * determines whether all allocated storage is uncorrupted. To use
+  * this built-in function, you must also specify the CHECK(STORAGE)
+  * compile-time option.
+  *
+  * When an allocation is made, it is followed by eight extra bytes
+  * which are set to 'ff'x. The allocation is considered uncorrupted
+  * if those bytes have not been altered.
+  *
+  * The pointer expression must point to storage allocated for a
+  * BASED variable.
+  *
+  * @param {ANY<LOCATOR>} [p] Pointer expression.
+  * @returns {BIT(1)} '1'B if the specified pointer value is the
+  *   start of uncorrupted allocated storage.
+  */
+ CHECKSTG: PROC (p) RETURNS (BIT(1));
+    DCL p ANY<LOCATOR> OPTIONAL;
+ END;
+ /**
+  * CURRENTSIZE returns a FIXED BIN value that gives the
+  * implementation-defined storage, in bytes, required by x.
+  *
+  * The value returned by CURRENTSIZE(x) is defined as the number of
+  * bytes that would be transmitted in the following circumstances:
+  *
+  * \`\`\`
+  *   declare F file record output
+  *           environment(scalarvarying);
+  *   write file(F) from(S);
+  * \`\`\`
+  *
+  * If \`x\` is a scalar varying-length string, the returned value
+  * includes the length-prefix of the string and the number of
+  * currently-used bytes. It does not include any unused bytes in
+  * the string.
+  *
+  * If \`x\` is a scalar area, the returned value includes the area
+  * control bytes and the current extent of the area. It does not
+  * include any unused bytes at the end of the area.
+  *
+  * If \`x\` is an aggregate containing areas or varying-length
+  * strings, the returned value includes the area control bytes, the
+  * maximum sizes of the areas, the length prefixes of the strings,
+  * and the number of bytes in the maximum lengths of the strings.
+  * There is an exception to this rule:
+  *
+  * - If \`x\` is a structure or union whose last element is a
+  * nondimensioned area, the returned value includes that area's
+  * control bytes and the current extent of that area. It does not
+  * include any unused bytes at the end of that area.
+  *
+  * The CURRENTSIZE built-in function must not be used on a BASED
+  * variable with adjustable extents if that variable has not been
+  * allocated.
+  *
+  * Under the CMPAT(V3) compiler option, CURRENTSIZE returns a FIXED
+  * BIN(63) value. Under all other CMPAT options, it returns a FIXED
+  * BIN(31) value.
+  *
+  * For examples of the CURRENTSIZE built-in function, see SIZE.
+  *
+  * @param {ANY} x A variable of any data type, data organization,
+  *   and storage class except those in the following list:
+  *
+  *   - A BASED, DEFINED, parameter, subscripted, or structure or
+  *   union base-element variable that is an unaligned fixed-length
+  *   bit string
+  *   - A minor structure or union whose first or last base element
+  *   is an unaligned fixed-length bit string (except where it is
+  *   also the first or last element of the containing major
+  *   structure or union)
+  *   - A major structure or union that has the BASED, DEFINED, or
+  *   parameter attribute, and that has an unaligned fixed-length
+  *   bit string as its first or last element
+  *   - A variable not in connected storage
+  * @returns {FIXED BINARY} The storage required by \`x\` in bytes.
+  */
+ CURRENTSIZE: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * CURRENTSTORAGE is a synonym for CURRENTSIZE.
+  *
+  * Abbreviation: CSTG
+  *
+  * Note: The USAGE(HEX(CSTG) is accepted as a synonym for
+  * USAGE(HEX(CURRENTSIZE) in Enterprise PL/I for z/OS Version 6
+  * Release 1.
+  *
+  * @param {ANY} x A variable of any data type, data organization,
+  *   and storage class.
+  * @returns {FIXED BINARY} The storage required by \`x\` in bytes.
+  */
+ CURRENTSTORAGE: CSTG: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * EMPTY returns an area of zero extent. It can be used to free all
+  * allocations in an area.
+  *
+  * The value of this function is assigned to an area variable when
+  * the variable is allocated. Consider this example:
+  *
+  * \`\`\`
+  *   declare A area,
+  *           I based (P),
+  *           J based (Q);
+  *
+  *   allocate I in(A), J in (A);
+  *   A = empty();
+  *
+  *   // Equivalent to:  free I in (A), J in (A);
+  * \`\`\`
+  * @returns {ANY<AREA>} An area of zero extent.
+  */
+ EMPTY: PROC () RETURNS (ANY<AREA>);
+ END;
+ /**
+  * ENTRYADDR returns a pointer value that is the address of the
+  * entry point of the entry reference \`x\`. This may be a pointer
+  * to an AMODE changing glue code used to call \`x\`.
+  *
+  * If \`x\` is a fetchable entry constant, it must be fetched
+  * before ENTRYADDR is executed. However, if \`x\` has been
+  * released, then ENTRYADDR will return SYSNULL.
+  *
+  * @param {ANY<ENTRY>} x Entry reference.
+  * @returns {ANY<LOCATOR>} The address of the entry point of \`x\`.
+  */
+ ENTRYADDR: PROC (x) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<ENTRY>;
+ END;
+ /**
+  * HANDLE returns a handle to the typed structure \`x\`.
+  *
+  * @param {ANY<STRUCTURE>} x Typed structure.
+  * @returns {ANY} A handle to the typed structure \`x\`.
+  */
+ HANDLE: PROC (x) RETURNS (ANY);
+    DCL x ANY<STRUCTURE>;
+ END;
+ /**
+  * LOCATION returns a FIXED BIN value that specifies the byte
+  * location of x within the level-1 structure or union that has
+  * member x.
+  *
+  * Abbreviation: LOC
+  *
+  * LOCATION can be used in restricted expressions, with a
+  * limitation. The value for \`x\` must be declared before \`y\` if
+  * LOC(x) is used to set either of the following:
+  *
+  * - The extent of a variable \`y\` that must have constant
+  * extents.
+  * - The value of a variable \`y\` that must have a constant value.
+  *
+  * Under the CMPAT(V3) compiler option, LOCATION returns a FIXED
+  * BIN(63) value. Under all other CMPAT options, it returns a FIXED
+  * BIN(31) value.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl 1 Table static,
+  *         2 Tab2loc fixed bin(15) nonasgn init(loc(Tab2)),
+  *                     // location is 0; gets initialized to 8
+  *         2 Tab3loc fixed bin(15) nonasgn init(loc(Tab3)),
+  *                     // location is 2; gets initialized to 808
+  *         2 Length fixed bin nonasgn init(loc(End)),
+  *                     // location is 4
+  *         2 * fixed bin,
+  *         2 Tab2(20,20)    fixed bin,
+  *                     // location is 8
+  *         2 Tab3(20,20)    fixed bin,
+  *                     // location is 808
+  *
+  *         2 F2_loc fixed bin nonasgn init(loc(F2)),
+  *                     // location is 1608; gets initialized to  1612
+  *         2 F2_bitloc fixed bin nonasgn init(bitloc(F2)),
+  *                     // location is 1610; gets initialized to 1
+  *
+  *         2 Flags,        // location is 1612
+  *           3 F1 bit(1),
+  *           3 F2 bit(1),  // bitlocation is 1
+  *           3 F3 bit(1),
+  *         2 Bits(16) bit, // location is 1613
+  *         2 End char(0);
+  * \`\`\`
+  *
+  * @param {ANY} x Structure or union member name. If \`x\` is not
+  *   a member of a structure or union, a value of 0 is returned. If
+  *   \`x\` has the BIT attribute, the value returned by LOCATION is
+  *   the location of the byte that contains \`x\`.
+  *
+  *   The value for \`x\` must not be subscripted.
+  * @returns {FIXED BINARY} The byte location of \`x\` within the
+  *   level-1 structure or union.
+  */
+ LOCATION: LOC: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * LOCSTG(x) returns a FIXED BIN value that specifies the number of
+  * bytes that are needed for the storage to hold all the elements
+  * of x that have the LOCATES attributes.
+  *
+  * The return value has type FIXED BIN(63) under CMPAT(V3);
+  * otherwise, it has type FIXED BIN(31).
+  *
+  * **Example**
+  *
+  * With the following declaration, the reference locstag(data)
+  * returns the value 96*actual_count:
+  *
+  * \`\`\`
+  * 	      declare
+  *              1 data based(data_ptr) unaligned,
+  *                  2 actual_count fixed bin(31),
+  *                  2 orderinfo(order_count refer( actual_count)),
+  *                     3 name     offset(pool)
+  *                        locates(char(30) varying),
+  *                     3 address offset(pool)
+  *                        locates(char(62) varying),
+  *                  2 pool area(10_000);
+  * \`\`\`
+  *
+  * @param {ANY} x Must be a reference that has the LOCATES
+  *   attribute or contains subelements that have the LOCATES
+  *   attribute.
+  * @returns {FIXED BINARY} The number of bytes needed for the
+  *   storage of elements with LOCATES attributes.
+  */
+ LOCSTG: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * LOCVAL(x, a) returns the value at the offset that is specified
+  * by x in the a area. The type of the value is specified in the
+  * LOCATES attribute of x.
+  *
+  * Do not use a LOCVAL reference as the argument to the ADDR
+  * built-in function. To obtain the address of such a reference,
+  * apply the POINTER built-in function to the corresponding OFFSET.
+  *
+  * **Example**
+  *
+  * With the following declaration, these two references are
+  * equivalent: locval(name(1)); and locval(name(1), pool);. Both
+  * references return the char(30) varying value at the location in
+  * pool with the offset held in name(1).
+  *
+  * \`\`\`
+  * 	      declare
+  *               1 data based(data_ptr) unaligned,
+  *                  2 actual_count fixed bin(31),
+  *                  2 orderinfo(order_count refer( actual_count)),
+  *                     3 name     offset(pool)
+  *                        locates(char(30) varying),
+  *                     3 address offset(pool)
+  *                        locates(char(62) varying),
+  *                  2 pool area(10_000);
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} x Must be an OFFSET with the LOCATES
+  *   attribute. It must be a valid, non-null offset into the area a.
+  * @param {ANY<AREA>} [a] Must be an AREA reference. If you do not
+  *   specify a, the OFFSET attribute for x must have specified an
+  *   AREA reference, and the offset is assumed to be from that area.
+  * @returns {ANY} The value at the offset specified by \`x\` in the
+  *   \`a\` area.
+  */
+ //TODO has overloads
+ LOCVAL: PROC (x, a) RETURNS (ANY);
+    DCL x ANY<LOCATOR>;
+    DCL a ANY<AREA> OPTIONAL;
+ END;
+ /**
+  * NULL returns the null pointer value. The null pointer value does
+  * not identify any generation of a variable. The null pointer
+  * value can be assigned to and compared with handles. The null
+  * pointer value can be converted to OFFSET by assignment of the
+  * built-in function value to an offset variable.
+  * @returns {ANY<LOCATOR>} The null pointer value.
+  */
+ NULL: PROC () RETURNS (ANY<LOCATOR>);
+ END;
+ /**
+  * NULLENTRY returns a limited entry that has a null value.
+  *
+  * NULLENTRY can be assigned to or compared with any other entry
+  * variable.
+  *
+  * You can use NULLENTRY to initialize an entry variable in static
+  * storage.
+  *
+  * You cannot use NULLENTRY as one of the arguments to the PLISRTA,
+  * PLISRTB, PLISRTC or PLISRTD built-in functions.
+  *
+  * ENTRYADDR(NULLENTRY) returns the same value as SYSNULL.
+  * @returns {ANY<ENTRY>} A limited entry with a null value.
+  */
+ NULLENTRY: PROC () RETURNS (ANY<ENTRY>);
+ END;
+ /**
+  * OFFSET returns an offset value derived from a pointer reference
+  * \`x\` and relative to an area \`y\`. If x is the null pointer
+  * value, the null offset value is returned.
+  *
+  * If \`x\` is an element reference, \`y\` must be an element
+  * variable.
+  *
+  * @param {ANY<LOCATOR>} x Pointer reference. It must identify a
+  *   generation of a based variable within the area \`y\`, or be
+  *   the null pointer value.
+  * @param {ANY<AREA>} y Area reference.
+  * @returns {ANY<LOCATOR>} An offset value derived from the pointer
+  *   \`x\` relative to the area \`y\`.
+  */
+ OFFSET: PROC (x, y) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<AREA>;
+ END;
+ /**
+  * OFFSETADD returns the sum of the arguments.
+  *
+  * @param {ANY<LOCATOR>} x Expression. \`x\` must be specified as
+  *   OFFSET.
+  * @param {ANY<NUMBER>} y Expression. \`y\` must have a
+  *   computational type and is converted to FIXED BINARY.
+  * @returns {ANY<LOCATOR>} The sum of the arguments.
+  */
+ OFFSETADD: PROC (x, y) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<NUMBER>;
+ END;
+ /**
+  * OFFSETDIFF returns a FIXED BIN value that is the arithmetic
+  * difference between the arguments.
+  *
+  * The return value has type FIXED BIN(31) under OFFSETSIZE(4) or
+  * type FIXED BIN(63) under OFFSETSIZE(8).
+  *
+  * @param {ANY<LOCATOR>} x Expression. Must be specified as OFFSET.
+  * @param {ANY<LOCATOR>} y Expression. Must be specified as OFFSET.
+  * @returns {FIXED BINARY} The arithmetic difference between \`x\`
+  *   and \`y\`.
+  */
+ OFFSETDIFF: PROC (x, y) RETURNS (FIXED BINARY);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+ END;
+ /**
+  * OFFSETSUBTRACT is equivalent to OFFSETADD(x,-y).
+  *
+  * @param {ANY<LOCATOR>} x Expressions. \`x\` must be specified as
+  *   OFFSET.
+  * @param {ANY<NUMBER>} y Expression. \`y\` must have a
+  *   computational type and is converted to FIXED BINARY.
+  * @returns {ANY<LOCATOR>} The result of OFFSETADD(x,-y).
+  */
+ OFFSETSUBTRACT: PROC (x, y) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<NUMBER>;
+ END;
+ /**
+  * OFFSETVALUE returns an offset value that is the converted value
+  * of \`x\`.
+  *
+  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  *   computational type and is converted to FIXED BINARY.
+  * @returns {ANY<LOCATOR>} An offset value that is the converted
+  *   value of \`x\`.
+  */
+ OFFSETVALUE: PROC (x) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * POINTER returns a pointer value that identifies the generation
+  * specified by an offset reference \`x\`, in an area specified by
+  * \`y\`. If \`x\` is the null offset value, the null pointer value
+  * is returned.
+  *
+  * Abbreviation: PTR
+  *
+  * Generations of based variables in different areas are equivalent
+  * if, up to the allocation of the latest generation, the variables
+  * have been allocated and freed the same number of times as each
+  * other.
+  *
+  * @param {ANY<LOCATOR>} x Offset reference. It can be the null
+  *   offset value. If it is not, \`x\` must identify a generation
+  *   of a based variable, but not necessarily in \`y\`. If it is
+  *   not in \`y\`, the generation must be equivalent to a generation
+  *   in \`y\`.
+  * @param {ANY<AREA>} y Area reference.
+  * @returns {ANY<LOCATOR>} A pointer value that identifies the
+  *   generation specified by \`x\` in area \`y\`.
+  */
+ POINTER: PTR: PROC (x, y) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<AREA>;
+ END;
+ /**
+  * POINTERADD returns a pointer value that is the sum of its
+  * arguments.
+  *
+  * Abbreviation: PTRADD
+  *
+  * POINTERADD can be used as a locator for a based variable.
+  *
+  * POINTERADD can be used for subtraction by prefixing the operand
+  * to be subtracted with a minus sign.
+  *
+  * There is no need to use POINTERADD to increment a pointer - you
+  * can simply increment the pointer as you would an integer. For
+  * example, there is no need to write:
+  *
+  * \`\`\`
+  *       p = pointeradd(p,2);
+  * \`\`\`
+  *
+  * Instead, you could write either of the following equivalent
+  * statements:
+  *
+  * \`\`\`
+  *       p = p + 2;
+  *       p += 2;
+  * \`\`\`
+  *
+  * However, POINTERADD can be useful in dereferencing the storage
+  * at a location offset from a pointer, as in the following
+  * example:
+  *
+  * \`\`\`
+  *       dcl x fixed bin(31), b based fixed bin(31);
+  *       x = pointeradd(p,2)->b;
+  * \`\`\`
+  *
+  * Note, however, since a locator in PL/I must be a reference, you
+  * cannot write
+  *
+  * \`\`\`
+  *       x = (p + 2)->b;
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} x Pointer expression.
+  * @param {ANY<NUMBER>} y Expression that must have a computational
+  *   type and is converted to FIXED BINARY(31,0).
+  * @returns {ANY<LOCATOR>} A pointer value that is the sum of its
+  *   arguments.
+  */
+ POINTERADD: PTRADD: PROC (x, y) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<NUMBER>;
+ END;
+ /**
+  * POINTERDIFF returns a size_t 1 result that is the difference
+  * between the two pointers x and y.
+  *
+  * Abbreviation: PTRDIFF
+  *
+  * @param {ANY<LOCATOR>} x Expressions declared as POINTER.
+  * @param {ANY<LOCATOR>} y Expressions declared as POINTER.
+  * @returns {FIXED BINARY} The difference between the two pointers.
+  */
+ POINTERDIFF: PTRDIFF: PROC (x, y) RETURNS (FIXED BINARY);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+ END;
+ /**
+  * POINTERSUBTRACT is equivalent to POINTERADD(x,-y).
+  *
+  * Abbreviation: PTRSUBTRACT
+  *
+  * @param {ANY<LOCATOR>} x Must be a pointer expression.
+  * @param {ANY<NUMBER>} y Expression that must have a computational
+  *   type and is converted to FIXED BINARY(31,0).
+  * @returns {ANY<LOCATOR>} The result of POINTERADD(x,-y).
+  */
+ POINTERSUBTRACT: PTRSUBTRACT: PROC (x, y) RETURNS (ANY<LOCATOR>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<NUMBER>;
+ END;
+ /**
+  * POINTERVALUE returns a pointer value that is the converted value
+  * of \`x\`.
+  *
+  * Abbreviation: PTRVALUE
+  *
+  * POINTERVALUE(x) can be used to initialize static pointer
+  * variables if \`x\` is a constant.
+  *
+  * @param {ANY} x Expression that must have either the HANDLE
+  *   attribute, or have a computational type. If \`x\` has a
+  *   computational type, it is converted to FIXED BINARY(31,0).
+  * @returns {ANY<LOCATOR>} A pointer value that is the converted
+  *   value of \`x\`.
+  */
+ POINTERVALUE: PTRVALUE: PROC (x) RETURNS (ANY<LOCATOR>);
+    DCL x ANY;
+ END;
+ /**
+  * SIZE returns a FIXED BIN value that gives the
+  * implementation-defined storage, in bytes, allocated to a
+  * variable x.
+  *
+  * The value returned by SIZE(x) is the maximum number of bytes
+  * that could be transmitted in the following circumstances:
+  *
+  * \`\`\`
+  *   declare F file record input
+  *           environment(scalarvarying);
+  *   read file(F) into(x);
+  * \`\`\`
+  *
+  * - If \`x\` is a varying-length string, the returned value
+  * includes the length-prefix of the string and the number of bytes
+  * in the maximum length of the string
+  * - If \`x\` is an area, the returned value includes the area
+  * control bytes and the maximum size of the area
+  * - If \`x\` is an aggregate containing areas or varying-length
+  * strings, the returned value includes the area control bytes, the
+  * maximum sizes of the areas, the length prefixes of the strings,
+  * and the number of bytes in the maximum lengths of the strings.
+  *
+  * The SIZE built-in function must not be used on a BASED variable
+  * with adjustable extents if that variable has not been allocated.
+  *
+  * Under the CMPAT(V3) compiler option, SIZE returns a FIXED
+  * BIN(63) value. Under all other CMPAT options, it returns a FIXED
+  * BIN(31) value.
+  *
+  * To get the number of bytes currently required by a variable, as
+  * opposed to the number of bytes allocated to it, use the
+  * CURRENTSIZE built-in function.
+  *
+  * When x is BASED and uses REFER, the compiler generates inline
+  * code for SIZE(x) if:
+  *
+  * - Elements in x with the NONVARYING and BIT attributes have the
+  * ALIGNED attribute.
+  * - All other elements in x have the UNALIGNED attribute.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Scids   char(17)         init('See you at SCIDS!') static;
+  *   dcl Vscids  char(20) varying init('See you at SCIDS!') static;
+  *   dcl Stg fixed bin(31);
+  *
+  *   Stg = storage   (Scids);           // 17 bytes
+  *   Stg = currentsize (Scids);         // 17 bytes
+  *   Stg = size (Vscids);               // 22 bytes
+  *   Stg = currentsize (Vscids);        // 19 bytes
+  *   Stg = size (Stg);                  // 4  bytes
+  *   Stg = currentsize (Stg);           // 4  bytes
+  * \`\`\`
+  *
+  * @param {ANY} x A variable of any data type, data organization,
+  *   alignment, and storage class, except those in the following
+  *   list:
+  *
+  *   - A BASED, DEFINED, parameter, subscripted, or structure or
+  *   union base-element variable that is an unaligned fixed-length
+  *   bit string
+  *   - A minor structure or union whose first or last base element
+  *   is an unaligned fixed-length bit string (except where it is
+  *   also the first or last element of the containing major
+  *   structure or union)
+  *   - A major structure or union that has the BASED, DEFINED, or
+  *   parameter attribute, and that has an unaligned fixed-length
+  *   bit string as its first or last element
+  *   - A variable not in connected storage
+  * @returns {FIXED BINARY} The storage in bytes allocated to \`x\`.
+  */
+ SIZE: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * STORAGE is a synonym for SIZE.
+  *
+  * Abbreviation: STG
+  *
+  * Note: The USAGE(HEX(STG) is accepted as a synonym for
+  * USAGE(HEX(SIZE).
+  *
+  * @param {ANY} x A variable of any data type, data organization,
+  *   alignment, and storage class.
+  * @returns {FIXED BINARY} The storage in bytes allocated to \`x\`.
+  */
+ STORAGE: STG: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * SYSNULL returns the system null pointer value.
+  *
+  * You can assign SYSNULL to handles and compare it with handles.
+  * You can use SYSNULL to initialize static pointer and offset
+  * variables.
+  *
+  * Note: NULL and SYSNULL may compare equal; however, you should
+  * not write code that depends on their equality.
+  *
+  * See also NULL.
+  * @returns {ANY<LOCATOR>} The system null pointer value.
+  */
+ SYSNULL: PROC () RETURNS (ANY<LOCATOR>);
+ END;
+ /**
+  * TYPE returns the typed structure or union located by the handle,
+  * \`x\`.
+  *
+  * TYPE(x) dereferences the typed structure (or union) \`x\`. For
+  * an example of the TYPE built-in functions, see TYPE
+  * pseudovariable.
+  *
+  * @param {ANY} x Handle.
+  * @returns {ANY<STRUCTURE>} The typed structure or union located
+  *   by the handle \`x\`.
+  */
+ TYPE: PROC (x) RETURNS (ANY<STRUCTURE>);
+    DCL x ANY;
+ END;
+ /**
+  * UNALLOCATED returns a BIT(1) value indicating whether or not a
+  * specified pointer value is the start of a piece of allocated
+  * storage. To use this built-in function, you must also specify
+  * the CHECK(STORAGE) compile-time option.
+  *
+  * UNALLOCATED returns the BIT(1) value '1'b if the specified
+  * pointer value is \`not\` the start of a piece of storage that is
+  * obtained with the ALLOCATE statement or the ALLOCATE built-in
+  * function.
+  *
+  * Note that the pointer passed to UNALLOCATED is "rounded down" to
+  * the nearest doubleword and that rounded value is compared
+  * against all allocated addresses when similarly rounded down.
+  *
+  * @param {ANY<LOCATOR>} p Pointer expression.
+  * @returns {BIT(1)} '1'b if the pointer does not point to the
+  *   start of allocated storage.
+  */
+ UNALLOCATED: PROC (p) RETURNS (BIT(1));
+    DCL p ANY<LOCATOR>;
+ END;
+ /**
+  * VARGLIST returns the address of the first optional parameter
+  * passed to a procedure with a variable number of arguments.
+  *
+  * The VARGLIST built-in function may be used only inside a
+  * procedure whose last parameter has the LIST attribute.
+  * @returns {ANY<LOCATOR>} The address of the first optional
+  *   parameter.
+  */
+ VARGLIST: PROC () RETURNS (ANY<LOCATOR>);
+ END;
+ /**
+  * VARGSIZE returns the number of bytes that a variable would
+  * occupy on the stack if it were passed BYVALUE.
+  *
+  * VARGSIZE(x) returns the number of bytes that x would occupy on
+  * the stack if it were passed BYVALUE. This value will be at least
+  * as large as SIZE(x); it will be larger if the value returned by
+  * SIZE(x) needs to be rounded up to a 4-byte multiple.
+  *
+  * VARGSIZE is meant to be used only inside a procedure whose last
+  * parameter has the LIST attribute.
+  *
+  * @param {ANY} x A variable of any data type, data organization,
+  *   alignment, and storage class, except as listed below.
+  *
+  *   \`x\` cannot be:
+  *
+  *   - A BASED, DEFINED, parameter, subscripted, or structure or
+  *   union base-element variable that is an unaligned fixed-length
+  *   bit string
+  *   - A minor structure or union whose first or last base element
+  *   is an unaligned fixed-length bit string (except where it is
+  *   also the first or last element of the containing major
+  *   structure or union)
+  *   - A major structure or union that has the BASED, DEFINED, or
+  *   parameter attribute, and which has an unaligned fixed-length
+  *   bit string as its first or last element
+  *   - A variable not in connected storage
+  * @returns {FIXED BINARY} The number of bytes \`x\` would occupy
+  *   on the stack if passed BYVALUE.
+  */
+ VARGSIZE: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
 
  /* String-handling built-in functions */
  BIT: PROC (value) RETURNS (); END;
