@@ -1714,13 +1714,13 @@ export const Builtins =
   *   search.
   * @param {ANY<LOCATOR>} p Address of first buffer to be searched.
   * @param {ANY<NUMBER>} n Length of first buffer to be searched.
-  * @param {ANY<LOCATOR>} q Address of second buffer to use as the target of
-  *   the search.
-  * @param {ANY<NUMBER>} m Length of second buffer to use as the target of
-  *   the search.
-  * @returns {ANY<NUMBER>} value that indicates the starting position within
-  *   the buffer of a specified substring, or zero if the substring is not
-  *   found.
+  * @param {ANY<LOCATOR>} q Address of second buffer to use as the
+  *   target of the search.
+  * @param {ANY<NUMBER>} m Length of second buffer to use as the target
+  *   of the search.
+  * @returns {ANY<NUMBER>} value that indicates the starting position
+  *   within the buffer of a specified substring, or zero if the
+  *   substring is not found.
   */
  //TODO has overloads
  MEMINDEX: PROC () RETURNS ();
