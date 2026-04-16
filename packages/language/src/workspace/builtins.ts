@@ -2297,7 +2297,8 @@ export const Builtins =
   * would be set equal to 72.
   *
   * \`\`\`
-  * <A><A1><B1>t1</B1><B2>t2</B2></A1><A2><C1>17</C1><C2>-29.0</C2></A2></A>
+  * <A><A1><B1>t1</B1><B2>t2</B2></A1><A2><C1>17</C1><C2>-29.0</C2>
+  * </A2></A>
   * \`\`\`
   *
   * @param {ANY<STRUCTURE>} x Reference to a structure or DEFINE
@@ -2641,63 +2642,510 @@ export const Builtins =
   */
  ONFILE: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONGSOURCE: PROC () RETURNS ();
+ /**
+  * ONGSOURCE returns a graphic string containing the DBCS character
+  * that caused the CONVERSION condition to be raised.
+  *
+  * It is in context in an ON-unit (or any of its dynamic
+  * descendants) for the CONVERSION condition or for the ERROR or
+  * FINISH condition raised as the implicit action for a CONVERSION
+  * condition.
+  *
+  * If the ONGSOURCE built-in function is used out of context, a
+  * null GRAPHIC string is returned.
+  * @returns {ANY<CHARACTER>} The DBCS character that caused the
+  *   CONVERSION condition, or a null GRAPHIC string if out of
+  *   context.
+  */
+ ONGSOURCE: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONHBOUND: PROC () RETURNS ();
+ /**
+  * ONHBOUND returns a REAL FIXED BIN(63) value that specifies the
+  * upper bound of an array for which SUBSCRIPTRANGE has been
+  * raised.
+  *
+  * If ONHBOUND is used out of context, zero is returned.
+  *
+  * If the following code is run, then ONHBOUND would return 4.
+  *
+  * \`\`\`
+  *           dcl a(3,2:4) fixed bin(31) init( (*) 0 );
+  *           dcl jx       fixed bin(31);
+  *           dcl value    fixed bin(31);
+  *
+  *           jx = 5;
+  *           (subrg): value = a(1,jx);
+  * \`\`\`
+  * @returns {FIXED BINARY} The upper bound of the array that raised
+  *   SUBSCRIPTRANGE, or zero if out of context.
+  */
+ ONHBOUND: PROC () RETURNS (FIXED BINARY);
  END;
- ONJSONNAME: PROC () RETURNS ();
+ /**
+  * ONJSONNAME returns a nonvarying character string containing the
+  * name for which no match was found in a JSONGETMEMBER or
+  * JSONGETVALUE call.
+  *
+  * It is in context in an ON-unit for the CONFORMANCE condition
+  * raised when a mismatched name is found in a JSONGETMEMBER or
+  * JSONGETVALUE call, or for the ERROR or FINISH condition raised
+  * as the implicit action for such a CONFORMANCE condition.
+  *
+  * If it is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The unmatched name from the JSON call,
+  *   or a null string if out of context.
+  */
+ ONJSONNAME: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONKEY: PROC () RETURNS ();
+ /**
+  * ONKEY returns a character string whose value is the key of the
+  * record that raised an input/output condition.
+  *
+  * For indexed files, if the key is GRAPHIC, the string is returned
+  * as a mixed character string. ONKEY is in context for the
+  * following:
+  *
+  * - An ON-unit, or any of its dynamic descendants
+  * - Any input/output condition, except ENDFILE
+  * - The ERROR or FINISH condition raised as implicit action for an
+  * input/output condition.
+  *
+  * ONKEY is always set for operations on a KEYED file, even if the
+  * statement that raised the condition does not specified the KEY,
+  * KEYTO, or KEYFROM options.
+  *
+  * The result of specifying ONKEY is:
+  *
+  * - For any input/output condition (other than ENDFILE), or for
+  * the ERROR or FINISH condition raised as implicit action for
+  * these conditions, the result is the value of the recorded key
+  * from the I/O statement causing the error.
+  * - For relative data sets, the result is a character string
+  * representation of the relative record number. If the key was
+  * incorrectly specified, the result is the last 8 characters of
+  * the source key. If the source key is less than 8 characters, it
+  * is padded on the right with blanks to make it 8 characters. If
+  * the key was correctly specified, the character string consists
+  * of the relative record number in character form padded on the
+  * left with blanks, if necessary.
+  * - For a REWRITE statement that attempts to write an updated
+  * record on to an indexed data set when the key of the updated
+  * record differs from that of the input record, the result is the
+  * value of the embedded key of the input record.
+  *
+  * If ONKEY is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The key of the record that raised the
+  *   I/O condition, or a null string if out of context.
+  */
+ ONKEY: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONLBOUND: PROC () RETURNS ();
+ /**
+  * ONLBOUND returns a REAL FIXED BIN(63) value that specifies the
+  * lower bound of an array for which SUBSCRIPTRANGE has been
+  * raised.
+  *
+  * If ONLBOUND is used out of context, zero is returned.
+  *
+  * If the following code is run, then ONLBOUND would return 2.
+  *
+  * \`\`\`
+  *           dcl a(3,2:4) fixed bin(31) init( (*) 0 );
+  *           dcl jx       fixed bin(31);
+  *           dcl value    fixed bin(31);
+  *
+  *           jx = 5;
+  *           (subrg): value = a(1,jx);
+  * \`\`\`
+  * @returns {FIXED BINARY} The lower bound of the array that raised
+  *   SUBSCRIPTRANGE, or zero if out of context.
+  */
+ ONLBOUND: PROC () RETURNS (FIXED BINARY);
  END;
- ONLINE: PROC () RETURNS ();
+ /**
+  * ONLINE returns a FIXED BIN(31) value which is the line number in
+  * the source in which a condition was raised.
+  *
+  * The source program must have been compiled with the GONUMBER
+  * option, and on Windows it must also have been linked with the
+  * /debug option.
+  *
+  * If ONLINE is used out of context, a value of zero is returned.
+  * @returns {FIXED BINARY} The line number where the condition was
+  *   raised, or zero if out of context.
+  */
+ ONLINE: PROC () RETURNS (FIXED BINARY);
  END;
- ONLOC: PROC () RETURNS ();
+ /**
+  * ONLOC is a synonym for ONPROC.
+  *
+  * If ONLOC is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The name of the procedure in which the
+  *   condition was raised, or a null string if out of context.
+  */
+ ONLOC: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONOFFSET: PROC () RETURNS ();
+ /**
+  * ONOFFSET returns a FIXED BIN(31) value which is the offset from
+  * the start of the user procedure (or BEGIN block) in which a
+  * condition was raised.
+  *
+  * If ONOFFSET is used out of context, a value of zero is returned.
+  * @returns {FIXED BINARY} The offset from the start of the
+  *   procedure where the condition was raised, or zero if out of
+  *   context.
+  */
+ ONOFFSET: PROC () RETURNS (FIXED BINARY);
  END;
- ONOPERATOR: PROC () RETURNS ();
+ /**
+  * ONOPERATOR returns a CHAR(2) string whose value is the operator
+  * in an ASSERT COMPARE statement that raised an ASSERTION
+  * condition.
+  *
+  * The ONOPERATOR built-in function is in context in an ON-unit for
+  * the ASSERTION condition when raised by an ASSERT COMPARE
+  * statement, or for the ERROR or FINISH condition raised as the
+  * implicit action for an ASSERTION condition.
+  *
+  * If an ASSERT COMPARE statement raises the ASSERTION condition,
+  * but does not explicitly specify an operator in its COMPARE
+  * clause, then the ONOPERATOR built-in function will return the
+  * implicit operator value 'EQ'.
+  *
+  * If the ONOPERATOR built-in function is used out of context, a
+  * null string is returned.
+  * @returns {CHARACTER} The operator from the ASSERT COMPARE
+  *   statement, or a null string if out of context.
+  */
+ ONOPERATOR: PROC () RETURNS (CHARACTER);
  END;
- ONPACKAGE: PROC () RETURNS ();
+ /**
+  * ONPACKAGE returns a nonvarying character string containing the
+  * name of the package where the ASSERT statement that raised the
+  * ASSERTION condition is invoked.
+  *
+  * It is in context in an ON-unit for the ASSERTION condition, or
+  * for the ERROR or FINISH condition raised as the implicit action
+  * for an ASSERTION condition.
+  *
+  * If it is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} Name of the package containing the
+  *   ASSERT statement, or a null string if out of context.
+  */
+ ONPACKAGE: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONPROCEDURE: ONPROC: PROC () RETURNS ();
+ /**
+  * ONPROCEDURE returns the name of a procedure in which a condition
+  * is raised.
+  *
+  * Abbreviation: ONPROC
+  *
+  * ONPROCEDURE always returns the leftmost name of a multiple label
+  * specification, regardless of which name appears in the CALL or
+  * GOTO statement. If the name is a DBCS name, it is returned as a
+  * mixed-character string. It is in context in any ON-unit, or in
+  * any of its dynamic descendants.
+  *
+  * If ONPROCEDURE is used out of context, a null string is
+  * returned.
+  * @returns {ANY<CHARACTER>} Name of the procedure where the
+  *   condition was raised, or a null string if out of context.
+  */
+ ONPROCEDURE: ONPROC: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONSOURCE: PROC () RETURNS ();
+ /**
+  * ONSOURCE returns a character string whose value is the contents
+  * of the field that was being processed when the CONVERSION
+  * condition was raised.
+  *
+  * It is in context in an ON-unit (or any of its dynamic
+  * descendants) for the CONVERSION condition or for the ERROR or
+  * FINISH condition raised as the implicit action for a CONVERSION
+  * condition.
+  *
+  * If ONSOURCE is used out of context, a null string is returned.
+  *
+  * If the source in a failed conversion is a COMPLEX value, then
+  * ONSOURCE() will show only the REAL or IMAG half of that value.
+  * @returns {ANY<CHARACTER>} Contents of the field being converted
+  *   when CONVERSION was raised, or a null string if out of context.
+  */
+ ONSOURCE: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONSUBSCRIPT: PROC () RETURNS ();
+ /**
+  * ONSUBSCRIPT returns a REAL FIXED BIN(63) value that specifies
+  * the invalid array index which caused SUBSCRIPTRANGE to be
+  * raised.
+  *
+  * If ONSUBSCRIPT is used out of context, zero is returned.
+  *
+  * If the following code is run, then ONSUBSCRIPT would return 5.
+  *
+  * \`\`\`
+  *           dcl a(3,2:4) fixed bin(31) init( (*) 0 );
+  *           dcl jx       fixed bin(31);
+  *           dcl value    fixed bin(31);
+  *
+  *           jx = 5;
+  *           (subrg): value = a(1,jx);
+  * \`\`\`
+  * @returns {FIXED BINARY} The invalid array index that caused
+  *   SUBSCRIPTRANGE, or zero if out of context.
+  */
+ ONSUBSCRIPT: PROC () RETURNS (FIXED BINARY);
  END;
- ONTEXT: PROC () RETURNS ();
+ /**
+  * ONTEXT returns a nonvarying character string containing the
+  * value of the TEXT clause of the ASSERT statement that raised the
+  * ASSERTION condition. If the ASSERT statement had no TEXT clause,
+  * a null string is returned.
+  *
+  * It is in context in an ON-unit for the ASSERTION condition, or
+  * for the ERROR or FINISH condition raised as the implicit action
+  * for an ASSERTION condition.
+  *
+  * If it is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The TEXT clause value from the ASSERT
+  *   statement, or a null string if out of context.
+  */
+ ONTEXT: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONUCHAR: PROC () RETURNS ();
+ /**
+  * ONUCHAR returns a UCHAR(1) string containing the UTF-8 data that
+  * caused a CONVERSION condition. It is in context in an ON-unit
+  * (or any of its dynamic descendants) for the CONVERSION condition
+  * or for the ERROR or FINISH condition raised as the implicit
+  * action for the CONVERSION condition.
+  *
+  * If the ONUCHAR built-in function is used out of context, a UTF-8
+  * blank is returned.
+  * @returns {CHARACTER} The UTF-8 character that caused the
+  *   CONVERSION condition, or a UTF-8 blank if out of context.
+  */
+ ONUCHAR: PROC () RETURNS (CHARACTER);
  END;
- ONUSOURCE: PROC () RETURNS ();
+ /**
+  * ONUSOURCE returns a UCHAR string whose value is the contents of
+  * the field that was being processed when a CONVERSION condition
+  * was raised. It is in context in an ON-unit (or any of its
+  * dynamic descendants) for the CONVERSION condition or for the
+  * ERROR or FINISH condition raised as the implicit action for a
+  * CONVERSION condition.
+  *
+  * If the ONUSOURCE built-in function is used out of context, a
+  * null string is returned.
+  * @returns {ANY<CHARACTER>} The UTF-8 field contents when
+  *   CONVERSION was raised, or a null string if out of context.
+  */
+ ONUSOURCE: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONWCHAR: PROC () RETURNS ();
+ /**
+  * ONWCHAR returns a widechar(1) string containing the widechar
+  * that caused the CONVERSION condition to be raised.
+  *
+  * It is in context in an ON-unit (or any of its dynamic
+  * descendants) for the CONVERSION condition or for the ERROR or
+  * FINISH condition raised as the implicit action for the
+  * CONVERSION condition.
+  *
+  * If the ONWCHAR built-in function is used out of context, a
+  * widechar blank is returned.
+  * @returns {CHARACTER} The widechar that caused the CONVERSION
+  *   condition, or a widechar blank if out of context.
+  */
+ ONWCHAR: PROC () RETURNS (CHARACTER);
  END;
- ONWSOURCE: PROC () RETURNS ();
+ /**
+  * ONWSOURCE returns a WIDECHAR string whose value is the contents
+  * of the field that was being processed when the CONVERSION
+  * condition was raised.
+  *
+  * It is in context in an ON-unit (or any of its dynamic
+  * descendants) for the CONVERSION condition or for the ERROR or
+  * FINISH condition raised as the implicit action for a CONVERSION
+  * condition.
+  *
+  * If ONWSOURCE is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The widechar field contents when
+  *   CONVERSION was raised, or a null string if out of context.
+  */
+ ONWSOURCE: PROC () RETURNS (ANY<CHARACTER>);
  END;
 
  /* Date and time functions */
- DATE: PROC () RETURNS ();
+ /**
+  * DATE returns a nonvarying character(6) string containing the
+  * date in the format, YYMMDD.
+  * @returns {CHARACTER} A nonvarying character(6) string containing
+  *   the current date in YYMMDD format.
+  */
+ DATE: PROC () RETURNS (CHARACTER);
  END;
 
- DATETIME: PROC () RETURNS ();
+ /**
+  * DATETIME returns a character string timestamp of today's date in
+  * either the default format or a user-specified format.
+  *
+  * See DAYS for an example of using DATETIME.
+  *
+  * @param {ANY<CHARACTER>} [y] Expression
+  *
+  *   If present, it specifies the date/time pattern in which the
+  *   date is returned. If \`y\` is missing, it is assumed to be the
+  *   default date/time pattern 'YYYYMMDDHHMISS999'.
+  *
+  *   See Table 2 for the allowed patterns.
+  *
+  *   \`y\` must have computational type and should have character
+  *   type. If not, it is converted to character.
+  * @returns {ANY<CHARACTER>} A character string timestamp of today's
+  *   date in the specified or default format.
+  */
+ DATETIME: PROC (y) RETURNS (ANY<CHARACTER>);
+    DCL y ANY<CHARACTER> OPTIONAL;
  END;
 
- DAYS: PROC () RETURNS ();
+ /**
+  * DAYS returns a FIXED BINARY(31,0) value that is the number of
+  * days (in Lilian format) corresponding to the date \`d\`.
+  *
+  * \`\`\`
+  *   dcl Date_format value ('MMDDYYYY') char;
+  *   dcl Todays_date char(length(Date_format));
+  *   dcl Sep2_1993 char(length(Date_format));
+  *   dcl Days_of_July4_1993 fixed bin(31);
+  *   dcl Msg char(100) varying;
+  *   dcl Date_due char(length(Date_format));
+  *
+  *   Todays_date = datetime(date_format); // e.g. 06161993
+  *
+  *   Days_of_July4_1993 = days('07041993','MMDDYYYY');
+  *   Sep2_1993 = daystodate(days_of_July4_1993 + 60, Date_format);
+  *                //  09021993
+  *
+  *   Date_due = daystodate(days() + 60, Date_format);
+  *           // assuming today is July 4, 1993, this would be
+  *           // Sept. 2, 1993
+  *
+  *   Msg = 'Please pay amount due on or before ' ||
+  *            substr(Date_due, 1, 2) || '/' ||
+  *            substr(Date_due, 3,2)  || '/' ||
+  *            substr(Date_due, 5);
+  * \`\`\`
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of the Lilian format, see Date/time built-in functions.
+  *
+  * @param {ANY<CHARACTER>} [d] String expression representing a date. If
+  *   omitted, it is assumed to be the value returned by DATETIME().
+  *
+  *   The value for \`d\` must have computational type and should
+  *   have character type. If not, \`d\` is converted to character.
+  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns. If
+  *   omitted, it is assumed to be the value 'YYYYMMDDHHMISS999'.
+  *
+  *   \`p\` must have computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<NUMBER>} [w] An integer expression that defines a century
+  *   window to be used to handle any two-digit year formats.
+  *
+  *   - If the value is positive, such as 1950, it is treated as a
+  *   year.
+  *   - If negative or zero, the value specifies an offset to be
+  *   subtracted from the current, system-supplied year.
+  *   - If omitted, \`w\` defaults to the value specified in the
+  *   WINDOW compile-time option.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   number of days in Lilian format corresponding to date d.
+  */
+ DAYS: PROC (d, p, w) RETURNS (FIXED BINARY);
+    DCL d ANY<CHARACTER> OPTIONAL;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- DAYSTODATE: PROC (days) RETURNS ();
+ /**
+  * DAYSTODATE returns a nonvarying character string containing the
+  * date in the form \`p\` that corresponds to \`d\` days (in Lilian
+  * format).
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of the Lilian format, see Date/time built-in functions.
+  *
+  * See DAYS for an example of using DAYSTODATE.
+  *
+  * @param {ANY<NUMBER>} d The number of days (in Lilian format). \`d\`
+  *   must have a computational type and is converted to FIXED
+  *   BINARY(31,0) if necessary.
+  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns.
+  *
+  *   If omitted, \`p\` is assumed to be the default date/time
+  *   pattern 'YYYYMMDDHHMISS999' (same as the default format
+  *   returned by DATETIME).
+  * @param {ANY<NUMBER>} [w] An integer expression that defines a century
+  *   window to be used to handle any two-digit year formats.
+  *
+  *   - If the value is positive, such as 1950, it is treated as a
+  *   year.
+  *   - If negative or zero, the value specifies an offset to be
+  *   subtracted from the current, system-supplied year.
+  *   - If omitted, \`w\` defaults to the value specified in the
+  *   WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} A nonvarying character string containing
+  *   the date in the form p corresponding to d Lilian days.
+  */
+ DAYSTODATE: PROC (d, p, w) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<NUMBER>;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- DAYSTOMICROSECS: PROC (days) RETURNS ();
+ /**
+  * DAYSTOMICROSECS returns a FIXED BINARY(63) value that is the
+  * number of microseconds that corresponds to the number of days.
+  *
+  * DAYSTOMICROSECS(x) is the same as \`x\`*(24*60*60*1_000_000).
+  *
+  * @param {ANY<NUMBER>} x An expression that specifies the number of
+  *   days.
+  *
+  *   \`x\` must have a computational type and will be converted to
+  *   FIXED BINARY(31) if necessary.
+  * @returns {FIXED BINARY} A FIXED BINARY(63) value that is the
+  *   number of microseconds corresponding to x days.
+  */
+ DAYSTOMICROSECS: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
 
- DAYSTOSECS: PROC (days) RETURNS ();
+ /**
+  * DAYSTOSECS returns a FLOAT BINARY(53) value that is the number
+  * of seconds corresponding to the number of days.
+  *
+  * DAYSTOSECS(x) is the same as \`x\`*(24*60*60).
+  *
+  * @param {ANY<NUMBER>} x An expression that specifies the number of
+  *   days.
+  *
+  *   \`x\` must have a computational type and is converted to FIXED
+  *   BINARY(31,0) if necessary.
+  * @returns {FLOAT BINARY} A FLOAT BINARY(53) value that is the
+  *   number of seconds corresponding to x days.
+  */
+ DAYSTOSECS: PROC (x) RETURNS (FLOAT BINARY);
+    DCL x ANY<NUMBER>;
  END;
 
- JULIANTOSMF: PROC (julian) RETURNS ();
+ /**
+  * JULIANTOSMF returns a CHAR(4) value that holds a date in the SMF
+  * format.
+  *
+  * @param {CHARACTER} d A CHAR(7) variable that holds a date in the
+  *   Julian format YYYYDDD
+  * @returns {CHARACTER} A CHAR(4) value that holds the date in SMF
+  *   format.
+  */
+ JULIANTOSMF: PROC (d) RETURNS (CHARACTER);
+    DCL d CHARACTER;
  END;
 
  MAXDATE: PROC () RETURNS ();
