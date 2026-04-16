@@ -3148,78 +3148,765 @@ export const Builtins =
     DCL d CHARACTER;
  END;
 
- MAXDATE: PROC () RETURNS ();
+ /**
+  * MAXDATE returns a character string containing the latest
+  * date/time value corresponding to a specified date/time pattern.
+  *
+  * MAXDATE('YYYY-MM-DD-HH.MI.SS.999999') returns the value
+  * '9999-12-31-23.59.59.999999'.
+  *
+  * The allowed date/time patterns are listed in Table 2.
+  *
+  * @param {ANY<CHARACTER>} p Specifies one of the supported date/time
+  *   patterns.
+  * @returns {ANY<CHARACTER>} A character string containing the latest
+  *   date/time value corresponding to p.
+  */
+ MAXDATE: PROC (p) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<CHARACTER>;
  END;
 
- MICROSECS: PROC () RETURNS ();
+ /**
+  * MICROSECS returns a FIXED BINARY(63) value that is the number of
+  * microseconds corresponding to the date \`d\`.
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * @param {ANY<CHARACTER>} [d] Specifies a string expression
+  *   representing a date. If present, \`d\` specifies the input date
+  *   as a character string representing the date/time specified in
+  *   the pattern \`p\`. If \`d\` is omitted, it is assumed to be the
+  *   value returned by TIMESTAMP().
+  *
+  *   \`d\` must have a computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<CHARACTER>} [p] Specifies one of the supported date/time
+  *   patterns. If \`p\` is omitted, it is assumed to be the
+  *   TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
+  *
+  *   \`p\` must have a computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {FIXED BINARY} A FIXED BINARY(63) value that is the
+  *   number of microseconds corresponding to the date \`d\`.
+  */
+ MICROSECS: PROC (d, p, w) RETURNS (FIXED BINARY);
+    DCL d ANY<CHARACTER> OPTIONAL;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- MICROSECSTODATE: PROC (microsecs) RETURNS ();
+ /**
+  * MICROSECSTODATE returns a NONVARYING character string, which
+  * contains the date in a specified date/time pattern. The
+  * specified date/time pattern corresponds to the number of
+  * microseconds.
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * @param {ANY<NUMBER>} m Specifies the number of microseconds (in
+  *   Lilian format). \`m\` must have a computational type and is
+  *   converted to FIXED BIN(63) if necessary.
+  * @param {ANY<CHARACTER>} [p] Specifies one of the supported date/time
+  *   patterns. If \`p\` is omitted, it is assumed to be the
+  *   TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} A NONVARYING character string
+  *   containing the date in the specified date/time pattern.
+  */
+ MICROSECSTODATE: PROC (m, p, w) RETURNS (ANY<CHARACTER>);
+    DCL m ANY<NUMBER>;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- MICROSECSTODAYS: PROC (microsecs) RETURNS ();
+ /**
+  * MICROSECSTODAYS returns a FIXED BINARY(31) value that represents
+  * the number of microseconds x converted to days, ignoring
+  * incomplete days.
+  *
+  * MICROSECSTODAYS(x) is the same as \`x\`/(24*60*60*1_000_000).
+  *
+  * For an example, see SECS.
+  *
+  * @param {ANY<NUMBER>} x An expression that specifies the number of
+  *   microseconds. The value for \`x\` must have computational type
+  *   and will be converted to FIXED BINARY(63) if necessary.
+  * @returns {FIXED BINARY} A FIXED BINARY(31) value that represents
+  *   the number of microseconds x converted to days, ignoring
+  *   incomplete days.
+  */
+ MICROSECSTODAYS: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
 
- MINDATE: PROC () RETURNS ();
+ /**
+  * MINDATE returns a character string containing the earliest
+  * date/time value corresponding to a specified date/time pattern.
+  *
+  * MINDATE('YYYY-MM-DD-HH.MI.SS.999999') returns the value
+  * '1582-10-14-00.00.00.000000' under the NONULLDATE compiler
+  * option and '0001-01-01-00.00.00.000000' under the NULLDATE
+  * compiler option.
+  *
+  * The allowed date/time patterns are listed in Table 2.
+  *
+  * @param {ANY<CHARACTER>} p Specifies one of the supported date/time
+  *   patterns.
+  * @returns {ANY<CHARACTER>} A character string containing the
+  *   earliest date/time value corresponding to p.
+  */
+ MINDATE: PROC (p) RETURNS (ANY<CHARACTER>);
+    DCL p ANY<CHARACTER>;
  END;
 
- REPATTERN: PROC () RETURNS ();
+ /**
+  * REPATTERN takes a value holding a date in one pattern and
+  * returns that value converted to a date in a second pattern.
+  *
+  * The returned value has the attributes CHAR(m) NONVARYING where
+  * \`m\` is the length of the target pattern \`p\`.
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * The REPATTERN built-in function will perform the specified
+  * conversion in-line when both of the following are true:
+  *
+  * - the source and target patterns do not use the DDD element.
+  * - the source pattern has as much date information as the target,
+  * i.e. if the target has a year, month or day, then the source
+  * must have the corresponding information and there must also be
+  * at least as many digits in the source year as in the target.
+  *
+  * So, for example,
+  *
+  * - YYYYMMDD to DD.MM.YY will be inlined
+  * - MM/DD/YYYY to YYMM will be inlined
+  * - MMYY to YYYYMMDD will not be inlined
+  *
+  * The following are some examples of how to use REPATTERN to
+  * convert between 2-digit-year and 4-digit-year date patterns. But
+  * you can use this built-in function to convert a date from any
+  * supported pattern to any other supported pattern even if the
+  * patterns use the same number of digits to hold the year value.
+  *
+  * REPATTERN('990101','YYYYMMDD','YYMMDD', 1950) returns '19990101'
+  * REPATTERN('000101','YYYYMMDD','YYMMDD', 1950) returns '20000101'
+  * REPATTERN('19990101','YYMMDD','YYYYMMDD', 1950) returns '990101'
+  * REPATTERN('20000101','YYMMDD','YYYYMMDD', 1950) returns '000101'
+  * REPATTERN('19490101','YYMMDD','YYYYMMDD', 1950) raises ERROR
+  *
+  * @param {ANY<CHARACTER>} d A string expression representing a
+  *   date. The length of \`d\` must be at least as large as the
+  *   length of the source pattern \`q\`. If \`d\` is larger, any
+  *   excess characters must be formed by leading blanks.
+  *
+  *   \`d\` must have a computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<CHARACTER>} p The target pattern; must be one of the
+  *   supported date/time patterns.
+  * @param {ANY<CHARACTER>} [q] The source pattern; must be one
+  *   of the supported date/time patterns. If omitted, then the
+  *   first argument must be NONVARYING CHAR with length 17, 20,
+  *   or 26; in this case, the source pattern will be assumed
+  *   based on the following criteria:
+  *
+  *   | Pattern | Length of the first argument |
+  *   | --- | --- |
+  *   | YYYYMMDDHHMISS999 | 17 |
+  *   | YYYYMMDDHHMISS999999 | 20 |
+  *   | YYYY-MM-DD-HH.MI.SS.999999 | 26 |
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} The value converted to a date in a
+  *   second pattern.
+  */
+ REPATTERN: PROC (d, p, q, w) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<CHARACTER>;
+    DCL p ANY<CHARACTER>;
+    DCL q ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- SECS: PROC () RETURNS ();
+ /**
+  * SECS returns a FLOAT BINARY(53) value that is the number of
+  * seconds (based on Lilian format) corresponding to the date
+  * \`d\`.
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Dayname (7) char(9) var
+  * static nonasgn init( 'Sunday',
+  *                      'Monday',
+  *                      'Tuesday',
+  *                      'Wednesday',
+  *                      'Thursday',
+  *                      'Friday',
+  *                      'Saturday');
+  *   dcl Jul4_1776_Secs float bin(53);
+  *   dcl Age_Tot_Secs pic 'Z,ZZZ,ZZZ,ZZZ,ZZ9';
+  *
+  *   Jul4_1776_Secs = secs('17760704','YYYYMMDD');     // seconds
+  *   Age_Tot_Secs   = secs() - Jul4_1776_Secs;   // seconds since
+  *   display ('USA became independent on ' ||
+  *             dayname(weekday(secstodays(Jul4_1776_Secs))) ||
+  *            ', July 4, 1776 and at this very moment it has been ' ||
+  *            Age_Tot_Secs, ||     ' seconds.');
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} [d] A string expression representing a
+  *   date. If present, \`d\` specifies the input date as a character
+  *   string representing the date/time specified in the pattern
+  *   \`p\`. If \`d\` is missing, it is assumed to be DATETIME().
+  *
+  *   \`d\` must have a computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<CHARACTER>} [p] One of the supported date/time
+  *   patterns. If \`p\` is omitted, it is assumed to be the default
+  *   date/time pattern 'YYYYMMDDHHMISS999'.
+  *
+  *   \`p\` must have a computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {FLOAT BINARY} A FLOAT BINARY(53) value that is the
+  *   number of seconds (based on Lilian format) corresponding to
+  *   the date \`d\`.
+  */
+ SECS: PROC (d, p, w) RETURNS (FLOAT BINARY);
+    DCL d ANY<CHARACTER> OPTIONAL;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- SECSTODATE: PROC (secs) RETURNS ();
+ /**
+  * SECSTODATE returns a nonvarying character string containing the
+  * date in the date/time pattern specified by \`p\` that
+  * corresponds to \`d\` seconds (based on Lilian format).
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * @param {ANY<NUMBER>} d The number of seconds (in Lilian format).
+  *   \`d\` must have a computational type and is converted to FLOAT
+  *   BIN(53) if necessary.
+  * @param {ANY<CHARACTER>} [p] One of the supported date/time
+  *   patterns. If omitted, \`p\` is assumed to be the default
+  *   date/time pattern 'YYYYMMDDHHMISS999' (the default format
+  *   returned by DATETIME).
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} A nonvarying character string
+  *   containing the date in the date/time pattern specified by \`p\`
+  *   that corresponds to \`d\` seconds (based on Lilian format).
+  */
+ SECSTODATE: PROC (d, p, w) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<NUMBER>;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- SECSTODAYS: PROC (secs) RETURNS ();
+ /**
+  * SECSTODAYS returns a FIXED BINARY(31,0) value that represents
+  * the number of seconds \`x\` converted to days, ignoring
+  * incomplete days.
+  *
+  * SECSTODAYS(x) is the same as \`x\`/(24*60*60).
+  *
+  * For an example, see SECS.
+  *
+  * @param {ANY<NUMBER>} x Expression. The value for \`x\` must have
+  *   computational type and should be FLOAT BINARY(53). If not, it
+  *   is converted to FLOAT BINARY(53).
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that
+  *   represents the number of seconds \`x\` converted to days,
+  *   ignoring incomplete days.
+  */
+ SECSTODAYS: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER>;
  END;
 
- SMFTOJULIAN: PROC (smf) RETURNS ();
+ /**
+  * SMFTOJULIAN returns a CHAR(7) value that holds the date in the
+  * Julian format YYYYDDD.
+  *
+  * @param {ANY<CHARACTER>} d A CHAR(4) variable that holds a date
+  *   in the SMF format.
+  * @returns {ANY<CHARACTER>} A CHAR(7) value that holds the date in
+  *   the Julian format YYYYDDD.
+  */
+ SMFTOJULIAN: PROC (d) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<CHARACTER>;
  END;
 
- STCKETODATE: PROC (stck) RETURNS ();
+ /**
+  * STCKETODATE returns a character string that contains a date/time
+  * value corresponding to a STCKE value (set by PLISTCKE).
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * @param {ANY<CHARACTER>} x A CHAR(16) value holding a STCKE
+  *   value.
+  * @param {ANY<CHARACTER>} [p] Specifies one of the supported
+  *   date/time patterns. If \`p\` is omitted, it is assumed to be
+  *   the TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
+  * @returns {ANY<CHARACTER>} A character string that contains a
+  *   date/time value corresponding to a STCKE value (set by
+  *   PLISTCKE).
+  */
+ STCKETODATE: PROC (x, p) RETURNS (ANY<CHARACTER>);
+    DCL x ANY<CHARACTER>;
+    DCL p ANY<CHARACTER> OPTIONAL;
  END;
 
- STCKTODATE: PROC (stck) RETURNS ();
+ /**
+  * STCKTODATE returns a character string that contains a date/time
+  * value corresponding to a STCK value (set by PLISTCK).
+  *
+  * The allowed patterns are listed in Table 2. For an explanation
+  * of Lilian format, see Date/time built-in functions.
+  *
+  * @param {ANY<NUMBER>} x An UNSIGNED FIXED BIN(64) value holding
+  *   a STCK value.
+  * @param {ANY<CHARACTER>} [p] Specifies one of the supported
+  *   date/time patterns. If \`p\` is omitted, it is assumed to be
+  *   the TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
+  * @returns {ANY<CHARACTER>} A character string that contains a
+  *   date/time value corresponding to a STCK value (set by
+  *   PLISTCK).
+  */
+ STCKTODATE: PROC (x, p) RETURNS (ANY<CHARACTER>);
+    DCL x ANY<NUMBER>;
+    DCL p ANY<CHARACTER> OPTIONAL;
  END;
 
- TIME: PROC () RETURNS ();
+ /**
+  * TIME returns a character string timestamp in the format
+  * HHMISS999.
+  * @returns {ANY<CHARACTER>} A character string timestamp in the
+  *   format HHMISS999.
+  */
+ TIME: PROC () RETURNS (ANY<CHARACTER>);
  END;
 
- TIMESTAMP: PROC () RETURNS ();
+ /**
+  * TIMESTAMP returns a CHAR(26) character string that gives the
+  * current date and time in the format YYYY-MM-DD-HH.MI.SS.999999.
+  * @returns {ANY<CHARACTER>} A CHAR(26) character string that gives
+  *   the current date and time in the format
+  *   YYYY-MM-DD-HH.MI.SS.999999.
+  */
+ TIMESTAMP: PROC () RETURNS (ANY<CHARACTER>);
  END;
 
- UTCDATETIME: PROC () RETURNS ();
+ /**
+  * UTCDATETIME returns a character string that gives the current
+  * Coordinated Universal Time (UTC) in the pattern
+  * YYYYMMDDHHMISS999.
+  * @returns {ANY<CHARACTER>} A character string that gives the
+  *   current Coordinated Universal Time (UTC) in the pattern
+  *   YYYYMMDDHHMISS999.
+  */
+ UTCDATETIME: PROC () RETURNS (ANY<CHARACTER>);
  END;
 
- UTCMICROSECS: PROC () RETURNS ();
+ /**
+  * UTCMICROSECS returns a FIXED BINARY(63) value that gives the
+  * current UTC time in microseconds.
+  * @returns {FIXED BINARY} A FIXED BINARY(63) value that gives the
+  *   current UTC time in microseconds.
+  */
+ UTCMICROSECS: PROC () RETURNS (FIXED BINARY);
  END;
 
- UTCSECS: PROC () RETURNS ();
+ /**
+  * UTCSECS returns a FLOAT BIN(53) value that gives the current
+  * Coordinated Universal Time (UTC) in seconds in the Lilian
+  * format.
+  *
+  * If you define a variable to hold a number of quarter-hours as
+  *
+  * \`\`\`
+  * dcl qh fixed dec(5,2);
+  * \`\`\`
+  *
+  * then
+  *
+  * \`\`\`
+  * qh = 15*round(fixeddec((secs()-utcsecs())/900,7,2),0);
+  * \`\`\`
+  *
+  * will set it to the UTC offset as a number of quarter-hours, and
+  * the expression
+  *
+  * \`\`\`
+  * edit((qh/60),'S99') || ':' || edit(rem(qh,60),'99')
+  * \`\`\`
+  *
+  * will be a char(6) string holding the UTC offset in the usual
+  * format. For example, as -08:00 for California and +05:45 for
+  * Nepal.
+  * @returns {FLOAT BINARY} A FLOAT BIN(53) value that gives the
+  *   current Coordinated Universal Time (UTC) in seconds in the
+  *   Lilian format.
+  */
+ UTCSECS: PROC () RETURNS (FLOAT BINARY);
  END;
 
- VALIDDATE: PROC (date) RETURNS ();
+ /**
+  * VALIDDATE returns '1'B if the string d holds a date/time value
+  * that matches the pattern p.
+  *
+  * Allowable patterns are listed in Table 2. For an explanation of
+  * Lilian format, see Date/time built-in functions.
+  *
+  * If the pattern contains punctuation characters, VALIDDATE checks
+  * that the input string contains matching characters. For example,
+  * for the pattern YYYY-MM-DD, VALIDDATE accepts 2019-03-14 but not
+  * 2019.03.14.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl duedate   char(8);
+  *   dcl (b1,b2)   bit(1);
+  *
+  *   duedate = '20190228';
+  *   b1 = validdate( duedate, 'YYYYMMDD' ); // b1 = '1'b
+  *
+  *   duedate = '02302019';
+  *   b2 = validdate( duedate, 'DDMMYYYY' ); // b2 = '0'b
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  *
+  *   \`d\` specifies the input date as a character string
+  *   representing date/time according to the pattern \`p\`.
+  *
+  *   \`d\` must have computational type and should have character
+  *   type. If not, \`d\` is converted to character.
+  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns.
+  *
+  *   If present, it specifies the date/time pattern of \`d\`. If
+  *   \`p\` is missing, it is assumed to be the default date/time
+  *   pattern of 'YYYYMMDDHHMISS999'.
+  *
+  *   \`p\` must have computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {BIT} '1'B if the string d holds a date/time value
+  *   that matches the pattern p.
+  */
+ VALIDDATE: PROC (d, p, w) RETURNS (BIT);
+    DCL d ANY<CHARACTER>;
+    DCL p ANY<CHARACTER> OPTIONAL;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- WEEKDAY: PROC (date) RETURNS ();
+ /**
+  * WEEKDAY returns a FIXED BINARY(31,0) value that is the number of
+  * days \`x\` converted to the day of the week, where 1=Sunday,
+  * 2=Monday, . . . 7=Saturday. If \`x\` is missing, it is assumed
+  * to be DAYS for today.
+  *
+  * For an example of WEEKDAY, see SECS.
+  *
+  * @param {ANY<NUMBER>} [x] Expression. If present, \`x\` specifies
+  *   the input date as days. If missing, \`x\` is assumed to be
+  *   DAYS().
+  *
+  *   If \`x\` is missing and today's date is not available from the
+  *   system, a result of zero is returned.
+  *
+  *   \`x\` must have computational type and will be converted to
+  *   FIXED BINARY(31,0), if necessary.
+  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  *   number of days \`x\` converted to the day of the week, where
+  *   1=Sunday, 2=Monday, . . . 7=Saturday. If \`x\` is missing, it
+  *   is assumed to be DAYS for today.
+  */
+ WEEKDAY: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<NUMBER> OPTIONAL;
  END;
 
- Y4DATE: PROC (date) RETURNS ();
+ /**
+  * Y4DATE takes a date value with the pattern 'YYMMDD' and returns
+  * the date value with the two-digit year widened to a four-digit
+  * year.
+  *
+  * The returned value has the attributes CHAR(8) NONVARYING and is
+  * calculated as follows:
+  *
+  * \`\`\`
+  *   dcl y2 pic'99';
+  *   dcl y4 pic'9999';
+  *   dcl cc pic'99';
+  *
+  *   y2 = substr(d,1,2);
+  *   cc = w/100;
+  *
+  *   if y2 < mod(w,100) then
+  *     y4 = 100*cc + 100 + y2;
+  *   else
+  *     y4 = 100*cc + y2;
+  *
+  *   return( y4 || substr(d,3) );
+  * \`\`\`
+  *
+  * Y4DATE('990101',1950) returns '19990101' Y4DATE('000101',1950)
+  * returns '20000101'
+  *
+  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  *
+  *   \`d\` must have computational type and should have character
+  *   type. If not, \`d\` is converted to character.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} The date value with the two-digit year
+  *   widened to a four-digit year (CHAR(8) NONVARYING).
+  */
+ Y4DATE: PROC (d, w) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<CHARACTER>;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- Y4JULIAN: PROC (julian) RETURNS ();
+ /**
+  * Y4JULIAN takes a date value with the pattern 'YYDDD' and returns
+  * the date value with the two-digit year widened to a four-digit
+  * year.
+  *
+  * The returned value has the attributes CHAR(7) NONVARYING and is
+  * calculated as follows:
+  *
+  * \`\`\`
+  *   dcl y2 pic'99';
+  *   dcl y4 pic'9999';
+  *   dcl c  pic'99';
+  *
+  *   y2 = substr(d,1,2);
+  *   cc = w/100;
+  *
+  *   if y2 < mod(w,100) then
+  *     y4 = 100*cc + 100 + y2;
+  *   else
+  *     y4 = 100*cc + y2;
+  *
+  *   return( y4 || substr(d,3) );
+  * \`\`\`
+  *
+  * Y4JULIAN('99001',1950) returns '1999001' Y4JULIAN('00001',1950)
+  * returns '2000001'.
+  *
+  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  *   The length of \`d\` must be at least 5. If it is larger than 5,
+  *   excess characters must be formed by leading blanks.
+  *
+  *   \`d\` must have computational type and should have character
+  *   type. If not, it is converted to character.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} The date value with the two-digit year
+  *   widened to a four-digit year (CHAR(7) NONVARYING).
+  */
+ Y4JULIAN: PROC (d, w) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<CHARACTER>;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
- Y4YEAR: PROC (date) RETURNS ();
+ /**
+  * Y4YEAR takes a date value with the pattern 'YY' and returns the
+  * date value with the two-digit year widened to a four-digit year.
+  *
+  * The returned value has the attributes CHAR(4) NONVARYING and is
+  * calculated as follows:
+  *
+  * \`\`\`
+  *   dcl y2 pic'99';
+  *   dcl y4 pic'9999';
+  *   dcl c  pic'99';
+  *
+  *   y2 = d;
+  *   cc = w/100;
+  *
+  *   if y2 < mod(w,100) then
+  *     y4 = 100*cc + 100 + y2;
+  *   else
+  *     y4 = 100*cc + y2;
+  *
+  *   return( y4 );
+  * \`\`\`
+  *
+  * Y4YEAR('99',1950) returns '1999' Y4YEAR('00',1950) returns
+  * '2000'
+  *
+  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  *   The length of \`d\` must be at least 2. If it is larger than 2,
+  *   excess characters must be formed by leading blanks.
+  *
+  *   \`d\` must have computational type and should have character
+  *   type. If not, \`d\` is converted to character.
+  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
+  * @returns {ANY<CHARACTER>} The date value with the two-digit year
+  *   widened to a four-digit year (CHAR(4) NONVARYING).
+  */
+ Y4YEAR: PROC (d, w) RETURNS (ANY<CHARACTER>);
+    DCL d ANY<CHARACTER>;
+    DCL w ANY<NUMBER> OPTIONAL;
  END;
 
  /* Encoding and hashing functions */
- BASE64DECODE: PROC (buffer) RETURNS ();
+ /**
+  * BASE64DECODE decodes a source buffer from base 64 that is
+  * encoded in the character set specified by the ASCII or EBCDIC
+  * suboption of the DEFAULT compiler option. It returns a size_t
+  * value that indicates the number of bytes that are written into
+  * the target buffer.
+  *
+  * Note: Some arguments or return values are of type size_t. If the
+  * LP(32) compiler option is in effect, size_t is FIXED BIN(31); if
+  * the LP(64) compiler option is in effect, size_t is FIXED
+  * BIN(63).
+  *
+  * The returned value depends on the address of the target buffer
+  * or the size of the target buffer:
+  *
+  * - If the address of the target buffer p is zero, the number of
+  * bytes that would be written is returned.
+  * - If the target buffer is not large enough, a value of -1 is
+  * returned.
+  * - If the target buffer is large enough, the number of bytes that
+  * are written to the buffer is returned.
+  *
+  * This built-in function is the reverse of the built-in function
+  * BASE64ENCODE and expects that the base 64 source was encoded by
+  * using the same convention that the BASE64ENCODE built-in
+  * function uses. See Convention for encoding a source buffer into
+  * base 64 as EBCDIC for details. If other conventions were used,
+  * the results are unpredictable.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ BASE64DECODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- BASE64DECODE8: PROC (buffer) RETURNS ();
+ /**
+  * BASE64DECODE8 decodes the source buffer from base 64 that is
+  * encoded as UTF-8. It returns a size_t 1 value that indicates the
+  * number of bytes that are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * This function is the reverse of the function BASE64ENCODE8 and
+  * expects that the base 64 source was encoded by using the same
+  * convention that the BASE64ENCODE8 function uses. See Convention
+  * for encoding a source buffer into base 64 as UTF-8 for details.
+  * If other conventions were used, the results are unpredictable.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ BASE64DECODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
- BASE64DECODE16: PROC (buffer) RETURNS ();
+ /**
+  * BASE64DECODE16 decodes the source buffer from base 64 that is
+  * encoded as UTF-16. It returns a size_t 1 value that indicates
+  * the number of bytes that are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * that would be written is returned. If the target buffer is not
+  * large enough, a value of -1 is returned. If the target buffer is
+  * large enough, the number of bytes that is written to the buffer
+  * is returned.
+  *
+  * This function is the reverse of the function BASE64ENCODE16 and
+  * expects that the base 64 source was encoded by using the same
+  * convention that the BASE64ENCODE16 function uses. See Convention
+  * for encoding a source buffer into base 64 as UTF-16 for details.
+  * If other conventions were used, the results are unpredictable.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written into the target buffer.
+  */
+ BASE64DECODE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
  BASE64ENCODE: PROC (buffer) RETURNS ();
  END;
