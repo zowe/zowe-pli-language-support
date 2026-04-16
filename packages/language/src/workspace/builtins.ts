@@ -1726,75 +1726,920 @@ export const Builtins =
  MEMINDEX: PROC () RETURNS ();
  END;
 
- MEMREPLACE: PROC (buffer, value, replacement) RETURNS ();
- END;
-
- MEMSEARCH: PROC (buffer, value) RETURNS ();
- END;
-
- MEMSEARCHR: PROC (buffer, value) RETURNS ();
- END;
-
- MEMSQUEEZE: PROC (buffer, target, replacement) RETURNS ();
- END;
-
- /** 
-  * Searches for the first nonoccurrence of any one of the elements of 
-  * a string within a buffer. 
+ /**
+  * MEMREPLACE fills a target buffer with the contents of a source
+  * buffer with one or more occurrences of a specified third buffer
+  * replaced by a fourth buffer, and returns a size_t value that
+  * indicates the number of bytes that are written to the target
+  * buffer.
+  *
+  * The returned value depends on the address of the target buffer
+  * or the size of the target buffer:
+  *
+  * - If the address of the target buffer is zero (null), the number
+  * of bytes that would be written is returned.
+  * - If the target buffer is not large enough, a value of -1 is
+  * returned.
+  * - If the target buffer is large enough, the number of bytes that
+  * are written to the buffer is returned.
+  *
+  * \`\`\`
+  * dcl ein char(50) var value('reserved from #date# till #date#.');
+  * dcl aus char(80) var;
+  * dcl cx fixed bin(31);
+  *
+  * dcl f   char(6);
+  * dcl t   char(10);
+  *
+  * f = '#date#';
+  * t = '2018/05/01';
+  *
+  * cx = memreplace( addrdata(aus), maxlength(aus),
+  *                  addrdata(ein), length(ein),
+  *                  addrdata(f), length(f),
+  *                  addrdata(t), length(t));
+  *      // cx = 37
+  *      // aus = 'reserved from 2018/05/01 till #date#.'
+  * cx = memreplace( addrdata(aus), maxlength(aus),
+  *                  addrdata(ein), length(ein),
+  *                  addrdata(f), length(f),
+  *                  addrdata(t), length(t),16,1);
+  *      // cx = 37
+  *      // aus = 'reserved from #date# till 2018/05/01.'
+  * cx = memreplace( addrdata(aus), maxlength(aus),
+  *                  addrdata(ein), length(ein),
+  *                  addrdata(f), length(f),
+  *                  addrdata(t), length(t),,0);
+  *      // cx = 41
+  *      // aus = 'reserved from 2018/05/01 till 2018/05/01.'
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target
+  *   buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. The length must be non-negative. It must have a
+  *   computational type and is converted to the size_t type.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source
+  *   buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. The length must be non-negative. It must have a
+  *   computational type and is converted to the size_t type.
+  * @param {ANY<LOCATOR>} f Specifies the address of the buffer
+  *   containing the bytes that will be replaced.
+  * @param {ANY<NUMBER>} x Specifies the length in bytes of the
+  *   buffer f. The length must be non-negative. It must have a
+  *   computational type and is converted to the size_t type.
+  * @param {ANY<LOCATOR>} t Specifies the address of the buffer
+  *   containing the bytes that will be used to replace the bytes of
+  *   the buffer f within the buffer p.
+  * @param {ANY<NUMBER>} y Specifies the length in bytes of the
+  *   buffer t. The length must be non-negative. It must have a
+  *   computational type and is converted to the size_t type.
+  * @param {ANY<NUMBER>} [s] An optional expression that specifies the
+  *   location within the source buffer from where to start
+  *   searching for the buffer defined by f and x. It must have a
+  *   computational type and is converted to the size_t type. The
+  *   default value for s is 1. If s is less than 1 or if s is
+  *   greater than 1 + n, zero bytes will be written to the target
+  *   buffer.
+  * @param {ANY<NUMBER>} [i] An optional expression that specifies the
+  *   maximum number of times f should be replaced by t. It must
+  *   have a computational type and is converted to the size_t type.
+  *   The default value of i is 1. i must be non-negative. If the
+  *   value of i is 0, all occurrences of f in source buffer will be
+  *   replaced by t.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes that are written to the target buffer.
   */
- MEMVERIFY: PROC (buffer, value) RETURNS ();
+ MEMREPLACE: PROC (p, m, q, n, f, x, t, y, s, i) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+    DCL f ANY<LOCATOR>;
+    DCL x ANY<NUMBER>;
+    DCL t ANY<LOCATOR>;
+    DCL y ANY<NUMBER>;
+    DCL s ANY<NUMBER> OPTIONAL;
+    DCL i ANY<NUMBER> OPTIONAL;
  END;
 
- MEMVERIFYR: PROC (buffer, value) RETURNS ();
+ /**
+  * MEMSEARCH returns a size_t 1 value that specifies the first
+  * position (from the left) in a buffer at which any character,
+  * graphic, uchar, or widechar in a given string appears.
+  *
+  * The buffer length must be nonnegative and must have a
+  * computational type. The buffer length is converted to type
+  * size_t.
+  *
+  * The string-expression \`x\` must have type CHARACTER (including
+  * PICTURE), GRAPHIC, UCHAR, or WIDECHAR. The buffer length is
+  * interpreted as the number of units of that string type.
+  *
+  * The address \`p\` and the length \`n\` specify the "string" in
+  * which to search for any character, graphic, uchar, or widechar
+  * that appears in \`x\`.
+  *
+  * If either the buffer length \`n\` is zero or \`x\` is the null
+  * string, the result is zero.
+  *
+  * If \`x\` does not occur in the buffer, the result is zero.
+  *
+  * \`\`\`
+  *   dcl cb(128*1024) char(1);
+  *   dcl wb(128*1024) widechar(1);
+  *   dcl pos fixed bin(31);
+  *
+  *   // 128K bytes searched from the left for a numeric
+  *   pos = memsearch( addr(cb), stg(cb), '012345789' );
+  *
+  *   // 256K bytes searched from the left for a widechar '0' or '1'
+  *   pos = memsearch( addr(wb), stg(wb), '0030_0031'wx );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Address of buffer to be searched
+  * @param {ANY<NUMBER>} n Length of buffer to be searched
+  * @param {ANY<CHARACTER>} x String-expression
+  * @returns {ANY<NUMBER>} A size_t value specifying the first
+  *   position in the buffer at which any element of x appears,
+  *   or zero if not found.
+  */
+ MEMSEARCH: PROC (p, n, x) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+    DCL x ANY<CHARACTER>;
  END;
 
- WHEREDIFF: PROC (buffer1, buffer2) RETURNS ();
+ /**
+  * MEMSEARCHR returns a size_t 1 value that specifies the first
+  * position (from the right) in a buffer at which any character,
+  * graphic, uchar, or widechar in a given string appears.
+  *
+  * The buffer length must be nonnegative and must have a
+  * computational type. The buffer length is converted to type
+  * size_t.
+  *
+  * The string-expression \`x\` must have type CHARACTER (including
+  * PICTURE), GRAPHIC, UCHAR, or WIDECHAR. The buffer length is
+  * interpreted as the number of units of that string type.
+  *
+  * The address \`p\` and the length \`n\` specify the "string" in
+  * which to search for any character, graphic, uchar, or widechar
+  * that appears in \`x\`.
+  *
+  * If either the buffer length \`n\` is zero or \`x\` is the null
+  * string, the result is zero.
+  *
+  * If \`x\` does not occur in the buffer, the result is zero.
+  *
+  * \`\`\`
+  *   dcl cb(128*1024) char(1);
+  *   dcl wb(128*1024) widechar(1);
+  *   dcl pos fixed bin(31);
+  *
+  *   // 128K bytes searched from the right for a numeric
+  *   pos = memsearchr( addr(cb), stg(cb), '012345789' );
+  *
+  *   // 256K bytes searched from the right for a widechar '0' or '1'
+  *   pos = memsearchr( addr(wb), stg(wb), '0030_0031'wx );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Address of buffer to be searched
+  * @param {ANY<NUMBER>} n Length of buffer to be searched
+  * @param {ANY<CHARACTER>} x String-expression
+  * @returns {ANY<NUMBER>} A size_t value specifying the first
+  *   position (from the right) in the buffer at which any element
+  *   of x appears, or zero if not found.
+  */
+ MEMSEARCHR: PROC (p, n, x) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+    DCL x ANY<CHARACTER>;
  END;
 
- WSCOLLAPSE: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMSQUEEZE fills a target buffer with the contents of a source
+  * buffer with all multiple occurrences of a specified character
+  * replaced by one. It returns a size_t value that indicates the
+  * number of bytes written to the target buffer.
+  *
+  * The returned value depends on the address of the target buffer
+  * or the size of the target buffer:
+  *
+  * - If the address of the target buffer is zero (null), the number
+  * of bytes that would be written is returned.
+  * - If the target buffer is not large enough, a value of -1 is
+  * returned.
+  * - If the target buffer is large enough, the number of bytes that
+  * are written to the buffer is returned.
+  * - The target buffer will include all the characters in the
+  * source buffer before the ith character (without any collapsing)
+  * and then all characters from the nth position onwards, squeezed
+  * and trimmed as appropriate.
+  *
+  * \`\`\`
+  * dcl s  char(20);
+  * dcl t  char(20);
+  * dcl cx fixed bin(31);
+  *
+  * s  = '...abc....def...gh..';
+  * cx = memsqueeze(sysnull(), 0, addr(s), stg(s), '.');
+  *       // cx = 12
+  * cx = memsqueeze(addr(t), stg(t), addr(s), stg(s), '.');
+  *       // cx = 12
+  *       // t = '.abc.def.gh.'
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t. It must be non-negative.
+  * @param {CHARACTER} z An expression that must have the type
+  *   CHARACTER(1) NONVARYING.
+  * @param {ANY<NUMBER>} [i] An optional expression that must be
+  *   computational and will be converted to size_t as necessary. If
+  *   not specified, the default value for i is 1. If i < 1, default
+  *   value of 1 is used.
+  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  *   of bytes written to the target buffer.
+  */
+ MEMSQUEEZE: PROC (p, m, q, n, z, i) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+    DCL z CHARACTER;
+    DCL i ANY<NUMBER> OPTIONAL;
  END;
 
- WSCOLLAPSE16: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMVERIFY returns a size_t 1 value that specifies the position
+  * in a buffer of the first (from the left) character, graphic,
+  * uchar, or widechar that is \`not\` in a specified string.
+  *
+  * The buffer length must be nonnegative and must have a
+  * computational type. The buffer length is converted to type
+  * size_t.
+  *
+  * The string-expression \`x\` must have type CHARACTER (including
+  * PICTURE), GRAPHIC, UCHAR, or WIDECHAR. The buffer length is
+  * interpreted as the number of units of that string type.
+  *
+  * The address \`p\` and the length \`n\` specify the "string" in
+  * which to search for any character, graphic, uchar, or widechar
+  * that does not appear in \`x\`.
+  *
+  * If either the buffer length \`n\` is zero or \`x\` is the null
+  * string, the result is zero.
+  *
+  * If all the characters, graphics, uchars, or widechars in the
+  * buffer do appear in \`x\`, the result is zero.
+  *
+  * \`\`\`
+  *    dcl cb(128*1024) char(1);
+  *   dcl wb(128*1024) widechar(1);
+  *   dcl pos fixed bin(31);
+  *
+  *   // 128K bytes searched from the left for a non-numeric
+  *   pos = memverify( addr(cb), stg(cb), '012345789' );
+  *
+  *   // 256K bytes searched from the left for a non-blank widechar
+  *   pos = memverify( addr(wb), stg(wb), '0020'wx );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Address of buffer to be searched.
+  * @param {ANY<NUMBER>} n Length of buffer to be searched.
+  * @param {ANY<CHARACTER>} x String-expression.
+  * @returns {ANY<NUMBER>} A size_t value specifying the position of
+  *   the first non-matching element (from the left), or zero if all
+  *   match.
+  */
+ MEMVERIFY: PROC (p, n, x) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+    DCL x ANY<CHARACTER>;
  END;
 
- WSREPLACE: PROC (buffer, target) RETURNS ();
+ /**
+  * MEMVERIFYR returns a size_t 1 value that specifies the position
+  * in a buffer of the first (from the right) character, graphic,
+  * uchar, or widechar that is \`not\` in a specified string.
+  *
+  * The buffer length must be nonnegative and must have a
+  * computational type. The buffer length is converted to type
+  * size_t.
+  *
+  * The string-expression \`x\` must have type CHARACTER (including
+  * PICTURE), GRAPHIC, UCHAR, or WIDECHAR. The buffer length is
+  * interpreted as the number of units of that string type.
+  *
+  * The address \`p\` and the length \`n\` specify the "string" in
+  * which to search for any character, graphic, uchar, or widechar
+  * that does not appear in \`x\`.
+  *
+  * If either the buffer length \`n\` is zero or \`x\` is the null
+  * string, the result is zero.
+  *
+  * If all the characters, graphics, uchars, or widechars in the
+  * buffer do appear in \`x\`, the result is zero.
+  *
+  * \`\`\`
+  *  dcl cb(128*1024) char(1);
+  *   dcl wb(128*1024) widechar(1);
+  *   dcl pos fixed bin(31);
+  *
+  *   // 128K bytes searched from the right for a non-numeric
+  *   pos = memverify( addr(cb), stg(cb), '012345789' );
+  *
+  *   // 256K bytes searched from the right for a non-blank widechar
+  *   pos = memverify( addr(wb), stg(wb), '0020'wx );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Address of buffer to be searched.
+  * @param {ANY<NUMBER>} n Length of buffer to be searched.
+  * @param {ANY<CHARACTER>} x String-expression.
+  * @returns {ANY<NUMBER>} A size_t value specifying the position of
+  *   the first non-matching element (from the right), or zero if
+  *   all match.
+  */
+ MEMVERIFYR: PROC (p, n, x) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+    DCL x ANY<CHARACTER>;
  END;
 
- WSREPLACE16: PROC (buffer, target) RETURNS ();
+ /**
+  * WHEREDIFF returns a size_t value that specifies the index of the
+  * first byte that differs in two buffers or zero if all the bytes
+  * are the same.
+  *
+  * If the two buffers are different, the WHEREDIFF built-in
+  * function does not indicate if the first byte that differs is
+  * greater or less than the corresponding byte in the second
+  * buffer. If you want to know how the buffers differ, use the
+  * COMPARE built-in function instead.
+  *
+  * @param {ANY<LOCATOR>} x Expression. It must have the POINTER or
+  *   OFFSET type. If OFFSET, the expression must be declared with
+  *   the AREA qualification.
+  * @param {ANY<LOCATOR>} y Expression. It must have the POINTER or
+  *   OFFSET type. If OFFSET, the expression must be declared with
+  *   the AREA qualification.
+  * @param {ANY<NUMBER>} z Expression. It is converted to size_t.
+  * @returns {ANY<NUMBER>} A size_t value specifying the index of the
+  *   first differing byte, or zero if all bytes are the same.
+  */
+ WHEREDIFF: PROC (x, y, z) RETURNS (ANY<NUMBER>);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
  END;
 
- XMLCHAR: PROC (buffer) RETURNS ();
+ /**
+  * WSCOLLAPSE returns a size_t 1 value that indicates the number of
+  * bytes that are written into the target buffer when it collapses
+  * all the whitespace in the CHARACTER source buffer.
+  *
+  * WSCOLLAPSE collapses the whitespace by one of the following
+  * means:
+  *
+  * - Replacing each character from \t\f\v\n\r with a blank.
+  * - Trimming all leading and trailing blanks.
+  * - Reducing multiple interior blanks to one blank.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * to be written is returned. If the target buffer is not large
+  * enough, a value of -1 is returned. If the target buffer is large
+  * enough, the number of bytes that is written to the buffer is
+  * returned.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written to the target buffer, or -1 if too small.
+  */
+ WSCOLLAPSE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
 
- XMLSCRUB: PROC (buffer) RETURNS ();
+ /**
+  * WSCOLLAPSE16 collapses all the whitespace in a source buffer
+  * encoded as UTF-16. It returns a size_t 1 value that indicates
+  * the number of bytes that are written into the target buffer.
+  * WHITESPACECOLLAPSE is a deprecated synonym for WSCOLLAPSE16.
+  *
+  * WSCOLLAPSE16 collapses the whitespace by one of the following
+  * means:
+  *
+  * - Replacing each character from \t\f\v\n\r with a UTF-16 blank.
+  * - Trimming all leading and trailing blanks.
+  * - Reducing multiple interior blanks to one blank.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * to be written is returned. If the target buffer is not large
+  * enough, a value of -1 is returned. If the target buffer is large
+  * enough, the number of bytes that is written to the buffer is
+  * returned.
+  *
+  * The source buffer must hold UTF-16 data.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written to the target buffer, or -1 if too small.
+  */
+ WSCOLLAPSE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
 
- XMLSCRUB16: PROC (buffer) RETURNS ();
+ /**
+  * WSREPLACE replaces each character from \t, \f, \v, \n in a
+  * source buffer encoded as CHARACTER by a blank. This function
+  * returns a size_t 1 value that indicates the number of bytes that
+  * are written into the target buffer.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * to be written is returned. If the target buffer is not large
+  * enough, a value of -1 is returned. If the target buffer is large
+  * enough, the number of bytes that is written to the buffer is
+  * returned.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written to the target buffer, or -1 if too small.
+  */
+ WSREPLACE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
 
- XMLUCHAR: PROC (buffer) RETURNS ();
+ /**
+  * WSREPLACE16 replaces all characters from \t, \f, \v, \n in a
+  * source buffer encoded as UTF-16 by a blank. This function
+  * returns a size_t 1 value that indicates the number of bytes that
+  * are written into the target buffer. WHITESPACEREPLACE is a
+  * deprecated synonym for WSREPLACE16.
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * to be written is returned. If the target buffer is not large
+  * enough, a value of -1 is returned. If the target buffer is large
+  * enough, the number of bytes that is written to the buffer is
+  * returned.
+  *
+  * The source buffer must hold UTF-16 data.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written to the target buffer, or -1 if too small.
+  */
+ WSREPLACE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+ END;
+
+ /**
+  * XMLCHAR dumps data from a structure as XML into a buffer. It
+  * returns a size_t 1 value that indicates the number of bytes
+  * written to the buffer. If the buffer is too small, the structure
+  * data is truncated and the number of bytes needed for the buffer
+  * to contain the structure is returned.
+  *
+  * When the XML output is created, it follows these rules:
+  *
+  * - When a variable has the XMLCONTENT attribute, the variable is
+  * presented as tagless text
+  * - When no variable has the XMLATTR attribute, each name in the
+  * structure is written out, first enclosed in "<" and ">" and
+  * later enclosed in "</" and ">".
+  * - When a variable has the XMLATTR attribute, the field is
+  * presented as an attribute of its containing structure.
+  * - When a variable has the XMLOMIT attribute, the field is
+  * omitted if it has a null value.
+  * - Numeric and bit data is converted to character.
+  * - Leading and trailing blanks are trimmed wherever possible.
+  *
+  * Note: By default the names of the variables in the generated XML
+  * output are all in upper case. The CASE(ASIS) suboption of the
+  * XML compiler option can be used to specify that the names appear
+  * in the case in which they were declared.
+  *
+  * **Example of using XMLCHAR**
+  *
+  * This example is based on the following code fragment:
+  *
+  * \`\`\`
+  *     dcl buffer   char(800);
+  *     dcl written  fixed bin(31);
+  *     dcl next     pointer;
+  *     dcl left     fixed bin(31);
+  *     dcl
+  *       1 a,
+  *        2 a1,
+  *          3 b1 char(8),
+  *          3 b2 char(8),
+  *        2 a2,
+  *          3 c1 fixed bin,
+  *          3 c2 fixed dec(5,1);
+  *
+  *     b1 = ' t1';
+  *     b2 = 't2';
+  *     c1 = 17;
+  *     c2 = -29;
+  *     next = addr(buffer);
+  *     left = stg(buffer);
+  *     written = xmlchar( a, next, left );
+  *     next += written;
+  *     left -= written;
+  * \`\`\`
+  *
+  * The following bytes would be written to the buffer, and written
+  * would be set equal to 72.
+  *
+  * \`\`\`
+  * <A><A1><B1>t1</B1><B2>t2</B2></A1><A2><C1>17</C1><C2>-29.0</C2></A2></A>
+  * \`\`\`
+  *
+  * @param {ANY<STRUCTURE>} x Reference to a structure or DEFINE
+  *   STRUCTURE type.
+  *
+  *   The reference \`x\` must conform to the following rules:
+  *
+  *   - It must contain only computational data, that is, only
+  *   string and numeric data. However, it must not contain any
+  *   GRAPHIC, UCHAR, WIDECHAR, or WIDEPIC elements.
+  *   - It may contain arrays, but if it is an array itself, it must
+  *   be completely subscripted.
+  *   - It may contain substructures, but any contained substructure
+  *   must not use an asterisk (*) in place of a name. However, an
+  *   asterisk may be used as the name of a base element, but in
+  *   that case, the unnamed element will not be written to the
+  *   target buffer.
+  *   - If \`x\` is a reference to a structure, it must not contain
+  *   any DEFINE STRUCTURE types.
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written, or the needed size if the buffer is too small.
+  */
+ XMLCHAR: PROC (x, p, n) RETURNS (ANY<NUMBER>);
+    DCL x ANY<STRUCTURE>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+ END;
+
+ /**
+  * XMLSCRUB scrubs the CHARACTER source buffer. It returns a
+  * size_t1 value that indicates the number of bytes that are
+  * written into the target buffer.
+  *
+  * XMLSCRUB cleans the CHARACTER source buffer by:
+  *
+  * - Replacing each character less than a blank except for \t, \n,
+  * \r with a blank.
+  * - Replacing carriage returns with .
+  * - Replacing the following characters with corresponding strings
+  * as follows: | Characters | Strings |
+  * | --- | --- |
+  * | " | " |
+  * | ' | ' |
+  * | & | &amp; |
+  * | < | < |
+  * | > | > |
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * to be written is returned. If the target buffer is not large
+  * enough, a value of -1 is returned. If the target buffer is large
+  * enough, the number of bytes that is written to the buffer is
+  * returned.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written to the target buffer, or -1 if too small.
+  */
+ XMLSCRUB: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+ END;
+
+ /**
+  * XMLSCRUB16 scrubs the UTF-16 source buffer. It returns a size_t
+  * 1 value that indicates the number of bytes that are written into
+  * the target buffer. XMLCLEAN is a deprecated synonym for
+  * XMLSCRUB16.
+  *
+  * XMLSCRUB16 cleans the UTF-16 source buffer by:
+  *
+  * - Replacing each invalid UTF-16 with a UTF-16 blank.
+  * - Replacing carriage returns with .
+  * - Replacing the following characters with corresponding strings
+  * as follows: | Characters | Strings |
+  * | --- | --- |
+  * | " | " |
+  * | ' | ' |
+  * | & | &amp; |
+  * | < | < |
+  * | > | > |
+  *
+  * If the address of the target buffer is zero, the number of bytes
+  * to be written is returned. If the target buffer is not large
+  * enough, a value of -1 is returned. If the target buffer is large
+  * enough, the number of bytes that is written to the buffer is
+  * returned.
+  *
+  * The source buffer must hold UTF-16 data.
+  *
+  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
+  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
+  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  *   buffer. It must have a computational type and is converted to
+  *   type size_t.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written to the target buffer, or -1 if too small.
+  */
+ XMLSCRUB16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
+    DCL p ANY<LOCATOR>;
+    DCL m ANY<NUMBER>;
+    DCL q ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
+ END;
+
+ /**
+  * XMLUCHAR dumps data from a structure as XML into a buffer as
+  * UTF-8. It returns a size_t 1 value that indicates the number of
+  * bytes written to the buffer. If the buffer is too small, the
+  * structure data is truncated and the number of bytes needed for
+  * the buffer to contain the structure is returned.
+  *
+  * When the XML output is created, XMLUCHAR follows the same rules
+  * as XMLCHAR.
+  *
+  * @param {ANY<STRUCTURE>} x Reference to a structure or DEFINE
+  *   STRUCTURE type.
+  *
+  *   The reference \`x\` must conform to the same rules as XMLCHAR
+  *   except that it can contain UCHAR elements.
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<NUMBER>} n Length of the target buffer.
+  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  *   bytes written, or the needed size if the buffer is too small.
+  */
+ XMLUCHAR: PROC (x, p, n) RETURNS (ANY<NUMBER>);
+    DCL x ANY<STRUCTURE>;
+    DCL p ANY<LOCATOR>;
+    DCL n ANY<NUMBER>;
  END;
 
  /* Condition handling builtins */
- DATAFIELD: PROC () RETURNS ();
+ /**
+  * DATAFIELD is in context in a NAME condition ON-unit (or any of
+  * its dynamic descendants). It returns a character string whose
+  * value is the contents of the field that raised the condition. It
+  * is also in context in an ON-unit (or any of its dynamic
+  * descendants) for an ERROR or FINISH condition raised as part of
+  * the implicit action for the NAME condition.
+  *
+  * If the string that raised the condition contains DBCS
+  * identifiers, GRAPHIC data, or mixed character data, DATAFIELD
+  * returns a mixed character string.
+  *
+  * If DATAFIELD is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} Contents of the field that raised the
+  *   NAME condition, or a null string if out of context.
+  */
+ DATAFIELD: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONACTUAL: PROC () RETURNS ();
+ /**
+  * ONACTUAL returns a nonvarying character string whose value is
+  * the "actual" value of an ASSERT COMPARE statement that raised
+  * the ASSERTION condition. If the expression has GRAPHIC or
+  * WIDECHAR type, a null string is returned.
+  *
+  * It is in context in an ON-unit for the ASSERTION condition, or
+  * for the ERROR or FINISH condition raised as the implicit action
+  * for an ASSERTION condition.
+  *
+  * If it is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The "actual" value from the ASSERT
+  *   COMPARE statement, or a null string if out of context.
+  */
+ ONACTUAL: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONAREA: PROC () RETURNS ();
+ /**
+  * ONAREA returns a character string whose value is the name of the
+  * AREA reference for which an AREA condition is raised. If the
+  * reference includes DBCS names, the string returned is a mixed
+  * character string. It is in context in an ON-unit (or any of its
+  * dynamic descendants) for the AREA condition, or for the ERROR or
+  * FINISH condition raised as the implicit action for an AREA
+  * condition.
+  *
+  * If the ONAREA built-in function is used out of context, a null
+  * string is returned.
+  *
+  * If the AREA reference is excessively long or complicated, a null
+  * string is returned.
+  * @returns {ANY<CHARACTER>} Name of the AREA reference, or a null
+  *   string if out of context.
+  */
+ ONAREA: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONCHAR: PROC () RETURNS ();
+ /**
+  * ONCHAR returns a character(1) string containing the character
+  * that caused the CONVERSION condition to be raised. It is in
+  * context in an ON-unit (or any of its dynamic descendants) for
+  * the CONVERSION condition or for the ERROR or FINISH condition
+  * raised as the implicit action for the CONVERSION condition.
+  *
+  * If the ONCHAR built-in function is used out of context, a blank
+  * is returned.
+  * @returns {CHARACTER} The character that caused the CONVERSION
+  *   condition, or a blank if out of context.
+  */
+ ONCHAR: PROC () RETURNS (CHARACTER);
  END;
- ONEXPECTED: PROC () RETURNS ();
+ /**
+  * ONEXPECTED returns a nonvarying character string whose value is
+  * the "expected" value of an ASSERT COMPARE statement that raised
+  * the ASSERTION condition. If the expression has GRAPHIC or
+  * WIDECHAR type, a null string is returned.
+  *
+  * It is in context in an ON-unit for the ASSERTION condition, or
+  * for the ERROR or FINISH condition raised as the implicit action
+  * for an ASSERTION condition.
+  *
+  * If it is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} The "expected" value from the ASSERT
+  *   COMPARE statement, or a null string if out of context.
+  */
+ ONEXPECTED: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONCODE: PROC () RETURNS ();
+ /**
+  * The ONCODE built-in function provides a fixed-point binary value
+  * that depends on the cause of the last condition.
+  *
+  * ONCODE can be used to distinguish between the various
+  * circumstances that raise a particular condition—for instance,
+  * the ERROR condition. For codes corresponding to the conditions
+  * and errors detected, refer to the specific condition.
+  *
+  * ONCODE returns a real fixed-point binary value that is the
+  * condition code. It is in context in any ON-unit or its dynamic
+  * descendant. All condition codes are defined in Messages and
+  * Codes.
+  *
+  * If ONCODE is used out of context, zero is returned.
+  * @returns {FIXED BINARY} The condition code, or zero if out of
+  *   context.
+  */
+ ONCODE: PROC () RETURNS (FIXED BINARY);
  END;
- ONCONDCOND: PROC () RETURNS ();
+ /**
+  * ONCONDCOND returns a nonvarying character string whose value is
+  * the name of the condition for which a CONDITION condition is
+  * raised.
+  *
+  * If the name is a DBCS name, it will be returned as a mixed
+  * character string. It is in context in the following
+  * circumstances:
+  *
+  * - In a CONDITION ON-unit, or any of its dynamic descendants
+  * - In an ANYCONDITION ON-unit that traps a CONDITION condition,
+  * or any dynamic descendants of such an ON-unit.
+  *
+  * If ONCONDCOND is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} Name of the raised CONDITION condition,
+  *   or a null string if out of context.
+  */
+ ONCONDCOND: PROC () RETURNS (ANY<CHARACTER>);
  END;
- ONCONDID: PROC () RETURNS ();
+ /**
+  * ONCONDID (short for ON-condition identifier) returns a FIXED
+  * BINARY(31,0) value that identifies the condition being handled
+  * by an ON-unit. It is in context in any ON-unit or one of its
+  * dynamic descendants.
+  *
+  * The values returned by ONCONDID are given in the following
+  * DECLARE statement:
+  *
+  * \`\`\`
+  *   declare (   condid_area               value(1),
+  *               condid_attention          value(2),
+  *               condid_condition          value(3),
+  *               condid_conversion         value(4),
+  *               condid_endfile            value(5),
+  *               condid_endpage            value(6),
+  *               condid_error              value(7),
+  *               condid_finish             value(8),
+  *               condid_fixedoverflow      value(9),
+  *               condid_invalidop          value(10),
+  *               condid_key                value(11),
+  *               condid_name               value(12),
+  *               condid_overflow           value(13),
+  *               condid_record             value(14),
+  *               condid_size               value(15),
+  *               condid_storage            value(16),
+  *               condid_stringrange        value(17),
+  *               condid_stringsize         value(18),
+  *               condid_subscriptrange     value(19),
+  *               condid_transmit           value(20),
+  *               condid_undefinedfile      value(21),
+  *               condid_underflow          value(22),
+  *               condid_zerodivide         value(23),
+  *               condid_assertion          value(24),
+  *           ) fixed bin(31);
+  * \`\`\`
+  *
+  * If ONCONDID is used out of context, a value of zero is returned.
+  * @returns {FIXED BINARY} Identifier of the condition being
+  *   handled, or zero if out of context.
+  */
+ ONCONDID: PROC () RETURNS (FIXED BINARY);
  END;
- ONCOUNT: PROC () RETURNS ();
+ /**
+  * ONCOUNT returns an unscaled REAL FIXED BINARY value specifying
+  * the number of conditions that remain to be handled when an
+  * ON-unit is entered.
+  *
+  * It is in context in any ON-unit, or any dynamic descendant of an
+  * ON-unit. (See Multiple conditions.)
+  *
+  * If ONCOUNT is used out of context, zero is returned.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  * @returns {FIXED BINARY} Number of remaining conditions to handle,
+  *   or zero if out of context.
+  */
+ ONCOUNT: PROC () RETURNS (FIXED BINARY);
  END;
- ONFILE: PROC () RETURNS ();
+ /**
+  * ONFILE returns a character string whose value is the name of the
+  * file for which an input or output condition is raised.
+  *
+  * If the name is a DBCS name, it is returned as a mixed character
+  * string. It is in context in an ON-unit (or any of its dynamic
+  * descendants) for an input or output condition, or for the ERROR
+  * or FINISH condition raised as the implicit action for an input
+  * or output condition.
+  *
+  * If ONFILE is used out of context, a null string is returned.
+  * @returns {ANY<CHARACTER>} Name of the file that raised the I/O
+  *   condition, or a null string if out of context.
+  */
+ ONFILE: PROC () RETURNS (ANY<CHARACTER>);
  END;
  ONGSOURCE: PROC () RETURNS ();
  END;
