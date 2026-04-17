@@ -266,6 +266,12 @@ export type PgmsConfig = {
 
 export type PluginConfigDiagnostics = Map<string, LspDiagnostic[]>;
 
+type ProcGrpsSnapshot = {
+  entries: PluginConfigUnresolvedLibData[];
+  text: string;
+  uri: URI;
+};
+
 /**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
  * processing their contents, and making those settings available to the language server.
@@ -298,8 +304,7 @@ export class PluginConfigurationProvider {
    * Used for code actions: the editor often passes only one diagnostic in the code action request,
    * so fixes for proc_grps.json are driven from this list.
    */
-  private lastProcGrpsUnresolvedLibEntries: PluginConfigUnresolvedLibData[] =
-    [];
+  private lastProcGrpsSnapshot?: ProcGrpsSnapshot;
 
   constructor() {
     this.programConfigs = new Map<string, ProgramConfig>();
@@ -310,8 +315,8 @@ export class PluginConfigurationProvider {
   /**
    * Entries matching the last published unresolved-library diagnostics for proc_grps.json.
    */
-  public getLastProcGrpsUnresolvedLibEntries(): ReadonlyArray<PluginConfigUnresolvedLibData> {
-    return this.lastProcGrpsUnresolvedLibEntries;
+  public getLastProcGrpsSnapshot(): Readonly<ProcGrpsSnapshot> | undefined {
+    return this.lastProcGrpsSnapshot;
   }
 
   /**
@@ -555,7 +560,8 @@ export class PluginConfigurationProvider {
   private async postProcessProcessGroups(
     configDocument?: TextDocument,
   ): Promise<LspDiagnostic[]> {
-    this.lastProcGrpsUnresolvedLibEntries = [];
+    this.lastProcGrpsSnapshot = undefined;
+    const unresolvedLibEntries: PluginConfigUnresolvedLibData[] = [];
     const diagnostics: LspDiagnostic[] = [];
     for (const processGroup of this.processGroupConfigs.values()) {
       // all computed libs for this group, dirs + ddnames
@@ -644,7 +650,7 @@ export class PluginConfigurationProvider {
                   path: item?.meta?.path,
                 },
               };
-              this.lastProcGrpsUnresolvedLibEntries.push({
+              unresolvedLibEntries.push({
                 lib,
                 pgroup: processGroup.name,
                 path: item?.meta?.path,
@@ -674,6 +680,15 @@ export class PluginConfigurationProvider {
           .filter((e) => isLibsDir(e))
           .map((e) => e.dir.replace(/\\/g, "/")),
       );
+    }
+    if (configDocument) {
+      this.lastProcGrpsSnapshot = {
+        entries: unresolvedLibEntries,
+        text: configDocument.getText(),
+        uri: UriUtils.toUri(configDocument.uri),
+      };
+    } else {
+      this.lastProcGrpsSnapshot = undefined;
     }
     return diagnostics;
   }

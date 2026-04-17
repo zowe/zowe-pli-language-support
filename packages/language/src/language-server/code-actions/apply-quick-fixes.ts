@@ -46,30 +46,6 @@ function isProcGrpsDocumentUri(documentUri: string): boolean {
   return UriUtils.equals(documentUri, expected);
 }
 
-async function readProcGrpsText(): Promise<
-  { uri: URI; text: string } | undefined
-> {
-  const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
-  if (!workspacePath) {
-    return undefined;
-  }
-  const procGrpsUri = UriUtils.joinPath(
-    UriUtils.toUri(workspacePath),
-    ".pliplugin",
-    "proc_grps.json",
-  );
-  try {
-    const content = await FileSystemProviderInstance.readFile(procGrpsUri);
-    if (content === undefined) {
-      return undefined;
-    }
-    return { uri: procGrpsUri, text: content };
-  } catch (err) {
-    console.error(err);
-    return undefined;
-  }
-}
-
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
 ): Promise<CodeAction | undefined> {
@@ -303,17 +279,21 @@ export async function quickFixRemoveUnresolvedLib(
   if (!data.path) {
     return undefined;
   }
-  const read = await readProcGrpsText();
-  if (!read) {
-    return undefined;
+  const procGrpsSnapshot =
+    PluginConfigurationProviderInstance.getLastProcGrpsSnapshot();
+  if (!procGrpsSnapshot) {
+    return;
   }
-  const { uri: procGrpsUri, text } = read;
+  const { text: procGrpsText, uri: procGrpsUri } = procGrpsSnapshot;
+  if (!procGrpsText || !procGrpsUri) {
+    return;
+  }
 
   let newContent: string;
   try {
     newContent = jsoncApplyEdits(
-      text,
-      jsoncModify(text, data.path, undefined, JSONC_FORMAT),
+      procGrpsText,
+      jsoncModify(procGrpsText, data.path, undefined, JSONC_FORMAT),
     );
   } catch (err) {
     console.error("Failed to build proc_grps edit for remove lib:", err);
@@ -338,6 +318,8 @@ export async function quickFixRemoveUnresolvedLib(
  */
 export async function quickFixRemoveAllUnresolvedLibs(
   pairs: readonly PluginConfigUnresolvedLibData[],
+  procGrpsSnapshotText: string,
+  procGrpsSnapshotUri: URI,
   relatedDiagnostics: Diagnostic[],
 ): Promise<CodeAction | undefined> {
   const unique: (PluginConfigUnresolvedLibData & { path: JSONPath })[] = [];
@@ -356,13 +338,7 @@ export async function quickFixRemoveAllUnresolvedLibs(
   if (unique.length < 2) {
     return undefined;
   }
-
-  const read = await readProcGrpsText();
-  if (!read) {
-    return undefined;
-  }
-  const { uri, text: initialText } = read;
-  let text = initialText;
+  let text = procGrpsSnapshotText;
 
   unique.sort((a, b) => {
     // Sort from highest index first so earlier indices remain valid when removing right-to-left.
@@ -371,11 +347,10 @@ export async function quickFixRemoveAllUnresolvedLibs(
 
   for (const { path } of unique) {
     try {
-      text = jsoncApplyEdits(
-        text,
-        jsoncModify(text, path, undefined, JSONC_FORMAT),
-      );
+      const edits = jsoncModify(text, path, undefined, JSONC_FORMAT);
+      text = jsoncApplyEdits(text, edits);
     } catch (err) {
+      console.error("Failed at path:", JSON.stringify(path));
       console.error(
         "Failed to build proc_grps edit from unresolved lib path:",
         err,
@@ -391,7 +366,7 @@ export async function quickFixRemoveAllUnresolvedLibs(
     command: {
       title: "Remove all unresolved libs",
       command: Commands.REMOVE_DEAD_LIB,
-      arguments: [uri.toString(), text],
+      arguments: [procGrpsSnapshotUri.toString(), text],
     },
   };
 }
@@ -404,18 +379,23 @@ async function handleMultipleUnresolvedLibs(
   const unresolvedInContext = diagnostics.filter(
     (d) => d.code === unresolvedLibCode,
   );
-  const procGrpsEntries =
-    documentUri &&
-    isProcGrpsDocumentUri(documentUri) &&
-    unresolvedInContext.length > 0
-      ? PluginConfigurationProviderInstance.getLastProcGrpsUnresolvedLibEntries()
-      : [];
-  if (!procGrpsEntries.length) {
+  if (
+    !documentUri ||
+    !isProcGrpsDocumentUri(documentUri) ||
+    !unresolvedInContext.length
+  ) {
+    return;
+  }
+  const procGrpsSnapshot =
+    PluginConfigurationProviderInstance.getLastProcGrpsSnapshot();
+  if (!procGrpsSnapshot || !procGrpsSnapshot.entries) {
     return;
   }
 
   const action = await quickFixRemoveAllUnresolvedLibs(
-    procGrpsEntries,
+    procGrpsSnapshot.entries,
+    procGrpsSnapshot.text,
+    procGrpsSnapshot.uri,
     unresolvedInContext,
   );
   return action;
