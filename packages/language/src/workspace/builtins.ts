@@ -504,8 +504,8 @@ export const Builtins =
   * The seed is maintained at the program level and not within each
   * thread in a multithreading application.
   *
-  * @param {ANY<NUMBER>} [x] Expression. \`x\` must have a computational type
-  *   and should have an arithmetic type. If \`x\` is numeric, it
+  * @param {ANY<NUMBER>} [x] Expression. \`x\` must have a computational
+  *   type and should have an arithmetic type. If \`x\` is numeric, it
   *   must be real. If \`x\` is not specified FIXED BINARY(31,0), it
   *   is converted.
   *
@@ -522,8 +522,8 @@ export const Builtins =
   * REAL returns the real part of \`x\`. The result has the base,
   * scale, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it is converted to
-  *   complex.
+  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it is converted
+  *   to complex.
   * @returns {ANY<NUMBER>} real part of \`x\`
   */
  REAL: PROC (x) RETURNS (ANY<NUMBER>);
@@ -775,8 +775,8 @@ export const Builtins =
   *   and the sign is restored.
   * @param {ANY<NUMBER>} n An optionally-signed integer that specifies
   *   the digit at which rounding is to occur.
-  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified by
-  *   \`n\` following the rounding rule of round half to even.
+  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified
+  *   by \`n\` following the rounding rule of round half to even.
   */
  ROUNDTOEVEN: PROC (x, n) RETURNS (ANY<NUMBER>);
    DECLARE x ANY<NUMBER>;
@@ -881,8 +881,8 @@ export const Builtins =
   *
   * @param {ANY(*)} x Array reference. \`x\` must not have less than
   *   \`y\` dimensions.
-  * @param {ANY<NUMBER>} [y] Expression specifying a particular dimension of
-  *   \`x\`. If necessary, \`y\` is converted to a FIXED
+  * @param {ANY<NUMBER>} [y] Expression specifying a particular
+  *   dimension of \`x\`. If necessary, \`y\` is converted to a FIXED
   *   BINARY(31,0). \`y\` must be greater than or equal to 1. If
   *   \`y\` is not supplied, it defaults to 1.
   *
@@ -906,14 +906,14 @@ export const Builtins =
   *
   * @param {ANY(*)} x Array reference. \`x\` must not have less than
   *   \`y\` dimensions.
-  * @param {ANY<NUMBER>} [y] Expression specifying a particular dimension of
-  *   \`x\`. If necessary, \`y\` is converted to FIXED BINARY(31,0).
-  *   \`y\` must be greater than or equal to 1. If \`y\` is not
-  *   supplied, it defaults to 1.
+  * @param {ANY<NUMBER>} [y] Expression specifying a particular
+  *   dimension of \`x\`. If necessary, \`y\` is converted to
+  *   FIXED BINARY(31,0). \`y\` must be greater than or equal to 1.
+  *   If \`y\` is not supplied, it defaults to 1.
   *
   *   \`y\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED BINARY} FIXED BINARY value that specifies the current
-  *  upper bound of dimension \`y\` of \`x\`
+  * @returns {FIXED BINARY} FIXED BINARY value that specifies the
+  *  current upper bound of dimension \`y\` of \`x\`
   */
  HBOUND: PROC (x, y) RETURNS (FIXED BINARY);
    DCL x ANY(*);
@@ -1161,10 +1161,10 @@ export const Builtins =
   *
   * @param {ANY(*)} x An array expression. x must be a one-dimensional
   *   array. If x is an array of NONVARYING BIT, it must be aligned.
-  * @param {ANY<ENTRY>} f Expression. Specifies the function that will be
-  *   invoked to perform all the required comparisons.
-  * @param {ANY<NUMBER>} [n] An expression that specifies the index of the
-  *   first array element to be examined. It defaults to LBOUND(x).
+  * @param {ANY<ENTRY>} f Expression. Specifies the function that will
+  *   be invoked to perform all the required comparisons.
+  * @param {ANY<NUMBER>} [n] An expression that specifies the index of
+  *   the first array element to be examined. It defaults to LBOUND(x).
   * @param {ANY<NUMBER>} [m] An expression that specifies the number of
   *   to-be-examined array elements. The counting starts with the
   *   nth and defaults to HBOUND(x) – n + 1.
@@ -3035,18 +3035,18 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of the Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<CHARACTER>} [d] String expression representing a date. If
-  *   omitted, it is assumed to be the value returned by DATETIME().
+  * @param {ANY<CHARACTER>} [d] String expression representing a date. 
+  *   If omitted, it is assumed to be the value returned by DATETIME().
   *
   *   The value for \`d\` must have computational type and should
   *   have character type. If not, \`d\` is converted to character.
-  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns. If
-  *   omitted, it is assumed to be the value 'YYYYMMDDHHMISS999'.
+  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns.
+  *   If omitted, it is assumed to be the value 'YYYYMMDDHHMISS999'.
   *
   *   \`p\` must have computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<NUMBER>} [w] An integer expression that defines a century
-  *   window to be used to handle any two-digit year formats.
+  * @param {ANY<NUMBER>} [w] An integer expression that defines a
+  *   century window to be used to handle any two-digit year formats.
   *
   *   - If the value is positive, such as 1950, it is treated as a
   *   year.
@@ -3081,8 +3081,8 @@ export const Builtins =
   *   If omitted, \`p\` is assumed to be the default date/time
   *   pattern 'YYYYMMDDHHMISS999' (same as the default format
   *   returned by DATETIME).
-  * @param {ANY<NUMBER>} [w] An integer expression that defines a century
-  *   window to be used to handle any two-digit year formats.
+  * @param {ANY<NUMBER>} [w] An integer expression that defines a
+  *   century window to be used to handle any two-digit year formats.
   *
   *   - If the value is positive, such as 1950, it is treated as a
   *   year.
@@ -11511,17 +11511,18 @@ export const Builtins =
   * Given the following:
   *
   * \`\`\`
-  *   pattern = '([a-zA-Z]+) * ([a-zA-Z]+) * ((([a-zA-Z1-9]+)\.){0,1}([a-zA-Z1-9]+))';
-  *   string = ' CREATE DATABASE TESTDB;';
-  *   rc = regex( a_index, a_length, pattern, string );
+  * pattern =
+  * '([a-zA-Z]+) * ([a-zA-Z]+) * ((([a-zA-Z1-9]+)\.){0,1}([a-zA-Z1-9]+))';
+  * string = ' CREATE DATABASE TESTDB;';
+  * rc = regex( a_index, a_length, pattern, string );
   * \`\`\`
   *
   * Then
   *
   * \`\`\`
-  *   a_index(2) and a_length(2) will give the index and length for CREATE
-  *   a_index(3) and a_length(3) will give the index and length for DATABASE
-  *   a_index(4) and a_length(4) will give the index and length for TESTDB
+  * a_index(2) and a_length(2) will give the index and length for CREATE
+  * a_index(3) and a_length(3) will give the index and length for DATABASE
+  * a_index(4) and a_length(4) will give the index and length for TESTDB
   * \`\`\`
   *
   * @param {FIXED BINARY} i A reference. \`i\` must be ASSIGNABLE.
@@ -12863,13 +12864,13 @@ export const Builtins =
   * and assign that offset to name(1).
   *
   * \`\`\`
-  * 	      declare
-  *               1 data based(data_ptr) unaligned,
-  *                  2 actual_count fixed bin(31),
-  *                  2 orderinfo(order_count refer( actual_count)),
-  *                     3 name    offset(pool) locates(char(30) varying),
-  *                     3 address offset(pool) locates(char(62) varying),
-  *                  2 pool area(10_000);
+  * 	     declare
+  *              1 data based(data_ptr) unaligned,
+  *                 2 actual_count fixed bin(31),
+  *                 2 orderinfo(order_count refer( actual_count)),
+  *                    3 name    offset(pool) locates(char(30) varying),
+  *                    3 address offset(pool) locates(char(62) varying),
+  *                 2 pool area(10_000);
   *
   *        call locnewspace(name(1));
   *        call locnewspace(name(1), pool);
@@ -12915,11 +12916,11 @@ export const Builtins =
   * \`\`\`
   *             declare
   *               1 data based(data_ptr) unaligned,
-  *                  2 actual_count fixed bin(31),
-  *                  2 orderinfo(order_count refer(actual_count)),
-  *                     3 name    offset(pool) locates(char(30) varying),
-  *                     3 address offset(pool) locates(char(62) varying),
-  *                  2 pool area(10_000);
+  *                 2 actual_count fixed bin(31),
+  *                 2 orderinfo(order_count refer(actual_count)),
+  *                    3 name    offset(pool) locates(char(30) varying),
+  *                    3 address offset(pool) locates(char(62) varying),
+  *                 2 pool area(10_000);
   *
   *             call locnewvalue('Sherlock Holmes', name(1));
   *             call locnewvalue('Sherlock Holmes', name(1), pool);

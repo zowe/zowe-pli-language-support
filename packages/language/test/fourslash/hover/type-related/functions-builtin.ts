@@ -20,7 +20,8 @@ hover.expectMarkdownAt(
     DCL x ANY<CHARACTER>;
     DCL y FIXED BINARY;
     DCL z FIXED BINARY OPTIONAL;
- END;`) + `
+ END;`) +
+    `
 ---
 SUBSTR returns a substring, specified by \`y\` and \`z\`, of
 \`x\`.
