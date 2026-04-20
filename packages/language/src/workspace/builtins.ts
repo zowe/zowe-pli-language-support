@@ -11651,31 +11651,888 @@ export const Builtins =
     DCL n FIXED BINARY OPTIONAL;
     DCL i FIXED BINARY OPTIONAL;
  END;
- REPLACEBY2: PROC (value) RETURNS (); END;
- REVERSE: PROC (value) RETURNS (); END;
- RIGHT: PROC (value) RETURNS (); END;
- SCRUBOUT: PROC (value) RETURNS (); END;
- SEARCH: PROC (value) RETURNS (); END;
- SEARCHR: PROC (value) RETURNS (); END;
- SQUEEZE: PROC (value) RETURNS (); END;
- SUBSTR: PROC (value) RETURNS (); END;
- SUBTO: PROC (value) RETURNS (); END;
- TALLY: PROC (value) RETURNS (); END;
- TRANSLATE: PROC (value) RETURNS (); END;
- TRIM: PROC (value) RETURNS (); END;
- UHIGH: PROC (value) RETURNS (); END;
- ULENGTH: PROC (value) RETURNS (); END;
- ULENGTH8: PROC (value) RETURNS (); END;
- ULENGTH16: PROC (value) RETURNS (); END;
- ULOW: PROC (value) RETURNS (); END;
- UPOS: PROC (value) RETURNS (); END;
- UPPERASCII: PROC (value) RETURNS (); END;
- UPPERCASE: PROC (value) RETURNS (); END;
- UPPERLATIN1: PROC (value) RETURNS (); END;
- USUBSTR: PROC (value) RETURNS (); END;
- USUPPLEMENTARY: PROC (value) RETURNS (); END;
- UTF8: PROC (value) RETURNS (); END;
- UTF8STG: PROC (value) RETURNS (); END;
+ /**
+  * REPLACEBY2 returns a nonvarying string formed by replacing some
+  * of the characters in \`x\` by a pair of characters.
+  *
+  * REPLACEBY2 operates on each character of \`x\` as follows:
+  *
+  * If a character in \`x\` is found in \`z\`, the character pair in
+  * \`y\` that corresponds to that in \`z\` is copied to the result;
+  * otherwise, the character in \`x\` is copied directly to the
+  * result. If \`z\` contains duplicates, the leftmost occurrence is
+  * used.
+  *
+  * The string \`y\` must be twice as long as the string \`z\`.
+  *
+  * As an example, REPLACEBY2( 'Rätsel', 'aeoeuess', 'äöüß') returns
+  * the string 'Raetsel'.
+  *
+  * @param {ANY<CHARACTER>} x Character expression to be searched
+  *   for possible replacement of its characters.
+  * @param {ANY<CHARACTER>} y Character expression containing the
+  *   replacement pair values..
+  * @param {ANY<CHARACTER>} z Character expression containing the
+  *   characters that are to be replaced.
+  * @returns {CHARACTER} String with characters of \`z\` replaced by
+  *   corresponding pairs from \`y\`.
+  */
+ REPLACEBY2: PROC (x, y, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL z ANY<CHARACTER>;
+ END;
+ /**
+  * REVERSE returns a nonvarying string that contains the elements
+  * of \`x\` in reverse order.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Source char value('HARPO');
+  *   dcl Target char(length(Source));
+  *
+  *   Target = reverse (Source);     // 'OPRAH'
+  * \`\`\`
+  *
+  * @param {ANY} x Expression. \`x\` must have a computational type
+  *   and should have a string type. If \`x\` does not have a string
+  *   type, it is converted to string (that is, from numeric to
+  *   character, bit, graphic, uchar, or widechar), according to the
+  *   rules for concatenation.
+  * @returns {ANY} \`x\` with its elements in reverse order.
+  */
+ REVERSE: PROC (x) RETURNS (ANY);
+    DCL x ANY;
+ END;
+ /**
+  * RIGHT returns a string that is the result of inserting string
+  * \`x\` at the right end of a string with length \`n\` and padded
+  * on the left with the character \`z\` as needed.
+  *
+  * If \`z\` is omitted, a blank is used as the padding character.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Source char value('One Hundred SCIDS Marks');
+  *   dcl Target char(30);
+  *
+  *   Target = right (Source, length(Target), '*');
+  *              // '*******One Hundred SCIDS Marks'
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x Expression. \`x\` must have a
+  *   computational type and can have a character type. If not, it
+  *   is converted to character.
+  * @param {FIXED BINARY} n Expression. \`n\` must have a
+  *   computational type and is converted to FIXED BINARY(31,0).
+  * @param {CHARACTER} [z] Expression. If specified, \`z\` must have
+  *   the type CHARACTER(1) NONVARYING type.
+  * @returns {CHARACTER} \`x\` right-aligned in a string of length
+  *   \`n\`, padded with \`z\`.
+  */
+ RIGHT: PROC (x, n, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL n FIXED BINARY;
+    DCL z CHARACTER OPTIONAL;
+ END;
+ /**
+  * SCRUBOUT returns a string with all the characters from a second
+  * string removed.
+  *
+  * SCRUBOUT( x, '0123456789' ) will remove all the numeric
+  * characters from x.
+  *
+  * SCRUBOUT( x, '0123456789', 4 ) will remove all the numeric
+  * characters from x after the first 3 characters.
+  *
+  * @param {ANY<CHARACTER>} x A string expression that specifies the
+  *   string from which the characters in the string f will be
+  *   removed. x must have a CHARACTER type.
+  * @param {ANY<CHARACTER>} f A string expression that specifies the
+  *   characters to be removed from x. f must have a CHARACTER type.
+  * @param {FIXED BINARY} [n] An optional expression that specifies
+  *   a location within the string x, from where the compiler begins
+  *   searching for characters from the string f.
+  *
+  *   n must have a computational type and is converted to FIXED
+  *   BINARY(31,0). The default value for n is 1.
+  *
+  *   If n is less than 1 or greater than length(x)+1, the
+  *   STRINGRANGE condition will be raised if enabled, and the
+  *   result will be a null character string.
+  * @returns {CHARACTER} \`x\` with all characters from \`f\`
+  *   removed.
+  */
+ SCRUBOUT: PROC (x, f, n) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL f ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * SEARCH returns an unscaled REAL FIXED BINARY value specifying
+  * the first position in one string at which any character, bit,
+  * graphic, uchar, or widechar of another string appears. It also
+  * allows you to specify the location at which to start searching.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * SEARCH can be used to find delimiters in a string of numbers.
+  *
+  * SEARCH will perform best when the second and third arguments are
+  * either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  *
+  * **Example 1**
+  *
+  * \`\`\`
+  *   dcl Source char value(' Our PL/I wields the Power ');
+  *   dcl Pos fixed bin(31);
+  *
+  * // Find occurrences of any of the characters 'P','o',or 'w'
+  * // in source
+  *
+  *   Pos = search (Source, 'Pow');           // returns 6 for the 'P'
+  *   Pos = search (Source, 'Pow', Pos+1); // returns 11 for the 'w'
+  *   Pos = search (Source, 'Pow', Pos+1); // returns 22 for the 'P'
+  *   Pos = search (Source, 'Pow', Pos+1); // returns 23 for the 'o'
+  *   Pos = search (Source, 'Pow', Pos+1); // returns 24 for the 'w'
+  *
+  *   Pos = index (source, 'Pow',1);      // returns 22 for the 'Pow'
+  * \`\`\`
+  *
+  * In the above example, SEARCH returns the position at which any
+  * of the three characters ('P', 'o', or 'w') appear. INDEX returns
+  * the position at which the whole string 'Pow' appears.
+  *
+  * **Example 2**
+  *
+  * \`\`\`
+  *   dcl Source char value (' 368,475;121.,856,478')
+  *   dcl Delims char(3) init (',;.');         // string of delimiters
+  *   dcl Number(5) char(3);
+  *   dcl Start fixed bin(31);
+  *   dcl End fixed bin(31);
+  *
+  *   // Extract the three-digit numbers from the source string
+  *   // by searching for the delimiters
+  *   Start = verify (Source, ' ');
+  *                      // find start of first number
+  *   End   = search (Source, ',;.', Start );
+  *                      // find end of first number
+  *   if End = 0 then
+  *      End = length (Source) + 1;
+  *   Number(1) = substr (Source, Start, 3);        // 368
+  *   Start = verify (Source, Delims, End);
+  *                // find start of second number
+  *   End   = search (Source, Delims, Start );
+  *   Number(2) = substr (Source, Start, 3);        // 475
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x Expressions. \`x\` specifies the
+  *   string in which to search for any character, bit, graphic,
+  *   uchar, or widechar that appears in string \`y\`.
+  *
+  *   If either \`x\` or \`y\` are the null string, the result is
+  *   zero.
+  *
+  *   If \`y\` does not occur in \`x\`, the result is zero.
+  * @param {ANY<CHARACTER>} y See \`x\`.
+  * @param {FIXED BINARY} [n] Expression. \`n\` specifies the
+  *   location within \`x\` at which to begin searching. It must
+  *   have a computational type and is converted to FIXED
+  *   BINARY(31,0).
+  *
+  *   Unless 1 ≤ \`n\` ≤ LENGTH(\`x\`)+1, STRINGRANGE condition, if
+  *   enabled, is raised. Its implicit action and normal return give
+  *   a result of zero.
+  * @returns {FIXED BINARY} The first position in \`x\` at which any
+  *   character of \`y\` appears.
+  */
+ SEARCH: PROC (x, y, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * SEARCHR searches for the first occurrence of any one of the
+  * elements of a string within another string but the search starts
+  * from the right.
+  *
+  * The SEARCHR function performs the same operation as the SEARCH
+  * built-in function except for the following differences:
+  *
+  * - The search is done from right to left.
+  * - The default value for \`n\` is LENGTH(\`x\`).
+  * - Unless 0 ≤ \`n\` ≤ LENGTH(\`x\`), the STRINGRANGE condition,
+  * if enabled, is raised. Its implicit action and normal return
+  * give a result of zero.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * SEARCHR will perform best when the second and third arguments
+  * are either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Source char value (' 555 Bailey Ave, San Jose, CA 95141, USA');
+  *   dcl Digits char value ('0123456789');
+  *   dcl (Start, End) fixed bin(31);
+  *   dcl Num char(20) var;
+  *
+  *      //   Find last number (i.e., zip code)
+  *
+  *   End   = searchr (Source, Digits);     // returns 35 for the '1'
+  *   Start = verifyr (Source, Digits, End); // returns 30 for the ' '
+  *   Num   = substr (Source, Start + 1, End - Start); // extract number
+  * \`\`\`
+  * @param {ANY<CHARACTER>} x Expressions. \`x\` specifies the
+  *   string in which to search for any character, bit, graphic,
+  *   uchar, or widechar that appears in string \`y\`.
+  *
+  *   If either \`x\` or \`y\` are the null string, the result is
+  *   zero.
+  *
+  *   If \`y\` does not occur in \`x\`, the result is zero.
+  * @param {ANY<CHARACTER>} y See \`x\`.
+  * @param {FIXED BINARY} [n] Expression. \`n\` specifies the
+  *   location within \`x\` at which to begin searching. It must
+  *   have a computational type and is converted to FIXED
+  *   BINARY(31,0).
+  *
+  *   Unless 1 ≤ \`n\` ≤ LENGTH(\`x\`)+1, STRINGRANGE condition, if
+  *   enabled, is raised. Its implicit action and normal return give
+  *   a result of zero.
+  * @returns {FIXED BINARY} The last position in \`x\` at which any
+  *   character of \`y\` appears.
+  */
+ SEARCHR: PROC (x, y, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * SQUEEZE returns a string that reduces all multiple occurrences
+  * of a character to one, with an optionally specified starting
+  * position.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  * dcl s1 char value( ' abc  :  def   gh  ' );
+  * dcl s  char(20);
+  *
+  * s = squeeze(s1, ' ', 1);
+  *       // ' abc : def gh '
+  * s = squeeze(s1, ' ', index(s1,':'));
+  *        // ' abc  : def gh '
+  *
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x A string expression. \`x\` specifies
+  *   the string from which all multiple occurrences of the
+  *   character defined by \`y\` are reduced to one. \`x\` must have
+  *   the CHARACTER attribute.
+  * @param {CHARACTER} y An expression that must have the type
+  *   CHARACTER(1) NONVARYING.
+  * @param {FIXED BINARY} [n] An expression that specifies the
+  *   location within \`x\` at which to begin to locate the first
+  *   occurrences of \`y\`. \`n\` must have a computational type and
+  *   is converted to type size_t. The default value for \`n\` is 1.
+  *
+  *   - If \`n\` < 1, the default value 1 is used.
+  *   - If \`n\` > length(\`x\`), the full string of \`x\` is
+  *   returned.
+  * @returns {CHARACTER} String with multiple occurrences of \`y\`
+  *   reduced to one.
+  */
+ SQUEEZE: PROC (x, y, n) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y CHARACTER;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * SUBSTR returns a substring, specified by \`y\` and \`z\`, of
+  * \`x\`.
+  *
+  * The STRINGRANGE condition is raised if \`z\` is negative or if
+  * the values of \`y\` and \`z\` are such that the substring does
+  * not lie entirely within the current length of \`x\`. It is not
+  * raised when \`y\` = LENGTH(\`x\`)+1 and \`z\` = 0. For an
+  * example of the SUBSTR built-in function, see SEARCH.
+  *
+  * @param {ANY<CHARACTER>} x String expression. It specifies the
+  *   string from which the substring is extracted. If \`x\` is not
+  *   a string, it is converted to character.
+  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  *   BINARY(31,0). \`y\` specifies the starting position of the
+  *   substring in \`x\`.
+  * @param {FIXED BINARY} [z] Expression that is converted to FIXED
+  *   BINARY(31,0). \`z\` specifies the length of the substring in
+  *   \`x\`. If \`z\` is zero, a null string is returned. If \`z\`
+  *   is omitted, the substring returned is position \`y\` in \`x\`
+  *   to the end of \`x\`.
+  * @returns {ANY<CHARACTER>} The substring of \`x\` starting at
+  *   \`y\` with length \`z\`.
+  */
+ SUBSTR: PROC (x, y, z) RETURNS (ANY<CHARACTER>);
+    DCL x ANY<CHARACTER>;
+    DCL y FIXED BINARY;
+    DCL z FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * SUBTO returns a substring, specified by \`y\` and \`z\`, of
+  * \`x\`.
+  *
+  * SUBTO(\`x,y\`) is equivalent to SUBSTR(\`x,y\`), and
+  * SUBTO(\`x,y,z\`) is equivalent to SUBSTR(\`x,y,z-y+\`1).
+  *
+  * The STRINGRANGE condition is raised for a SUBTO reference if and
+  * only if the STRINGRANGE condition would be raised for the
+  * equivalent SUBSTR reference. In particular, this means that if k
+  * = length(\`x\`), then STRINGRANGE would be raised for
+  * SUBTO(\`x,y,z\`) under any of these 5 conditions:
+  *
+  * \`\`\`
+  *
+  *          y < 1
+  *          y > k+1
+  *          y = k+1 then unless z = k
+  *          z-y+1 < 0
+  *          z > k
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x String expression. It specifies the
+  *   string from which the substring is extracted. If \`x\` is not
+  *   a string, it is converted to character.
+  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  *   BINARY(31,0). \`y\` specifies the starting position of the
+  *   substring in \`x\`.
+  * @param {FIXED BINARY} [z] Expression that is converted to FIXED
+  *   BINARY(31,0). \`z\` specifies the ending position of the
+  *   substring in \`x\`. If \`z = y-\`1, a null string is returned.
+  *   If \`z\` is omitted, the substring returned is position \`y\`
+  *   in \`x\` to the end of \`x\`.
+  * @returns {ANY<CHARACTER>} The substring of \`x\` from position
+  *   \`y\` to position \`z\`.
+  */
+ SUBTO: PROC (x, y, z) RETURNS (ANY<CHARACTER>);
+    DCL x ANY<CHARACTER>;
+    DCL y FIXED BINARY;
+    DCL z FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * TALLY returns a FIXED BINARY(31,0) result that indicates the
+  * number of times that string \`y\` appears in string \`x\`.
+  *
+  * If \`y\` does not appear in \`x\`, a value of 0 is returned.
+  *
+  * If either \`x\` or \`y\` are the null string, the result is
+  * zero.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   TALLY ('We''ve got the Power!', 'power');      // returns 0
+  *   TALLY ('We''ve got the Power!', 'Power');      // returns 1
+  *   TALLY ('We''ve got the Power!', ' ');          // returns 3
+  *   TALLY ('We''ve got the Power!', 'e');          // returns 4
+  *   TALLY ('1001'B, '1'B);                         // returns 2
+  * \`\`\`
+  *
+  * @param {ANY} x String expressions.
+  *
+  *   Both \`x\` and \`y\` must have computational type and should
+  *   be character, bit, graphic, uchar, or widechar type.
+  * @param {ANY} y See \`x\`.
+  * @returns {FIXED BINARY} The number of times \`y\` appears in
+  *   \`x\`.
+  */
+ TALLY: PROC (x, y) RETURNS (FIXED BINARY);
+    DCL x ANY;
+    DCL y ANY;
+ END;
+ /**
+  * TRANSLATE returns a character string of the same length as
+  * \`x\`.
+  *
+  * TRANSLATE operates on each character of \`x\` as follows:
+  *
+  * If a character in \`x\` is found in \`z\`, the character in
+  * \`y\` that corresponds to that in \`z\` is copied to the result;
+  * otherwise, the character in \`x\` is copied directly to the
+  * result. If \`z\` contains duplicates, the leftmost occurrence is
+  * used.
+  *
+  * \`y\` is padded with blanks, or truncated, on the right to match
+  * the length of \`z\`.
+  *
+  * Any arithmetic or bit arguments are converted to character.
+  *
+  * TRANSLATE supports UCHAR data. But if x has UCHAR type, then z
+  * must not be omitted.
+  *
+  * TRANSLATE does not support GRAPHIC or WIDECHAR data.
+  *
+  * TRANSLATE will perform best when the second and third arguments
+  * are either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl source char value("Ein Raetsel gibt es nicht.");
+  *   dcl target char(length(source));
+  *   dcl (to   value ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+  *        from value ('abcdefghijklmnopqrstuvwxyz')) char;
+  *
+  *   target = translate(source, to, from);
+  *            // "EIN RAETSEL GIBT ES NICHT."
+  * \`\`\`
+  *
+  * Note that you could also use the UPPERCASE built-in for the same
+  * purpose as the TRANSLATE built-in in the example above. However,
+  * while the UPPERCASE built-in function will translate only the
+  * standard alphabetic characters, TRANSLATE can be used to
+  * translate other characters. For example, if "Raetsel" were
+  * spelled with an ä-umlaut, TRANSLATE could translate the ä-umlaut
+  * to Ä-umlaut if those characters were added to the \`from\` and
+  * \`to\` strings, respectively.
+  *
+  * @param {ANY<CHARACTER>} x Character expression to be searched
+  *   for possible translation of its characters.
+  * @param {ANY<CHARACTER>} y Character expression containing the
+  *   translation values of characters.
+  * @param {ANY<CHARACTER>} [z] Character expression containing the
+  *   characters that are to be translated. If \`z\` is omitted, it
+  *   defaults to collate().
+  * @returns {CHARACTER} \`x\` with characters of \`z\` translated to
+  *   corresponding characters in \`y\`.
+  */
+ TRANSLATE: PROC (x, y, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL z ANY<CHARACTER> OPTIONAL;
+ END;
+ /**
+  * TRIM returns a nonvarying character string with characters
+  * trimmed from one or both ends.
+  *
+  * If \`y\` and \`z\` are both omitted, they both default to a
+  * CHAR(1) NONVARYING string containing one blank.
+  *
+  * **Example**
+  *
+  * In the following example, the TRIM function removes
+  *
+  * - all the blanks from the left side of the string.
+  * - all the blanks and all the asterisks from the right side of
+  * the string.
+  *
+  * \`\`\`
+  *   dcl Source char value(" *** PL/I's got the Power!  ***  ");
+  *   dcl Target char(length(Source)) varying;
+  *
+  *   Target = trim(Source, ' ', '* ');
+  *                // "*** PL/I's got the Power!"
+  *
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x Expressions.
+  *
+  *   Each must have a computational type and should have CHARACTER
+  *   type or UCHAR type. If not, they are converted.
+  *
+  *   \`x\` is the string from which the characters defined by \`y\`
+  *   are trimmed from the left, and the characters defined by \`z\`
+  *   are trimmed from the right.
+  *
+  *   If \`z\` is omitted, it defaults to a CHARACTER(1) NONVARYING
+  *   string containing one blank.
+  * @param {ANY<CHARACTER>} [y] See \`x\`.
+  * @param {ANY<CHARACTER>} [z] See \`x\`.
+  * @returns {CHARACTER} \`x\` with leading \`y\` and trailing \`z\`
+  *   characters trimmed.
+  */
+ TRIM: PROC (x, y, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER> OPTIONAL;
+    DCL z ANY<CHARACTER> OPTIONAL;
+ END;
+ /**
+  * UHIGH returns a UCHAR string of length x with each UTF-8 data
+  * item having the highest UCHAR value ('F48FBFBF'ux).
+  *
+  * The value returned by BYTELENGTH(UHIGH(x)) is equal to 4*x.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
+  * @returns {CHARACTER} UCHAR string of length \`x\` with each item
+  *   set to the highest UCHAR value.
+  */
+ UHIGH: PROC (x) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * ULENGTH returns a FIXED BINARY(31) value that is the number of
+  * UTF characters held in a string.
+  *
+  * If \`x\` has CHARACTER type, then the string must contain valid
+  * UTF-8 data. If not, the program is in error.
+  *
+  * If \`x\` has WIDECHAR type, then the string must contain valid
+  * UTF-16 data. If not, the program is in error.
+  *
+  * ULENGTH will return the number of UTF-8 or UTF-16 characters
+  * held in the CHAR or WIDECHAR argument, respectively. It does not
+  * return the number of characters if the string were normalized.
+  * For example, in UTF-8, a lowercase a umlaut may be represented
+  * in the normalized or canonical form via the string 'c3_a4'x or
+  * in the unnormalized or combining form as '61_cc_88'x, but
+  * ULENGTH will return 1 for the string 'c3_a4'x and 2 for the
+  * string '61_cc_88'x.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have CHARACTER or
+  *   WIDECHAR type.
+  * @returns {FIXED BINARY} The number of UTF characters in \`x\`.
+  */
+ ULENGTH: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * ULENGTH8 returns a FIXED BIN(31) value, which is the length of a
+  * CHAR string needed if the UTF characters held in a string were
+  * converted to UTF-8.
+  *
+  * If \`x\` has CHARACTER type, then ULENGTH8 is the same as
+  * LENGTH, and the string will not be checked for valid UTF-8 data.
+  *
+  * If \`x\` has WIDECHAR type, then the string must contain valid
+  * UTF-16 data, and ULENGTH8 will return the length of the CHAR
+  * string that would result if \`x\` were converted from UTF-16 to
+  * UTF-8. If the string does not contain valid UTF-16 data, the
+  * program is in error.
+  *
+  * For example, if \`x\` equals the WIDECHAR string
+  * '004B_00E4_0073_0065'wx, then ULENGTH8(x) returns 5.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have CHARACTER or
+  *   WIDECHAR type.
+  * @returns {FIXED BINARY} The length of the CHAR string needed to
+  *   hold \`x\` converted to UTF-8.
+  */
+ ULENGTH8: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * ULENGTH16 returns a FIXED BINARY(31) value that is the length of
+  * a WIDECHAR string needed when the UTF characters held in a
+  * string were converted to UTF-16.
+  *
+  * If \`x\` has CHAR type, then the string must contain valid UTF-8
+  * data, and ULENGTH16 will return the length of the WIDECHAR
+  * string that would result if \`x\` were converted from UTF-8 to
+  * UTF-16. If the string does not contain valid UTF-8 data, the
+  * program is in error.
+  *
+  * If \`x\` has WIDECHAR type, then ULENGTH16 is the same as
+  * LENGTH, and the string will not be checked for valid UTF-16
+  * data.
+  *
+  * For example, if \`x\` equals the CHARACTER string
+  * '4b_c3_a4_73_65'x, then ULENGTH16(x) returns 4.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have CHARACTER or
+  *   WIDECHAR type.
+  * @returns {FIXED BINARY} The length of the WIDECHAR string needed
+  *   to hold \`x\` converted to UTF-16.
+  */
+ ULENGTH16: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * ULOW returns a UCHAR string of length x with each UTF-8 data
+  * item having the lowest UCHAR value ('00'ux).
+  *
+  * The value returned by BYTELENGTH(ULOW(x)) is equal to x.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
+  * @returns {CHARACTER} UCHAR string of length \`x\` with each item
+  *   set to the lowest UCHAR value.
+  */
+ ULOW: PROC (x) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * UPOS returns a FIXED BIN(31) value which is the index of the nth
+  * UTF character in a string.
+  *
+  * If \`x\` has CHARACTER type, then the string must contain valid
+  * UTF-8 data. If not, the program is in error.
+  *
+  * If \`x\` has WIDECHAR type, then the string must contain valid
+  * UTF-16 data. If not, the program is in error.
+  *
+  * If \`n\` is not positive or if \`n\` is larger than ULENGTH(x),
+  * then zero will be returned. Otherwise, if \`x\` has CHARACTER
+  * type, then UPOS(x,n) will return the position of the byte where
+  * the nth UTF-8 character starts, and if \`x\` has WIDECHAR type,
+  * then UPOS(x,n) will return the position of the widechar
+  * character where the nth UTF-16 character starts.
+  *
+  * For example, if x equals the CHARACTER string
+  * '4b_c3_a4_66_65_72'x, then
+  *
+  * - UPOS(x,1) returns 1
+  * - UPOS(x,2) returns 2
+  * - UPOS(x,3) returns 4
+  * - UPOS(x,4) returns 5
+  * - UPOS(x,5) returns 6
+  *
+  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  *   or WIDECHAR type.
+  * @param {FIXED BINARY} n Expression which must have computational
+  *   type and which will be converted to FIXED BIN(31) if
+  *   necessary.
+  * @returns {FIXED BINARY} The index of the \`n\`th UTF character
+  *   in \`x\`.
+  */
+ UPOS: PROC (x, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL n FIXED BINARY;
+ END;
+ /**
+  * UPPERASCII returns a UCHAR string with all of its ASCII
+  * characters converted to their corresponding uppercase
+  * characters.
+  *
+  * UPPERASCII(x) is equivalent to TRANSLATE(x, 'A...Z', 'a...z').
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
+  * @returns {CHARACTER} \`x\` with ASCII characters converted to
+  *   uppercase.
+  */
+ UPPERASCII: PROC (x) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * UPPERCASE returns a character string with all characters
+  * converted to their uppercase equivalent.
+  *
+  * UPPERCASE(\`x\`) is equivalent to TRANSLATE(x, 'A...Z', 'a...z')
+  * and UPPERCASE(\`x\`, \`c\` ) is equivalent to TRANSLATE(x,
+  * upperc, lowerc). The values of \`upperc\` and \`lowerc\` are
+  * determined by the value of the code page \`c\`. Specifying
+  * UPPERCASE(\`x\`, \`c\`) will not only translate alphabetic
+  * characters 'a...z' to 'A...Z', but also translate characters
+  * such as lowercase ä-umlaut('c0'x) to uppercase Ä-umlaut('4a'x).
+  *
+  * For example, if the Lower_01141 was declared as:
+  *
+  * \`\`\`
+  * dcl lower_01141 char
+  *  value( (
+  *               '8182838485868788'8991929394959697'x
+  *            || '9899A2A3A4A5A6A7A8A9424445464748'x
+  *            || '4951525354555657'586A708C8D8E9CC0'x
+  *            || 'CBCDCECFD0DBDDDE'x
+  *         ) );
+  * \`\`\`
+  *
+  * and the Upper_01141 was declared as:
+  *
+  * \`\`\`
+  * dcl upper_01141 char
+  *   value( (
+  *               'C1C2C3C4C5C6C7C8C9D1D2D3D4D5D6D7'x
+  *            || 'D8D9E2E3E4E5E6E7E8E9626465666768'x
+  *            || '6971727374757677'78E080ACADAE9E4A'x
+  *            || 'EBEDEEEF5AFBFDFE'x
+  *         ) );
+  * \`\`\`
+  *
+  * then UPPERCASE(x, 1141 ) would be the same as TRANSLATE( x,
+  * Upper_01141, Lower_01141 ).
+  *
+  * The appendix lists the values of \`upperc\` and \`lowerc\` for
+  * the supported values of \`c\`. For details, see Limits.
+  *
+  * @param {ANY<CHARACTER>} x An expression. If necessary, \`x\` is
+  *   converted to character.
+  * @param {FIXED BINARY} [c] An expression that specifies the code
+  *   page that will be uppercased.
+  * @returns {CHARACTER} \`x\` with all characters converted to
+  *   uppercase.
+  */
+ UPPERCASE: PROC (x, c) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL c FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * UPPERLATIN1 returns a UCHAR string with all of its ASCII and
+  * Latin-1 supplement characters converted to their corresponding
+  * uppercase characters.
+  *
+  * The letters Y with DIAERESIS(ÿ) and SHARP S(ß) are not changed.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
+  * @returns {CHARACTER} \`x\` with ASCII and Latin-1 characters
+  *   converted to uppercase.
+  */
+ UPPERLATIN1: PROC (x) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * USUBSTR returns a substring of a UTF string.
+  *
+  * If \`x\` has CHARACTER type, then the string must contain valid
+  * UTF-8 data. If not, the program is in error.
+  *
+  * If \`x\` has WIDECHAR type, then the string must contain valid
+  * UTF-16 data. If not, the program is in error.
+  *
+  * The ERROR condition (and not the STRINGRANGE condition) will
+  * also be raised if
+  *
+  * - \`i\` is less than 1, or
+  * - \`j\` is less than zero, or
+  * - \`i + j - 1\` is larger than ULENGTH(x)
+  *
+  * If \`x\` has CHARACTER type, then USUBSTR(x,i,j) will return a
+  * CHARACTER string containing the \`j\` UTF-8 characters in \`x\`
+  * starting with the \`i\`th UTF-8 character.
+  *
+  * If \`x\` has WIDECHAR type, then USUBSTR(x,i,j) will return a
+  * WIDECHAR string containing the \`j\` UTF-16 characters in \`x\`
+  * starting with the \`i\`th UTF-16 character.
+  *
+  * In general, USUBSTR(x,i,j) will not equal SUBSTR(x,i,j).
+  *
+  * For example, if x equals the CHARACTER string
+  * '4b_c3_a4_66_65_72'x, then
+  *
+  * -
+  * -
+  * -
+  * -
+  *
+  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  *   or WIDECHAR type.
+  * @param {FIXED BINARY} i Expression which must have computational
+  *   type and which will be converted to FIXED BIN(31) if
+  *   necessary.
+  * @param {FIXED BINARY} j Expression which must have computational
+  *   type and which will be converted to FIXED BIN(31) if
+  *   necessary.
+  * @returns {ANY<CHARACTER>} The \`j\` UTF characters of \`x\`
+  *   starting at the \`i\`th character.
+  */
+ USUBSTR: PROC (x, i, j) RETURNS (ANY<CHARACTER>);
+    DCL x ANY<CHARACTER>;
+    DCL i FIXED BINARY;
+    DCL j FIXED BINARY;
+ END;
+ /**
+  * USUPPLEMENTARY returns a FIXED BIN(31) value that is either the
+  * index of the first of the UTF surrogate pair in a string or zero
+  * if the string contains no UTF surrogate pairs.
+  *
+  * If \`x\` has CHARACTER type, then the string must contain valid
+  * UTF-8 data. However, the validity of the data will not be
+  * checked. If the data is invalid, the ERROR condition will not be
+  * raised, the program is in error, and the result returned by this
+  * function will be unpredictable.
+  *
+  * If \`x\` has WIDECHAR type, then the string must contain valid
+  * UTF-16 data. However, the validity of the data will not be
+  * checked. If the data is invalid, the ERROR condition will not be
+  * raised, the program is in error, and the result returned by this
+  * function will be unpredictable.
+  *
+  * As an example, the musical G-clef is represented by the UTF-16
+  * surrogate pair 'D834_DD1E'wx, and hence in the following code,
+  * the value 3 will be listed:
+  *
+  * \`\`\`
+  *     dcl w  wchar(20) varying;
+  *     dcl jx fixed bin;
+  *
+  *     w = '0020_0020_D834_DD1E'wx
+  *
+  *     jx = usupplementary(w);
+  *
+  *     put skip list(jx);
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  *   or WIDECHAR type.
+  * @returns {FIXED BINARY} Index of the first UTF surrogate pair in
+  *   \`x\`, or zero if none.
+  */
+ USUPPLEMENTARY: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * UTF8(x) returns a CHAR value that is the UTF-8 equivalent of x.
+  *
+  * If x has the type other than WIDECHAR, the CODEPAGE option
+  * specifies the value for the code page of x when it is converted
+  * to UTF-8.
+  *
+  * If x has the WIDECHAR type, it is converted to UTF-8 under the
+  * assumption that x holds UTF-16.
+  *
+  * You can use UTF8(x) in restricted expressions. Therefore, you
+  * can use UTF8(x) to create UTF-8 literals.
+  *
+  * Notes: If x has the CHAR type, the length of UTF8(x) might be
+  * two times as large as the length of x. If x has the WCHAR type,
+  * the length of UTF8(x) might be three times as the length of x.
+  * If the length of UTF8 exceeds the maximum length of CHAR, the
+  * generated code raises the ERROR condition. If x has the WCHAR
+  * type and holds invalid UTF-16 data, the generated code raises
+  * the ERROR condition. For example, UTF8('babb'x,1140) and
+  * UTF8('63fc'x,1141) will both return '5b5d'x. Because on code
+  * page 1140, 'ba'x and 'bb'x correspond to UTF-8 characters '5b'x
+  * and '5d'x; but on code page 1141, '63'x and 'fc'x map to UTF-8
+  * characters '5b'x and '5d'x.
+  *
+  * @param {ANY} x An expression that must have one of these types:
+  *   FIXED, FLOAT, PICTURE, BIT, CHAR, or WIDECHAR.
+  * @param {FIXED BINARY} [c] A restricted expression that specifies
+  *   the code page of the source. It is ignored if x has WIDECHAR
+  *   type.
+  *
+  *   The code page must have a computational type and is converted
+  *   to type FIXED BINARY (31,0). The code page must specify a
+  *   valid, supported code page.
+  * @returns {CHARACTER} The UTF-8 equivalent of \`x\`.
+  */
+ UTF8: PROC (x, c) RETURNS (CHARACTER);
+    DCL x ANY;
+    DCL c FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * UTF8STG returns a FIXED BIN value that specifies the number of
+  * bytes that must be present if the input character is the start
+  * of a valid UTF-8 character.
+  *
+  * The function returns zero if the character cannot be the start
+  * of a valid UTF-8 character. For example, if the character has
+  * the value '80'x, UTF8STG returns zero.
+  *
+  * @param {CHARACTER} x Specifies the input character. x must be
+  *   of the type CHAR(1).
+  * @returns {FIXED BINARY} The number of bytes needed for the
+  *   UTF-8 character starting with \`x\`, or zero if invalid.
+  */
+ UTF8STG: PROC (x) RETURNS (FIXED BINARY);
+    DCL x CHARACTER;
+ END;
  UTF8TOCHAR: PROC (value) RETURNS (); END;
  UTF8TOWCHAR: PROC (value) RETURNS (); END;
  UVALID: PROC (value) RETURNS (); END;
