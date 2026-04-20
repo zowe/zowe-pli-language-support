@@ -775,7 +775,7 @@ export const Builtins =
   *   and the sign is restored.
   * @param {ANY<NUMBER>} n An optionally-signed integer that specifies
   *   the digit at which rounding is to occur.
-  * @return {ANY<NUMBER>} value of \`x\` rounded at a digit specified by
+  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified by
   *   \`n\` following the rounding rule of round half to even.
   */
  ROUNDTOEVEN: PROC (x, n) RETURNS (ANY<NUMBER>);
@@ -826,7 +826,7 @@ export const Builtins =
   * but does not have the form above, then \`q\` must be positive.
   *
   * @param {ANY<NUMBER>} x Real expression.
-  * @return {ANY<NUMBER>} integer value that is the truncated value of
+  * @returns {ANY<NUMBER>} integer value that is the truncated value of
   *  \`x\`
   */
  TRUNC: PROC (x) RETURNS (ANY<NUMBER>);
@@ -842,7 +842,7 @@ export const Builtins =
   * @param {ANY(*)} x Computational array expression. If \`x\` is not
   *   a bit string array, then \`x\` is converted to a bit string
   *   array.
-  * @return {BIT(*)} bit string in which each bit is 1 if the
+  * @returns {BIT(*)} bit string in which each bit is 1 if the
   *   corresponding bit in each element of \`x\` exists and is 1
   */
  ALL: PROC (x) RETURNS (BIT(*));
@@ -857,7 +857,7 @@ export const Builtins =
   * @param {ANY(*)} x Computational array expression. If \`x\` is not
   *   a bit string array, then \`x\` is converted to a bit string
   *   array.
-  * @return {BIT(*)} bit string in which each bit is 1 if the
+  * @returns {BIT(*)} bit string in which each bit is 1 if the
   *   corresponding bit in any element of \`x\` exists and is 1
   */
  ANY: PROC (x) RETURNS (BIT(*));
@@ -1065,7 +1065,7 @@ export const Builtins =
   *
   * @param {ANY(*)} x An array expression.
   * @param {ANY} y An element expression.
-  * @return {FLOAT} floating-point value that is an approximation of a
+  * @returns {FLOAT} floating-point value that is an approximation of a
   *   polynomial formed from an one-dimensional array expressions x.
   */
  POLY: PROC (x, y) RETURNS (FLOAT);
@@ -1547,7 +1547,7 @@ export const Builtins =
   * @param {ANY<NUMBER>} n Length of the target buffer.
   * @param {ANY<LOCATOR>} q Address of the source buffer.
   * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @return {ANY<NUMBER>} value that indicates the number of bytes
+  * @returns {ANY<NUMBER>} value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-8 is invalid.
   */
@@ -10614,31 +10614,1043 @@ export const Builtins =
  END;
 
  /* String-handling built-in functions */
- BIT: PROC (value) RETURNS (); END;
- BOOL: PROC (value) RETURNS (); END;
- CENTERLEFT: CENTRELEFT: CENTER: PROC (value) RETURNS (); END;
- CENTERRIGHT: CENTRERIGHT:  PROC (value) RETURNS (); END;
- CHARACTER: CHAR: PROC (value) RETURNS (); END;
- CHARGRAPHIC: CHARG: PROC (value) RETURNS (); END;
- COLLAPSE: PROC (value) RETURNS (); END;
- COPY: PROC (value) RETURNS (); END;
- EDIT: PROC (value) RETURNS (); END;
- GRAPHIC: PROC (value) RETURNS (); END;
- HIGH: PROC (value) RETURNS (); END;
- INDEX: PROC (value) RETURNS (); END;
- INDEXR: PROC (value) RETURNS (); END;
- LEFT: PROC (value) RETURNS (); END;
- LENGTH: PROC (value) RETURNS (); END;
- LOW: PROC (value) RETURNS (); END;
- LOWERASCII: PROC (value) RETURNS (); END;
- LOWERCASE: PROC (value) RETURNS (); END;
- LOWERLATIN1: PROC (value) RETURNS (); END;
- MAXLENGTH: PROC (value) RETURNS (); END;
- MPSTR: PROC (value) RETURNS (); END;
- PICSPEC: PROC (value) RETURNS (); END;
- REGEX: PROC (value) RETURNS (); END;
- REPEAT: PROC (value) RETURNS (); END;
- REPLACE: PROC (value) RETURNS (); END;
+ /**
+  * BIT returns a result that is the bit value of \`x\`, and has a
+  * length specified by \`y\`.
+  *
+  * @param {ANY} x Expression.
+  * @param {FIXED BINARY} [y] Expression. If necessary, \`y\` is
+  *   converted to a real fixed-point binary value. If \`y\` is
+  *   omitted, the length is determined by the rules for type
+  *   conversion. If \`y\` = 0, the result is the null bit
+  *   string. \`y\` must not be negative.
+  * @returns {ANY} The bit value of \`x\` with length \`y\`.
+  */
+ BIT: PROC (x, y) RETURNS (ANY);
+    DCL x ANY;
+    DCL y FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * BOOL returns a bit string that is the result of the Boolean
+  * operation \`z\`, on \`x\` and \`y\`. The length of the result is
+  * equal to that of the longer operand, \`x\` or \`y\`.
+  *
+  * @param {ANY} x Expressions. \`x\` and \`y\` are converted to
+  *   bit strings, if necessary. If \`x\` and \`y\` are of
+  *   different lengths, the shorter is padded on the right with
+  *   zeros to match the longer.
+  * @param {ANY} y See \`x\`.
+  * @param {ANY} z Expression. \`z\` is converted to a bit string
+  *   of length 4, if necessary. When a bit from \`x\` is matched
+  *   with a bit from \`y\`, the corresponding bit of the result is
+  *   specified by a selected bit of \`z\`, as follows:
+  *
+  *   |  | x | y | Result |
+  *   | --- | --- | --- | --- |
+  *   |  | 0 | 0 | bit 1 of z |
+  *   |  | 0 | 1 | bit 2 of z |
+  *   |  | 1 | 0 | bit 3 of z |
+  *   |  | 1 | 1 | bit 4 of z |
+  * @returns {BIT(*)} The result of the Boolean operation on \`x\`
+  *   and \`y\` using \`z\`.
+  */
+ BOOL: PROC (x, y, z) RETURNS (BIT(*));
+    DCL x ANY;
+    DCL y ANY;
+    DCL z ANY;
+ END;
+ /**
+  * CENTERLEFT returns a string that is the result of inserting
+  * string \`x\` in the center (or one position to the left of
+  * center) of a string with length y and padded on the left and on
+  * the right with the character \`z\` as needed.
+  *
+  * Specifying a value for \`z\` is optional.
+  *
+  * Abbreviation: CENTER
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Source char value('Feel the Power');
+  *   dcl Target20 char(20);
+  *   dcl Target21 char(21);
+  *
+  *   Target20 = center (Source, length(Target20), '*');
+  *              // '***Feel the Power***' - exactly centered
+  *
+  *
+  *   Target21 = center (Source, length(Target21), '*');
+  *              // '***Feel the Power****' - leaning left!
+  *
+  * \`\`\`
+  *
+  * If \`z\` is omitted, a blank is used as the padding character.
+  *
+  * @param {ANY<CHARACTER>} x Expression that is converted to
+  *   character.
+  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  *   BINARY(31,0).
+  * @param {CHARACTER} [z] Optional expression. If specified, \`z\`
+  *   must be CHARACTER(1) NONVARYING type.
+  * @returns {CHARACTER} \`x\` centered in a string of length
+  *   \`y\`, padded with \`z\`.
+  */
+ CENTERLEFT: CENTRELEFT: CENTER: PROC (x, y, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y FIXED BINARY;
+    DCL z CHARACTER OPTIONAL;
+ END;
+ /**
+  * CENTERRIGHT returns a string that is the result of inserting
+  * string \`x\` in the center (or one position to the right of
+  * center) of a string with length \`y\` and padded on the left and
+  * on the right with the character \`z\` as needed.
+  *
+  * Specifying a value for \`z\` is optional.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Source char value('Feel the Power');
+  *   dcl Target20 char(20);
+  *   dcl Target21 char(21);
+  *
+  *   Target20 = centerright (Source, length(Target20), '*');
+  *              // '***Feel the Power***' - exactly centered
+  *
+  *   Target21 = centerright (Source, length(Target21), '*');
+  *              // '****Feel the Power***' - leaning right!
+  * \`\`\`
+  *
+  * If \`z\` is omitted, a blank is used as the padding character.
+  *
+  * @param {ANY<CHARACTER>} x Expression that is converted to
+  *   character.
+  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  *   BINARY(31,0).
+  * @param {CHARACTER} [z] Optional expression. If specified, \`z\`
+  *   must be CHARACTER(1) NONVARYING type.
+  * @returns {CHARACTER} \`x\` centered in a string of length
+  *   \`y\`, padded with \`z\`.
+  */
+ CENTERRIGHT: CENTRERIGHT: PROC (x, y, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y FIXED BINARY;
+    DCL z CHARACTER OPTIONAL;
+ END;
+ /**
+  * CHARACTER returns the character value of \`x\`, with a length
+  * specified by \`y\`. CHARACTER also supports conversion from
+  * graphic to character type.
+  *
+  * Abbreviation: CHAR
+  *
+  * **Example: Conversion from graphic to character**
+  *
+  * \`\`\`
+  *   dcl X graphic(6);
+  *   dcl A char (6);
+  *   A = char(X);
+  * \`\`\`
+  *
+  * | For X with value | Intermediate result | A is assigned |
+  * | --- | --- | --- |
+  * | .A.B.C.D.E.F | ABCDEF | ABCDEF |
+  *
+  * @param {ANY} x Expression.
+  *
+  *   \`x\` must have a computational type.
+  *
+  *   When \`x\` is nongraphic, CHARACTER returns \`x\` converted to
+  *   character.
+  *
+  *   When \`x\` is GRAPHIC, CHARACTER returns \`x\` converted to
+  *   SBCS characters. If a DBCS character cannot be translated to
+  *   an SBCS equivalent, the CONVERSION condition is raised.
+  *
+  *   The values of \`x\` are not checked.
+  * @param {FIXED BINARY} [y] Expression. If necessary, y is
+  *   converted to a real fixed-point binary value.
+  *
+  *   If \`y\` is omitted, the length is determined by the rules for
+  *   type conversion.
+  *
+  *   \`y\` cannot be negative.
+  *
+  *   If \`y\` = 0, the result is the null character string.
+  * @returns {CHARACTER} The character value of \`x\` with length
+  *   \`y\`.
+  */
+ CHARACTER: CHAR: PROC (x, y) RETURNS (CHARACTER);
+    DCL x ANY;
+    DCL y FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * CHARGRAPHIC converts a GRAPHIC (DBCS) string \`x\` to a mixed
+  * character string with a length specified by \`y\`.
+  *
+  * Abbreviation: CHARG
+  *
+  * CHARGRAPHIC returns a mixed character string that is converted
+  * from \`x\`.
+  *
+  * The following rules apply:
+  *
+  * - If \`y\` = 0, the result is the null character string.
+  * - If \`y\` = 1, the result is a character string of 1 blank.
+  * - If \`y\` is greater than the length needed to contain the
+  * character string, the result is padded with SBCS blanks.
+  * - If \`y\` is less than the length needed to contain the
+  * character string, the result is truncated. The integrity is
+  * preserved by truncating after a graphic and appending an SBCS
+  * blank, if necessary, to complete the length of the string.
+  *
+  * **Example 1**
+  *
+  * This example shows a conversion from graphic to character. \`y\`
+  * is long enough to contain the result.
+  *
+  * \`\`\`
+  *   dcl X graphic(6);
+  *   dcl A char (12);
+  *   A = char(X,12);
+  * \`\`\`
+  *
+  * | For X with value | Intermediate Result | A is assigned |
+  * | --- | --- | --- |
+  * | .A.B.C.D.E.F | .A.B.C.D.E.F | .A.B.C.D.E.F |
+  *
+  * **Example 2**
+  *
+  * This example shows a conversion from graphic to character.
+  * However, \`y\` is too short to contain the result.
+  *
+  * \`\`\`
+  *   dcl X graphic(6);
+  *   dcl A char (12);
+  *   A = char(X,11);
+  * \`\`\`
+  *
+  * | For X with value | Intermediate Result | A is assigned |
+  * | --- | --- | --- |
+  * | .A.B.C.D.E.F | .A.B.C.D.E.F | .A.B.C.D.Eb |
+  *
+  * @param {GRAPHIC} x Expression.
+  *
+  *   \`x\` must be a GRAPHIC string.
+  * @param {FIXED BINARY} [y] Expression. If necessary, y is
+  *   converted to a real fixed-point binary value.
+  *
+  *   If \`y\` is omitted, the length is determined by the rules for
+  *   type conversion.
+  *
+  *   \`y\` cannot be negative.
+  * @returns {CHARACTER} Mixed character string converted from \`x\`.
+  */
+ CHARGRAPHIC: CHARG: PROC (x, y) RETURNS (CHARACTER);
+    DCL x GRAPHIC;
+    DCL y FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * COLLAPSE returns a string that reduces all multiple occurrences
+  * of a character to one, starting from an optional specified
+  * position. The leading and trailing instances of that character
+  * are also trimmed.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  * dcl s1 char value( ' abc  :  def   gh  ' );
+  * dcl s  char(20);
+  *
+  * s = collapse(s1, ' ', 1);
+  *       // 'abc : def gh '
+  * s = collapse(s1, ' ', 2);
+  *       // ' abc : def gh '
+  * s = collapse(s1, ' ', index(s1,':'));
+  *       // ' abc  : def gh '
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x A string expression. \`x\` specifies
+  *   the string from which all multiple occurrences of the
+  *   character defined by \`y\` are reduced to one. \`x\` must have
+  *   the CHARACTER attribute.
+  * @param {CHARACTER} y An expression. \`y\` must have the type
+  *   CHARACTER(1) NONVARYING. The leading and trailing instances
+  *   of \`y\` are also trimmed.
+  * @param {FIXED BINARY} [n] An expression. \`n\` specifies the
+  *   location within \`x\` at which to begin to locate the first
+  *   occurrences of \`y\`.
+  *
+  *   \`n\` must have a computational type and is converted to type
+  *   size_t. The default value for \`n\` is 1.
+  *
+  *   - If \`n\` < 1, the default value 1 is used.
+  *   - If \`n\` > length(\`x\`), the full string of \`x\` is
+  *   returned.
+  * @returns {CHARACTER} String with multiple occurrences of \`y\`
+  *   reduced to one.
+  */
+ COLLAPSE: PROC (x, y, n) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL y CHARACTER;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * COPY returns a string consisting of \`y\` concatenated copies of
+  * the string \`x\`.
+  *
+  * **Example**
+  *
+  * Considering the following code:
+  *
+  * \`\`\`
+  *   copy('Walla  ',1)         //  returns 'Walla  '
+  *
+  *   repeat('Walla  ',1)       //  returns 'Walla  Walla  '
+  * \`\`\`
+  *
+  * In this example, repeat(x,n) is equivalent to copy(x,n+1).
+  *
+  * @param {ANY} x Expression.
+  *
+  *   \`x\` must have a computational type and should have a string
+  *   type. If not, it is converted to character.
+  * @param {FIXED BINARY} y An integer expression with a nonnegative
+  *   value. It specifies the number of repetitions. It must have a
+  *   computational type and is converted to FIXED BINARY(31,0).
+  *
+  *   If \`y\` is zero, the result is a null string.
+  * @returns {CHARACTER} String of \`y\` concatenated copies of \`x\`.
+  */
+ COPY: PROC (x, y) RETURNS (CHARACTER);
+    DCL x ANY;
+    DCL y FIXED BINARY;
+ END;
+ /**
+  * EDIT returns a character string of length LENGTH(y). Its value
+  * is equivalent to what would result if \`x\` were assigned to a
+  * variable declared with the picture specification given by \`y\`.
+  *
+  * For the valid picture characters, see Picture specification
+  * characters.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl pic1 char(9) init ('ZZZZZZZZ9');
+  *   dcl pic2 char(7) init ('ZZ9V.99');
+  *   dcl num fixed dec (9) init (123456789);
+  *   z = edit (num, pic1);                     // '123456789'
+  *   z = edit (num, pic2);                     //    '789.00'
+  *   z = edit (num, substr(pic1,8));           //     '89'
+  *   z = edit (num, substr(pic2,1,5));         //    '789.'
+  *   z = edit (num, substr(pic1,7,3));         //    '789'
+  *   z = edit (num, substr(pic2,3,5));         //    '9.00'
+  *   z = edit ('1', substr(pic1,7,3));         //     '  1'
+  *   z = edit ('PL/I', 'AAXA');                //    'PL/I'
+  *   z = edit ('PL/I', 'AAAA');                // raises conversion
+  * \`\`\`
+  *
+  * If \`x\` cannot be edited into the picture specification given
+  * by \`y\`, the conditions raised are those that would be raised
+  * if \`x\` were assigned to a PICTURE data item which has the same
+  * picture specification contained in \`y\`.
+  *
+  * @param {ANY} x Expression
+  *
+  *   \`x\` must have computational type.
+  * @param {ANY<CHARACTER>} y String expression.
+  *
+  *   \`y\` must have character type and must contain picture
+  *   characters that are valid for a PICTURE data item. If \`y\`
+  *   does not contain a valid picture specification, the ERROR
+  *   condition is raised.
+  * @returns {CHARACTER} Character string of length LENGTH(\`y\`).
+  */
+ EDIT: PROC (x, y) RETURNS (CHARACTER);
+    DCL x ANY;
+    DCL y ANY<CHARACTER>;
+ END;
+ /**
+  * GRAPHIC explicitly converts character (or mixed character) data
+  * to GRAPHIC data. All other data first converts to character, and
+  * then to the GRAPHIC data type.
+  *
+  * GRAPHIC returns the graphic value of \`x\`, with a length in
+  * graphic symbols specified by \`y\`.
+  *
+  * The content of \`x\` is checked for validity during conversion,
+  * using the same rules as for checking graphic and mixed character
+  * constants.
+  *
+  * **Example 1**
+  *
+  * This example shows a conversion from CHARACTER to GRAPHIC. The
+  * target is long enough to contain the result.
+  *
+  * \`\`\`
+  *   dcl X char (11) varying;
+  *   dcl A graphic (11);
+  *   A = graphic(X,8);
+  * \`\`\`
+  *
+  * | For X with values | Intermediate result | A is assigned |
+  * | --- | --- | --- |
+  * | ABCDEFGHIJ 123 123A.B.C | .A.B.C.D.E.F.G.H.I.J .1.2.3
+  * .1.2.3.A.B.C | .A.B.C.D.E.F.G.H.b.b.b .1.2.3.b.b.b.b.b.b.b.b
+  * .1.2.3.A.B.C.b.b.b.b.b |
+  *
+  * where .b is a DBCS blank.
+  *
+  * **Example 2**
+  *
+  * This example shows a conversion from CHARACTER to GRAPHIC.
+  * However, the target is too short to contain the result.
+  *
+  * \`\`\`
+  *   dcl X char (10) varying;
+  *   dcl A graphic (8);
+  *   A = graphic(X);
+  * \`\`\`
+  *
+  * | For X with value | Intermediate result | A is assigned |
+  * | --- | --- | --- |
+  * | ABCDEFGHIJ | .A.B.C.D.E.F.G.H.I.J | .A.B.C.D.E.F.G.H |
+  *
+  * @param {ANY} x Expression. When \`x\` is GRAPHIC, it is subject
+  *   to a length change, with applicable padding or truncation.
+  *   When \`x\` is nongraphic, it is converted to character, if
+  *   necessary. SBCS characters are converted to equivalent DBCS
+  *   characters.
+  * @param {FIXED BINARY} [y] Expression. If necessary, \`y\` is
+  *   converted to a real fixed-point binary value. If \`y\` is
+  *   omitted, the length is determined by the rules for type
+  *   conversion.
+  *
+  *   \`y\` must not be negative.
+  *
+  *   If \`y\` = 0, the result is the null graphic string.
+  *
+  *   The following rules apply:
+  *
+  *   - If \`y\` is greater than the length needed to contain the
+  *   graphic string, the result is padded with graphic blanks.
+  *   - If \`y\` is less than the length needed to contain the
+  *   graphic string, the result is truncated.
+  * @returns {GRAPHIC} The graphic value of \`x\` with length \`y\`.
+  */
+ GRAPHIC: PROC (x, y) RETURNS (GRAPHIC);
+    DCL x ANY;
+    DCL y FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * HIGH returns a character string of length \`x\`, where each
+  * character is the highest character in the collating sequence
+  * (hexadecimal FF).
+  *
+  * @param {FIXED BINARY} x Expression. If necessary, \`x\` is
+  *   converted to a positive real fixed-point binary value. If
+  *   \`x\` = 0, the result is the null character string.
+  * @returns {CHARACTER} String of length \`x\` with each character
+  *   set to hexadecimal FF.
+  */
+ HIGH: PROC (x) RETURNS (CHARACTER);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * INDEX returns an unscaled REAL FIXED BINARY value that indicates
+  * the starting position within \`x\` of a substring identical to
+  * \`y\`. You can also specify the location within \`x\` where
+  * processing begins.
+  *
+  * If \`y\` does not occur in \`x\`, or if either \`x\` or \`y\`
+  * have zero length, the value zero is returned.
+  *
+  * If \`n\` is less than 1 or if \`n\` is greater than 1 +
+  * length(x), the STRINGRANGE condition will be raised, and the
+  * result will be 0.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * INDEX will perform best when the second and third arguments are
+  * either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl tractatus char
+  *         value( 'Wovon man nicht sprechen kann, ' ||
+  *                'darueber muss man schweigen.' );
+  *
+  *   dcl pos fixed bin init(1);
+  *
+  *   pos = index( tractatus, 'man', pos+1 ); // pos = 07
+  *
+  *   pos = index( tractatus, 'man', pos+1 ); // pos = 46
+  *
+  *   pos = index( tractatus, 'man', pos+1 ); // pos = 00
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x String-expression to be searched.
+  * @param {ANY<CHARACTER>} y Target string-expression of the
+  *   search.
+  * @param {FIXED BINARY} [n] \`n\` specifies the location within
+  *   \`x\` at which to begin processing. It must have a
+  *   computational type and is converted to FIXED BINARY(31,0).
+  * @returns {FIXED BINARY} The starting position within \`x\` of
+  *   the first match for \`y\`.
+  */
+ INDEX: PROC (x, y, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * INDEXR returns an unscaled REAL FIXED BINARY value indicating
+  * the starting position within \`x\` of a substring identical to
+  * \`y\` when the search for \`y\` starts from the right end of
+  * \`x\`. You can also specify the location within \`x\` where
+  * processing begins.
+  *
+  * The INDEXR function performs the same operation as the INDEX
+  * built-in function except for the following differences:
+  *
+  * - The search is done from right to left.
+  * - The default value of \`n\` is LENGTH(\`x\`).
+  * - Unless 0 ≤ \`n\` ≤ LENGTH(\`x\`), the STRINGRANGE condition,
+  * if enabled, is raised. Its implicit action and normal return
+  * give a result of zero.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * INDEXR will perform best when the second and third arguments are
+  * either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  * @returns {FIXED BINARY} The starting position of the last
+  *   match for \`y\` within \`x\`.
+  */
+ INDEXR: PROC (x, y, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * LEFT returns a string that is the result of inserting string
+  * \`x\` at the left end of a string with length \`n\` and padded
+  * on the right with the character \`z\` as needed.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl Source char value('One Hundred SCIDS Marks');
+  *   dcl Target char(30);
+  *
+  *   Target = left (Source, length(Target), '*');
+  *              // 'One Hundred SCIDS Marks*******'
+  * \`\`\`
+  *
+  * If \`z\` is omitted, a blank is used as the padding character.
+  *
+  * @param {ANY<CHARACTER>} x Expression. \`x\` must have a
+  *   computational type and should have a character type. If not,
+  *   it is converted to CHARACTER.
+  * @param {FIXED BINARY} n Expression. \`n\` must have a
+  *   computational type and should have a character type. If \`n\`
+  *   does not have the attributes FIXED BINARY(31,0), it is
+  *   converted to them.
+  * @param {CHARACTER} [z] Expression. If specified, \`z\` must have
+  *   the type CHARACTER(1) NONVARYING type.
+  * @returns {CHARACTER} \`x\` left-aligned in a string of length
+  *   \`n\`, padded with \`z\`.
+  */
+ LEFT: PROC (x, n, z) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL n FIXED BINARY;
+    DCL z CHARACTER OPTIONAL;
+ END;
+ /**
+  * LENGTH returns an unscaled REAL FIXED BINARY value specifying
+  * the current length of \`x\`.
+  *
+  * For an example of the LENGTH built-in function, refer to
+  * MAXLENGTH.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * When applied to an OFFSET reference with the LOCATES attribute
+  * and implicit AREA qualification:
+  *
+  * - If the OFFSET reference is not null, LENGTH returns the
+  * address of the located data.
+  * - If the OFFSET reference is null, LENGTH returns SYSNULL.
+  *
+  * @param {ANY} x String-expression or an OFFSET reference with
+  *   the LOCATES attribute and an explicit AREA reference. If \`x\`
+  *   is binary, it is converted to bit string; otherwise, any other
+  *   conversion required is to character string.
+  * @returns {FIXED BINARY} The current length of \`x\`.
+  */
+ LENGTH: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * LOW returns a character string of length \`x\`, where each
+  * character is the lowest character in the collating sequence
+  * (hexadecimal 00).
+  *
+  * @param {FIXED BINARY} x Expression. If necessary, \`x\` is
+  *   converted to a positive real fixed-point binary value. If
+  *   \`x\` = 0, the result is the null character string.
+  * @returns {CHARACTER} String of length \`x\` with each character
+  *   set to hexadecimal 00.
+  */
+ LOW: PROC (x) RETURNS (CHARACTER);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * LOWERASCII returns a UCHAR string with all of its ASCII
+  * characters converted to their corresponding lowercase
+  * characters.
+  *
+  * LOWERASCII(x) is equivalent to TRANSLATE(x, 'a...z', 'A...Z').
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
+  * @returns {CHARACTER} \`x\` with ASCII characters converted to
+  *   lowercase.
+  */
+ LOWERASCII: PROC (x) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * LOWERCASE returns a character string with all characters
+  * converted to their lowercase equivalent.
+  *
+  * LOWERCASE(\`x\`) is equivalent to TRANSLATE(x, 'a...z', 'A...Z')
+  * and LOWERCASE(\`x\`, \`c\` ) is equivalent to TRANSLATE(x,
+  * lowerc, upperc). The values of \`lowerc\` and \`upperc\` are
+  * determined by the value of the code page \`c\`. Specifying
+  * LOWERCASE(\`x\`, \`c\`) will not only translate alphabetic
+  * characters 'A...Z' to 'a...z', but also translate characters
+  * such as uppercase Ä-umlaut('4a'x) to lowercase ä-umlaut('c0'x).
+  *
+  * For example, if the Lower_01141 was declared as:
+  *
+  * \`\`\`
+  * dcl lower_01141 char
+  *  value( (
+  *               '8182838485868788'8991929394959697'x
+  *            || '9899A2A3A4A5A6A7A8A9424445464748'x
+  *            || '4951525354555657'586A708C8D8E9CC0'x
+  *            || 'CBCDCECFD0DBDDDE'x
+  *         ) );
+  * \`\`\`
+  *
+  * and the Upper_01141 was declared as:
+  *
+  * \`\`\`
+  * dcl upper_01141 char
+  *   value( (
+  *               'C1C2C3C4C5C6C7C8C9D1D2D3D4D5D6D7'x
+  *            || 'D8D9E2E3E4E5E6E7E8E9626465666768'x
+  *            || '6971727374757677'78E080ACADAE9E4A'x
+  *            || 'EBEDEEEF5AFBFDFE'x
+  *         ) );
+  * \`\`\`
+  *
+  * then LOWERCASE(x, 1141 ) would be the same as TRANSLATE( x,
+  * Lower_01141, Upper_01141 ).
+  *
+  * The appendix lists the values of \`lowerc\` and \`upperc\` for
+  * the supported values of \`c\`. For details, see Limits.
+  *
+  * @param {ANY<CHARACTER>} x An expression. If necessary, \`x\` is
+  *   converted to character.
+  * @param {FIXED BINARY} [c] An expression that specifies the code
+  *   page that will be lowercased.
+  * @returns {CHARACTER} \`x\` with all characters converted to
+  *   lowercase.
+  */
+ LOWERCASE: PROC (x, c) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL c FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * LOWERLATIN1 returns a UCHAR string with all of its ASCII and
+  * Latin-1 supplement characters converted to their corresponding
+  * lowercase characters.
+  *
+  * The letters Y with DIAERESIS(ÿ) and SHARP S (ß) are not changed.
+  *
+  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
+  * @returns {CHARACTER} \`x\` with ASCII and Latin-1 characters
+  *   converted to lowercase.
+  */
+ LOWERLATIN1: PROC (x) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * MAXLENGTH returns the maximum length of a string.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl x char(20);
+  *   dcl y char(20) varying;
+  *
+  *   x, y = '';
+  *
+  *   x = copy( '*', length(x) );    // fills x with '*'
+  *   y = copy( '*', length(y) );    // leaves y unchanged
+  *
+  *   x = copy( '-', maxlength(x) ); // fills x with '-'
+  *   y = copy( '-', maxlength(y) ); // fills y with '-'
+  * \`\`\`
+  *
+  * Note that the first assignment to \`y\` leaves it unchanged
+  * because \`length(y)\` will return zero when it is used in the
+  * code snippet above (since \`y\` is VARYING and was previously
+  * set to '').
+  *
+  * However, the second assignment to \`y\` fills it with 20 - signs
+  * because \`maxlength(y)\` will return 20 (the declared length of
+  * \`y\`).
+  *
+  * @param {ANY} x Expression. \`x\` must have a computational type
+  *   and should have a string type. If not, it is converted to
+  *   character.
+  * @returns {FIXED BINARY} The maximum length of the string \`x\`.
+  */
+ MAXLENGTH: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY;
+ END;
+ /**
+  * MPSTR truncates a string at a logical boundary and returns a
+  * mixed character string.
+  *
+  * It does not truncate a double-byte character between bytes. The
+  * length of the returned string is equal to the length of the
+  * expression \`x\`, or to the value specified by \`y\`. The
+  * processing of the string is determined by the rules selected by
+  * the expression \`r\`, as described below.
+  *
+  * @param {ANY<CHARACTER>} x Expression that yields the character
+  *   string result. The value of \`x\` is converted to character if
+  *   necessary.
+  * @param {ANY<CHARACTER>} r Expression that yields a character
+  *   result. The expression cannot be GRAPHIC and is converted to
+  *   character if necessary.
+  *
+  *   The expression \`r\` specifies the rules to be used for
+  *   processing the string. The characters that can be used in
+  *   \`r\` and the rules for them are as follows:
+  *
+  *   V or v Validates the mixed string \`x\` and returns a mixed
+  *   string. S or s Removes any null DBCS strings, creates a new
+  *   string, and returns a mixed string.
+  *
+  *   If both V and S are specified, V takes precedence over S,
+  *   regardless of the order in which they were specified.
+  *
+  *   If S is specified without V, the string x is assumed to be a
+  *   valid string. If the string is not valid, undefined results
+  *   occur.
+  *
+  *   Note: The parameter \`r\` is ignored on Intel and AIX.
+  * @param {FIXED BINARY} [y] Expression. If necessary, \`y\` is
+  *   converted to a real fixed-point binary value. If \`y\` is
+  *   omitted, the length is determined by the rules for type
+  *   conversion. The value of \`y\` cannot be negative. If \`y\` =
+  *   0, the result is the null character string. If \`y\` is
+  *   greater than the length needed to contain \`x\`, the result is
+  *   padded with blanks. If \`y\` is less than the length needed to
+  *   contain \`x\`, the result is truncated by discarding excess
+  *   characters from the right (if they are SBCS characters), or
+  *   by discarding as many DBCS characters (2-byte pairs) as
+  *   needed.
+  * @returns {CHARACTER} Mixed character string truncated at a
+  *   logical boundary.
+  */
+ MPSTR: PROC (x, r, y) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL r ANY<CHARACTER>;
+    DCL y FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * PICSPEC casts data from CHARACTER to PICTURE type.
+  *
+  * The expression \`x\` must be CHARACTER NONVARYING with a length
+  * known at compile time.
+  *
+  * \`y\` must be a character literal that specifies a valid PICTURE
+  * with an external representation that has the same length as the
+  * first argument.
+  *
+  * The result has the PICTURE type specified by the second
+  * argument.
+  *
+  * Unlike the EDIT built-in function, no conversion is done and no
+  * checks are made to see if the first argument holds data valid
+  * for the picture.
+  *
+  * Like the UNSPEC built-in function, only the "type" of the data
+  * is changed.
+  *
+  * So, for example given PICSPEC(x,'(5)9'), \`x\` must be CHAR(5)
+  * (since while the picture specification '(5)9' was 4 characters
+  * in length, its external representation requires 5 characters),
+  * but \`x\` will not be checked to see if it actually contains 5
+  * numeric digits.
+  *
+  * A statement of the N = N + PICSPEC(X,'(5)9') will not cause
+  * \`x\` to be converted from CHAR to PIC'(5)9', a conversion that
+  * would require a library call, but will cause the contents of
+  * \`x\` to be treated as if it were declared as PIC'(5)9'.
+  *
+  * @param {CHARACTER} x Expression.
+  * @param {CHARACTER} y Picture specification.
+  * @returns {ANY<PICTURE>} Data of \`x\` cast to the PICTURE type
+  *   specified by \`y\`.
+  */
+ PICSPEC: PROC (x, y) RETURNS (ANY<PICTURE>);
+    DCL x CHARACTER;
+    DCL y CHARACTER;
+ END;
+ /**
+  * REGEX returns a FIXED BIN(31) that indicates the success of
+  * matching a specified regular expression or pattern against a
+  * string.
+  *
+  * If either i or j is an array, then
+  *
+  * - both must be arrays with matching bounds and NATIVE type
+  * size_t
+  * - the first elements of each array will be assigned the index
+  * and length of the matching expression (if any).
+  * - the second and subsequent elements of each array will be
+  * assigned the index and length of the corresponding matching
+  * subexpression (if any).
+  *
+  * The characters [, ], {, }, |, ^, and $ occur often in regular
+  * expressions and have varying code points in different encoded
+  * character sets. The (implicit or explicit) code page value must
+  * correctly match the code page of p and x. If not, the pattern
+  * might be deemed to be invalid or a match might not be found.
+  *
+  * The processing of the REGEX built-in function proceeds in these
+  * steps:
+  *
+  * 1. If n is less than 1 or if n is greater than 1 + length(x),
+  * the STRINGRANGE condition will be raised if enabled, and REGEX
+  * will return the value 1.
+  * 2. If there is no locale matching the code page c, then REGEX
+  * will return the value -1.
+  * 3. If the string p does not specify a valid regular expression,
+  * then REGEX will return a value greater than 1.
+  * 4. If there is no match in the string x for the regular
+  * expression p, then REGEX will return the value 1 and set the
+  * index i and the length j to 0. Otherwise, REGEX will return the
+  * value 0 and set the index i and the length j corresponding to
+  * the substring in x that is the first match for the regular
+  * expression p.
+  *
+  * The search for a match to the regular expression is case
+  * sensitive.
+  *
+  * **Examples**
+  *
+  * Example 1
+  *
+  * If p = "All(a|e)n" and x = "12Allan3Allen4Alan5Allan678", then
+  *
+  * - regex( i, j, p, x ) will return 0 and set i to 3 and j to 5
+  * (because it has found the match for the first "Allan").
+  * - regex( i, j, p, x, 4 ) will return 0 and set i to 9 and j
+  * to 5 (because it has found the match for "Allen").
+  * - regex( i, j, p, x, 10 ) will return 0 and set i to 20 and j
+  * to 5 (because it has found the match for the second "Allan").
+  * - regex( i, j, p, x , 21 ) will return 1 (because there are no
+  * more matches).
+  *
+  * The preceding set of matches could also have been found via the
+  * following loop, which uses the optional fifth parameter to walk
+  * through the string x
+  *
+  * \`\`\`
+  * n = 1;
+  * do loop;
+  *   rc = regex( i, j, p, x, n );
+  *   if rc <> 0 then leave;
+  *   put skip list( substr( x, i, j ) );
+  *   n = i + j;
+  * end;
+  * \`\`\`
+  *
+  * Example 2
+  *
+  * If p = "[hc]+at" and x = "the cat in the hat", then regex( i,
+  * j, p, x, n ) will find the match for "cat" or "hat" depending
+  * on the value of n. But, if p = "63"x || "hc" || "fc"x ||
+  * "+at", then although under codepage 1141, this pattern would
+  * display as "[hc]+at".
+  *
+  * - Under the default code page 1140, regex( i, j, p, x, n )
+  * would find no match, because under code page 1140 the hex
+  * values for [ and ] are "ba"x and "bb"x respectively.
+  * - However, regex( i, j, p, x, n, 1141) would find the match
+  * for "cat" or "hat" depending on the value of n.
+  *
+  * Example 3
+  *
+  * Given the following:
+  *
+  * \`\`\`
+  *   pattern = '([a-zA-Z]+) * ([a-zA-Z]+) * ((([a-zA-Z1-9]+)\.){0,1}([a-zA-Z1-9]+))';
+  *   string = ' CREATE DATABASE TESTDB;';
+  *   rc = regex( a_index, a_length, pattern, string );
+  * \`\`\`
+  *
+  * Then
+  *
+  * \`\`\`
+  *   a_index(2) and a_length(2) will give the index and length for CREATE
+  *   a_index(3) and a_length(3) will give the index and length for DATABASE
+  *   a_index(4) and a_length(4) will give the index and length for TESTDB
+  * \`\`\`
+  *
+  * @param {FIXED BINARY} i A reference. \`i\` must be ASSIGNABLE.
+  *   If a match for the pattern is found, it will be assigned the
+  *   index of the substring in x of the first match for the
+  *   regular expression p. i must be REAL FIXED BIN with scale
+  *   factor 0. i must be either a scalar or a one-dimensional
+  *   array of scalars.
+  * @param {FIXED BINARY} j A reference. j must be ASSIGNABLE. If
+  *   a match for the pattern is found, it will be assigned the
+  *   length of the substring in x of the first match for the
+  *   regular expression p. j must be REAL FIXED BIN with scale
+  *   factor 0. j must be either a scalar or a one-dimensional
+  *   array of scalars.
+  * @param {ANY<CHARACTER>} p A string holding a regular
+  *   expression. The pattern p must have CHARACTER type.
+  *
+  *   The pattern p must conform to the POSIX standard for Extended
+  *   Regular Expressions (EREs) (and not to the POSIX standard for
+  *   Basic Regular Expressions). Wikipedia and other web sites
+  *   contain good descriptions of regular expressions.
+  * @param {ANY<CHARACTER>} x A string. x is to be searched for a
+  *   match with the regular expression p. The string x must have
+  *   CHARACTER type.
+  * @param {FIXED BINARY} [n] An expression. n specifies the
+  *   location within x at which to begin searching. n must have a
+  *   computational type and is converted to FIXED BINARY(31,0).
+  *   If omitted, it defaults to 1.
+  * @param {FIXED BINARY} [c] A restricted expression. c specifies
+  *   the code page of p and x. If omitted, it defaults to the
+  *   value in the CODEPAGE compiler option. If not omitted, a
+  *   value for n must be specified.
+  *
+  *   The code page must have a computational type and is converted
+  *   to FIXED BINARY (31,0). The code page must specify a valid,
+  *   supported code page.
+  * @returns {FIXED BINARY} 0 if a match was found, 1 if no match,
+  *   -1 if no matching locale, >1 if pattern is invalid.
+  */
+ REGEX: PROC (i, j, p, x, n, c) RETURNS (FIXED BINARY);
+    DCL i FIXED BINARY;
+    DCL j FIXED BINARY;
+    DCL p ANY<CHARACTER>;
+    DCL x ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+    DCL c FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * REPEAT returns a string consisting of \`x\` concatenated to
+  * itself the number of times specified by \`y\`.
+  *
+  * That is, there are (\`y\` + 1) occurrences of \`x\`.
+  *
+  * If \`y\` is zero or negative, the string \`x\` is returned. For
+  * an example of the REPEAT built-in function, see COPY.
+  *
+  * @param {ANY} x Bit, character, graphic, uchar or widechar
+  *   expression to be repeated. If \`x\` is arithmetic, the
+  *   following conversions occur:
+  *
+  *   - If it is binary, \`x\` is converted to bit string.
+  *   - If it is decimal, \`x\` is converted to character string.
+  * @param {FIXED BINARY} y Expression. If necessary, \`y\` is
+  *   converted to a real fixed-point binary value.
+  * @returns {ANY} String of \`x\` repeated \`y\` + 1 times.
+  */
+ REPEAT: PROC (x, y) RETURNS (ANY);
+    DCL x ANY;
+    DCL y FIXED BINARY;
+ END;
+ /**
+  * REPLACE returns a string with one or more occurrences of a
+  * substring replaced by another substring.
+  *
+  * \`\`\`
+  * dcl ein char(50) var init( 'reserved from #date# till #date#.' );
+  * dcl aus char(80) var;
+  *
+  * dcl f   char(6);
+  * dcl t   char(10);
+  *
+  * f = '#date#';
+  * t = '2018/05/01';
+  *
+  * aus = replace( ein, f, t );
+  *       // 'reserved from 2018/05/01 till #date#.'
+  * aus = replace( ein, f, t, 16 );
+  *       // 'reserved from #date# till 2018/05/01.'
+  * aus = replace( ein, f, t, 1, 2 );
+  *       // 'reserved from 2018/05/01 till 2018/05/01.'
+  * aus = replace( ein, f, t, 16, 1 );
+  *       // 'reserved from #date# till 2018/05/01.'
+  * aus = replace( ein, f, t, 1, 0 );
+  *       // 'reserved from 2018/05/01 till 2018/05/01.'
+  * \`\`\`
+  *
+  * @param {ANY<CHARACTER>} x A string expression that specifies
+  *   the string within which the occurrences of the substring f
+  *   will be replaced by the substring t. x must have a CHARACTER
+  *   type.
+  * @param {ANY<CHARACTER>} f A string expression that specifies
+  *   the substring that will be replaced within the string x. f
+  *   must have a CHARACTER type.
+  * @param {ANY<CHARACTER>} t A string expression that specifies
+  *   the substring that will be used to replace the substring f
+  *   within the string x. t must have a CHARACTER type.
+  * @param {FIXED BINARY} [n] An optional expression that specifies
+  *   a location within the string x, from where the compiler
+  *   begins searching for the substring f. n must have a
+  *   computational type and is converted to FIXED BINARY(31,0).
+  *   The default value for n is 1. If n is less than 1 or greater
+  *   than the length(x), the STRINGRANGE condition will be raised
+  *   if enabled, and the result will be a null character string.
+  * @param {FIXED BINARY} [i] An optional expression that specifies
+  *   the maximum number of times that the substring f should be
+  *   replaced by the substring t. i must have a computational type
+  *   and is converted to FIXED BINARY(31,0). The default value for
+  *   i is 1. i must be non-negative. If i is 0, all occurrences of
+  *   the substring f in the string x will be replaced by the
+  *   substring t.
+  * @returns {CHARACTER} \`x\` with occurrences of \`f\` replaced
+  *   by \`t\`.
+  */
+ REPLACE: PROC (x, f, t, n, i) RETURNS (CHARACTER);
+    DCL x ANY<CHARACTER>;
+    DCL f ANY<CHARACTER>;
+    DCL t ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+    DCL i FIXED BINARY OPTIONAL;
+ END;
  REPLACEBY2: PROC (value) RETURNS (); END;
  REVERSE: PROC (value) RETURNS (); END;
  RIGHT: PROC (value) RETURNS (); END;
