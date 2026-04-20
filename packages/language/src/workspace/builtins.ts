@@ -12533,33 +12533,773 @@ export const Builtins =
  UTF8STG: PROC (x) RETURNS (FIXED BINARY);
     DCL x CHARACTER;
  END;
- UTF8TOCHAR: PROC (value) RETURNS (); END;
- UTF8TOWCHAR: PROC (value) RETURNS (); END;
- UVALID: PROC (value) RETURNS (); END;
- UWIDTH: PROC (value) RETURNS (); END;
- VERIFY: PROC (value) RETURNS (); END;
- VERIFYR: PROC (value) RETURNS (); END;
- WHIGH: PROC (value) RETURNS (); END;
- WIDECHAR: WCHAR: PROC (value) RETURNS (); END;
- WLOW: PROC (value) RETURNS (); END;
+ /**
+  * UTF8TOCHAR(x) returns a CHAR value holding x converted from
+  * UTF-8.
+  *
+  * Note: If x holds invalid UTF-8 data, the generated code raises
+  * the ERROR condition.
+  *
+  * @param {CHARACTER} x An expression that must have the CHAR
+  *   type.
+  *
+  *   When x is converted from UTF-8 to CHAR, the CODEPAGE option
+  *   is used to specify the target code page.
+  * @param {FIXED BINARY} [c] A restricted expression that
+  *   specifies the code page of x.
+  *
+  *   If omitted, it defaults to the value in the CODEPAGE compiler
+  *   option.
+  *
+  *   If specified, the code page must have a computational type and
+  *   is converted to FIXED BINARY (31,0). The code page must
+  *   specify a valid, supported code page.
+  * @returns {CHARACTER} The converted CHAR value.
+  */
+ UTF8TOCHAR: PROC (x, c) RETURNS (CHARACTER);
+    DCL x CHARACTER;
+    DCL c FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * UTF8TOWCHAR(x) returns a WCHAR value holding x converted from
+  * UTF-8 to UTF-16.
+  *
+  * You can use UTF8TOWCHAR(x) in restricted expressions.
+  *
+  * Note: If x holds invalid UTF-8 data, the generated code raises
+  * the ERROR condition.
+  *
+  * @param {CHARACTER} x An expression that must have the CHAR
+  *   type. x is converted from UTF-8 to UTF-16.
+  * @returns {WIDECHAR} WCHAR value holding x converted from
+  *   UTF-8 to UTF-16.
+  */
+ UTF8TOWCHAR: PROC (x) RETURNS (WIDECHAR);
+    DCL x CHARACTER;
+ END;
+ /**
+  * UVALID returns a FIXED BINARY(31) value which is zero if a
+  * string contains valid UTF data and which is the index of the
+  * first invalid element if the string does not contain valid UTF
+  * data.
+  *
+  * If \`x\` has CHARACTER type, then UVALID(x) will return 0 if the
+  * string contains valid UTF-8 data. Otherwise, it will return the
+  * index of the BYTE where the first invalid UTF-8 data starts.
+  *
+  * If x has UCHAR type, then UVALID(x) will return 0 if the string
+  * contains valid UTF-8 data. Otherwise, it will return the index
+  * of the UCHAR where the first invalid UTF-8 data starts.
+  *
+  * If \`x\` has WIDECHAR or WIDEPIC type, then UVALID(x) will
+  * return 0 if the string contains valid UTF-16 data. Otherwise, it
+  * will return the index of the WIDECHAR where the first invalid
+  * UTF-16 data starts.
+  *
+  * Note that UVALID will indicate if the string contains valid UTF
+  * data (according to the rules below). It does not indicate if
+  * these bytes have actually been allocated to represent any
+  * particular character.
+  *
+  * For UTF-8 data, the validity of a byte varies as follows
+  * according to its range:
+  *
+  * - '00'x - '7f'x, it is valid
+  * - '80'x - 'c1'x, it is invalid
+  * - 'c2'x - 'df'x, it is valid if followed by a second byte and if
+  * that byte is in the range '80'x to 'bf'x
+  * - 'e0'x - 'ef'x, it is valid if followed by 2 more bytes and if
+  *   - when the first byte is 'e0'x, the second and third bytes
+  *   must be in the ranges 'a0'x to 'bf'x and '80'x to 'bf'x,
+  *   respectively.
+  *   - when the first byte is in the range 'e1'x to 'ec'x, the
+  *   second and third bytes must be in the ranges '80'x to 'bf'x
+  *   - when the first byte is 'ed'x, the second and third bytes
+  *   must be in the ranges '80'x to '9f'x and '80'x to 'bf'x,
+  *   respectively.
+  *   - when the first byte is in the range 'ee'x to 'ef'x, the
+  *   second and third bytes must be in the ranges '80'x to 'bf'x
+  * - 'f0'x - 'f4'x, it is valid if followed by 3 more bytes and if
+  *   - when the first byte is 'f0'x, the second, third and fourth
+  *   bytes must be in the ranges '90'x to 'bf', '80'x to 'bf'x and
+  *   '80'x to 'bf'x, respectively.
+  *   - when the first byte is in the range 'f1'x to 'f3'x, the
+  *   second, third and fourth bytes must be in the range '80'x to
+  *   'bf'x
+  *   - when the first byte is 'f4'x, the second, third and fourth
+  *   bytes must be in the ranges '80'x to '8f'x, '80'x to 'bf'x and
+  *   '80'x to 'bf'x, respectively.
+  * - 'f5'x - 'ff'x, it is invalid
+  *
+  * For UTF-16 data, the validity of a widechar varies as follows
+  * according to its range:
+  *
+  * - '0000'wx - '007f'wx, it is valid and would be 1 byte if UTF-8
+  * - '0080'wx - '07ff'wx, it is valid and would be 2 bytes if UTF-8
+  * - '0800'wx - 'd7ff'wx, it is valid and would be 3 bytes if UTF-8
+  * - 'd800'wx - 'dbff'wx, it is valid if followed by a second
+  * widechar with a value greater than or equal to 'dc00'wx and less
+  * than or equal to 'dfff'wx. It is a unicode surrogate pair and
+  * would be 4 bytes if UTF-8
+  * - 'dc00'wx - 'dfff'wx, it is valid only when it is the second
+  * half of a surrogate pair
+  * - 'e000'wx - 'ffff'wx, it is valid and would be 3 bytes if UTF-8
+  *
+  * @param {ANY<CHARACTER>} x Expression which must have
+  *   CHARACTER, UCHAR, WIDECHAR or WIDEPIC type.
+  * @returns {FIXED BINARY} Zero if the string contains valid UTF
+  *   data, or the index of the first invalid element.
+  */
+ UVALID: PROC (x) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+ END;
+ /**
+  * UWIDTH returns a FIXED BIN(31) value, which is the width of the
+  * nth UTF character in a string.
+  *
+  * If \`x\` has CHARACTER type, then the string must contain valid
+  * UTF-8 data. If not, the program is in error.
+  *
+  * If \`x\` has WIDECHAR type, then the string must contain valid
+  * UTF-16 data. If not, the program is in error.
+  *
+  * If \`n\` is not positive or if \`n\` is larger than ULENGTH(x),
+  * then zero will be returned. Otherwise, if \`x\` has CHARACTER
+  * type, then UWIDTH(x,n) will return the width of the nth UTF-8
+  * character, and if \`x\` has WIDECHAR type, then UWIDTH(x,n) will
+  * return the width of the nth UTF-16 character.
+  *
+  * For example, if x equals the CHARACTER string
+  * '4b_c3_a4_66_65_72'x, then
+  *
+  * - UWIDTH(x,1) returns 1
+  * - UWIDTH(x,2) returns 2
+  * - UWIDTH(x,3) returns 1
+  * - UWIDTH(x,4) returns 1
+  * - UWIDTH(x,5) returns 1
+  *
+  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  *   or WIDECHAR type.
+  * @param {ANY<NUMBER>} n Expression which must have computational
+  *   type and which will be converted to FIXED BIN(31) if
+  *   necessary.
+  * @returns {FIXED BINARY} The width of the nth UTF character.
+  */
+ UWIDTH: PROC (x, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL n ANY<NUMBER>;
+ END;
+ /**
+  * VERIFY returns an unscaled REAL FIXED BINARY value that
+  * indicates the position in \`x\` of the leftmost character, bit,
+  * graphic, uchar, or widechar that is not in \`y\`. It also allows
+  * you to specify the location within \`x\` at which to begin
+  * processing.
+  *
+  * If all the characters, bits, graphics, uchars, or widechars in
+  * \`x\` do appear in \`y\`, a value of zero is returned. If \`x\`
+  * is the null string, a value of zero is returned. If \`x\` is not
+  * the null string and \`y\` is the null string, the value of \`n\`
+  * is returned. The default value for \`n\` is one.
+  *
+  * Unless 1 ≤ \`n\` ≤ LENGTH(\`x\`) + 1, the STRINGRANGE condition,
+  * if enabled, is raised. Its implicit action and normal return
+  * give a result of 0. If \`n\` = LENGTH(\`x\`) + 1, the result is
+  * zero.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * VERIFY will perform best when the second and third arguments are
+  * either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   X = '  a  b';         // Two blanks in each space
+  *   Y = ' ';              // One blank
+  *   N = 1;
+  *   I = verify(X,Y,N);    // I = 3
+  *
+  *   do while (I > 0);
+  *     display ( 'Nonblank at position ' || trim(I) );
+  *     N = I + 1;
+  *     I = verify(X,Y,N);
+  *   end;
+  * \`\`\`
+  *
+  * After the first pass through the do-loop, N=4 and VERIFY(X,Y,N)
+  * returns 6. After the second pass, N=7 and (LENGTH(x)+1),
+  * VERIFY(X,Y,N) now returns 0, and the loop ends.
+  *
+  * For more examples of the VERIFY built-in function, see SEARCH.
+  *
+  * @param {ANY<CHARACTER>} x String-expression.
+  * @param {ANY<CHARACTER>} y String-expression.
+  * @param {FIXED BINARY} [n] Expression \`n\` specifies the
+  *   location within \`x\` where processing begins. It must have
+  *   a computational type and is converted to FIXED BINARY(31,0).
+  * @returns {FIXED BINARY} Position of the leftmost character in
+  *   \`x\` that is not in \`y\`, or zero.
+  */
+ VERIFY: PROC (x, y, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * VERIFYR performs the same operation as the VERIFY built-in
+  * function except that the verification is done from right to
+  * left.
+  *
+  * Another difference is that the default value for \`n\` is
+  * LENGTH(\`x\`).
+  *
+  * Unless 0 ≤ \`n\` ≤ LENGTH(\`x\`), the STRINGRANGE condition, if
+  * enabled, is raised. If \`n\` = 0, the result is zero.
+  *
+  * The BIFPREC compiler option determines the precision of the
+  * result returned.
+  *
+  * VERIFYR will perform best when the second and third arguments
+  * are either literals, named constants declared with the VALUE
+  * attribute, or restricted expressions.
+  *
+  * For argument descriptions, see VERIFY.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   X = 'a  b  ';         // Two blanks in each space
+  *   Y = ' ';              // One blank
+  *   N = length(X);        // N = 6
+  *   I = verifyr(X,Y,N);   // I = 4
+  *
+  *   do while (I > 0);
+  *     display ( 'Nonblank at position ' || trim(I) );
+  *     N = I - 1;
+  *     I = verifyr(X,Y,N);
+  *   end;
+  * \`\`\`
+  *
+  * After the first pass through the do-loop, N=3 and VERIFYR(X,Y,N)
+  * returns 1. After the second pass, N=0, VERIFYR(X,Y,N) returns 0,
+  * and the loop ends. For another example, see SEARCHR.
+  *
+  * @param {ANY<CHARACTER>} x String-expression.
+  * @param {ANY<CHARACTER>} y String-expression.
+  * @param {FIXED BINARY} [n] Expression \`n\` specifies the
+  *   location within \`x\` where processing begins. It must have
+  *   a computational type and is converted to FIXED BINARY(31,0).
+  * @returns {FIXED BINARY} Position of the rightmost character in
+  *   \`x\` that is not in \`y\`, or zero.
+  */
+ VERIFYR: PROC (x, y, n) RETURNS (FIXED BINARY);
+    DCL x ANY<CHARACTER>;
+    DCL y ANY<CHARACTER>;
+    DCL n FIXED BINARY OPTIONAL;
+ END;
+ /**
+  * WHIGH returns a widechar string of length \`x\`, where each
+  * widechar has the highest widechar value (hexadecimal FFFF).
+  *
+  * @param {ANY<NUMBER>} x Expression. If necessary, \`x\` is
+  *   converted to a positive real fixed-point binary value. If
+  *   \`x\` = 0, the result is the null widechar string.
+  * @returns {WIDECHAR} Widechar string of length \`x\`.
+  */
+ WHIGH: PROC (x) RETURNS (WIDECHAR);
+    DCL x ANY<NUMBER>;
+ END;
+ /**
+  * WIDECHAR returns the widechar value of \`x\`, with a length
+  * specified by \`y\`.
+  *
+  * Abbreviation: WCHAR
+  *
+  * @param {ANY} x Expression.
+  *
+  *   \`x\` must have a computational type.
+  *
+  *   The values of \`x\` are not checked.
+  * @param {ANY<NUMBER>} [y] Expression. If necessary, y is
+  *   converted to a real fixed-point binary value.
+  *
+  *   If \`y\` is omitted, the length is determined by the rules for
+  *   type conversion.
+  *
+  *   \`y\` cannot be negative.
+  *
+  *   If \`y\` = 0, the result is the null widechar string.
+  * @returns {WIDECHAR} The widechar value of \`x\`.
+  */
+ WIDECHAR: WCHAR: PROC (x, y) RETURNS (WIDECHAR);
+    DCL x ANY;
+    DCL y ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * WLOW returns a widechar string of length x, where each widechar
+  * has the lowest widechar value (hexadecimal 0000).
+  *
+  * @param {ANY<NUMBER>} x Expression. If necessary, \`x\` is
+  *   converted to a positive real fixed-point binary value. If
+  *   \`x\` = 0, the result is the null widechar string.
+  * @returns {WIDECHAR} Widechar string of length x.
+  */
+ WLOW: PROC (x) RETURNS (WIDECHAR);
+    DCL x ANY<NUMBER>;
+ END;
 
  /* Subroutines */
- LOCNEWSPACE: PROC (value) RETURNS (); END;
- LOCNEWVALUE: PROC (value) RETURNS (); END;
- PLIASCII: PROC (value) RETURNS (); END;
- PLIATTN: PROC (value) RETURNS (); END;
- PLICANC: PROC (value) RETURNS (); END;
- PLICKPT: PROC (value) RETURNS (); END;
- PLIDELETE: PROC (value) RETURNS (); END;
- PLIDUMP: PROC (value) RETURNS (); END;
- PLIEBCDIC: PROC (value) RETURNS (); END;
- PLIFILL: PROC (value) RETURNS (); END;
- PLIFREE: PROC (value) RETURNS (); END;
- PLIMOVE: PROC (value) RETURNS (); END;
- PLIOVER: PROC (value) RETURNS (); END;
- PLIPARSE: PROC (value) RETURNS (); END;
- PLIREST: PROC (value) RETURNS (); END;
- PLIRETC: PROC (value) RETURNS (); END;
+ /**
+  * The LOCNEWSPACE(x, a) built-in subroutine allocates space in a
+  * for the variable type described by the LOCATES attribute that is
+  * associated with x.
+  *
+  * In the following code snippet, the two executable statements are
+  * equivalent: Both statements allocate 32 bytes from the pool area
+  * and assign that offset to name(1).
+  *
+  * \`\`\`
+  * 	      declare
+  *               1 data based(data_ptr) unaligned,
+  *                  2 actual_count fixed bin(31),
+  *                  2 orderinfo(order_count refer( actual_count)),
+  *                     3 name    offset(pool) locates(char(30) varying),
+  *                     3 address offset(pool) locates(char(62) varying),
+  *                  2 pool area(10_000);
+  *
+  *        call locnewspace(name(1));
+  *        call locnewspace(name(1), pool);
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} x Must be an OFFSET reference with the
+  *   LOCATES attribute. x must be scalar.
+  * @param {ANY<AREA>} [a] Must be an AREA reference. a must be
+  *   scalar.
+  *
+  *   If you do not specify a, the OFFSET attribute for x must have
+  *   specified an AREA reference, and LOCNEWSPACE allocates space
+  *   in that area.
+  */
+ LOCNEWSPACE: PROC (x, a);
+    DCL x ANY<LOCATOR>;
+    DCL a ANY<AREA> OPTIONAL;
+ END;
+ /**
+  * The LOCNEWVALUE(v, x, a) built-in subroutine allocates space in
+  * a for the variable type described by the LOCATES attribute that
+  * is associated with x and assigns v to that area.
+  *
+  * The following three statements are equivalent:
+  *
+  * -
+  * -
+  * -
+  *
+  * If the OFFSET attribute for x specifies an AREA attribute, the
+  * following statements are equivalent:
+  *
+  * -
+  * -
+  * -
+  *
+  * In the following code snippet, the two executable statements are
+  * equivalent: Both statements allocate 17 bytes in the pool area,
+  * assign that offset to name(1), and assign the 'Sherlock Holmes'
+  * value as a character varying string to that location in the
+  * area.
+  *
+  * \`\`\`
+  *             declare
+  *               1 data based(data_ptr) unaligned,
+  *                  2 actual_count fixed bin(31),
+  *                  2 orderinfo(order_count refer(actual_count)),
+  *                     3 name    offset(pool) locates(char(30) varying),
+  *                     3 address offset(pool) locates(char(62) varying),
+  *                  2 pool area(10_000);
+  *
+  *             call locnewvalue('Sherlock Holmes', name(1));
+  *             call locnewvalue('Sherlock Holmes', name(1), pool);
+  * \`\`\`
+  *
+  * @param {ANY} v Must be computational and scalar.
+  * @param {ANY<LOCATOR>} x Must be an OFFSET reference with the
+  *   LOCATES attribute. x must be scalar.
+  * @param {ANY<AREA>} [a] Must be an AREA reference. a must be
+  *   scalar.
+  *
+  *   If you do not specify a, the OFFSET attribute for x must have
+  *   specified an AREA reference, and LOCNEWSPACE allocates space
+  *   in that area.
+  */
+ LOCNEWVALUE: PROC (v, x, a);
+    DCL v ANY;
+    DCL x ANY<LOCATOR>;
+    DCL a ANY<AREA> OPTIONAL;
+ END;
+ /**
+  * PLIASCII converts z bytes of an EBCDIC value at location y to an
+  * ASCII value at location x.
+  *
+  * The storage at location x and y must not overlap unless they
+  * specify the same location.
+  *
+  * @param {ANY<LOCATOR>} x Expression with type POINTER or OFFSET.
+  *   If the type is OFFSET, the expression must be an OFFSET
+  *   variable declared with the AREA attribute.
+  * @param {ANY<LOCATOR>} y Expression with type POINTER or OFFSET.
+  *   If the type is OFFSET, the expression must be an OFFSET
+  *   variable declared with the AREA attribute.
+  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  *   type and is converted to type size_t.1
+  */
+ PLIASCII: PROC (x, y, z);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * PLIATTN causes the ATTENTION condition to be raised at that
+  * point in the code. It gives you explicit control over where the
+  * compiler inserts attention breakpoints.
+  *
+  * The INTERRUPT option has no effect on the code that is generated
+  * for a call to this subroutine.
+  */
+ PLIATTN: PROC ();
+ END;
+ /**
+  * PLICANC allows you to cancel the automatic restart facility.
+  *
+  * For more information about using PLICANC, see the Programming
+  * Guide.
+  */
+ PLICANC: PROC ();
+ END;
+ /**
+  * PLICKPT allows you to take a checkpoint for later restart.
+  *
+  * For more information about using PLICKPT, see the Programming
+  * Guide.
+  *
+  * @param {ANY} [argument] Checkpoint expressions such as ddname
+  *   and check-id.
+  */
+ PLICKPT: PROC (argument);
+    DCL argument ANY LIST;
+ END;
+ /**
+  * PLIDELETE frees the storage associated with the handle \`x\`.
+  *
+  * PLIDELETE(x) is the best way to free the storage associated with
+  * a handle; this storage is usually acquired by the NEW type
+  * function.
+  *
+  * CALL PLIDELETE(x) is equivalent to CALL PLIFREE(PTRVALUE(x)).
+  *
+  * @param {ANY<LOCATOR>} x Handle expression.
+  */
+ PLIDELETE: PROC (x);
+    DCL x ANY<LOCATOR>;
+ END;
+ /**
+  * PLIDUMP allows you to obtain a formatted dump of selected parts
+  * of storage that is used by your program.
+  *
+  * For more information about using PLIDUMP, refer to the
+  * Programming Guide.
+  *
+  * @param {ANY} [argument] Checkpoint expressions such as ddname
+  *   and check-id.
+  */
+ PLIDUMP: PROC (argument);
+    DCL argument ANY LIST;
+ END;
+ /**
+  * PLIEBCDIC converts z bytes of an ASCII value at location y to an
+  * EBCDIC value at location x.
+  *
+  * The storage at location x and y must not overlap unless they
+  * specify the same location.
+  *
+  * @param {ANY<LOCATOR>} x Expression with type POINTER or OFFSET.
+  *   If the type is OFFSET, the expression must be an OFFSET
+  *   variable declared with the AREA attribute.
+  * @param {ANY<LOCATOR>} y Expression with type POINTER or OFFSET.
+  *   If the type is OFFSET, the expression must be an OFFSET
+  *   variable declared with the AREA attribute.
+  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  *   type and is converted to type size_t.1
+  */
+ PLIEBCDIC: PROC (x, y, z);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * PLIFILL moves \`z\` copies of the byte \`y\` to the location
+  * \`x\` without any conversions, padding, or truncation.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl 1 Str1,
+  *         2 B  fixed bin(31),
+  *         2 C  pointer,
+  *         2 * union,
+  *           3 D  char(4),
+  *           3 E  fixed bin(31),
+  *           3 *,
+  *             4 * char(3),
+  *             4 F fixed bin(8) unsigned,
+  *         2 * char(0)
+  *              initial call plifill( addr(Str1), '00'x, stg(Str1) );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} x Expression. \`x\` must be declared
+  *   POINTER or OFFSET. If it is OFFSET, x must be declared with
+  *   the AREA attribute.
+  * @param {CHARACTER} y Must be declared CHARACTER(1) NONVARYING.
+  * @param {ANY<NUMBER>} z Expression. It is converted to type
+  *   size_t 1.
+  */
+ PLIFILL: PROC (x, y, z);
+    DCL x ANY<LOCATOR>;
+    DCL y CHARACTER;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * PLIFREE frees the heap storage associated with the pointer \`p\`
+  * that was allocated using the ALLOCATE built-in function.
+  *
+  * PLIFREE is the opposite of ALLOCATE (ALLOC).
+  *
+  * @param {ANY<LOCATOR>} p Locator expression.
+  */
+ PLIFREE: PROC (p);
+    DCL p ANY<LOCATOR>;
+ END;
+ /**
+  * PLIMOVE moves \`z\` storage units (bytes) from location \`y\` to
+  * location \`x\`, without any conversions, padding, or truncation.
+  *
+  * Unlike the PLIOVER built-in subroutine, storage at locations
+  * \`x\` and \`y\` is assumed to be unique. If storage overlaps,
+  * unpredictable results can occur.
+  *
+  * **Example**
+  *
+  * \`\`\`
+  *   dcl 1 Str1,
+  *         2 B  fixed bin(31),
+  *         2 C  pointer,
+  *         2 * union,
+  *           3 D  char(4),
+  *           3 E  fixed bin(31),
+  *           3 *,
+  *             4 * char(3),
+  *             4 F fixed bin(8) unsigned,
+  *         2 * char(0);
+  *   dcl 1 Template nonasgn static,
+  *         2 * fixed bin(31) init(200),
+  *         2 * pointer init(sysnull()),
+  *         2 * char(4) init(''),
+  *         2 * char(0);
+  *
+  *   call plimove(addr(Str1), addr(Template), stg(Str1));
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} x Expression declared as POINTER or
+  *   OFFSET. If the type is OFFSET, \`x\` must be declared with
+  *   the AREA attribute.
+  * @param {ANY<LOCATOR>} y Expression declared as POINTER or
+  *   OFFSET. If the type is OFFSET, \`y\` must be declared with
+  *   the AREA attribute.
+  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  *   type and is converted to type size_t.1
+  */
+ PLIMOVE: PROC (x, y, z);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * PLIOVER moves \`z\` storage units (bytes) from location \`y\` to
+  * location \`x\`, without any conversions, padding, or truncation.
+  * Unlike the PLIMOVE built-in subroutine, the storage at locations
+  * \`x\` and \`y\` can overlap.
+  *
+  * @param {ANY<LOCATOR>} x Expression declared as POINTER or
+  *   OFFSET. If the type is OFFSET, \`x\` must be declared with
+  *   the AREA attribute.
+  * @param {ANY<LOCATOR>} y Expression declared as POINTER or
+  *   OFFSET. If the type is OFFSET, \`y\` must be declared with
+  *   the AREA attribute.
+  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  *   type and is converted to type size_t.1
+  */
+ PLIOVER: PROC (x, y, z);
+    DCL x ANY<LOCATOR>;
+    DCL y ANY<LOCATOR>;
+    DCL z ANY<NUMBER>;
+ END;
+ /**
+  * PLIPARSE parses a character string into substrings.
+  *
+  * There must at least 3 arguments and no more than 64.
+  *
+  * The first argument is the input string to be parsed (which can
+  * be any expression with CHARACTER type).
+  *
+  * The arguments after that input string consist of an even number
+  * of pairs with each pair consisting of
+  *
+  * - an even number of pairs with each pair consisting of a target
+  * reference (or an *) and a separator
+  * - an optional, last target argument that must be a reference (or
+  * * )
+  *
+  * The first target argument after the first separator that is not
+  * found is assigned the remaining input and any remaining target
+  * arguments are assigned the quotation marks.
+  *
+  * Any target argument that is not an * must have CHARACTER type
+  * and must be ASSIGNABLE.
+  *
+  * The separators must all have CHARACTER type.
+  *
+  * Example 1
+  *
+  * Given
+  *
+  * \`\`\`
+  *     dcl x1    char(16) varying;
+  *     dcl x2    char(16) varying;
+  *     dcl x3    char(16) varying;
+  *     dcl x4    char(16) varying;
+  *
+  *     dcl s1    char value('KEY:');
+  *     dcl s2    char value('--');
+  *     dcl s3    char value('-');
+  *
+  *     input = '31415KEY:0123--45678-9';
+  *
+  *     call pliparse( input, x1, s1, x2, s2, x3, s3, x4  );
+  * \`\`\`
+  *
+  * the target arguments will have the following values
+  *
+  * \`\`\`
+  *     x1 = '31415';
+  *     x2 = '0123';
+  *     x3 = '45678';
+  *     x4 = '9';
+  * \`\`\`
+  *
+  * Example 2
+  *
+  * In this example, "input" differs from the example above in that
+  * there is no "--"
+  *
+  * Given
+  *
+  * \`\`\`
+  *     dcl x1    char(16) varying;
+  *     dcl x2    char(16) varying;
+  *     dcl x3    char(16) varying;
+  *     dcl x4    char(16) varying;
+  *
+  *     dcl s1    char value('KEY:');
+  *     dcl s2    char value('--');
+  *     dcl s3    char value('-');
+  *
+  *     input = '31415KEY:0123-45678-9';
+  *
+  *     call pliparse( input, x1, s1, x2, s2, x3, s3, x4  );
+  * \`\`\`
+  *
+  * the target arguments will have the following values
+  *
+  * \`\`\`
+  *     x1 = '31415';
+  *     x2 = '0123-45678-9';
+  *     x3 = '';
+  *     x4 = '';
+  * \`\`\`
+  *
+  * Example 3
+  *
+  * Given
+  *
+  * \`\`\`
+  *     dcl x1    char(16) varying;
+  *     dcl x2    char(16) varying;
+  *     dcl x3    char(16) varying;
+  *     dcl x4    char(16) varying;
+  *
+  *     input = ' Alex  Bruno';
+  *
+  *     call pliparse( input, x1, ' ', x2, ' ', x3, ' ', x4  );
+  *
+  * \`\`\`
+  *
+  * the target arguments will have the following values
+  *
+  * \`\`\`
+  *     x1 = '';
+  *     x2 = 'Alex';
+  *     x3 = '';
+  *     x4 = 'Bruno';
+  * \`\`\`
+  *
+  * Example 4
+  *
+  * Given
+  *
+  * \`\`\`
+  *     dcl x1    char(16) varying;
+  *     dcl x2    char(16) varying;
+  *     dcl x3    char(16) varying;
+  *     dcl x4    char(16) varying;
+  *     input = collapse( ' Alex  Bruno', ' ' );
+  *
+  *     call pliparse( input, x1, ' ', x2, ' ', x3, ' ', x4  );
+  * \`\`\`
+  *
+  * the target arguments will have the following values
+  *
+  * \`\`\`
+  *     x1 = 'Alex';
+  *     x2 = 'Bruno';
+  *     x3 = '';
+  *     x4 = '';
+  * \`\`\`
+  */
+// TODO has overloads
+ PLIPARSE: PROC (args);
+    DCL args LIST;
+ END;
+ /**
+  * PLIREST allows you to restart program execution.
+  *
+  * For more information about using PLIREST, see the Programming
+  * Guide.
+  */
+ PLIREST: PROC ();
+ END;
+ /**
+  * PLIRETC allows you to set a return code that can be examined by
+  * the program that invoked this PL/I program or by another PL/I
+  * procedure via the PLIRETV built-in function.
+  *
+  * @param {FIXED BINARY} x An expression yielding a FIXED
+  *   BINARY(31,0) return code.
+  */
+ PLIRETC: PROC (x);
+    DCL x FIXED BINARY;
+ END;
  PLISAXA: PROC (value) RETURNS (); END;
  PLISAXB: PROC (value) RETURNS (); END;
  PLISAXC: PROC (value) RETURNS (); END;
