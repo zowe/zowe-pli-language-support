@@ -13300,25 +13300,478 @@ export const Builtins =
  PLIRETC: PROC (x);
     DCL x FIXED BINARY;
  END;
- PLISAXA: PROC (value) RETURNS (); END;
- PLISAXB: PROC (value) RETURNS (); END;
- PLISAXC: PROC (value) RETURNS (); END;
- PLISAXD: PROC (value) RETURNS (); END;
- PLISRTA: PROC (value) RETURNS (); END;
- PLISRTB: PROC (value) RETURNS (); END;
- PLISRTC: PROC (value) RETURNS (); END;
- PLISRTD: PROC (value) RETURNS (); END;
- PLISTCK: PROC (value) RETURNS (); END;
- PLISTCKE: PROC (value) RETURNS (); END;
- PLISTCKF: PROC (value) RETURNS (); END;
- PLISTCKLOCAL: PROC (value) RETURNS (); END;
- PLISTCKELOCAL: PROC (value) RETURNS (); END;
- PLISTCKP: PROC (value) RETURNS (); END;
- PLISTCKPLOCAL: PROC (value) RETURNS (); END;
- PLISTCKPUTC: PROC (value) RETURNS (); END;
- PLISTCKUTC: PROC (value) RETURNS (); END;
- PLISTCKEUTC: PROC (value) RETURNS (); END;
- PLITRANxy: PROC (value) RETURNS (); END;
+ /**
+  * PLISAXA performs SAX-style parsing of an XML document that is
+  * located in a buffer in your program.
+  *
+  * Note that if the XML is contained in a CHARACTER VARYING or
+  * WIDECHAR VARYING string, the ADDRDATA built-in function should
+  * be used to obtain the address of the first data byte.
+  *
+  * Also note that if the XML is contained in a WIDECHAR string,
+  * the value for the number of bytes is twice the value returned
+  * by the LENGTH built-in function.
+  *
+  * For more information, see the Programming Guide.
+  *
+  * @param {ANY} e An event structure.
+  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  *   be passed back to the parsing events.
+  * @param {ANY<LOCATOR>} x The address of the buffer containing
+  *   the input XML.
+  * @param {FIXED BINARY} n The number of bytes of data in that
+  *   buffer. It must have a computational type and is converted
+  *   to type size_t.1
+  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  *   purported codepage of that XML.
+  */
+ PLISAXA: PROC (e, p, x, n, c);
+    DCL e ANY;
+    DCL p ANY<LOCATOR>;
+    DCL x ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL c ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * PLISAXB performs SAX-style parsing of an XML document that is
+  * located in a file.
+  *
+  * For more information, see the Programming Guide.
+  *
+  * @param {ANY} e An event structure
+  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  *   be passed back to the parsing events
+  * @param {CHARACTER} x A character string expression specifying
+  *   the input file
+  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  *   purported codepage of that XML
+  */
+ PLISAXB: PROC (e, p, x, c);
+    DCL e ANY;
+    DCL p ANY<LOCATOR>;
+    DCL x CHARACTER;
+    DCL c ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * PLISAXC performs SAX-style parsing of an XML document that is
+  * located in one or more buffers in your program.
+  *
+  * PLISAXC uses the z/OS XML System Services parser and is
+  * supported only on z/OS.
+  *
+  * For more information, see the Enterprise PL/I for z/OS®
+  * Programming Guide.
+  *
+  * @param {ANY} e An event structure.
+  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  *   be passed back to the parsing events.
+  * @param {ANY<LOCATOR>} x The address of the buffer containing
+  *   the XML document.
+  * @param {FIXED BINARY} n The number of bytes of data in that
+  *   buffer. It must have a computational type and is converted
+  *   to type size_t.1
+  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  *   codepage of that XML document.
+  */
+ PLISAXC: PROC (e, p, x, n, c);
+    DCL e ANY;
+    DCL p ANY<LOCATOR>;
+    DCL x ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL c ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * PLISAXD provides SAX-style parsing with XML validation of an
+  * XML document.
+  *
+  * PLISAXD uses the z/OS® XML System Services parser and is
+  * supported only on z/OS.
+  *
+  * For more information, see the chapter Using the PLISAXD XML
+  * parser in the Enterprise PL/I for z/OS Programming Guide.
+  *
+  * Note: An OSR is a preprocessed version of a schema. For more
+  * information about OSR, see the XML System Services User's
+  * Guide and Reference.
+  *
+  * @param {ANY} e An event structure.
+  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  *   be passed back to the parsing events.
+  * @param {ANY<LOCATOR>} x The address of s buffer that contains
+  *   the XML document.
+  * @param {FIXED BINARY} n The number of bytes of data in that
+  *   buffer. It must have a computational type and is converted
+  *   to type size_t.1
+  * @param {ANY<LOCATOR>} o The address of a buffer that contains
+  *   an Optimized Schema Representation (OSR).
+  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  *   codepage of that XML document.
+  */
+ PLISAXD: PROC (e, p, x, n, o, c);
+    DCL e ANY;
+    DCL p ANY<LOCATOR>;
+    DCL x ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL o ANY<LOCATOR>;
+    DCL c ANY<NUMBER> OPTIONAL;
+ END;
+ /**
+  * PLISRTA sorts an input file to produce a sorted output file.
+  *
+  * For more information, see the Programming Guide.
+  *
+  * @param {ANY} argument Sort arguments.
+  */
+ PLISRTA: PROC (argument);
+    DCL argument ANY LIST;
+ END;
+ /**
+  * PLISRTB sorts input records provided by an E15 PL/I exit
+  * procedure to produce a sorted output file.
+  *
+  * For more information, see the Programming Guide.
+  *
+  * @param {ANY} argument Sort arguments.
+  */
+ PLISRTB: PROC (argument);
+    DCL argument ANY LIST;
+ END;
+ /**
+  * PLISRTC sorts an input file to produce sorted records that are
+  * processed by an E35 PL/I exit procedure.
+  *
+  * For more information, see the Enterprise PL/I for z/OSPL/I
+  * for AIX Programming Guide.
+  *
+  * @param {ANY} argument Sort arguments.
+  */
+ PLISRTC: PROC (argument);
+    DCL argument ANY LIST;
+ END;
+ /**
+  * PLISRTD sorts input records provided by an E15 PL/I exit
+  * procedure to produce sorted records that are processed by an
+  * E35 PL/I exit procedure.
+  *
+  * For more information, see the Programming Guide.
+  *
+  * @param {ANY} argument Sort arguments.
+  */
+ PLISRTD: PROC (argument);
+    DCL argument ANY LIST;
+ END;
+ /**
+  * PLISTCK generates the corresponding store clock hardware
+  * instruction and returns the condition code set by the
+  * instruction.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  *   It is set by the STCK instruction. For more details about
+  *   the STCK instruction, see the Principles of Operations
+  *   manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCK: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKE generates the corresponding store clock hardware
+  * instruction and returns the condition code set by the
+  * instruction.
+  *
+  * @param {CHARACTER} x CHAR(16) NONVARYING reference. It is set
+  *   by the STCKE instruction. For more details about the STCKE
+  *   instruction, see the Principles of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKE: PROC (x) RETURNS (FIXED BINARY);
+    DCL x CHARACTER;
+ END;
+ /**
+  * PLISTCKF generates the corresponding store clock hardware
+  * instruction and returns the condition code set by the
+  * instruction.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  *   It is set by the STCKF instruction. For more details about
+  *   the STCKF instruction, see the Principles of Operations
+  *   manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKF: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKLOCAL generates the corresponding store clock hardware
+  * instruction and adjusts the STCK value by subtracting the
+  * number of leap seconds from the STCK value and then adding
+  * the time zone difference to give the local time.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BINARY(64)
+  *   reference.
+  *
+  *   It is set by the STCK instruction and then adjusted. For
+  *   more details about the STCK instruction, see the Principles
+  *   of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKLOCAL: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKELOCAL generates the corresponding store clock hardware
+  * instruction and adjusts the STCKE value by subtracting the
+  * number of leap seconds from the STCKE value and then adding
+  * the time zone difference to give the local time.
+  *
+  * @param {CHARACTER} x CHAR(16) NONVARYING reference.
+  *
+  *   It is set by the STCKE instruction and then adjusted. For
+  *   more details about the STCKE instruction, see the Principles
+  *   of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKELOCAL: PROC (x) RETURNS (FIXED BINARY);
+    DCL x CHARACTER;
+ END;
+ /**
+  * PLISTCKP generates the corresponding Perform Timing Facility
+  * Function (PTFF) hardware instruction and returns the condition
+  * code set by the instruction.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  *
+  *   It is set by the PTFF instruction. For more details about
+  *   the PTFF instruction, see the Principles of Operations
+  *   manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKP: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKPLOCAL generates the corresponding Perform Timing
+  * Facility Function (PTFF) hardware instruction and then
+  * adjusts the PTFF value by subtracting the number of leap
+  * seconds from the PTFF value and then adding the time zone
+  * difference to give the local time. It returns the condition
+  * code set by the instruction.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  *
+  *   It is set by the PTFF instruction and then adjusted. For
+  *   more details about the PTFF instruction, see the Principles
+  *   of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKPLOCAL: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKPUTC generates the corresponding Perform Timing
+  * Facility Function (PTFF) hardware instruction and adjusts
+  * the PTFF value by subtracting the number of leap seconds to
+  * give the UTC time. It returns the condition code set by the
+  * instruction.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  *
+  *   It is set by the PTFF instruction and then adjusted. For
+  *   more details about the PTFF instruction, see the Principles
+  *   of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKPUTC: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKUTC generates the corresponding store clock hardware
+  * instruction and adjusts the STCK value by subtracting the
+  * number of leap seconds to give the UTC time.
+  *
+  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BINARY(64)
+  *   reference.
+  *
+  *   It is set by the STCK instruction and then adjusted. For
+  *   more details about the STCK instruction, see the Principles
+  *   of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKUTC: PROC (x) RETURNS (FIXED BINARY);
+    DCL x FIXED BINARY;
+ END;
+ /**
+  * PLISTCKEUTC generates the corresponding store clock hardware
+  * instruction and adjusts the STCKE value by subtracting the
+  * number of leap seconds to give the UTC time.
+  *
+  * @param {CHARACTER} x CHAR(16) NONVARYING reference.
+  *
+  *   It is set by the STCKE instruction and then adjusted. For
+  *   more details about the STCKE instruction, see the Principles
+  *   of Operations manual.
+  * @returns {FIXED BINARY} The condition code set by the
+  *   instruction.
+  */
+ PLISTCKEUTC: PROC (x) RETURNS (FIXED BINARY);
+    DCL x CHARACTER;
+ END;
+ /**
+  * PLITRAN11 translates one-byte data from a source buffer to
+  * one-byte data in a target buffer.
+  *
+  * The buffer length must be nonnegative and must have a
+  * computational type. The buffer length is converted to type
+  * size_t.1
+  *
+  * The target buffer must be at least as large as the source
+  * buffer.
+  *
+  * The translate table must be aligned on a doubleword boundary.
+  * The easiest way to force this alignment is to add the
+  * attribute ALIGNED(8) to the declare of the table.
+  *
+  * On z/OS, PLITRAN11 is implemented via inline code using the
+  * CU11 instruction.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {FIXED BINARY} n Length of the source buffer.
+  * @param {ANY<LOCATOR>} t Address of the 256-byte translate
+  *   table.
+  */
+ PLITRAN11: PROC (p, q, n, t);
+    DCL p ANY<LOCATOR>;
+    DCL q ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL t ANY<LOCATOR>;
+ END;
+ /**
+  * PLITRAN12 translates one-byte data from a source buffer to
+  * two-byte data in a target buffer.
+  *
+  * The target buffer must be at least twice as large as the
+  * source buffer.
+  *
+  * The translate table must be aligned on a doubleword boundary.
+  * The easiest way to force this alignment is to add the
+  * attribute ALIGNED(8) to the declare of the table.
+  *
+  * On z/OS, PLITRAN12 is implemented via inline code using the
+  * CU12 instruction.
+  *
+  * Example:
+  *
+  * This table can be used to quickly transform a buffer to
+  * lower-case hex:
+  *
+  * \`\`\`
+  *            dcl
+  *              1 lowerhex(16) static nonasgn aligned(8)
+  *                             char(32) init (
+  *                          /*   0 1 2 3 4 5 6 7 8 9 a b c d e f   //
+  *                             '000102030405060708090a0b0c0d0e0f',
+  *                             '101112131415161718191a1b1c1d1e1f',
+  *                             '202122232425262728292a2b2c2d2e2f',
+  *                             '303132333435363738393a3b3c3d3e3f',
+  *                             '404142434445464748494a4b4c4d4e4f',
+  *                             '505152535455565758595a5b5c5d5e5f',
+  *                             '606162636465666768696a6b6c6d6e6f',
+  *                             '707172737475767778797a7b7c7d7e7f',
+  *                             '808182838485868788898a8b8c8d8e8f',
+  *                             '909192939495969798999a9b9c9d9e9f',
+  *                             'a0a1a2a3a4a5a6a7a8a9aaabacadaeaf',
+  *                             'b0b1b2b3b4b5b6b7b8b9babbbcbdbebf',
+  *                             'c0c1c2c3c4c5c6c7c8c9cacbcccdcecf',
+  *                             'd0d1d2d3d4d5d6d7d8d9dadbdcdddedf',
+  *                             'e0e1e2e3e4e5e6e7e8e9eaebecedeeef',
+  *                             'f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff'  );
+  *
+  *            call plitran12( p, q, n, addr(lowerhex) );
+  * \`\`\`
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {FIXED BINARY} n Length of the source buffer. The
+  *   buffer length must be nonnegative and must have a
+  *   computational type. The buffer length is converted to type
+  *   size_t.1
+  * @param {ANY<LOCATOR>} t Address of the 512-byte translate
+  *   table.
+  */
+ PLITRAN12: PROC (p, q, n, t);
+    DCL p ANY<LOCATOR>;
+    DCL q ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL t ANY<LOCATOR>;
+ END;
+ /**
+  * PLITRAN21 translates two-byte data from a source buffer to
+  * one-byte data in a target buffer.
+  *
+  * The target buffer must be at least half as large as the
+  * source buffer.
+  *
+  * The translate table must be aligned on a doubleword boundary.
+  * The easiest way to force this alignment is to add the
+  * attribute ALIGNED(8) to the declare of the table.
+  *
+  * On z/OS, PLITRAN21 is implemented via inline code using the
+  * CU21 instruction.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {FIXED BINARY} n Length of the source buffer. The
+  *   buffer length must be nonnegative and must have a
+  *   computational type. The buffer length is converted to type
+  *   size_t.1
+  * @param {ANY<LOCATOR>} t Address of the 64K-byte translate
+  *   table.
+  */
+ PLITRAN21: PROC (p, q, n, t);
+    DCL p ANY<LOCATOR>;
+    DCL q ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL t ANY<LOCATOR>;
+ END;
+ /**
+  * PLITRAN22 translates two-byte data from a source buffer to
+  * two-byte data in a target buffer.
+  *
+  * The target buffer must be at least as large as the source
+  * buffer.
+  *
+  * The translate table must be aligned on a doubleword boundary.
+  * The easiest way to force this alignment is to add the
+  * attribute ALIGNED(8) to the declare of the table.
+  *
+  * On z/OS, PLITRAN22 is implemented via inline code using the
+  * CU22 instruction.
+  *
+  * @param {ANY<LOCATOR>} p Address of the target buffer.
+  * @param {ANY<LOCATOR>} q Address of the source buffer.
+  * @param {FIXED BINARY} n Length of the source buffer. The
+  *   buffer length must be nonnegative and must have a
+  *   computational type. The buffer length is converted to type
+  *   size_t.1
+  * @param {ANY<LOCATOR>} t Address of the 128K-byte translate
+  *   table.
+  */
+ PLITRAN22: PROC (p, q, n, t);
+    DCL p ANY<LOCATOR>;
+    DCL q ANY<LOCATOR>;
+    DCL n FIXED BINARY;
+    DCL t ANY<LOCATOR>;
+ END;
 
  ${KNOWN_BUILTINS}
 
