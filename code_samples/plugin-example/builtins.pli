@@ -52,9 +52,13 @@
  A = MEMCU41(P1, 1, P2, 2);
  A = MEMCU42(P1, 1, P2, 2);
 
+ A = ONCODE();
+ A = JULIANTOSMF("2024-06-01T12:00:00Z");
+
  //TODO overloads
  A = MEMINDEX(P1, 1, "x");
  A = MEMINDEX(P1, 1, P2, 2);
+ A = REPATTERN(1,2);
 
  //TODO ARGCOUNT bei MemberCall
  //TODO HOVER comment docu for CallStatement

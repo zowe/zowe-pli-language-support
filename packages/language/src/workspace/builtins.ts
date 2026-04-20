@@ -3335,6 +3335,7 @@ export const Builtins =
   * @returns {ANY<CHARACTER>} The value converted to a date in a
   *   second pattern.
   */
+ //TODO has overloads
  REPATTERN: PROC (d, p, q, w) RETURNS (ANY<CHARACTER>);
     DCL d ANY<CHARACTER>;
     DCL p ANY<CHARACTER>;
