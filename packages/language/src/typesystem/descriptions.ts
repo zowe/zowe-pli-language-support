@@ -1172,14 +1172,16 @@ function createArithmeticTypeDescription({
   endianness = Endianess.Big,
   //TODO default value depends on platform?
   floatFormat = FloatFormat.IEEE,
+  initial,
   ...base
-}: Partial<ArithmeticTypeDescriptionProps>): ArithmeticTypeDescription {
+}: Partial<ArithmeticTypeDescription>): ArithmeticTypeDescription {
   return {
     type: ArithmeticType,
     ...createBaseTypeDescription(ArithmeticType, base),
     mode,
     scale,
     precision,
+    initial,
     base: unit,
     sign,
     endianness,

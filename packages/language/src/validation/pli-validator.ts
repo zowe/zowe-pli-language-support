@@ -22,7 +22,7 @@ import {
 } from "./type-check-validator";
 import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
-import { CallStatement_checkArguments } from "./compiler/check-arguments";
+import { CallStatement_checkArguments, MemberCall_checkArguments } from "./compiler/check-arguments";
 import { IBM1352IE_declared_item_pli_scan_repetition } from "./compiler/IBM1352IE-declare-item-scan-repetition";
 import {
   DeprecateStatements,
@@ -51,6 +51,7 @@ export function registerPliValidationChecks(): ValidationChecks {
     LeaveStatement: [IBM1219I_leave_exits_noniterative_do],
     // TODO @montymxb Mar. 27th, 2025: Needs to have a way to readily access the containing 'document' (SourceFile) to compare the offsets (see def)
     // MemberCall: [IBM1747IS_Function_cannot_be_used_before_the_functions_descriptor_list_has_been_scanned],
+    MemberCall: [MemberCall_checkArguments],
     ProcedureStatement: [
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,

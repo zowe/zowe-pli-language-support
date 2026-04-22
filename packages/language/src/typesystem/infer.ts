@@ -225,10 +225,15 @@ export class DefaultTypeInferer implements TypeInferer {
         if (!expression.value) {
           return TypeDescriptions.Unknown();
         }
+        const initial = ast.createInitialAttribute();
+        const item = ast.createInitialAttributeSpecification();
+        item.expression = expression;
+        initial.items = [item];
         switch (expression.value.kind) {
           case ast.SyntaxKind.StringLiteral:
             return TypeDescriptions.String({
               format: StringFormat.NonVarying,
+              initial,
               stringBits: {
                 //TODO handle other string kinds
                 kind:
@@ -242,7 +247,9 @@ export class DefaultTypeInferer implements TypeInferer {
             });
           case ast.SyntaxKind.NumberLiteral:
             //TODO handle other numeric literals
-            return TypeDescriptions.Arithmetic({});
+            return TypeDescriptions.Arithmetic({
+              initial
+            });
         }
         break;
       }
@@ -556,7 +563,16 @@ export class DefaultTypeInferer implements TypeInferer {
       expression.value?.kind === ast.SyntaxKind.StringLiteral &&
       typeof expression.value.value === "string"
     ) {
-      return expression.value.value;
+      //almost STRING_TERM from tokens.ts
+      const pattern = /^("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*$/i;
+      const literalValue = expression.value.value;
+      const match = pattern.exec(literalValue);
+      if (match) {
+        return match[1].slice(1, -1)
+          .replace(/("")/g, '"')
+          .replace(/('')/g, "'");
+      }
+      return undefined;
     }
     return undefined;
   }
