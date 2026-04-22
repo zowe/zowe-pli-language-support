@@ -522,6 +522,7 @@ export class DefaultTypeInferer implements TypeInferer {
     target: TypeDescriptions.Any,
     _unit: CompilationUnit,
   ): boolean {
+    //TODO respect isDataTypeGeneric flag and other attributes that can influence assignability
     if (source.type === target.type) {
       return true;
     }
