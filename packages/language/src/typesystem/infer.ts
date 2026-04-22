@@ -574,7 +574,8 @@ export class DefaultTypeInferer implements TypeInferer {
           .replace(/("")/g, '"')
           .replace(/('')/g, "'");
       }
-      return undefined;
+      //if it does not match the pattern, it was produces by the PP parser, which removes quotes on its own
+      return literalValue;
     }
     return undefined;
   }
