@@ -248,7 +248,7 @@ export class DefaultTypeInferer implements TypeInferer {
           case ast.SyntaxKind.NumberLiteral:
             //TODO handle other numeric literals
             return TypeDescriptions.Arithmetic({
-              initial
+              initial,
             });
         }
         break;
@@ -564,11 +564,13 @@ export class DefaultTypeInferer implements TypeInferer {
       typeof expression.value.value === "string"
     ) {
       //almost STRING_TERM from tokens.ts
-      const pattern = /^("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*$/i;
+      const pattern =
+        /^("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*$/i;
       const literalValue = expression.value.value;
       const match = pattern.exec(literalValue);
       if (match) {
-        return match[1].slice(1, -1)
+        return match[1]
+          .slice(1, -1)
           .replace(/("")/g, '"')
           .replace(/('')/g, "'");
       }
