@@ -982,9 +982,7 @@ export type SyntaxNode =
   | ProcedureOrderOption
   | ProcedureRecursiveOption
   | ProcedureScopeOption
-  
   | CicsLinkStatement
-  
   | CicsLengthSpecification
   | CicsChannelSpecification
   | CicsProgramSpecification
@@ -995,12 +993,10 @@ export type SyntaxNode =
   | CicsSyncOnReturnSpecification
   | CicsTransactionIdSpecification
   | CicsCommAreaSpecification
-  
   | CicsAreaLiteral
   | CicsStringLiteral
   | CicsNumericLiteral
-  | CicsReferenceItem
-  ;
+  | CicsReferenceItem;
 
 export type AllocateAttribute =
   | AllocateDimension
@@ -4468,7 +4464,6 @@ export function createCicsCommAreaSpecification(): CicsCommAreaSpecification {
     commArea: null,
   };
 }
-
 
 export interface CicsLengthSpecification extends AstNode {
   kind: SyntaxKind.CicsLengthSpecification;
