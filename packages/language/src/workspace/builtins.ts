@@ -1712,18 +1712,27 @@ export const Builtins =
   * @param {ANY<NUMBER>} n Length of buffer to be searched.
   * @param {ANY<STRING>} x String-expression to use as the target of the
   *   search.
-  * @param {ANY<LOCATOR>} p Address of first buffer to be searched.
-  * @param {ANY<NUMBER>} n Length of first buffer to be searched.
   * @param {ANY<LOCATOR>} q Address of second buffer to use as the
   *   target of the search.
   * @param {ANY<NUMBER>} m Length of second buffer to use as the target
   *   of the search.
+  * 
+  * @param {ANY} xqm
+  *   x String-expression to use as the target of the search.
+  * 
+  *   q Address of second buffer to use as the target of the search.
+  * 
+  *   m Length of second buffer to use as the target of the search.
   * @returns {ANY<NUMBER>} value that indicates the starting position
   *   within the buffer of a specified substring, or zero if the
   *   substring is not found.
+  *
+  * @todo TODO has overloads
   */
- //TODO has overloads
- MEMINDEX: PROC () RETURNS ();
+ MEMINDEX: PROC (p, n, xqm) RETURNS (ANY<NUMBER>);
+   DCL p ANY<LOCATOR>;
+   DCL n ANY<NUMBER>;
+   DCL xqm ANY LIST;
  END;
 
  /**
@@ -3332,15 +3341,35 @@ export const Builtins =
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
+  * 
+  * @param {ANY} pqw
+  *   p The target pattern; must be one of the
+  *   supported date/time patterns.
+  * 
+  *   q The source pattern; must be one
+  *   of the supported date/time patterns. If omitted, then the
+  *   first argument must be NONVARYING CHAR with length 17, 20,
+  *   or 26; in this case, the source pattern will be assumed
+  *   based on the following criteria:
+  *
+  *   | Pattern | Length of the first argument |
+  *   | --- | --- |
+  *   | YYYYMMDDHHMISS999 | 17 |
+  *   | YYYYMMDDHHMISS999999 | 20 |
+  *   | YYYY-MM-DD-HH.MI.SS.999999 | 26 |
+  * 
+  *   w Specifies an expression (such as 1950)
+  *   that can be converted to an integer. If negative, it specifies
+  *   an offset to be subtracted from the value of the year when the
+  *   code runs. If omitted, \`w\` defaults to the value specified
+  *   in the WINDOW compile-time option.
   * @returns {ANY<CHARACTER>} The value converted to a date in a
   *   second pattern.
+  * @todo TODO has overloads
   */
- //TODO has overloads
- REPATTERN: PROC (d, p, q, w) RETURNS (ANY<CHARACTER>);
+ REPATTERN: PROC (d, pqw) RETURNS (ANY<CHARACTER>);
     DCL d ANY<CHARACTER>;
-    DCL p ANY<CHARACTER>;
-    DCL q ANY<CHARACTER> OPTIONAL;
-    DCL w ANY<NUMBER> OPTIONAL;
+    DCL pqw ANY LIST;
  END;
 
  /**
@@ -9112,7 +9141,6 @@ export const Builtins =
   * @returns {BIT(1)} '1'B if the value matches the value
   *   set, '0'B otherwise.
   */
- //TODO has overloads
  VALIDVALUE: PROC (x, y) RETURNS (BIT(1));
     DCL x ANY;
     DCL y ANY OPTIONAL;
@@ -10194,7 +10222,6 @@ export const Builtins =
   * @returns {ANY} The value at the offset specified by \`x\` in the
   *   \`a\` area.
   */
- //TODO has overloads
  LOCVAL: PROC (x, a) RETURNS (ANY);
     DCL x ANY<LOCATOR>;
     DCL a ANY<AREA> OPTIONAL;
@@ -13278,10 +13305,14 @@ export const Builtins =
   *     x3 = '';
   *     x4 = '';
   * \`\`\`
+  * 
+  * @param {ANY} args There must at least 3 arguments and 
+  *   no more than 64.
+  * 
+  * @todo TODO has overloads
   */
-// TODO has overloads
  PLIPARSE: PROC (args);
-    DCL args LIST;
+    DCL args ANY LIST;
  END;
  /**
   * PLIREST allows you to restart program execution.

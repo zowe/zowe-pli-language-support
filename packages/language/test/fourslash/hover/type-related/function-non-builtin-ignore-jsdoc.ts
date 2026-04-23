@@ -17,7 +17,4 @@
 //// A = <|1>XXX();
 
 //the JSDoc will be ignored since it's not a builtin
-hover.expectMarkdownAt(
-  1,
-  hover.codeBlock(`XXX: PROC RETURNS(CHARACTER); END;`),
-);
+hover.expectMarkdownAt(1, hover.codeBlock(`XXX: PROC RETURNS(CHARACTER);`));

@@ -5,8 +5,8 @@
  DCL FUNC ENTRY;
  DCL (P1,P2) POINTER;
 
- A = MAX('2',2,3,4,5,6,7); 
- D = TRIM("Hallo", "1", 2); 
+ A = MAX('2',ABS(B),3,4,5,6,7); 
+ D = TRIM("hallo", "", ""); 
  
  A = ABS(B);
  A = CEIL(B);
@@ -59,12 +59,13 @@
  A = JULIANTOSMF("2024-06-01T12:00:00Z");
 
  //TODO overloads
- // A = MEMINDEX(P1, 1, "x");
+ A = MEMINDEX(P1, 1);
  // A = MEMINDEX(P1, 1, P2, 2);
- // A = REPATTERN(1,2);
+ A = REPATTERN(1,2, "");
 
- //TODO ARGCOUNT bei MemberCall
- //TODO HOVER comment docu for CallStatement
+ CALL PLIPARSE(A, B, ' ', C, ' ');
+
+ CALL QUICKSORT(BITS, 1, 30);
 
 
 
