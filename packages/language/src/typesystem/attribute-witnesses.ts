@@ -78,6 +78,36 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
 
   addAttribute(attribute: ast.DeclarationAttribute): void {
     switch (attribute.kind) {
+      /**
+       * Builtin attributes (only for builtin files, this is outside the PL/I specification
+       * in order to make it possible to declare builtin procedures with parameters of any type)
+       */
+      case ast.SyntaxKind.AnyAttribute: {
+        if (attribute.token) {
+          this.addAttributeWitness(
+            AttributeKind.DataType,
+            attribute.dataType,
+            attribute,
+            attribute.token,
+          );
+          this.addAttributeWitness(
+            AttributeKind.DataTypeIsGeneric,
+            true,
+            attribute,
+            attribute.token,
+          );
+          if (attribute.dimensions && attribute.dimensions.token) {
+            this.addAttributeWitness(
+              AttributeKind.Dimension,
+              computeDimensions(attribute.dimensions),
+              attribute,
+              attribute.dimensions.token,
+            );
+          }
+        }
+        break;
+      }
+
       case ast.SyntaxKind.ComputationDataAttribute:
         if (attribute !== null) {
           this.handleDefaultAttribute(attribute);
@@ -198,19 +228,6 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
     const token = attribute.typeToken;
     const type = attribute.type;
     switch (type) {
-      /**
-       * Builtin attributes (only for builtin files, this is outside the PL/I specification
-       * in order to make it possible to declare builtin procedures with parameters of any type)
-       */
-      case ast.DefaultAttribute.ANY: {
-        this.addAttributeWitness(
-          AttributeKind.DataType,
-          DataType.Unknown,
-          attribute,
-          token,
-        );
-        break;
-      }
       /**
        * Data type attributes
        */

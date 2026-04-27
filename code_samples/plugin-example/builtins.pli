@@ -1,0 +1,78 @@
+ DCL (A,B,C) FIXED;
+ DCL (D, E, F) CHAR;
+ DCL G(100) FIXED;
+ DCL BITS BIT(32);
+ DCL FUNC ENTRY;
+ DCL (P1,P2) POINTER;
+
+ A = MAX('2',ABS(B),3,4,5,6,7); 
+ D = TRIM("hallo", "", ""); 
+ 
+ A = ABS(B);
+ A = CEIL(B);
+ A = COMPLEX(B, C);
+ A = CONJG(B);
+ A = FLOOR(C);
+ A = IMAG(C);
+ A = MAX(A, B, C);
+ A = MAXVAL(A);
+ A = MIN(A, B, C);
+ A = MINVAL(A);
+ A = MOD(B, C);
+ A = RANDOM();
+ A = RANDOM(123);
+ A = REAL(C);
+ A = REM(B, C);
+ A = ROUND(B, C);
+ A = ROUNDAWAYFROMZERO(B, C);
+ A = ROUNDTOEVEN(B, C);
+ A = SIGN(-1);
+ A = TRUNC(B);
+ BITS = ALL(G);
+ BITS = ANY(G);
+ A = DIMENSION(G, 1);
+ A = HBOUND(G, 1);
+ A = HBOUNDACROSS(G);
+ A = INARRAY(1, G);
+ A = LBOUND(G, 1);
+ A = LBOUNDACROSS(G);
+ A = POLY(G, 123);
+ A = PROD(G);
+ CALL QUICKSORT(G, 1, 100);
+ CALL QUICKSORTX(G, FUNC, 1, 100);
+ A = SUM(G);
+ A = COMPARE(G, G, 2);
+ A = HEXENCODE(P1, 8, P2, 16);
+ A = HEXENCODE8(P1, 8, P2, 16);
+ D = HEXIMAGE(P1, 1, "x");
+ D = HEXIMAGE8(P1, 1, "x");
+ A = MEMCONVERT(P1, 8, 1, P2, 16, 1, 1);
+ A = MEMCOLLAPSE(P1, 8, P2, 16, "1", 1);
+ A = MEMCU12(P1, 1, P2, 2);
+ A = MEMCU14(P1, 1, P2, 2);
+ A = MEMCU21(P1, 1, P2, 2);
+ A = MEMCU24(P1, 1, P2, 2);
+ A = MEMCU41(P1, 1, P2, 2);
+ A = MEMCU42(P1, 1, P2, 2);
+ A = XMLSCRUB(1,2,3,4);
+
+ A = ONCODE();
+ A = JULIANTOSMF("2024-06-01T12:00:00Z");
+
+ //TODO overloads
+ A = MEMINDEX(P1, 1);
+ // A = MEMINDEX(P1, 1, P2, 2);
+ A = REPATTERN(1,2, "");
+
+ CALL PLIPARSE(A, B, ' ', C, ' ');
+
+ CALL QUICKSORT(BITS, 1, 30);
+
+
+
+
+
+
+
+
+

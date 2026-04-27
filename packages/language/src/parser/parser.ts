@@ -4931,6 +4931,7 @@ const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAtt
     () => valueRangeAttribute,
     () => returnsAttribute,
     () => computationDataAttribute,
+    () => anyAttribute,
     () => entryAttribute,
     () => likeAttribute,
     () => typeAttribute,
@@ -5178,7 +5179,8 @@ const returnsAttribute = rule(
       (state.canConsumeFirst(computationDataAttribute.first()) ||
         state.canConsumeFirst(dateAttribute.first()) ||
         state.canConsumeFirst(valueListAttribute.first()) ||
-        state.canConsumeFirst(valueRangeAttribute.first()))
+        state.canConsumeFirst(valueRangeAttribute.first()) ||
+        state.canConsumeFirst(anyAttribute.first()))
     ) {
       inc();
       if (state.canConsumeFirst(computationDataAttribute.first())) {
@@ -5193,6 +5195,9 @@ const returnsAttribute = rule(
       } else if (state.canConsumeFirst(valueRangeAttribute.first())) {
         const attr = valueRangeAttribute.rule(state);
         attr && element.attrs.push(attr);
+      } else if (state.canConsumeFirst(anyAttribute.first())) {
+        const attr = anyAttribute.rule(state);
+        attr && element.attrs.push(attr);
       }
     }
 
@@ -5202,6 +5207,43 @@ const returnsAttribute = rule(
       tokens.CloseParen,
     );
 
+    return element;
+  },
+);
+
+const anyAttribute = rule(
+  sequence(tokens.ANY),
+  (state: ParserState): ast.AnyAttribute => {
+    const element = ast.createAnyAttribute();
+    element.token = state.consume(
+      element,
+      CstNodeKind.AnyAttribute_ANY,
+      tokens.ANY,
+    );
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AnyAttribute_OpenAngle,
+        tokens.LessThan,
+      )
+    ) {
+      const dataTypeToken = state.consume(
+        element,
+        CstNodeKind.AnyAttribute_DataType,
+        tokens.DataTypes,
+      );
+      element.dataType = tokens.DataTypes.mapToEnumLiteral(
+        dataTypeToken!.tokenTypeIdx,
+      );
+      state.consume(
+        element,
+        CstNodeKind.AnyAttribute_CloseAngle,
+        tokens.GreaterThan,
+      );
+    }
+    if (state.canConsumeFirst(dimensions.first())) {
+      element.dimensions = dimensions.rule(state);
+    }
     return element;
   },
 );

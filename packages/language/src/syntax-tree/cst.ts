@@ -734,4 +734,8 @@ export enum CstNodeKind {
   EnvironmentOptionValue_OpenParen,
   EnvironmentOptionValue_CloseParen,
   EnvironmentOptionSymbol_Name,
+  AnyAttribute_ANY,
+  AnyAttribute_OpenAngle,
+  AnyAttribute_DataType,
+  AnyAttribute_CloseAngle,
 }

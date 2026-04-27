@@ -14,9 +14,9 @@
 // @filename: pli-builtin:///xxx.pli
 //// /**
 ////  * Description
-////  * @param {CHARACTER} a Description of a
-////  * @param {FIXED} b Description of b
-////  * @param {FIXED} [c] Description of c
+////  * @param a Description of a
+////  * @param b Description of b
+////  * @param [c] Description of c
 ////  */
 //// %XXX: PROC(A, B, C);
 ////   DECLARE A CHARACTER;

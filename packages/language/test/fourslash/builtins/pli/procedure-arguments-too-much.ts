@@ -11,10 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-//// /** JSDoc description :) */
-//// XXX: PROC RETURNS(CHARACTER); END;
-//// DCL A CHARACTER;
-//// A = <|1>XXX();
+//// XXX: PROC(A, B);
+////    DCL A FIXED;
+////    DCL B FIXED;
+//// END XXX;
+//// START: PROC RETURNS(FIXED);
+////   CALL <|XXX|>(1, 2, 3);
+////   RETURN(0);
+//// END START;
 
-//the JSDoc will be ignored since it's not a builtin
-hover.expectMarkdownAt(1, hover.codeBlock(`XXX: PROC RETURNS(CHARACTER);`));
+verify.expectDiagnosticsAt("XXX", code.Warning.IBM3324I);

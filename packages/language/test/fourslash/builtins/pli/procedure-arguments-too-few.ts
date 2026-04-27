@@ -11,15 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
+//// XXX: PROC(A, B);
+////    DCL A FIXED;
+////    DCL B FIXED;
+//// END XXX;
+//// START: PROC RETURNS(FIXED);
+////   CALL <|XXX|>(1);
+////   RETURN(0);
+//// END START;
 
-// @filename: pli-builtin:///xxx.pli
-//// XXX: PROCEDURE (X) RETURNS(FIXED);
-////   DCL <|X|> <|1:ANY|>;
-////   RETURN(12);
-//// END;
-
-verify.noDiagnostics("1");
-types.expectTypeAt("X", {
-  type: types.dataTypes.Unknown,
-});
+verify.expectDiagnosticsAt("XXX", code.Warning.IBM3323I);
