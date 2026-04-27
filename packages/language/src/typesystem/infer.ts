@@ -564,18 +564,14 @@ export class DefaultTypeInferer implements TypeInferer {
       expression.value?.kind === ast.SyntaxKind.StringLiteral &&
       typeof expression.value.value === "string"
     ) {
-      //almost STRING_TERM from tokens.ts
-      const pattern =
-        /^("(""|\\.|[^"\\])*"|'(''|\\.|[^'\\])*')(x[nu]?|a|e|b[43x]?|g[x]?|ux|wx|i|m)*$/i;
       const literalValue = expression.value.value;
-      const match = pattern.exec(literalValue);
-      if (match) {
-        return match[1]
-          .slice(1, -1)
-          .replace(/("")/g, '"')
-          .replace(/('')/g, "'");
+      const firstLetter = literalValue[0];
+      if (firstLetter === '"' || firstLetter === "'") {
+        const closeingQuoteIndex = literalValue.lastIndexOf(firstLetter);
+        if (closeingQuoteIndex > 0) {
+          return literalValue.substring(1, closeingQuoteIndex);
+        }
       }
-      //if it does not match the pattern, it was produces by the PP parser, which removes quotes on its own
       return literalValue;
     }
     return undefined;
