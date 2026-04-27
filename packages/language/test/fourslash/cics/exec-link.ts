@@ -12,6 +12,11 @@
 /// <reference path="../framework.ts" />
 
 //// DCL <|1:PROGNAME|> CHAR(100);
-//// EXEC CICS LINK PROGRAM(<|1>PROGNAME);
+//// DCL <|2:COMA|> CHAR(100);
+//// DCL <|3:LEN|> FIXED;
+//// EXEC CICS LINK
+////   PROGRAM(<|1>PROGNAME)
+////   COMMAREA(<|2>COMA)
+////   LENGTH(<|3>LEN);
 
 linker.expectLinks();

@@ -978,6 +978,8 @@ export function forEachNode(
       node.syncOnReturn && action(node.syncOnReturn);
       node.systemId && action(node.systemId);
       node.transactionId && action(node.transactionId);
+      node.commArea && action(node.commArea);
+      node.length && action(node.length);
       break;
     case SyntaxKind.CicsProgramSpecification:
       node.name && action(node.name);
