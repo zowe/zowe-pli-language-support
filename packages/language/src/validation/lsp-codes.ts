@@ -98,7 +98,8 @@ export const LspCodes = {
     DuplicatedSpecification: {
       code: "CICS001",
       severity: Severity.E,
-      message: (specName: string) =>`Duplicated CICS specification: ${specName}.`,
-    }
-  }
+      message: (specName: string) =>
+        `Duplicated CICS specification: ${specName}.`,
+    },
+  },
 };
