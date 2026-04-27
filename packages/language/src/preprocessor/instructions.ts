@@ -87,6 +87,7 @@ export enum InstructionKind {
   Note,
   SqlAttribute,
   SqlHostVariable,
+  CicsVariable,
   CicsResponseCode,
   CicsExecStatement,
 
@@ -117,6 +118,7 @@ export type Instruction =
   | SqlAttributeInstruction
   | SqlHostVariableInstruction
   | CicsResponseInstruction
+  | CicsVariableInstruction
   | CicsExecInstruction;
 
 export interface CicsResponseInstruction {
@@ -135,11 +137,15 @@ export function createCicsResponseInstruction(
 
 export interface CicsExecInstruction {
   kind: InstructionKind.CicsExecStatement;
+  variables: CicsVariableInstruction[];
 }
 
-export function createCicsExecInstruction(): CicsExecInstruction {
+export function createCicsExecInstruction(statement: ast.CicsExecStatement): CicsExecInstruction {
   return {
     kind: InstructionKind.CicsExecStatement,
+    variables: (statement.content?.hostVariables ?? []).map((token) =>
+      createCicsVariableInstruction(token),
+    )
   };
 }
 
@@ -188,6 +194,20 @@ export interface SqlAttributeInstruction {
   attribute: ast.SqlAttributeStatement;
 }
 
+export interface CicsVariableInstruction {
+  kind: InstructionKind.CicsVariable;
+  token: Token;
+}
+
+export function createCicsVariableInstruction(
+  token: Token,
+): CicsVariableInstruction {
+  return {
+    kind: InstructionKind.CicsVariable,
+    token,
+  };
+}
+
 export interface ProcedureInstructionContainer {
   names: string[];
   labels: Map<string, ast.LabelPrefix>;
@@ -221,11 +241,11 @@ export interface AnswerInstruction {
   columnToken?: Token;
   marginsToken?: Token;
   margins:
-    | {
-        left: ExpressionInstruction | undefined;
-        right: ExpressionInstruction | undefined;
-      }
-    | undefined;
+  | {
+    left: ExpressionInstruction | undefined;
+    right: ExpressionInstruction | undefined;
+  }
+  | undefined;
   scanMode: ScanMode | undefined;
 }
 

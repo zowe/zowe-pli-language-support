@@ -266,6 +266,8 @@ export enum SyntaxKind {
   CicsAreaLiteral,
   CicsNumericLiteral,
 
+  CicsVariableReference,
+
   SqlExecStatement,
   SqlHostVariableReference,
   EmbeddedUnknownStatement,
@@ -996,7 +998,9 @@ export type SyntaxNode =
   | CicsAreaLiteral
   | CicsStringLiteral
   | CicsNumericLiteral
-  | CicsReferenceItem;
+  | CicsReferenceItem
+  | CicsVariableReference
+  ;
 
 export type AllocateAttribute =
   | AllocateDimension
@@ -1182,7 +1186,8 @@ export type Unit =
   | SqlHostVariableReference
   | CicsResponseStatement
   | CicsExecStatement
-  | SqlExecStatement;
+  | SqlExecStatement
+  | CicsVariableReference;
 
 // Preprocessor AST
 
@@ -4400,7 +4405,7 @@ export function createCicsExecStatement(): CicsExecStatement {
 }
 
 export type CicsStatement = CicsLinkStatement;
-export type CicsEmbeddedStatement = EmbeddedUnknownStatement | CicsStatement;
+export type CicsEmbeddedStatement = EmbeddedUnknownStatement;
 
 export interface CicsLinkStatement extends AstNode {
   kind: SyntaxKind.CicsLinkStatement;
@@ -4636,6 +4641,19 @@ export function createCicsNumericLiteral(): CicsNumericLiteral {
     kind: SyntaxKind.CicsNumericLiteral,
     container: null,
     value: null,
+  };
+}
+
+export interface CicsVariableReference extends AstNode {
+  kind: SyntaxKind.CicsVariableReference;
+  ref: Reference<NamedVariable> | null;
+}
+
+export function createCicsVariableReference(): CicsVariableReference {
+  return {
+    kind: SyntaxKind.CicsVariableReference,
+    container: null,
+    ref: null,
   };
 }
 

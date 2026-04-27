@@ -773,4 +773,6 @@ export enum CstNodeKind {
   CicsTransactionIdSpecification_CloseParen,
   CicsTransactionIdSpecification_OpenParen,
   CicsTransactionIdSpecification_TRANSID,
+  CicsVariableReference_Marker,
+  CicsVariableReference_HostVariable,
 }

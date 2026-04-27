@@ -743,6 +743,7 @@ const unit = orRule<ast.Unit, []>(
   () => procedureStatement,
   () => packageRule,
   () => sqlHostVariableReference,
+  () => cicsVariableReference,
 );
 
 const allocateStatement = rule(
@@ -6524,6 +6525,31 @@ const sqlHostVariableReference = rule(
     const id = state.consume(
       element,
       CstNodeKind.SqlHostVariableReference_HostVariable,
+      tokens.ID,
+    );
+    if (id) {
+      element.ref = ast.createReference(
+        element,
+        id,
+        ast.ReferenceType.Variable,
+      );
+    }
+    return element;
+  },
+);
+
+const cicsVariableReference = rule(
+  sequence(tokens.CICS_VARIABLE_MARKER),
+  (state: ParserState): ast.CicsVariableReference => {
+    const element = ast.createCicsVariableReference();
+    state.consume(
+      element,
+      CstNodeKind.CicsVariableReference_Marker,
+      tokens.CICS_VARIABLE_MARKER,
+    );
+    const id = state.consume(
+      element,
+      CstNodeKind.CicsVariableReference_HostVariable,
       tokens.ID,
     );
     if (id) {

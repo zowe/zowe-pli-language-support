@@ -16,13 +16,26 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { embeddedUnknownStatement } from "./unknown-parser";
 import { orRule, rule, sequence } from "./parser-types";
 import * as cicsTokens from "./tokens/cics-tokens.generated";
+import { TraversalState, traverseAllNodes } from "../syntax-tree/ast-iterator";
 
 export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
   const execStatement = ast.createCicsExecStatement();
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
   if (state.canConsumeFirst(cicsStatement.first())) {
-    execStatement.content = cicsStatement.rule(state);
+    const cicsAst = cicsStatement.rule(state);
+    if(cicsAst) {
+      const unknownStatement = ast.createEmbeddedUnknownStatement();
+      traverseAllNodes(cicsAst, (node) => {
+        if(node.kind === ast.SyntaxKind.CicsReferenceItem && node.ref) {
+          const token = node.ref.token;
+          token.immediateFollow = false;
+          unknownStatement.hostVariables.push(token);
+        }
+        return TraversalState.Continue;
+      });
+      execStatement.content = unknownStatement;
+    }
   } else {
     execStatement.content = embeddedUnknownStatement(
       state,

@@ -1012,6 +1012,7 @@ export function forEachNode(
     case SyntaxKind.CicsStringLiteral:
     case SyntaxKind.CicsAreaLiteral:
     case SyntaxKind.CicsNumericLiteral:
+    case SyntaxKind.CicsVariableReference:
       break;
     case SyntaxKind.SqlExecStatement:
       if (node.content) {

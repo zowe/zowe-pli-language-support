@@ -16,6 +16,7 @@ import { preprocessorParse } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
 import {
+  CICS_VARIABLE_MARKER,
   createTokenInstance,
   SQL_HOST_VARIABLE_MARKER,
   Token,
@@ -545,6 +546,9 @@ function runInstructionSync(
     case inst.InstructionKind.CicsExecStatement:
       runCicsExecInstruction(instruction, context);
       break;
+    case inst.InstructionKind.CicsVariable:
+      runCicsVariableInstruction(instruction, context);
+      break;
   }
   return undefined;
 }
@@ -585,6 +589,31 @@ function runSqlHostVariableInstruction(
     "",
     "",
     SQL_HOST_VARIABLE_MARKER,
+    startOffset,
+    startLine,
+    startColumn,
+    // Start and end position are the same
+    startOffset,
+    startLine,
+    startColumn,
+    undefined,
+  );
+  // Emit both tokens now
+  context.tokens.push(varMarkerToken, token);
+}
+
+function runCicsVariableInstruction(
+  instruction: inst.CicsVariableInstruction,
+  context: InterpreterContext,
+): void {
+  const token = instruction.token;
+  const { startOffset, startLine, startColumn } = token;
+  // Generate a marker token for the PL/I parser
+  // This token is used to identify the ID as a host variable
+  const varMarkerToken = createTokenInstance(
+    "",
+    "",
+    CICS_VARIABLE_MARKER,
     startOffset,
     startLine,
     startColumn,
@@ -705,6 +734,9 @@ function runCicsExecInstruction(
   instruction: inst.CicsExecInstruction,
   context: InterpreterContext,
 ): void {
+  for (const instr of instruction.variables) {
+    runCicsVariableInstruction(instr, context);
+  }
   const procSemicolonIndex = findProcSemicolon(context);
   if (procSemicolonIndex === undefined) {
     return;

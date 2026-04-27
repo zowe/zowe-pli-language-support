@@ -40,7 +40,6 @@ export function isNameToken(kind: CstNodeKind | undefined): boolean {
  */
 export function getNameToken(node: SyntaxNode): Token | undefined {
   switch (node.kind) {
-    case SyntaxKind.CicsReferenceItem:
     case SyntaxKind.ProcedureParameter:
     case SyntaxKind.ReferenceItem:
       return node.ref?.token ?? undefined;
@@ -68,6 +67,7 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.ProcedureParameter_Id:
     case CstNodeKind.TypeReference_Ref:
     case CstNodeKind.SqlHostVariableReference_HostVariable:
+    case CstNodeKind.CicsVariableReference_HostVariable:
     case CstNodeKind.CicsReferenceItem_ID:
       return true;
   }
@@ -107,6 +107,8 @@ export function getReference(node: SyntaxNode): Reference | undefined {
     case SyntaxKind.SqlHostVariableReference:
       return node.ref ?? undefined;
     case SyntaxKind.CicsReferenceItem:
+      return node.ref ?? undefined;
+    case SyntaxKind.CicsVariableReference:
       return node.ref ?? undefined;
   }
   return undefined;
