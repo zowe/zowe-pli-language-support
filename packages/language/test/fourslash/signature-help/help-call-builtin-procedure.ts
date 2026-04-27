@@ -14,7 +14,7 @@
 // @filename: pli-builtin:///xxx.pli
 //// /**
 ////  * Description :)
-////  * @param {FIXED} INPUT Description of input parameter.
+////  * @param INPUT Description of input parameter.
 ////  */
 //// XXX: PROCEDURE(INPUT);
 ////   DCL INPUT FIXED;

@@ -133,8 +133,8 @@ export const Builtins =
   * \`COMPLEX FIXED(p,q)\`. In the latter case, the result is 
   * \`REAL FIXED(min(n,p+1),q)\` where \`n\` is \`N\` for \`DECIMAL\`
   * and \`M\` for \`BINARY\`.
-  * @param {ANY<NUMBER>} value Expression.
-  * @returns {ANY<NUMBER>} absolute value of \`value\`
+  * @param value Expression.
+  * @returns absolute value of \`value\`
   */
  ABS: PROC (value) RETURNS (ANY<NUMBER>);
    DECLARE value ANY<NUMBER>;
@@ -160,8 +160,8 @@ export const Builtins =
   * If the expression \`value\` has the attributes \`FIXED BIN(p,q)\`
   * but does not have the form above, then \`q\` must be positive.
   * 
-  * @param {ANY<NUMBER>} value Real expression.
-  * @returns {ANY<NUMBER>} smallest integer value greater than or
+  * @param value Real expression.
+  * @returns smallest integer value greater than or
   *   equal to \`value\`.
   */
  CEIL: PROC (value) RETURNS (ANY<NUMBER>);
@@ -188,21 +188,21 @@ export const Builtins =
   * arguments are floating-point, the result has the precision of
   * the longer argument.
   *
-  * @param {ANY<NUMBER>} x Real expressions.
+  * @param x Real expressions.
   *
   *   If \`x\` and \`y\` differ in base, the decimal argument is
   *   converted to binary. If they differ in scale, the fixed-point
   *   argument is converted to floating-point. The result has the
   *   common base and scale.
   * 
-  * @param {ANY<NUMBER>} y Real expressions.
+  * @param y Real expressions.
   *
   *   If \`x\` and \`y\` differ in base, the decimal argument is
   *   converted to binary. If they differ in scale, the fixed-point
   *   argument is converted to floating-point. The result has the
   *   common base and scale.
   * 
-  * @returns {ANY<NUMBER>} complex value \`x\` + \`y\` * \`i\`
+  * @returns complex value \`x\` + \`y\` * \`i\`
   */
  COMPLEX: CPLX:  PROC (x, y) RETURNS (ANY<NUMBER>);
    DECLARE x ANY<NUMBER>;
@@ -213,12 +213,12 @@ export const Builtins =
   * CONJG returns the conjugate of \`x\`, that is, the value of the
   * expression with the sign of the imaginary part reversed.
   *
-  * @param {ANY<NUMBER>} x Expression.
+  * @param x Expression.
   *
   *   If \`x\` is real, it is converted to complex. The result has
   *   the base, scale, mode, and precision of \`x\`.
   * 
-  * @returns {ANY<NUMBER>} conjugate of \`x\`
+  * @returns conjugate of \`x\`
   */
  CONJG: PROC (x) RETURNS (ANY<NUMBER>);
    DECLARE x ANY<NUMBER>;
@@ -265,9 +265,9 @@ export const Builtins =
   * If the expression \`x\` has the attributes FIXED BIN(\`p,q\`)
   * but does not have the form above, then \`q\` must be positive.
   *
-  * @param {ANY<NUMBER>} x Real expression.
+  * @param x Real expression.
   * 
-  * @returns {ANY<NUMBER>} largest integer value less than or equal to
+  * @returns largest integer value less than or equal to
   * \`x\`
   */
  FLOOR: PROC (x) RETURNS (ANY<NUMBER>);
@@ -278,10 +278,10 @@ export const Builtins =
   * IMAG returns the imaginary part of \`x\`. The mode of the result
   * is real and has the base, scale, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it is
+  * @param x Expression. If \`x\` is real, it is
   *   converted to complex, and an appropriate zero value is returned.
   * 
-  * @returns {ANY<NUMBER>} imaginary part of \`x\`
+  * @returns imaginary part of \`x\`
   */
  IMAG: PROC (x) RETURNS (ANY<NUMBER>);
    DECLARE x ANY<NUMBER>;
@@ -326,9 +326,9 @@ export const Builtins =
   * If all the arguments are UNSIGNED FIXED BIN, then the result is
   * UNSIGNED FIXED BIN.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER> LIST} y Expression.
-  * @returns {ANY<NUMBER>} largest value from a set of two or more
+  * @param x Expression.
+  * @param y Expression.
+  * @returns largest value from a set of two or more
   *   expressions
   */
  MAX: PROC (x, y) RETURNS (ANY<NUMBER>);
@@ -355,9 +355,9 @@ export const Builtins =
   * MAXVAL(x) is a constant and can be used in restricted
   * expressions.
   *
-  * @param {ANY<NUMBER> REAL} x An expression. \`x\` must have the REAL
+  * @param x An expression. \`x\` must have the REAL
   *   attribute.
-  * @returns {ANY<NUMBER>} maximum value that its numeric operand could
+  * @returns maximum value that its numeric operand could
   *   assume.
   */
  MAXVAL: PROC (x) RETURNS (ANY<NUMBER>);
@@ -379,9 +379,9 @@ export const Builtins =
   * If all the arguments are UNSIGNED FIXED BIN, then the result is
   * UNSIGNED FIXED BIN.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} y Expression.
-  * @returns {ANY<NUMBER>} smallest value from a set of one or more
+  * @param x Expression.
+  * @param y Expression.
+  * @returns smallest value from a set of one or more
   *   expressions
   */
  MIN: PROC (x, y) RETURNS (ANY<NUMBER>);
@@ -408,9 +408,9 @@ export const Builtins =
   * MINVAL(x) is a constant and can be used in restricted
   * expressions.
   *
-  * @param {ANY<NUMBER> REAL} x An expression. \`x\` must have the REAL
+  * @param x An expression. \`x\` must have the REAL
   *   attribute.
-  * @returns {ANY<NUMBER>} minimum value that its numeric operand could
+  * @returns minimum value that its numeric operand could
   *   assume.
   */
  MINVAL: PROC (x) RETURNS (ANY<NUMBER>);
@@ -474,10 +474,10 @@ export const Builtins =
   *   mod( -10, -8 ) = 6
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Real expression.
-  * @param {ANY<NUMBER>} y Real expression. If \`y\` = 0,
+  * @param x Real expression.
+  * @param y Real expression. If \`y\` = 0,
   *   the ZERODIVIDE condition is raised.
-  * @returns {ANY<NUMBER>} modular equivalent of the remainder of one 
+  * @returns modular equivalent of the remainder of one 
   *   value
   */
  MOD: PROC (x, y) RETURNS (ANY<NUMBER>);
@@ -504,14 +504,14 @@ export const Builtins =
   * The seed is maintained at the program level and not within each
   * thread in a multithreading application.
   *
-  * @param {ANY<NUMBER>} [x] Expression. \`x\` must have a computational
+  * @param [x] Expression. \`x\` must have a computational
   *   type and should have an arithmetic type. If \`x\` is numeric, it
   *   must be real. If \`x\` is not specified FIXED BINARY(31,0), it
   *   is converted.
   *
   *   Unless 0 < \`x\` < 2,147,483,646, the ERROR condition is
   *   raised.
-  * @returns {ANY<NUMBER>} random number generated using \`x\` as the
+  * @returns random number generated using \`x\` as the
   *   given seed
   */
  RANDOM: PROC (x) RETURNS (ANY<NUMBER>);
@@ -522,9 +522,9 @@ export const Builtins =
   * REAL returns the real part of \`x\`. The result has the base,
   * scale, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it is converted
+  * @param x Expression. If \`x\` is real, it is converted
   *   to complex.
-  * @returns {ANY<NUMBER>} real part of \`x\`
+  * @returns real part of \`x\`
   */
  REAL: PROC (x) RETURNS (ANY<NUMBER>);
    DECLARE x ANY<NUMBER>;
@@ -542,11 +542,11 @@ export const Builtins =
   * For examples that contrast the REM and MOD built-in functions,
   * refer to MOD.
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must be computational and
+  * @param x Expression. \`x\` must be computational and
   *   can be arithmetic.
-  * @param {ANY<NUMBER>} y Expression. \`y\` must be computational and
+  * @param y Expression. \`y\` must be computational and
   *   can be arithmetic.
-  * @returns {ANY<NUMBER>} remainder of \`x\` divided by \`y\`
+  * @returns remainder of \`x\` divided by \`y\`
   */
  REM: PROC (x, y) RETURNS (ANY<NUMBER>);
    DECLARE x ANY<NUMBER>;
@@ -694,11 +694,11 @@ export const Builtins =
   *     display( round(x,6) );  //  3.141592979431152E+00
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Real expression. If \`x\` is negative, the
+  * @param x Real expression. If \`x\` is negative, the
   *   absolute value is rounded and the sign is restored.
-  * @param {ANY<NUMBER>} n Optionally-signed integer. It specifies the
+  * @param n Optionally-signed integer. It specifies the
   *   digit at which rounding is to occur.
-  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified 
+  * @returns value of \`x\` rounded at a digit specified 
   *   by \`n\`.
   */
  ROUND: PROC (x, n) RETURNS (ANY<NUMBER>);
@@ -744,12 +744,12 @@ export const Builtins =
   * - FLOOR(x) rounds toward negative infinity.
   * - TRUNC(x) rounds toward zero.
   *
-  * @param {ANY<NUMBER>} x A real expression that is FIXED DECIMAL or 
+  * @param x A real expression that is FIXED DECIMAL or 
   *   DFP FLOAT. If \`x\` is negative, the absolute value is rounded and
   *   the sign is restored.
-  * @param {ANY<NUMBER>} n An optionally-signed integer that specifies
+  * @param n An optionally-signed integer that specifies
   *   the digit at which rounding is to occur.
-  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified
+  * @returns value of \`x\` rounded at a digit specified
   *   by \`n\`, following the rule of round half away from zero.
   */
  ROUNDAWAYFROMZERO: ROUNDDEC: PROC (x, n) RETURNS (ANY<NUMBER>);
@@ -770,12 +770,12 @@ export const Builtins =
   * ROUNDTOEVEN function, both 23.5 and 24.5 get rounded to 24 and
   * both -23.5 and -24.5 get rounded to -24.
   *
-  * @param {ANY<NUMBER>} x A real expression that is FIXED DECIMAL or
+  * @param x A real expression that is FIXED DECIMAL or
   *   DFP FLOAT. If \`x\` is negative, the nearest even value is rounded
   *   and the sign is restored.
-  * @param {ANY<NUMBER>} n An optionally-signed integer that specifies
+  * @param n An optionally-signed integer that specifies
   *   the digit at which rounding is to occur.
-  * @returns {ANY<NUMBER>} value of \`x\` rounded at a digit specified
+  * @returns value of \`x\` rounded at a digit specified
   *   by \`n\` following the rounding rule of round half to even.
   */
  ROUNDTOEVEN: PROC (x, n) RETURNS (ANY<NUMBER>);
@@ -798,8 +798,8 @@ export const Builtins =
   * The BIFPREC compiler option determines the precision of the
   * result returned.
   *
-  * @param {ANY<NUMBER>} x Real expression.
-  * @returns {FIXED BINARY} unscaled REAL FIXED BINARY value that 
+  * @param x Real expression.
+  * @returns unscaled REAL FIXED BINARY value that 
   *   indicates whether \`x\` is positive, zero, or negative.
   */
  SIGN: PROC (x) RETURNS (FIXED BINARY);
@@ -825,8 +825,8 @@ export const Builtins =
   * If the expression \`x\` has the attributes FIXED BIN(\`p,q\`)
   * but does not have the form above, then \`q\` must be positive.
   *
-  * @param {ANY<NUMBER>} x Real expression.
-  * @returns {ANY<NUMBER>} integer value that is the truncated value of
+  * @param x Real expression.
+  * @returns integer value that is the truncated value of
   *  \`x\`
   */
  TRUNC: PROC (x) RETURNS (ANY<NUMBER>);
@@ -839,10 +839,10 @@ export const Builtins =
   * corresponding bit in each element of \`x\` exists and is 1. The
   * length of the result is equal to that of the longest element.
   *
-  * @param {ANY(*)} x Computational array expression. If \`x\` is not
+  * @param x Computational array expression. If \`x\` is not
   *   a bit string array, then \`x\` is converted to a bit string
   *   array.
-  * @returns {BIT(*)} bit string in which each bit is 1 if the
+  * @returns bit string in which each bit is 1 if the
   *   corresponding bit in each element of \`x\` exists and is 1
   */
  ALL: PROC (x) RETURNS (BIT(*));
@@ -854,10 +854,10 @@ export const Builtins =
   * corresponding bit in any element of \`x\` exists and is 1. The
   * length of the result is equal to that of the longest element.
   *
-  * @param {ANY(*)} x Computational array expression. If \`x\` is not
+  * @param x Computational array expression. If \`x\` is not
   *   a bit string array, then \`x\` is converted to a bit string
   *   array.
-  * @returns {BIT(*)} bit string in which each bit is 1 if the
+  * @returns bit string in which each bit is 1 if the
   *   corresponding bit in any element of \`x\` exists and is 1
   */
  ANY: PROC (x) RETURNS (BIT(*));
@@ -879,16 +879,16 @@ export const Builtins =
   *
   * Using LBOUND and HBOUND instead of DIMENSION is recommended.
   *
-  * @param {ANY(*)} x Array reference. \`x\` must not have less than
+  * @param x Array reference. \`x\` must not have less than
   *   \`y\` dimensions.
-  * @param {ANY<NUMBER>} [y] Expression specifying a particular
+  * @param [y] Expression specifying a particular
   *   dimension of \`x\`. If necessary, \`y\` is converted to a FIXED
   *   BINARY(31,0). \`y\` must be greater than or equal to 1. If
   *   \`y\` is not supplied, it defaults to 1.
   *
   *   \`y\` can be omitted only if the array is one-dimensional.
   * 
-  * @returns {FIXED BINARY} value that specifies the current
+  * @returns value that specifies the current
   *   extent of dimension \`y\` of \`x\`
   */
  DIMENSION: DIM: PROC (x, y) RETURNS (FIXED BINARY);
@@ -904,15 +904,15 @@ export const Builtins =
   * BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
   * options, HBOUND returns a FIXED BIN(31) value.
   *
-  * @param {ANY(*)} x Array reference. \`x\` must not have less than
+  * @param x Array reference. \`x\` must not have less than
   *   \`y\` dimensions.
-  * @param {ANY<NUMBER>} [y] Expression specifying a particular
+  * @param [y] Expression specifying a particular
   *   dimension of \`x\`. If necessary, \`y\` is converted to
   *   FIXED BINARY(31,0). \`y\` must be greater than or equal to 1.
   *   If \`y\` is not supplied, it defaults to 1.
   *
   *   \`y\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED BINARY} FIXED BINARY value that specifies the
+  * @returns FIXED BINARY value that specifies the
   *  current upper bound of dimension \`y\` of \`x\`
   */
  HBOUND: PROC (x, y) RETURNS (FIXED BINARY);
@@ -949,8 +949,8 @@ export const Builtins =
   *      end;                            
   * \`\`\`
   *
-  * @param {ANY(*) DIMACROSS} x DIMACROSS reference
-  * @returns {FIXED BINARY} value that specifies the current upper
+  * @param x DIMACROSS reference
+  * @returns value that specifies the current upper
   *   bound of a DIMACROSS reference \`x\`
   */
  HBOUNDACROSS: PROC (x) RETURNS (FIXED BINARY);
@@ -961,9 +961,9 @@ export const Builtins =
   * INARRAY returns a BIT(1) value that indicates whether an
   * expression is equal to any of the elements of an array.
   *
-  * @param {ANY} x Scalar expression. x must have a type that is
+  * @param x Scalar expression. x must have a type that is
   *   comparable with the type of the elements of y.
-  * @param {ANY(*)} y Array expression.
+  * @param y Array expression.
   *
   *   When y is a reference to a one-dimensional STATIC
   *   NONASSIGNABLE array with a simple INITIAL list, the compiler
@@ -989,7 +989,7 @@ export const Builtins =
   *   \`\`\`
   *   INLIST( countryCode, 'AT', 'DE', 'CH' )
   *   \`\`\`
-  * @returns {BIT(1)} value that indicates whether an expression is
+  * @returns value that indicates whether an expression is
   *   equal to any of the elements of an array.
   */
  INARRAY: PROC (x, y) RETURNS (BIT(1));
@@ -1005,9 +1005,9 @@ export const Builtins =
   * BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
   * options, LBOUND returns a FIXED BIN(31) value.
   *
-  * @param {ANY(*)} x Array reference. \`x\` must not have less than
+  * @param x Array reference. \`x\` must not have less than
   *   \`y\` dimensions.
-  * @param {ANY<NUMBER>} [y] Expression specifying a particular
+  * @param [y] Expression specifying a particular
   *   dimension of \`x\`. If necessary, \`y\` is converted to
   *   FIXED BINARY(31,0).
   *   The value for \`y\` must be greater than or equal to 1. and if
@@ -1015,7 +1015,7 @@ export const Builtins =
   *
   *   The value for \`y\` can be omitted only if the array is
   *   one-dimensional.
-  * @returns {FIXED BINARY} value that specifies the current
+  * @returns value that specifies the current
   *   lower bound of dimension \`y\` of \`x\`
   */
  LBOUND: PROC (x, y) RETURNS (FIXED BINARY);
@@ -1031,8 +1031,8 @@ export const Builtins =
   * FIXED BIN(63) value. Under the CMPAT(V2) and CMPAT(LE) compiler
   * options, LBOUNDACROSS returns a FIXED BIN(31) value.
   *
-  * @param {ANY(*) DIMACROSS} x DIMACROSS reference
-  * @returns {FIXED BINARY} value that specifies the current lower
+  * @param x DIMACROSS reference
+  * @returns value that specifies the current lower
   *   bound of a DIMACROSS reference \`x\`
   */
  LBOUNDACROSS: PROC (x) RETURNS (FIXED BINARY);
@@ -1063,9 +1063,9 @@ export const Builtins =
   *       x(m) + x(m+1)*y + x(m+2)*y**2 + ... + x(n)*y**(n-m)
   * \`\`\`
   *
-  * @param {ANY(*)} x An array expression.
-  * @param {ANY} y An element expression.
-  * @returns {FLOAT} floating-point value that is an approximation of a
+  * @param x An array expression.
+  * @param y An element expression.
+  * @returns floating-point value that is an approximation of a
   *   polynomial formed from an one-dimensional array expressions x.
   */
  POLY: PROC (x, y) RETURNS (FLOAT);
@@ -1081,13 +1081,13 @@ export const Builtins =
   * precision (n,0), where \`n\` is the maximum number of digits
   * allowed. The base and mode match the converted argument \`x\`.
   *
-  * @param {ANY(*)} x Array expression. If the elements of \`x\` are
+  * @param x Array expression. If the elements of \`x\` are
   *   strings, they are converted to fixed-point integer values.
   *
   *   If the elements of \`x\` are not fixed-point integer values or
   *   strings, they are converted to floating-point and the result
   *   is floating-point.
-  * @returns {ANY<NUMBER>} product of all the elements in \`x\`
+  * @returns product of all the elements in \`x\`
   */
  PROD: PROC (x) RETURNS (ANY<NUMBER>);
    DCL x ANY(*);
@@ -1106,7 +1106,7 @@ export const Builtins =
   * 
   * - if j < k, then x(j) < = x(k)
   *
-  * @param {ANY(*)} x An array expression. x must be a one-dimensional
+  * @param x An array expression. x must be a one-dimensional
   *   array of scalars. If x is an array of NONVARYING BIT, it must
   *   be aligned.
   *
@@ -1116,9 +1116,9 @@ export const Builtins =
   *   - They must be POINTERs
   *   - They must be HANDLEs
   *   - They must be ORDINALs
-  * @param {ANY<NUMBER>} [n] An expression that specifies the index of 
+  * @param [n] An expression that specifies the index of 
   *   the first array element to be examined. It defaults to LBOUND(x).
-  * @param {ANY<NUMBER>} [m] An expression that specifies the number of
+  * @param [m] An expression that specifies the number of
   *   to-be-examined array elements. The counting starts with the
   *   nth and defaults to HBOUND(x) – n + 1.
   */
@@ -1159,13 +1159,13 @@ export const Builtins =
   * 
   * - if j < k, thenf( addr(x(j)), addr(x(k)) ) < = 0
   *
-  * @param {ANY(*)} x An array expression. x must be a one-dimensional
+  * @param x An array expression. x must be a one-dimensional
   *   array. If x is an array of NONVARYING BIT, it must be aligned.
-  * @param {ANY<ENTRY>} f Expression. Specifies the function that will
+  * @param f Expression. Specifies the function that will
   *   be invoked to perform all the required comparisons.
-  * @param {ANY<NUMBER>} [n] An expression that specifies the index of
+  * @param [n] An expression that specifies the index of
   *   the first array element to be examined. It defaults to LBOUND(x).
-  * @param {ANY<NUMBER>} [m] An expression that specifies the number of
+  * @param [m] An expression that specifies the number of
   *   to-be-examined array elements. The counting starts with the
   *   nth and defaults to HBOUND(x) – n + 1.
   */
@@ -1180,7 +1180,7 @@ export const Builtins =
   * SUM returns the sum of all the elements in \`x\`. The base,
   * mode, and scale of the result match those of \`x\`.
   *
-  * @param {ANY(*)} x Array expression. If the elements of \`x\` are
+  * @param x Array expression. If the elements of \`x\` are
   *   strings, they are converted to fixed-point integer values.
   *
   *   If the elements of \`x\` are fixed-point, the precision of the
@@ -1189,7 +1189,7 @@ export const Builtins =
   *
   *   If the elements of \`x\` are floating-point, the precision of
   *   the result matches \`x\`.
-  * @returns {ANY<NUMBER>} sum of all the elements in \`x\`
+  * @returns sum of all the elements in \`x\`
   */
  SUM: PROC (x) RETURNS (ANY<NUMBER>);
    DCL x ANY(*);
@@ -1240,14 +1240,14 @@ export const Builtins =
   *   Result = compare(addr(Str1), addr(Template), stg(Str1));   // -1
   * \`\`\`
   *
-  * @param {ANY(*)} x Expression. Both must have the POINTER or
+  * @param x Expression. Both must have the POINTER or
   *   OFFSET type. If OFFSET, the expression must be declared with
   *   the AREA qualification.
-  * @param {ANY(*)} y Expression. Both must have the POINTER or
+  * @param y Expression. Both must have the POINTER or
   *   OFFSET type. If OFFSET, the expression must be declared with
   *   the AREA qualification.
-  * @param {ANY} z Expression. It is converted to size_t 1.
-  * @returns {FIXED BINARY(31,0)} value that indicates the relationship
+  * @param z Expression. It is converted to size_t 1.
+  * @returns value that indicates the relationship
   *   of the z bytes at the addresses x and y
   */
  COMPARE: PROC (x, y, z) RETURNS ();
@@ -1278,15 +1278,15 @@ export const Builtins =
   * the LP(64) compiler option is in effect, size_t is FIXED
   * BIN(63).
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes that
+  * @returns value that indicates the number of bytes that
   *   are written into the target buffer, or -1 if the target buffer is
   *   not large enough, or the number of bytes that would be written if
   *   the address of the target buffer is zero.
@@ -1309,15 +1309,15 @@ export const Builtins =
   * large enough, the number of bytes that is written to the buffer
   * is returned.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes that
+  * @returns value that indicates the number of bytes that
   *   are written into the target buffer, or -1 if the target buffer is
   *   not large enough, or the number of bytes that would be written if
   *   the address of the target buffer is zero.
@@ -1348,14 +1348,14 @@ export const Builtins =
   *
   * For examples of the HEXIMAGE built-in function, see HEX.
   *
-  * @param {ANY<LOCATOR>} p Restricted expression that must have a 
+  * @param p Restricted expression that must have a 
   *   locator type (POINTER or OFFSET). If \`p\` is OFFSET, it must 
   *   have the AREA attribute.
-  * @param {ANY<NUMBER>} n Expression. \`n\` must have a computational
+  * @param n Expression. \`n\` must have a computational
   *   type and is converted to FIXED BINARY(31,0).
-  * @param {CHARACTER(1) NONVARYING} [z] If specified, \`z\` must have
+  * @param [z] If specified, \`z\` must have
   *   the type CHARACTER(1) NONVARYING.
-  * @returns {CHARACTER(*)} character string that is the hexadecimal
+  * @returns character string that is the hexadecimal
   *   representation of the storage at a specified location.
   */
  HEXIMAGE: PROC (p, n, z) RETURNS (CHARACTER(*));
@@ -1384,12 +1384,12 @@ export const Builtins =
   *
   * For examples of the HEXIMAGE8 built-in function, see HEX8.
   *
-  * @param {ANY<LOCATOR>} p A restricted expression that must have a
+  * @param p A restricted expression that must have a
   *   locator type (POINTER or OFFSET). If \`p\` is OFFSET, it must have
   *   the AREA attribute.
-  * @param {ANY<NUMBER>} n An expression. \`n\` must have a
+  * @param n An expression. \`n\` must have a
   *   computational type and is converted to FIXED BINARY(31,0).
-  * @param {CHARACTER(1) NONVARYING} [z] An expression. If specified,
+  * @param [z] An expression. If specified,
   *   \`z\` must have the type CHARACTER(1) NONVARYING and must be a
   *   valid 1-byte UTF-8 character.
   */
@@ -1417,15 +1417,15 @@ export const Builtins =
   * type FIXED BINARY (31,0). The code page must specify a valid,
   * supported code page.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY} c Target code page.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @param {ANY} d Source code page.
-  * @param {ANY} [t] A character string or variable that names the
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param c Target code page.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @param d Source code page.
+  * @param [t] A character string or variable that names the
   *   technique to use in the conversion. t is of length 8 or less.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer.
   */
  MEMCONVERT: PROC (p, n, c, q, m, d, t) RETURNS (ANY<NUMBER>);
@@ -1474,21 +1474,21 @@ export const Builtins =
   *        // t = 'abc.def.gh'
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t. It must be non-negative.
-  * @param {CHARACTER(1) NONVARYING} z An expression that must have the type
+  * @param z An expression that must have the type
   *   CHARACTER(1) NONVARYING.
-  * @param {ANY<NUMBER>} [i] An optional expression that must be
+  * @param [i] An optional expression that must be
   *   computational and will be converted to size_t as necessary. If
   *   not specified, the default value for i is 1. If i < 1, default
   *   value of 1 is used.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes that
+  * @returns value that indicates the number of bytes that
   *   are written to the target buffer, or -1 if the target buffer is
   *   not large enough, or the number of bytes that would be written if
   *   the address of the target buffer is zero.
@@ -1515,11 +1515,11 @@ export const Builtins =
   * If the target buffer is too small or if the source UTF-8 is
   * invalid, a value of -1 is returned.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-8 is invalid.
   */
@@ -1543,11 +1543,11 @@ export const Builtins =
   * If the target buffer is too small or if the source UTF-8 is
   * invalid, a value of -1 is returned.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-8 is invalid.
   */
@@ -1572,11 +1572,11 @@ export const Builtins =
   * The source must contain valid UTF-16, and the behavior of this
   * function when it does not is unspecified.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-16 is invalid.
   */
@@ -1601,11 +1601,11 @@ export const Builtins =
   * The source must contain valid UTF-16, and the behavior of this
   * function when it does not is unspecified.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-16 is invalid.
   */
@@ -1629,11 +1629,11 @@ export const Builtins =
   * If the target buffer is too small or if the source UTF-32 is
   * invalid, a value of -1 is returned.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-32 is invalid.
   */
@@ -1657,11 +1657,11 @@ export const Builtins =
   * If the target buffer is too small or if the source UTF-32 is
   * invalid, a value of -1 is returned.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {ANY<NUMBER>} m Length of the source buffer.
-  * @returns {ANY<NUMBER>} value that indicates the number of bytes
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @param q Address of the source buffer.
+  * @param m Length of the source buffer.
+  * @returns value that indicates the number of bytes
   *   that are written to the target buffer, or -1 if the target buffer
   *   is not large enough or if the source UTF-32 is invalid.
   */
@@ -1708,22 +1708,22 @@ export const Builtins =
   *   pos = memindex( addr(wb), stg(wb), wchar('test') );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Address of buffer to be searched.
-  * @param {ANY<NUMBER>} n Length of buffer to be searched.
-  * @param {ANY<STRING>} x String-expression to use as the target of the
+  * @param p Address of buffer to be searched.
+  * @param n Length of buffer to be searched.
+  * @param x String-expression to use as the target of the
   *   search.
-  * @param {ANY<LOCATOR>} q Address of second buffer to use as the
+  * @param q Address of second buffer to use as the
   *   target of the search.
-  * @param {ANY<NUMBER>} m Length of second buffer to use as the target
+  * @param m Length of second buffer to use as the target
   *   of the search.
   * 
-  * @param {ANY} xqm
+  * @param xqm
   *   x String-expression to use as the target of the search.
   * 
   *   q Address of second buffer to use as the target of the search.
   * 
   *   m Length of second buffer to use as the target of the search.
-  * @returns {ANY<NUMBER>} value that indicates the starting position
+  * @returns value that indicates the starting position
   *   within the buffer of a specified substring, or zero if the
   *   substring is not found.
   *
@@ -1783,41 +1783,41 @@ export const Builtins =
   *      // aus = 'reserved from 2018/05/01 till 2018/05/01.'
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target
+  * @param p Specifies the address of the target
   *   buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param m Specifies the length in bytes of the target
   *   buffer. The length must be non-negative. It must have a
   *   computational type and is converted to the size_t type.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source
+  * @param q Specifies the address of the source
   *   buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param n Specifies the length in bytes of the source
   *   buffer. The length must be non-negative. It must have a
   *   computational type and is converted to the size_t type.
-  * @param {ANY<LOCATOR>} f Specifies the address of the buffer
+  * @param f Specifies the address of the buffer
   *   containing the bytes that will be replaced.
-  * @param {ANY<NUMBER>} x Specifies the length in bytes of the
+  * @param x Specifies the length in bytes of the
   *   buffer f. The length must be non-negative. It must have a
   *   computational type and is converted to the size_t type.
-  * @param {ANY<LOCATOR>} t Specifies the address of the buffer
+  * @param t Specifies the address of the buffer
   *   containing the bytes that will be used to replace the bytes of
   *   the buffer f within the buffer p.
-  * @param {ANY<NUMBER>} y Specifies the length in bytes of the
+  * @param y Specifies the length in bytes of the
   *   buffer t. The length must be non-negative. It must have a
   *   computational type and is converted to the size_t type.
-  * @param {ANY<NUMBER>} [s] An optional expression that specifies the
+  * @param [s] An optional expression that specifies the
   *   location within the source buffer from where to start
   *   searching for the buffer defined by f and x. It must have a
   *   computational type and is converted to the size_t type. The
   *   default value for s is 1. If s is less than 1 or if s is
   *   greater than 1 + n, zero bytes will be written to the target
   *   buffer.
-  * @param {ANY<NUMBER>} [i] An optional expression that specifies the
+  * @param [i] An optional expression that specifies the
   *   maximum number of times f should be replaced by t. It must
   *   have a computational type and is converted to the size_t type.
   *   The default value of i is 1. i must be non-negative. If the
   *   value of i is 0, all occurrences of f in source buffer will be
   *   replaced by t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written to the target buffer.
   */
  MEMREPLACE: PROC (p, m, q, n, f, x, t, y, s, i) RETURNS (ANY<NUMBER>);
@@ -1867,10 +1867,10 @@ export const Builtins =
   *   pos = memsearch( addr(wb), stg(wb), '0030_0031'wx );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Address of buffer to be searched
-  * @param {ANY<NUMBER>} n Length of buffer to be searched
-  * @param {ANY<CHARACTER>} x String-expression
-  * @returns {ANY<NUMBER>} A size_t value specifying the first
+  * @param p Address of buffer to be searched
+  * @param n Length of buffer to be searched
+  * @param x String-expression
+  * @returns A size_t value specifying the first
   *   position in the buffer at which any element of x appears,
   *   or zero if not found.
   */
@@ -1914,10 +1914,10 @@ export const Builtins =
   *   pos = memsearchr( addr(wb), stg(wb), '0030_0031'wx );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Address of buffer to be searched
-  * @param {ANY<NUMBER>} n Length of buffer to be searched
-  * @param {ANY<CHARACTER>} x String-expression
-  * @returns {ANY<NUMBER>} A size_t value specifying the first
+  * @param p Address of buffer to be searched
+  * @param n Length of buffer to be searched
+  * @param x String-expression
+  * @returns A size_t value specifying the first
   *   position (from the right) in the buffer at which any element
   *   of x appears, or zero if not found.
   */
@@ -1960,21 +1960,21 @@ export const Builtins =
   *       // t = '.abc.def.gh.'
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t. It must be non-negative.
-  * @param {CHARACTER} z An expression that must have the type
+  * @param z An expression that must have the type
   *   CHARACTER(1) NONVARYING.
-  * @param {ANY<NUMBER>} [i] An optional expression that must be
+  * @param [i] An optional expression that must be
   *   computational and will be converted to size_t as necessary. If
   *   not specified, the default value for i is 1. If i < 1, default
   *   value of 1 is used.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes written to the target buffer.
   */
  MEMSQUEEZE: PROC (p, m, q, n, z, i) RETURNS (ANY<NUMBER>);
@@ -2021,10 +2021,10 @@ export const Builtins =
   *   pos = memverify( addr(wb), stg(wb), '0020'wx );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Address of buffer to be searched.
-  * @param {ANY<NUMBER>} n Length of buffer to be searched.
-  * @param {ANY<CHARACTER>} x String-expression.
-  * @returns {ANY<NUMBER>} A size_t value specifying the position of
+  * @param p Address of buffer to be searched.
+  * @param n Length of buffer to be searched.
+  * @param x String-expression.
+  * @returns A size_t value specifying the position of
   *   the first non-matching element (from the left), or zero if all
   *   match.
   */
@@ -2069,10 +2069,10 @@ export const Builtins =
   *   pos = memverify( addr(wb), stg(wb), '0020'wx );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Address of buffer to be searched.
-  * @param {ANY<NUMBER>} n Length of buffer to be searched.
-  * @param {ANY<CHARACTER>} x String-expression.
-  * @returns {ANY<NUMBER>} A size_t value specifying the position of
+  * @param p Address of buffer to be searched.
+  * @param n Length of buffer to be searched.
+  * @param x String-expression.
+  * @returns A size_t value specifying the position of
   *   the first non-matching element (from the right), or zero if
   *   all match.
   */
@@ -2093,14 +2093,14 @@ export const Builtins =
   * buffer. If you want to know how the buffers differ, use the
   * COMPARE built-in function instead.
   *
-  * @param {ANY<LOCATOR>} x Expression. It must have the POINTER or
+  * @param x Expression. It must have the POINTER or
   *   OFFSET type. If OFFSET, the expression must be declared with
   *   the AREA qualification.
-  * @param {ANY<LOCATOR>} y Expression. It must have the POINTER or
+  * @param y Expression. It must have the POINTER or
   *   OFFSET type. If OFFSET, the expression must be declared with
   *   the AREA qualification.
-  * @param {ANY<NUMBER>} z Expression. It is converted to size_t.
-  * @returns {ANY<NUMBER>} A size_t value specifying the index of the
+  * @param z Expression. It is converted to size_t.
+  * @returns A size_t value specifying the index of the
   *   first differing byte, or zero if all bytes are the same.
   */
  WHEREDIFF: PROC (x, y, z) RETURNS (ANY<NUMBER>);
@@ -2127,15 +2127,15 @@ export const Builtins =
   * enough, the number of bytes that is written to the buffer is
   * returned.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @returns A size_t value indicating the number of
   *   bytes written to the target buffer, or -1 if too small.
   */
  WSCOLLAPSE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -2166,15 +2166,15 @@ export const Builtins =
   *
   * The source buffer must hold UTF-16 data.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @returns A size_t value indicating the number of
   *   bytes written to the target buffer, or -1 if too small.
   */
  WSCOLLAPSE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -2196,15 +2196,15 @@ export const Builtins =
   * enough, the number of bytes that is written to the buffer is
   * returned.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @returns A size_t value indicating the number of
   *   bytes written to the target buffer, or -1 if too small.
   */
  WSREPLACE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -2229,15 +2229,15 @@ export const Builtins =
   *
   * The source buffer must hold UTF-16 data.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @returns A size_t value indicating the number of
   *   bytes written to the target buffer, or -1 if too small.
   */
  WSREPLACE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -2310,7 +2310,7 @@ export const Builtins =
   * </A2></A>
   * \`\`\`
   *
-  * @param {ANY<STRUCTURE>} x Reference to a structure or DEFINE
+  * @param x Reference to a structure or DEFINE
   *   STRUCTURE type.
   *
   *   The reference \`x\` must conform to the following rules:
@@ -2327,9 +2327,9 @@ export const Builtins =
   *   target buffer.
   *   - If \`x\` is a reference to a structure, it must not contain
   *   any DEFINE STRUCTURE types.
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @returns A size_t value indicating the number of
   *   bytes written, or the needed size if the buffer is too small.
   */
  XMLCHAR: PROC (x, p, n) RETURNS (ANY<NUMBER>);
@@ -2365,15 +2365,15 @@ export const Builtins =
   * enough, the number of bytes that is written to the buffer is
   * returned.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @returns A size_t value indicating the number of
   *   bytes written to the target buffer, or -1 if too small.
   */
  XMLSCRUB: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -2412,15 +2412,15 @@ export const Builtins =
   *
   * The source buffer must hold UTF-16 data.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @returns A size_t value indicating the number of
   *   bytes written to the target buffer, or -1 if too small.
   */
  XMLSCRUB16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -2440,14 +2440,14 @@ export const Builtins =
   * When the XML output is created, XMLUCHAR follows the same rules
   * as XMLCHAR.
   *
-  * @param {ANY<STRUCTURE>} x Reference to a structure or DEFINE
+  * @param x Reference to a structure or DEFINE
   *   STRUCTURE type.
   *
   *   The reference \`x\` must conform to the same rules as XMLCHAR
   *   except that it can contain UCHAR elements.
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<NUMBER>} n Length of the target buffer.
-  * @returns {ANY<NUMBER>} A size_t value indicating the number of
+  * @param p Address of the target buffer.
+  * @param n Length of the target buffer.
+  * @returns A size_t value indicating the number of
   *   bytes written, or the needed size if the buffer is too small.
   */
  XMLUCHAR: PROC (x, p, n) RETURNS (ANY<NUMBER>);
@@ -2470,7 +2470,7 @@ export const Builtins =
   * returns a mixed character string.
   *
   * If DATAFIELD is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} Contents of the field that raised the
+  * @returns Contents of the field that raised the
   *   NAME condition, or a null string if out of context.
   */
  DATAFIELD: PROC () RETURNS (ANY<CHARACTER>);
@@ -2486,7 +2486,7 @@ export const Builtins =
   * for an ASSERTION condition.
   *
   * If it is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The "actual" value from the ASSERT
+  * @returns The "actual" value from the ASSERT
   *   COMPARE statement, or a null string if out of context.
   */
  ONACTUAL: PROC () RETURNS (ANY<CHARACTER>);
@@ -2505,7 +2505,7 @@ export const Builtins =
   *
   * If the AREA reference is excessively long or complicated, a null
   * string is returned.
-  * @returns {ANY<CHARACTER>} Name of the AREA reference, or a null
+  * @returns Name of the AREA reference, or a null
   *   string if out of context.
   */
  ONAREA: PROC () RETURNS (ANY<CHARACTER>);
@@ -2519,7 +2519,7 @@ export const Builtins =
   *
   * If the ONCHAR built-in function is used out of context, a blank
   * is returned.
-  * @returns {CHARACTER} The character that caused the CONVERSION
+  * @returns The character that caused the CONVERSION
   *   condition, or a blank if out of context.
   */
  ONCHAR: PROC () RETURNS (CHARACTER);
@@ -2535,7 +2535,7 @@ export const Builtins =
   * for an ASSERTION condition.
   *
   * If it is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The "expected" value from the ASSERT
+  * @returns The "expected" value from the ASSERT
   *   COMPARE statement, or a null string if out of context.
   */
  ONEXPECTED: PROC () RETURNS (ANY<CHARACTER>);
@@ -2555,7 +2555,7 @@ export const Builtins =
   * Codes.
   *
   * If ONCODE is used out of context, zero is returned.
-  * @returns {FIXED BINARY} The condition code, or zero if out of
+  * @returns The condition code, or zero if out of
   *   context.
   */
  ONCODE: PROC () RETURNS (FIXED BINARY);
@@ -2574,7 +2574,7 @@ export const Builtins =
   * or any dynamic descendants of such an ON-unit.
   *
   * If ONCONDCOND is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} Name of the raised CONDITION condition,
+  * @returns Name of the raised CONDITION condition,
   *   or a null string if out of context.
   */
  ONCONDCOND: PROC () RETURNS (ANY<CHARACTER>);
@@ -2617,7 +2617,7 @@ export const Builtins =
   * \`\`\`
   *
   * If ONCONDID is used out of context, a value of zero is returned.
-  * @returns {FIXED BINARY} Identifier of the condition being
+  * @returns Identifier of the condition being
   *   handled, or zero if out of context.
   */
  ONCONDID: PROC () RETURNS (FIXED BINARY);
@@ -2634,7 +2634,7 @@ export const Builtins =
   *
   * The BIFPREC compiler option determines the precision of the
   * result returned.
-  * @returns {FIXED BINARY} Number of remaining conditions to handle,
+  * @returns Number of remaining conditions to handle,
   *   or zero if out of context.
   */
  ONCOUNT: PROC () RETURNS (FIXED BINARY);
@@ -2650,7 +2650,7 @@ export const Builtins =
   * or output condition.
   *
   * If ONFILE is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} Name of the file that raised the I/O
+  * @returns Name of the file that raised the I/O
   *   condition, or a null string if out of context.
   */
  ONFILE: PROC () RETURNS (ANY<CHARACTER>);
@@ -2666,7 +2666,7 @@ export const Builtins =
   *
   * If the ONGSOURCE built-in function is used out of context, a
   * null GRAPHIC string is returned.
-  * @returns {ANY<CHARACTER>} The DBCS character that caused the
+  * @returns The DBCS character that caused the
   *   CONVERSION condition, or a null GRAPHIC string if out of
   *   context.
   */
@@ -2689,7 +2689,7 @@ export const Builtins =
   *           jx = 5;
   *           (subrg): value = a(1,jx);
   * \`\`\`
-  * @returns {FIXED BINARY} The upper bound of the array that raised
+  * @returns The upper bound of the array that raised
   *   SUBSCRIPTRANGE, or zero if out of context.
   */
  ONHBOUND: PROC () RETURNS (FIXED BINARY);
@@ -2705,7 +2705,7 @@ export const Builtins =
   * as the implicit action for such a CONFORMANCE condition.
   *
   * If it is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The unmatched name from the JSON call,
+  * @returns The unmatched name from the JSON call,
   *   or a null string if out of context.
   */
  ONJSONNAME: PROC () RETURNS (ANY<CHARACTER>);
@@ -2747,7 +2747,7 @@ export const Builtins =
   * value of the embedded key of the input record.
   *
   * If ONKEY is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The key of the record that raised the
+  * @returns The key of the record that raised the
   *   I/O condition, or a null string if out of context.
   */
  ONKEY: PROC () RETURNS (ANY<CHARACTER>);
@@ -2769,7 +2769,7 @@ export const Builtins =
   *           jx = 5;
   *           (subrg): value = a(1,jx);
   * \`\`\`
-  * @returns {FIXED BINARY} The lower bound of the array that raised
+  * @returns The lower bound of the array that raised
   *   SUBSCRIPTRANGE, or zero if out of context.
   */
  ONLBOUND: PROC () RETURNS (FIXED BINARY);
@@ -2783,7 +2783,7 @@ export const Builtins =
   * /debug option.
   *
   * If ONLINE is used out of context, a value of zero is returned.
-  * @returns {FIXED BINARY} The line number where the condition was
+  * @returns The line number where the condition was
   *   raised, or zero if out of context.
   */
  ONLINE: PROC () RETURNS (FIXED BINARY);
@@ -2792,7 +2792,7 @@ export const Builtins =
   * ONLOC is a synonym for ONPROC.
   *
   * If ONLOC is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The name of the procedure in which the
+  * @returns The name of the procedure in which the
   *   condition was raised, or a null string if out of context.
   */
  ONLOC: PROC () RETURNS (ANY<CHARACTER>);
@@ -2803,7 +2803,7 @@ export const Builtins =
   * condition was raised.
   *
   * If ONOFFSET is used out of context, a value of zero is returned.
-  * @returns {FIXED BINARY} The offset from the start of the
+  * @returns The offset from the start of the
   *   procedure where the condition was raised, or zero if out of
   *   context.
   */
@@ -2826,7 +2826,7 @@ export const Builtins =
   *
   * If the ONOPERATOR built-in function is used out of context, a
   * null string is returned.
-  * @returns {CHARACTER} The operator from the ASSERT COMPARE
+  * @returns The operator from the ASSERT COMPARE
   *   statement, or a null string if out of context.
   */
  ONOPERATOR: PROC () RETURNS (CHARACTER);
@@ -2841,7 +2841,7 @@ export const Builtins =
   * for an ASSERTION condition.
   *
   * If it is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} Name of the package containing the
+  * @returns Name of the package containing the
   *   ASSERT statement, or a null string if out of context.
   */
  ONPACKAGE: PROC () RETURNS (ANY<CHARACTER>);
@@ -2860,7 +2860,7 @@ export const Builtins =
   *
   * If ONPROCEDURE is used out of context, a null string is
   * returned.
-  * @returns {ANY<CHARACTER>} Name of the procedure where the
+  * @returns Name of the procedure where the
   *   condition was raised, or a null string if out of context.
   */
  ONPROCEDURE: ONPROC: PROC () RETURNS (ANY<CHARACTER>);
@@ -2879,7 +2879,7 @@ export const Builtins =
   *
   * If the source in a failed conversion is a COMPLEX value, then
   * ONSOURCE() will show only the REAL or IMAG half of that value.
-  * @returns {ANY<CHARACTER>} Contents of the field being converted
+  * @returns Contents of the field being converted
   *   when CONVERSION was raised, or a null string if out of context.
   */
  ONSOURCE: PROC () RETURNS (ANY<CHARACTER>);
@@ -2901,7 +2901,7 @@ export const Builtins =
   *           jx = 5;
   *           (subrg): value = a(1,jx);
   * \`\`\`
-  * @returns {FIXED BINARY} The invalid array index that caused
+  * @returns The invalid array index that caused
   *   SUBSCRIPTRANGE, or zero if out of context.
   */
  ONSUBSCRIPT: PROC () RETURNS (FIXED BINARY);
@@ -2917,7 +2917,7 @@ export const Builtins =
   * for an ASSERTION condition.
   *
   * If it is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The TEXT clause value from the ASSERT
+  * @returns The TEXT clause value from the ASSERT
   *   statement, or a null string if out of context.
   */
  ONTEXT: PROC () RETURNS (ANY<CHARACTER>);
@@ -2931,7 +2931,7 @@ export const Builtins =
   *
   * If the ONUCHAR built-in function is used out of context, a UTF-8
   * blank is returned.
-  * @returns {CHARACTER} The UTF-8 character that caused the
+  * @returns The UTF-8 character that caused the
   *   CONVERSION condition, or a UTF-8 blank if out of context.
   */
  ONUCHAR: PROC () RETURNS (CHARACTER);
@@ -2946,7 +2946,7 @@ export const Builtins =
   *
   * If the ONUSOURCE built-in function is used out of context, a
   * null string is returned.
-  * @returns {ANY<CHARACTER>} The UTF-8 field contents when
+  * @returns The UTF-8 field contents when
   *   CONVERSION was raised, or a null string if out of context.
   */
  ONUSOURCE: PROC () RETURNS (ANY<CHARACTER>);
@@ -2962,7 +2962,7 @@ export const Builtins =
   *
   * If the ONWCHAR built-in function is used out of context, a
   * widechar blank is returned.
-  * @returns {CHARACTER} The widechar that caused the CONVERSION
+  * @returns The widechar that caused the CONVERSION
   *   condition, or a widechar blank if out of context.
   */
  ONWCHAR: PROC () RETURNS (CHARACTER);
@@ -2978,7 +2978,7 @@ export const Builtins =
   * condition.
   *
   * If ONWSOURCE is used out of context, a null string is returned.
-  * @returns {ANY<CHARACTER>} The widechar field contents when
+  * @returns The widechar field contents when
   *   CONVERSION was raised, or a null string if out of context.
   */
  ONWSOURCE: PROC () RETURNS (ANY<CHARACTER>);
@@ -2988,7 +2988,7 @@ export const Builtins =
  /**
   * DATE returns a nonvarying character(6) string containing the
   * date in the format, YYMMDD.
-  * @returns {CHARACTER} A nonvarying character(6) string containing
+  * @returns A nonvarying character(6) string containing
   *   the current date in YYMMDD format.
   */
  DATE: PROC () RETURNS (CHARACTER);
@@ -3000,7 +3000,7 @@ export const Builtins =
   *
   * See DAYS for an example of using DATETIME.
   *
-  * @param {ANY<CHARACTER>} [y] Expression
+  * @param [y] Expression
   *
   *   If present, it specifies the date/time pattern in which the
   *   date is returned. If \`y\` is missing, it is assumed to be the
@@ -3010,7 +3010,7 @@ export const Builtins =
   *
   *   \`y\` must have computational type and should have character
   *   type. If not, it is converted to character.
-  * @returns {ANY<CHARACTER>} A character string timestamp of today's
+  * @returns A character string timestamp of today's
   *   date in the specified or default format.
   */
  DATETIME: PROC (y) RETURNS (ANY<CHARACTER>);
@@ -3048,17 +3048,17 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of the Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<CHARACTER>} [d] String expression representing a date. 
+  * @param [d] String expression representing a date. 
   *   If omitted, it is assumed to be the value returned by DATETIME().
   *
   *   The value for \`d\` must have computational type and should
   *   have character type. If not, \`d\` is converted to character.
-  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns.
+  * @param [p] One of the supported date/time patterns.
   *   If omitted, it is assumed to be the value 'YYYYMMDDHHMISS999'.
   *
   *   \`p\` must have computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<NUMBER>} [w] An integer expression that defines a
+  * @param [w] An integer expression that defines a
   *   century window to be used to handle any two-digit year formats.
   *
   *   - If the value is positive, such as 1950, it is treated as a
@@ -3067,7 +3067,7 @@ export const Builtins =
   *   subtracted from the current, system-supplied year.
   *   - If omitted, \`w\` defaults to the value specified in the
   *   WINDOW compile-time option.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @returns A FIXED BINARY(31,0) value that is the
   *   number of days in Lilian format corresponding to date d.
   */
  DAYS: PROC (d, p, w) RETURNS (FIXED BINARY);
@@ -3086,15 +3086,15 @@ export const Builtins =
   *
   * See DAYS for an example of using DAYSTODATE.
   *
-  * @param {ANY<NUMBER>} d The number of days (in Lilian format). \`d\`
+  * @param d The number of days (in Lilian format). \`d\`
   *   must have a computational type and is converted to FIXED
   *   BINARY(31,0) if necessary.
-  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns.
+  * @param [p] One of the supported date/time patterns.
   *
   *   If omitted, \`p\` is assumed to be the default date/time
   *   pattern 'YYYYMMDDHHMISS999' (same as the default format
   *   returned by DATETIME).
-  * @param {ANY<NUMBER>} [w] An integer expression that defines a
+  * @param [w] An integer expression that defines a
   *   century window to be used to handle any two-digit year formats.
   *
   *   - If the value is positive, such as 1950, it is treated as a
@@ -3103,7 +3103,7 @@ export const Builtins =
   *   subtracted from the current, system-supplied year.
   *   - If omitted, \`w\` defaults to the value specified in the
   *   WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} A nonvarying character string containing
+  * @returns A nonvarying character string containing
   *   the date in the form p corresponding to d Lilian days.
   */
  DAYSTODATE: PROC (d, p, w) RETURNS (ANY<CHARACTER>);
@@ -3118,12 +3118,12 @@ export const Builtins =
   *
   * DAYSTOMICROSECS(x) is the same as \`x\`*(24*60*60*1_000_000).
   *
-  * @param {ANY<NUMBER>} x An expression that specifies the number of
+  * @param x An expression that specifies the number of
   *   days.
   *
   *   \`x\` must have a computational type and will be converted to
   *   FIXED BINARY(31) if necessary.
-  * @returns {FIXED BINARY} A FIXED BINARY(63) value that is the
+  * @returns A FIXED BINARY(63) value that is the
   *   number of microseconds corresponding to x days.
   */
  DAYSTOMICROSECS: PROC (x) RETURNS (FIXED BINARY);
@@ -3136,12 +3136,12 @@ export const Builtins =
   *
   * DAYSTOSECS(x) is the same as \`x\`*(24*60*60).
   *
-  * @param {ANY<NUMBER>} x An expression that specifies the number of
+  * @param x An expression that specifies the number of
   *   days.
   *
   *   \`x\` must have a computational type and is converted to FIXED
   *   BINARY(31,0) if necessary.
-  * @returns {FLOAT BINARY} A FLOAT BINARY(53) value that is the
+  * @returns A FLOAT BINARY(53) value that is the
   *   number of seconds corresponding to x days.
   */
  DAYSTOSECS: PROC (x) RETURNS (FLOAT BINARY);
@@ -3152,9 +3152,9 @@ export const Builtins =
   * JULIANTOSMF returns a CHAR(4) value that holds a date in the SMF
   * format.
   *
-  * @param {CHARACTER} d A CHAR(7) variable that holds a date in the
+  * @param d A CHAR(7) variable that holds a date in the
   *   Julian format YYYYDDD
-  * @returns {CHARACTER} A CHAR(4) value that holds the date in SMF
+  * @returns A CHAR(4) value that holds the date in SMF
   *   format.
   */
  JULIANTOSMF: PROC (d) RETURNS (CHARACTER);
@@ -3170,9 +3170,9 @@ export const Builtins =
   *
   * The allowed date/time patterns are listed in Table 2.
   *
-  * @param {ANY<CHARACTER>} p Specifies one of the supported date/time
+  * @param p Specifies one of the supported date/time
   *   patterns.
-  * @returns {ANY<CHARACTER>} A character string containing the latest
+  * @returns A character string containing the latest
   *   date/time value corresponding to p.
   */
  MAXDATE: PROC (p) RETURNS (ANY<CHARACTER>);
@@ -3186,7 +3186,7 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<CHARACTER>} [d] Specifies a string expression
+  * @param [d] Specifies a string expression
   *   representing a date. If present, \`d\` specifies the input date
   *   as a character string representing the date/time specified in
   *   the pattern \`p\`. If \`d\` is omitted, it is assumed to be the
@@ -3194,18 +3194,18 @@ export const Builtins =
   *
   *   \`d\` must have a computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<CHARACTER>} [p] Specifies one of the supported date/time
+  * @param [p] Specifies one of the supported date/time
   *   patterns. If \`p\` is omitted, it is assumed to be the
   *   TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
   *
   *   \`p\` must have a computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {FIXED BINARY} A FIXED BINARY(63) value that is the
+  * @returns A FIXED BINARY(63) value that is the
   *   number of microseconds corresponding to the date \`d\`.
   */
  MICROSECS: PROC (d, p, w) RETURNS (FIXED BINARY);
@@ -3223,18 +3223,18 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<NUMBER>} m Specifies the number of microseconds (in
+  * @param m Specifies the number of microseconds (in
   *   Lilian format). \`m\` must have a computational type and is
   *   converted to FIXED BIN(63) if necessary.
-  * @param {ANY<CHARACTER>} [p] Specifies one of the supported date/time
+  * @param [p] Specifies one of the supported date/time
   *   patterns. If \`p\` is omitted, it is assumed to be the
   *   TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} A NONVARYING character string
+  * @returns A NONVARYING character string
   *   containing the date in the specified date/time pattern.
   */
  MICROSECSTODATE: PROC (m, p, w) RETURNS (ANY<CHARACTER>);
@@ -3252,10 +3252,10 @@ export const Builtins =
   *
   * For an example, see SECS.
   *
-  * @param {ANY<NUMBER>} x An expression that specifies the number of
+  * @param x An expression that specifies the number of
   *   microseconds. The value for \`x\` must have computational type
   *   and will be converted to FIXED BINARY(63) if necessary.
-  * @returns {FIXED BINARY} A FIXED BINARY(31) value that represents
+  * @returns A FIXED BINARY(31) value that represents
   *   the number of microseconds x converted to days, ignoring
   *   incomplete days.
   */
@@ -3274,9 +3274,9 @@ export const Builtins =
   *
   * The allowed date/time patterns are listed in Table 2.
   *
-  * @param {ANY<CHARACTER>} p Specifies one of the supported date/time
+  * @param p Specifies one of the supported date/time
   *   patterns.
-  * @returns {ANY<CHARACTER>} A character string containing the
+  * @returns A character string containing the
   *   earliest date/time value corresponding to p.
   */
  MINDATE: PROC (p) RETURNS (ANY<CHARACTER>);
@@ -3320,16 +3320,16 @@ export const Builtins =
   * REPATTERN('20000101','YYMMDD','YYYYMMDD', 1950) returns '000101'
   * REPATTERN('19490101','YYMMDD','YYYYMMDD', 1950) raises ERROR
   *
-  * @param {ANY<CHARACTER>} d A string expression representing a
+  * @param d A string expression representing a
   *   date. The length of \`d\` must be at least as large as the
   *   length of the source pattern \`q\`. If \`d\` is larger, any
   *   excess characters must be formed by leading blanks.
   *
   *   \`d\` must have a computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<CHARACTER>} p The target pattern; must be one of the
+  * @param p The target pattern; must be one of the
   *   supported date/time patterns.
-  * @param {ANY<CHARACTER>} [q] The source pattern; must be one
+  * @param [q] The source pattern; must be one
   *   of the supported date/time patterns. If omitted, then the
   *   first argument must be NONVARYING CHAR with length 17, 20,
   *   or 26; in this case, the source pattern will be assumed
@@ -3340,13 +3340,13 @@ export const Builtins =
   *   | YYYYMMDDHHMISS999 | 17 |
   *   | YYYYMMDDHHMISS999999 | 20 |
   *   | YYYY-MM-DD-HH.MI.SS.999999 | 26 |
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
   * 
-  * @param {ANY} pqw
+  * @param pqw
   *   p The target pattern; must be one of the
   *   supported date/time patterns.
   * 
@@ -3367,7 +3367,7 @@ export const Builtins =
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} The value converted to a date in a
+  * @returns The value converted to a date in a
   *   second pattern.
   * @todo TODO has overloads
   */
@@ -3406,25 +3406,25 @@ export const Builtins =
   *            Age_Tot_Secs, ||     ' seconds.');
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} [d] A string expression representing a
+  * @param [d] A string expression representing a
   *   date. If present, \`d\` specifies the input date as a character
   *   string representing the date/time specified in the pattern
   *   \`p\`. If \`d\` is missing, it is assumed to be DATETIME().
   *
   *   \`d\` must have a computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<CHARACTER>} [p] One of the supported date/time
+  * @param [p] One of the supported date/time
   *   patterns. If \`p\` is omitted, it is assumed to be the default
   *   date/time pattern 'YYYYMMDDHHMISS999'.
   *
   *   \`p\` must have a computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {FLOAT BINARY} A FLOAT BINARY(53) value that is the
+  * @returns A FLOAT BINARY(53) value that is the
   *   number of seconds (based on Lilian format) corresponding to
   *   the date \`d\`.
   */
@@ -3442,19 +3442,19 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<NUMBER>} d The number of seconds (in Lilian format).
+  * @param d The number of seconds (in Lilian format).
   *   \`d\` must have a computational type and is converted to FLOAT
   *   BIN(53) if necessary.
-  * @param {ANY<CHARACTER>} [p] One of the supported date/time
+  * @param [p] One of the supported date/time
   *   patterns. If omitted, \`p\` is assumed to be the default
   *   date/time pattern 'YYYYMMDDHHMISS999' (the default format
   *   returned by DATETIME).
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} A nonvarying character string
+  * @returns A nonvarying character string
   *   containing the date in the date/time pattern specified by \`p\`
   *   that corresponds to \`d\` seconds (based on Lilian format).
   */
@@ -3473,10 +3473,10 @@ export const Builtins =
   *
   * For an example, see SECS.
   *
-  * @param {ANY<NUMBER>} x Expression. The value for \`x\` must have
+  * @param x Expression. The value for \`x\` must have
   *   computational type and should be FLOAT BINARY(53). If not, it
   *   is converted to FLOAT BINARY(53).
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that
+  * @returns A FIXED BINARY(31,0) value that
   *   represents the number of seconds \`x\` converted to days,
   *   ignoring incomplete days.
   */
@@ -3488,9 +3488,9 @@ export const Builtins =
   * SMFTOJULIAN returns a CHAR(7) value that holds the date in the
   * Julian format YYYYDDD.
   *
-  * @param {ANY<CHARACTER>} d A CHAR(4) variable that holds a date
+  * @param d A CHAR(4) variable that holds a date
   *   in the SMF format.
-  * @returns {ANY<CHARACTER>} A CHAR(7) value that holds the date in
+  * @returns A CHAR(7) value that holds the date in
   *   the Julian format YYYYDDD.
   */
  SMFTOJULIAN: PROC (d) RETURNS (ANY<CHARACTER>);
@@ -3504,12 +3504,12 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<CHARACTER>} x A CHAR(16) value holding a STCKE
+  * @param x A CHAR(16) value holding a STCKE
   *   value.
-  * @param {ANY<CHARACTER>} [p] Specifies one of the supported
+  * @param [p] Specifies one of the supported
   *   date/time patterns. If \`p\` is omitted, it is assumed to be
   *   the TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
-  * @returns {ANY<CHARACTER>} A character string that contains a
+  * @returns A character string that contains a
   *   date/time value corresponding to a STCKE value (set by
   *   PLISTCKE).
   */
@@ -3525,12 +3525,12 @@ export const Builtins =
   * The allowed patterns are listed in Table 2. For an explanation
   * of Lilian format, see Date/time built-in functions.
   *
-  * @param {ANY<NUMBER>} x An UNSIGNED FIXED BIN(64) value holding
+  * @param x An UNSIGNED FIXED BIN(64) value holding
   *   a STCK value.
-  * @param {ANY<CHARACTER>} [p] Specifies one of the supported
+  * @param [p] Specifies one of the supported
   *   date/time patterns. If \`p\` is omitted, it is assumed to be
   *   the TIMESTAMP pattern, namely 'YYYY-MM-DD-HH.MI.SS.999999'.
-  * @returns {ANY<CHARACTER>} A character string that contains a
+  * @returns A character string that contains a
   *   date/time value corresponding to a STCK value (set by
   *   PLISTCK).
   */
@@ -3542,7 +3542,7 @@ export const Builtins =
  /**
   * TIME returns a character string timestamp in the format
   * HHMISS999.
-  * @returns {ANY<CHARACTER>} A character string timestamp in the
+  * @returns A character string timestamp in the
   *   format HHMISS999.
   */
  TIME: PROC () RETURNS (ANY<CHARACTER>);
@@ -3551,7 +3551,7 @@ export const Builtins =
  /**
   * TIMESTAMP returns a CHAR(26) character string that gives the
   * current date and time in the format YYYY-MM-DD-HH.MI.SS.999999.
-  * @returns {ANY<CHARACTER>} A CHAR(26) character string that gives
+  * @returns A CHAR(26) character string that gives
   *   the current date and time in the format
   *   YYYY-MM-DD-HH.MI.SS.999999.
   */
@@ -3562,7 +3562,7 @@ export const Builtins =
   * UTCDATETIME returns a character string that gives the current
   * Coordinated Universal Time (UTC) in the pattern
   * YYYYMMDDHHMISS999.
-  * @returns {ANY<CHARACTER>} A character string that gives the
+  * @returns A character string that gives the
   *   current Coordinated Universal Time (UTC) in the pattern
   *   YYYYMMDDHHMISS999.
   */
@@ -3572,7 +3572,7 @@ export const Builtins =
  /**
   * UTCMICROSECS returns a FIXED BINARY(63) value that gives the
   * current UTC time in microseconds.
-  * @returns {FIXED BINARY} A FIXED BINARY(63) value that gives the
+  * @returns A FIXED BINARY(63) value that gives the
   *   current UTC time in microseconds.
   */
  UTCMICROSECS: PROC () RETURNS (FIXED BINARY);
@@ -3605,7 +3605,7 @@ export const Builtins =
   * will be a char(6) string holding the UTC offset in the usual
   * format. For example, as -08:00 for California and +05:45 for
   * Nepal.
-  * @returns {FLOAT BINARY} A FLOAT BIN(53) value that gives the
+  * @returns A FLOAT BIN(53) value that gives the
   *   current Coordinated Universal Time (UTC) in seconds in the
   *   Lilian format.
   */
@@ -3637,14 +3637,14 @@ export const Builtins =
   *   b2 = validdate( duedate, 'DDMMYYYY' ); // b2 = '0'b
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  * @param d A string expression representing a date.
   *
   *   \`d\` specifies the input date as a character string
   *   representing date/time according to the pattern \`p\`.
   *
   *   \`d\` must have computational type and should have character
   *   type. If not, \`d\` is converted to character.
-  * @param {ANY<CHARACTER>} [p] One of the supported date/time patterns.
+  * @param [p] One of the supported date/time patterns.
   *
   *   If present, it specifies the date/time pattern of \`d\`. If
   *   \`p\` is missing, it is assumed to be the default date/time
@@ -3652,12 +3652,12 @@ export const Builtins =
   *
   *   \`p\` must have computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {BIT} '1'B if the string d holds a date/time value
+  * @returns '1'B if the string d holds a date/time value
   *   that matches the pattern p.
   */
  VALIDDATE: PROC (d, p, w) RETURNS (BIT);
@@ -3674,7 +3674,7 @@ export const Builtins =
   *
   * For an example of WEEKDAY, see SECS.
   *
-  * @param {ANY<NUMBER>} [x] Expression. If present, \`x\` specifies
+  * @param [x] Expression. If present, \`x\` specifies
   *   the input date as days. If missing, \`x\` is assumed to be
   *   DAYS().
   *
@@ -3683,7 +3683,7 @@ export const Builtins =
   *
   *   \`x\` must have computational type and will be converted to
   *   FIXED BINARY(31,0), if necessary.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @returns A FIXED BINARY(31,0) value that is the
   *   number of days \`x\` converted to the day of the week, where
   *   1=Sunday, 2=Monday, . . . 7=Saturday. If \`x\` is missing, it
   *   is assumed to be DAYS for today.
@@ -3719,16 +3719,16 @@ export const Builtins =
   * Y4DATE('990101',1950) returns '19990101' Y4DATE('000101',1950)
   * returns '20000101'
   *
-  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  * @param d A string expression representing a date.
   *
   *   \`d\` must have computational type and should have character
   *   type. If not, \`d\` is converted to character.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} The date value with the two-digit year
+  * @returns The date value with the two-digit year
   *   widened to a four-digit year (CHAR(8) NONVARYING).
   */
  Y4DATE: PROC (d, w) RETURNS (ANY<CHARACTER>);
@@ -3763,18 +3763,18 @@ export const Builtins =
   * Y4JULIAN('99001',1950) returns '1999001' Y4JULIAN('00001',1950)
   * returns '2000001'.
   *
-  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  * @param d A string expression representing a date.
   *   The length of \`d\` must be at least 5. If it is larger than 5,
   *   excess characters must be formed by leading blanks.
   *
   *   \`d\` must have computational type and should have character
   *   type. If not, it is converted to character.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} The date value with the two-digit year
+  * @returns The date value with the two-digit year
   *   widened to a four-digit year (CHAR(7) NONVARYING).
   */
  Y4JULIAN: PROC (d, w) RETURNS (ANY<CHARACTER>);
@@ -3808,18 +3808,18 @@ export const Builtins =
   * Y4YEAR('99',1950) returns '1999' Y4YEAR('00',1950) returns
   * '2000'
   *
-  * @param {ANY<CHARACTER>} d A string expression representing a date.
+  * @param d A string expression representing a date.
   *   The length of \`d\` must be at least 2. If it is larger than 2,
   *   excess characters must be formed by leading blanks.
   *
   *   \`d\` must have computational type and should have character
   *   type. If not, \`d\` is converted to character.
-  * @param {ANY<NUMBER>} [w] Specifies an expression (such as 1950)
+  * @param [w] Specifies an expression (such as 1950)
   *   that can be converted to an integer. If negative, it specifies
   *   an offset to be subtracted from the value of the year when the
   *   code runs. If omitted, \`w\` defaults to the value specified
   *   in the WINDOW compile-time option.
-  * @returns {ANY<CHARACTER>} The date value with the two-digit year
+  * @returns The date value with the two-digit year
   *   widened to a four-digit year (CHAR(4) NONVARYING).
   */
  Y4YEAR: PROC (d, w) RETURNS (ANY<CHARACTER>);
@@ -3857,15 +3857,15 @@ export const Builtins =
   * base 64 as EBCDIC for details. If other conventions were used,
   * the results are unpredictable.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  BASE64DECODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -3891,15 +3891,15 @@ export const Builtins =
   * for encoding a source buffer into base 64 as UTF-8 for details.
   * If other conventions were used, the results are unpredictable.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  BASE64DECODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -3925,15 +3925,15 @@ export const Builtins =
   * for encoding a source buffer into base 64 as UTF-16 for details.
   * If other conventions were used, the results are unpredictable.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  BASE64DECODE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -3991,15 +3991,15 @@ export const Builtins =
   * | 5 | 'pleas'A | 8 | cGxlYXM= |
   * | 4 | 'plea'A | 8 | cGxlYQ== |
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  BASE64ENCODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -4051,15 +4051,15 @@ export const Builtins =
   * | 5 | 'pleas'E | 8 | UTF8('l5OFgaI=') |
   * | 4 | 'plea'E | 8 | UTF8('l5OFgQ==) |
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  BASE64ENCODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -4111,15 +4111,15 @@ export const Builtins =
   * | 5 | 'pleas'E | 16 | WCHAR('l5OFgaI=') |
   * | 4 | 'plea'E | 16 | WCHAR('l5OFgQ==') |
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  BASE64ENCODE16: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -4132,11 +4132,11 @@ export const Builtins =
   * CHECKSUM returns an UNSIGNED FIXED BIN(32) value that is the
   * checksum value for a specified buffer.
   *
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.1
-  * @returns {ANY<NUMBER>} An UNSIGNED FIXED BIN(32) value that is
+  * @returns An UNSIGNED FIXED BIN(32) value that is
   *   the checksum value for a specified buffer.
   */
  CHECKSUM: PROC (q, n) RETURNS (ANY<NUMBER>);
@@ -4159,15 +4159,15 @@ export const Builtins =
   * If the source contains characters other than hexadecimal digits,
   * the CONVERSION condition is raised.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  HEXDECODE: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -4190,15 +4190,15 @@ export const Builtins =
   * If the source contains characters other than hexadecimal digits,
   * the CONVERSION condition is raised.
   *
-  * @param {ANY<LOCATOR>} p Specifies the address of the target buffer.
-  * @param {ANY<NUMBER>} m Specifies the length in bytes of the target
+  * @param p Specifies the address of the target buffer.
+  * @param m Specifies the length in bytes of the target
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @param {ANY<LOCATOR>} q Specifies the address of the source buffer.
-  * @param {ANY<NUMBER>} n Specifies the length in bytes of the source
+  * @param q Specifies the address of the source buffer.
+  * @param n Specifies the length in bytes of the source
   *   buffer. It must have a computational type and is converted to
   *   type size_t.
-  * @returns {ANY<NUMBER>} A size_t value that indicates the number
+  * @returns A size_t value that indicates the number
   *   of bytes that are written into the target buffer.
   */
  HEXDECODE8: PROC (p, m, q, n) RETURNS (ANY<NUMBER>);
@@ -4227,12 +4227,12 @@ export const Builtins =
   *         encoded = sha1digest(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR(20) string with the SHA-1 hash
+  * @returns A CHAR(20) string with the SHA-1 hash
   *   value.
   */
  SHA1DIGEST: PROC (p, n) RETURNS (ANY<CHARACTER>);
@@ -4272,14 +4272,14 @@ export const Builtins =
   * routines as long as they all use the same token created by the
   * SHA1INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA1INIT or SHA1UPDATE.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR(20) string with the SHA-1 hash
+  * @returns A CHAR(20) string with the SHA-1 hash
   *   value.
   */
  SHA1FINAL: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
@@ -4293,7 +4293,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA1FINAL function for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA1UPDATE and SHA1FINAL.
   */
  SHA1INIT: PROC () RETURNS (ANY<LOCATOR>);
@@ -4309,14 +4309,14 @@ export const Builtins =
   *
   * See the description of the SHA1FINAL function for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA1INIT or SHA1UPDATE.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA1UPDATE and SHA1FINAL.
   */
  SHA1UPDATE: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -4346,12 +4346,12 @@ export const Builtins =
   *         encoded = sha2digest512(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2DIGEST224: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4379,12 +4379,12 @@ export const Builtins =
   *         encoded = sha2digest512(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2DIGEST256: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4412,12 +4412,12 @@ export const Builtins =
   *         encoded = sha2digest512(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2DIGEST384: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4445,12 +4445,12 @@ export const Builtins =
   *         encoded = sha2digest512(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2DIGEST512: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4491,14 +4491,14 @@ export const Builtins =
   * routines as long as they all use the same token created by the
   * SHA2INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2FINAL224: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -4540,14 +4540,14 @@ export const Builtins =
   * routines as long as they all use the same token created by the
   * SHA2INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2FINAL256: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -4589,14 +4589,14 @@ export const Builtins =
   * routines as long as they all use the same token created by the
   * SHA2INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2FINAL384: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -4638,14 +4638,14 @@ export const Builtins =
   * routines as long as they all use the same token created by the
   * SHA2INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-2 hash value.
+  * @returns A CHAR string with the SHA-2 hash value.
   */
  SHA2FINAL512: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -4658,7 +4658,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA2FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA2UPDATE and SHA2FINAL.
   */
  SHA2INIT224: PROC () RETURNS (ANY<LOCATOR>);
@@ -4669,7 +4669,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA2FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA2UPDATE and SHA2FINAL.
   */
  SHA2INIT256: PROC () RETURNS (ANY<LOCATOR>);
@@ -4680,7 +4680,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA2FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA2UPDATE and SHA2FINAL.
   */
  SHA2INIT384: PROC () RETURNS (ANY<LOCATOR>);
@@ -4691,7 +4691,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA2FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA2UPDATE and SHA2FINAL.
   */
  SHA2INIT512: PROC () RETURNS (ANY<LOCATOR>);
@@ -4707,14 +4707,14 @@ export const Builtins =
   *
   * See the description of the SHA2FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA2UPDATE and SHA2FINAL.
   */
  SHA2UPDATE224: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -4733,14 +4733,14 @@ export const Builtins =
   *
   * See the description of the SHA2FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA2UPDATE and SHA2FINAL.
   */
  SHA2UPDATE256: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -4759,14 +4759,14 @@ export const Builtins =
   *
   * See the description of the SHA2FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA2UPDATE and SHA2FINAL.
   */
  SHA2UPDATE384: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -4785,14 +4785,14 @@ export const Builtins =
   *
   * See the description of the SHA2FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA2INITx or SHA2UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA2UPDATE and SHA2FINAL.
   */
  SHA2UPDATE512: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -4822,12 +4822,12 @@ export const Builtins =
   *         encoded = sha3digest256(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3DIGEST224: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4855,12 +4855,12 @@ export const Builtins =
   *         encoded = sha3digest256(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3DIGEST256: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4888,12 +4888,12 @@ export const Builtins =
   *         encoded = sha3digest256(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3DIGEST384: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4921,12 +4921,12 @@ export const Builtins =
   *         encoded = sha3digest256(addrdata(c), length(c));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be hashed.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3DIGEST512: PROC (p, n) RETURNS (ANY<CHARACTER>);
     DCL p ANY<LOCATOR>;
@@ -4960,11 +4960,11 @@ export const Builtins =
   * set of routines as long as they all use the same token created
   * by the SHA3INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
   *
@@ -4974,7 +4974,7 @@ export const Builtins =
   *
   *   These functions generate code that executes the KIMD and KLMD
   *   assembler instructions.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3FINAL224: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -5009,11 +5009,11 @@ export const Builtins =
   * set of routines as long as they all use the same token created
   * by the SHA3INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
   *
@@ -5023,7 +5023,7 @@ export const Builtins =
   *
   *   These functions generate code that executes the KIMD and KLMD
   *   assembler instructions.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3FINAL256: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -5058,11 +5058,11 @@ export const Builtins =
   * set of routines as long as they all use the same token created
   * by the SHA3INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
   *
@@ -5072,7 +5072,7 @@ export const Builtins =
   *
   *   These functions generate code that executes the KIMD and KLMD
   *   assembler instructions.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3FINAL384: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -5107,11 +5107,11 @@ export const Builtins =
   * set of routines as long as they all use the same token created
   * by the SHA3INIT call.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
   *
@@ -5121,7 +5121,7 @@ export const Builtins =
   *
   *   These functions generate code that executes the KIMD and KLMD
   *   assembler instructions.
-  * @returns {ANY<CHARACTER>} A CHAR string with the SHA-3 hash value.
+  * @returns A CHAR string with the SHA-3 hash value.
   */
  SHA3FINAL512: PROC (t, p, n) RETURNS (ANY<CHARACTER>);
     DCL t ANY<LOCATOR>;
@@ -5134,7 +5134,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA3FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA3UPDATE and SHA3FINAL.
   */
  SHA3INIT224: PROC () RETURNS (ANY<LOCATOR>);
@@ -5145,7 +5145,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA3FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA3UPDATE and SHA3FINAL.
   */
  SHA3INIT256: PROC () RETURNS (ANY<LOCATOR>);
@@ -5156,7 +5156,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA3FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA3UPDATE and SHA3FINAL.
   */
  SHA3INIT384: PROC () RETURNS (ANY<LOCATOR>);
@@ -5167,7 +5167,7 @@ export const Builtins =
   * series of texts.
   *
   * See the description of the SHA3FINAL functions for an example.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with SHA3UPDATE and SHA3FINAL.
   */
  SHA3INIT512: PROC () RETURNS (ANY<LOCATOR>);
@@ -5183,14 +5183,14 @@ export const Builtins =
   *
   * See the description of the SHA3FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA3UPDATE and SHA3FINAL.
   */
  SHA3UPDATE224: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -5209,14 +5209,14 @@ export const Builtins =
   *
   * See the description of the SHA3FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA3UPDATE and SHA3FINAL.
   */
  SHA3UPDATE256: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -5235,14 +5235,14 @@ export const Builtins =
   *
   * See the description of the SHA3FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA3UPDATE and SHA3FINAL.
   */
  SHA3UPDATE384: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -5261,14 +5261,14 @@ export const Builtins =
   *
   * See the description of the SHA3FINAL functions for an example.
   *
-  * @param {ANY<LOCATOR>} t A token returned by a previous invocation
+  * @param t A token returned by a previous invocation
   *   of SHA3INITx or SHA3UPDATEx.
-  * @param {ANY<LOCATOR>} \`p\` A pointer that specifies the address
+  * @param \`p\` A pointer that specifies the address
   *   of a buffer to be added to the hash.
-  * @param {ANY<NUMBER>} \`n\` An expression that specifies the length
+  * @param \`n\` An expression that specifies the length
   *   (in bytes) of that buffer. It must have a computational type
   *   and will be converted to type size_t.
-  * @returns {ANY<LOCATOR>} A token (of type POINTER) that can be
+  * @returns A token (of type POINTER) that can be
   *   used with further SHA3UPDATE and SHA3FINAL.
   */
  SHA3UPDATE512: PROC (t, p, n) RETURNS (ANY<LOCATOR>);
@@ -5286,8 +5286,8 @@ export const Builtins =
   * EPSILON(x) is a constant and can be used in restricted
   * expressions.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT expression.
-  * @returns {ANY<NUMBER>} A floating-point value that is the spacing
+  * @param x REAL FLOAT expression.
+  * @returns A floating-point value that is the spacing
   *   between \`x\` and the next positive number when \`x\` is 1.
   */
  EPSILON: PROC (x) RETURNS (ANY<NUMBER>);
@@ -5300,9 +5300,9 @@ export const Builtins =
   *
   * HUGE(x) is a constant and can be used in restricted expressions.
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have the attributes
+  * @param x Expression. \`x\` must have the attributes
   *   REAL FLOAT.
-  * @returns {ANY<NUMBER>} A floating-point value that is the largest
+  * @returns A floating-point value that is the largest
   *   positive value \`x\` can assume.
   */
  HUGE: PROC (x) RETURNS (ANY<NUMBER>);
@@ -5318,8 +5318,8 @@ export const Builtins =
   * No floating-point exceptions will be raised no matter what the
   * format of the argument.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
-  * @returns {BIT} '1'B if the argument is not a NAN and not
+  * @param x REAL FLOAT DECIMAL expression.
+  * @returns '1'B if the argument is not a NAN and not
   *   positive or negative infinity; '0'B otherwise.
   */
  ISFINITE: PROC (x) RETURNS (BIT);
@@ -5334,8 +5334,8 @@ export const Builtins =
   * No floating-point exceptions will be raised no matter what the
   * format of the argument.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
-  * @returns {BIT} '1'B if the argument is an infinity; '0'B
+  * @param x REAL FLOAT DECIMAL expression.
+  * @returns '1'B if the argument is an infinity; '0'B
   *   otherwise.
   */
  ISINF: PROC (x) RETURNS (BIT);
@@ -5350,8 +5350,8 @@ export const Builtins =
   * No floating-point exceptions will be raised no matter what the
   * format of the argument.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
-  * @returns {BIT} '1'B if the argument is a NAN; '0'B otherwise.
+  * @param x REAL FLOAT DECIMAL expression.
+  * @returns '1'B if the argument is a NAN; '0'B otherwise.
   */
  ISNAN: PROC (x) RETURNS (BIT);
     DCL x ANY<NUMBER>;
@@ -5366,8 +5366,8 @@ export const Builtins =
   * No floating-point exceptions will be raised no matter what the
   * format of the argument.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
-  * @returns {BIT} '1'B if the argument is not a zero, subnormal,
+  * @param x REAL FLOAT DECIMAL expression.
+  * @returns '1'B if the argument is not a zero, subnormal,
   *   infinity or NaN; '0'B otherwise.
   */
  ISNORMAL: PROC (x) RETURNS (BIT);
@@ -5382,8 +5382,8 @@ export const Builtins =
   * No floating-point exceptions will be raised no matter what the
   * format of the argument.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT DECIMAL expression.
-  * @returns {BIT} '1'B if the argument is a zero; '0'B otherwise.
+  * @param x REAL FLOAT DECIMAL expression.
+  * @returns '1'B if the argument is a zero; '0'B otherwise.
   */
  ISZERO: PROC (x) RETURNS (BIT);
     DCL x ANY<NUMBER>;
@@ -5451,9 +5451,9 @@ export const Builtins =
   *   maxexp(x) = 6145    for x float dec(p), 16 < p
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have the REAL and
+  * @param x Expression. \`x\` must have the REAL and
   *   FLOAT attributes.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @returns A FIXED BINARY(31,0) value that is the
   *   maximum value that EXPONENT(x) can assume.
   */
  MAXEXP: PROC (x) RETURNS (FIXED BINARY);
@@ -5522,9 +5522,9 @@ export const Builtins =
   *   minexp(x) = -6142     for x float dec(p), 16 < p
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have the REAL and
+  * @param x Expression. \`x\` must have the REAL and
   *   FLOAT attributes.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @returns A FIXED BINARY(31,0) value that is the
   *   minimum value that EXPONENT(x) can assume.
   */
  MINEXP: PROC (x) RETURNS (FIXED BINARY);
@@ -5594,9 +5594,9 @@ export const Builtins =
   *   places(x) = 34        for x float dec(p), 16 < p
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must be declared REAL
+  * @param x Expression. \`x\` must be declared REAL
   *   FLOAT.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @returns A FIXED BINARY(31,0) value that is the
   *   model-precision used to represent \`x\`.
   */
  PLACES: PROC (x) RETURNS (FIXED BINARY);
@@ -5615,8 +5615,8 @@ export const Builtins =
   *
   * RADIX(x) can be used in restricted expressions.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT expression.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @param x REAL FLOAT expression.
+  * @returns A FIXED BINARY(31,0) value that is the
   *   model-base used to represent \`x\`.
   */
  RADIX: PROC (x) RETURNS (FIXED BINARY);
@@ -5629,8 +5629,8 @@ export const Builtins =
   *
   * TINY(x) is a constant and can be used in restricted expressions.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT expression.
-  * @returns {ANY<NUMBER>} A floating-point value that is the
+  * @param x REAL FLOAT expression.
+  * @returns A floating-point value that is the
   *   smallest positive value \`x\` can assume.
   */
  TINY: PROC (x) RETURNS (ANY<NUMBER>);
@@ -5651,9 +5651,9 @@ export const Builtins =
   *
   * Consequently, EXPONENT(1e0) equals 1 and not 0.
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must be declared as REAL
+  * @param x Expression. \`x\` must be declared as REAL
   *   FLOAT.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that is the
+  * @returns A FIXED BINARY(31,0) value that is the
   *   exponent part of x.
   */
  EXPONENT: PROC (x) RETURNS (FIXED BINARY);
@@ -5667,8 +5667,8 @@ export const Builtins =
   *
   * PRED(TINY(X)) will return zero and will not raise UNDERFLOW.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT expression.
-  * @returns {ANY<NUMBER>} A floating-point value that is the biggest
+  * @param x REAL FLOAT expression.
+  * @returns A floating-point value that is the biggest
   *   representable number smaller than \`x\`.
   */
  PRED: PROC (x) RETURNS (ANY<NUMBER>);
@@ -5688,10 +5688,10 @@ export const Builtins =
   *
   * The result has the base, mode, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT expression.
-  * @param {ANY<NUMBER>} n Expression. It must have a computational
+  * @param x REAL FLOAT expression.
+  * @param n Expression. It must have a computational
   *   type and is converted to FIXED BINARY(31,0).
-  * @returns {ANY<NUMBER>} A floating-point value equal to
+  * @returns A floating-point value equal to
   *   x*(radix(x)^n).
   */
  SCALE: PROC (x, n) RETURNS (ANY<NUMBER>);
@@ -5713,8 +5713,8 @@ export const Builtins =
   *   succ(0d0)     = tiny(0d0)
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x REAL FLOAT expression.
-  * @returns {ANY<NUMBER>} A floating-point value that is the
+  * @param x REAL FLOAT expression.
+  * @returns A floating-point value that is the
   *   smallest representable number larger than \`x\`.
   */
  SUCC: PROC (x) RETURNS (ANY<NUMBER>);
@@ -5742,9 +5742,9 @@ export const Builtins =
   * The BIFPREC compiler option determines the precision of the
   * result returned.
   *
-  * @param {ANY<FILE>} x File-reference. The file must be open
+  * @param x File-reference. The file must be open
   *   and have the STREAM attribute.
-  * @returns {FIXED BINARY} An unscaled REAL FIXED BINARY value
+  * @returns An unscaled REAL FIXED BINARY value
   *   specifying the number of data items transmitted during the
   *   last GET or PUT operation on \`x\`.
   */
@@ -5760,8 +5760,8 @@ export const Builtins =
   * bytestream files; for example, files that require the use of
   * the FILEREAD built-in function.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @returns {BIT} A '1'B when the end of the file is reached;
+  * @param x File reference.
+  * @returns A '1'B when the end of the file is reached;
   *   '0'B if the end is not reached.
   */
  ENDFILE: PROC (x) RETURNS (BIT);
@@ -5791,10 +5791,10 @@ export const Builtins =
   * FILEDDINT(x,'KEYLOC') and FILEDDINT(x,'KEYLEN') are valid
   * only for VSAM KSDS files.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @param {ANY<CHARACTER>} c Character string that holds the
+  * @param x File reference.
+  * @param c Character string that holds the
   *   attribute to be queried.
-  * @returns {FIXED BINARY} A size_t value that is the value of
+  * @returns A size_t value that is the value of
   *   attribute \`c\` for file \`x\`.
   */
  FILEDDINT: PROC (x, c) RETURNS (FIXED BINARY);
@@ -5816,10 +5816,10 @@ export const Builtins =
   * is not open or the attribute is invalid for the file being
   * queried.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @param {ANY<CHARACTER>} c Character string that holds the
+  * @param x File reference.
+  * @param c Character string that holds the
   *   attribute to be queried.
-  * @returns {FIXED BINARY} A FIXED BIN(31) value that holds the
+  * @returns A FIXED BIN(31) value that holds the
   *   value 1 if the attribute \`c\` applies to file \`x\`.
   *   Otherwise, a value of 0 is returned.
   */
@@ -5881,10 +5881,10 @@ export const Builtins =
   * The ERROR condition with oncode 1010 is raised when the file is
   * not open or the attribute is invalid for the file being queried.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @param {ANY<CHARACTER>} c Character string that holds the
+  * @param x File reference.
+  * @param c Character string that holds the
   *   attribute to be queried.
-  * @returns {CHARACTER} A character string that is the value of
+  * @returns A character string that is the value of
   *   the attribute \`c\` for the file \`x\`.
   */
  FILEDDWORD: PROC (x, c) RETURNS (CHARACTER);
@@ -5908,8 +5908,8 @@ export const Builtins =
   * The ERROR condition with oncode 1010 is raised when the file
   * is not open.
   *
-  * @param {ANY<FILE>} x File reference
-  * @returns {FIXED BINARY} A size_t 1 value that is the system
+  * @param x File reference
+  * @returns A size_t 1 value that is the system
   *   token for a PL/I file constant or variable.
   */
  FILEID: PROC (x) RETURNS (FIXED BINARY);
@@ -5925,9 +5925,9 @@ export const Builtins =
   * valid and usable only until the termination of the block in
   * which the FILENEW function is invoked.
   *
-  * @param {ANY<FILE>} [x] Restricted expression. x must be a
+  * @param [x] Restricted expression. x must be a
   *   file constant or an initialized file variable.
-  * @returns {ANY<FILE>} A FILE variable that points to a new
+  * @returns A FILE variable that points to a new
   *   file constant in automatic storage.
   */
  FILENEW: PROC (x) RETURNS (ANY<FILE>);
@@ -5937,8 +5937,8 @@ export const Builtins =
   * FILEOPEN returns '1'B if the file \`x\` is open and '0'B if
   * the file is not open.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @returns {BIT} '1'B if the file \`x\` is open and '0'B if the
+  * @param x File reference.
+  * @returns '1'B if the file \`x\` is open and '0'B if the
   *   file is not open.
   */
  FILEOPEN: PROC (x) RETURNS (BIT);
@@ -5951,13 +5951,13 @@ export const Builtins =
   *
   * FILEREAD can read only zFS TYPE(U) files.
   *
-  * @param {ANY<FILE>} x File reference
-  * @param {ANY<LOCATOR>} y Expression with type POINTER or
+  * @param x File reference
+  * @param y Expression with type POINTER or
   *   OFFSET. If the type is OFFSET, the expression must be an
   *   OFFSET variable declared with the AREA attribute.
-  * @param {ANY<NUMBER>} z Expression. It must have a
+  * @param z Expression. It must have a
   *   computational type and is converted to type size_t.1
-  * @returns {FIXED BINARY} The number of storage units actually
+  * @returns The number of storage units actually
   *   read.
   */
  FILEREAD: PROC (x, y, z) RETURNS (FIXED BINARY);
@@ -5977,18 +5977,18 @@ export const Builtins =
   *
   * FILESEEK can be used only on zFS TYPE(U) files.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @param {ANY<NUMBER>} y A size_t value that indicates the
+  * @param x File reference.
+  * @param y A size_t value that indicates the
   *   number of positions the file pointer is to be moved
   *   relative to \`z\`.
-  * @param {ANY<NUMBER>} z A FIXED BINARY(31) value that
+  * @param z A FIXED BINARY(31) value that
   *   indicates the origin from which the file pointer is to be
   *   moved. The following values are valid:
   *
   *   **-1**: Beginning of the file
   *   **0**: Current position of the file pointer
   *   **1**: End of the file
-  * @returns {FIXED BINARY} A FIXED BIN(31) value. The value is
+  * @returns A FIXED BIN(31) value. The value is
   *   0 if the change in file position is successful; it is
   *   nonzero otherwise.
   */
@@ -6005,8 +6005,8 @@ export const Builtins =
   *
   * FILETELL can be used only on zFS TYPE(U) files.
   *
-  * @param {ANY<FILE>} x File reference
-  * @returns {FIXED BINARY} A size_t 1 value that indicates the
+  * @param x File reference
+  * @returns A size_t 1 value that indicates the
   *   current position of the file x.
   */
  FILETELL: PROC (x) RETURNS (FIXED BINARY);
@@ -6019,13 +6019,13 @@ export const Builtins =
   *
   * FILEWRITE can write only to zFS TYPE(U) files.
   *
-  * @param {ANY<FILE>} x File reference.
-  * @param {ANY<LOCATOR>} y Expression with type POINTER or
+  * @param x File reference.
+  * @param y Expression with type POINTER or
   *   OFFSET. If the type is OFFSET, the expression must be an
   *   OFFSET variable declared with the AREA attribute.
-  * @param {ANY<NUMBER>} z Expression. It must have a
+  * @param z Expression. It must have a
   *   computational type and is converted to type size_t.1
-  * @returns {FIXED BINARY} The number of storage units actually
+  * @returns The number of storage units actually
   *   written.
   */
  FILEWRITE: PROC (x, y, z) RETURNS (FIXED BINARY);
@@ -6044,8 +6044,8 @@ export const Builtins =
   * The BIFPREC compiler option determines the precision of the
   * result returned.
   *
-  * @param {ANY<FILE>} x File-reference.
-  * @returns {FIXED BINARY} An unscaled REAL FIXED BINARY
+  * @param x File-reference.
+  * @returns An unscaled REAL FIXED BINARY
   *   specifying the current line number of \`x\`.
   */
  LINENO: PROC (x) RETURNS (FIXED BINARY);
@@ -6065,7 +6065,7 @@ export const Builtins =
   *
   * If a JSON or Unicode CONVERSION condition is raised,
   * ONSUBCODE returns the index of the invalid character.
-  * @returns {FIXED BINARY} A FIXED BINARY(31,0) value that gives
+  * @returns A FIXED BINARY(31,0) value that gives
   *   more information about an I/O, JSON, or conversion error
   *   that occurred.
   */
@@ -6083,7 +6083,7 @@ export const Builtins =
   * xxxxyyyy, where xxxx is Register 15 and yyyy is the reason
   * code. The return and reason codes are documented in VSAM
   * Macro Instructions.
-  * @returns {FIXED BINARY} A FIXED BIN(31) value that gives more
+  * @returns A FIXED BIN(31) value that gives more
   *   information about an I/O error that has occurred.
   */
  ONSUBCODE2: PROC () RETURNS (FIXED BINARY);
@@ -6098,9 +6098,9 @@ export const Builtins =
   * The BIFPREC compiler option determines the precision of the
   * result returned.
   *
-  * @param {ANY<FILE>} x File reference. The file must be open
+  * @param x File reference. The file must be open
   *   and have the PRINT attribute.
-  * @returns {FIXED BINARY} An unscaled REAL FIXED BIN(31) value
+  * @returns An unscaled REAL FIXED BIN(31) value
   *   that is the current page number associated with file \`x\`.
   */
  PAGENO: PROC (x) RETURNS (FIXED BINARY);
@@ -6125,9 +6125,9 @@ export const Builtins =
   * - The file is not open
   * - No current cursor position exists in the file.
   *
-  * @param {ANY<FILE>} x File reference. The file must have the
+  * @param x File reference. The file must have the
   *   RECORD attribute.
-  * @returns {BIT} A bit string of length 1 indicating whether a
+  * @returns A bit string of length 1 indicating whether a
   *   record that has been accessed is followed by another with
   *   the same key.
   */
@@ -6148,11 +6148,11 @@ export const Builtins =
   * The result is REAL FIXED BIN( max(p1,p2,...), 0 ). It is
   * UNSIGNED if all the arguments are UNSIGNED.
   *
-  * @param {ANY<NUMBER>} x Expression that must have a
+  * @param x Expression that must have a
   *   computational type.
-  * @param {ANY<NUMBER> LIST} y Expression that must have a
+  * @param y Expression that must have a
   *   computational type.
-  * @returns {FIXED BINARY} The logical AND of its arguments.
+  * @returns The logical AND of its arguments.
   */
  IAND: PROC (x, y) RETURNS (FIXED BINARY);
     DCL x ANY<NUMBER>;
@@ -6179,9 +6179,9 @@ export const Builtins =
   * - when(p <= 32), the value returned is between 0 and 32
   * - otherwise, the value returned is between 0 and 64
   *
-  * @param {ANY<NUMBER>} x Specifies a REAL FIXED BIN value with a
+  * @param x Specifies a REAL FIXED BIN value with a
   *   scale factor of zero.
-  * @returns {FIXED BINARY} The number of leading zeros in x.
+  * @returns The number of leading zeros in x.
   */
  ICLZ: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY<NUMBER>;
@@ -6199,11 +6199,11 @@ export const Builtins =
   * The result is REAL FIXED BIN( max(p1,p2,...), 0 ). It is
   * UNSIGNED if all the arguments are UNSIGNED.
   *
-  * @param {ANY<NUMBER>} x Expression that must have a
+  * @param x Expression that must have a
   *   computational type.
-  * @param {ANY<NUMBER>} y Expression that must have a
+  * @param y Expression that must have a
   *   computational type.
-  * @returns {FIXED BINARY} The logical exclusive-OR of \`x\` and \`y\`.
+  * @returns The logical exclusive-OR of \`x\` and \`y\`.
   */
  IEOR: PROC (x, y) RETURNS (FIXED BINARY);
     DCL x ANY<NUMBER>;
@@ -6228,9 +6228,9 @@ export const Builtins =
   *   inot(+1)       //  produces -2
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The logical NOT of \`x\`.
+  * @returns The logical NOT of \`x\`.
   */
  INOT: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY<NUMBER>;
@@ -6247,11 +6247,11 @@ export const Builtins =
   * The result is REAL FIXED BIN( max(p1,p2,...), 0 ). It is
   * UNSIGNED if all the arguments are UNSIGNED.
   *
-  * @param {ANY<NUMBER>} x Expression that must have a
+  * @param x Expression that must have a
   *   computational type.
-  * @param {ANY<NUMBER> LIST} y Expression that must have a
+  * @param y Expression that must have a
   *   computational type.
-  * @returns {FIXED BINARY} The logical OR of its arguments.
+  * @returns The logical OR of its arguments.
   */
  IOR: PROC (x, y) RETURNS (FIXED BINARY);
     DCL x ANY<NUMBER>;
@@ -6282,9 +6282,9 @@ export const Builtins =
   *    value -1.
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The result of casting \`x\` to a signed
+  * @returns The result of casting \`x\` to a signed
   *   integer value without changing its bit pattern.
   */
  ISIGNED: PROC (x) RETURNS (FIXED BINARY);
@@ -6319,11 +6319,11 @@ export const Builtins =
   *   isll(2147483645,1)       //  produces  -6
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  * @param n Expression. \`n\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The result of logically shifting \`x\`
+  * @returns The result of logically shifting \`x\`
   *   to the left by \`n\` places.
   */
  ISLL: PROC (x, n) RETURNS (FIXED BINARY);
@@ -6357,11 +6357,11 @@ export const Builtins =
   *   isrl(-6,1)            //  produces 2147483645
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  * @param n Expression. \`n\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The result of logically shifting \`x\`
+  * @returns The result of logically shifting \`x\`
   *   to the right by \`n\` places.
   */
  ISRL: PROC (x, n) RETURNS (FIXED BINARY);
@@ -6393,9 +6393,9 @@ export const Builtins =
   *    FIXED BIN(32) value.
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The result of casting \`x\` to an
+  * @returns The result of casting \`x\` to an
   *   unsigned integer value without changing its bit pattern.
   */
  IUNSIGNED: PROC (x) RETURNS (FIXED BINARY);
@@ -6424,11 +6424,11 @@ export const Builtins =
   *   lower2 (-7,1)                       //  Produces -4
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  * @param n Expression. \`n\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The result of arithmetic right-shifting
+  * @returns The result of arithmetic right-shifting
   *   \`x\` by \`n\` places.
   */
  LOWER2: PROC (x, n) RETURNS (FIXED BINARY);
@@ -6460,11 +6460,11 @@ export const Builtins =
   *   raise2(6,1)                    //  produces 12
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type.
-  * @param {ANY<NUMBER>} n Expression. \`n\` must have a
+  * @param n Expression. \`n\` must have a
   *   computational type.
-  * @returns {FIXED BINARY} The value x*(2**n).
+  * @returns The value x*(2**n).
   */
  RAISE2: PROC (x, n) RETURNS (FIXED BINARY);
     DCL x ANY<NUMBER>;
@@ -6488,11 +6488,11 @@ export const Builtins =
   * - When the first character after any whitespace is not the
   * desired character ], a value of zero is returned.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} The number of bytes read.
+  * @returns The number of bytes read.
   */
  JSONGETARRAYEND: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6514,11 +6514,11 @@ export const Builtins =
   * - When the first character after any whitespace is not the
   * desired character [, a value of zero is returned.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} The number of bytes read.
+  * @returns The number of bytes read.
   */
  JSONGETARRAYSTART: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6540,11 +6540,11 @@ export const Builtins =
   * - When the first character after any whitespace is not the
   * desired character, a value of zero is returned.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} The number of bytes read.
+  * @returns The number of bytes read.
   */
  JSONGETCOLON: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6566,11 +6566,11 @@ export const Builtins =
   * - When the first character after any whitespace is not the
   * desired character, a value of zero is returned.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} The number of bytes read.
+  * @returns The number of bytes read.
   */
  JSONGETCOMMA: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6690,11 +6690,11 @@ export const Builtins =
   *    }
   * \`\`\`
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @param {ANY} [x] A variable reference whose name-value pair is
+  * @param [x] A variable reference whose name-value pair is
   *   to be read from the buffer. The variable reference must not
   *   contain any of these elements:
   *
@@ -6706,7 +6706,7 @@ export const Builtins =
   *   - Unnamed elements
   *
   *   x may have STRUCTURE type.
-  * @returns {FIXED BINARY} The number of bytes read from the
+  * @returns The number of bytes read from the
   *   buffer.
   */
  JSONGETMEMBER: PROC (p, n, x) RETURNS (FIXED BINARY);
@@ -6730,11 +6730,11 @@ export const Builtins =
   * - When the first character after any whitespace is not the
   * desired character }, a value of zero is returned.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} The number of bytes read.
+  * @returns The number of bytes read.
   */
  JSONGETOBJECTEND: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6756,11 +6756,11 @@ export const Builtins =
   * - When the first character after any whitespace is not the
   * desired character {, a value of zero is returned.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} The number of bytes read.
+  * @returns The number of bytes read.
   */
  JSONGETOBJECTSTART: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6910,11 +6910,11 @@ export const Builtins =
   *    read = jsonGetValue( p, n, info );
   * \`\`\`
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be read
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer
-  * @param {ANY} [x] A variable reference whose value is to be
+  * @param [x] A variable reference whose value is to be
   *   read from the buffer
   *
   *   The variable reference must not contain any of these elements:
@@ -6927,7 +6927,7 @@ export const Builtins =
   *   - Unnamed elements
   *
   *   x may have STRUCTURE type.
-  * @returns {FIXED BINARY} The number of bytes read from the
+  * @returns The number of bytes read from the
   *   buffer.
   */
  JSONGETVALUE: PROC (p, n, x) RETURNS (FIXED BINARY);
@@ -6940,11 +6940,11 @@ export const Builtins =
   * if the number of available bytes n is greater than zero. The
   * function returns a size_t 1 value equal to 1.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} 1.
+  * @returns 1.
   */
  JSONPUTARRAYEND: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6955,11 +6955,11 @@ export const Builtins =
   * buffer if the number of available bytes n is greater than zero.
   * The function returns a size_t 1 value equal to 1.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} 1.
+  * @returns 1.
   */
  JSONPUTARRAYSTART: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6970,11 +6970,11 @@ export const Builtins =
   * available bytes n is greater than zero. The function returns a
   * size_t 1 value equal to 1.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of available bytes in the buffer.
-  * @returns {FIXED BINARY} 1.
+  * @returns 1.
   */
  JSONPUTCOLON: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -6985,11 +6985,11 @@ export const Builtins =
   * available bytes n is greater than zero. The function returns a
   * size_t 1 value equal to 1.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t that specifies the number of
+  * @param n A size_t that specifies the number of
   *   available bytes in the buffer.
-  * @returns {FIXED BINARY} 1.
+  * @returns 1.
   */
  JSONPUTCOMMA: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -7092,11 +7092,11 @@ export const Builtins =
   * Unlike the previous examples, this buffer contains complete,
   * valid JSON text.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t that specifies the number of
+  * @param n A size_t that specifies the number of
   *   available bytes in the buffer.
-  * @param {ANY} x A variable reference whose value is to be
+  * @param x A variable reference whose value is to be
   *   written to the buffer. The variable reference must not contain
   *   any of these elements:
   *
@@ -7108,7 +7108,7 @@ export const Builtins =
   *   - Unnamed elements
   *
   *   x may have STRUCTURE type.
-  * @param {ANY<CHARACTER>} [y] An optional parameter that
+  * @param [y] An optional parameter that
   *   specifies whether names should be written in lowercase,
   *   uppercase, or asis.
   *
@@ -7116,7 +7116,7 @@ export const Builtins =
   *   UPPER, or ASIS. These values can themselves be specified in
   *   any case. If not specified, it will default to the value in
   *   JSON(CASE) option.
-  * @returns {FIXED BINARY} The number of bytes written to the
+  * @returns The number of bytes written to the
   *   buffer, or the number of bytes needed if n is zero.
   */
  JSONPUTMEMBER: PROC (p, n, x, y) RETURNS (FIXED BINARY);
@@ -7130,11 +7130,11 @@ export const Builtins =
   * the number of available bytes n is greater than zero. The
   * function returns a size_t 1 value equal to 1.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t that specifies the number of
+  * @param n A size_t that specifies the number of
   *   available bytes in the buffer.
-  * @returns {FIXED BINARY} 1.
+  * @returns 1.
   */
  JSONPUTOBJECTEND: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -7145,11 +7145,11 @@ export const Builtins =
   * the number of available bytes n is greater than zero. The
   * function returns a size_t 1 value equal to 1.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t that specifies the number of
+  * @param n A size_t that specifies the number of
   *   available bytes in the buffer.
-  * @returns {FIXED BINARY} 1.
+  * @returns 1.
   */
  JSONPUTOBJECTSTART: PROC (p, n) RETURNS (FIXED BINARY);
     DCL p POINTER;
@@ -7203,11 +7203,11 @@ export const Builtins =
   * {"D":2,"E":3}
   * \`\`\`
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be written.
-  * @param {FIXED BINARY} n A size_t that specifies the number of
+  * @param n A size_t that specifies the number of
   *   available bytes in the buffer.
-  * @param {ANY} x A variable reference whose value is to be
+  * @param x A variable reference whose value is to be
   *   written to the buffer. The variable reference must not contain
   *   any of these elements:
   *
@@ -7219,7 +7219,7 @@ export const Builtins =
   *   - Unnamed elements
   *
   *   x may have STRUCTURE type.
-  * @param {ANY<CHARACTER>} [y] An optional parameter that
+  * @param [y] An optional parameter that
   *   specifies whether names should be written in lowercase,
   *   uppercase, or asis.
   *
@@ -7227,7 +7227,7 @@ export const Builtins =
   *   UPPER, or ASIS. These values can themselves be specified in
   *   any case. If not specified, it will default to the value in
   *   JSON(CASE) option.
-  * @returns {FIXED BINARY} The number of bytes written to the
+  * @returns The number of bytes written to the
   *   buffer, or the number of bytes needed if n is zero.
   */
  JSONPUTVALUE: PROC (p, n, x, y) RETURNS (FIXED BINARY);
@@ -7242,11 +7242,11 @@ export const Builtins =
   * is valid; otherwise, it returns the index of the first invalid
   * byte.
   *
-  * @param {POINTER} p A pointer that specifies the address of a
+  * @param p A pointer that specifies the address of a
   *   buffer to be tested.
-  * @param {FIXED BINARY} n A size_t value that specifies the
+  * @param n A size_t value that specifies the
   *   number of bytes in the buffer.
-  * @returns {FIXED BINARY} Zero if the JSON text is valid;
+  * @returns Zero if the JSON text is valid;
   *   otherwise, the index of the first invalid byte.
   */
  JSONVALID: PROC (p, n) RETURNS (FIXED BINARY);
@@ -7267,8 +7267,8 @@ export const Builtins =
   *
   * and has the base and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression, where ABS(x) <= 1.
-  * @returns {FLOAT} An approximation of the inverse (arc) cosine
+  * @param x Real expression, where ABS(x) <= 1.
+  * @returns An approximation of the inverse (arc) cosine
   *   in radians of \`x\`.
   */
  ACOS: PROC (x) RETURNS (FLOAT);
@@ -7286,8 +7286,8 @@ export const Builtins =
   *
   * The result has the base and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression, where ABS(x) <= 1.
-  * @returns {FLOAT} An approximation of the inverse (arc) sine
+  * @param x Real expression, where ABS(x) <= 1.
+  * @returns An approximation of the inverse (arc) sine
   *   in radians of \`x\`.
   */
  ASIN: PROC (x) RETURNS (FLOAT);
@@ -7298,7 +7298,7 @@ export const Builtins =
   * the inverse (arc) tangent in radians of \`x\` or of a ratio
   * \`x/y\`.
   *
-  * @param {ANY<NUMBER>} x Expression.
+  * @param x Expression.
   *
   *   If \`x\` alone is specified, the result has the base and
   *   precision of \`x\`, and is in the range:
@@ -7319,8 +7319,8 @@ export const Builtins =
   *   |  | -π/2 | for y=0 and x<0 |
   *   |  | π + ATAN(x/y) | for y<0 and x>=0 |
   *   |  | -π + ATAN(x/y) | for y<0 and x<0 |
-  * @param {ANY<NUMBER>} [y] Expression.
-  * @returns {FLOAT} An approximation of the inverse (arc) tangent
+  * @param [y] Expression.
+  * @returns An approximation of the inverse (arc) tangent
   *   in radians of \`x\` or of \`x/y\`.
   */
  ATAN: PROC (x, y) RETURNS (FLOAT);
@@ -7335,7 +7335,7 @@ export const Builtins =
   * For argument requirements and attributes of the result, see
   * ATAN.
   *
-  * @param {ANY<NUMBER>} x Expression.
+  * @param x Expression.
   *
   *   If \`x\` alone is specified it must be real. The result has
   *   the base and precision of \`x\`, and is in the range:
@@ -7350,8 +7350,8 @@ export const Builtins =
   *   \`\`\`
   *     (180/π) * ATAN(x,y)
   *   \`\`\`
-  * @param {ANY<NUMBER>} [y] Expression.
-  * @returns {FLOAT} An approximation of the inverse (arc) tangent
+  * @param [y] Expression.
+  * @returns An approximation of the inverse (arc) tangent
   *   in degrees of \`x\` or of \`x/y\`.
   */
  ATAND: PROC (x, y) RETURNS (FLOAT);
@@ -7369,8 +7369,8 @@ export const Builtins =
   *   LOG((1 + x)/(1 - x))/2
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Expression. ABS(x)<1.
-  * @returns {FLOAT} An approximation of the inverse (arc)
+  * @param x Expression. ABS(x)<1.
+  * @returns An approximation of the inverse (arc)
   *   hyperbolic tangent of \`x\`.
   */
  ATANH: PROC (x) RETURNS (FLOAT);
@@ -7381,8 +7381,8 @@ export const Builtins =
   * and mode of \`x\`, and is an approximation of the cosine of
   * \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression with a value in radians.
-  * @returns {FLOAT} An approximation of the cosine of \`x\`.
+  * @param x Expression with a value in radians.
+  * @returns An approximation of the cosine of \`x\`.
   */
  COS: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7392,8 +7392,8 @@ export const Builtins =
   * precision of \`x\`, and is an approximation of the cosine of
   * \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression with a value in degrees.
-  * @returns {FLOAT} An approximation of the cosine of \`x\`.
+  * @param x Real expression with a value in degrees.
+  * @returns An approximation of the cosine of \`x\`.
   */
  COSD: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7403,8 +7403,8 @@ export const Builtins =
   * precision, and mode of \`x\`, and is an approximation of the
   * hyperbolic cosine of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @returns {FLOAT} An approximation of the hyperbolic cosine
+  * @param x Expression.
+  * @returns An approximation of the hyperbolic cosine
   *   of \`x\`.
   */
  COSH: PROC (x) RETURNS (FLOAT);
@@ -7421,8 +7421,8 @@ export const Builtins =
   * (2/ √(π) ) ∫x0 EXP(-(t2 ))dt
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Real expression.
-  * @returns {FLOAT} An approximation of the error function of \`x\`.
+  * @param x Real expression.
+  * @returns An approximation of the error function of \`x\`.
   */
  ERF: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7438,8 +7438,8 @@ export const Builtins =
   *   1 - ERF(x)
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Real expression.
-  * @returns {FLOAT} An approximation of the complement of the
+  * @param x Real expression.
+  * @returns An approximation of the complement of the
   *   error function of \`x\`.
   */
  ERFC: PROC (x) RETURNS (FLOAT);
@@ -7452,8 +7452,8 @@ export const Builtins =
   *
   * The result has the base, mode, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @returns {FLOAT} An approximation of e raised to the power \`x\`.
+  * @param x Expression.
+  * @returns An approximation of e raised to the power \`x\`.
   */
  EXP: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7469,9 +7469,9 @@ export const Builtins =
   * gamma(x) =  ∫∞0 (ux-1)(e-x)du
   * \`\`\`
   *
-  * @param {ANY<NUMBER>} x Real expression. The value of \`x\` must
+  * @param x Real expression. The value of \`x\` must
   *   be greater than zero.
-  * @returns {FLOAT} An approximation of the gamma of \`x\`.
+  * @returns An approximation of the gamma of \`x\`.
   */
  GAMMA: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7481,9 +7481,9 @@ export const Builtins =
   * the natural logarithm (the logarithm to the base e) of \`x\`. It
   * has the base, mode, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must be greater than
+  * @param x Expression. \`x\` must be greater than
   *   zero.
-  * @returns {FLOAT} An approximation of the natural logarithm
+  * @returns An approximation of the natural logarithm
   *   of \`x\`.
   */
  LOG: PROC (x) RETURNS (FLOAT);
@@ -7494,9 +7494,9 @@ export const Builtins =
   * approximation of the common logarithm (the logarithm to the
   * base 10) of \`x\`. It has the base and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression. It must be greater than
+  * @param x Real expression. It must be greater than
   *   zero.
-  * @returns {FLOAT} An approximation of the common logarithm
+  * @returns An approximation of the common logarithm
   *   of \`x\`.
   */
  LOG10: PROC (x) RETURNS (FLOAT);
@@ -7507,9 +7507,9 @@ export const Builtins =
   * approximation of the binary logarithm (the logarithm to the
   * base 2) of \`x\`. It has the base and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression. The value of \`x\` must
+  * @param x Real expression. The value of \`x\` must
   *   be greater than zero.
-  * @returns {FLOAT} An approximation of the binary logarithm
+  * @returns An approximation of the binary logarithm
   *   of \`x\`.
   */
  LOG2: PROC (x) RETURNS (FLOAT);
@@ -7527,9 +7527,9 @@ export const Builtins =
   *
   * LOGGAMMA has the base, mode, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression. The value of \`x\` must
+  * @param x Real expression. The value of \`x\` must
   *   be greater than 0.
-  * @returns {FLOAT} An approximation of the log of gamma of \`x\`.
+  * @returns An approximation of the log of gamma of \`x\`.
   */
  LOGGAMMA: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7539,8 +7539,8 @@ export const Builtins =
   * the sine of \`x\`. It has the base, mode, and precision of
   * \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression whose value is in radians.
-  * @returns {FLOAT} An approximation of the sine of \`x\`.
+  * @param x Expression whose value is in radians.
+  * @returns An approximation of the sine of \`x\`.
   */
  SIN: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7550,9 +7550,9 @@ export const Builtins =
   * approximation of the sine of \`x\`. It has the base and
   * precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression whose value is in
+  * @param x Real expression whose value is in
   *   degrees.
-  * @returns {FLOAT} An approximation of the sine of \`x\`.
+  * @returns An approximation of the sine of \`x\`.
   */
  SIND: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7562,8 +7562,8 @@ export const Builtins =
   * approximation of the hyperbolic sine of \`x\`. It has the base,
   * mode, and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression whose value is in radians.
-  * @returns {FLOAT} An approximation of the hyperbolic sine of
+  * @param x Expression whose value is in radians.
+  * @returns An approximation of the hyperbolic sine of
   *   \`x\`.
   */
  SINH: PROC (x) RETURNS (FLOAT);
@@ -7574,9 +7574,9 @@ export const Builtins =
   * the positive square root of \`x\`. It has the base, mode, and
   * precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression. If \`x\` is real, it must not
+  * @param x Expression. If \`x\` is real, it must not
   *   be less than zero.
-  * @returns {FLOAT} An approximation of the positive square root
+  * @returns An approximation of the positive square root
   *   of \`x\`.
   */
  SQRT: PROC (x) RETURNS (FLOAT);
@@ -7596,8 +7596,8 @@ export const Builtins =
   * The SQRTF built-in function is not supported for DFP.
   *
   * For the definition and syntax, see SQRT.
-  * @param {ANY<NUMBER>} x Real expression.
-  * @returns {FLOAT} An approximation of the positive square root
+  * @param x Real expression.
+  * @returns An approximation of the positive square root
   *   of \`x\`.
   */
  SQRTF: PROC (x) RETURNS (FLOAT);
@@ -7608,8 +7608,8 @@ export const Builtins =
   * the tangent of \`x\`. It has the base, mode, and precision of
   * \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression whose value is in radians.
-  * @returns {FLOAT} An approximation of the tangent of \`x\`.
+  * @param x Expression whose value is in radians.
+  * @returns An approximation of the tangent of \`x\`.
   */
  TAN: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7619,9 +7619,9 @@ export const Builtins =
   * approximation of the tangent of \`x\`. It has the base and
   * precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Real expression whose value is in
+  * @param x Real expression whose value is in
   *   degrees.
-  * @returns {FLOAT} An approximation of the tangent of \`x\`.
+  * @returns An approximation of the tangent of \`x\`.
   */
  TAND: PROC (x) RETURNS (FLOAT);
     DCL x ANY<NUMBER>;
@@ -7631,8 +7631,8 @@ export const Builtins =
   * of the hyperbolic tangent of \`x\`. It has the base, mode,
   * and precision of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression whose value is in radians.
-  * @returns {FLOAT} An approximation of the hyperbolic tangent
+  * @param x Expression whose value is in radians.
+  * @returns An approximation of the hyperbolic tangent
   *   of \`x\`.
   */
  TANH: PROC (x) RETURNS (FLOAT);
@@ -7652,16 +7652,16 @@ export const Builtins =
   * leaf element of x is less than the corresponding leaf
   * element of y.
   *
-  * @param {ANY<STRUCTURE>} x Structure reference.
-  * @param {ANY<STRUCTURE>} y Structure reference.
-  * @param {CHARACTER(2)} [z] A CHAR(2) constant. When
+  * @param x Structure reference.
+  * @param y Structure reference.
+  * @param [z] A CHAR(2) constant. When
   *   uppercased, the constant must have one of these values:
   *   EQ, LE, LT, GT, GE, or NE. If you do not specify z, EQ
   *   is the default value.
   *
   *   EQ Equal to LE Less than or equal to LT Less than GT
   *   Greater than GE Greater than or equal to NE Not equal to
-  * @returns {BIT(1)} Result of comparing all elements of the
+  * @returns Result of comparing all elements of the
   *   two structures.
   */
  ALLCOMPARE: PROC (x, y, z) RETURNS (BIT(1));
@@ -7680,13 +7680,13 @@ export const Builtins =
   * In BETWEEN(x,a,b), a <= b must be true, and if not, the
   * program is in error and its behavior is undefined.
   *
-  * @param {ANY} x Expression. Must be either all ORDINAL with
+  * @param x Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} a Expression. Must be either all ORDINAL with
+  * @param a Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} b Expression. Must be either all ORDINAL with
+  * @param b Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @returns {BIT(1)} Whether x is in the closed interval
+  * @returns Whether x is in the closed interval
   *   defined by a and b.
   */
  BETWEEN: PROC (x, a, b) RETURNS (BIT(1));
@@ -7706,13 +7706,13 @@ export const Builtins =
   * In BETWEENEXCLUSIVE(x,a,b) , a < b must be true, and if
   * not, the program is in error and its behavior is undefined.
   *
-  * @param {ANY} x Expression. Must be either all ORDINAL with
+  * @param x Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} a Expression. Must be either all ORDINAL with
+  * @param a Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} b Expression. Must be either all ORDINAL with
+  * @param b Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @returns {BIT(1)} Whether x is in the open interval defined
+  * @returns Whether x is in the open interval defined
   *   by a and b.
   */
  BETWEENEXCLUSIVE: PROC (x, a, b) RETURNS (BIT(1));
@@ -7734,13 +7734,13 @@ export const Builtins =
   * if not, the program is in error and its behavior is
   * undefined.
   *
-  * @param {ANY} x Expression. Must be either all ORDINAL with
+  * @param x Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} a Expression. Must be either all ORDINAL with
+  * @param a Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} b Expression. Must be either all ORDINAL with
+  * @param b Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @returns {BIT(1)} Whether x is in the left-open interval
+  * @returns Whether x is in the left-open interval
   *   defined by a and b.
   */
  BETWEENLEFTEXCLUSIVE: PROC (x, a, b) RETURNS (BIT(1));
@@ -7762,13 +7762,13 @@ export const Builtins =
   * if not, the program is in error and its behavior is
   * undefined.
   *
-  * @param {ANY} x Expression. Must be either all ORDINAL with
+  * @param x Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} a Expression. Must be either all ORDINAL with
+  * @param a Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} b Expression. Must be either all ORDINAL with
+  * @param b Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @returns {BIT(1)} Whether x is in the right-open interval
+  * @returns Whether x is in the right-open interval
   *   defined by a and b.
   */
  BETWEENRIGHTEXCLUSIVE: PROC (x, a, b) RETURNS (BIT(1));
@@ -7806,20 +7806,20 @@ export const Builtins =
   * 25 inclusive. If the returned value is non-zero, the true
   * index of the found value is the returned value minus 13.
   *
-  * @param {ANY(*)} x An expression that specifies the target
+  * @param x An expression that specifies the target
   *   array that would be searched within. x must be a
   *   one-dimensional array of scalars and the elements of x
   *   must be in ascending order. If x is an array of
   *   NONVARYING BIT, it must be aligned.
-  * @param {ANY} y An expression that specifies the key value
+  * @param y An expression that specifies the key value
   *   to be searched for.
-  * @param {ANY<NUMBER>} [n] An expression that specifies the
+  * @param [n] An expression that specifies the
   *   index of the first array element to be examined. It
   *   defaults to LBOUND(x).
-  * @param {ANY<NUMBER>} [m] An expression that specifies the
+  * @param [m] An expression that specifies the
   *   number of to-be-examined array elements. The counting
   *   starts with the nth and defaults to HBOUND(x) \u2013 n + 1.
-  * @returns {FIXED BINARY(31)} Relative index of the key value
+  * @returns Relative index of the key value
   *   in the array, or zero if not found.
   */
  BINSEARCH: PROC (x, y, n, m) RETURNS (FIXED BINARY(31));
@@ -7870,23 +7870,23 @@ export const Builtins =
   * 25 inclusive. If the returned value is non-zero, the true
   * index of the found value is the returned value minus 13.
   *
-  * @param {ANY(*)} x An expression that specifies the target
+  * @param x An expression that specifies the target
   *   array that would be searched within. x must be a
   *   one-dimensional array and the elements of x must be in
   *   ascending order. If x is an array of NONVARYING BIT, it
   *   must be aligned.
-  * @param {POINTER} p An expression that specifies the address
+  * @param p An expression that specifies the address
   *   of the key value to be searched for.
-  * @param {ANY<ENTRY>} f An expression that specifies the
+  * @param f An expression that specifies the
   *   function that will be invoked to perform all the required
   *   comparisons.
-  * @param {ANY<NUMBER>} [n] An expression that specifies the
+  * @param [n] An expression that specifies the
   *   index of the first array element to be examined. It
   *   defaults to LBOUND(x).
-  * @param {ANY<NUMBER>} [m] An expression that specifies the
+  * @param [m] An expression that specifies the
   *   number of to-be-examined array elements. The counting
   *   starts with the nth and defaults to HBOUND(x) \u2013 n + 1.
-  * @returns {FIXED BINARY(31)} Relative index of the key value
+  * @returns Relative index of the key value
   *   in the array, or zero if not found.
   */
  BINSEARCHX: PROC (x, p, f, n, m) RETURNS (FIXED BINARY(31));
@@ -7945,9 +7945,9 @@ export const Builtins =
   * 	CSTG(X) = 9
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR
+  * @param x Expression. x must have UCHAR
   *   type.
-  * @returns {FIXED BINARY(31)} Number of bytes used by the
+  * @returns Number of bytes used by the
   *   UCHAR string.
   */
  BYTELENGTH: PROC (x) RETURNS (FIXED BINARY(31));
@@ -7972,12 +7972,12 @@ export const Builtins =
   * cmpxchg8 instruction in the same manner that the CS
   * built-in function uses the cmpxchg4 instruction.
   *
-  * @param {POINTER} p Address of the old FIXED BINARY(63)
+  * @param p Address of the old FIXED BINARY(63)
   *   value.
-  * @param {POINTER} q Address of the current FIXED BINARY(63)
+  * @param q Address of the current FIXED BINARY(63)
   *   value.
-  * @param {FIXED BINARY(63)} x The new FIXED BINARY(63) value.
-  * @returns {FIXED BINARY(31)} 0 if the old and current values
+  * @param x The new FIXED BINARY(63) value.
+  * @returns 0 if the old and current values
   *   were equal, 1 otherwise.
   */
  CDS: PROC (p, q, x) RETURNS (FIXED BINARY(31));
@@ -7995,9 +7995,9 @@ export const Builtins =
   *
   * CHARVAL is the inverse of RANK (when applied to character).
   *
-  * @param {ANY<NUMBER>} n Expression converted to UNSIGNED
+  * @param n Expression converted to UNSIGNED
   *   FIXED BIN(8) if necessary.
-  * @returns {CHARACTER(1)} CHARACTER(1) value corresponding
+  * @returns CHARACTER(1) value corresponding
   *   to n.
   */
  // BYTE is a synonym for CHARVAL
@@ -8009,7 +8009,7 @@ export const Builtins =
   * value of the CODEPAGE compiler option. It has no arguments
   * and is a restricted expression.
   *
-  * @returns {FIXED BINARY(31)} Value of the CODEPAGE compiler
+  * @returns Value of the CODEPAGE compiler
   *   option.
   */
  CODEPAGE: PROC() RETURNS (FIXED BINARY(31));
@@ -8019,7 +8019,7 @@ export const Builtins =
   * possible CHARACTER(1) values one time each in the collating
   * order.
   *
-  * @returns {CHARACTER(256)} All 256 CHARACTER(1) values in
+  * @returns All 256 CHARACTER(1) values in
   *   collating order.
   */
  COLLATE: PROC() RETURNS (CHARACTER(256));
@@ -8099,12 +8099,12 @@ export const Builtins =
   *  end;
   * \`\`\`
   *
-  * @param {POINTER} p Address of the old FIXED BINARY(31)
+  * @param p Address of the old FIXED BINARY(31)
   *   value.
-  * @param {POINTER} q Address of the current FIXED BINARY(31)
+  * @param q Address of the current FIXED BINARY(31)
   *   value.
-  * @param {FIXED BINARY(31)} x The new FIXED BINARY(31) value.
-  * @returns {FIXED BINARY(31)} 0 if the old and current values
+  * @param x The new FIXED BINARY(31) value.
+  * @returns 0 if the old and current values
   *   were equal, 1 otherwise.
   */
  CS: PROC (p, q, x) RETURNS (FIXED BINARY(31));
@@ -8127,13 +8127,13 @@ export const Builtins =
   * be the same. For example, not only Haus and HAUS would
   * match, but Stra\u00dfe and STRASSE would also match.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have
+  * @param x Expression. x must have
   *   computational type and is converted to UCHAR type if
   *   necessary.
-  * @param {ANY<CHARACTER>} y Expression. y must have
+  * @param y Expression. y must have
   *   computational type and is converted to UCHAR type if
   *   necessary.
-  * @returns {FIXED BINARY(31)} 0 if strings are identical when
+  * @returns 0 if strings are identical when
   *   folded, nonzero otherwise.
   */
  FOLDEDFULLMATCH: PROC (x, y) RETURNS (FIXED BINARY(31));
@@ -8155,13 +8155,13 @@ export const Builtins =
   * equal. For example, Haus and HAUS would match, but
   * Stra\u00dfe and STRASSE would not match.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have
+  * @param x Expression. x must have
   *   computational type and is converted to UCHAR type if
   *   necessary.
-  * @param {ANY<CHARACTER>} y Expression. y must have
+  * @param y Expression. y must have
   *   computational type and is converted to UCHAR type if
   *   necessary.
-  * @returns {FIXED BINARY(31)} 0 if strings are identical when
+  * @returns 0 if strings are identical when
   *   folded, nonzero otherwise.
   */
  FOLDEDSIMPLEMATCH: PROC (x, y) RETURNS (FIXED BINARY(31));
@@ -8172,9 +8172,9 @@ export const Builtins =
   * GETENV returns a character value representing a specified
   * environment variable.
   *
-  * @param {ANY<CHARACTER>} x Expression naming an environment
+  * @param x Expression naming an environment
   *   variable.
-  * @returns {CHARACTER(*)} Character value of the specified
+  * @returns Character value of the specified
   *   environment variable.
   */
  GETENV: PROC (x) RETURNS (CHARACTER(*));
@@ -8200,9 +8200,9 @@ export const Builtins =
   *
   * .
   *
-  * @param {ANY<CHARACTER>} x Specifies the name of the
+  * @param x Specifies the name of the
   *   exported JCL symbol.
-  * @returns {CHARACTER(*)} Character string value of the
+  * @returns Character string value of the
   *   requested JCL symbol.
   */
  GETJCLSYMBOL: PROC (x) RETURNS (CHARACTER(*));
@@ -8218,11 +8218,11 @@ export const Builtins =
   * GETSYSWORD built-in function, you can obtain the individual
   * job accounting field information.
   *
-  * @param {ANY<CHARACTER>} x The requested system information.
+  * @param x The requested system information.
   *   The following is the valid keyword for \`x\`:
   *
   *   - MAXACTINFO
-  * @returns {FIXED BINARY(31)} Value of the requested system
+  * @returns Value of the requested system
   *   information.
   */
  GETSYSINT: PROC (x) RETURNS (FIXED BINARY(31));
@@ -8306,7 +8306,7 @@ export const Builtins =
   * that initializes the CICS control region is returned for
   * the STEPNAME.
   *
-  * @param {ANY<CHARACTER>} x A character expression that
+  * @param x A character expression that
   *   specifies the requested system information. The following
   *   are valid keywords for \`x\`:
   *
@@ -8323,7 +8323,7 @@ export const Builtins =
   *   - SYSNAME
   *   - SYSNODE
   *   - SYSPLEX
-  * @returns {CHARACTER(*)} Character string of the requested
+  * @returns Character string of the requested
   *   system information.
   */
  GETSYSWORD: PROC (x) RETURNS (CHARACTER(*));
@@ -8337,7 +8337,7 @@ export const Builtins =
   *
   * The GTCA built-in function is supported only on z/OS.
   *
-  * @returns {POINTER} Pointer to the LE control block.
+  * @returns Pointer to the LE control block.
   */
  GTCA: PROC() RETURNS (POINTER);
  END;
@@ -8405,12 +8405,12 @@ export const Builtins =
   *   display (heximage( addr(Y), stg(Y) ));  // displays 0102
   * \`\`\`
   *
-  * @param {ANY} x Expression that represents any variable.
+  * @param x Expression that represents any variable.
   *   The whole number of bytes that contain \`x\` is converted
   *   to hexadecimal.
-  * @param {CHARACTER(1)} [z] Expression. If specified, \`z\`
+  * @param [z] Expression. If specified, \`z\`
   *   must have the type CHARACTER(1) NONVARYING.
-  * @returns {CHARACTER(*)} Hexadecimal representation of the
+  * @returns Hexadecimal representation of the
   *   storage containing \`x\`.
   */
  HEX: PROC (x, z) RETURNS (CHARACTER(*));
@@ -8482,13 +8482,13 @@ export const Builtins =
   *   display (heximage8( addr(Y), stg(Y) ));  // displays 0102
   * \`\`\`
   *
-  * @param {ANY} x An expression that represents any variable.
+  * @param x An expression that represents any variable.
   *   The whole number of bytes that contain \`x\` is converted
   *   to hexadecimal.
-  * @param {CHARACTER(1)} [z] An expression. If specified, \`z\`
+  * @param [z] An expression. If specified, \`z\`
   *   must have the type CHARACTER(1) NONVARYING and must be a
   *   valid 1-byte UTF-8 character.
-  * @returns {CHARACTER(*)} UTF-8 hexadecimal representation of
+  * @returns UTF-8 hexadecimal representation of
   *   the storage containing \`x\`.
   */
  HEX8: PROC (x, z) RETURNS (CHARACTER(*));
@@ -8519,18 +8519,18 @@ export const Builtins =
   * - If y and z are non-computational, the result type has
   * the same type.
   *
-  * @param {BIT(1)} x An operand that can be converted to bit.
+  * @param x An operand that can be converted to bit.
   *   x is true if any bit in the converted bit string has the
   *   value '1'b.
-  * @param {ANY} y Operand. Must be computational (and if a
+  * @param y Operand. Must be computational (and if a
   *   string, must be NONVARYING with a constant length), a
   *   pointer, an ordinal with the same type as z, or a handle
   *   to the same structure type as z.
-  * @param {ANY} z Operand. Must be computational (and if a
+  * @param z Operand. Must be computational (and if a
   *   string, must be NONVARYING with a constant length), a
   *   pointer, an ordinal with the same type as y, or a handle
   *   to the same structure type as y.
-  * @returns {ANY} Value of y if x is true, value of z if x is
+  * @returns Value of y if x is true, value of z if x is
   *   false.
   */
  IFTHENELSE: PROC (x, y, z) RETURNS (ANY);
@@ -8547,9 +8547,9 @@ export const Builtins =
   * The INDICATORS built-in function is useful in declaring an
   * indicator array for use in SQL statements.
   *
-  * @param {ANY<STRUCTURE>} x Expression. x must be a structure
+  * @param x Expression. x must be a structure
   *   reference.
-  * @returns {FIXED BINARY} Number of elements at the next
+  * @returns Number of elements at the next
   *   logical level in the structure.
   */
  INDICATORS: PROC (x) RETURNS (FIXED BINARY);
@@ -8571,11 +8571,11 @@ export const Builtins =
   * on the invocation of any user functions that change storage
   * associated with the first argument.
   *
-  * @param {ANY} x Expression. Must be either all ORDINAL with
+  * @param x Expression. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @param {ANY} y Expressions. Must be either all ORDINAL with
+  * @param y Expressions. Must be either all ORDINAL with
   *   the same type or all computational.
-  * @returns {BIT(1)} Whether x is equal to any of the
+  * @returns Whether x is equal to any of the
   *   remaining arguments.
   */
  INLIST: PROC (x, y) RETURNS (BIT(1));
@@ -8591,9 +8591,9 @@ export const Builtins =
   * because the symbol is not an exported JCL symbol or because
   * the symbol has been set to a null string value.
   *
-  * @param {ANY<CHARACTER>} x Character expression. Specifies
+  * @param x Character expression. Specifies
   *   the symbol name to be tested.
-  * @returns {BIT(1)} '1'B if x is a valid exported JCL
+  * @returns '1'B if x is a valid exported JCL
   *   symbol, '0'B otherwise.
   */
  ISJCLSYMBOL: PROC (x) RETURNS (BIT(1));
@@ -8604,7 +8604,7 @@ export const Builtins =
   * invoked has the OPTIONS(MAIN) attribute. Otherwise it
   * returns a '0'B.
   *
-  * @returns {BIT(1)} '1'B if the containing procedure has
+  * @returns '1'B if the containing procedure has
   *   OPTIONS(MAIN), '0'B otherwise.
   */
  ISMAIN: PROC() RETURNS (BIT(1));
@@ -8613,7 +8613,7 @@ export const Builtins =
   * MAINNAME returns a CHARACTER string that is the name of the
   * MAIN function on the current call stack.
   *
-  * @returns {CHARACTER(*)} Name of the MAIN function on the
+  * @returns Name of the MAIN function on the
   *   current call stack.
   */
  MAINNAME: PROC() RETURNS (CHARACTER(*));
@@ -8626,9 +8626,9 @@ export const Builtins =
   * Note: This argument must be declared as OPTIONAL in the
   * corresponding ENTRY declaration in the calling code.
   *
-  * @param {ANY} x Level-1 unsubscripted parameter with the
+  * @param x Level-1 unsubscripted parameter with the
   *   BYADDR attribute.
-  * @returns {BIT(1)} '1'B if the parameter was omitted,
+  * @returns '1'B if the parameter was omitted,
   *   '0'B otherwise.
   */
  OMITTED: PROC (x) RETURNS (BIT(1));
@@ -8641,7 +8641,7 @@ export const Builtins =
   * If there is no package in the current compilation unit,
   * PACKAGENAME returns the name of the outermost procedure.
   *
-  * @returns {CHARACTER(*)} Name of the package in which the
+  * @returns Name of the package in which the
   *   function is invoked.
   */
  PACKAGENAME: PROC() RETURNS (CHARACTER(*));
@@ -8653,7 +8653,7 @@ export const Builtins =
   * The value of the PL/I return code is the most recent value
   * specified by a CALL PLIRETC statement.
   *
-  * @returns {FIXED BINARY(31)} The PL/I return code.
+  * @returns The PL/I return code.
   */
  PLIRETV: PROC() RETURNS (FIXED BINARY(31));
  END;
@@ -8676,9 +8676,9 @@ export const Builtins =
   * On z/OS, the POPCNT(\`x\`) built-in function requires an
   * ARCH level of 9 or higher.
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have the
+  * @param x Expression. \`x\` must have the
   *   attributes REAL FIXED BIN with a scale factor of zero.
-  * @returns {ANY<NUMBER>} FIXED BIN value with the bit count
+  * @returns FIXED BIN value with the bit count
   *   per byte; same precision as \`x\`.
   */
  POPCNT: PROC (x) RETURNS (ANY<NUMBER>);
@@ -8692,8 +8692,8 @@ export const Builtins =
   * Note: This argument must be declared as OPTIONAL in the
   * corresponding ENTRY declaration in the calling code.
   *
-  * @param {ANY} x Level-1 unsubscripted BYADDR parameter.
-  * @returns {BIT(1)} '1'B if the parameter was present,
+  * @param x Level-1 unsubscripted BYADDR parameter.
+  * @returns '1'B if the parameter was present,
   *   '0'B otherwise.
   */
  PRESENT: PROC (x) RETURNS (BIT(1));
@@ -8710,7 +8710,7 @@ export const Builtins =
   * multiple label specification, regardless of which name
   * appears in the CALL or GOTO statement.
   *
-  * @returns {CHARACTER(*)} Name of the current procedure.
+  * @returns Name of the current procedure.
   */
  PROCEDURENAME: PROCNAME: PROC() RETURNS (CHARACTER(*));
  END;
@@ -8721,9 +8721,9 @@ export const Builtins =
   * PUTENV returns true ('1'B) if successful and false ('0'B)
   * otherwise.
   *
-  * @param {ANY<CHARACTER>} string A character string of the
+  * @param string A character string of the
   *   form \`envvarname=value\`.
-  * @returns {BIT(1)} '1'B if successful, '0'B otherwise.
+  * @returns '1'B if successful, '0'B otherwise.
   */
  PUTENV: PROC (string) RETURNS (BIT(1));
     DCL string ANY<CHARACTER>;
@@ -8738,9 +8738,9 @@ export const Builtins =
   * If xx is widechar, RANK(x) is equal to UNSPEC(y) where y
   * is x stored in bigendian format.
   *
-  * @param {ANY<CHARACTER>} x Must have the attributes CHAR (1)
+  * @param x Must have the attributes CHAR (1)
   *   NONVARYING or WCHAR (1) NONVARYING.
-  * @returns {ANY<NUMBER>} Integer value corresponding to
+  * @returns Integer value corresponding to
   *   the character.
   */
  RANK: PROC (x) RETURNS (ANY<NUMBER>);
@@ -8757,7 +8757,7 @@ export const Builtins =
   * The string returned is system dependent and should be used
   * for tracing and debugging purposes only.
   *
-  * @returns {CHARACTER(*)} Name of the source file containing
+  * @returns Name of the source file containing
   *   the invoking statement.
   */
  SOURCEFILE: PROC() RETURNS (CHARACTER(*));
@@ -8772,7 +8772,7 @@ export const Builtins =
   * The SOURCELINE built-in function can be used in restricted
   * expressions.
   *
-  * @returns {FIXED BINARY(31)} Line number of the invoking
+  * @returns Line number of the invoking
   *   statement.
   */
  SOURCELINE: PROC() RETURNS (FIXED BINARY(31));
@@ -8785,7 +8785,7 @@ export const Builtins =
   * If the STACKADDR built-in function is used to change
   * storage, unpredictable results may occur.
   *
-  * @returns {ANY<LOCATOR>} Address of the DSA for the current
+  * @returns Address of the DSA for the current
   *   procedure or BEGIN block.
   */
  STACKADDR: PROC() RETURNS (ANY<LOCATOR>);
@@ -8857,8 +8857,8 @@ export const Builtins =
   *       2 D  bit(8) aligned;
   * \`\`\`
   *
-  * @param {ANY} x Aggregate or element reference.
-  * @returns {ANY<CHARACTER>} Concatenation of all elements
+  * @param x Aggregate or element reference.
+  * @returns Concatenation of all elements
   *   of x.
   */
  STRING: PROC (x) RETURNS (ANY<CHARACTER>);
@@ -8869,10 +8869,10 @@ export const Builtins =
   * value from the command processor when it is invoked with
   * the command contained in \`x\`.
   *
-  * @param {ANY<CHARACTER>} [x] Must have a computational type
+  * @param [x] Must have a computational type
   *   and should have character type. If not, \`x\` is converted
   *   to character.
-  * @returns {FIXED BINARY(31)} Return value from the command
+  * @returns Return value from the command
   *   processor.
   */
  SYSTEM: PROC (x) RETURNS (FIXED BINARY(31));
@@ -8895,10 +8895,10 @@ export const Builtins =
   * Windows, you should invoke GetCurrentThreadId, and on
   * z/OS, you should invoke pthread_self.
   *
-  * @param {ANY<TASK>} x Task reference. The value of \`x\`
+  * @param x Task reference. The value of \`x\`
   *   should have been set previously in the THREAD option of
   *   the ATTACH statement.
-  * @returns {POINTER} Address of the OS thread identifier for
+  * @returns Address of the OS thread identifier for
   *   the attached thread.
   */
  THREADID: PROC (x) RETURNS (POINTER);
@@ -8914,12 +8914,12 @@ export const Builtins =
   * If x contains non-hex characters, the CONVERSION condition
   * will be raised.
   *
-  * @param {ANY<CHARACTER>} x An expression that must have
+  * @param x An expression that must have
   *   CHARACTER type.
-  * @param {CHARACTER(1)} [c] An expression that must have
+  * @param [c] An expression that must have
   *   CHARACTER(1) NONVARYING type. If specified, it is the
   *   character that separates every 8 characters in x.
-  * @returns {CHARACTER(*)} Decoded value of the hex input
+  * @returns Decoded value of the hex input
   *   string.
   */
  UNHEX: PROC (x, c) RETURNS (CHARACTER(*));
@@ -9016,9 +9016,9 @@ export const Builtins =
   * is included in the returned bit string. If \`x\` is an
   * area, the returned value includes the control information.
   *
-  * @param {ANY} x Scalar, array, structure, or union
+  * @param x Scalar, array, structure, or union
   *   expression.
-  * @returns {BIT(*)} Internal coded form of \`x\`.
+  * @returns Internal coded form of \`x\`.
   */
  UNSPEC: PROC (x) RETURNS (BIT(*));
     DCL x ANY;
@@ -9049,7 +9049,7 @@ export const Builtins =
   * in effect, all alphabetic characters in the returned
   * string will be in uppercase.
   *
-  * @returns {CHARACTER(36)} A version 5 universally unique
+  * @returns A version 5 universally unique
   *   identifier.
   */
  UUID: PROC() RETURNS (CHARACTER(36));
@@ -9068,7 +9068,7 @@ export const Builtins =
   * in effect, all alphabetic characters in the returned
   * string will be in uppercase.
   *
-  * @returns {CHARACTER(36)} A version 4 universally unique
+  * @returns A version 4 universally unique
   *   identifier.
   */
  UUID4: PROC() RETURNS (CHARACTER(36));
@@ -9088,9 +9088,9 @@ export const Builtins =
   *
   * Otherwise it returns '0'b.
   *
-  * @param {ANY} x Reference with either PICTURE, FIXED DEC,
+  * @param x Reference with either PICTURE, FIXED DEC,
   *   or ORDINAL type.
-  * @returns {BIT(1)} '1'b if the contents are valid for the
+  * @returns '1'b if the contents are valid for the
   *   data type, '0'b otherwise.
   */
  VALID: PROC (x) RETURNS (BIT(1));
@@ -9130,9 +9130,9 @@ export const Builtins =
   * if (1900 <= x) & (x <= 2100) then
   * \`\`\`
   *
-  * @param {ANY} x A reference that must have the VALUELIST or
+  * @param x A reference that must have the VALUELIST or
   *   VALUERANGE attribute.
-  * @param {ANY} [y] An expression that is to be tested
+  * @param [y] An expression that is to be tested
   *   against the value set for x. If x has a computational
   *   type, then y must also have a computational type and
   *   will be converted, if necessary, to the same type as x;
@@ -9142,7 +9142,7 @@ export const Builtins =
   *
   *   If y is omitted, it defaults to x. VALIDVALUE(x) is
   *   equivalent to VALIDVALUE(x,x).
-  * @returns {BIT(1)} '1'B if the value matches the value
+  * @returns '1'B if the value matches the value
   *   set, '0'B otherwise.
   */
  VALIDVALUE: PROC (x, y) RETURNS (BIT(1));
@@ -9160,9 +9160,9 @@ export const Builtins =
   * WCHARVAL is the inverse of RANK (when applied to
   * widechar).
   *
-  * @param {ANY<NUMBER>} n Expression converted to UNSIGNED
+  * @param n Expression converted to UNSIGNED
   *   FIXED BIN(16) if necessary.
-  * @returns {WIDECHAR(1)} WIDECHAR(1) value corresponding
+  * @returns WIDECHAR(1) value corresponding
   *   to n.
   */
  WCHARVAL: PROC (n) RETURNS (WIDECHAR(1));
@@ -9179,9 +9179,9 @@ export const Builtins =
   * a way to obtain a displayable value for an ORDINAL and can
   * be very useful in debugging.
   *
-  * @param {ANY<ORDINAL>} x Reference. It must have ordinal
+  * @param x Reference. It must have ordinal
   *   type.
-  * @returns {CHARACTER(*)} Name of the ordinal member
+  * @returns Name of the ordinal member
   *   associated with x.
   */
  ORDINALNAME: PROC (x) RETURNS (CHARACTER(*));
@@ -9193,9 +9193,9 @@ export const Builtins =
   *
   * The returned ordinal has the same type as ordinal \`x\`.
   *
-  * @param {ANY<ORDINAL>} x Reference. It must have ordinal
+  * @param x Reference. It must have ordinal
   *   type.
-  * @returns {ANY<ORDINAL>} Next lower ordinal value of the
+  * @returns Next lower ordinal value of the
   *   same type as x.
   */
  ORDINALPRED: PROC (x) RETURNS (ANY<ORDINAL>);
@@ -9207,9 +9207,9 @@ export const Builtins =
   *
   * The returned ordinal has the same type as ordinal \`x\`.
   *
-  * @param {ANY<ORDINAL>} x Reference. It must have ordinal
+  * @param x Reference. It must have ordinal
   *   type.
-  * @returns {ANY<ORDINAL>} Next higher ordinal value of the
+  * @returns Next higher ordinal value of the
   *   same type as x.
   */
  ORDINALSUCC: PROC (x) RETURNS (ANY<ORDINAL>);
@@ -9229,17 +9229,17 @@ export const Builtins =
   * ADD can be used for subtraction by prefixing a minus sign
   * to the operand to be subtracted.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} y Expression.
-  * @param {ANY<NUMBER>} p Restricted expression. It specifies
+  * @param x Expression.
+  * @param y Expression.
+  * @param p Restricted expression. It specifies
   *   the number of digits to be maintained throughout the
   *   operation.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor of the result. For a fixed-point
   *   result, if \`q\` is omitted, a scaling factor of zero is
   *   the default, and if not omitted, it must be nonnegative.
   *   For a floating-point result, \`q\` must be omitted.
-  * @returns {ANY<NUMBER>} Sum of x and y with the specified
+  * @returns Sum of x and y with the specified
   *   precision.
   */
  ADD: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
@@ -9258,16 +9258,16 @@ export const Builtins =
   * If both \`p\` and \`q\` are omitted, the precision of the
   * result is determined from the rules for base conversion.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression. Specifies
+  * @param x Expression.
+  * @param [p] Restricted expression. Specifies
   *   the number of digits to be maintained throughout the
   *   operation; it must not exceed the implementation limit.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor of the result. For a fixed-point
   *   result, if \`q\` is omitted, a scaling factor of zero is
   *   the default, and if not omitted, it must be nonnegative.
   *   For a floating-point result, \`q\` must be omitted.
-  * @returns {ANY<NUMBER>} Binary value of x with the
+  * @returns Binary value of x with the
   *   specified precision.
   */
  BINARY: BIN: PROC (x, p, q) RETURNS (ANY<NUMBER>);
@@ -9285,16 +9285,16 @@ export const Builtins =
   * If both \`p\` and \`q\` are omitted, the precision of the
   * result is determined from the rules for base conversion.
   *
-  * @param {ANY<NUMBER>} x Reference.
-  * @param {ANY<NUMBER>} [p] Restricted expression specifying
+  * @param x Reference.
+  * @param [p] Restricted expression specifying
   *   the number of digits to be maintained throughout the
   *   operation.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor of the result. For a fixed-point
   *   result, if \`q\` is omitted, a scaling factor of zero is
   *   the default, and if not omitted, it must be nonnegative.
   *   For a floating-point result, \`q\` must be omitted.
-  * @returns {ANY<NUMBER>} Decimal value of x with the
+  * @returns Decimal value of x with the
   *   specified precision.
   */
  DECIMAL: DEC: PROC (x, p, q) RETURNS (ANY<NUMBER>);
@@ -9311,18 +9311,18 @@ export const Builtins =
   * by the rules for expression evaluation. The mode is REAL
   * if both operands are REAL; otherwise, it is COMPLEX.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} y Expression. If \`y\` = 0, the
+  * @param x Expression.
+  * @param y Expression. If \`y\` = 0, the
   *   ZERODIVIDE condition is raised.
-  * @param {ANY<NUMBER>} p Restricted expression specifying
+  * @param p Restricted expression specifying
   *   the number of digits to be maintained throughout the
   *   operation.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor of the result. For a fixed-point
   *   result, if \`q\` is omitted, a scaling factor of zero is
   *   the default, and if not omitted, it must be nonnegative.
   *   For a floating-point result, \`q\` must be omitted.
-  * @returns {ANY<NUMBER>} Quotient of x/y with the specified
+  * @returns Quotient of x/y with the specified
   *   precision.
   */
  DIVIDE: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
@@ -9340,15 +9340,15 @@ export const Builtins =
   * for a binary result or (5,0) for a decimal result, are
   * used.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the total number of digits in the result. It
   *   must not exceed the implementation limit.
-  * @param {ANY<NUMBER>} [q] Restricted expression that
+  * @param [q] Restricted expression that
   *   specifies the scaling factor of the result. If \`q\` is
   *   omitted, a scaling factor of zero is assumed. If \`q\` is
   *   specified, it must be nonnegative.
-  * @returns {ANY<NUMBER>} Fixed-point value of x with the
+  * @returns Fixed-point value of x with the
   *   specified precision.
   */
  FIXED: PROC (x, p, q) RETURNS (ANY<NUMBER>);
@@ -9377,15 +9377,15 @@ export const Builtins =
   * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FIXED BIN(r,0)
   * where r = min(M,1+CEIL(N*3.32)) |
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the total number of digits in the result. It
   *   must not exceed the implementation limit.
-  * @param {ANY<NUMBER>} [q] Restricted expression that
+  * @param [q] Restricted expression that
   *   specifies the scaling factor of the result. If \`q\` is
   *   omitted, a scaling factor of zero is assumed. If \`q\` is
   *   specified, it must be nonnegative.
-  * @returns {FIXED BINARY} FIXED BIN value of x with the
+  * @returns FIXED BIN value of x with the
   *   specified precision and scale.
   */
  FIXEDBIN: PROC (x, p, q) RETURNS (FIXED BINARY);
@@ -9414,15 +9414,15 @@ export const Builtins =
   * min(N,1+CEIL(M/3.32)) |
   * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FIXED DEC(N,0) |
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the total number of digits in the result. It
   *   must not exceed the implementation limit.
-  * @param {ANY<NUMBER>} [q] Restricted expression that
+  * @param [q] Restricted expression that
   *   specifies the scaling factor of the result. If \`q\` is
   *   omitted, a scaling factor of zero is assumed. If \`q\` is
   *   specified, it must be nonnegative.
-  * @returns {FIXED DECIMAL} FIXED DEC value of x with the
+  * @returns FIXED DEC value of x with the
   *   specified precision and scale.
   */
  FIXEDDEC: PROC (x, p, q) RETURNS (FIXED DECIMAL);
@@ -9435,8 +9435,8 @@ export const Builtins =
   * \`x\`, with a precision specified by \`p\`. The result has
   * the base and mode of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the minimum number of digits in the result.
   *
   *   If \`p\` is omitted, the precision of the result is
@@ -9444,7 +9444,7 @@ export const Builtins =
   *
   *   If \`p\` is omitted, the default value, 15 for a binary
   *   result or 5 for a decimal result, is used.
-  * @returns {FLOAT} Approximate floating-point value of x
+  * @returns Approximate floating-point value of x
   *   with the specified precision.
   */
  FLOAT: PROC (x, p) RETURNS (FLOAT);
@@ -9469,11 +9469,11 @@ export const Builtins =
   * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FLOAT BIN(r) where
   * r = CEIL(N*3.32) |
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the total number of digits in the result. It
   *   must not exceed the implementation limit.
-  * @returns {FLOAT BINARY} FLOAT BIN value of x with the
+  * @returns FLOAT BIN value of x with the
   *   specified precision.
   */
  FLOATBIN: PROC (x, p) RETURNS (FLOAT BINARY);
@@ -9497,11 +9497,11 @@ export const Builtins =
   * | BIT | FLOAT DEC(r) where r = CEIL(M/3.32) |
   * | CHAR, GRAPHIC, UCHAR, or WIDECHAR | FLOAT DEC(N) |
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the total number of digits in the result. It
   *   must not exceed the implementation limit.
-  * @returns {FLOAT DECIMAL} FLOAT DEC value of x with the
+  * @returns FLOAT DEC value of x with the
   *   specified precision.
   */
  FLOATDEC: PROC (x, p) RETURNS (FLOAT DECIMAL);
@@ -9532,17 +9532,17 @@ export const Builtins =
   * case, FIXEDOVERFLOW will be raised if SIZE is disabled
   * (and the result is too big).
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} y Expression.
-  * @param {ANY<NUMBER>} p Restricted expression that
+  * @param x Expression.
+  * @param y Expression.
+  * @param p Restricted expression that
   *   specifies the number of digits to be maintained
   *   throughout the operation.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor of the result. For a fixed-point
   *   result, if \`q\` is omitted, a scaling factor of zero is
   *   the default, and if not omitted, it must be nonnegative.
   *   For a floating-point result, \`q\` must be omitted.
-  * @returns {ANY<NUMBER>} Product of x and y with the
+  * @returns Product of x and y with the
   *   specified precision.
   */
  MULTIPLY: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
@@ -9558,8 +9558,8 @@ export const Builtins =
   * For example, if x is declared as FIXED DEC(9,3), PRECVAL(x)
   * returns 9.
   *
-  * @param {ANY<NUMBER>} x A numeric expression.
-  * @returns {FIXED BINARY(31)} Precision of the numeric
+  * @param x A numeric expression.
+  * @returns Precision of the numeric
   *   expression.
   */
  PRECVAL: PROC (x) RETURNS (FIXED BINARY(31));
@@ -9572,16 +9572,16 @@ export const Builtins =
   *
   * Abbreviation: PREC
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} p Restricted expression. \`p\` specifies
+  * @param x Expression.
+  * @param p Restricted expression. \`p\` specifies
   *   the number of digits that the value of the expression
   *   \`x\` is to have after conversion.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor of the result. For a fixed-point
   *   result, if \`q\` is omitted, a scaling factor of zero is
   *   the default, and if not omitted, it must be nonnegative.
   *   For a floating-point result, \`q\` must be omitted.
-  * @returns {ANY<NUMBER>} Value of x with the specified
+  * @returns Value of x with the specified
   *   precision.
   */
  PRECISION: PREC: PROC (x, p, q) RETURNS (ANY<NUMBER>);
@@ -9598,8 +9598,8 @@ export const Builtins =
   * For example, if x is declared as FIXED DEC(9,3), SCALEVAL(x)
   * returns 3.
   *
-  * @param {ANY<NUMBER>} x A numeric expression.
-  * @returns {FIXED BINARY(31)} Scale factor of the numeric
+  * @param x A numeric expression.
+  * @returns Scale factor of the numeric
   *   expression.
   */
  SCALEVAL: PROC (x) RETURNS (FIXED BINARY(31));
@@ -9609,15 +9609,15 @@ export const Builtins =
   * SIGNED returns a signed FIXED BINARY value of \`x\`, with a
   * precision specified by \`p\` and \`q\`.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Restricted expression that
+  * @param x Expression.
+  * @param [p] Restricted expression that
   *   specifies the number of digits to be maintained
   *   throughout the operation.
-  * @param {ANY<NUMBER>} [q] Restricted expression that
+  * @param [q] Restricted expression that
   *   specifies the scaling factor of the result. If \`q\` is
   *   omitted, a scaling factor of zero is assumed. If \`q\` is
   *   specified, it must be nonnegative.
-  * @returns {FIXED BINARY} Signed FIXED BINARY value of x
+  * @returns Signed FIXED BINARY value of x
   *   with the specified precision.
   */
  SIGNED: PROC (x, p, q) RETURNS (FIXED BINARY);
@@ -9631,13 +9631,13 @@ export const Builtins =
   * For details about arguments, see ADD for argument
   * descriptions.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} y Expression.
-  * @param {ANY<NUMBER>} p Restricted expression specifying
+  * @param x Expression.
+  * @param y Expression.
+  * @param p Restricted expression specifying
   *   the number of digits to be maintained.
-  * @param {ANY<NUMBER>} [q] Restricted expression specifying
+  * @param [q] Restricted expression specifying
   *   the scaling factor. Omit for floating-point results.
-  * @returns {ANY<NUMBER>} Difference of x and y with the
+  * @returns Difference of x and y with the
   *   specified precision.
   */
  SUBTRACT: PROC (x, y, p, q) RETURNS (ANY<NUMBER>);
@@ -9650,14 +9650,14 @@ export const Builtins =
   * UNSIGNED returns an unsigned FIXED BINARY value of \`x\`,
   * with a precision specified by \`p\` and \`q\`.
   *
-  * @param {ANY<NUMBER>} x Expression.
-  * @param {ANY<NUMBER>} [p] Integer. It specifies the number
+  * @param x Expression.
+  * @param [p] Integer. It specifies the number
   *   of digits to be maintained throughout the operation.
-  * @param {ANY<NUMBER>} [q] Restricted expression that
+  * @param [q] Restricted expression that
   *   specifies the scaling factor of the result. If \`q\` is
   *   omitted, a scaling factor of zero is assumed. If \`q\` is
   *   specified, it must be nonnegative.
-  * @returns {FIXED BINARY} Unsigned FIXED BINARY value of x
+  * @returns Unsigned FIXED BINARY value of x
   *   with the specified precision.
   */
  UNSIGNED: PROC (x, p, q) RETURNS (FIXED BINARY);
@@ -9688,7 +9688,7 @@ export const Builtins =
   * ADDR returns the pointer value that identifies the generation of
   * \`x\`.
   *
-  * @param {ANY} x Reference. It refers to a variable of any data
+  * @param x Reference. It refers to a variable of any data
   *   type, data organization, alignment, and storage class except:
   *
   *   - A subscripted reference to a variable that is an unaligned
@@ -9725,7 +9725,7 @@ export const Builtins =
   *   pointer
   *   - A parameter, and a dummy argument has been created, the
   *   returned value identifies the dummy argument
-  * @returns {ANY<LOCATOR>} The pointer value that identifies the
+  * @returns The pointer value that identifies the
   *   generation of \`x\`.
   */
  ADDR: PROC (x) RETURNS (ANY<LOCATOR>);
@@ -9747,8 +9747,8 @@ export const Builtins =
   *   address of the located data.
   *   - If the OFFSET reference is null, ADDRDATA returns SYSNULL.
   *
-  * @param {ANY} x Reference.
-  * @returns {ANY<LOCATOR>} The pointer value that identifies the
+  * @param x Reference.
+  * @returns The pointer value that identifies the
   *   generation of \`x\`.
   */
  ADDRDATA: PROC (x) RETURNS (ANY<LOCATOR>);
@@ -9758,13 +9758,13 @@ export const Builtins =
   * ALLOC31 allocates storage of size n in heap storage below the
   * bar and returns the pointer to the allocated storage.
   *
-  * @param {ANY<NUMBER>} n Expression. Nonnegative value that
+  * @param n Expression. Nonnegative value that
   *   represents the storage size to be allocated. If necessary, n
   *   is converted to type size_t 1.
   *
   *   If the requested amount of storage is not available, the
   *   STORAGE condition is raised.
-  * @returns {ANY<LOCATOR>} The pointer to the allocated storage.
+  * @returns The pointer to the allocated storage.
   */
  ALLOC31: PROC (n) RETURNS (ANY<LOCATOR>);
     DCL n ANY<NUMBER>;
@@ -9776,19 +9776,19 @@ export const Builtins =
   *
   * Abbreviation: ALLOC
   *
-  * @param {ANY<NUMBER>} n Expression. Nonnegative value that
+  * @param n Expression. Nonnegative value that
   *   represents the storage size to be allocated. If necessary,
   *   \`n\` is converted to type size_t 1.
   *
   *   If the requested amount of storage is not available, the
   *   STORAGE condition is raised.
-  * @param {ANY<AREA>} [x] AREA reference. When you specify
+  * @param [x] AREA reference. When you specify
   *   ALLOCATE(n, x), the specified number of bytes n is allocated
   *   within that area. The number is rounded up to a multiple of 8.
   *
   *   If there is insufficient space within the specified area, the
   *   AREA condition is raised.
-  * @returns {ANY<LOCATOR>} The pointer to the allocated storage.
+  * @returns The pointer to the allocated storage.
   */
  ALLOCATE: ALLOC: PROC (n, x) RETURNS (ANY<LOCATOR>);
     DCL n ANY<NUMBER>;
@@ -9804,8 +9804,8 @@ export const Builtins =
   * If \`x\` is not allocated in the current program, the result is
   * zero.
   *
-  * @param {ANY} x Level-1 unsubscripted controlled variable.
-  * @returns {FIXED BINARY(31)} The number of generations of \`x\`
+  * @param x Level-1 unsubscripted controlled variable.
+  * @returns The number of generations of \`x\`
   *   that can be accessed in the current program.
   */
  ALLOCATION: ALLOCN: PROC (x) RETURNS (FIXED BINARY(31));
@@ -9831,12 +9831,12 @@ export const Builtins =
   * made from an AREA without any FREEs or when all the FREEs from
   * an AREA are in reverse order from all the ALLOCATEs.
   *
-  * @param {ANY<NUMBER>} n Expression. A nonnegative value that
+  * @param n Expression. A nonnegative value that
   *   represents the storage size to be allocated. It is rounded up
   *   to the nearest multiple of 8. If necessary, n is converted to
   *   a size_t value.
-  * @param {ANY<AREA>} x AREA reference.
-  * @returns {ANY<LOCATOR>} Pointer to the allocated storage, or
+  * @param x AREA reference.
+  * @returns Pointer to the allocated storage, or
   *   sysnull if there is not enough space.
   */
  ALLOCNEXT: PROC (n, x) RETURNS (ANY<LOCATOR>);
@@ -9856,8 +9856,8 @@ export const Builtins =
   * the nearest doubleword and that rounded value is compared
   * against all allocated addresses when similarly rounded down.
   *
-  * @param {ANY<LOCATOR>} p Pointer expression.
-  * @returns {FIXED BINARY(31)} The amount of storage allocated with
+  * @param p Pointer expression.
+  * @returns The amount of storage allocated with
   *   the specified pointer.
   */
  ALLOCSIZE: PROC (p) RETURNS (FIXED BINARY(31));
@@ -9872,9 +9872,9 @@ export const Builtins =
   * The storage acquired cannot be explicitly freed; the storage is
   * automatically freed when the block terminates.
   *
-  * @param {ANY<NUMBER>} n Expression. n must be nonnegative. If
+  * @param n Expression. n must be nonnegative. If
   *   necessary, n is converted to type size_t 1.
-  * @returns {ANY<LOCATOR>} The pointer to the allocated storage.
+  * @returns The pointer to the allocated storage.
   */
  AUTOMATIC: AUTO: PROC (n) RETURNS (ANY<LOCATOR>);
     DCL n ANY<NUMBER>;
@@ -9898,8 +9898,8 @@ export const Builtins =
   *   Alloc C9 in(Uarea);
   * \`\`\`
   *
-  * @param {ANY<AREA>} x A reference with the AREA attribute
-  * @returns {FIXED BINARY} The size of the largest single
+  * @param x A reference with the AREA attribute
+  * @returns The size of the largest single
   *   allocation that can be obtained from the area \`x\`.
   */
  AVAILABLEAREA: PROC (x) RETURNS (FIXED BINARY);
@@ -9917,8 +9917,8 @@ export const Builtins =
   *
   * Abbreviation: BINVALUE
   *
-  * @param {ANY} x Expression
-  * @returns {FIXED BINARY} The converted integer value.
+  * @param x Expression
+  * @returns The converted integer value.
   */
  BINARYVALUE: BINVALUE: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -9941,11 +9941,11 @@ export const Builtins =
   *
   * For examples, see LOCATION.
   *
-  * @param {ANY} x Reference of type unaligned bit. If \`x\` does
+  * @param x Reference of type unaligned bit. If \`x\` does
   *   not have type unaligned bit, a value of 0 is returned.
   *
   *   \`x\` must not be subscripted.
-  * @returns {FIXED BINARY(31)} The location of bit \`x\` within the
+  * @returns The location of bit \`x\` within the
   *   byte that contains \`x\`.
   */
  BITLOCATION: BITLOC: PROC (x) RETURNS (FIXED BINARY(31));
@@ -9966,8 +9966,8 @@ export const Builtins =
   * The pointer expression must point to storage allocated for a
   * BASED variable.
   *
-  * @param {ANY<LOCATOR>} [p] Pointer expression.
-  * @returns {BIT(1)} '1'B if the specified pointer value is the
+  * @param [p] Pointer expression.
+  * @returns '1'B if the specified pointer value is the
   *   start of uncorrupted allocated storage.
   */
  CHECKSTG: PROC (p) RETURNS (BIT(1));
@@ -10016,7 +10016,7 @@ export const Builtins =
   *
   * For examples of the CURRENTSIZE built-in function, see SIZE.
   *
-  * @param {ANY} x A variable of any data type, data organization,
+  * @param x A variable of any data type, data organization,
   *   and storage class except those in the following list:
   *
   *   - A BASED, DEFINED, parameter, subscripted, or structure or
@@ -10030,7 +10030,7 @@ export const Builtins =
   *   parameter attribute, and that has an unaligned fixed-length
   *   bit string as its first or last element
   *   - A variable not in connected storage
-  * @returns {FIXED BINARY} The storage required by \`x\` in bytes.
+  * @returns The storage required by \`x\` in bytes.
   */
  CURRENTSIZE: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -10044,9 +10044,9 @@ export const Builtins =
   * USAGE(HEX(CURRENTSIZE) in Enterprise PL/I for z/OS Version 6
   * Release 1.
   *
-  * @param {ANY} x A variable of any data type, data organization,
+  * @param x A variable of any data type, data organization,
   *   and storage class.
-  * @returns {FIXED BINARY} The storage required by \`x\` in bytes.
+  * @returns The storage required by \`x\` in bytes.
   */
  CURRENTSTORAGE: CSTG: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -10068,7 +10068,7 @@ export const Builtins =
   *
   *   // Equivalent to:  free I in (A), J in (A);
   * \`\`\`
-  * @returns {ANY<AREA>} An area of zero extent.
+  * @returns An area of zero extent.
   */
  EMPTY: PROC () RETURNS (ANY<AREA>);
  END;
@@ -10081,8 +10081,8 @@ export const Builtins =
   * before ENTRYADDR is executed. However, if \`x\` has been
   * released, then ENTRYADDR will return SYSNULL.
   *
-  * @param {ANY<ENTRY>} x Entry reference.
-  * @returns {ANY<LOCATOR>} The address of the entry point of \`x\`.
+  * @param x Entry reference.
+  * @returns The address of the entry point of \`x\`.
   */
  ENTRYADDR: PROC (x) RETURNS (ANY<LOCATOR>);
     DCL x ANY<ENTRY>;
@@ -10090,8 +10090,8 @@ export const Builtins =
  /**
   * HANDLE returns a handle to the typed structure \`x\`.
   *
-  * @param {ANY<STRUCTURE>} x Typed structure.
-  * @returns {ANY} A handle to the typed structure \`x\`.
+  * @param x Typed structure.
+  * @returns A handle to the typed structure \`x\`.
   */
  HANDLE: PROC (x) RETURNS (ANY);
     DCL x ANY<STRUCTURE>;
@@ -10144,13 +10144,13 @@ export const Builtins =
   *         2 End char(0);
   * \`\`\`
   *
-  * @param {ANY} x Structure or union member name. If \`x\` is not
+  * @param x Structure or union member name. If \`x\` is not
   *   a member of a structure or union, a value of 0 is returned. If
   *   \`x\` has the BIT attribute, the value returned by LOCATION is
   *   the location of the byte that contains \`x\`.
   *
   *   The value for \`x\` must not be subscripted.
-  * @returns {FIXED BINARY} The byte location of \`x\` within the
+  * @returns The byte location of \`x\` within the
   *   level-1 structure or union.
   */
  LOCATION: LOC: PROC (x) RETURNS (FIXED BINARY);
@@ -10181,10 +10181,10 @@ export const Builtins =
   *                  2 pool area(10_000);
   * \`\`\`
   *
-  * @param {ANY} x Must be a reference that has the LOCATES
+  * @param x Must be a reference that has the LOCATES
   *   attribute or contains subelements that have the LOCATES
   *   attribute.
-  * @returns {FIXED BINARY} The number of bytes needed for the
+  * @returns The number of bytes needed for the
   *   storage of elements with LOCATES attributes.
   */
  LOCSTG: PROC (x) RETURNS (FIXED BINARY);
@@ -10218,12 +10218,12 @@ export const Builtins =
   *                  2 pool area(10_000);
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} x Must be an OFFSET with the LOCATES
+  * @param x Must be an OFFSET with the LOCATES
   *   attribute. It must be a valid, non-null offset into the area a.
-  * @param {ANY<AREA>} [a] Must be an AREA reference. If you do not
+  * @param [a] Must be an AREA reference. If you do not
   *   specify a, the OFFSET attribute for x must have specified an
   *   AREA reference, and the offset is assumed to be from that area.
-  * @returns {ANY} The value at the offset specified by \`x\` in the
+  * @returns The value at the offset specified by \`x\` in the
   *   \`a\` area.
   */
  LOCVAL: PROC (x, a) RETURNS (ANY);
@@ -10236,7 +10236,7 @@ export const Builtins =
   * value can be assigned to and compared with handles. The null
   * pointer value can be converted to OFFSET by assignment of the
   * built-in function value to an offset variable.
-  * @returns {ANY<LOCATOR>} The null pointer value.
+  * @returns The null pointer value.
   */
  NULL: PROC () RETURNS (ANY<LOCATOR>);
  END;
@@ -10253,7 +10253,7 @@ export const Builtins =
   * PLISRTB, PLISRTC or PLISRTD built-in functions.
   *
   * ENTRYADDR(NULLENTRY) returns the same value as SYSNULL.
-  * @returns {ANY<ENTRY>} A limited entry with a null value.
+  * @returns A limited entry with a null value.
   */
  NULLENTRY: PROC () RETURNS (ANY<ENTRY>);
  END;
@@ -10265,11 +10265,11 @@ export const Builtins =
   * If \`x\` is an element reference, \`y\` must be an element
   * variable.
   *
-  * @param {ANY<LOCATOR>} x Pointer reference. It must identify a
+  * @param x Pointer reference. It must identify a
   *   generation of a based variable within the area \`y\`, or be
   *   the null pointer value.
-  * @param {ANY<AREA>} y Area reference.
-  * @returns {ANY<LOCATOR>} An offset value derived from the pointer
+  * @param y Area reference.
+  * @returns An offset value derived from the pointer
   *   \`x\` relative to the area \`y\`.
   */
  OFFSET: PROC (x, y) RETURNS (ANY<LOCATOR>);
@@ -10279,11 +10279,11 @@ export const Builtins =
  /**
   * OFFSETADD returns the sum of the arguments.
   *
-  * @param {ANY<LOCATOR>} x Expression. \`x\` must be specified as
+  * @param x Expression. \`x\` must be specified as
   *   OFFSET.
-  * @param {ANY<NUMBER>} y Expression. \`y\` must have a
+  * @param y Expression. \`y\` must have a
   *   computational type and is converted to FIXED BINARY.
-  * @returns {ANY<LOCATOR>} The sum of the arguments.
+  * @returns The sum of the arguments.
   */
  OFFSETADD: PROC (x, y) RETURNS (ANY<LOCATOR>);
     DCL x ANY<LOCATOR>;
@@ -10296,9 +10296,9 @@ export const Builtins =
   * The return value has type FIXED BIN(31) under OFFSETSIZE(4) or
   * type FIXED BIN(63) under OFFSETSIZE(8).
   *
-  * @param {ANY<LOCATOR>} x Expression. Must be specified as OFFSET.
-  * @param {ANY<LOCATOR>} y Expression. Must be specified as OFFSET.
-  * @returns {FIXED BINARY} The arithmetic difference between \`x\`
+  * @param x Expression. Must be specified as OFFSET.
+  * @param y Expression. Must be specified as OFFSET.
+  * @returns The arithmetic difference between \`x\`
   *   and \`y\`.
   */
  OFFSETDIFF: PROC (x, y) RETURNS (FIXED BINARY);
@@ -10308,11 +10308,11 @@ export const Builtins =
  /**
   * OFFSETSUBTRACT is equivalent to OFFSETADD(x,-y).
   *
-  * @param {ANY<LOCATOR>} x Expressions. \`x\` must be specified as
+  * @param x Expressions. \`x\` must be specified as
   *   OFFSET.
-  * @param {ANY<NUMBER>} y Expression. \`y\` must have a
+  * @param y Expression. \`y\` must have a
   *   computational type and is converted to FIXED BINARY.
-  * @returns {ANY<LOCATOR>} The result of OFFSETADD(x,-y).
+  * @returns The result of OFFSETADD(x,-y).
   */
  OFFSETSUBTRACT: PROC (x, y) RETURNS (ANY<LOCATOR>);
     DCL x ANY<LOCATOR>;
@@ -10322,9 +10322,9 @@ export const Builtins =
   * OFFSETVALUE returns an offset value that is the converted value
   * of \`x\`.
   *
-  * @param {ANY<NUMBER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type and is converted to FIXED BINARY.
-  * @returns {ANY<LOCATOR>} An offset value that is the converted
+  * @returns An offset value that is the converted
   *   value of \`x\`.
   */
  OFFSETVALUE: PROC (x) RETURNS (ANY<LOCATOR>);
@@ -10343,13 +10343,13 @@ export const Builtins =
   * have been allocated and freed the same number of times as each
   * other.
   *
-  * @param {ANY<LOCATOR>} x Offset reference. It can be the null
+  * @param x Offset reference. It can be the null
   *   offset value. If it is not, \`x\` must identify a generation
   *   of a based variable, but not necessarily in \`y\`. If it is
   *   not in \`y\`, the generation must be equivalent to a generation
   *   in \`y\`.
-  * @param {ANY<AREA>} y Area reference.
-  * @returns {ANY<LOCATOR>} A pointer value that identifies the
+  * @param y Area reference.
+  * @returns A pointer value that identifies the
   *   generation specified by \`x\` in area \`y\`.
   */
  POINTER: PTR: PROC (x, y) RETURNS (ANY<LOCATOR>);
@@ -10399,10 +10399,10 @@ export const Builtins =
   *       x = (p + 2)->b;
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} x Pointer expression.
-  * @param {ANY<NUMBER>} y Expression that must have a computational
+  * @param x Pointer expression.
+  * @param y Expression that must have a computational
   *   type and is converted to FIXED BINARY(31,0).
-  * @returns {ANY<LOCATOR>} A pointer value that is the sum of its
+  * @returns A pointer value that is the sum of its
   *   arguments.
   */
  POINTERADD: PTRADD: PROC (x, y) RETURNS (ANY<LOCATOR>);
@@ -10415,9 +10415,9 @@ export const Builtins =
   *
   * Abbreviation: PTRDIFF
   *
-  * @param {ANY<LOCATOR>} x Expressions declared as POINTER.
-  * @param {ANY<LOCATOR>} y Expressions declared as POINTER.
-  * @returns {FIXED BINARY} The difference between the two pointers.
+  * @param x Expressions declared as POINTER.
+  * @param y Expressions declared as POINTER.
+  * @returns The difference between the two pointers.
   */
  POINTERDIFF: PTRDIFF: PROC (x, y) RETURNS (FIXED BINARY);
     DCL x ANY<LOCATOR>;
@@ -10428,10 +10428,10 @@ export const Builtins =
   *
   * Abbreviation: PTRSUBTRACT
   *
-  * @param {ANY<LOCATOR>} x Must be a pointer expression.
-  * @param {ANY<NUMBER>} y Expression that must have a computational
+  * @param x Must be a pointer expression.
+  * @param y Expression that must have a computational
   *   type and is converted to FIXED BINARY(31,0).
-  * @returns {ANY<LOCATOR>} The result of POINTERADD(x,-y).
+  * @returns The result of POINTERADD(x,-y).
   */
  POINTERSUBTRACT: PTRSUBTRACT: PROC (x, y) RETURNS (ANY<LOCATOR>);
     DCL x ANY<LOCATOR>;
@@ -10446,10 +10446,10 @@ export const Builtins =
   * POINTERVALUE(x) can be used to initialize static pointer
   * variables if \`x\` is a constant.
   *
-  * @param {ANY} x Expression that must have either the HANDLE
+  * @param x Expression that must have either the HANDLE
   *   attribute, or have a computational type. If \`x\` has a
   *   computational type, it is converted to FIXED BINARY(31,0).
-  * @returns {ANY<LOCATOR>} A pointer value that is the converted
+  * @returns A pointer value that is the converted
   *   value of \`x\`.
   */
  POINTERVALUE: PTRVALUE: PROC (x) RETURNS (ANY<LOCATOR>);
@@ -10512,7 +10512,7 @@ export const Builtins =
   *   Stg = currentsize (Stg);           // 4  bytes
   * \`\`\`
   *
-  * @param {ANY} x A variable of any data type, data organization,
+  * @param x A variable of any data type, data organization,
   *   alignment, and storage class, except those in the following
   *   list:
   *
@@ -10527,7 +10527,7 @@ export const Builtins =
   *   parameter attribute, and that has an unaligned fixed-length
   *   bit string as its first or last element
   *   - A variable not in connected storage
-  * @returns {FIXED BINARY} The storage in bytes allocated to \`x\`.
+  * @returns The storage in bytes allocated to \`x\`.
   */
  SIZE: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -10540,9 +10540,9 @@ export const Builtins =
   * Note: The USAGE(HEX(STG) is accepted as a synonym for
   * USAGE(HEX(SIZE).
   *
-  * @param {ANY} x A variable of any data type, data organization,
+  * @param x A variable of any data type, data organization,
   *   alignment, and storage class.
-  * @returns {FIXED BINARY} The storage in bytes allocated to \`x\`.
+  * @returns The storage in bytes allocated to \`x\`.
   */
  STORAGE: STG: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -10558,7 +10558,7 @@ export const Builtins =
   * not write code that depends on their equality.
   *
   * See also NULL.
-  * @returns {ANY<LOCATOR>} The system null pointer value.
+  * @returns The system null pointer value.
   */
  SYSNULL: PROC () RETURNS (ANY<LOCATOR>);
  END;
@@ -10570,8 +10570,8 @@ export const Builtins =
   * an example of the TYPE built-in functions, see TYPE
   * pseudovariable.
   *
-  * @param {ANY} x Handle.
-  * @returns {ANY<STRUCTURE>} The typed structure or union located
+  * @param x Handle.
+  * @returns The typed structure or union located
   *   by the handle \`x\`.
   */
  TYPE: PROC (x) RETURNS (ANY<STRUCTURE>);
@@ -10592,8 +10592,8 @@ export const Builtins =
   * the nearest doubleword and that rounded value is compared
   * against all allocated addresses when similarly rounded down.
   *
-  * @param {ANY<LOCATOR>} p Pointer expression.
-  * @returns {BIT(1)} '1'b if the pointer does not point to the
+  * @param p Pointer expression.
+  * @returns '1'b if the pointer does not point to the
   *   start of allocated storage.
   */
  UNALLOCATED: PROC (p) RETURNS (BIT(1));
@@ -10605,7 +10605,7 @@ export const Builtins =
   *
   * The VARGLIST built-in function may be used only inside a
   * procedure whose last parameter has the LIST attribute.
-  * @returns {ANY<LOCATOR>} The address of the first optional
+  * @returns The address of the first optional
   *   parameter.
   */
  VARGLIST: PROC () RETURNS (ANY<LOCATOR>);
@@ -10622,7 +10622,7 @@ export const Builtins =
   * VARGSIZE is meant to be used only inside a procedure whose last
   * parameter has the LIST attribute.
   *
-  * @param {ANY} x A variable of any data type, data organization,
+  * @param x A variable of any data type, data organization,
   *   alignment, and storage class, except as listed below.
   *
   *   \`x\` cannot be:
@@ -10638,7 +10638,7 @@ export const Builtins =
   *   parameter attribute, and which has an unaligned fixed-length
   *   bit string as its first or last element
   *   - A variable not in connected storage
-  * @returns {FIXED BINARY} The number of bytes \`x\` would occupy
+  * @returns The number of bytes \`x\` would occupy
   *   on the stack if passed BYVALUE.
   */
  VARGSIZE: PROC (x) RETURNS (FIXED BINARY);
@@ -10650,13 +10650,13 @@ export const Builtins =
   * BIT returns a result that is the bit value of \`x\`, and has a
   * length specified by \`y\`.
   *
-  * @param {ANY} x Expression.
-  * @param {FIXED BINARY} [y] Expression. If necessary, \`y\` is
+  * @param x Expression.
+  * @param [y] Expression. If necessary, \`y\` is
   *   converted to a real fixed-point binary value. If \`y\` is
   *   omitted, the length is determined by the rules for type
   *   conversion. If \`y\` = 0, the result is the null bit
   *   string. \`y\` must not be negative.
-  * @returns {ANY} The bit value of \`x\` with length \`y\`.
+  * @returns The bit value of \`x\` with length \`y\`.
   */
  BIT: PROC (x, y) RETURNS (ANY);
     DCL x ANY;
@@ -10667,12 +10667,12 @@ export const Builtins =
   * operation \`z\`, on \`x\` and \`y\`. The length of the result is
   * equal to that of the longer operand, \`x\` or \`y\`.
   *
-  * @param {ANY} x Expressions. \`x\` and \`y\` are converted to
+  * @param x Expressions. \`x\` and \`y\` are converted to
   *   bit strings, if necessary. If \`x\` and \`y\` are of
   *   different lengths, the shorter is padded on the right with
   *   zeros to match the longer.
-  * @param {ANY} y See \`x\`.
-  * @param {ANY} z Expression. \`z\` is converted to a bit string
+  * @param y See \`x\`.
+  * @param z Expression. \`z\` is converted to a bit string
   *   of length 4, if necessary. When a bit from \`x\` is matched
   *   with a bit from \`y\`, the corresponding bit of the result is
   *   specified by a selected bit of \`z\`, as follows:
@@ -10683,7 +10683,7 @@ export const Builtins =
   *   |  | 0 | 1 | bit 2 of z |
   *   |  | 1 | 0 | bit 3 of z |
   *   |  | 1 | 1 | bit 4 of z |
-  * @returns {BIT(*)} The result of the Boolean operation on \`x\`
+  * @returns The result of the Boolean operation on \`x\`
   *   and \`y\` using \`z\`.
   */
  BOOL: PROC (x, y, z) RETURNS (BIT(*));
@@ -10719,13 +10719,13 @@ export const Builtins =
   *
   * If \`z\` is omitted, a blank is used as the padding character.
   *
-  * @param {ANY<CHARACTER>} x Expression that is converted to
+  * @param x Expression that is converted to
   *   character.
-  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  * @param y Expression that is converted to FIXED
   *   BINARY(31,0).
-  * @param {CHARACTER} [z] Optional expression. If specified, \`z\`
+  * @param [z] Optional expression. If specified, \`z\`
   *   must be CHARACTER(1) NONVARYING type.
-  * @returns {CHARACTER} \`x\` centered in a string of length
+  * @returns \`x\` centered in a string of length
   *   \`y\`, padded with \`z\`.
   */
  CENTERLEFT: CENTRELEFT: CENTER: PROC (x, y, z) RETURNS (CHARACTER);
@@ -10757,13 +10757,13 @@ export const Builtins =
   *
   * If \`z\` is omitted, a blank is used as the padding character.
   *
-  * @param {ANY<CHARACTER>} x Expression that is converted to
+  * @param x Expression that is converted to
   *   character.
-  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  * @param y Expression that is converted to FIXED
   *   BINARY(31,0).
-  * @param {CHARACTER} [z] Optional expression. If specified, \`z\`
+  * @param [z] Optional expression. If specified, \`z\`
   *   must be CHARACTER(1) NONVARYING type.
-  * @returns {CHARACTER} \`x\` centered in a string of length
+  * @returns \`x\` centered in a string of length
   *   \`y\`, padded with \`z\`.
   */
  CENTERRIGHT: CENTRERIGHT: PROC (x, y, z) RETURNS (CHARACTER);
@@ -10790,7 +10790,7 @@ export const Builtins =
   * | --- | --- | --- |
   * | .A.B.C.D.E.F | ABCDEF | ABCDEF |
   *
-  * @param {ANY} x Expression.
+  * @param x Expression.
   *
   *   \`x\` must have a computational type.
   *
@@ -10802,7 +10802,7 @@ export const Builtins =
   *   an SBCS equivalent, the CONVERSION condition is raised.
   *
   *   The values of \`x\` are not checked.
-  * @param {FIXED BINARY} [y] Expression. If necessary, y is
+  * @param [y] Expression. If necessary, y is
   *   converted to a real fixed-point binary value.
   *
   *   If \`y\` is omitted, the length is determined by the rules for
@@ -10811,7 +10811,7 @@ export const Builtins =
   *   \`y\` cannot be negative.
   *
   *   If \`y\` = 0, the result is the null character string.
-  * @returns {CHARACTER} The character value of \`x\` with length
+  * @returns The character value of \`x\` with length
   *   \`y\`.
   */
  CHARACTER: CHAR: PROC (x, y) RETURNS (CHARACTER);
@@ -10868,17 +10868,17 @@ export const Builtins =
   * | --- | --- | --- |
   * | .A.B.C.D.E.F | .A.B.C.D.E.F | .A.B.C.D.Eb |
   *
-  * @param {GRAPHIC} x Expression.
+  * @param x Expression.
   *
   *   \`x\` must be a GRAPHIC string.
-  * @param {FIXED BINARY} [y] Expression. If necessary, y is
+  * @param [y] Expression. If necessary, y is
   *   converted to a real fixed-point binary value.
   *
   *   If \`y\` is omitted, the length is determined by the rules for
   *   type conversion.
   *
   *   \`y\` cannot be negative.
-  * @returns {CHARACTER} Mixed character string converted from \`x\`.
+  * @returns Mixed character string converted from \`x\`.
   */
  CHARGRAPHIC: CHARG: PROC (x, y) RETURNS (CHARACTER);
     DCL x GRAPHIC;
@@ -10904,14 +10904,14 @@ export const Builtins =
   *       // ' abc  : def gh '
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x A string expression. \`x\` specifies
+  * @param x A string expression. \`x\` specifies
   *   the string from which all multiple occurrences of the
   *   character defined by \`y\` are reduced to one. \`x\` must have
   *   the CHARACTER attribute.
-  * @param {CHARACTER} y An expression. \`y\` must have the type
+  * @param y An expression. \`y\` must have the type
   *   CHARACTER(1) NONVARYING. The leading and trailing instances
   *   of \`y\` are also trimmed.
-  * @param {FIXED BINARY} [n] An expression. \`n\` specifies the
+  * @param [n] An expression. \`n\` specifies the
   *   location within \`x\` at which to begin to locate the first
   *   occurrences of \`y\`.
   *
@@ -10921,7 +10921,7 @@ export const Builtins =
   *   - If \`n\` < 1, the default value 1 is used.
   *   - If \`n\` > length(\`x\`), the full string of \`x\` is
   *   returned.
-  * @returns {CHARACTER} String with multiple occurrences of \`y\`
+  * @returns String with multiple occurrences of \`y\`
   *   reduced to one.
   */
  COLLAPSE: PROC (x, y, n) RETURNS (CHARACTER);
@@ -10945,16 +10945,16 @@ export const Builtins =
   *
   * In this example, repeat(x,n) is equivalent to copy(x,n+1).
   *
-  * @param {ANY} x Expression.
+  * @param x Expression.
   *
   *   \`x\` must have a computational type and should have a string
   *   type. If not, it is converted to character.
-  * @param {FIXED BINARY} y An integer expression with a nonnegative
+  * @param y An integer expression with a nonnegative
   *   value. It specifies the number of repetitions. It must have a
   *   computational type and is converted to FIXED BINARY(31,0).
   *
   *   If \`y\` is zero, the result is a null string.
-  * @returns {CHARACTER} String of \`y\` concatenated copies of \`x\`.
+  * @returns String of \`y\` concatenated copies of \`x\`.
   */
  COPY: PROC (x, y) RETURNS (CHARACTER);
     DCL x ANY;
@@ -10990,16 +10990,16 @@ export const Builtins =
   * if \`x\` were assigned to a PICTURE data item which has the same
   * picture specification contained in \`y\`.
   *
-  * @param {ANY} x Expression
+  * @param x Expression
   *
   *   \`x\` must have computational type.
-  * @param {ANY<CHARACTER>} y String expression.
+  * @param y String expression.
   *
   *   \`y\` must have character type and must contain picture
   *   characters that are valid for a PICTURE data item. If \`y\`
   *   does not contain a valid picture specification, the ERROR
   *   condition is raised.
-  * @returns {CHARACTER} Character string of length LENGTH(\`y\`).
+  * @returns Character string of length LENGTH(\`y\`).
   */
  EDIT: PROC (x, y) RETURNS (CHARACTER);
     DCL x ANY;
@@ -11051,12 +11051,12 @@ export const Builtins =
   * | --- | --- | --- |
   * | ABCDEFGHIJ | .A.B.C.D.E.F.G.H.I.J | .A.B.C.D.E.F.G.H |
   *
-  * @param {ANY} x Expression. When \`x\` is GRAPHIC, it is subject
+  * @param x Expression. When \`x\` is GRAPHIC, it is subject
   *   to a length change, with applicable padding or truncation.
   *   When \`x\` is nongraphic, it is converted to character, if
   *   necessary. SBCS characters are converted to equivalent DBCS
   *   characters.
-  * @param {FIXED BINARY} [y] Expression. If necessary, \`y\` is
+  * @param [y] Expression. If necessary, \`y\` is
   *   converted to a real fixed-point binary value. If \`y\` is
   *   omitted, the length is determined by the rules for type
   *   conversion.
@@ -11071,7 +11071,7 @@ export const Builtins =
   *   graphic string, the result is padded with graphic blanks.
   *   - If \`y\` is less than the length needed to contain the
   *   graphic string, the result is truncated.
-  * @returns {GRAPHIC} The graphic value of \`x\` with length \`y\`.
+  * @returns The graphic value of \`x\` with length \`y\`.
   */
  GRAPHIC: PROC (x, y) RETURNS (GRAPHIC);
     DCL x ANY;
@@ -11082,10 +11082,10 @@ export const Builtins =
   * character is the highest character in the collating sequence
   * (hexadecimal FF).
   *
-  * @param {FIXED BINARY} x Expression. If necessary, \`x\` is
+  * @param x Expression. If necessary, \`x\` is
   *   converted to a positive real fixed-point binary value. If
   *   \`x\` = 0, the result is the null character string.
-  * @returns {CHARACTER} String of length \`x\` with each character
+  * @returns String of length \`x\` with each character
   *   set to hexadecimal FF.
   */
  HIGH: PROC (x) RETURNS (CHARACTER);
@@ -11127,13 +11127,13 @@ export const Builtins =
   *   pos = index( tractatus, 'man', pos+1 ); // pos = 00
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x String-expression to be searched.
-  * @param {ANY<CHARACTER>} y Target string-expression of the
+  * @param x String-expression to be searched.
+  * @param y Target string-expression of the
   *   search.
-  * @param {FIXED BINARY} [n] \`n\` specifies the location within
+  * @param [n] \`n\` specifies the location within
   *   \`x\` at which to begin processing. It must have a
   *   computational type and is converted to FIXED BINARY(31,0).
-  * @returns {FIXED BINARY} The starting position within \`x\` of
+  * @returns The starting position within \`x\` of
   *   the first match for \`y\`.
   */
  INDEX: PROC (x, y, n) RETURNS (FIXED BINARY);
@@ -11163,7 +11163,7 @@ export const Builtins =
   * INDEXR will perform best when the second and third arguments are
   * either literals, named constants declared with the VALUE
   * attribute, or restricted expressions.
-  * @returns {FIXED BINARY} The starting position of the last
+  * @returns The starting position of the last
   *   match for \`y\` within \`x\`.
   */
  INDEXR: PROC (x, y, n) RETURNS (FIXED BINARY);
@@ -11188,16 +11188,16 @@ export const Builtins =
   *
   * If \`z\` is omitted, a blank is used as the padding character.
   *
-  * @param {ANY<CHARACTER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type and should have a character type. If not,
   *   it is converted to CHARACTER.
-  * @param {FIXED BINARY} n Expression. \`n\` must have a
+  * @param n Expression. \`n\` must have a
   *   computational type and should have a character type. If \`n\`
   *   does not have the attributes FIXED BINARY(31,0), it is
   *   converted to them.
-  * @param {CHARACTER} [z] Expression. If specified, \`z\` must have
+  * @param [z] Expression. If specified, \`z\` must have
   *   the type CHARACTER(1) NONVARYING type.
-  * @returns {CHARACTER} \`x\` left-aligned in a string of length
+  * @returns \`x\` left-aligned in a string of length
   *   \`n\`, padded with \`z\`.
   */
  LEFT: PROC (x, n, z) RETURNS (CHARACTER);
@@ -11222,11 +11222,11 @@ export const Builtins =
   * address of the located data.
   * - If the OFFSET reference is null, LENGTH returns SYSNULL.
   *
-  * @param {ANY} x String-expression or an OFFSET reference with
+  * @param x String-expression or an OFFSET reference with
   *   the LOCATES attribute and an explicit AREA reference. If \`x\`
   *   is binary, it is converted to bit string; otherwise, any other
   *   conversion required is to character string.
-  * @returns {FIXED BINARY} The current length of \`x\`.
+  * @returns The current length of \`x\`.
   */
  LENGTH: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -11236,10 +11236,10 @@ export const Builtins =
   * character is the lowest character in the collating sequence
   * (hexadecimal 00).
   *
-  * @param {FIXED BINARY} x Expression. If necessary, \`x\` is
+  * @param x Expression. If necessary, \`x\` is
   *   converted to a positive real fixed-point binary value. If
   *   \`x\` = 0, the result is the null character string.
-  * @returns {CHARACTER} String of length \`x\` with each character
+  * @returns String of length \`x\` with each character
   *   set to hexadecimal 00.
   */
  LOW: PROC (x) RETURNS (CHARACTER);
@@ -11252,8 +11252,8 @@ export const Builtins =
   *
   * LOWERASCII(x) is equivalent to TRANSLATE(x, 'a...z', 'A...Z').
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
-  * @returns {CHARACTER} \`x\` with ASCII characters converted to
+  * @param x Expression. x must have UCHAR type.
+  * @returns \`x\` with ASCII characters converted to
   *   lowercase.
   */
  LOWERASCII: PROC (x) RETURNS (CHARACTER);
@@ -11301,11 +11301,11 @@ export const Builtins =
   * The appendix lists the values of \`lowerc\` and \`upperc\` for
   * the supported values of \`c\`. For details, see Limits.
   *
-  * @param {ANY<CHARACTER>} x An expression. If necessary, \`x\` is
+  * @param x An expression. If necessary, \`x\` is
   *   converted to character.
-  * @param {FIXED BINARY} [c] An expression that specifies the code
+  * @param [c] An expression that specifies the code
   *   page that will be lowercased.
-  * @returns {CHARACTER} \`x\` with all characters converted to
+  * @returns \`x\` with all characters converted to
   *   lowercase.
   */
  LOWERCASE: PROC (x, c) RETURNS (CHARACTER);
@@ -11319,8 +11319,8 @@ export const Builtins =
   *
   * The letters Y with DIAERESIS(ÿ) and SHARP S (ß) are not changed.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
-  * @returns {CHARACTER} \`x\` with ASCII and Latin-1 characters
+  * @param x Expression. x must have UCHAR type.
+  * @returns \`x\` with ASCII and Latin-1 characters
   *   converted to lowercase.
   */
  LOWERLATIN1: PROC (x) RETURNS (CHARACTER);
@@ -11353,10 +11353,10 @@ export const Builtins =
   * because \`maxlength(y)\` will return 20 (the declared length of
   * \`y\`).
   *
-  * @param {ANY} x Expression. \`x\` must have a computational type
+  * @param x Expression. \`x\` must have a computational type
   *   and should have a string type. If not, it is converted to
   *   character.
-  * @returns {FIXED BINARY} The maximum length of the string \`x\`.
+  * @returns The maximum length of the string \`x\`.
   */
  MAXLENGTH: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY;
@@ -11371,10 +11371,10 @@ export const Builtins =
   * processing of the string is determined by the rules selected by
   * the expression \`r\`, as described below.
   *
-  * @param {ANY<CHARACTER>} x Expression that yields the character
+  * @param x Expression that yields the character
   *   string result. The value of \`x\` is converted to character if
   *   necessary.
-  * @param {ANY<CHARACTER>} r Expression that yields a character
+  * @param r Expression that yields a character
   *   result. The expression cannot be GRAPHIC and is converted to
   *   character if necessary.
   *
@@ -11394,7 +11394,7 @@ export const Builtins =
   *   occur.
   *
   *   Note: The parameter \`r\` is ignored on Intel and AIX.
-  * @param {FIXED BINARY} [y] Expression. If necessary, \`y\` is
+  * @param [y] Expression. If necessary, \`y\` is
   *   converted to a real fixed-point binary value. If \`y\` is
   *   omitted, the length is determined by the rules for type
   *   conversion. The value of \`y\` cannot be negative. If \`y\` =
@@ -11405,7 +11405,7 @@ export const Builtins =
   *   characters from the right (if they are SBCS characters), or
   *   by discarding as many DBCS characters (2-byte pairs) as
   *   needed.
-  * @returns {CHARACTER} Mixed character string truncated at a
+  * @returns Mixed character string truncated at a
   *   logical boundary.
   */
  MPSTR: PROC (x, r, y) RETURNS (CHARACTER);
@@ -11444,9 +11444,9 @@ export const Builtins =
   * would require a library call, but will cause the contents of
   * \`x\` to be treated as if it were declared as PIC'(5)9'.
   *
-  * @param {CHARACTER} x Expression.
-  * @param {CHARACTER} y Picture specification.
-  * @returns {ANY<PICTURE>} Data of \`x\` cast to the PICTURE type
+  * @param x Expression.
+  * @param y Picture specification.
+  * @returns Data of \`x\` cast to the PICTURE type
   *   specified by \`y\`.
   */
  PICSPEC: PROC (x, y) RETURNS (ANY<PICTURE>);
@@ -11556,33 +11556,33 @@ export const Builtins =
   * a_index(4) and a_length(4) will give the index and length for TESTDB
   * \`\`\`
   *
-  * @param {FIXED BINARY} i A reference. \`i\` must be ASSIGNABLE.
+  * @param i A reference. \`i\` must be ASSIGNABLE.
   *   If a match for the pattern is found, it will be assigned the
   *   index of the substring in x of the first match for the
   *   regular expression p. i must be REAL FIXED BIN with scale
   *   factor 0. i must be either a scalar or a one-dimensional
   *   array of scalars.
-  * @param {FIXED BINARY} j A reference. j must be ASSIGNABLE. If
+  * @param j A reference. j must be ASSIGNABLE. If
   *   a match for the pattern is found, it will be assigned the
   *   length of the substring in x of the first match for the
   *   regular expression p. j must be REAL FIXED BIN with scale
   *   factor 0. j must be either a scalar or a one-dimensional
   *   array of scalars.
-  * @param {ANY<CHARACTER>} p A string holding a regular
+  * @param p A string holding a regular
   *   expression. The pattern p must have CHARACTER type.
   *
   *   The pattern p must conform to the POSIX standard for Extended
   *   Regular Expressions (EREs) (and not to the POSIX standard for
   *   Basic Regular Expressions). Wikipedia and other web sites
   *   contain good descriptions of regular expressions.
-  * @param {ANY<CHARACTER>} x A string. x is to be searched for a
+  * @param x A string. x is to be searched for a
   *   match with the regular expression p. The string x must have
   *   CHARACTER type.
-  * @param {FIXED BINARY} [n] An expression. n specifies the
+  * @param [n] An expression. n specifies the
   *   location within x at which to begin searching. n must have a
   *   computational type and is converted to FIXED BINARY(31,0).
   *   If omitted, it defaults to 1.
-  * @param {FIXED BINARY} [c] A restricted expression. c specifies
+  * @param [c] A restricted expression. c specifies
   *   the code page of p and x. If omitted, it defaults to the
   *   value in the CODEPAGE compiler option. If not omitted, a
   *   value for n must be specified.
@@ -11590,7 +11590,7 @@ export const Builtins =
   *   The code page must have a computational type and is converted
   *   to FIXED BINARY (31,0). The code page must specify a valid,
   *   supported code page.
-  * @returns {FIXED BINARY} 0 if a match was found, 1 if no match,
+  * @returns 0 if a match was found, 1 if no match,
   *   -1 if no matching locale, >1 if pattern is invalid.
   */
  REGEX: PROC (i, j, p, x, n, c) RETURNS (FIXED BINARY);
@@ -11610,15 +11610,15 @@ export const Builtins =
   * If \`y\` is zero or negative, the string \`x\` is returned. For
   * an example of the REPEAT built-in function, see COPY.
   *
-  * @param {ANY} x Bit, character, graphic, uchar or widechar
+  * @param x Bit, character, graphic, uchar or widechar
   *   expression to be repeated. If \`x\` is arithmetic, the
   *   following conversions occur:
   *
   *   - If it is binary, \`x\` is converted to bit string.
   *   - If it is decimal, \`x\` is converted to character string.
-  * @param {FIXED BINARY} y Expression. If necessary, \`y\` is
+  * @param y Expression. If necessary, \`y\` is
   *   converted to a real fixed-point binary value.
-  * @returns {ANY} String of \`x\` repeated \`y\` + 1 times.
+  * @returns String of \`x\` repeated \`y\` + 1 times.
   */
  REPEAT: PROC (x, y) RETURNS (ANY);
     DCL x ANY;
@@ -11650,31 +11650,31 @@ export const Builtins =
   *       // 'reserved from 2018/05/01 till 2018/05/01.'
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x A string expression that specifies
+  * @param x A string expression that specifies
   *   the string within which the occurrences of the substring f
   *   will be replaced by the substring t. x must have a CHARACTER
   *   type.
-  * @param {ANY<CHARACTER>} f A string expression that specifies
+  * @param f A string expression that specifies
   *   the substring that will be replaced within the string x. f
   *   must have a CHARACTER type.
-  * @param {ANY<CHARACTER>} t A string expression that specifies
+  * @param t A string expression that specifies
   *   the substring that will be used to replace the substring f
   *   within the string x. t must have a CHARACTER type.
-  * @param {FIXED BINARY} [n] An optional expression that specifies
+  * @param [n] An optional expression that specifies
   *   a location within the string x, from where the compiler
   *   begins searching for the substring f. n must have a
   *   computational type and is converted to FIXED BINARY(31,0).
   *   The default value for n is 1. If n is less than 1 or greater
   *   than the length(x), the STRINGRANGE condition will be raised
   *   if enabled, and the result will be a null character string.
-  * @param {FIXED BINARY} [i] An optional expression that specifies
+  * @param [i] An optional expression that specifies
   *   the maximum number of times that the substring f should be
   *   replaced by the substring t. i must have a computational type
   *   and is converted to FIXED BINARY(31,0). The default value for
   *   i is 1. i must be non-negative. If i is 0, all occurrences of
   *   the substring f in the string x will be replaced by the
   *   substring t.
-  * @returns {CHARACTER} \`x\` with occurrences of \`f\` replaced
+  * @returns \`x\` with occurrences of \`f\` replaced
   *   by \`t\`.
   */
  REPLACE: PROC (x, f, t, n, i) RETURNS (CHARACTER);
@@ -11701,13 +11701,13 @@ export const Builtins =
   * As an example, REPLACEBY2( 'Rätsel', 'aeoeuess', 'äöüß') returns
   * the string 'Raetsel'.
   *
-  * @param {ANY<CHARACTER>} x Character expression to be searched
+  * @param x Character expression to be searched
   *   for possible replacement of its characters.
-  * @param {ANY<CHARACTER>} y Character expression containing the
+  * @param y Character expression containing the
   *   replacement pair values..
-  * @param {ANY<CHARACTER>} z Character expression containing the
+  * @param z Character expression containing the
   *   characters that are to be replaced.
-  * @returns {CHARACTER} String with characters of \`z\` replaced by
+  * @returns String with characters of \`z\` replaced by
   *   corresponding pairs from \`y\`.
   */
  REPLACEBY2: PROC (x, y, z) RETURNS (CHARACTER);
@@ -11728,12 +11728,12 @@ export const Builtins =
   *   Target = reverse (Source);     // 'OPRAH'
   * \`\`\`
   *
-  * @param {ANY} x Expression. \`x\` must have a computational type
+  * @param x Expression. \`x\` must have a computational type
   *   and should have a string type. If \`x\` does not have a string
   *   type, it is converted to string (that is, from numeric to
   *   character, bit, graphic, uchar, or widechar), according to the
   *   rules for concatenation.
-  * @returns {ANY} \`x\` with its elements in reverse order.
+  * @returns \`x\` with its elements in reverse order.
   */
  REVERSE: PROC (x) RETURNS (ANY);
     DCL x ANY;
@@ -11755,14 +11755,14 @@ export const Builtins =
   *              // '*******One Hundred SCIDS Marks'
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x Expression. \`x\` must have a
+  * @param x Expression. \`x\` must have a
   *   computational type and can have a character type. If not, it
   *   is converted to character.
-  * @param {FIXED BINARY} n Expression. \`n\` must have a
+  * @param n Expression. \`n\` must have a
   *   computational type and is converted to FIXED BINARY(31,0).
-  * @param {CHARACTER} [z] Expression. If specified, \`z\` must have
+  * @param [z] Expression. If specified, \`z\` must have
   *   the type CHARACTER(1) NONVARYING type.
-  * @returns {CHARACTER} \`x\` right-aligned in a string of length
+  * @returns \`x\` right-aligned in a string of length
   *   \`n\`, padded with \`z\`.
   */
  RIGHT: PROC (x, n, z) RETURNS (CHARACTER);
@@ -11780,12 +11780,12 @@ export const Builtins =
   * SCRUBOUT( x, '0123456789', 4 ) will remove all the numeric
   * characters from x after the first 3 characters.
   *
-  * @param {ANY<CHARACTER>} x A string expression that specifies the
+  * @param x A string expression that specifies the
   *   string from which the characters in the string f will be
   *   removed. x must have a CHARACTER type.
-  * @param {ANY<CHARACTER>} f A string expression that specifies the
+  * @param f A string expression that specifies the
   *   characters to be removed from x. f must have a CHARACTER type.
-  * @param {FIXED BINARY} [n] An optional expression that specifies
+  * @param [n] An optional expression that specifies
   *   a location within the string x, from where the compiler begins
   *   searching for characters from the string f.
   *
@@ -11795,7 +11795,7 @@ export const Builtins =
   *   If n is less than 1 or greater than length(x)+1, the
   *   STRINGRANGE condition will be raised if enabled, and the
   *   result will be a null character string.
-  * @returns {CHARACTER} \`x\` with all characters from \`f\`
+  * @returns \`x\` with all characters from \`f\`
   *   removed.
   */
  SCRUBOUT: PROC (x, f, n) RETURNS (CHARACTER);
@@ -11864,7 +11864,7 @@ export const Builtins =
   *   Number(2) = substr (Source, Start, 3);        // 475
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x Expressions. \`x\` specifies the
+  * @param x Expressions. \`x\` specifies the
   *   string in which to search for any character, bit, graphic,
   *   uchar, or widechar that appears in string \`y\`.
   *
@@ -11872,8 +11872,8 @@ export const Builtins =
   *   zero.
   *
   *   If \`y\` does not occur in \`x\`, the result is zero.
-  * @param {ANY<CHARACTER>} y See \`x\`.
-  * @param {FIXED BINARY} [n] Expression. \`n\` specifies the
+  * @param y See \`x\`.
+  * @param [n] Expression. \`n\` specifies the
   *   location within \`x\` at which to begin searching. It must
   *   have a computational type and is converted to FIXED
   *   BINARY(31,0).
@@ -11881,7 +11881,7 @@ export const Builtins =
   *   Unless 1 ≤ \`n\` ≤ LENGTH(\`x\`)+1, STRINGRANGE condition, if
   *   enabled, is raised. Its implicit action and normal return give
   *   a result of zero.
-  * @returns {FIXED BINARY} The first position in \`x\` at which any
+  * @returns The first position in \`x\` at which any
   *   character of \`y\` appears.
   */
  SEARCH: PROC (x, y, n) RETURNS (FIXED BINARY);
@@ -11924,7 +11924,7 @@ export const Builtins =
   *   Start = verifyr (Source, Digits, End); // returns 30 for the ' '
   *   Num   = substr (Source, Start + 1, End - Start); // extract number
   * \`\`\`
-  * @param {ANY<CHARACTER>} x Expressions. \`x\` specifies the
+  * @param x Expressions. \`x\` specifies the
   *   string in which to search for any character, bit, graphic,
   *   uchar, or widechar that appears in string \`y\`.
   *
@@ -11932,8 +11932,8 @@ export const Builtins =
   *   zero.
   *
   *   If \`y\` does not occur in \`x\`, the result is zero.
-  * @param {ANY<CHARACTER>} y See \`x\`.
-  * @param {FIXED BINARY} [n] Expression. \`n\` specifies the
+  * @param y See \`x\`.
+  * @param [n] Expression. \`n\` specifies the
   *   location within \`x\` at which to begin searching. It must
   *   have a computational type and is converted to FIXED
   *   BINARY(31,0).
@@ -11941,7 +11941,7 @@ export const Builtins =
   *   Unless 1 ≤ \`n\` ≤ LENGTH(\`x\`)+1, STRINGRANGE condition, if
   *   enabled, is raised. Its implicit action and normal return give
   *   a result of zero.
-  * @returns {FIXED BINARY} The last position in \`x\` at which any
+  * @returns The last position in \`x\` at which any
   *   character of \`y\` appears.
   */
  SEARCHR: PROC (x, y, n) RETURNS (FIXED BINARY);
@@ -11967,13 +11967,13 @@ export const Builtins =
   *
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x A string expression. \`x\` specifies
+  * @param x A string expression. \`x\` specifies
   *   the string from which all multiple occurrences of the
   *   character defined by \`y\` are reduced to one. \`x\` must have
   *   the CHARACTER attribute.
-  * @param {CHARACTER} y An expression that must have the type
+  * @param y An expression that must have the type
   *   CHARACTER(1) NONVARYING.
-  * @param {FIXED BINARY} [n] An expression that specifies the
+  * @param [n] An expression that specifies the
   *   location within \`x\` at which to begin to locate the first
   *   occurrences of \`y\`. \`n\` must have a computational type and
   *   is converted to type size_t. The default value for \`n\` is 1.
@@ -11981,7 +11981,7 @@ export const Builtins =
   *   - If \`n\` < 1, the default value 1 is used.
   *   - If \`n\` > length(\`x\`), the full string of \`x\` is
   *   returned.
-  * @returns {CHARACTER} String with multiple occurrences of \`y\`
+  * @returns String with multiple occurrences of \`y\`
   *   reduced to one.
   */
  SQUEEZE: PROC (x, y, n) RETURNS (CHARACTER);
@@ -11999,18 +11999,18 @@ export const Builtins =
   * raised when \`y\` = LENGTH(\`x\`)+1 and \`z\` = 0. For an
   * example of the SUBSTR built-in function, see SEARCH.
   *
-  * @param {ANY<CHARACTER>} x String expression. It specifies the
+  * @param x String expression. It specifies the
   *   string from which the substring is extracted. If \`x\` is not
   *   a string, it is converted to character.
-  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  * @param y Expression that is converted to FIXED
   *   BINARY(31,0). \`y\` specifies the starting position of the
   *   substring in \`x\`.
-  * @param {FIXED BINARY} [z] Expression that is converted to FIXED
+  * @param [z] Expression that is converted to FIXED
   *   BINARY(31,0). \`z\` specifies the length of the substring in
   *   \`x\`. If \`z\` is zero, a null string is returned. If \`z\`
   *   is omitted, the substring returned is position \`y\` in \`x\`
   *   to the end of \`x\`.
-  * @returns {ANY<CHARACTER>} The substring of \`x\` starting at
+  * @returns The substring of \`x\` starting at
   *   \`y\` with length \`z\`.
   */
  SUBSTR: PROC (x, y, z) RETURNS (ANY<CHARACTER>);
@@ -12040,18 +12040,18 @@ export const Builtins =
   *          z > k
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x String expression. It specifies the
+  * @param x String expression. It specifies the
   *   string from which the substring is extracted. If \`x\` is not
   *   a string, it is converted to character.
-  * @param {FIXED BINARY} y Expression that is converted to FIXED
+  * @param y Expression that is converted to FIXED
   *   BINARY(31,0). \`y\` specifies the starting position of the
   *   substring in \`x\`.
-  * @param {FIXED BINARY} [z] Expression that is converted to FIXED
+  * @param [z] Expression that is converted to FIXED
   *   BINARY(31,0). \`z\` specifies the ending position of the
   *   substring in \`x\`. If \`z = y-\`1, a null string is returned.
   *   If \`z\` is omitted, the substring returned is position \`y\`
   *   in \`x\` to the end of \`x\`.
-  * @returns {ANY<CHARACTER>} The substring of \`x\` from position
+  * @returns The substring of \`x\` from position
   *   \`y\` to position \`z\`.
   */
  SUBTO: PROC (x, y, z) RETURNS (ANY<CHARACTER>);
@@ -12078,12 +12078,12 @@ export const Builtins =
   *   TALLY ('1001'B, '1'B);                         // returns 2
   * \`\`\`
   *
-  * @param {ANY} x String expressions.
+  * @param x String expressions.
   *
   *   Both \`x\` and \`y\` must have computational type and should
   *   be character, bit, graphic, uchar, or widechar type.
-  * @param {ANY} y See \`x\`.
-  * @returns {FIXED BINARY} The number of times \`y\` appears in
+  * @param y See \`x\`.
+  * @returns The number of times \`y\` appears in
   *   \`x\`.
   */
  TALLY: PROC (x, y) RETURNS (FIXED BINARY);
@@ -12137,14 +12137,14 @@ export const Builtins =
   * to Ä-umlaut if those characters were added to the \`from\` and
   * \`to\` strings, respectively.
   *
-  * @param {ANY<CHARACTER>} x Character expression to be searched
+  * @param x Character expression to be searched
   *   for possible translation of its characters.
-  * @param {ANY<CHARACTER>} y Character expression containing the
+  * @param y Character expression containing the
   *   translation values of characters.
-  * @param {ANY<CHARACTER>} [z] Character expression containing the
+  * @param [z] Character expression containing the
   *   characters that are to be translated. If \`z\` is omitted, it
   *   defaults to collate().
-  * @returns {CHARACTER} \`x\` with characters of \`z\` translated to
+  * @returns \`x\` with characters of \`z\` translated to
   *   corresponding characters in \`y\`.
   */
  TRANSLATE: PROC (x, y, z) RETURNS (CHARACTER);
@@ -12176,7 +12176,7 @@ export const Builtins =
   *
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x Expressions.
+  * @param x Expressions.
   *
   *   Each must have a computational type and should have CHARACTER
   *   type or UCHAR type. If not, they are converted.
@@ -12187,9 +12187,9 @@ export const Builtins =
   *
   *   If \`z\` is omitted, it defaults to a CHARACTER(1) NONVARYING
   *   string containing one blank.
-  * @param {ANY<CHARACTER>} [y] See \`x\`.
-  * @param {ANY<CHARACTER>} [z] See \`x\`.
-  * @returns {CHARACTER} \`x\` with leading \`y\` and trailing \`z\`
+  * @param [y] See \`x\`.
+  * @param [z] See \`x\`.
+  * @returns \`x\` with leading \`y\` and trailing \`z\`
   *   characters trimmed.
   */
  TRIM: PROC (x, y, z) RETURNS (CHARACTER);
@@ -12203,8 +12203,8 @@ export const Builtins =
   *
   * The value returned by BYTELENGTH(UHIGH(x)) is equal to 4*x.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
-  * @returns {CHARACTER} UCHAR string of length \`x\` with each item
+  * @param x Expression. x must have UCHAR type.
+  * @returns UCHAR string of length \`x\` with each item
   *   set to the highest UCHAR value.
   */
  UHIGH: PROC (x) RETURNS (CHARACTER);
@@ -12229,9 +12229,9 @@ export const Builtins =
   * ULENGTH will return 1 for the string 'c3_a4'x and 2 for the
   * string '61_cc_88'x.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have CHARACTER or
+  * @param x Expression. x must have CHARACTER or
   *   WIDECHAR type.
-  * @returns {FIXED BINARY} The number of UTF characters in \`x\`.
+  * @returns The number of UTF characters in \`x\`.
   */
  ULENGTH: PROC (x) RETURNS (FIXED BINARY);
     DCL x ANY<CHARACTER>;
@@ -12253,9 +12253,9 @@ export const Builtins =
   * For example, if \`x\` equals the WIDECHAR string
   * '004B_00E4_0073_0065'wx, then ULENGTH8(x) returns 5.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have CHARACTER or
+  * @param x Expression. x must have CHARACTER or
   *   WIDECHAR type.
-  * @returns {FIXED BINARY} The length of the CHAR string needed to
+  * @returns The length of the CHAR string needed to
   *   hold \`x\` converted to UTF-8.
   */
  ULENGTH8: PROC (x) RETURNS (FIXED BINARY);
@@ -12279,9 +12279,9 @@ export const Builtins =
   * For example, if \`x\` equals the CHARACTER string
   * '4b_c3_a4_73_65'x, then ULENGTH16(x) returns 4.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have CHARACTER or
+  * @param x Expression. x must have CHARACTER or
   *   WIDECHAR type.
-  * @returns {FIXED BINARY} The length of the WIDECHAR string needed
+  * @returns The length of the WIDECHAR string needed
   *   to hold \`x\` converted to UTF-16.
   */
  ULENGTH16: PROC (x) RETURNS (FIXED BINARY);
@@ -12293,8 +12293,8 @@ export const Builtins =
   *
   * The value returned by BYTELENGTH(ULOW(x)) is equal to x.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
-  * @returns {CHARACTER} UCHAR string of length \`x\` with each item
+  * @param x Expression. x must have UCHAR type.
+  * @returns UCHAR string of length \`x\` with each item
   *   set to the lowest UCHAR value.
   */
  ULOW: PROC (x) RETURNS (CHARACTER);
@@ -12326,12 +12326,12 @@ export const Builtins =
   * - UPOS(x,4) returns 5
   * - UPOS(x,5) returns 6
   *
-  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  * @param x Expression which must have CHARACTER
   *   or WIDECHAR type.
-  * @param {FIXED BINARY} n Expression which must have computational
+  * @param n Expression which must have computational
   *   type and which will be converted to FIXED BIN(31) if
   *   necessary.
-  * @returns {FIXED BINARY} The index of the \`n\`th UTF character
+  * @returns The index of the \`n\`th UTF character
   *   in \`x\`.
   */
  UPOS: PROC (x, n) RETURNS (FIXED BINARY);
@@ -12345,8 +12345,8 @@ export const Builtins =
   *
   * UPPERASCII(x) is equivalent to TRANSLATE(x, 'A...Z', 'a...z').
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
-  * @returns {CHARACTER} \`x\` with ASCII characters converted to
+  * @param x Expression. x must have UCHAR type.
+  * @returns \`x\` with ASCII characters converted to
   *   uppercase.
   */
  UPPERASCII: PROC (x) RETURNS (CHARACTER);
@@ -12394,11 +12394,11 @@ export const Builtins =
   * The appendix lists the values of \`upperc\` and \`lowerc\` for
   * the supported values of \`c\`. For details, see Limits.
   *
-  * @param {ANY<CHARACTER>} x An expression. If necessary, \`x\` is
+  * @param x An expression. If necessary, \`x\` is
   *   converted to character.
-  * @param {FIXED BINARY} [c] An expression that specifies the code
+  * @param [c] An expression that specifies the code
   *   page that will be uppercased.
-  * @returns {CHARACTER} \`x\` with all characters converted to
+  * @returns \`x\` with all characters converted to
   *   uppercase.
   */
  UPPERCASE: PROC (x, c) RETURNS (CHARACTER);
@@ -12412,8 +12412,8 @@ export const Builtins =
   *
   * The letters Y with DIAERESIS(ÿ) and SHARP S(ß) are not changed.
   *
-  * @param {ANY<CHARACTER>} x Expression. x must have UCHAR type.
-  * @returns {CHARACTER} \`x\` with ASCII and Latin-1 characters
+  * @param x Expression. x must have UCHAR type.
+  * @returns \`x\` with ASCII and Latin-1 characters
   *   converted to uppercase.
   */
  UPPERLATIN1: PROC (x) RETURNS (CHARACTER);
@@ -12453,15 +12453,15 @@ export const Builtins =
   * -
   * -
   *
-  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  * @param x Expression which must have CHARACTER
   *   or WIDECHAR type.
-  * @param {FIXED BINARY} i Expression which must have computational
+  * @param i Expression which must have computational
   *   type and which will be converted to FIXED BIN(31) if
   *   necessary.
-  * @param {FIXED BINARY} j Expression which must have computational
+  * @param j Expression which must have computational
   *   type and which will be converted to FIXED BIN(31) if
   *   necessary.
-  * @returns {ANY<CHARACTER>} The \`j\` UTF characters of \`x\`
+  * @returns The \`j\` UTF characters of \`x\`
   *   starting at the \`i\`th character.
   */
  USUBSTR: PROC (x, i, j) RETURNS (ANY<CHARACTER>);
@@ -12501,9 +12501,9 @@ export const Builtins =
   *     put skip list(jx);
   * \`\`\`
   *
-  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  * @param x Expression which must have CHARACTER
   *   or WIDECHAR type.
-  * @returns {FIXED BINARY} Index of the first UTF surrogate pair in
+  * @returns Index of the first UTF surrogate pair in
   *   \`x\`, or zero if none.
   */
  USUPPLEMENTARY: PROC (x) RETURNS (FIXED BINARY);
@@ -12534,16 +12534,16 @@ export const Builtins =
   * and '5d'x; but on code page 1141, '63'x and 'fc'x map to UTF-8
   * characters '5b'x and '5d'x.
   *
-  * @param {ANY} x An expression that must have one of these types:
+  * @param x An expression that must have one of these types:
   *   FIXED, FLOAT, PICTURE, BIT, CHAR, or WIDECHAR.
-  * @param {FIXED BINARY} [c] A restricted expression that specifies
+  * @param [c] A restricted expression that specifies
   *   the code page of the source. It is ignored if x has WIDECHAR
   *   type.
   *
   *   The code page must have a computational type and is converted
   *   to type FIXED BINARY (31,0). The code page must specify a
   *   valid, supported code page.
-  * @returns {CHARACTER} The UTF-8 equivalent of \`x\`.
+  * @returns The UTF-8 equivalent of \`x\`.
   */
  UTF8: PROC (x, c) RETURNS (CHARACTER);
     DCL x ANY;
@@ -12558,9 +12558,9 @@ export const Builtins =
   * of a valid UTF-8 character. For example, if the character has
   * the value '80'x, UTF8STG returns zero.
   *
-  * @param {CHARACTER} x Specifies the input character. x must be
+  * @param x Specifies the input character. x must be
   *   of the type CHAR(1).
-  * @returns {FIXED BINARY} The number of bytes needed for the
+  * @returns The number of bytes needed for the
   *   UTF-8 character starting with \`x\`, or zero if invalid.
   */
  UTF8STG: PROC (x) RETURNS (FIXED BINARY);
@@ -12573,12 +12573,12 @@ export const Builtins =
   * Note: If x holds invalid UTF-8 data, the generated code raises
   * the ERROR condition.
   *
-  * @param {CHARACTER} x An expression that must have the CHAR
+  * @param x An expression that must have the CHAR
   *   type.
   *
   *   When x is converted from UTF-8 to CHAR, the CODEPAGE option
   *   is used to specify the target code page.
-  * @param {FIXED BINARY} [c] A restricted expression that
+  * @param [c] A restricted expression that
   *   specifies the code page of x.
   *
   *   If omitted, it defaults to the value in the CODEPAGE compiler
@@ -12587,7 +12587,7 @@ export const Builtins =
   *   If specified, the code page must have a computational type and
   *   is converted to FIXED BINARY (31,0). The code page must
   *   specify a valid, supported code page.
-  * @returns {CHARACTER} The converted CHAR value.
+  * @returns The converted CHAR value.
   */
  UTF8TOCHAR: PROC (x, c) RETURNS (CHARACTER);
     DCL x CHARACTER;
@@ -12602,9 +12602,9 @@ export const Builtins =
   * Note: If x holds invalid UTF-8 data, the generated code raises
   * the ERROR condition.
   *
-  * @param {CHARACTER} x An expression that must have the CHAR
+  * @param x An expression that must have the CHAR
   *   type. x is converted from UTF-8 to UTF-16.
-  * @returns {WIDECHAR} WCHAR value holding x converted from
+  * @returns WCHAR value holding x converted from
   *   UTF-8 to UTF-16.
   */
  UTF8TOWCHAR: PROC (x) RETURNS (WIDECHAR);
@@ -12678,9 +12678,9 @@ export const Builtins =
   * half of a surrogate pair
   * - 'e000'wx - 'ffff'wx, it is valid and would be 3 bytes if UTF-8
   *
-  * @param {ANY<CHARACTER>} x Expression which must have
+  * @param x Expression which must have
   *   CHARACTER, UCHAR, WIDECHAR or WIDEPIC type.
-  * @returns {FIXED BINARY} Zero if the string contains valid UTF
+  * @returns Zero if the string contains valid UTF
   *   data, or the index of the first invalid element.
   */
  UVALID: PROC (x) RETURNS (FIXED BINARY);
@@ -12711,12 +12711,12 @@ export const Builtins =
   * - UWIDTH(x,4) returns 1
   * - UWIDTH(x,5) returns 1
   *
-  * @param {ANY<CHARACTER>} x Expression which must have CHARACTER
+  * @param x Expression which must have CHARACTER
   *   or WIDECHAR type.
-  * @param {ANY<NUMBER>} n Expression which must have computational
+  * @param n Expression which must have computational
   *   type and which will be converted to FIXED BIN(31) if
   *   necessary.
-  * @returns {FIXED BINARY} The width of the nth UTF character.
+  * @returns The width of the nth UTF character.
   */
  UWIDTH: PROC (x, n) RETURNS (FIXED BINARY);
     DCL x ANY<CHARACTER>;
@@ -12768,12 +12768,12 @@ export const Builtins =
   *
   * For more examples of the VERIFY built-in function, see SEARCH.
   *
-  * @param {ANY<CHARACTER>} x String-expression.
-  * @param {ANY<CHARACTER>} y String-expression.
-  * @param {FIXED BINARY} [n] Expression \`n\` specifies the
+  * @param x String-expression.
+  * @param y String-expression.
+  * @param [n] Expression \`n\` specifies the
   *   location within \`x\` where processing begins. It must have
   *   a computational type and is converted to FIXED BINARY(31,0).
-  * @returns {FIXED BINARY} Position of the leftmost character in
+  * @returns Position of the leftmost character in
   *   \`x\` that is not in \`y\`, or zero.
   */
  VERIFY: PROC (x, y, n) RETURNS (FIXED BINARY);
@@ -12820,12 +12820,12 @@ export const Builtins =
   * returns 1. After the second pass, N=0, VERIFYR(X,Y,N) returns 0,
   * and the loop ends. For another example, see SEARCHR.
   *
-  * @param {ANY<CHARACTER>} x String-expression.
-  * @param {ANY<CHARACTER>} y String-expression.
-  * @param {FIXED BINARY} [n] Expression \`n\` specifies the
+  * @param x String-expression.
+  * @param y String-expression.
+  * @param [n] Expression \`n\` specifies the
   *   location within \`x\` where processing begins. It must have
   *   a computational type and is converted to FIXED BINARY(31,0).
-  * @returns {FIXED BINARY} Position of the rightmost character in
+  * @returns Position of the rightmost character in
   *   \`x\` that is not in \`y\`, or zero.
   */
  VERIFYR: PROC (x, y, n) RETURNS (FIXED BINARY);
@@ -12837,10 +12837,10 @@ export const Builtins =
   * WHIGH returns a widechar string of length \`x\`, where each
   * widechar has the highest widechar value (hexadecimal FFFF).
   *
-  * @param {ANY<NUMBER>} x Expression. If necessary, \`x\` is
+  * @param x Expression. If necessary, \`x\` is
   *   converted to a positive real fixed-point binary value. If
   *   \`x\` = 0, the result is the null widechar string.
-  * @returns {WIDECHAR} Widechar string of length \`x\`.
+  * @returns Widechar string of length \`x\`.
   */
  WHIGH: PROC (x) RETURNS (WIDECHAR);
     DCL x ANY<NUMBER>;
@@ -12851,12 +12851,12 @@ export const Builtins =
   *
   * Abbreviation: WCHAR
   *
-  * @param {ANY} x Expression.
+  * @param x Expression.
   *
   *   \`x\` must have a computational type.
   *
   *   The values of \`x\` are not checked.
-  * @param {ANY<NUMBER>} [y] Expression. If necessary, y is
+  * @param [y] Expression. If necessary, y is
   *   converted to a real fixed-point binary value.
   *
   *   If \`y\` is omitted, the length is determined by the rules for
@@ -12865,7 +12865,7 @@ export const Builtins =
   *   \`y\` cannot be negative.
   *
   *   If \`y\` = 0, the result is the null widechar string.
-  * @returns {WIDECHAR} The widechar value of \`x\`.
+  * @returns The widechar value of \`x\`.
   */
  WIDECHAR: WCHAR: PROC (x, y) RETURNS (WIDECHAR);
     DCL x ANY;
@@ -12875,10 +12875,10 @@ export const Builtins =
   * WLOW returns a widechar string of length x, where each widechar
   * has the lowest widechar value (hexadecimal 0000).
   *
-  * @param {ANY<NUMBER>} x Expression. If necessary, \`x\` is
+  * @param x Expression. If necessary, \`x\` is
   *   converted to a positive real fixed-point binary value. If
   *   \`x\` = 0, the result is the null widechar string.
-  * @returns {WIDECHAR} Widechar string of length x.
+  * @returns Widechar string of length x.
   */
  WLOW: PROC (x) RETURNS (WIDECHAR);
     DCL x ANY<NUMBER>;
@@ -12907,9 +12907,9 @@ export const Builtins =
   *        call locnewspace(name(1), pool);
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} x Must be an OFFSET reference with the
+  * @param x Must be an OFFSET reference with the
   *   LOCATES attribute. x must be scalar.
-  * @param {ANY<AREA>} [a] Must be an AREA reference. a must be
+  * @param [a] Must be an AREA reference. a must be
   *   scalar.
   *
   *   If you do not specify a, the OFFSET attribute for x must have
@@ -12957,10 +12957,10 @@ export const Builtins =
   *             call locnewvalue('Sherlock Holmes', name(1), pool);
   * \`\`\`
   *
-  * @param {ANY} v Must be computational and scalar.
-  * @param {ANY<LOCATOR>} x Must be an OFFSET reference with the
+  * @param v Must be computational and scalar.
+  * @param x Must be an OFFSET reference with the
   *   LOCATES attribute. x must be scalar.
-  * @param {ANY<AREA>} [a] Must be an AREA reference. a must be
+  * @param [a] Must be an AREA reference. a must be
   *   scalar.
   *
   *   If you do not specify a, the OFFSET attribute for x must have
@@ -12979,13 +12979,13 @@ export const Builtins =
   * The storage at location x and y must not overlap unless they
   * specify the same location.
   *
-  * @param {ANY<LOCATOR>} x Expression with type POINTER or OFFSET.
+  * @param x Expression with type POINTER or OFFSET.
   *   If the type is OFFSET, the expression must be an OFFSET
   *   variable declared with the AREA attribute.
-  * @param {ANY<LOCATOR>} y Expression with type POINTER or OFFSET.
+  * @param y Expression with type POINTER or OFFSET.
   *   If the type is OFFSET, the expression must be an OFFSET
   *   variable declared with the AREA attribute.
-  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  * @param z Expression. It must have a computational
   *   type and is converted to type size_t.1
   */
  PLIASCII: PROC (x, y, z);
@@ -13017,7 +13017,7 @@ export const Builtins =
   * For more information about using PLICKPT, see the Programming
   * Guide.
   *
-  * @param {ANY} [argument] Checkpoint expressions such as ddname
+  * @param [argument] Checkpoint expressions such as ddname
   *   and check-id.
   */
  PLICKPT: PROC (argument);
@@ -13032,7 +13032,7 @@ export const Builtins =
   *
   * CALL PLIDELETE(x) is equivalent to CALL PLIFREE(PTRVALUE(x)).
   *
-  * @param {ANY<LOCATOR>} x Handle expression.
+  * @param x Handle expression.
   */
  PLIDELETE: PROC (x);
     DCL x ANY<LOCATOR>;
@@ -13044,7 +13044,7 @@ export const Builtins =
   * For more information about using PLIDUMP, refer to the
   * Programming Guide.
   *
-  * @param {ANY} [argument] Checkpoint expressions such as ddname
+  * @param [argument] Checkpoint expressions such as ddname
   *   and check-id.
   */
  PLIDUMP: PROC (argument);
@@ -13057,13 +13057,13 @@ export const Builtins =
   * The storage at location x and y must not overlap unless they
   * specify the same location.
   *
-  * @param {ANY<LOCATOR>} x Expression with type POINTER or OFFSET.
+  * @param x Expression with type POINTER or OFFSET.
   *   If the type is OFFSET, the expression must be an OFFSET
   *   variable declared with the AREA attribute.
-  * @param {ANY<LOCATOR>} y Expression with type POINTER or OFFSET.
+  * @param y Expression with type POINTER or OFFSET.
   *   If the type is OFFSET, the expression must be an OFFSET
   *   variable declared with the AREA attribute.
-  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  * @param z Expression. It must have a computational
   *   type and is converted to type size_t.1
   */
  PLIEBCDIC: PROC (x, y, z);
@@ -13091,11 +13091,11 @@ export const Builtins =
   *              initial call plifill( addr(Str1), '00'x, stg(Str1) );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} x Expression. \`x\` must be declared
+  * @param x Expression. \`x\` must be declared
   *   POINTER or OFFSET. If it is OFFSET, x must be declared with
   *   the AREA attribute.
-  * @param {CHARACTER} y Must be declared CHARACTER(1) NONVARYING.
-  * @param {ANY<NUMBER>} z Expression. It is converted to type
+  * @param y Must be declared CHARACTER(1) NONVARYING.
+  * @param z Expression. It is converted to type
   *   size_t 1.
   */
  PLIFILL: PROC (x, y, z);
@@ -13109,7 +13109,7 @@ export const Builtins =
   *
   * PLIFREE is the opposite of ALLOCATE (ALLOC).
   *
-  * @param {ANY<LOCATOR>} p Locator expression.
+  * @param p Locator expression.
   */
  PLIFREE: PROC (p);
     DCL p ANY<LOCATOR>;
@@ -13144,13 +13144,13 @@ export const Builtins =
   *   call plimove(addr(Str1), addr(Template), stg(Str1));
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} x Expression declared as POINTER or
+  * @param x Expression declared as POINTER or
   *   OFFSET. If the type is OFFSET, \`x\` must be declared with
   *   the AREA attribute.
-  * @param {ANY<LOCATOR>} y Expression declared as POINTER or
+  * @param y Expression declared as POINTER or
   *   OFFSET. If the type is OFFSET, \`y\` must be declared with
   *   the AREA attribute.
-  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  * @param z Expression. It must have a computational
   *   type and is converted to type size_t.1
   */
  PLIMOVE: PROC (x, y, z);
@@ -13164,13 +13164,13 @@ export const Builtins =
   * Unlike the PLIMOVE built-in subroutine, the storage at locations
   * \`x\` and \`y\` can overlap.
   *
-  * @param {ANY<LOCATOR>} x Expression declared as POINTER or
+  * @param x Expression declared as POINTER or
   *   OFFSET. If the type is OFFSET, \`x\` must be declared with
   *   the AREA attribute.
-  * @param {ANY<LOCATOR>} y Expression declared as POINTER or
+  * @param y Expression declared as POINTER or
   *   OFFSET. If the type is OFFSET, \`y\` must be declared with
   *   the AREA attribute.
-  * @param {ANY<NUMBER>} z Expression. It must have a computational
+  * @param z Expression. It must have a computational
   *   type and is converted to type size_t.1
   */
  PLIOVER: PROC (x, y, z);
@@ -13310,7 +13310,7 @@ export const Builtins =
   *     x4 = '';
   * \`\`\`
   * 
-  * @param {ANY} args There must at least 3 arguments and 
+  * @param args There must at least 3 arguments and 
   *   no more than 64.
   * 
   * @todo TODO has overloads
@@ -13331,7 +13331,7 @@ export const Builtins =
   * the program that invoked this PL/I program or by another PL/I
   * procedure via the PLIRETV built-in function.
   *
-  * @param {FIXED BINARY} x An expression yielding a FIXED
+  * @param x An expression yielding a FIXED
   *   BINARY(31,0) return code.
   */
  PLIRETC: PROC (x);
@@ -13351,15 +13351,15 @@ export const Builtins =
   *
   * For more information, see the Programming Guide.
   *
-  * @param {ANY} e An event structure.
-  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  * @param e An event structure.
+  * @param p A pointer value or "token" that will
   *   be passed back to the parsing events.
-  * @param {ANY<LOCATOR>} x The address of the buffer containing
+  * @param x The address of the buffer containing
   *   the input XML.
-  * @param {FIXED BINARY} n The number of bytes of data in that
+  * @param n The number of bytes of data in that
   *   buffer. It must have a computational type and is converted
   *   to type size_t.1
-  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  * @param [c] A numeric expression specifying the
   *   purported codepage of that XML.
   */
  PLISAXA: PROC (e, p, x, n, c);
@@ -13375,12 +13375,12 @@ export const Builtins =
   *
   * For more information, see the Programming Guide.
   *
-  * @param {ANY} e An event structure
-  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  * @param e An event structure
+  * @param p A pointer value or "token" that will
   *   be passed back to the parsing events
-  * @param {CHARACTER} x A character string expression specifying
+  * @param x A character string expression specifying
   *   the input file
-  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  * @param [c] A numeric expression specifying the
   *   purported codepage of that XML
   */
  PLISAXB: PROC (e, p, x, c);
@@ -13399,15 +13399,15 @@ export const Builtins =
   * For more information, see the Enterprise PL/I for z/OS®
   * Programming Guide.
   *
-  * @param {ANY} e An event structure.
-  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  * @param e An event structure.
+  * @param p A pointer value or "token" that will
   *   be passed back to the parsing events.
-  * @param {ANY<LOCATOR>} x The address of the buffer containing
+  * @param x The address of the buffer containing
   *   the XML document.
-  * @param {FIXED BINARY} n The number of bytes of data in that
+  * @param n The number of bytes of data in that
   *   buffer. It must have a computational type and is converted
   *   to type size_t.1
-  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  * @param [c] A numeric expression specifying the
   *   codepage of that XML document.
   */
  PLISAXC: PROC (e, p, x, n, c);
@@ -13431,17 +13431,17 @@ export const Builtins =
   * information about OSR, see the XML System Services User's
   * Guide and Reference.
   *
-  * @param {ANY} e An event structure.
-  * @param {ANY<LOCATOR>} p A pointer value or "token" that will
+  * @param e An event structure.
+  * @param p A pointer value or "token" that will
   *   be passed back to the parsing events.
-  * @param {ANY<LOCATOR>} x The address of s buffer that contains
+  * @param x The address of s buffer that contains
   *   the XML document.
-  * @param {FIXED BINARY} n The number of bytes of data in that
+  * @param n The number of bytes of data in that
   *   buffer. It must have a computational type and is converted
   *   to type size_t.1
-  * @param {ANY<LOCATOR>} o The address of a buffer that contains
+  * @param o The address of a buffer that contains
   *   an Optimized Schema Representation (OSR).
-  * @param {ANY<NUMBER>} [c] A numeric expression specifying the
+  * @param [c] A numeric expression specifying the
   *   codepage of that XML document.
   */
  PLISAXD: PROC (e, p, x, n, o, c);
@@ -13457,7 +13457,7 @@ export const Builtins =
   *
   * For more information, see the Programming Guide.
   *
-  * @param {ANY} argument Sort arguments.
+  * @param argument Sort arguments.
   */
  PLISRTA: PROC (argument);
     DCL argument ANY LIST;
@@ -13468,7 +13468,7 @@ export const Builtins =
   *
   * For more information, see the Programming Guide.
   *
-  * @param {ANY} argument Sort arguments.
+  * @param argument Sort arguments.
   */
  PLISRTB: PROC (argument);
     DCL argument ANY LIST;
@@ -13480,7 +13480,7 @@ export const Builtins =
   * For more information, see the Enterprise PL/I for z/OSPL/I
   * for AIX Programming Guide.
   *
-  * @param {ANY} argument Sort arguments.
+  * @param argument Sort arguments.
   */
  PLISRTC: PROC (argument);
     DCL argument ANY LIST;
@@ -13492,7 +13492,7 @@ export const Builtins =
   *
   * For more information, see the Programming Guide.
   *
-  * @param {ANY} argument Sort arguments.
+  * @param argument Sort arguments.
   */
  PLISRTD: PROC (argument);
     DCL argument ANY LIST;
@@ -13502,11 +13502,11 @@ export const Builtins =
   * instruction and returns the condition code set by the
   * instruction.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  * @param x REAL UNSIGNED FIXED BIN(64) reference.
   *   It is set by the STCK instruction. For more details about
   *   the STCK instruction, see the Principles of Operations
   *   manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCK: PROC (x) RETURNS (FIXED BINARY);
@@ -13517,10 +13517,10 @@ export const Builtins =
   * instruction and returns the condition code set by the
   * instruction.
   *
-  * @param {CHARACTER} x CHAR(16) NONVARYING reference. It is set
+  * @param x CHAR(16) NONVARYING reference. It is set
   *   by the STCKE instruction. For more details about the STCKE
   *   instruction, see the Principles of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKE: PROC (x) RETURNS (FIXED BINARY);
@@ -13531,11 +13531,11 @@ export const Builtins =
   * instruction and returns the condition code set by the
   * instruction.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  * @param x REAL UNSIGNED FIXED BIN(64) reference.
   *   It is set by the STCKF instruction. For more details about
   *   the STCKF instruction, see the Principles of Operations
   *   manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKF: PROC (x) RETURNS (FIXED BINARY);
@@ -13547,13 +13547,13 @@ export const Builtins =
   * number of leap seconds from the STCK value and then adding
   * the time zone difference to give the local time.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BINARY(64)
+  * @param x REAL UNSIGNED FIXED BINARY(64)
   *   reference.
   *
   *   It is set by the STCK instruction and then adjusted. For
   *   more details about the STCK instruction, see the Principles
   *   of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKLOCAL: PROC (x) RETURNS (FIXED BINARY);
@@ -13565,12 +13565,12 @@ export const Builtins =
   * number of leap seconds from the STCKE value and then adding
   * the time zone difference to give the local time.
   *
-  * @param {CHARACTER} x CHAR(16) NONVARYING reference.
+  * @param x CHAR(16) NONVARYING reference.
   *
   *   It is set by the STCKE instruction and then adjusted. For
   *   more details about the STCKE instruction, see the Principles
   *   of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKELOCAL: PROC (x) RETURNS (FIXED BINARY);
@@ -13581,12 +13581,12 @@ export const Builtins =
   * Function (PTFF) hardware instruction and returns the condition
   * code set by the instruction.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  * @param x REAL UNSIGNED FIXED BIN(64) reference.
   *
   *   It is set by the PTFF instruction. For more details about
   *   the PTFF instruction, see the Principles of Operations
   *   manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKP: PROC (x) RETURNS (FIXED BINARY);
@@ -13600,12 +13600,12 @@ export const Builtins =
   * difference to give the local time. It returns the condition
   * code set by the instruction.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  * @param x REAL UNSIGNED FIXED BIN(64) reference.
   *
   *   It is set by the PTFF instruction and then adjusted. For
   *   more details about the PTFF instruction, see the Principles
   *   of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKPLOCAL: PROC (x) RETURNS (FIXED BINARY);
@@ -13618,12 +13618,12 @@ export const Builtins =
   * give the UTC time. It returns the condition code set by the
   * instruction.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BIN(64) reference.
+  * @param x REAL UNSIGNED FIXED BIN(64) reference.
   *
   *   It is set by the PTFF instruction and then adjusted. For
   *   more details about the PTFF instruction, see the Principles
   *   of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKPUTC: PROC (x) RETURNS (FIXED BINARY);
@@ -13634,13 +13634,13 @@ export const Builtins =
   * instruction and adjusts the STCK value by subtracting the
   * number of leap seconds to give the UTC time.
   *
-  * @param {FIXED BINARY} x REAL UNSIGNED FIXED BINARY(64)
+  * @param x REAL UNSIGNED FIXED BINARY(64)
   *   reference.
   *
   *   It is set by the STCK instruction and then adjusted. For
   *   more details about the STCK instruction, see the Principles
   *   of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKUTC: PROC (x) RETURNS (FIXED BINARY);
@@ -13651,12 +13651,12 @@ export const Builtins =
   * instruction and adjusts the STCKE value by subtracting the
   * number of leap seconds to give the UTC time.
   *
-  * @param {CHARACTER} x CHAR(16) NONVARYING reference.
+  * @param x CHAR(16) NONVARYING reference.
   *
   *   It is set by the STCKE instruction and then adjusted. For
   *   more details about the STCKE instruction, see the Principles
   *   of Operations manual.
-  * @returns {FIXED BINARY} The condition code set by the
+  * @returns The condition code set by the
   *   instruction.
   */
  PLISTCKEUTC: PROC (x) RETURNS (FIXED BINARY);
@@ -13680,10 +13680,10 @@ export const Builtins =
   * On z/OS, PLITRAN11 is implemented via inline code using the
   * CU11 instruction.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {FIXED BINARY} n Length of the source buffer.
-  * @param {ANY<LOCATOR>} t Address of the 256-byte translate
+  * @param p Address of the target buffer.
+  * @param q Address of the source buffer.
+  * @param n Length of the source buffer.
+  * @param t Address of the 256-byte translate
   *   table.
   */
  PLITRAN11: PROC (p, q, n, t);
@@ -13736,13 +13736,13 @@ export const Builtins =
   *            call plitran12( p, q, n, addr(lowerhex) );
   * \`\`\`
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {FIXED BINARY} n Length of the source buffer. The
+  * @param p Address of the target buffer.
+  * @param q Address of the source buffer.
+  * @param n Length of the source buffer. The
   *   buffer length must be nonnegative and must have a
   *   computational type. The buffer length is converted to type
   *   size_t.1
-  * @param {ANY<LOCATOR>} t Address of the 512-byte translate
+  * @param t Address of the 512-byte translate
   *   table.
   */
  PLITRAN12: PROC (p, q, n, t);
@@ -13765,13 +13765,13 @@ export const Builtins =
   * On z/OS, PLITRAN21 is implemented via inline code using the
   * CU21 instruction.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {FIXED BINARY} n Length of the source buffer. The
+  * @param p Address of the target buffer.
+  * @param q Address of the source buffer.
+  * @param n Length of the source buffer. The
   *   buffer length must be nonnegative and must have a
   *   computational type. The buffer length is converted to type
   *   size_t.1
-  * @param {ANY<LOCATOR>} t Address of the 64K-byte translate
+  * @param t Address of the 64K-byte translate
   *   table.
   */
  PLITRAN21: PROC (p, q, n, t);
@@ -13794,13 +13794,13 @@ export const Builtins =
   * On z/OS, PLITRAN22 is implemented via inline code using the
   * CU22 instruction.
   *
-  * @param {ANY<LOCATOR>} p Address of the target buffer.
-  * @param {ANY<LOCATOR>} q Address of the source buffer.
-  * @param {FIXED BINARY} n Length of the source buffer. The
+  * @param p Address of the target buffer.
+  * @param q Address of the source buffer.
+  * @param n Length of the source buffer. The
   *   buffer length must be nonnegative and must have a
   *   computational type. The buffer length is converted to type
   *   size_t.1
-  * @param {ANY<LOCATOR>} t Address of the 128K-byte translate
+  * @param t Address of the 128K-byte translate
   *   table.
   */
  PLITRAN22: PROC (p, q, n, t);
@@ -13833,7 +13833,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * \`COLLATE\` returns a \`CHARACTER\` string of length 256 comprising
   * the 256 possible character values one time each in the collating
   * order.
-  * @returns {CHARACTER} string of length 256 comprising the
+  * @returns string of length 256 comprising the
   *   256 possible character values one time each in the collating 
   *   order
   */
@@ -13841,10 +13841,10 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
 
  /**
   * \`COMMENT\` converts a \`CHARACTER\` expression into a comment.
-  * @param {CHARACTER} text Expression that is to be converted to a
+  * @param text Expression that is to be converted to a
   *   comment. \`text\` should have \`CHARACTER\` type, and if not,
   *   it is converted thereto.
-  * @returns {CHARACTER} \`text\` is enclosed with a &#47;* and an 
+  * @returns \`text\` is enclosed with a &#47;* and an 
   *   *&#47; If \`text\` contains &#47;* or *&#47; composite symbols,
   *   they are replaced by &#47;> and <&#47;, respectively.
   */
@@ -13871,7 +13871,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * If no timing facility is available, the last 8 characters of the
   * returned string are set to 00.00.00.
-  * @returns {CHARACTER} string of length 17 containing the date and
+  * @returns string of length 17 containing the date and
   * the time of the compilation.
   */
  COMPILEDATE: PROC RETURNS(CHARACTER); END;
@@ -13895,7 +13895,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * | . | Period |
   * | SS | Second |
   * 
-  * @returns {CHARACTER} string of length 18 containing the date and
+  * @returns string of length 18 containing the date and
   *   the time of compilation.
   */
  COMPILETIME: PROC RETURNS(CHARACTER); END;
@@ -13903,9 +13903,9 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`COPY\` returns a \`CHARACTER\` string consisting of
   * \`n\` concatenated copies of the string \`string\`.
-  * @param {CHARACTER} string Expression. \`string\` should have 
+  * @param string Expression. \`string\` should have 
   *   \`CHARACTER\` type, and if not, it is converted thereto.
-  * @param {FIXED} n Expression that specifies the number of 
+  * @param n Expression that specifies the number of 
   *   repetitions.
   * 
   *   \`n\` should have \`FIXED\` type, and if not, it is converted
@@ -13914,7 +13914,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   *   \`n\` must be nonnegative.
   * 
   *   If \`n\` is zero, the result is a null string.
-  * @returns {CHARACTER} string consisting of \`n\` concatenated copies
+  * @returns string consisting of \`n\` concatenated copies
   *   of the string \`string\`.
   */
  COPY: PROC(string, n) RETURNS(CHARACTER);
@@ -13933,16 +13933,16 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * The \`COUNTER\` built-in function can be used to generate unique
   * names, or for counting purposes.
-  * @returns {CHARACTER} string of length 5 containing a decimal number
+  * @returns string of length 5 containing a decimal number
   */
  COUNTER: PROC RETURNS(CHARACTER); END;
 
  /**
   * \`DIMENSION\` returns a \`FIXED\` value specifying current extent
   * of dimension \`d\` of \`array\`.
-  * @param {ANY(*)} array Array reference.
+  * @param array Array reference.
   *   \`array\` must not have less than \`d\` dimensions.
-  * @param {FIXED} [d] Expression specifying a particular dimension 
+  * @param [d] Expression specifying a particular dimension 
   *   of \`array\`.
   * 
   *   \`d\` should have \`FIXED\` type, and if not, it will be
@@ -13953,7 +13953,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   *   If \`d\` is not supplied, the default is 1.
   * 
   *   \`d\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED} value specifying current extent of dimension
+  * @returns value specifying current extent of dimension
   *   \`d\` of \`array\`.
   */
  DIMENSION: DIM: PROC(array, d) RETURNS(FIXED);
@@ -13964,9 +13964,9 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`HBOUND\` returns a \`FIXED\` value specifying current upper bound
   * of dimension \`d\` of \`array\`.
-  * @param {ANY(*)} array Array reference. \`array\` must not have less
+  * @param array Array reference. \`array\` must not have less
   *   than \`d\` dimensions.
-  * @param {FIXED} [d] Expression specifying a particular dimension
+  * @param [d] Expression specifying a particular dimension
   *   of \`array\`.
   * 
   *   \`d\` should have \`FIXED\` type, and if not, it will be
@@ -13977,7 +13977,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   *   If \`d\` is not supplied, the default is 1.
   * 
   *   \`d\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED} value specifying current upper bound of
+  * @returns value specifying current upper bound of
   *   dimension \`d\` of \`array\`.
   */
  HBOUND: PROC(array, d) RETURNS(FIXED);
@@ -13999,18 +13999,18 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * \`1 + LENGTH(\`haystack\`)\`.
   * 
   * If \`\`offset\` = LENGTH(\`haystack\`) + 1\`, the result is zero.
-  * @param {CHARACTER} haystack Expression to be searched.
+  * @param haystack Expression to be searched.
   *   \`haystack\` should have \`CHARACTER\` type, and if not, it will
   *   be converted thereto.
-  * @param {CHARACTER} needle Target expression of the search.
+  * @param needle Target expression of the search.
   *   \`needle\` should have \`CHARACTER\` type, and if not, it will
   *   be converted thereto.
-  * @param {FIXED} [offset] \`offset\` specifies the location within
+  * @param [offset] \`offset\` specifies the location within
   *   \`haystack\` at which to begin processing.
   * 
   *   \`offset\` should have \`FIXED\` type, and if not, it will
   *   be converted thereto.
-  * @returns {FIXED} value indicating the starting position within
+  * @returns value indicating the starting position within
   *   \`haystack\` of a substring identical to \`needle\`
   */
  INDEX: PROC(haystack, needle, offset) RETURNS(FIXED);
@@ -14022,9 +14022,9 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`LBOUND\` returns a \`FIXED\` value specifying current lower bound
   * of dimension \`d\` of \`array\`.
-  * @param {ANY(*)} array Array reference. \`array\` must not have less
+  * @param array Array reference. \`array\` must not have less
   *   than \`d\` dimensions.
-  * @param {FIXED} [d] Expression specifying a particular dimension
+  * @param [d] Expression specifying a particular dimension
   *   of \`array\`.
   * 
   *   \`d\` should have \`FIXED\` type, and if not, it will
@@ -14035,7 +14035,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   *   If \`d\` is not supplied, the default is 1.
   * 
   *   \`d\` can be omitted only if the array is one-dimensional.
-  * @returns {FIXED} value specifying current lower bound of
+  * @returns value specifying current lower bound of
   *   dimension \`d\` of \`array\`.
   */
  LBOUND: PROC(array, d) RETURNS(FIXED);
@@ -14046,9 +14046,9 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`LENGTH\` returns a \`FIXED\` value specifying the current length
   * of a given character expression.
-  * @param {CHARACTER} string Expression. \`string\` should have
+  * @param string Expression. \`string\` should have
   *   \`CHARACTER\` type, and if not, it will be converted thereto.
-  * @returns {FIXED} value specifying the current length of the
+  * @returns value specifying the current length of the
   *   character expression
   */
  LENGTH: PROC(string) RETURNS(FIXED);
@@ -14071,11 +14071,11 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * alphabetic characters 'A...Z' to 'a...z', but also translate
   * characters such as uppercase Ä-umlaut('4a'x) to
   * lowercase ä-umlaut('c0'x).
-  * @param {CHARACTER} string Expression. \`string\` should have
+  * @param string Expression. \`string\` should have
   *   \`CHARACTER\` type, and if not, it will be converted thereto.
-  * @param {FIXED} [codes] Expression. Specifies the code page that
+  * @param [codes] Expression. Specifies the code page that
   *   will be lowercased.
-  * @returns {CHARACTER} character string with all characters 
+  * @returns character string with all characters 
   *   converted to their lowercase equivalent
   */
  LOWERCASE: PROC(string, codes) RETURNS(CHARACTER);
@@ -14087,7 +14087,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * \`MACCOL\` returns a \`FIXED\` value that represents the column
   * where the outermost macro invocation starts in the source text that
   * contains the macro invocation.
-  * @returns {FIXED} The value returned is not affected by nested
+  * @returns The value returned is not affected by nested
   *   macro invocations.
   */
  MACCOL: PROC RETURNS(FIXED); END;
@@ -14098,7 +14098,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * See the information about the \`MARGINS\` option in the
   * Programming Guide.
-  * @returns {FIXED} column number of the left source margin in
+  * @returns column number of the left source margin in
   *   \`MARGINS\` compiler option
   */
  MACLMAR: PROC RETURNS(FIXED); END;
@@ -14109,7 +14109,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * It is invalid to invoke \`MACNAME\` outside of a preprocessor
   * procedure.
-  * @returns {CHARACTER} name of the preprocessor procedure
+  * @returns name of the preprocessor procedure
   */
  MACNAME: PROC RETURNS(CHARACTER); END;
 
@@ -14119,7 +14119,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * See the information about the \`MARGINS\` option in the
   * Programming Guide.
-  * @returns {FIXED} column number of the right source margin in
+  * @returns column number of the right source margin in
   *   \`MARGINS\` compiler option
   */
  MACRMAR: PROC RETURNS(FIXED); END;
@@ -14127,12 +14127,12 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`MAX\` returns the largest value from a set of two or more
   * expressions.
-  * @param {FIXED} value1 First expression. \`value1\` should have
+  * @param value1 First expression. \`value1\` should have
   *   \`FIXED\` type, and if not, it will be converted thereto.
-  * @param {FIXED} valueN Second and subsequent expressions.
+  * @param valueN Second and subsequent expressions.
   *   Each \`valueN\` should have \`FIXED\` type, and if not, it will
   *   be converted thereto.
-  * @returns {FIXED} largest value from a set of two or more
+  * @returns largest value from a set of two or more
   *   expressions
   */
  MAX: PROC(value1, valueN) RETURNS(FIXED);
@@ -14143,12 +14143,12 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`MIN\` returns the smallest value from a set of two or more
   * expressions.
-  * @param {FIXED} value1 First expression. \`value1\` should have
+  * @param value1 First expression. \`value1\` should have
   *   \`FIXED\` type, and if not, it will be converted thereto.
-  * @param {FIXED} valueN Second and subsequent expressions.
+  * @param valueN Second and subsequent expressions.
   *   Each \`valueN\` should have \`FIXED\` type, and if not, it will
   *   be converted thereto.
-  * @returns {FIXED} smallest value from a set of two or
+  * @returns smallest value from a set of two or
   *   more expressions
   */
  MIN: PROC(value1, valueN) RETURNS(FIXED);
@@ -14179,9 +14179,9 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * - If the argument is a parameter of the invoking procedure,
   *   \`PARMSET\` returns the value for the specified parameter when
   *   the invoking procedure was itself invoked.
-  * @param {ANY} parameter Must be a parameter of the preprocessor
+  * @param parameter Must be a parameter of the preprocessor
   *   procedure.
-  * @returns {FIXED} bit value indicating if a specified parameter
+  * @returns bit value indicating if a specified parameter
   *   was set on invocation of the procedure
   */
  PARMSET: PROC(parameter) RETURNS(FIXED);
@@ -14194,12 +14194,12 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * If \`string\` contains single quotation marks, each is replaced by
   * two consecutive single quotation marks.
-  * @param {CHARACTER} string Expression that is converted to a
+  * @param string Expression that is converted to a
   *   quoted string.
   * 
   *   \`string\` should have CHARACTER type, and if not, it is
   *   converted thereto.
-  * @returns {CHARACTER} A valid quoted string.
+  * @returns A valid quoted string.
   */
  QUOTE: PROC(string) RETURNS(CHARACTER);
    DECLARE string CHARACTER;
@@ -14208,11 +14208,11 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`REPEAT\` returns a \`CHARACTER\` string consisting of
   * \`(n + 1)\` concatenated copies of the string \`string\`.
-  * @param {CHARACTER} string Expression.
+  * @param string Expression.
   * 
   *   \`string\` should have \`CHARACTER\` type, and if not,
   *   it is converted thereto.
-  * @param {FIXED} n Expression that specifies the number of
+  * @param n Expression that specifies the number of
   *   repetitions.
   * 
   *   \`n\` should have \`FIXED\` type, and if not, it is
@@ -14222,7 +14222,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   *   If \`n\` is zero, the result is \`string\`
   *   (converted to character as necessary).
-  * @returns {CHARACTER} A string consisting of
+  * @returns A string consisting of
   *   \`(n + 1)\` concatenated copies of the string \`string\`.
   */
  REPEAT: PROC(string, n) RETURNS(CHARACTER);
@@ -14240,22 +14240,22 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * If \`offset = LENGTH(string)+1\` and \`length = 0\`, the null
   * string is returned.
-  * @param {CHARACTER} string Expression specifies the string from
+  * @param string Expression specifies the string from
   *   which the substring is extracted.
   * 
   *   \`string\` should have \`CHARACTER\` type, and if not, it is
   *   converted thereto.
-  * @param {FIXED} offset Expression that specifies the starting
+  * @param offset Expression that specifies the starting
   *   position of the substring in \`string\`.
   * 
   *   \`offset\` should have \`FIXED\` type, and if not, it is
   *   converted thereto.
-  * @param {FIXED} length Expression that specifies the length of the
+  * @param length Expression that specifies the length of the
   *   substring in \`string\`.
   * 
   *   \`length\` should have \`FIXED\` type, and if not, it is
   *   converted thereto.
-  * @returns {CHARACTER} substring specified by \`offset\` and
+  * @returns substring specified by \`offset\` and
   *   \`length\` of \`string\`
   */
  SUBSTR: PROC(string, offset, length) RETURNS(CHARACTER);
@@ -14272,7 +14272,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * The possible return values are as follows:
   * - \`4\` under \`CMPAT(V2)\` and \`CMPAT(LE)\`
   * - \`8\` under \`CMPAT(V3)\`
-  * @returns {FIXED} value that indicates the maximum number of bytes
+  * @returns value that indicates the maximum number of bytes
   *   that is needed to hold an index for an array permitted under the
   *   compiler \`CMPAT\` option
   */
@@ -14283,7 +14283,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * number of bytes needed to hold an \`OFFSET\`.
   * 
   * Currently, \`SYSOFFSETSIZE\` returns 4.
-  * @returns {FIXED} value that indicates the number of bytes needed
+  * @returns value that indicates the number of bytes needed
   *   to hold an \`OFFSET\`
   */
  SYSOFFSETSIZE: PROC RETURNS(FIXED); END;
@@ -14299,7 +14299,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * \`SYSPARM\` allows information external to the program to be
   * accessed without modifying the source program.
-  * @returns {CHARACTER} string value of the \`SYSPARM\`
+  * @returns string value of the \`SYSPARM\`
   *   compiler option
   */
  SYSPARM: PROC RETURNS(CHARACTER); END;
@@ -14310,7 +14310,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * Currently, \`SYSPOINTERSIZE\` returns 4. But under the
   * \`LP(64)\` option, the \`SYSPOINTERSIZE\` returns 8.
-  * @returns {FIXED} value that indicates the number of bytes needed
+  * @returns value that indicates the number of bytes needed
   *   to hold a \`POINTER\`
   */
  SYSPOINTERSIZE: PROC RETURNS(FIXED); END;
@@ -14325,7 +14325,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * See the information about the \`SYSTEM\` compiler option in the
   * Programming Guide.
-  * @returns {CHARACTER} string value of the \`SYSTEM\` compiler option
+  * @returns string value of the \`SYSTEM\` compiler option
   */
  SYSTEM: PROC RETURNS(CHARACTER); END;
 
@@ -14337,7 +14337,7 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * The result that \`SYSVERSION\` returns is a string of
   * length 22 in one of the following formats. Each string is
   * padded with blanks on the right to make it 22 in length.
-  * @returns {CHARACTER} string containing the product name as well 
+  * @returns string containing the product name as well 
   *   as the version, release, and modification level
   */
  SYSVERSION: PROC RETURNS(CHARACTER); END;
@@ -14356,23 +14356,23 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * 
   * \`replacement\` is padded with blanks, or truncated, on the
   * right to match the length of \`search\`.
-  * @param {CHARACTER} input Expression to be searched for possible 
+  * @param input Expression to be searched for possible 
   *   translation of its characters.
   * 
   *   \`input\` should have \`CHARACTER\` type, and if not, it is
   *   converted thereto.
-  * @param {CHARACTER} replacement Expression containing the
+  * @param replacement Expression containing the
   *   translation values of characters.
   * 
   *   \`replacement\` should have \`CHARACTER\` type, and if not,
   *   it is converted thereto.
-  * @param {CHARACTER} [search] Expression containing the characters
+  * @param [search] Expression containing the characters
   *   that are to be translated. If \`search\` is omitted, the default
   *   is \`COLLATE\`.
   * 
   *   \`search\` should have \`CHARACTER\` type, and if not, it
   *   is converted thereto.
-  * @returns {CHARACTER} string of the same length as \`input\`,
+  * @returns string of the same length as \`input\`,
   *   but with selected characters translated
   */
  TRANSLATE: PROC(input, replacement, search) RETURNS(CHARACTER);
@@ -14384,14 +14384,14 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * \`TRIM\` returns a \`CHARACTER\` string with characters trimmed
   * from one or both ends of an input string.
-  * @param {CHARACTER} input is a \`CHARACTER\` string expression
-  * @param {CHARACTER} [left] is a \`CHARACTER\` string expression,
+  * @param input is a \`CHARACTER\` string expression
+  * @param [left] is a \`CHARACTER\` string expression,
   *   that should be trimmed from the left end of \`input\`.
   *   If \`left\` is omitted, the default is a single blank character.
-  * @param {CHARACTER} [right] is a \`CHARACTER\` string expression,
+  * @param [right] is a \`CHARACTER\` string expression,
   *   that should be trimmed from the right end of \`input\`.
   *   If \`right\` is omitted, the default is a single blank character.
-  * @returns {CHARACTER} string with characters trimmed from one or
+  * @returns string with characters trimmed from one or
   *   both ends of an input string
   */
  TRIM: PROC(input, left, right) RETURNS(CHARACTER);
@@ -14403,11 +14403,11 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
  /**
   * UPPERCASE returns a character string with all characters converted
   * to their uppercase equivalent.
-  * @param {CHARACTER} string Expression. If necessary, \`string\
+  * @param string Expression. If necessary, \`string\
   *   is converted to character.
-  * @param {FIXED} [codes] Expression. Specifies the code page that
+  * @param [codes] Expression. Specifies the code page that
   *   will be uppercased.
-  * @returns {CHARACTER} character string with all characters
+  * @returns character string with all characters
   *   converted to their uppercase equivalent
   */
  UPPERCASE: PROC(string, codes) RETURNS(CHARACTER);
@@ -14431,12 +14431,12 @@ export const BuiltinsMacro = ` /* Preprocessor built-ins */
   * than \`1 + LENGTH(input)\`.
   * 
   * If \`offset = LENGTH(input) + 1\`, the result is zero.
-  * @param {CHARACTER} input Expression. The string to be searched.
-  * @param {CHARACTER} compare Expression. The string containing the
+  * @param input Expression. The string to be searched.
+  * @param compare Expression. The string containing the
   *   characters to be verified against.
-  * @param {FIXED} [offset] Expression. Specifies the position
+  * @param [offset] Expression. Specifies the position
   *   within \`input\` at which to begin processing.
-  * @returns {FIXED} position in \`input\` of the leftmost character
+  * @returns position in \`input\` of the leftmost character
   *   that is not in \`compare\`
   */
  VERIFY: PROC(input, compare, offset) RETURNS(FIXED);

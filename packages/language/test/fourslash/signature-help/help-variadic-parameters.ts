@@ -28,7 +28,7 @@ signatureHelp.expectMarkdownParameterAt(
 First expression. \`value1\` should have
 \`FIXED\` type, and if not, it will be converted thereto.`,
 );
-const parameter2Documentation = `\`valueN: FIXED\`
+const parameter2Documentation = `\`valueN: FIXED LIST\`
 
 Second and subsequent expressions.
 Each \`valueN\` should have \`FIXED\` type, and if not, it will

@@ -33,23 +33,23 @@ raised when \`y\` = LENGTH(\`x\`)+1 and \`z\` = 0. For an
 example of the SUBSTR built-in function, see SEARCH.
 
 *@param*
-{ANY&lt;CHARACTER&gt;} x String expression. It specifies the
+x String expression. It specifies the
 string from which the substring is extracted. If \`x\` is not
 a string, it is converted to character.
 
 *@param*
-{FIXED BINARY} y Expression that is converted to FIXED
+y Expression that is converted to FIXED
 BINARY(31,0). \`y\` specifies the starting position of the
 substring in \`x\`.
 
 *@param*
-{FIXED BINARY} [z] Expression that is converted to FIXED
+[z] Expression that is converted to FIXED
 BINARY(31,0). \`z\` specifies the length of the substring in
 \`x\`. If \`z\` is zero, a null string is returned. If \`z\`
 is omitted, the substring returned is position \`y\` in \`x\`
 to the end of \`x\`.
 
 *@returns*
-{ANY&lt;CHARACTER&gt;} The substring of \`x\` starting at
+The substring of \`x\` starting at
 \`y\` with length \`z\`.`,
 );
