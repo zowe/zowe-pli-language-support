@@ -225,10 +225,15 @@ export class DefaultTypeInferer implements TypeInferer {
         if (!expression.value) {
           return TypeDescriptions.Unknown();
         }
+        const initial = ast.createInitialAttribute();
+        const item = ast.createInitialAttributeSpecification();
+        item.expression = expression;
+        initial.items = [item];
         switch (expression.value.kind) {
           case ast.SyntaxKind.StringLiteral:
             return TypeDescriptions.String({
               format: StringFormat.NonVarying,
+              initial,
               stringBits: {
                 //TODO handle other string kinds
                 kind:
@@ -242,7 +247,9 @@ export class DefaultTypeInferer implements TypeInferer {
             });
           case ast.SyntaxKind.NumberLiteral:
             //TODO handle other numeric literals
-            return TypeDescriptions.Arithmetic({});
+            return TypeDescriptions.Arithmetic({
+              initial,
+            });
         }
         break;
       }
@@ -515,6 +522,7 @@ export class DefaultTypeInferer implements TypeInferer {
     target: TypeDescriptions.Any,
     _unit: CompilationUnit,
   ): boolean {
+    //TODO respect isDataTypeGeneric flag and other attributes that can influence assignability
     if (source.type === target.type) {
       return true;
     }
@@ -556,7 +564,15 @@ export class DefaultTypeInferer implements TypeInferer {
       expression.value?.kind === ast.SyntaxKind.StringLiteral &&
       typeof expression.value.value === "string"
     ) {
-      return expression.value.value;
+      const literalValue = expression.value.value;
+      const firstLetter = literalValue[0];
+      if (firstLetter === '"' || firstLetter === "'") {
+        const closeingQuoteIndex = literalValue.lastIndexOf(firstLetter);
+        if (closeingQuoteIndex > 0) {
+          return literalValue.substring(1, closeingQuoteIndex);
+        }
+      }
+      return literalValue;
     }
     return undefined;
   }

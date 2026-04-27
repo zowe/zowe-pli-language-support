@@ -11,10 +11,8 @@
 
 /// <reference path="../../framework.ts" />
 
-//// /** JSDoc description :) */
-//// XXX: PROC RETURNS(CHARACTER); END;
-//// DCL A CHARACTER;
-//// A = <|1>XXX();
+//// DCL XXX FIXED;
+//// DCL YYY CHARACTER INITIAL("abc");
+//// XXX = <|MAX|>(YYY, 2, 3);
 
-//the JSDoc will be ignored since it's not a builtin
-hover.expectMarkdownAt(1, hover.codeBlock(`XXX: PROC RETURNS(CHARACTER);`));
+verify.expectDiagnosticsAt("MAX", code.Severe.IBM3948I);

@@ -9,15 +9,17 @@
  *
  */
 
-/// <reference path="../../framework.ts" />
+/// <reference path="../framework.ts" />
 
-// @filename: file:///yyy.pli
+//TODO @tag(#issue-656) Remove this file once all builtin procedures signatures are setup
+
+// @filename: pli-builtin:///xxx.pli
 //// XXX: PROCEDURE (X) RETURNS(FIXED);
 ////   DCL <|X|>(10) <|1:ANY|>;
-////   RETURN(34);
+////   RETURN(12);
 //// END;
 
-verify.expectDiagnosticsAt("1", code.LSP.BuiltinAttributes.IsForbiddenUsage);
+verify.noDiagnostics("1");
 types.expectTypeAt("X", {
   type: types.dataTypes.Unknown,
   dimension: [

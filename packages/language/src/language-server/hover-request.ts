@@ -326,7 +326,8 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
 
   if (
     token.element.container &&
-    token.element.container.kind === SyntaxKind.MemberCall
+    (token.element.container.kind === SyntaxKind.MemberCall ||
+      token.element.container.kind === SyntaxKind.CallStatement)
   ) {
     const outerCall = token.element.container;
     if (!outerCall) {
@@ -334,6 +335,10 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     }
     let jsDocsComment = "";
     if (ref.node.kind === SyntaxKind.LabelPrefix) {
+      if (ref.node.nameToken?.uri?.scheme !== BuiltinsUriSchema) {
+        // JSDoc is only for builtins
+        return getNodeRepresentation(unit, ref.node);
+      }
       const jsDoc = getJSDocCommentBeforeLabelPrefix(
         ref.node as LabelPrefix,
         unit,

@@ -11,10 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
-//// /** JSDoc description :) */
-//// XXX: PROC RETURNS(CHARACTER); END;
-//// DCL A CHARACTER;
-//// A = <|1>XXX();
+//// DCL XXX CHARACTER;
+//// XXX = <|TRIM|>(XXX, " ", " ", " ");
 
-//the JSDoc will be ignored since it's not a builtin
-hover.expectMarkdownAt(1, hover.codeBlock(`XXX: PROC RETURNS(CHARACTER);`));
+verify.expectDiagnosticsAt("TRIM", code.Error.IBM3639I);

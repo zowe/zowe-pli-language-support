@@ -34,27 +34,27 @@ If \`offset = LENGTH(string)+1\` and \`length = 0\`, the null
 string is returned.
 
 *@param*
-{CHARACTER} string Expression specifies the string from
+string Expression specifies the string from
 which the substring is extracted.
 
 \`string\` should have \`CHARACTER\` type, and if not, it is
 converted thereto.
 
 *@param*
-{FIXED} offset Expression that specifies the starting
+offset Expression that specifies the starting
 position of the substring in \`string\`.
 
 \`offset\` should have \`FIXED\` type, and if not, it is
 converted thereto.
 
 *@param*
-{FIXED} length Expression that specifies the length of the
+length Expression that specifies the length of the
 substring in \`string\`.
 
 \`length\` should have \`FIXED\` type, and if not, it is
 converted thereto.
 
 *@returns*
-{CHARACTER} substring specified by \`offset\` and
+substring specified by \`offset\` and
 \`length\` of \`string\``,
 );

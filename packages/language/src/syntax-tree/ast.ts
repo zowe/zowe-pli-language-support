@@ -15,6 +15,23 @@ import { assertUnreachable } from "../utils/common";
 import { isObject } from "../utils/types";
 import type { CompilationUnit } from "../workspace/compilation-unit";
 
+export enum DataType {
+  Area,
+  Arithmetic,
+  Entry,
+  File,
+  Format,
+  Label,
+  Locator,
+  Ordinal,
+  Picture,
+  String,
+  Structure,
+  Task,
+  Union,
+  Unknown = -1,
+}
+
 export enum SyntaxKind {
   // Preprocessor AST
   ActivateStatement,
@@ -30,6 +47,7 @@ export enum SyntaxKind {
   AllocateLocationReferenceSet,
   AllocateStatement,
   AllocateType,
+  AnyAttribute,
   AssertStatement,
   AssignmentStatement,
   AttachStatement,
@@ -288,11 +306,6 @@ export enum SimpleOptions {
 }
 
 export enum DefaultAttribute {
-  // special builtin attributes
-  // Not part of the PL/I specification!
-  // Helps declaring parameters of any type for builtin procedures
-  ANY,
-  // normal attributes
   INT,
   NORESCAN,
   BIT,
@@ -763,6 +776,7 @@ export type SyntaxNode =
   | AllocateLocationReferenceSet
   | AllocateStatement
   | AllocateType
+  | AnyAttribute
   | AssertStatement
   | AssignmentStatement
   | AttachStatement
@@ -962,6 +976,7 @@ export type Condition =
   | NamedCondition;
 export type DataAttributeType = DefaultAttribute;
 export type CommonDeclarationAttribute =
+  | AnyAttribute
   | ComputationDataAttribute
   | DateAttribute
   | DefinedAttribute
@@ -1007,7 +1022,10 @@ export type DefaultDeclarationAttribute =
  * A list of all the possible attributes that can be used in a declaration.
  * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
  */
-export type DeclarationAttribute = CommonDeclarationAttribute | ValueAttribute;
+export type DeclarationAttribute =
+  | CommonDeclarationAttribute
+  | ValueAttribute
+  | AnyAttribute;
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
   | EntryParameterDescription
@@ -1556,6 +1574,27 @@ export interface CompilerOptionText extends AstNode {
   kind: SyntaxKind.CompilerOptionText;
   token: Token;
   value: string;
+}
+
+/**
+ * Not part of the PL/I specification!
+ * Helps declaring parameters of any type for builtin procedures
+ */
+export interface AnyAttribute extends AstNode {
+  kind: SyntaxKind.AnyAttribute;
+  token: Token | null;
+  dataType: DataType;
+  dimensions: Dimensions | null;
+}
+
+export function createAnyAttribute(): AnyAttribute {
+  return {
+    kind: SyntaxKind.AnyAttribute,
+    container: null,
+    token: null,
+    dataType: DataType.Unknown,
+    dimensions: null,
+  };
 }
 
 export interface ComputationDataAttribute extends AstNode {
@@ -3764,6 +3803,7 @@ export interface ReturnsAttribute extends AstNode {
     | DateAttribute
     | ValueListAttribute
     | ValueRangeAttribute
+    | AnyAttribute
   )[];
 }
 

@@ -568,7 +568,7 @@ class JSDocCommentImpl implements JSDocComment {
         value += fillNewlines(value) + text;
       }
     }
-    return value.trim();
+    return value.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 }
 

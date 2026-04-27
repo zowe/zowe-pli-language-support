@@ -982,6 +982,7 @@ export function forEachNode(
     case SyntaxKind.CicsResponseStatement:
     case SyntaxKind.EmbeddedUnknownStatement:
     case SyntaxKind.SqlHostVariableReference:
+    case SyntaxKind.AnyAttribute:
       break;
     default:
       assertUnreachable(node);

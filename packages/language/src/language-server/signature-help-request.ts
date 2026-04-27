@@ -29,6 +29,7 @@ import { Token } from "../parser/tokens";
 import { assertType } from "../preprocessor/util";
 import { takeWhile } from "lodash-es";
 import { isJSDocParagraph } from "../documentation/jsdoc";
+import { TypeDescriptions } from "../typesystem/descriptions";
 
 type ArgumentInfo = {
   startToken: Token | null;
@@ -40,6 +41,7 @@ type ParameterInfo = {
   label: string;
   variadic: boolean;
   token: Token | null;
+  typeDescription: TypeDescriptions.Any;
 };
 
 type CallInfo = {
@@ -62,13 +64,16 @@ export function signatureHelpRequest(
   const jsDoc = getJSDocCommentBeforeLabelPrefix(callInfo.labelPrefix, unit);
   const parameterDocumentation = new Map<string, string>();
   if (jsDoc) {
-    const paramPattern = /^ *\{([^}]+)\} *\[?(\w+)\]? */; // extracts the parameter name
+    const paramPattern = /^ *\[?(\w+)\]? */;
     for (const paramTag of jsDoc.getTags("param")) {
       const match = paramTag.content.toString().match(paramPattern);
       if (match) {
         const trimLeftLength = match[0].length;
-        const paramType = match[1];
-        const paramName = match[2];
+        const paramName = match[1];
+        const paramNameUpper = paramName.toUpperCase();
+        const paramType = callInfo.parameters
+          .find((p) => p.label === paramNameUpper)!
+          .typeDescription.toString();
         parameterDocumentation.set(
           paramName.toUpperCase(),
           `\`${paramName}: ${paramType}\`\n\n${paramTag.content.toMarkdown().substring(trimLeftLength)}`,
@@ -201,6 +206,7 @@ function getCallInfoFromReferenceItem(
         label: parameter?.ref?.text ?? "<unknown>",
         variadic: parameterType.list,
         token: parameter?.ref?.token ?? null,
+        typeDescription: parameterType,
       });
     }
   }

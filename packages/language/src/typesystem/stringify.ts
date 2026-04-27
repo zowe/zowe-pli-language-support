@@ -25,9 +25,12 @@ export function stringifyAttributeWitnesses(
   return witnesses.order
     .filter((a) => typeof witnesses.witnesses[a]?.value !== "undefined")
     .map((a) => {
-      const stringify = AttributeStringifiers[a] as (value: any) => string;
+      const stringify = AttributeStringifiers[a] as (
+        value: any,
+        witnesses: AttributeWitnesses,
+      ) => string;
       const value = witnesses.witnesses[a]?.value;
-      return stringify(value);
+      return stringify(value, witnesses);
     })
     .filter((a) => typeof a !== "undefined")
     .join(" ");
