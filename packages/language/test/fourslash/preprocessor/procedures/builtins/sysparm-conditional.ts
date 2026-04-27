@@ -11,9 +11,11 @@
 
 /// <reference path="../../../framework.ts" />
 
-////*PROCESS SYSPARM(TEST_VAR);
-//// %DCL Y CHAR;
-//// %Y = SYSPARM;
-//// Y
+////*PROCESS SYSPARM(DEBUG);
+//// %IF SYSPARM = 'DEBUG' %THEN DO;
+////   %DCL MODE CHAR;
+////   %MODE = 'DEBUGGING';
+////   MODE
+//// %END;
 
-preprocessor.expectTokens("TEST_VAR");
+preprocessor.expectTokens("DEBUGGING");

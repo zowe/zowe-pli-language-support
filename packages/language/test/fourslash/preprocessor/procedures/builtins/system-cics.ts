@@ -11,9 +11,12 @@
 
 /// <reference path="../../../framework.ts" />
 
-////*PROCESS SYSPARM(TEST_VAR);
+////*PROCESS SYSTEM(CICS);
 //// %DCL Y CHAR;
-//// %Y = SYSPARM;
+//// %Y = SYSTEM();
 //// Y
 
-preprocessor.expectTokens("TEST_VAR");
+// MVS is the default SYSTEM compiler option
+preprocessor.expectTokens(`
+  CICS
+`);
