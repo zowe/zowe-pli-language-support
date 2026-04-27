@@ -14,7 +14,7 @@ import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { embeddedUnknownStatement } from "./unknown-parser";
-import { orRule, rule, sequence } from "./parser-types";
+import { anyOrderRule, orRule, rule, sequence } from "./parser-types";
 import * as cicsTokens from "./tokens/cics-tokens.generated";
 import { TraversalState, traverseAllNodes } from "../syntax-tree/ast-iterator";
 
@@ -54,6 +54,31 @@ export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
 
 const cicsStatement = orRule<ast.CicsStatement, []>(() => linkStatement);
 
+type LinkStatementContent = {
+  program: ast.CicsProgramSpecification;
+  commArea: ast.CicsCommAreaSpecification;
+  length: ast.CicsLengthSpecification;
+  dataLength: ast.CicsDataLengthSpecification;
+  channel: ast.CicsChannelSpecification;
+  inputMessage: ast.CicsInputMessageSpecification;
+  inputMessageLength: ast.CicsInputMessageLengthSpecification;
+  systemId: ast.CicsSystemIdSpecification;
+  syncOnReturn: ast.CicsSyncOnReturnSpecification;
+  transactionId: ast.CicsTransactionIdSpecification;
+}
+const linkStatementContent = anyOrderRule<keyof LinkStatementContent, LinkStatementContent, []>({
+  program: () => programSpecification,
+  commArea: () => commAreaSpecification,
+  length: () => lengthSpecification,
+  dataLength: () => dataLengthSpecification,
+  channel: () => channelSpecification,
+  inputMessage: () => inputMessageSpecification,
+  inputMessageLength: () => inputMessageLengthSpecification,
+  systemId: () => systemIdSpecification,
+  syncOnReturn: () => syncOnReturnSpecification,
+  transactionId: () => transactionIdSpecification,
+});
+
 const linkStatement = rule(
   sequence(cicsTokens.LINK),
   (state: ParserState): ast.CicsLinkStatement => {
@@ -64,36 +89,19 @@ const linkStatement = rule(
       cicsTokens.LINK,
     );
 
-    linkStatement.program = programSpecification.rule(state);
+    const specs = linkStatementContent.rule(state);
 
-    if (state.canConsumeFirst(commAreaSpecification.first())) {
-      linkStatement.commArea = commAreaSpecification.rule(state);
-      if (state.canConsumeFirst(lengthSpecification.first())) {
-        linkStatement.length = lengthSpecification.rule(state);
-      }
-      if (state.canConsumeFirst(dataLengthSpecification.first())) {
-        linkStatement.dataLength = dataLengthSpecification.rule(state);
-      }
-    } else if (state.canConsumeFirst(channelSpecification.first())) {
-      linkStatement.channel = channelSpecification.rule(state);
-    }
-
-    if (state.canConsumeFirst(inputMessageSpecification.first())) {
-      linkStatement.inputMessage = inputMessageSpecification.rule(state);
-      if (state.canConsumeFirst(inputMessageLengthSpecification.first())) {
-        linkStatement.inputMessageLength =
-          inputMessageLengthSpecification.rule(state);
-      }
-    } else {
-      if (state.canConsumeFirst(systemIdSpecification.first())) {
-        linkStatement.systemId = systemIdSpecification.rule(state);
-      }
-      if (state.canConsumeFirst(syncOnReturnSpecification.first())) {
-        linkStatement.syncOnReturn = syncOnReturnSpecification.rule(state);
-      }
-      if (state.canConsumeFirst(transactionIdSpecification.first())) {
-        linkStatement.transactionId = transactionIdSpecification.rule(state);
-      }
+    if (specs) {
+      specs.program && (linkStatement.program = specs.program);
+      specs.commArea && (linkStatement.commArea = specs.commArea);
+      specs.length && (linkStatement.length = specs.length);
+      specs.dataLength && (linkStatement.dataLength = specs.dataLength);
+      specs.channel && (linkStatement.channel = specs.channel);
+      specs.inputMessage && (linkStatement.inputMessage = specs.inputMessage);
+      specs.inputMessageLength && (linkStatement.inputMessageLength = specs.inputMessageLength);
+      specs.systemId && (linkStatement.systemId = specs.systemId);
+      specs.syncOnReturn && (linkStatement.syncOnReturn = specs.syncOnReturn);
+      specs.transactionId && (linkStatement.transactionId = specs.transactionId);
     }
 
     state.consume(
