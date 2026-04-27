@@ -999,8 +999,7 @@ export type SyntaxNode =
   | CicsStringLiteral
   | CicsNumericLiteral
   | CicsReferenceItem
-  | CicsVariableReference
-  ;
+  | CicsVariableReference;
 
 export type AllocateAttribute =
   | AllocateDimension

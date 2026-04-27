@@ -140,12 +140,14 @@ export interface CicsExecInstruction {
   variables: CicsVariableInstruction[];
 }
 
-export function createCicsExecInstruction(statement: ast.CicsExecStatement): CicsExecInstruction {
+export function createCicsExecInstruction(
+  statement: ast.CicsExecStatement,
+): CicsExecInstruction {
   return {
     kind: InstructionKind.CicsExecStatement,
     variables: (statement.content?.hostVariables ?? []).map((token) =>
       createCicsVariableInstruction(token),
-    )
+    ),
   };
 }
 
@@ -241,11 +243,11 @@ export interface AnswerInstruction {
   columnToken?: Token;
   marginsToken?: Token;
   margins:
-  | {
-    left: ExpressionInstruction | undefined;
-    right: ExpressionInstruction | undefined;
-  }
-  | undefined;
+    | {
+        left: ExpressionInstruction | undefined;
+        right: ExpressionInstruction | undefined;
+      }
+    | undefined;
   scanMode: ScanMode | undefined;
 }
 

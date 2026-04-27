@@ -24,10 +24,10 @@ export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
   if (state.canConsumeFirst(cicsStatement.first())) {
     const cicsAst = cicsStatement.rule(state);
-    if(cicsAst) {
+    if (cicsAst) {
       const unknownStatement = ast.createEmbeddedUnknownStatement();
       traverseAllNodes(cicsAst, (node) => {
-        if(node.kind === ast.SyntaxKind.CicsReferenceItem && node.ref) {
+        if (node.kind === ast.SyntaxKind.CicsReferenceItem && node.ref) {
           const token = node.ref.token;
           token.immediateFollow = false;
           unknownStatement.hostVariables.push(token);
