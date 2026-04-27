@@ -65,8 +65,12 @@ type LinkStatementContent = {
   systemId: ast.CicsSystemIdSpecification;
   syncOnReturn: ast.CicsSyncOnReturnSpecification;
   transactionId: ast.CicsTransactionIdSpecification;
-}
-const linkStatementContent = anyOrderRule<keyof LinkStatementContent, LinkStatementContent, []>({
+};
+const linkStatementContent = anyOrderRule<
+  keyof LinkStatementContent,
+  LinkStatementContent,
+  []
+>({
   program: () => programSpecification,
   commArea: () => commAreaSpecification,
   length: () => lengthSpecification,
@@ -98,10 +102,12 @@ const linkStatement = rule(
       specs.dataLength && (linkStatement.dataLength = specs.dataLength);
       specs.channel && (linkStatement.channel = specs.channel);
       specs.inputMessage && (linkStatement.inputMessage = specs.inputMessage);
-      specs.inputMessageLength && (linkStatement.inputMessageLength = specs.inputMessageLength);
+      specs.inputMessageLength &&
+        (linkStatement.inputMessageLength = specs.inputMessageLength);
       specs.systemId && (linkStatement.systemId = specs.systemId);
       specs.syncOnReturn && (linkStatement.syncOnReturn = specs.syncOnReturn);
-      specs.transactionId && (linkStatement.transactionId = specs.transactionId);
+      specs.transactionId &&
+        (linkStatement.transactionId = specs.transactionId);
     }
 
     state.consume(

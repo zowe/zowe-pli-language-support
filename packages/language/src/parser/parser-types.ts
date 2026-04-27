@@ -141,7 +141,14 @@ export function orRule<T, Args extends any[]>(
   return new RuleFirstPairWrapper(...rules);
 }
 
-export function anyOrderRule<K extends string, T extends Record<K, any>, Args extends any[]>(anyOf: { [P in K]: () => RuleFirstPair<T[P], Args> }): RuleFirstPair<Partial<T>, Args> {
+export function anyOrderRule<
+  K extends string,
+  T extends Record<K, any>,
+  Args extends any[],
+>(anyOf: { [P in K]: () => RuleFirstPair<T[P], Args> }): RuleFirstPair<
+  Partial<T>,
+  Args
+> {
   class RuleFirstPairWrapper implements RuleFirstPair<T, Args> {
     first: () => RuleMap<any>;
     rule: Rule<T | null, Args>;
@@ -156,16 +163,22 @@ export function anyOrderRule<K extends string, T extends Record<K, any>, Args ex
       });
       this.rule = (state: ParserState, ...args: Args) => {
         let result: Partial<T> = {};
-        while(state.canConsumeFirst(this.first())) {
+        while (state.canConsumeFirst(this.first())) {
           for (const [key, rule] of Object.entries(rules)) {
             assertType<K>(key);
             assertType<() => RuleFirstPair<T[keyof T], Args>>(rule);
             const first = rule().first();
-            if(state.canConsumeFirst(first)) {
+            if (state.canConsumeFirst(first)) {
               const token = state.token;
               const ast = rule().rule(state, ...args) ?? undefined;
-              if(result[key] && token) {
-                state.diagnostics.push(diagnosticFromCode(LspCodes.Cics.DuplicatedSpecification, token, token.image));
+              if (result[key] && token) {
+                state.diagnostics.push(
+                  diagnosticFromCode(
+                    LspCodes.Cics.DuplicatedSpecification,
+                    token,
+                    token.image,
+                  ),
+                );
                 continue;
               }
               result[key] = ast;
