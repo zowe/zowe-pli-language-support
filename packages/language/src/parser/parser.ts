@@ -5180,7 +5180,6 @@ const returnsAttribute = rule(
         state.canConsumeFirst(dateAttribute.first()) ||
         state.canConsumeFirst(valueListAttribute.first()) ||
         state.canConsumeFirst(valueRangeAttribute.first()) ||
-        state.canConsumeFirst(anyAttribute.first()) ||
         state.canConsumeFirst(anyAttribute.first()))
     ) {
       inc();
@@ -5195,9 +5194,6 @@ const returnsAttribute = rule(
         attr && element.attrs.push(attr);
       } else if (state.canConsumeFirst(valueRangeAttribute.first())) {
         const attr = valueRangeAttribute.rule(state);
-        attr && element.attrs.push(attr);
-      } else if (state.canConsumeFirst(anyAttribute.first())) {
-        const attr = anyAttribute.rule(state);
         attr && element.attrs.push(attr);
       } else if (state.canConsumeFirst(anyAttribute.first())) {
         const attr = anyAttribute.rule(state);

@@ -1435,7 +1435,7 @@ export const Builtins =
    DCL q ANY<LOCATOR>;
    DCL m ANY<NUMBER>;
    DCL d ANY;
-   DCL t ANY CHARACTER(8) OPTIONAL;
+   DCL t CHARACTER(8) OPTIONAL;
  END;
 
  /**
@@ -2117,7 +2117,7 @@ export const Builtins =
   * WSCOLLAPSE collapses the whitespace by one of the following
   * means:
   *
-  * - Replacing each character from \t\f\v\n\r with a blank.
+  * - Replacing each character from \\t\\f\\v\\n\\r with a blank.
   * - Trimming all leading and trailing blanks.
   * - Reducing multiple interior blanks to one blank.
   *
@@ -2154,7 +2154,7 @@ export const Builtins =
   * WSCOLLAPSE16 collapses the whitespace by one of the following
   * means:
   *
-  * - Replacing each character from \t\f\v\n\r with a UTF-16 blank.
+  * - Replacing each character from \\t\\f\\v\\n\\r with a UTF-16 blank.
   * - Trimming all leading and trailing blanks.
   * - Reducing multiple interior blanks to one blank.
   *
@@ -2185,7 +2185,7 @@ export const Builtins =
  END;
 
  /**
-  * WSREPLACE replaces each character from \t, \f, \v, \n in a
+  * WSREPLACE replaces each character from \\t, \\f, \\v, \\n in a
   * source buffer encoded as CHARACTER by a blank. This function
   * returns a size_t 1 value that indicates the number of bytes that
   * are written into the target buffer.
@@ -2215,7 +2215,7 @@ export const Builtins =
  END;
 
  /**
-  * WSREPLACE16 replaces all characters from \t, \f, \v, \n in a
+  * WSREPLACE16 replaces all characters from \\t, \\f, \\v, \\n in a
   * source buffer encoded as UTF-16 by a blank. This function
   * returns a size_t 1 value that indicates the number of bytes that
   * are written into the target buffer. WHITESPACEREPLACE is a
@@ -2345,18 +2345,20 @@ export const Builtins =
   *
   * XMLSCRUB cleans the CHARACTER source buffer by:
   *
-  * - Replacing each character less than a blank except for \t, \n,
-  * \r with a blank.
+  * - Replacing each character less than a blank except for \\t, \\n,
+  * \\r with a blank.
   * - Replacing carriage returns with .
   * - Replacing the following characters with corresponding strings
-  * as follows: | Characters | Strings |
+  * as follows:
+  * 
+  * | Characters | Strings |
   * | --- | --- |
   * | " | " |
   * | ' | ' |
-  * | & | &amp; |
-  * | < | < |
-  * | > | > |
-  *
+  * | &amp; | &amp;amp; |
+  * | &lt; | &lt; |
+  * | &gt; | &gt; |
+  * 
   * If the address of the target buffer is zero, the number of bytes
   * to be written is returned. If the target buffer is not large
   * enough, a value of -1 is returned. If the target buffer is large
@@ -2392,13 +2394,15 @@ export const Builtins =
   * - Replacing each invalid UTF-16 with a UTF-16 blank.
   * - Replacing carriage returns with .
   * - Replacing the following characters with corresponding strings
-  * as follows: | Characters | Strings |
+  * as follows:
+  * 
+  * | Characters | Strings |
   * | --- | --- |
   * | " | " |
   * | ' | ' |
-  * | & | &amp; |
-  * | < | < |
-  * | > | > |
+  * | &amp; | &amp;amp; |
+  * | &lt; | &lt; |
+  * | &gt; | &gt; |
   *
   * If the address of the target buffer is zero, the number of bytes
   * to be written is returned. If the target buffer is not large
