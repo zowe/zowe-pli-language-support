@@ -310,11 +310,26 @@ export function isAttributeValidForPreprocessor<K extends AttributeKind>(
 
 export type AttributeStringifier<K extends AttributeKind> = (
   value: AttributeTypes[K],
+  witnesses: AttributeWitnesses,
 ) => string | undefined;
 
 export const AttributeStringifiers: {
   [K in AttributeKind]: AttributeStringifier<K>;
 } = {
+  [AttributeKind.DataTypeIsGeneric]: function (
+    value: boolean,
+    witnesses: AttributeWitnesses,
+  ): string | undefined {
+    if (value) {
+      const dataType = witnesses.witnesses[AttributeKind.DataType]?.value;
+      if (dataType === undefined || dataType === DataType.Unknown) {
+        return "ANY";
+      }
+      const type = TypeDescriptions.Names[dataType].toUpperCase();
+      return `ANY<${type}>`;
+    }
+    return undefined;
+  },
   [AttributeKind.BuiltIn]: function (value: boolean): string | undefined {
     return value ? "BUILTIN" : undefined;
   },
@@ -385,18 +400,13 @@ export const AttributeStringifiers: {
   [AttributeKind.DataType]: function (value: DataType): string | undefined {
     return undefined;
   },
-  [AttributeKind.DataTypeIsGeneric]: function (
-    value: boolean,
-  ): string | undefined {
-    return undefined;
-  },
   [AttributeKind.Dimension]: function (
     value: DimensionBound[] | undefined,
   ): string | undefined {
     if (!value) {
       return undefined;
     }
-    return `DIMENSION(...)`;
+    return `DIMENSION(*)`;
     /*
     ${value
       .map((bound) => {
@@ -1561,9 +1571,6 @@ function createUnknownTypeDescription(common?: {
     type: UnknownType,
     ...createBaseTypeDescription(UnknownType, {
       ...common,
-      toString() {
-        return "<UNKNOWN>";
-      },
     }),
   };
 }
