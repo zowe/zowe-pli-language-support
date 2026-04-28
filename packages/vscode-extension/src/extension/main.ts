@@ -153,7 +153,10 @@ async function startLanguageClient(
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "*", language: "pli" }],
+    documentSelector: [
+      { scheme: "*", language: "pli" },
+      { scheme: "file", pattern: "**/.pliplugin/*.json" },
+    ],
   };
 
   // Create the language client and start the client.
