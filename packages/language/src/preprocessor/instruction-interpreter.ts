@@ -9,7 +9,7 @@
  *
  */
 
-import { tokenMatcher } from "chevrotain";
+import { tokenMatcher, TokenType } from "chevrotain";
 import { TextDocuments } from "../language-server/text-documents";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse } from "../parser/parser-entry";
@@ -546,9 +546,6 @@ function runInstructionSync(
     case inst.InstructionKind.CicsExecStatement:
       runCicsExecInstruction(instruction, context);
       break;
-    case inst.InstructionKind.CicsVariable:
-      runCicsVariableInstruction(instruction, context);
-      break;
   }
   return undefined;
 }
@@ -577,18 +574,14 @@ function getGenerationCacheEntry(
   return entry;
 }
 
-function runSqlHostVariableInstruction(
-  instruction: inst.SqlHostVariableInstruction,
-  context: InterpreterContext,
-): void {
-  const token = instruction.token;
+function emitMarker(context: InterpreterContext, token: Token, type: TokenType): void {
   const { startOffset, startLine, startColumn } = token;
   // Generate a marker token for the PL/I parser
   // This token is used to identify the ID as a host variable
   const varMarkerToken = createTokenInstance(
     "",
     "",
-    SQL_HOST_VARIABLE_MARKER,
+    type,
     startOffset,
     startLine,
     startColumn,
@@ -606,25 +599,14 @@ function runCicsVariableInstruction(
   instruction: inst.CicsVariableInstruction,
   context: InterpreterContext,
 ): void {
-  const token = instruction.token;
-  const { startOffset, startLine, startColumn } = token;
-  // Generate a marker token for the PL/I parser
-  // This token is used to identify the ID as a host variable
-  const varMarkerToken = createTokenInstance(
-    "",
-    "",
-    CICS_VARIABLE_MARKER,
-    startOffset,
-    startLine,
-    startColumn,
-    // Start and end position are the same
-    startOffset,
-    startLine,
-    startColumn,
-    undefined,
-  );
-  // Emit both tokens now
-  context.tokens.push(varMarkerToken, token);
+  emitMarker(context, instruction.token, CICS_VARIABLE_MARKER);
+}
+
+function runSqlHostVariableInstruction(
+  instruction: inst.SqlHostVariableInstruction,
+  context: InterpreterContext,
+): void {
+  emitMarker(context, instruction.token, SQL_HOST_VARIABLE_MARKER);
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
