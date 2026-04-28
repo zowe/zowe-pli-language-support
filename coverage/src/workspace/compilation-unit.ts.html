@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.79% </span>
+                <span class="strong">56.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>77/138</span>
+                <span class='fraction'>80/142</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">43.47% </span>
+                <span class="strong">44% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>20/46</span>
+                <span class='fraction'>22/50</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">48.48% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>16/33</span>
+                <span class='fraction'>17/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">56.29% </span>
+                <span class="strong">56.83% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>76/135</span>
+                <span class='fraction'>79/139</span>
             </div>
         
             
@@ -508,7 +508,19 @@
 <a name='L443'></a><a href='#L443'>443</a>
 <a name='L444'></a><a href='#L444'>444</a>
 <a name='L445'></a><a href='#L445'>445</a>
-<a name='L446'></a><a href='#L446'>446</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L446'></a><a href='#L446'>446</a>
+<a name='L447'></a><a href='#L447'>447</a>
+<a name='L448'></a><a href='#L448'>448</a>
+<a name='L449'></a><a href='#L449'>449</a>
+<a name='L450'></a><a href='#L450'>450</a>
+<a name='L451'></a><a href='#L451'>451</a>
+<a name='L452'></a><a href='#L452'>452</a>
+<a name='L453'></a><a href='#L453'>453</a>
+<a name='L454'></a><a href='#L454'>454</a>
+<a name='L455'></a><a href='#L455'>455</a>
+<a name='L456'></a><a href='#L456'>456</a>
+<a name='L457'></a><a href='#L457'>457</a>
+<a name='L458'></a><a href='#L458'>458</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -613,6 +625,15 @@
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">2564x</span>
 <span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -772,6 +793,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1059,6 +1083,15 @@ const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
 const isBuiltinFile = (uri: URI) =&gt; uri.toString().startsWith(BuiltinFileStart);
 const FIVE_MINUTES = 1000 * 60 * 5;
 &nbsp;
+/**
+ * JSON under `.pliplugin/` is not PL/I source. The client attaches the LS there for code actions;
+ * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
+ */
+function isPluginConfigurationUri(uri: URI): boolean {
+  const path = uri.fsPath.replace(/\\/g, "/");
+  return path.includes("/.pliplugin/") &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >/\.json$/i.test(path);</span>
+}
+&nbsp;
 function createBuiltinUnitGetter(
   builtinDocument: TextDocument,
 ): () =&gt; Promise&lt;CompilationUnit&gt; {
@@ -1218,6 +1251,9 @@ export class CompilationUnitHandler {
     <span class="missing-if-branch" title="if path not taken" >I</span>if (this.compilationUnits.has(uri.toString())) {
       // existing compilation unit
 <span class="cstat-no" title="statement not covered" >      return this.compilationUnits.get(uri.toString());</span>
+    }
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (isPluginConfigurationUri(uri)) {
+<span class="cstat-no" title="statement not covered" >      return undefined;</span>
     } else if (!PluginConfigurationProviderInstance.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
       const unit = await this.createAndStoreCompilationUnit(uri);
@@ -1405,7 +1441,7 @@ function <span class="fstat-no" title="function not covered" >isVirtualFile(u</s
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-27T14:41:59.251Z
+                at 2026-04-28T08:27:25.247Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
