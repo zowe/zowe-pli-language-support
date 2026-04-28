@@ -10,10 +10,10 @@
  */
 
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { Diagnostic } from "../language-server/types";
+import { Diagnostic, tokenToUri } from "../language-server/types";
 import { ReferencesCache } from "../linking/resolver";
 import { isValidToken } from "../linking/tokens";
-import { SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
+import { Reference, SyntaxKind, SyntaxNode } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
 import { registerPliValidationChecks } from "./pli-validator";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
@@ -126,8 +126,62 @@ export function linkingErrorsToDiagnostics(
 
   for (const reference of references.allReferences()) {
     if (reference.node === null && isValidToken(reference.token)) {
-      // Question: is reference.text and token.image the same?
-      reporter.reportCannotFindSymbol(reference.token, reference.text);
+      // If a specific linking diagnostic can be generated for this reference, generate it and return,
+      // otherwise report a generic "cannot find symbol" error
+      if (generateLinkingDiagnostic(reporter, unit, reference)) {
+        reporter.reportCannotFindSymbol(reference.token, reference.text);
+      }
     }
   }
+}
+
+function generateLinkingDiagnostic(
+  reporter: LinkerErrorReporter,
+  unit: CompilationUnit,
+  reference: Reference,
+): boolean {
+  const owner = reference.owner;
+  const uri = tokenToUri(reference.token);
+  if (!uri) {
+    return false;
+  }
+  // 1. check if the reference is part of a member call
+  // highlight the entire member call if it is, otherwise just the reference token
+  if (
+    owner.kind === SyntaxKind.ReferenceItem &&
+    owner.container?.kind === SyntaxKind.MemberCall
+  ) {
+    const isTopMost = owner.container.container?.kind !== SyntaxKind.MemberCall;
+    if (!isTopMost) {
+      // Do not report the error on this reference, it will be reported on the top-most member call
+      return false;
+    }
+    let currentNode = owner.container;
+    if (currentNode.previous === null) {
+      // Top most + no previous means this is just a simple reference, report a generic error
+      return true;
+    }
+    const names: string[] = [reference.text];
+    // Traverse through the previous items to get the full chain
+    while (currentNode.previous !== null) {
+      const name = currentNode.previous.element?.ref?.text;
+      if (name) {
+        names.push(name);
+      } else {
+        // Likely a parser error, do not report the linking error
+        return false;
+      }
+      currentNode = currentNode.previous;
+    }
+    const start = currentNode.element?.ref?.token.startOffset;
+    const end = reference.token.endOffset + 1;
+    if (start !== undefined) {
+      // Report the name and return
+      const fqn = names.reverse().join(".");
+      reporter.reportFqnReferenceNotFound(uri, fqn, start, end);
+    }
+    return false;
+  }
+  // Report the error
+  return true;
 }
