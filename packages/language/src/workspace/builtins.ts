@@ -111,14 +111,148 @@ export const BuiltinsSqldaDocument = TextDocument.create(
 );
 
 export const BuiltinsTypeFunctions = `
- BIND: PROC (t, p); END;
- CAST: PROC (t, x); END;
- FIRST: PROC (t); END;
- LAST: PROC (t); END;
- NEW: PROC (t); END;
- RESPEC: PROC (t, x); END;
- SIZE: PROC (t); END;
- VALUE: PROC (t); END;
+ /**
+  * BIND converts the pointer p to a handle for the structure type t.
+  * The BIND function can be used as a locator for a member of a typed
+  * structure.
+  * 
+  * @param t Name of a structure type
+  * @param p Pointer expression
+  * @returns a handle for the structure type t
+  */
+ BIND: PROC (t, p) RETURNS(ANY);
+   DCL t ANY;
+   DCL p ANY;
+ END;
+ /**
+  * CAST converts the expression x to the type t using C conversion 
+  * rules.
+  * 
+  * These are supported "C types":
+  * - REAL FIXED BIN(p,0)
+  * - REAL FIXED DEC(p,q) where p >= q and q>= 0.
+  * - NATIVE FLOAT
+  * - ORDINAL
+  * - POINTER or HANDLE
+  * - LIMITED ENTRY
+  * 
+  * If x is FLOAT or FIXED DEC, t must be FLOAT, FIXED or ORDINAL, and
+  * if t is FLOAT or FIXED DEC, x must be FLOAT, FIXED or ORDINAL.
+  * 
+  * Any conversions that are needed follow the ANSI C rules. This
+  * means, for instance, that SIZE will not be raised by CAST and that
+  * if negative values are cast to UNSIGNED, the result will be a
+  * large positive number.
+  * 
+  * IEEE DFP is not supported by CAST.
+  * 
+  * @param t Name of a scalar "C type"
+  * @param x A scalar expression also having "C type"
+  * @returns the value of x converted to type t
+  */
+ CAST: PROC (t, x) RETURNS(ANY);
+   DCL t ANY;
+   DCL x ANY;
+ END;
+ /**
+  * FIRST returns the first value in the ordinal set t.
+  * @param t Name of an ordinal type
+  * @returns first value in the ordinal set t
+  */
+ FIRST: PROC (t) RETURNS (ANY<ORDINAL>);
+   DCL t ANY;
+ END;
+ /**
+  * LAST returns the last value in the ordinal set t.
+  * @param t Name of an ordinal type
+  * @returns last value in the ordinal set t
+  */
+ LAST: PROC (t) RETURNS (ANY<ORDINAL>);
+   DCL t ANY;
+ END;
+ /**
+  * NEW acquires heap storage for structure type t and returns a handle
+  * to the acquired storage.
+  * 
+  * NEW(:t:) is equivalent to BIND(: t, ALLOC( SIZE(:t:) ) :).
+  * 
+  * @param t Name of a structure type
+  * @returns a handle to the acquired storage
+  */
+ NEW: PROC (t) RETURNS(ANY);
+   DCL t ANY;
+ END;
+ /**
+  * RESPEC changes the attributes of the expression x to the type t
+  * without changing the bit value of the expression.
+  * 
+  * x must have the same size as t, and if either x or t is
+  * UNALIGNED BIT, both must be UNALIGNED BIT (in which case the
+  * function is somewhat uninteresting because it would do nothing).
+  * 
+  * As an example, if t is a type with the attributes LIMITED ENTRY,
+  * RESPEC( t, sysnull() ) would return a "null" function pointer.
+  *
+  * @param t Name of a scalar type
+  * @param x A scalar expression
+  */
+ RESPEC: PROC (t, x);
+   DCL t ANY;
+   DCL x ANY;
+ END;
+ /**
+  * SIZE returns the amount of storage needed for a variable declared
+  * with the type t.
+  * 
+  * @param t Name of a structure or union type
+  * @returns amount of storage needed for a variable declared with 
+  *   the type t
+  */
+ SIZE: PROC (t) RETURNS (ANY<NUMBER>);
+   DCL t ANY;
+ END;
+ /**
+  * The VALUE type function initializes or assigns to a variable that
+  * has the corresponding structure type.
+  * 
+  * If the VALUE function is used with a structure type that is
+  * partially initialized, uninitialized bytes and bits are set to zero.
+  * 
+  * The VALUE function cannot be used with a structure type containing
+  * no elements with the INITIAL attribute.
+  * 
+  * You can use the VALUE function with the INIT form of the INITIAL
+  * attribute on the elements of a DEFINE STRUCTURE statement. However,
+  * you cannot use INIT CALL and INIT TO with the VALUE function on
+  * the elements of a DEFINE STRUCTURE statement.
+  * 
+  * The following example shows how to use the VALUE function:
+  * 
+  * \`\`\`
+  *   define struct
+  *     1 b,
+  *        2 b1 fixed bin init(17),
+  *        2 b2 fixed bin init(19);
+  *
+  *   define struct
+  *     1 c,
+  *       2 c1 type b init( value(: b :) ),
+  *       2 c2 fixed bin init(23);
+  *
+  *   dcl x type c static init( value(: c :) );
+  *   dcl y type c;
+  *
+  *   y = value(: c :);  
+  * \`\`\`
+  * 
+  * @param t Name of a typed structure. The VALUE function returns an
+  *   instance of the typed structure t with its initial values.
+  * @returns an instance of the typed structure t with its
+  *   initial values
+  */
+ VALUE: PROC (t) RETURNS (ANY);
+   DCL t ANY;
+ END;
 `;
 
 export const BuiltinsFile = "builtins.pli";
