@@ -4392,19 +4392,21 @@ export function createCicsResponseStatement(): CicsResponseStatement {
 
 export interface CicsExecStatement extends AstNode {
   kind: SyntaxKind.CicsExecStatement;
+  hostVariables: Token[];
   content: CicsEmbeddedStatement | null;
 }
 
 export function createCicsExecStatement(): CicsExecStatement {
   return {
     kind: SyntaxKind.CicsExecStatement,
+    hostVariables: [],
     container: null,
     content: null,
   };
 }
 
 export type CicsStatement = CicsLinkStatement;
-export type CicsEmbeddedStatement = EmbeddedUnknownStatement;
+export type CicsEmbeddedStatement = EmbeddedUnknownStatement | CicsStatement;
 
 export interface CicsLinkStatement extends AstNode {
   kind: SyntaxKind.CicsLinkStatement;

@@ -25,18 +25,18 @@ export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
   if (state.canConsumeFirst(cicsStatement.first())) {
     const cicsAst = cicsStatement.rule(state);
     if (cicsAst) {
-      const unknownStatement = ast.createEmbeddedUnknownStatement();
       traverseAllNodes(cicsAst, (node) => {
         if (node.kind === ast.SyntaxKind.CicsReferenceItem && node.ref) {
           const token = node.ref.token;
           token.immediateFollow = false;
-          unknownStatement.hostVariables.push(token);
+          execStatement.hostVariables.push(token);
         }
         return TraversalState.Continue;
       });
-      execStatement.content = unknownStatement;
+      execStatement.content = cicsAst;
     }
   } else {
+    //Note: Host variables are ignored here
     execStatement.content = embeddedUnknownStatement(
       state,
       CstNodeKind.ExecCicsStatement_COMMAND,
