@@ -13,6 +13,9 @@
 
 // @wrap: main
 //// DCL A FIXED BIN;
+//// DCL 1 X, 2 Y FIXED BIN;
 //// <|A.B|> = 1;
+//// <|X.Y.Z.W|> = 1;
 
 verify.expectExclusiveDiagnosticsAt("A.B", code.Severe.IBM1623I);
+verify.expectExclusiveDiagnosticsAt("X.Y.Z.W", code.Severe.IBM1623I);
