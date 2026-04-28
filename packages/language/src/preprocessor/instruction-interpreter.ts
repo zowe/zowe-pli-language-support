@@ -574,7 +574,11 @@ function getGenerationCacheEntry(
   return entry;
 }
 
-function emitMarker(context: InterpreterContext, token: Token, type: TokenType): void {
+function emitMarker(
+  context: InterpreterContext,
+  token: Token,
+  type: TokenType,
+): void {
   const { startOffset, startLine, startColumn } = token;
   // Generate a marker token for the PL/I parser
   // This token is used to identify the ID as a host variable
