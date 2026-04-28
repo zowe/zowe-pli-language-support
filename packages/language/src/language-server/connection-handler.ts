@@ -46,8 +46,12 @@ import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
-import { commandCreateConfig, commandResolveInclude } from "./commands";
-import { Commands, PluginConfiguration } from "./constants";
+import {
+  commandCreateConfig,
+  commandRemoveUnresolvedLib,
+  commandResolveInclude,
+} from "./commands";
+import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 export { PluginConfiguration } from "./constants";
 
@@ -63,6 +67,17 @@ export function startLanguageServer(connection: Connection): void {
   const compilationUnitHandler = new CompilationUnitHandler();
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
+
+  function publishPluginConfigDiagnostics(
+    diagnosticsByUri: Map<string, Diagnostic[]>,
+  ): void {
+    for (const [uri, diagnostics] of diagnosticsByUri.entries()) {
+      connection.sendDiagnostics({
+        uri,
+        diagnostics,
+      });
+    }
+  }
 
   async function withReadMutex<T>(
     uri: string,
@@ -111,7 +126,11 @@ export function startLanguageServer(connection: Connection): void {
           ],
         },
         executeCommandProvider: {
-          commands: [Commands.RESOLVE_INCLUDE, Commands.CREATE_CONFIG],
+          commands: [
+            Commands.RESOLVE_INCLUDE,
+            Commands.CREATE_CONFIG,
+            Commands.REMOVE_DEAD_LIB,
+          ],
         },
         documentHighlightProvider: true,
         semanticTokensProvider: {
@@ -136,13 +155,8 @@ export function startLanguageServer(connection: Connection): void {
     for (const folder of folders) {
       promises.push(
         PluginConfigurationProviderInstance.init(folder.uri).then(
-          (diagnostics) => {
-            const ws = PluginConfigurationProviderInstance.getWorkspacePath();
-            const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
-            connection.sendDiagnostics({
-              uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-              diagnostics,
-            });
+          (diagnosticsByUri) => {
+            publishPluginConfigDiagnostics(diagnosticsByUri);
           },
         ),
       );
@@ -350,21 +364,16 @@ export function startLanguageServer(connection: Connection): void {
     WorkspaceDidChangePlipluginConfigNotification,
     async () => {
       // handle changes to the .pliplugin config folder's contents
-      const diagnostics =
+      const diagnosticsByUri =
         await PluginConfigurationProviderInstance.reloadConfigurations();
-      const ws = PluginConfigurationProviderInstance.getWorkspacePath();
-      const wsPrefix = ws.endsWith("/") ? ws : ws + "/";
-      connection.sendDiagnostics({
-        uri: wsPrefix + PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-        diagnostics,
-      });
+      publishPluginConfigDiagnostics(diagnosticsByUri);
 
       // reindex reachable compilation units
       await compilationUnitHandler.reindex(connection, CancellationToken.None);
     },
   );
   connection.onRequest(ExistingFileRequest, (uriString: string): boolean => {
-    const uri = URI.parse(uriString);
+    const uri = UriUtils.toUri(uriString);
     const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
     return compilationUnit !== undefined;
   });
@@ -385,7 +394,10 @@ export function startLanguageServer(connection: Connection): void {
       const diagnostics = params.context.diagnostics as Diagnostic[];
       if (!diagnostics || !diagnostics.length) return [];
 
-      const actions = await applyQuickFixes(diagnostics);
+      const actions = await applyQuickFixes(
+        diagnostics,
+        params.textDocument.uri,
+      );
       return actions || [];
     }
   });
@@ -397,6 +409,9 @@ export function startLanguageServer(connection: Connection): void {
         break;
       case Commands.CREATE_CONFIG:
         await commandCreateConfig(params);
+        break;
+      case Commands.REMOVE_DEAD_LIB:
+        await commandRemoveUnresolvedLib(params);
         break;
     }
   });
