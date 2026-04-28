@@ -15,7 +15,6 @@ import {
   ProcedureStatement,
   SyntaxKind,
 } from "../../syntax-tree/ast";
-import { BuiltinsUriSchema } from "../../workspace/builtins";
 import { ParametricPLICode, PLICodes } from "../pli-codes";
 import {
   resolveProcedureFromCall,
@@ -78,13 +77,6 @@ export function MemberCall_checkArguments(
   }
   const procedure = retrieveProcedureFromLabelPrefix(labelPrefix);
   if (!procedure) {
-    return;
-  }
-  //TODO @tag(#issue-656) remove me once ALL built-in procedures signatures are setup
-  if (
-    procedure.procToken?.uri?.scheme &&
-    procedure.procToken.uri.scheme !== BuiltinsUriSchema
-  ) {
     return;
   }
   if (node.element.dimensions.length !== 1) {
