@@ -12,6 +12,7 @@
 /// <reference path="../framework.ts" />
 
 // @wrap: main
+//// DCL A FIXED BIN;
 //// <|A.B|> = 1;
 
 verify.expectExclusiveDiagnosticsAt("A.B", code.Severe.IBM1623I);

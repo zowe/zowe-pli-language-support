@@ -12,6 +12,7 @@
 import { AmbiguousReferenceData } from "../language-server/code-actions/apply-quick-fixes";
 import {
   diagnosticFromCode,
+  diagnosticFromCodeAtRange,
   fullCode,
   Range,
   Severity,
@@ -126,6 +127,24 @@ export class LinkerErrorReporter {
    */
   reportCannotFindSymbol(token: Token, name: string) {
     this.accept(diagnosticFromCode(LspCodes.UnknownIdentifier, token, name));
+  }
+
+  /**
+   * S IBM1623I
+   */
+  reportFqnReferenceNotFound(
+    uri: string,
+    fqn: string,
+    start: number,
+    end: number,
+  ) {
+    const diagnostic = diagnosticFromCodeAtRange(
+      PLICodes.Severe.IBM1623I,
+      { start, end },
+      fqn,
+    );
+    diagnostic.uri = uri;
+    this.accept(diagnostic);
   }
 
   /**
