@@ -192,32 +192,3 @@ function validateBound(
   }
   return undefined;
 }
-
-//TODO @tag(#issue-656) Make this method valid only for PL/I not for preprocessor
-export function BUILTIN_NoMultipleVariadicParameters(
-  stmt: ast.ProcedureStatement,
-  acceptor: ValidationAcceptor,
-  compilationUnit: CompilationUnit,
-) {
-  if (compilationUnit.uri.scheme !== BuiltinsUriSchema) {
-    return;
-  }
-  let foundVarArg = false;
-  for (const parameter of stmt.parameters) {
-    const description = compilationUnit.services.inferer.inferType(
-      parameter,
-      compilationUnit,
-    );
-    if (description.list) {
-      if (foundVarArg) {
-        const token =
-          description.witnesses.witnesses[AttributeKind.List]?.token;
-        if (token) {
-          acceptor(diagnosticFromCode(PLICodes.Severe.IBM2049I, token));
-        }
-      } else {
-        foundVarArg = true;
-      }
-    }
-  }
-}

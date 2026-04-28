@@ -16,10 +16,7 @@ import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONC
 import { IBM2615I_do_loops_execute_once } from "./compiler/IBM2615I-do-loops-execute-once";
 import { ValidationChecks } from "./validator";
 import { IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att } from "./compiler/IBM2412I-IBM2410I-IBM2409I-handle-return-stmt-and-returns-att";
-import {
-  BUILTIN_NoMultipleVariadicParameters,
-  typeCheck,
-} from "./type-check-validator";
+import { typeCheck } from "./type-check-validator";
 import { checkImplicitBuiltins } from "./language-server/implicit-builtins";
 import { IBM1376IE_attributes_in_declaration_lists } from "./compiler/IBM1376IE-attributes-in-declaration-lists";
 import {
@@ -59,7 +56,6 @@ export function registerPliValidationChecks(): ValidationChecks {
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
       IBM1213I_unreferenced_procedure,
-      BUILTIN_NoMultipleVariadicParameters,
     ],
     ReferenceItem: [checkImplicitBuiltins, checkProcedureCallsDimensions],
     SelectStatement: [IBM1059I_select_without_otherwise],
