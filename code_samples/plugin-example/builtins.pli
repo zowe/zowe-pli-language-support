@@ -68,6 +68,9 @@
 
  CALL QUICKSORT(BITS, 1, 30);
 
+ define ordinal Color ( Red, Green, Blue );
+
+ display (ordinalname( last(:Color:) ));
 
 
 

@@ -1999,7 +1999,7 @@ export namespace TypeDescriptions {
         return TypeDescriptions.Ordinal({
           ...common,
           names:
-            attributes[AttributeKind.OrdinalNames]!.value ??
+            attributes[AttributeKind.OrdinalNames]?.value ??
             DefaultValues[AttributeKind.OrdinalNames],
         });
       case DataType.Picture:
