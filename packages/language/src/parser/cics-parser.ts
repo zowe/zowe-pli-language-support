@@ -28,7 +28,6 @@ export function cicsExecStatement(state: ParserState): ast.CicsExecStatement {
       traverseAllNodes(cicsAst, (node) => {
         if (node.kind === ast.SyntaxKind.CicsReferenceItem && node.ref) {
           const token = node.ref.token;
-          token.immediateFollow = false;
           execStatement.hostVariables.push(token);
         }
         return TraversalState.Continue;
@@ -375,11 +374,14 @@ const cicsReferenceItem = rule(
       CstNodeKind.CicsReferenceItem_ID,
       t.ID,
     );
-    refItem.ref = ast.createReference(
-      refItem,
-      token,
-      ast.ReferenceType.Variable,
-    );
+    if (token) {
+      token.immediateFollow = false;
+      refItem.ref = ast.createReference(
+        refItem,
+        token,
+        ast.ReferenceType.Variable,
+      );
+    }
     return refItem;
   },
 );
