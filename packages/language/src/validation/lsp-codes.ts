@@ -94,4 +94,12 @@ export const LspCodes = {
         `Plugin Configuration expected '${expected}' in ${fileName}.`,
     },
   },
+  Cics: {
+    DuplicatedSpecification: {
+      code: "CICS001",
+      severity: Severity.E,
+      message: (specName: string) =>
+        `Duplicated CICS specification: ${specName}.`,
+    },
+  },
 };

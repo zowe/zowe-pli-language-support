@@ -1950,3 +1950,7 @@ export const SQL_HOST_VARIABLE_MARKER = createToken({
   name: "SQL_HOST_VARIABLE_MARKER",
   pattern: Lexer.NA,
 });
+export const CICS_VARIABLE_MARKER = createToken({
+  name: "CICS_VARIABLE_MARKER",
+  pattern: Lexer.NA,
+});

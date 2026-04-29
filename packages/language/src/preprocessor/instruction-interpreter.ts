@@ -9,13 +9,14 @@
  *
  */
 
-import { tokenMatcher } from "chevrotain";
+import { tokenMatcher, TokenType } from "chevrotain";
 import { TextDocuments } from "../language-server/text-documents";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
 import {
+  CICS_VARIABLE_MARKER,
   createTokenInstance,
   SQL_HOST_VARIABLE_MARKER,
   Token,
@@ -573,18 +574,18 @@ function getGenerationCacheEntry(
   return entry;
 }
 
-function runSqlHostVariableInstruction(
-  instruction: inst.SqlHostVariableInstruction,
+function emitMarker(
   context: InterpreterContext,
+  token: Token,
+  type: TokenType,
 ): void {
-  const token = instruction.token;
   const { startOffset, startLine, startColumn } = token;
   // Generate a marker token for the PL/I parser
   // This token is used to identify the ID as a host variable
   const varMarkerToken = createTokenInstance(
     "",
     "",
-    SQL_HOST_VARIABLE_MARKER,
+    type,
     startOffset,
     startLine,
     startColumn,
@@ -596,6 +597,20 @@ function runSqlHostVariableInstruction(
   );
   // Emit both tokens now
   context.tokens.push(varMarkerToken, token);
+}
+
+function runCicsVariableInstruction(
+  instruction: inst.CicsVariableInstruction,
+  context: InterpreterContext,
+): void {
+  emitMarker(context, instruction.token, CICS_VARIABLE_MARKER);
+}
+
+function runSqlHostVariableInstruction(
+  instruction: inst.SqlHostVariableInstruction,
+  context: InterpreterContext,
+): void {
+  emitMarker(context, instruction.token, SQL_HOST_VARIABLE_MARKER);
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
@@ -705,6 +720,9 @@ function runCicsExecInstruction(
   instruction: inst.CicsExecInstruction,
   context: InterpreterContext,
 ): void {
+  for (const instr of instruction.variables) {
+    runCicsVariableInstruction(instr, context);
+  }
   const procSemicolonIndex = findProcSemicolon(context);
   if (procSemicolonIndex === undefined) {
     return;
