@@ -97,6 +97,14 @@ export class DefaultCompositeTypeBuilder implements CompositeTypeBuilder {
     declaredItem: BuilderDeclareItem,
     attributes: AttributeCollectorResult,
   ): boolean {
+    //required for "generic" parameters only coming from builtin functions
+    const isDataTypeGeneric =
+      attributes.witnesses.witnesses[AttributeKind.DataTypeIsGeneric]?.value;
+    if (isDataTypeGeneric) {
+      const dataType =
+        attributes.witnesses.witnesses[AttributeKind.DataType]?.value;
+      return dataType === DataType.Structure || dataType === DataType.Union;
+    }
     const validCompositeAttributeKinds: AttributeKind[] = [
       AttributeKind.Dimension,
       AttributeKind.Alignment,
