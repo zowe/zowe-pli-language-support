@@ -12,6 +12,9 @@
 import { TokenType } from "chevrotain";
 import { ParserState } from "./parser-state";
 import { memoize } from "lodash-es";
+import { assertType } from "../preprocessor/util";
+import { diagnosticFromCode } from "../language-server/types";
+import { LspCodes } from "../validation/lsp-codes";
 
 export type Rule<T, Args extends any[] = any[]> = (
   state: ParserState,
@@ -136,6 +139,57 @@ export function orRule<T, Args extends any[]>(
     }
   }
   return new RuleFirstPairWrapper(...rules);
+}
+
+export function anyOrderRule<
+  K extends string,
+  T extends Record<K, any>,
+  Args extends any[],
+>(anyOf: { [P in K]: () => RuleFirstPair<T[P], Args> }): RuleFirstPair<
+  Partial<T>,
+  Args
+> {
+  class RuleFirstPairWrapper implements RuleFirstPair<T, Args> {
+    first: () => RuleMap<any>;
+    rule: Rule<T | null, Args>;
+    constructor(rules: { [P in K]: () => RuleFirstPair<T[P], Args> }) {
+      this.first = memoize(() => {
+        const map: RuleMap<T> = new Map();
+        for (const rule of Object.values(rules)) {
+          assertType<() => RuleFirstPair<T[keyof T], Args>>(rule);
+          mergeMaps(map, rule().first());
+        }
+        return map;
+      });
+      this.rule = (state: ParserState, ...args: Args) => {
+        let result: Partial<T> = {};
+        while (state.canConsumeFirst(this.first())) {
+          for (const [key, rule] of Object.entries(rules)) {
+            assertType<K>(key);
+            assertType<() => RuleFirstPair<T[keyof T], Args>>(rule);
+            const first = rule().first();
+            if (state.canConsumeFirst(first)) {
+              const token = state.token;
+              const ast = rule().rule(state, ...args) ?? undefined;
+              if (result[key] && token) {
+                state.diagnostics.push(
+                  diagnosticFromCode(
+                    LspCodes.Cics.DuplicatedSpecification,
+                    token,
+                    token.image,
+                  ),
+                );
+                continue;
+              }
+              result[key] = ast;
+            }
+          }
+        }
+        return result as T;
+      };
+    }
+  }
+  return new RuleFirstPairWrapper(anyOf);
 }
 
 export function rule<T, Args extends any[]>(

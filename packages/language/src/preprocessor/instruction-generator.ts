@@ -189,7 +189,7 @@ function generateInstructionForStatement(
       instruction = generateCicsResponseInstruction(value);
       break;
     case ast.SyntaxKind.CicsExecStatement:
-      instruction = inst.createCicsExecInstruction();
+      instruction = inst.createCicsExecInstruction(value);
       break;
     case ast.SyntaxKind.SqlExecStatement:
       instruction = inst.createSqlExecInstruction(value);
