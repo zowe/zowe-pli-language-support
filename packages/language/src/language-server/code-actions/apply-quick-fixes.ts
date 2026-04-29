@@ -10,18 +10,14 @@
  */
 
 import { URI, UriUtils } from "../../utils/uri";
-import { FileSystemProviderInstance } from "../../workspace/file-system-provider";
 import {
   CodeAction,
   CodeActionKind,
   Diagnostic,
   TextEdit,
 } from "vscode-languageserver-types";
-import {
-  PluginConfigUnresolvedLibData,
-  PluginConfigurationProviderInstance,
-  ProcessGroup,
-} from "../../workspace/plugin-configuration-provider";
+import { PluginConfigUnresolvedLibData } from "../../workspace/plugin-configuration-provider";
+import { WorkspaceContext } from "../../workspace/workspace-context";
 
 import { Commands, PluginConfiguration } from "../constants";
 import { LspCodes } from "../../validation/lsp-codes";
@@ -33,13 +29,16 @@ const JSONC_FORMAT = {
   formattingOptions: { tabSize: 2, insertSpaces: true },
 } as const;
 
-function isProcGrpsDocumentUri(documentUri: string): boolean {
-  const workspacePath = PluginConfigurationProviderInstance.getWorkspacePath();
+function isProcGrpsDocumentUri(
+  documentUri: string,
+  workspace: WorkspaceContext,
+): boolean {
+  const workspacePath = workspace.config.getWorkspacePath();
   if (!workspacePath) {
     return false;
   }
   const expected = UriUtils.joinPath(
-    UriUtils.toUri(workspacePath),
+    workspacePath,
     ".pliplugin",
     "proc_grps.json",
   );
@@ -48,35 +47,34 @@ function isProcGrpsDocumentUri(documentUri: string): boolean {
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
+  workspace: WorkspaceContext,
 ): Promise<CodeAction | undefined> {
-  const progConfig = PluginConfigurationProviderInstance.getProgramConfig(
+  const progConfig = workspace.config.getProgramConfig(
     UriUtils.toUri(diagnostic.data.entryUri),
   );
   if (!progConfig) return;
-  const procGrpsConfig =
-    PluginConfigurationProviderInstance.getProcessGroupConfig(
-      progConfig.pgroup,
-    );
+  const procGrpsConfig = workspace.config.getProcessGroupConfig(
+    progConfig.pgroup.value,
+  );
   const unresolvedFile = diagnostic.data?.unresolvedFile;
   if (!procGrpsConfig || !unresolvedFile) return undefined;
 
-  const configExtensions = procGrpsConfig.includeExtensions;
-  const unresolvedFilePath = await FileSystemProviderInstance.search({
-    path: UriUtils.toUri(unresolvedFile),
-    extensions: configExtensions,
-    global: true,
-  });
+  const configExtensions = procGrpsConfig.includeExtensions.map(
+    (item) => item.value,
+  );
+  const unresolvedFilePath = await workspace.fs.findFile(
+    UriUtils.toUri(unresolvedFile),
+    configExtensions,
+  );
   if (!unresolvedFilePath) return undefined;
 
-  const workspaceFolderUri = UriUtils.toUri(
-    PluginConfigurationProviderInstance.getWorkspacePath(),
-  );
+  const workspaceFolderUri = workspace.config.getWorkspacePath();
 
   const parentFolder = UriUtils.computeWorkspaceRelativeParentFolder(
     unresolvedFilePath,
     workspaceFolderUri,
   );
-  if (!parentFolder || procGrpsConfig.$computedLibsSet.has(parentFolder)) {
+  if (!parentFolder || procGrpsConfig.computedLibsSet.has(parentFolder)) {
     return undefined;
   }
   const procGrpsFileUri = UriUtils.joinPath(
@@ -85,8 +83,7 @@ export async function quickFixResolveInclude(
   );
   let newFileContent;
   try {
-    const originalFileContent =
-      await FileSystemProviderInstance.readFile(procGrpsFileUri);
+    const originalFileContent = await workspace.fs.readFile(procGrpsFileUri);
     if (!originalFileContent) {
       console.error("Missing 'proc_grps.json' file content.");
       return;
@@ -103,8 +100,10 @@ export async function quickFixResolveInclude(
     );
     return;
   }
+  // newFileContent comes from raw JSON.parse so groups carry plain string
+  // names, not the JsonItem-wrapped form of the loaded ProcessGroup schema.
   const groupToUpdate = newFileContent.pgroups.find(
-    (g: ProcessGroup) => g.name === progConfig.pgroup,
+    (g: { name: string }) => g.name === progConfig.pgroup.value,
   );
   if (!groupToUpdate) {
     return;
@@ -128,14 +127,15 @@ export async function quickFixResolveInclude(
 
 export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
+  workspace: WorkspaceContext,
 ): Promise<CodeAction | undefined> {
-  const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
+  const workspaceUri = workspace.config.getWorkspacePath();
   const entryUri = diagnostic.data.entryUri as string;
-  if (!workspace || !entryUri) {
+  if (!workspaceUri || !entryUri) {
     return;
   }
   const resolvedEntry = UriUtils.toFilePath(entryUri);
-  const workspacePath = UriUtils.toFilePath(workspace);
+  const workspacePath = UriUtils.toFilePath(workspaceUri);
 
   const workspaceParts = UriUtils.parts(workspacePath);
   const entryParts = UriUtils.parts(resolvedEntry);
@@ -271,6 +271,7 @@ export function quickFixResolveAmbiguousReference(
 
 export async function quickFixRemoveUnresolvedLib(
   diagnostic: Diagnostic,
+  workspace: WorkspaceContext,
 ): Promise<CodeAction | undefined> {
   const data = diagnostic.data as PluginConfigUnresolvedLibData | undefined;
   if (!data?.lib || !data?.pgroup) {
@@ -279,8 +280,7 @@ export async function quickFixRemoveUnresolvedLib(
   if (!data.path) {
     return undefined;
   }
-  const procGrpsSnapshot =
-    PluginConfigurationProviderInstance.getLastProcGrpsSnapshot();
+  const procGrpsSnapshot = workspace.config.getLastProcGrpsSnapshot();
   if (!procGrpsSnapshot) {
     return;
   }
@@ -374,6 +374,7 @@ export async function quickFixRemoveAllUnresolvedLibs(
 async function handleMultipleUnresolvedLibs(
   diagnostics: Diagnostic[],
   unresolvedLibCode: string,
+  workspace: WorkspaceContext,
   documentUri?: string,
 ): Promise<CodeAction | undefined> {
   const unresolvedInContext = diagnostics.filter(
@@ -381,13 +382,12 @@ async function handleMultipleUnresolvedLibs(
   );
   if (
     !documentUri ||
-    !isProcGrpsDocumentUri(documentUri) ||
+    !isProcGrpsDocumentUri(documentUri, workspace) ||
     !unresolvedInContext.length
   ) {
     return;
   }
-  const procGrpsSnapshot =
-    PluginConfigurationProviderInstance.getLastProcGrpsSnapshot();
+  const procGrpsSnapshot = workspace.config.getLastProcGrpsSnapshot();
   if (!procGrpsSnapshot || !procGrpsSnapshot.entries) {
     return;
   }
@@ -403,6 +403,7 @@ async function handleMultipleUnresolvedLibs(
 
 export async function applyQuickFixes(
   diagnostics: Diagnostic[],
+  workspace: WorkspaceContext,
   documentUri?: string,
 ): Promise<CodeAction[] | undefined> {
   const actions: CodeAction[] = [];
@@ -419,6 +420,7 @@ export async function applyQuickFixes(
   const hasHandledUnresolvedLibs = await handleMultipleUnresolvedLibs(
     diagnostics,
     CODE_UNRESOLVED_LIB,
+    workspace,
     documentUri,
   );
   if (hasHandledUnresolvedLibs) actions.push(hasHandledUnresolvedLibs);
@@ -433,11 +435,11 @@ export async function applyQuickFixes(
         actions.push(...quickFixResolveAmbiguousReference(diagnostic));
         break;
       case CODE_UNRESOLVED_INCLUDE:
-        action = await quickFixResolveInclude(diagnostic);
+        action = await quickFixResolveInclude(diagnostic, workspace);
         if (action) actions.push(action);
         break;
       case CODE_MISSING_CONFIG:
-        action = await quickFixCreateConfig(diagnostic);
+        action = await quickFixCreateConfig(diagnostic, workspace);
         if (action) actions.push(action);
         break;
       case CODE_MACRO_CASE:
@@ -445,7 +447,7 @@ export async function applyQuickFixes(
         if (action) actions.push(action);
         break;
       case CODE_UNRESOLVED_LIB:
-        action = await quickFixRemoveUnresolvedLib(diagnostic);
+        action = await quickFixRemoveUnresolvedLib(diagnostic, workspace);
         if (action) actions.push(action);
         break;
     }

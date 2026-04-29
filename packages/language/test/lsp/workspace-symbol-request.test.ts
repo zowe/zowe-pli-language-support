@@ -18,6 +18,7 @@ import * as lifecycle from "../../src/workspace/lifecycle";
 import { workspaceSymbolRequest } from "../../src/language-server/workspace-symbol-request";
 import { EditorDocuments } from "../../src/language-server/text-documents";
 import { CancellationToken } from "vscode-languageserver";
+import { defaultTestWorkspace } from "../test-workspace";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
@@ -49,7 +50,7 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
     ),
   );
 
-  const handler = new CompilationUnitHandler();
+  const handler = new CompilationUnitHandler(defaultTestWorkspace());
   textDocuments.forEach((doc) => EditorDocuments.set(doc));
   await Promise.all(
     textDocuments.map(async (doc, i) => {

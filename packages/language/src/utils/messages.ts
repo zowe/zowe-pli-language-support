@@ -9,8 +9,12 @@
  *
  */
 
-export * from "./workspace/builtins";
-export * from "./workspace/file-system-provider.js";
-export * from "./language-server/connection-handler.js";
-export * from "./utils/uri";
-export * from "./utils/messages";
+/**
+ * Notification sent to the LS when the workspace's plugin configuration changes.
+ */
+export const WorkspaceDidChangePlipluginConfigNotification =
+  "workspace/didChangePlipluginConfig";
+
+export const ExistingFileRequest = "pli/existingFileRequest";
+
+export const UpdateOperation = "pli/updateOperation";

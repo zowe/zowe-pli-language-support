@@ -24,6 +24,8 @@ import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
 import { TelemetryReporter } from "@vscode/extension-telemetry";
 import { handleMissingConfig } from "../common/missing-config-handler";
 import { registerPliDocumentIdentifier } from "./document-identification";
+import { registerFileSystemProvider } from "./file-system-provider";
+import { registerProgressReporter } from "./progress";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -167,8 +169,10 @@ async function startLanguageClient(
     clientOptions,
   );
 
-  // Register custom decorator types.
+  // Register custom connection message handlers.
   registerCustomDecorators(client, settings);
+  registerFileSystemProvider(client);
+  registerProgressReporter(client);
 
   // Start the client. This will also launch the server
   await client.start();

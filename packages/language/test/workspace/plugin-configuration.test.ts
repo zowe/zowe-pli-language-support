@@ -11,91 +11,77 @@
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { UriUtils } from "../../src/utils/uri";
-import {
-  FileSystemProviderInstance,
-  setFileSystemProvider,
-  VirtualFileSystemProvider,
-} from "../../src/workspace/file-system-provider";
-import {
-  PluginConfigurationProviderInstance,
-  ProcessGroup,
-} from "../../src/workspace/plugin-configuration-provider";
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
+import { ProcessGroup } from "../../src/workspace/plugin-configuration-provider";
+import { WorkspaceContext } from "../../src/workspace/workspace-context";
+import { makeProcessGroup } from "../config-fixtures";
 
 describe("Plugin Configuration Tests", () => {
+  let vfs: VirtualFileSystemProvider;
+  let workspace: WorkspaceContext;
+
   beforeEach(() => {
-    const vfs: VirtualFileSystemProvider = new VirtualFileSystemProvider();
-    setFileSystemProvider(vfs);
+    vfs = new VirtualFileSystemProvider();
+    workspace = new WorkspaceContext(vfs);
   });
 
   afterEach(async () => {
-    PluginConfigurationProviderInstance.setProgramConfigs("", []);
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
-    setFileSystemProvider(undefined);
+    workspace.config.setProgramConfigs(UriUtils.toUri(""), []);
+    await workspace.config.setProcessGroupConfigs([]);
   });
 
   /**
    * Helper function to create a process group configuration with default values
    */
   function createProcessGroup(name: string, libs: string[]): ProcessGroup {
-    return {
+    return makeProcessGroup({
       name,
-      compilerOptions: [],
       libs,
-      $computedLibs: [],
-      $computedLibsSet: new Set<string>(),
       includeExtensions: [".inc"],
-      lspOptions: {
-        checkMargins: false,
-        instructionCounterLimit: 5000,
-        caseUpperValidation: false,
-      },
-    };
+      checkMargins: false,
+      instructionCounterLimit: 5000,
+      caseUpperValidation: false,
+    });
   }
 
   test("No libs produce no diagnostics", async () => {
-    await PluginConfigurationProviderInstance.init("file:///");
+    await workspace.config.init(UriUtils.toUri("file:///"));
 
     // set up a process group with no libs
-    const diagnostics =
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        createProcessGroup("default", []),
-      ]);
+    const diagnostics = await workspace.config.setProcessGroupConfigs([
+      createProcessGroup("default", []),
+    ]);
 
     expect(diagnostics).toEqual([]);
   });
 
   test("Valid libs produce no diagnostics", async () => {
-    await PluginConfigurationProviderInstance.init("file:///");
+    await workspace.config.init(UriUtils.toUri("file:///"));
 
     // create a virtual directory to satisfy the subsequent libs check
-    await FileSystemProviderInstance.writeFile(
+    await workspace.fs.writeFile(
       UriUtils.toUri("file:///libs/existing/dummy.pli"),
       "",
     );
 
     // set up a process group w/ a libs entry that exists
-    const diagnostics =
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        createProcessGroup("default", ["libs/existing"]),
-      ]);
+    const diagnostics = await workspace.config.setProcessGroupConfigs([
+      createProcessGroup("default", ["libs/existing"]),
+    ]);
 
     expect(diagnostics).toEqual([]);
   });
 
   test("Invalid libs produce diagnostics", async () => {
-    await PluginConfigurationProviderInstance.init("file:///");
+    await workspace.config.init(UriUtils.toUri("file:///"));
 
     // populate the virtual file system with at least one file so it's not empty
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.toUri("file:///dummy.pli"),
-      "",
-    );
+    await workspace.fs.writeFile(UriUtils.toUri("file:///dummy.pli"), "");
 
     // set up a process group with a libs entry that does not exist
-    const diagnostics =
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        createProcessGroup("default", ["nonexistent-libs"]),
-      ]);
+    const diagnostics = await workspace.config.setProcessGroupConfigs([
+      createProcessGroup("default", ["nonexistent-libs"]),
+    ]);
 
     // should generate a diagnostic for the non-existing lib
     expect(diagnostics).toHaveLength(1);
@@ -105,27 +91,26 @@ describe("Plugin Configuration Tests", () => {
   });
 
   test("Only invalid libs produce diagnostics, not valid ones", async () => {
-    await PluginConfigurationProviderInstance.init("file:///");
+    await workspace.config.init(UriUtils.toUri("file:///"));
 
-    await FileSystemProviderInstance.writeFile(
+    await workspace.fs.writeFile(
       UriUtils.toUri("file:///libs/existing1/p1.pli"),
       "",
     );
-    await FileSystemProviderInstance.writeFile(
+    await workspace.fs.writeFile(
       UriUtils.toUri("file:///libs/existing2/p2.pli"),
       "",
     );
 
-    const diagnostics =
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-        createProcessGroup("default", [
-          "libs/existing1",
-          "libs/existing2",
+    const diagnostics = await workspace.config.setProcessGroupConfigs([
+      createProcessGroup("default", [
+        "libs/existing1",
+        "libs/existing2",
 
-          "invalid1",
-          "invalid2",
-        ]),
-      ]);
+        "invalid1",
+        "invalid2",
+      ]),
+    ]);
 
     // expect diagnostics for the 2 invalid libs only
     expect(diagnostics).toHaveLength(2);
@@ -144,42 +129,33 @@ describe("Plugin Configuration Tests", () => {
     const libs = ["lib1/dir1", "lib1/dir1", "lib2/DDNAME", "lib2/DDNAME"];
     const uniqueLibs = Array.from(new Set(libs));
 
-    await FileSystemProviderInstance.writeFile(
+    await workspace.fs.writeFile(
       UriUtils.toUri("file:///lib1/dir1/p1.pli"),
       "",
     );
-    await FileSystemProviderInstance.writeFile(
-      UriUtils.toUri("file:///lib2/DDNAME(p2)"),
-      "",
-    );
+    await workspace.fs.writeFile(UriUtils.toUri("file:///lib2/DDNAME(p2)"), "");
 
     // duplicate ddnames should be filtered out in $computedLibDdnamesSet
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-      {
+    await workspace.config.setProcessGroupConfigs([
+      makeProcessGroup({
         name: "default",
-        compilerOptions: [],
         libs,
-        $computedLibs: [],
-        $computedLibsSet: new Set<string>(),
         includeExtensions: [".inc"],
-        lspOptions: {
-          checkMargins: false,
-          instructionCounterLimit: 5000,
-          caseUpperValidation: false,
-        },
-      },
+        checkMargins: false,
+        instructionCounterLimit: 5000,
+        caseUpperValidation: false,
+      }),
     ]);
 
-    // ensure $computedLibs is present w/ only one of each unique entry (2)
-    const processGroup =
-      PluginConfigurationProviderInstance.getProcessGroupConfig("default");
+    // ensure computedLibs is present w/ only one of each unique entry (2)
+    const processGroup = workspace.config.getProcessGroupConfig("default");
     expect(processGroup).toBeDefined();
-    expect(processGroup?.$computedLibs).toBeDefined();
-    expect(processGroup?.$computedLibs.length).toBe(uniqueLibs.length);
+    expect(processGroup?.computedLibs).toBeDefined();
+    expect(processGroup?.computedLibs.length).toBe(uniqueLibs.length);
 
     // check the generated libs set as well
     // should be the one dir entry, not the ddname
-    expect(processGroup?.$computedLibsSet.size).toBe(1);
-    expect(processGroup?.$computedLibsSet.has("lib1/dir1")).toBe(true);
+    expect(processGroup?.computedLibsSet.size).toBe(1);
+    expect(processGroup?.computedLibsSet.has("lib1/dir1")).toBe(true);
   });
 });

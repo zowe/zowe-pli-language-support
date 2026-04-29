@@ -35,11 +35,8 @@ import {
   BuiltinsTextDocument,
   BuiltinsUriSchema,
 } from "./builtins.js";
-import {
-  PluginConfigurationProviderInstance,
-  ProcessGroup,
-  ProgramConfig,
-} from "./plugin-configuration-provider.js";
+import { GroupRecord, ProgramRecord } from "./plugin-configuration-provider.js";
+import { WorkspaceContext } from "./workspace-context.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { createMutex, Mutex } from "./mutex.js";
 import { Deferred, isOperationCancelled } from "../utils/promises.js";
@@ -84,8 +81,8 @@ export interface CompilationUnit {
   rootScope: Scope;
   rootPreprocessorScope: Scope;
   readonly services: CompilationServices;
-  readonly programConfig: ProgramConfig | undefined;
-  readonly processGroup: ProcessGroup | undefined;
+  readonly programConfig: ProgramRecord | undefined;
+  readonly processGroup: GroupRecord | undefined;
   readonly mutex: Mutex;
   /**
    * Resets all caches associated with this compilation unit.
@@ -98,6 +95,13 @@ export interface CompilationServices {
   typeCache: TypeCache;
   includeCache: LRUCache<string, string>;
   inferer: TypeInferer;
+  /**
+   * The workspace this unit belongs to. Owns the file system provider and
+   * the plugin configuration. Replaces the `PluginConfigurationProviderInstance`
+   * and `FileSystemProviderInstance` globals: callers reach the workspace
+   * through their compilation unit.
+   */
+  workspace: WorkspaceContext;
 }
 
 const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
@@ -115,12 +119,12 @@ function isPluginConfigurationUri(uri: URI): boolean {
 
 function createBuiltinUnitGetter(
   builtinDocument: TextDocument,
-): () => Promise<CompilationUnit> {
+): (workspace: WorkspaceContext) => Promise<CompilationUnit> {
   let builtinUnit: CompilationUnit | undefined = undefined;
-  return async () => {
+  return async (workspace) => {
     if (!builtinUnit) {
       const fileUri = URI.parse(builtinDocument.uri);
-      builtinUnit = await createCompilationUnit(fileUri);
+      builtinUnit = await createCompilationUnit(fileUri, workspace);
       await tokenize(builtinUnit, builtinDocument);
       parse(builtinUnit);
       generateSymbolTable(builtinUnit);
@@ -130,14 +134,16 @@ function createBuiltinUnitGetter(
   };
 }
 
-function createBuiltinScopeGetter(unitGetter: () => Promise<CompilationUnit>) {
+function createBuiltinScopeGetter(
+  unitGetter: (workspace: WorkspaceContext) => Promise<CompilationUnit>,
+) {
   let builtinFileScope: Scope | undefined;
-  return async (uri: URI): Promise<Scope> => {
+  return async (uri: URI, workspace: WorkspaceContext): Promise<Scope> => {
     if (isBuiltinFile(uri)) {
       return Scope.createRoot();
     }
     if (!builtinFileScope) {
-      const unit = await unitGetter();
+      const unit = await unitGetter(workspace);
       builtinFileScope =
         unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot();
     }
@@ -153,12 +159,13 @@ const getRootPreprocessorScope = createBuiltinScopeGetter(getBuiltinMacroUnit);
 
 export async function createCompilationUnit(
   uri: URI,
+  workspace: WorkspaceContext,
 ): Promise<CompilationUnit> {
   const compilerOptions = getDefaultCompilerOptions();
   const baseFiles: CompilationUnit[] = [];
   if (uri.scheme !== BuiltinsUriSchema) {
-    const unit = await getBuiltinUnit();
-    const macroUnit = await getBuiltinMacroUnit();
+    const unit = await getBuiltinUnit(workspace);
+    const macroUnit = await getBuiltinMacroUnit(workspace);
     baseFiles.push(unit, macroUnit);
   }
   const services: CompilationServices = {
@@ -169,11 +176,12 @@ export async function createCompilationUnit(
       ttl: FIVE_MINUTES,
     }),
     inferer: new DefaultTypeInferer(),
+    workspace,
   };
   // Cache for programConfig and processGroup to avoid repeated lookups
   // They cannot change during the lifetime of a compilation unit anyway
-  let cachedProgramConfig: ProgramConfig | undefined | null = null;
-  let cachedProcessGroup: ProcessGroup | undefined | null = null;
+  let cachedProgramConfig: ProgramRecord | undefined | null = null;
+  let cachedProcessGroup: GroupRecord | undefined | null = null;
   const unit: CompilationUnit = {
     uri,
     services,
@@ -204,14 +212,13 @@ export async function createCompilationUnit(
       .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
         skippedCode(connection, unit);
       }),
-    rootScope: await getBuiltinScope(uri),
-    rootPreprocessorScope: await getRootPreprocessorScope(uri),
+    rootScope: await getBuiltinScope(uri, workspace),
+    rootPreprocessorScope: await getRootPreprocessorScope(uri, workspace),
     get programConfig() {
       if (cachedProgramConfig !== null) {
         return cachedProgramConfig;
       }
-      cachedProgramConfig =
-        PluginConfigurationProviderInstance.getProgramConfig(uri);
+      cachedProgramConfig = workspace.config.getProgramConfig(uri);
       return cachedProgramConfig;
     },
     get processGroup() {
@@ -219,10 +226,9 @@ export async function createCompilationUnit(
         return cachedProcessGroup;
       }
       if (this.programConfig) {
-        cachedProcessGroup =
-          PluginConfigurationProviderInstance.getProcessGroupConfig(
-            this.programConfig.pgroup,
-          );
+        cachedProcessGroup = workspace.config.getProcessGroupConfig(
+          this.programConfig.pgroup.value,
+        );
       } else {
         cachedProcessGroup = undefined;
       }
@@ -253,6 +259,16 @@ export class CompilationUnitHandler {
    */
   readonly globalMutex = createMutex();
 
+  /**
+   * Workspace context shared by every unit this handler creates. Provides
+   * the file-system provider and the plugin configuration.
+   */
+  readonly workspace: WorkspaceContext;
+
+  constructor(workspace: WorkspaceContext) {
+    this.workspace = workspace;
+  }
+
   get ready(): Promise<void> {
     return this.readyDeferred.promise;
   }
@@ -275,7 +291,7 @@ export class CompilationUnitHandler {
     }
     if (isPluginConfigurationUri(uri)) {
       return undefined;
-    } else if (!PluginConfigurationProviderInstance.isLibFileCandidate(uri)) {
+    } else if (!this.workspace.config.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
       const unit = await this.createAndStoreCompilationUnit(uri);
       return unit;
@@ -286,7 +302,7 @@ export class CompilationUnitHandler {
   }
 
   async createAndStoreCompilationUnit(uri: URI): Promise<CompilationUnit> {
-    const unit = await createCompilationUnit(uri);
+    const unit = await createCompilationUnit(uri, this.workspace);
     this.compilationUnits.set(uri.toString(), unit);
     return unit;
   }

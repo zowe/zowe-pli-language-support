@@ -14,36 +14,53 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { Diagnostic as LspDiagnostic } from "vscode-languageserver-types";
 import {
   Diagnostic,
-  Range,
   diagnosticFromCodeAtRange,
   offsetLengthToRange,
   rangeToLSP,
   severityToLsp,
 } from "../language-server/types";
+import { mergeAbstractOptions } from "../config/compiler-options-merge";
+import { expandGroup } from "../config/lib-expander";
 import {
-  AbstractCompilerOptions,
-  parseAbstractCompilerOptions,
-} from "../preprocessor/compiler-options/parser";
+  parseProcessGroupConfigs,
+  parseProgramConfigs,
+} from "../config/loader";
+import {
+  GroupRecord,
+  isLibsDir,
+  PgmsConfig,
+  plainItem,
+  ProcessGroup,
+  ProgramConfig,
+  ProgramRecord,
+} from "../config/schema";
 import { isBoolean, isNumber, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
-import { FileSystemProviderInstance } from "./file-system-provider";
+import { FileSystemProvider } from "./file-system-provider";
 import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
 import { PluginConfiguration } from "../language-server/constants";
-import {
-  jsoncFindNodeAtLocation,
-  jsoncParseTree,
-  jsoncParse,
-  jsoncPrintParseErrorCode,
-  type JSONPath,
-  type JsonNode,
-  type ParseError,
-} from "../utils/jsonc";
+import { type JSONPath } from "../utils/jsonc";
 import { LspCodes } from "../validation/lsp-codes";
+import { Connection } from "vscode-languageserver";
+import { startLongRunningOperation } from "../utils/promises";
 
-/**
- * Pli options are effectively macros to set w/ the given values
- */
-export type PliOptions = Record<string, string>;
+// Re-export the schema types so existing imports of the provider module
+// keep working without churn at every call site.
+export {
+  isLibsDir,
+  plainItem,
+  type GroupRecord,
+  type JsonItem,
+  type JsonItemMeta,
+  type LibsDDEntry,
+  type LibsDirEntry,
+  type LibsEntry,
+  type PgmsConfig,
+  type ProcessGroup,
+  type ProgramConfig,
+  type ProgramEntry,
+  type ProgramRecord,
+} from "../config/schema";
 
 /** On LSP diagnostics for {@link LspCodes.PluginConfiguration.UnresolvedEntry}; use in code actions. */
 export type PluginConfigUnresolvedLibData = {
@@ -52,172 +69,12 @@ export type PluginConfigUnresolvedLibData = {
   path?: JSONPath;
 };
 
-export type JsonItem<T> = {
-  value: T;
-  meta?: JsonItemMeta;
-};
-
-export type JsonItemMeta = {
-  range: Range;
-  uri: URI;
-  path: JSONPath;
-};
-
-export type PropertyItems = Map<string, JsonItem<unknown>[]>;
-
 /**
- * Program configuration. Corresponds to the entry point of a compile unit
- * and the process group that it belongs to.
+ * Plain-object form of a process group config — what `proc_grps.json`
+ * deserializes to before {@link deserializeProcessGroup} wraps each leaf
+ * in a {@link JsonItem}. Kept exported because tests construct fixtures
+ * in this shape.
  */
-export interface ProgramConfig {
-  program: string;
-  pgroup: string;
-  compilerOptions?: string[];
-
-  /**
-   * Prebuilt abstract options for this program config.
-   * This is built from the program group's compiler options + pli-options,
-   * and includes this config's pli-options as well.
-   * This is used to avoid re-parsing the options every time we need them for any programs recognized by this config.
-   */
-  abstractOptions?: AbstractCompilerOptions;
-  /**
-   * Number of issues found in the pli-options for this program config (which generate compiler options)
-   * Used to avoid duplicate issue reporting later on when running translation in a program context
-   */
-  issues?: Diagnostic[];
-}
-
-interface SerializedProgramConfig {
-  program: string;
-  pgroup: string;
-  "compiler-options"?: string[];
-}
-
-function deserializeProgramConfig(obj: SerializedProgramConfig): ProgramConfig {
-  const compilerOptions = obj["compiler-options"] || [];
-  return {
-    program: obj.program,
-    pgroup: obj.pgroup,
-    compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
-  };
-}
-
-/**
- * Process group configuration. Corresponds to libraries, compiler options, and other
- * settings that are associated with a program config.
- */
-export interface ProcessGroup {
-  name: string;
-  compilerOptions: string[];
-
-  /**
-   * Actual libs as they're loaded from the config on disk.
-   * Feeds into computed libs, not directly used for resolving includes.
-   */
-  libs: string[];
-
-  /**
-   * Computed libs, includes libs from discs, sub dirs of libs, & dd names.
-   * DD name entries are derived from files like `abc(member)`, which produce a ddname of `abc`.
-   * This is populated after reading the configs, not serialized like regular 'libs'.
-   * Used to resolve includes.
-   */
-  $computedLibs: LibsEntry[];
-
-  /**
-   * Set of computed libs for fast lookup.
-   * Only contains directory entries, not DD name entries, which are partial.
-   * Used to find process groups from a lib URI
-   */
-  $computedLibsSet: Set<string>;
-
-  includeExtensions: string[];
-  lspOptions: {
-    checkMargins: boolean;
-    instructionCounterLimit: number;
-    caseUpperValidation: boolean;
-  };
-
-  /**
-   * Whether member name validation is enabled for this process group.
-   * Validation constraints member names to no more than 8 chars, starting with a letter,
-   * and only containing A-Z, 0-9, @, #, _, and $ (case insensitively).
-   */
-  memberNameValidation?: boolean;
-
-  /**
-   * Number of issues found in the compiler options for this process group.
-   * Used to avoid duplicate issue reporting later on when running translation in a program context
-   */
-  issueCount?: number;
-
-  /**
-   * Source metadata per property path in proc_grps.json.
-   * Example keys: "name", "libs", "include-extensions", "lsp-options.check-margins".
-   * Each key maps to all parsed occurrences so duplicates keep unique identity.
-   */
-  $propertyItems?: PropertyItems;
-}
-
-/**
- * Deserializes a process group config from a plain object.
- * Generates an empty $computedLibs array in the process, but does not populate it
- */
-export function deserializeProcessGroup(
-  obj: SerializedProcessGroup,
-): ProcessGroup {
-  const compilerOptions = obj["compiler-options"] || [];
-  const includeExtensions = obj["include-extensions"] || [];
-  const libs = obj.libs || [];
-  const lspOptions = obj["lsp-options"] || {};
-  const checkMargins = lspOptions["check-margins"] ?? false;
-  const instructionCounterLimit = lspOptions["instruction-counter-limit"];
-  const memberNameValidation = obj["member-name-validation"];
-  return {
-    name: obj.name,
-    compilerOptions: isStringArray(compilerOptions) ? compilerOptions : [],
-    libs: isStringArray(libs) ? libs : [],
-    $computedLibs: [],
-    $computedLibsSet: new Set<string>(),
-    includeExtensions: isStringArray(includeExtensions)
-      ? includeExtensions
-      : [],
-    lspOptions: {
-      checkMargins: isBoolean(checkMargins) ? checkMargins : false,
-      instructionCounterLimit: isNumber(instructionCounterLimit)
-        ? instructionCounterLimit
-        : MAX_INSTRUCTION_COUNTER,
-      caseUpperValidation: isBoolean(lspOptions["case-upper-validation"])
-        ? lspOptions["case-upper-validation"]
-        : true,
-    },
-    memberNameValidation: isBoolean(memberNameValidation)
-      ? memberNameValidation
-      : undefined,
-    $propertyItems: new Map<string, JsonItem<unknown>[]>(),
-  };
-}
-
-/**
- * Serializes a process group config to a plain object.
- * Drops computed fields in the process (such as $computedLibs)
- */
-export function serializeProcessGroup(
-  group: ProcessGroup,
-): SerializedProcessGroup {
-  return {
-    name: group.name,
-    "compiler-options": group.compilerOptions,
-    libs: group.libs,
-    "include-extensions": group.includeExtensions,
-    "member-name-validation": group.memberNameValidation,
-    "lsp-options": {
-      "check-margins": group.lspOptions.checkMargins,
-    },
-  };
-}
-
 interface SerializedProcessGroup {
   name: string;
   "compiler-options"?: string[];
@@ -232,37 +89,51 @@ interface SerializedProcessGroup {
 }
 
 /**
- * Library entry, either a directory or a DD entry
+ * Builds a {@link ProcessGroup} from a plain object — used by tests that
+ * construct fixtures in the on-disk JSON shape. Production loading goes
+ * through {@link parseProcessGroupConfigs} (in `config/loader.ts`), which
+ * preserves source provenance; this helper produces JsonItems with no
+ * meta because there is no source text to point at.
  */
-export type LibsEntry = LibsDirEntry | LibsDDEntry;
-
-/**
- * Library directory entry
- */
-export interface LibsDirEntry {
-  dir: string;
+export function deserializeProcessGroup(
+  obj: SerializedProcessGroup,
+): ProcessGroup {
+  const compilerOptions = obj["compiler-options"] || [];
+  const includeExtensions = obj["include-extensions"] || [];
+  const libs = obj.libs || [];
+  const lspOptions = obj["lsp-options"] || {};
+  const checkMargins = lspOptions["check-margins"] ?? false;
+  const instructionCounterLimit = lspOptions["instruction-counter-limit"];
+  const memberNameValidation = obj["member-name-validation"];
+  return {
+    name: plainItem(obj.name),
+    compilerOptions: (isStringArray(compilerOptions)
+      ? compilerOptions
+      : []
+    ).map(plainItem),
+    libs: (isStringArray(libs) ? libs : []).map(plainItem),
+    includeExtensions: (isStringArray(includeExtensions)
+      ? includeExtensions
+      : []
+    ).map(plainItem),
+    lspOptions: {
+      checkMargins: plainItem(isBoolean(checkMargins) ? checkMargins : false),
+      instructionCounterLimit: plainItem(
+        isNumber(instructionCounterLimit)
+          ? instructionCounterLimit
+          : MAX_INSTRUCTION_COUNTER,
+      ),
+      caseUpperValidation: plainItem(
+        isBoolean(lspOptions["case-upper-validation"])
+          ? lspOptions["case-upper-validation"]
+          : true,
+      ),
+    },
+    memberNameValidation: isBoolean(memberNameValidation)
+      ? plainItem(memberNameValidation)
+      : undefined,
+  };
 }
-
-/**
- * Library DD name entry
- */
-export interface LibsDDEntry {
-  ddLib: string;
-}
-
-export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
-  return (entry as LibsDirEntry).dir !== undefined;
-}
-
-/** ProgramEntry: Represents a single program entry in the program configuration file. */
-export type ProgramEntry = {
-  program: string;
-  pgroup: string;
-};
-/** ProgramConfig: Represents the structure of the program configuration file. */
-export type PgmsConfig = {
-  pgms: ProgramEntry[];
-};
 
 export type PluginConfigDiagnostics = Map<string, LspDiagnostic[]>;
 
@@ -278,26 +149,31 @@ type ProcGrpsSnapshot = {
  */
 export class PluginConfigurationProvider {
   /**
-   * Prebuilt list of glob patterns for library file matching.
+   * Direct prefix-and-extension index for library file membership checks.
+   * Maps a lower-cased URI prefix (`<workspace>/<libDir>/`) to the set of
+   * lower-cased extensions allowed in that lib. A file is a lib candidate
+   * iff its parent directory matches a prefix and its extension matches the
+   * prefix's set. Replaces the previous minimatch-based glob patterns —
+   * cheaper per call and avoids depending on minimatch for this hot path.
    */
-  private libFileGlobPatterns: string[] | undefined;
+  private libFileMatchers: Map<string, Set<string>> | undefined;
 
   /**
    * Map of program configs, keyed by their entry program.
    * These correspond to the entry point of a compile unit.
    */
-  private programConfigs: Map<string, ProgramConfig>;
+  private programConfigs: Map<string, ProgramRecord>;
 
   /**
    * Map of process group configs, keyed by their group name.
    * These serve as a collection of libraries, compiler options, and other settings.
    */
-  private processGroupConfigs: Map<string, ProcessGroup>;
+  private processGroupConfigs: Map<string, GroupRecord>;
 
   /**
    * The workspace path that we're initialized with.
    */
-  private workspacePath: string;
+  private workspacePath: URI;
 
   /**
    * Last unresolved lib entries from the most recent postProcessProcessGroups run.
@@ -306,10 +182,25 @@ export class PluginConfigurationProvider {
    */
   private lastProcGrpsSnapshot?: ProcGrpsSnapshot;
 
-  constructor() {
-    this.programConfigs = new Map<string, ProgramConfig>();
-    this.processGroupConfigs = new Map<string, ProcessGroup>();
-    this.workspacePath = ""; // empty workspace to start with
+  /**
+   * File system provider this configuration loads through. Injected at
+   * construction so the provider has no dependency on a global FS singleton.
+   */
+  private readonly fs: FileSystemProvider;
+
+  /**
+   * Connection used to send status updates about file loading and config parsing.
+   * In some cases, such as when working with remote file system, loading and processing of config files can be slow.
+   * Having the connection allows us to send progress updates to the client, so the user knows something is happening.
+   */
+  private readonly connection: Connection | undefined;
+
+  constructor(fs: FileSystemProvider, connection?: Connection) {
+    this.fs = fs;
+    this.connection = connection;
+    this.programConfigs = new Map<string, ProgramRecord>();
+    this.processGroupConfigs = new Map<string, GroupRecord>();
+    this.workspacePath = UriUtils.parse(""); // empty workspace to start with
   }
 
   /**
@@ -325,57 +216,83 @@ export class PluginConfigurationProvider {
    * @param workspacePath The full path to the workspace to load plugin configurations from
    * @returns Diagnostics keyed by config URI
    */
-  public async init(workspacePath: string): Promise<PluginConfigDiagnostics> {
+  public async init(workspacePath: URI): Promise<PluginConfigDiagnostics> {
     this.workspacePath = workspacePath;
     return this.loadConfigurations();
   }
 
   /**
-   * Builds and saves the glob patterns for library file matching.
-   * Omits DD entries, only includes directory-based libs.
-   * Patterns are prefixed with the workspace path and are intended to match full file paths.
+   * Builds the per-prefix extension index used by `isLibFileCandidate`.
+   * Omits DD entries (members live as `name(member)` files; their parent
+   * dirs are not "lib directories" in the file-membership sense).
    */
-  private buildLibFileGlobPatterns(): void {
-    const patterns: string[] = [];
-    // Normalize workspace path for URI prefix
-    let wsPrefix = this.workspacePath;
+  private buildLibFileMatchers(): void {
+    let wsPrefix = this.workspacePath.toString(true).toLowerCase();
     if (wsPrefix && !wsPrefix.endsWith("/")) {
       wsPrefix += "/";
     }
+    const matchers = new Map<string, Set<string>>();
     for (const processGroup of this.processGroupConfigs.values()) {
-      const computedLibs = processGroup.$computedLibs;
-      const extensions = processGroup.includeExtensions;
-      for (let lib of computedLibs) {
-        if (isLibsDir(lib)) {
-          const entry = lib.dir.replace(/[\\/]+$/, "");
-          for (const ext of extensions) {
-            patterns.push(`${wsPrefix}${entry}/*${ext}`);
-          }
+      const exts = processGroup.includeExtensions.map((item) =>
+        (item.value.startsWith(".")
+          ? item.value
+          : `.${item.value}`
+        ).toLowerCase(),
+      );
+      if (exts.length === 0) {
+        continue;
+      }
+      for (const lib of processGroup.computedLibs) {
+        if (!isLibsDir(lib)) {
+          continue;
+        }
+        const dir = lib.path.replace(/[\\/]+$/, "").toLowerCase();
+        const prefix = `${wsPrefix}${dir}/`;
+        let set = matchers.get(prefix);
+        if (!set) {
+          set = new Set<string>();
+          matchers.set(prefix, set);
+        }
+        for (const ext of exts) {
+          set.add(ext);
         }
       }
     }
-    this.libFileGlobPatterns = patterns;
+    this.libFileMatchers = matchers;
   }
 
   /**
-   * Checks if the given file path matches any known library file pattern.
-   * Patterns are memoized and rebuilt when process group configs change.
-   * @param filePath The file path to check for library membership
-   * @returns true if the file path matches any library file pattern, false otherwise
+   * Checks whether a URI looks like a file inside one of the configured
+   * lib directories (and matches one of that lib's allowed extensions).
+   * Used to decide whether a file should get its own compilation unit.
    */
   public isLibFileCandidate(uri: URI): boolean {
-    if (!this.libFileGlobPatterns) {
-      this.buildLibFileGlobPatterns();
+    if (!this.libFileMatchers) {
+      this.buildLibFileMatchers();
     }
-    // normalize a bit
-    const filePath = uri.toString(true).replace(/[\\/]+$/, "");
-    const patterns = this.libFileGlobPatterns || [];
-    for (const pattern of patterns) {
-      if (minimatch(filePath, pattern, { nocase: true })) {
-        return true;
-      }
+    const matchers = this.libFileMatchers!;
+    if (matchers.size === 0) {
+      return false;
     }
-    return false;
+    const filePath = uri
+      .toString(true)
+      .replace(/[\\/]+$/, "")
+      .toLowerCase();
+    const lastSlash = filePath.lastIndexOf("/");
+    if (lastSlash < 0) {
+      return false;
+    }
+    const dirPart = filePath.substring(0, lastSlash + 1);
+    const exts = matchers.get(dirPart);
+    if (!exts) {
+      return false;
+    }
+    const fileName = filePath.substring(lastSlash + 1);
+    const dotIdx = fileName.lastIndexOf(".");
+    if (dotIdx < 0) {
+      return false;
+    }
+    return exts.has(fileName.substring(dotIdx));
   }
 
   /**
@@ -396,14 +313,17 @@ export class PluginConfigurationProvider {
   private async loadConfigurations(): Promise<PluginConfigDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
 
-    // load configs
+    const cancel = startLongRunningOperation(
+      this.connection,
+      "Processing plugin configuration...",
+    );
     const programConfigDiagnostics = await this.loadProgramConfig(
       UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
     );
-
     const processGroupDiagnostics = await this.loadProcessGroupConfig(
       UriUtils.joinPath(workspaceUri, ".pliplugin", "proc_grps.json"),
     );
+    cancel();
     return new Map<string, LspDiagnostic[]>([
       [this.getConfigUri("pgm_conf.json"), programConfigDiagnostics],
       [this.getConfigUri("proc_grps.json"), processGroupDiagnostics],
@@ -419,9 +339,8 @@ export class PluginConfigurationProvider {
   ): Promise<LspDiagnostic[]> {
     const diagnostics: LspDiagnostic[] = [];
     // attempt to read configs
-    if (await FileSystemProviderInstance.fileExists(programConfigUri)) {
-      const progConfig =
-        await FileSystemProviderInstance.readFile(programConfigUri);
+    if (await this.fs.fileExists(programConfigUri)) {
+      const progConfig = await this.fs.readFile(programConfigUri);
 
       // add configs to our provider if they exist
       if (progConfig !== undefined) {
@@ -459,9 +378,9 @@ export class PluginConfigurationProvider {
   public async writeProcessGroupsFile(
     content = PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
   ): Promise<void> {
-    const workspaceUri = UriUtils.toUri(this.getWorkspacePath());
+    const workspaceUri = this.getWorkspacePath();
     try {
-      await FileSystemProviderInstance.writeFile(
+      await this.fs.writeFile(
         UriUtils.joinPath(
           workspaceUri,
           PluginConfiguration.PROCESS_GROUP_FILE_PATH,
@@ -497,9 +416,9 @@ export class PluginConfigurationProvider {
   public async writeProgramConfigFile(
     content: PgmsConfig = PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
   ): Promise<void> {
-    const workspaceUri = UriUtils.toUri(this.getWorkspacePath());
+    const workspaceUri = this.getWorkspacePath();
     try {
-      await FileSystemProviderInstance.writeFile(
+      await this.fs.writeFile(
         UriUtils.joinPath(workspaceUri, PluginConfiguration.PROGRAM_FILE_PATH),
         JSON.stringify(content, null, 2),
       );
@@ -510,9 +429,9 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Return the workspace path that this provider was initialized with
+   * Return the workspace URI that this provider was initialized with
    */
-  public getWorkspacePath(): string {
+  public getWorkspacePath(): URI {
     return this.workspacePath;
   }
 
@@ -524,10 +443,8 @@ export class PluginConfigurationProvider {
   private async loadProcessGroupConfig(
     processGroupConfigUri: URI,
   ): Promise<LspDiagnostic[]> {
-    if (await FileSystemProviderInstance.fileExists(processGroupConfigUri)) {
-      const processGrpConfig = await FileSystemProviderInstance.readFile(
-        processGroupConfigUri,
-      );
+    if (await this.fs.fileExists(processGroupConfigUri)) {
+      const processGrpConfig = await this.fs.readFile(processGroupConfigUri);
 
       if (processGrpConfig !== undefined) {
         try {
@@ -553,9 +470,11 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Go through all process groups & expand libs recursively to ensure all libs are findable when searching
-   * Populates the $computedLibs property of each process group, which is used to resolve includes
-   * @returns List of diagnostics encountered during processing
+   * Expands every process group's libs via the lib-expander, populates each
+   * record's `computedLibs`/`computedLibsSet` fields, and converts
+   * unresolved libs into LSP diagnostics. The classification (directory vs
+   * dataset vs unresolved) lives in `lib-expander.ts` and is driven by
+   * `stat` — not by exception handling.
    */
   private async postProcessProcessGroups(
     configDocument?: TextDocument,
@@ -563,124 +482,37 @@ export class PluginConfigurationProvider {
     this.lastProcGrpsSnapshot = undefined;
     const unresolvedLibEntries: PluginConfigUnresolvedLibData[] = [];
     const diagnostics: LspDiagnostic[] = [];
-    for (const processGroup of this.processGroupConfigs.values()) {
-      // all computed libs for this group, dirs + ddnames
-      // @montymxb Using a map here to avoid duplicates over a set, since our entries are objects.
-      //  A set will compare by ref instead of value, seeing each entry as unique, and adding duplicate lib entries.
-      //  That doesn't lead to any issues, but it adds extra entries that we have to look through later on.
-      const computedLibsMap: Map<string, LibsEntry> = new Map();
-      const libsToProcess = [...processGroup.libs];
-      while (libsToProcess.length > 0) {
-        const lib = libsToProcess.shift();
-        if (lib) {
-          // read all files in this lib path
-          // add any contained directories to the libs list, as well as the toProcess list
-          let libUri: URI;
-          const absPathRegex = /^\/|[A-Z]:|~/i;
-          if (absPathRegex.test(lib)) {
-            libUri = UriUtils.toUri(lib);
-          } else {
-            libUri = UriUtils.joinPath(UriUtils.toUri(this.workspacePath), lib);
-          }
 
-          try {
-            const entries = await FileSystemProviderInstance.readDir(libUri);
-            // add the lib itself first, since we know it exists now
-            computedLibsMap.set(`dir:${lib}`, {
-              dir: lib,
-            });
-            if (entries.length) {
-              for (const fileName of entries) {
-                // TODO @montymxb Nov. 7th, 2025: Handle stat checks in parallel to avoid blocking so long,
-                // see https://github.com/zowe/zowe-pli-language-support/issues/465
-                const stats = await FileSystemProviderInstance.stat(
-                  UriUtils.joinPath(libUri, fileName),
-                );
-                if (stats.isDirectory) {
-                  // directory to add for handling
-                  libsToProcess.push(`${lib}/${fileName}`);
-                  // also add to the full libs list
-                  const dir = `${lib}/${fileName}`;
-                  computedLibsMap.set(`dir:${dir}`, {
-                    dir,
-                  });
-                }
-              }
-            }
-          } catch (e) {
-            // could not read, try again to retrieve & read the parent directory
-            // take its entries to see if our lib exists as a file or directory
-            // if so, add it as a ddLib entry instead
-            const parentUri = UriUtils.dirname(libUri);
-            const libName = UriUtils.basename(libUri);
-            try {
-              const parentEntries =
-                await FileSystemProviderInstance.readDir(parentUri);
-              const ddnamePattern = new RegExp(`^${libName}\\(`, "i");
-              let matched = false;
-              for (const entry of parentEntries) {
-                if (ddnamePattern.test(entry)) {
-                  // found a ddname-style entry, add full lib & break out, only need one to confirm
-                  computedLibsMap.set(`dd:${lib}`, {
-                    ddLib: lib,
-                  });
-                  matched = true;
-                  break;
-                }
-              }
-
-              if (!matched) {
-                // no matches found, rethrow to generate diagnostic
-                throw e;
-              }
-            } catch (parentError) {
-              // parent directory also failed to read, skip this lib & collect diagnostic
-              const fallbackRange = offsetLengthToRange(0, 1);
-              const item = this.takeNextPropertyItem(processGroup, "libs", lib);
-              const range = item?.meta?.range ?? fallbackRange;
-              const unresolvedLibDiagnostic: Diagnostic = {
-                ...diagnosticFromCodeAtRange(
-                  LspCodes.PluginConfiguration.UnresolvedEntry,
-                  range,
-                  lib,
-                ),
-                data: {
-                  lib,
-                  pgroup: processGroup.name,
-                  path: item?.meta?.path,
-                },
-              };
-              unresolvedLibEntries.push({
-                lib,
-                pgroup: processGroup.name,
-                path: item?.meta?.path,
-              });
-              diagnostics.push(
-                this.toLspDiagnostic(unresolvedLibDiagnostic, configDocument),
-              );
-            }
-          }
-        }
-      }
-      // get computed libs in sorted order, depth 1st, alpha 2nd
-      const computedLibs = Array.from(computedLibsMap.values()).sort((a, b) => {
-        const aKey = isLibsDir(a) ? a.dir : a.ddLib;
-        const bKey = isLibsDir(b) ? b.dir : b.ddLib;
-        const aDepth = (aKey.match(/\//g) || []).length;
-        const bDepth = (bKey.match(/\//g) || []).length;
-        if (aDepth - bDepth === 0) {
-          return aKey.localeCompare(bKey);
-        }
-        return aDepth - bDepth;
-      });
-      processGroup.$computedLibs = computedLibs;
-      // build a lookup set for dir entries only
-      processGroup.$computedLibsSet = new Set(
-        computedLibs
-          .filter((e) => isLibsDir(e))
-          .map((e) => e.dir.replace(/\\/g, "/")),
+    for (const record of this.processGroupConfigs.values()) {
+      const expanded = await expandGroup(
+        record.libs,
+        this.fs,
+        this.workspacePath,
       );
+      record.computedLibs = expanded.libs;
+      record.computedLibsSet = expanded.libsSet;
+
+      const pgroupName = record.name.value;
+      for (const libItem of expanded.unresolved) {
+        const fallbackRange = offsetLengthToRange(0, 1);
+        const range = libItem.meta?.range ?? fallbackRange;
+        const path = libItem.meta?.path;
+        const lib = libItem.value;
+        const unresolvedLibDiagnostic: Diagnostic = {
+          ...diagnosticFromCodeAtRange(
+            LspCodes.PluginConfiguration.UnresolvedEntry,
+            range,
+            lib,
+          ),
+          data: { lib, pgroup: pgroupName, path },
+        };
+        unresolvedLibEntries.push({ lib, pgroup: pgroupName, path });
+        diagnostics.push(
+          this.toLspDiagnostic(unresolvedLibDiagnostic, configDocument),
+        );
+      }
     }
+
     if (configDocument) {
       this.lastProcGrpsSnapshot = {
         entries: unresolvedLibEntries,
@@ -700,32 +532,14 @@ export class PluginConfigurationProvider {
   private postProcessProgramConfigs() {
     for (const programConfig of this.programConfigs.values()) {
       const processGroupConfig = this.getProcessGroupConfig(
-        programConfig.pgroup,
+        programConfig.pgroup.value,
       );
-
-      // Collect and parse compiler options from both program and process group
-      // and parse them individually to accept working ones even if some have parser errors.
-      const compilerOptions = [
-        ...(programConfig.compilerOptions ?? []),
-        ...(processGroupConfig?.compilerOptions ?? []),
-      ];
-
-      const abstractOptions: AbstractCompilerOptions = {
-        options: [],
-        tokens: [],
-        issues: [],
-        comments: [],
-      };
-
-      for (const option of compilerOptions) {
-        const parsed = parseAbstractCompilerOptions(option);
-        abstractOptions.options.push(...parsed.options);
-        abstractOptions.tokens.push(...parsed.tokens);
-        abstractOptions.issues.push(...parsed.issues);
-      }
-
+      const { abstractOptions, issues } = mergeAbstractOptions(
+        programConfig.compilerOptions,
+        processGroupConfig?.compilerOptions,
+      );
       programConfig.abstractOptions = abstractOptions;
-      programConfig.issues = abstractOptions.issues;
+      programConfig.issues = issues;
     }
   }
 
@@ -737,42 +551,18 @@ export class PluginConfigurationProvider {
    * @returns Whether or not parsing & setup was successful
    */
   parseProgramConfigs(
-    workspacePath: string,
+    workspacePath: URI,
     text: string,
     diagnostics: LspDiagnostic[] = [],
   ): boolean {
-    try {
-      const parseErrors: ParseError[] = [];
-      const parsed = jsoncParse(text, parseErrors) as
-        | { pgms?: SerializedProgramConfig[] }
-        | undefined;
-      const document = this.createConfigTextDocument("pgm_conf.json", text);
-      diagnostics.push(
-        ...this.createJsonParseDiagnostics(
-          document,
-          parseErrors,
-          "pgm_conf.json",
-        ),
-      );
-      if (parseErrors.length > 0 || !Array.isArray(parsed?.pgms)) {
-        if (!Array.isArray(parsed?.pgms)) {
-          diagnostics.push(
-            this.createConfigStructureDiagnostic(
-              document,
-              "pgm_conf.json",
-              "pgms array",
-            ),
-          );
-        }
-        return false;
-      }
-      const serializedData = parsed.pgms;
-      const programConfigs = serializedData.map(deserializeProgramConfig);
-      this.setProgramConfigs(workspacePath, programConfigs);
-      return true;
-    } catch {
+    const configUri = UriUtils.toUri(this.getConfigUri("pgm_conf.json"));
+    const result = parseProgramConfigs(text, configUri);
+    diagnostics.push(...result.diagnostics);
+    if (!result.config) {
       return false;
     }
+    this.setProgramConfigs(workspacePath, result.config);
+    return true;
   }
 
   /**
@@ -783,15 +573,24 @@ export class PluginConfigurationProvider {
    * @param programConfigs Program configs loaded from .pliplugin/pgm_conf.json (when present)
    */
   public setProgramConfigs(
-    workspacePath: string,
+    workspaceUri: URI,
     programConfigs: ProgramConfig[],
   ): void {
     this.programConfigs.clear();
-    const workspaceUri = UriUtils.toUri(workspacePath);
 
     for (const config of programConfigs) {
-      const resolvedUri = this.resolveProgramPath(config.program, workspaceUri);
-      this.programConfigs.set(resolvedUri.toString(), config);
+      const resolvedUri = this.resolveProgramPath(
+        config.program.value,
+        workspaceUri,
+      );
+      // Wrap the loaded config into a ProgramRecord. `abstractOptions` and
+      // `issues` are filled in by `postProcessProgramConfigs` once the
+      // bound process group is also available.
+      this.programConfigs.set(resolvedUri.toString(), {
+        ...config,
+        abstractOptions: { options: [], tokens: [], issues: [], comments: [] },
+        issues: [],
+      });
     }
     this.postProcessProgramConfigs();
   }
@@ -829,91 +628,21 @@ export class PluginConfigurationProvider {
   public async parseProcessGroupConfigs(
     text: string,
   ): Promise<LspDiagnostic[]> {
-    try {
-      const diagnostics: LspDiagnostic[] = [];
-      const parseErrors: ParseError[] = [];
-      const parsed = jsoncParse(text, parseErrors) as
-        | { pgroups?: SerializedProcessGroup[] }
-        | undefined;
-      const document = this.createConfigTextDocument("proc_grps.json", text);
-      diagnostics.push(
-        ...this.createJsonParseDiagnostics(
-          document,
-          parseErrors,
-          "proc_grps.json",
-        ),
-      );
-      if (parseErrors.length > 0 || !Array.isArray(parsed?.pgroups)) {
-        if (!Array.isArray(parsed?.pgroups)) {
-          diagnostics.push(
-            this.createConfigStructureDiagnostic(
-              document,
-              "proc_grps.json",
-              "pgroups array",
-            ),
-          );
-        }
-        return diagnostics;
-      }
-      const serializedData: SerializedProcessGroup[] = parsed.pgroups;
-      const groupConfigs = serializedData.map(deserializeProcessGroup);
-      this.attachProcessGroupPropertyItems(
-        text,
-        groupConfigs,
-        UriUtils.toUri(document.uri),
-      );
-      const processingDiagnostics = await this.setProcessGroupConfigs(
-        groupConfigs,
-        document,
-      );
-      this.postProcessProgramConfigs();
-      return [...diagnostics, ...processingDiagnostics];
-    } catch {
-      return [];
+    const configUriString = this.getConfigUri("proc_grps.json");
+    const document = TextDocument.create(configUriString, "jsonc", 0, text);
+    const result = parseProcessGroupConfigs(
+      text,
+      UriUtils.toUri(configUriString),
+    );
+    if (!result.config) {
+      return result.diagnostics;
     }
-  }
-
-  private createJsonParseDiagnostics(
-    document: TextDocument,
-    parseErrors: ParseError[],
-    fileName: string,
-  ): LspDiagnostic[] {
-    return parseErrors.map((error) => {
-      const range = offsetLengthToRange(error.offset, error.length);
-      return this.toLspDiagnostic(
-        diagnosticFromCodeAtRange(
-          LspCodes.PluginConfiguration.ParseError,
-          range,
-          fileName,
-          jsoncPrintParseErrorCode(error.error),
-        ),
-        document,
-      );
-    });
-  }
-
-  private createConfigStructureDiagnostic(
-    document: TextDocument,
-    fileName: string,
-    expected: string,
-  ): LspDiagnostic {
-    return this.toLspDiagnostic(
-      diagnosticFromCodeAtRange(
-        LspCodes.PluginConfiguration.InvalidStructure,
-        offsetLengthToRange(0, 1),
-        fileName,
-        expected,
-      ),
+    const processingDiagnostics = await this.setProcessGroupConfigs(
+      result.config,
       document,
     );
-  }
-
-  private createConfigTextDocument(
-    fileName: string,
-    text: string,
-  ): TextDocument {
-    const uri = this.getConfigUri(fileName);
-    return TextDocument.create(uri, "jsonc", 0, text);
+    this.postProcessProgramConfigs();
+    return [...result.diagnostics, ...processingDiagnostics];
   }
 
   private getConfigUri(fileName: string): string {
@@ -946,138 +675,6 @@ export class PluginConfigurationProvider {
     };
   }
 
-  private attachProcessGroupPropertyItems(
-    text: string,
-    processGroups: ProcessGroup[],
-    configUri: URI,
-  ): void {
-    const root = jsoncParseTree(text);
-    if (!root) {
-      return;
-    }
-    const pgroupsNode = jsoncFindNodeAtLocation(root, ["pgroups"]);
-    if (!pgroupsNode || !pgroupsNode.children) {
-      return;
-    }
-    const count = Math.min(processGroups.length, pgroupsNode.children.length);
-
-    for (let i = 0; i < count; i++) {
-      const groupNode = pgroupsNode.children[i];
-      if (!groupNode) {
-        continue;
-      }
-      const items: PropertyItems =
-        processGroups[i].$propertyItems ??
-        new Map<string, JsonItem<unknown>[]>();
-      this.collectJsonItems(groupNode, items, [], configUri, ["pgroups", i]);
-      processGroups[i].$propertyItems = items;
-    }
-  }
-
-  private collectJsonItems(
-    node: JsonNode | undefined,
-    items: PropertyItems,
-    pathSegments: JSONPath,
-    configUri: URI,
-    rootPrefix: JSONPath,
-  ): void {
-    if (!node) {
-      return;
-    }
-
-    if (node.type === "object" && node.children) {
-      for (const property of node.children) {
-        const keyNode = property.children?.[0];
-        const valueNode = property.children?.[1];
-
-        const key = typeof keyNode?.value === "string" ? keyNode.value : "";
-        if (!key) {
-          continue;
-        }
-
-        this.collectJsonItems(
-          valueNode,
-          items,
-          [...pathSegments, key],
-          configUri,
-          rootPrefix,
-        );
-      }
-      return;
-    }
-    if (node.type === "array" && node.children) {
-      for (let index = 0; index < node.children.length; index++) {
-        const child = node.children[index];
-        this.collectJsonItems(
-          child,
-          items,
-          [...pathSegments, index],
-          configUri,
-          rootPrefix,
-        );
-      }
-      return;
-    }
-
-    this.collectPropertyItem(node, items, pathSegments, configUri, rootPrefix);
-  }
-
-  private collectPropertyItem(
-    node: JsonNode,
-    items: PropertyItems,
-    pathSegments: JSONPath,
-    configUri: URI,
-    rootPrefix: JSONPath,
-  ): void {
-    const propertyPath = this.toPropertyPath(pathSegments);
-    if (!propertyPath) {
-      return;
-    }
-    const value = node.value;
-    if (value === undefined) {
-      return;
-    }
-    const meta: JsonItemMeta = {
-      range: offsetLengthToRange(node.offset, node.length),
-      uri: configUri,
-      path: [...rootPrefix, ...pathSegments],
-    };
-
-    const list = items.get(propertyPath) ?? [];
-    list.push({
-      value,
-      meta,
-    });
-    items.set(propertyPath, list);
-  }
-
-  private toPropertyPath(pathSegments: JSONPath): string {
-    if (!pathSegments.length) {
-      return "";
-    }
-    return pathSegments
-      .filter((segment) => typeof segment === "string")
-      .join(".");
-  }
-
-  private takeNextPropertyItem(
-    processGroup: ProcessGroup,
-    propertyPath: string,
-    value: string,
-  ): JsonItem<unknown> | undefined {
-    const items = processGroup.$propertyItems?.get(propertyPath);
-    if (!items || items.length === 0) {
-      return undefined;
-    }
-    const index = items.findIndex((item) => item.value === value);
-    if (index < 0) {
-      return undefined;
-    }
-    const [item] = items.splice(index, 1);
-    processGroup.$propertyItems?.set(propertyPath, items);
-    return item;
-  }
-
   /**
    * Sets the process group configs of this plugin configuration provider, overwriting any existing configs.
    * Also invalidates the saved library file patterns & post-processes program configs.
@@ -1091,11 +688,17 @@ export class PluginConfigurationProvider {
   ): Promise<LspDiagnostic[]> {
     this.processGroupConfigs.clear();
     for (const config of processGroupConfigs) {
-      this.processGroupConfigs.set(config.name, config);
+      // Wrap the loaded config into a GroupRecord. `computedLibs` and
+      // `computedLibsSet` are filled in by `postProcessProcessGroups`.
+      this.processGroupConfigs.set(config.name.value, {
+        ...config,
+        computedLibs: [],
+        computedLibsSet: new Set<string>(),
+      });
     }
     this.postProcessProgramConfigs();
     const diagnostics = await this.postProcessProcessGroups(configDocument);
-    this.libFileGlobPatterns = undefined;
+    this.libFileMatchers = undefined;
     return diagnostics;
   }
 
@@ -1109,14 +712,14 @@ export class PluginConfigurationProvider {
     workspacePath: URI,
     programConfig: ProgramConfig,
   ) {
-    const existing = this.programConfigs.get(programConfig.program);
+    const existing = this.programConfigs.get(programConfig.program.value);
     if (existing) {
       console.error(
         `The following configuration entry already exists: ${existing}`,
       );
       return;
     }
-    this.setProgramConfigs(workspacePath.path, [
+    this.setProgramConfigs(workspacePath, [
       ...this.programConfigs.values(),
       programConfig,
     ]);
@@ -1132,7 +735,7 @@ export class PluginConfigurationProvider {
    * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
-  public getProgramConfig(program: URI): ProgramConfig | undefined {
+  public getProgramConfig(program: URI): ProgramRecord | undefined {
     // Note that we need to decode the URI
     const uri = program.toString(true);
     const direct = this.programConfigs.get(uri);
@@ -1179,7 +782,7 @@ export class PluginConfigurationProvider {
    * @param pgroup Name of the process group to get a config for
    * @returns Associated process group config, or undefined if not found
    */
-  public getProcessGroupConfig(pgroup: string): ProcessGroup | undefined {
+  public getProcessGroupConfig(pgroup: string): GroupRecord | undefined {
     return this.processGroupConfigs.get(pgroup);
   }
 
@@ -1189,30 +792,17 @@ export class PluginConfigurationProvider {
    * @param libUri URI of the including file (likely a library file)
    * @returns First process group config that includes a matching lib path, or undefined if not found
    */
-  public getProcessGroupConfigFromLib(libUri: URI): ProcessGroup | undefined {
+  public getProcessGroupConfigFromLib(libUri: URI): GroupRecord | undefined {
     const dirname = UriUtils.basename(UriUtils.dirname(libUri));
     const absolutePathLib = UriUtils.toFilePath(UriUtils.dirname(libUri));
     for (const config of this.processGroupConfigs.values()) {
       if (
-        config.$computedLibsSet.has(dirname) ||
-        config.$computedLibsSet.has(absolutePathLib)
+        config.computedLibsSet.has(dirname) ||
+        config.computedLibsSet.has(absolutePathLib)
       ) {
         return config;
       }
     }
     return undefined;
   }
-}
-
-/**
- * Singleton instance of the pli plugin configuration provider.
- */
-export let PluginConfigurationProviderInstance: PluginConfigurationProvider =
-  new PluginConfigurationProvider();
-
-export function setPluginConfigurationProvider(
-  provider: PluginConfigurationProvider | undefined,
-): void {
-  PluginConfigurationProviderInstance =
-    provider ?? new PluginConfigurationProvider();
 }

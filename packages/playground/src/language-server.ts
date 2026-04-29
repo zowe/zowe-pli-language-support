@@ -15,7 +15,6 @@ import {
   createConnection,
 } from "vscode-languageserver/browser.js";
 import {
-  setFileSystemProvider,
   startLanguageServer,
   UriUtils,
   VirtualFileSystemProvider,
@@ -76,6 +75,4 @@ const messageWriter = new BrowserMessageWriter(self as any);
 
 const connection = createConnection(messageReader, messageWriter);
 
-// Start the language server with the shared services
-setFileSystemProvider(new LSFileSystemProvider());
-startLanguageServer(connection);
+startLanguageServer(connection, new LSFileSystemProvider());

@@ -11,16 +11,13 @@
 
 import { describe, test, expect, beforeEach } from "vitest";
 import { Diagnostic } from "vscode-languageserver-types";
-import {
-  VirtualFileSystemProvider,
-  setFileSystemProvider,
-} from "../../src/workspace/file-system-provider";
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import {
   PluginConfigurationProvider,
-  setPluginConfigurationProvider,
   deserializeProcessGroup,
   type PluginConfigUnresolvedLibData,
 } from "../../src/workspace/plugin-configuration-provider";
+import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import type { JSONPath } from "../../src/utils/jsonc";
 import { URI, UriUtils } from "../../src/utils/uri";
 import * as applyQuickFixes from "../../src/language-server/code-actions/apply-quick-fixes";
@@ -28,16 +25,17 @@ import { PLICodes } from "../../src/validation/pli-codes";
 import { LspCodes } from "../../src/validation/lsp-codes";
 import { Commands } from "../../src/language-server/constants";
 import { fullCode } from "../../src/language-server/types";
+import { makeProgramConfig } from "../config-fixtures";
 
 let vfs: VirtualFileSystemProvider;
 let pluginConfig: PluginConfigurationProvider;
+let workspace: WorkspaceContext;
 
 beforeEach(async () => {
   // Reset in-memory providers
   vfs = new VirtualFileSystemProvider();
-  pluginConfig = new PluginConfigurationProvider();
-  setFileSystemProvider(vfs);
-  setPluginConfigurationProvider(pluginConfig);
+  workspace = new WorkspaceContext(vfs);
+  pluginConfig = workspace.config;
 
   // Base config setup
   const processGroup = deserializeProcessGroup({
@@ -57,10 +55,10 @@ beforeEach(async () => {
       ],
     }),
   );
-  await pluginConfig.init("/workspace");
+  await pluginConfig.init(UriUtils.toUri("/workspace"));
   await pluginConfig.setProcessGroupConfigs([processGroup]);
-  pluginConfig.setProgramConfigs("/workspace", [
-    { program: "main.pli", pgroup: "default" },
+  pluginConfig.setProgramConfigs(UriUtils.toUri("/workspace"), [
+    makeProgramConfig({ program: "main.pli", pgroup: "default" }),
   ]);
 });
 
@@ -70,7 +68,7 @@ const CODE_UNRESOLVED_LIB = fullCode(
 
 function procGrpsDocumentUri(): string {
   return UriUtils.joinPath(
-    UriUtils.toUri(pluginConfig.getWorkspacePath()),
+    pluginConfig.getWorkspacePath(),
     ".pliplugin",
     "proc_grps.json",
   ).toString();
@@ -142,7 +140,10 @@ describe("quickFixResolveInclude", () => {
     const diagnostic = {
       data: { entryUri: "file:///workspace/main.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+    const result = await applyQuickFixes.quickFixResolveInclude(
+      diagnostic,
+      workspace,
+    );
     expect(result).toBeUndefined();
   });
 
@@ -156,7 +157,10 @@ describe("quickFixResolveInclude", () => {
 
     // Remove all configs
     await pluginConfig.setProcessGroupConfigs([]);
-    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+    const result = await applyQuickFixes.quickFixResolveInclude(
+      diagnostic,
+      workspace,
+    );
     expect(result).toBeUndefined();
   });
 
@@ -167,7 +171,10 @@ describe("quickFixResolveInclude", () => {
         entryUri: "file:///workspace/main.pli",
       },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+    const result = await applyQuickFixes.quickFixResolveInclude(
+      diagnostic,
+      workspace,
+    );
     expect(result).toBeUndefined();
   });
 
@@ -187,7 +194,10 @@ describe("quickFixResolveInclude", () => {
         entryUri: "file:///workspace/main.pli",
       },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+    const result = await applyQuickFixes.quickFixResolveInclude(
+      diagnostic,
+      workspace,
+    );
     expect(result).toBeUndefined();
   });
 
@@ -199,7 +209,10 @@ describe("quickFixResolveInclude", () => {
         entryUri: "file:///workspace/main.pli",
       },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+    const result = await applyQuickFixes.quickFixResolveInclude(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.kind).toBe("quickfix");
@@ -232,7 +245,10 @@ describe("quickFixResolveInclude", () => {
         entryUri: "file:///workspace/main.pli",
       },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixResolveInclude(diagnostic);
+    const result = await applyQuickFixes.quickFixResolveInclude(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.kind).toBe("quickfix");
@@ -268,7 +284,10 @@ describe("quickFixResolveInclude", () => {
 describe("quickFixCreateConfig", () => {
   test("returns undefined when entryUri is missing", async () => {
     const diagnostic = { data: {} } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
     expect(result).toBeUndefined();
   });
 
@@ -276,7 +295,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "/workspace/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -289,7 +311,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "/workspace/nested/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -302,7 +327,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "/Users/mockUser/mockFolder/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -317,7 +345,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "file:///Users/mockUser/mockFolder/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -332,7 +363,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "file:///C:/Users/mockUser/mockFolder/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -347,7 +381,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "C:\\Users\\mockUser\\mockFolder\\foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -361,7 +398,10 @@ describe("quickFixCreateConfig", () => {
     const diagnostic = {
       data: { entryUri: "C:/Users/mockUser/mockFolder/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -372,13 +412,17 @@ describe("quickFixCreateConfig", () => {
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
   });
   test("returns valid CodeAction when entryUri is outside (above) the workspace", async () => {
-    pluginConfig.setProgramConfigs("/Users/mockUser/workspace", [
-      { program: "main.pli", pgroup: "default" },
-    ]);
+    pluginConfig.setProgramConfigs(
+      UriUtils.toUri("/Users/mockUser/workspace"),
+      [makeProgramConfig({ program: "main.pli", pgroup: "default" })],
+    );
     const diagnostic = {
       data: { entryUri: "/Users/mockUser/foo.pli" },
     } as Diagnostic;
-    const result = await applyQuickFixes.quickFixCreateConfig(diagnostic);
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      workspace,
+    );
 
     expect(result).toBeDefined();
     expect(result!.title).toContain("Create a startup configuration");
@@ -412,7 +456,10 @@ describe("applyQuickFixes", () => {
       },
     ] as Diagnostic[];
 
-    const result = await applyQuickFixes.applyQuickFixes(diagnostics);
+    const result = await applyQuickFixes.applyQuickFixes(
+      diagnostics,
+      workspace,
+    );
     expect(result).toHaveLength(2);
     expect(result![0].kind).toBe("quickfix");
     expect(result![1].kind).toBe("quickfix");
@@ -426,7 +473,10 @@ describe("applyQuickFixes", () => {
       },
     ] as Diagnostic[];
 
-    const result = await applyQuickFixes.applyQuickFixes(diagnostics);
+    const result = await applyQuickFixes.applyQuickFixes(
+      diagnostics,
+      workspace,
+    );
     expect(result).toHaveLength(1);
     expect(result![0].title).toContain(
       "Create a startup configuration for this file.",
@@ -439,7 +489,10 @@ describe("applyQuickFixes", () => {
       { code: undefined } as Diagnostic,
     ];
 
-    const result = await applyQuickFixes.applyQuickFixes(diagnostics);
+    const result = await applyQuickFixes.applyQuickFixes(
+      diagnostics,
+      workspace,
+    );
     expect(result).toBeUndefined();
   });
 
@@ -464,7 +517,10 @@ describe("applyQuickFixes", () => {
       },
     ] as Diagnostic[];
 
-    const result = await applyQuickFixes.applyQuickFixes(diagnostics);
+    const result = await applyQuickFixes.applyQuickFixes(
+      diagnostics,
+      workspace,
+    );
     expect(result).toHaveLength(2);
   });
 });
@@ -476,16 +532,22 @@ describe("applyQuickFixes", () => {
 describe("quickFixRemoveUnresolvedLib", () => {
   test("returns undefined when diagnostic data omits lib or pgroup", async () => {
     expect(
-      await applyQuickFixes.quickFixRemoveUnresolvedLib({
-        code: CODE_UNRESOLVED_LIB,
-        data: { lib: "x" },
-      } as Diagnostic),
+      await applyQuickFixes.quickFixRemoveUnresolvedLib(
+        {
+          code: CODE_UNRESOLVED_LIB,
+          data: { lib: "x" },
+        } as Diagnostic,
+        workspace,
+      ),
     ).toBeUndefined();
     expect(
-      await applyQuickFixes.quickFixRemoveUnresolvedLib({
-        code: CODE_UNRESOLVED_LIB,
-        data: { pgroup: "default" },
-      } as Diagnostic),
+      await applyQuickFixes.quickFixRemoveUnresolvedLib(
+        {
+          code: CODE_UNRESOLVED_LIB,
+          data: { pgroup: "default" },
+        } as Diagnostic,
+        workspace,
+      ),
     ).toBeUndefined();
   });
 
@@ -493,6 +555,7 @@ describe("quickFixRemoveUnresolvedLib", () => {
     expect(
       await applyQuickFixes.quickFixRemoveUnresolvedLib(
         unresolvedLibDiagnostic("x"),
+        workspace,
       ),
     ).toBeUndefined();
   });
@@ -500,6 +563,7 @@ describe("quickFixRemoveUnresolvedLib", () => {
   test("returns undefined when no snapshot exists", async () => {
     const result = await applyQuickFixes.quickFixRemoveUnresolvedLib(
       unresolvedLibDiagnostic("x", "default", ["pgroups", 0, "libs", 0]),
+      workspace,
     );
     expect(result).toBeUndefined();
   });
@@ -511,6 +575,7 @@ describe("quickFixRemoveUnresolvedLib", () => {
 
     const action = await applyQuickFixes.quickFixRemoveUnresolvedLib(
       unresolvedLibDiagnostic("drop-me", "default", badEntry!.path),
+      workspace,
     );
     expect(action).toBeDefined();
     expect(action!.command!.command).toBe(Commands.REMOVE_DEAD_LIB);
@@ -637,6 +702,7 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
 
     const result = await applyQuickFixes.applyQuickFixes(
       [unresolvedLibDiagnostic("bad-a", "default", snapshot!.entries[0].path)],
+      workspace,
       procGrpsDocumentUri(),
     );
     expect(result).toBeDefined();
@@ -671,6 +737,7 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
           0,
         ]),
       ],
+      workspace,
       procGrpsDocumentUri(),
     );
     expect(result).toBeDefined();
@@ -682,9 +749,16 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
     await setupParsedProcGrps(["solo-bad"]);
     const snapshot = pluginConfig.getLastProcGrpsSnapshot();
 
-    const result = await applyQuickFixes.applyQuickFixes([
-      unresolvedLibDiagnostic("solo-bad", "default", snapshot!.entries[0].path),
-    ]);
+    const result = await applyQuickFixes.applyQuickFixes(
+      [
+        unresolvedLibDiagnostic(
+          "solo-bad",
+          "default",
+          snapshot!.entries[0].path,
+        ),
+      ],
+      workspace,
+    );
     expect(result).toBeDefined();
     expect(result!.length).toBe(1);
     expect(result![0].command!.command).toBe(Commands.REMOVE_DEAD_LIB);
@@ -700,6 +774,7 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
           data: { entryUri: "/workspace/foo.pli" },
         } as Diagnostic,
       ],
+      workspace,
       procGrpsDocumentUri(),
     );
     expect(result).toBeDefined();
@@ -710,7 +785,7 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
 
 //
 // ----------------------------------------------------------
-// parseProcessGroupConfigs → metadata-driven quick fixes
+// parseProcessGroupConfigs -> metadata-driven quick fixes
 // These tests exercise the real parsing path to ensure
 // metadata paths are root-relative and quick fixes produce
 // actual content changes (not no-ops).
@@ -751,7 +826,10 @@ describe("metadata-driven quick fixes via parseProcessGroupConfigs", () => {
     const diag = unresolvedLibDiagnostic("bad-lib");
     diag.data.path = badEntry!.path;
 
-    const action = await applyQuickFixes.quickFixRemoveUnresolvedLib(diag);
+    const action = await applyQuickFixes.quickFixRemoveUnresolvedLib(
+      diag,
+      workspace,
+    );
     expect(action).toBeDefined();
     expect(action!.command!.command).toBe(Commands.REMOVE_DEAD_LIB);
 
@@ -829,6 +907,7 @@ describe("metadata-driven quick fixes via parseProcessGroupConfigs", () => {
 
     const result = await applyQuickFixes.applyQuickFixes(
       [diagA],
+      workspace,
       procGrpsDocumentUri(),
     );
     expect(result).toBeDefined();
@@ -880,9 +959,9 @@ describe("metadata-driven quick fixes via parseProcessGroupConfigs", () => {
       "",
     );
     await pluginConfig.parseProcessGroupConfigs(procGrpsJson);
-    pluginConfig.setProgramConfigs("/workspace", [
-      { program: "main.pli", pgroup: "group-a" },
-      { program: "other.pli", pgroup: "group-b" },
+    pluginConfig.setProgramConfigs(UriUtils.toUri("/workspace"), [
+      makeProgramConfig({ program: "main.pli", pgroup: "group-a" }),
+      makeProgramConfig({ program: "other.pli", pgroup: "group-b" }),
     ]);
 
     const snapshot = pluginConfig.getLastProcGrpsSnapshot();

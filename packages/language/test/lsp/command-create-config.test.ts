@@ -10,51 +10,47 @@
  */
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  FileSystemProviderInstance,
-  VirtualFileSystemProvider,
-  setFileSystemProvider,
-} from "../../src/workspace/file-system-provider";
-
-import {
-  PluginConfigurationProvider,
-  setPluginConfigurationProvider,
-} from "../../src/workspace/plugin-configuration-provider";
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
+import { PluginConfigurationProvider } from "../../src/workspace/plugin-configuration-provider";
+import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { commandCreateConfig } from "../../src/language-server/commands";
 import { Commands } from "../../src/language-server/constants";
 import { UriUtils } from "../../src/utils/uri";
 import { updateOrCreateConfig } from "../../src/utils/config";
+import { makeProgramConfig } from "../config-fixtures";
 
-const WORKSPACE_PATH = "/workspace";
-const CONFIG_FILE_PATH = "/workspace/.pliplugin/pgm_conf.json";
+const WORKSPACE_PATH = UriUtils.toUri("/workspace");
+const CONFIG_FILE_PATH = UriUtils.toUri("/workspace/.pliplugin/pgm_conf.json");
 
-const INITIAL_PROGRAM = { program: "a.pli", pgroup: "default" };
-const INITIAL_CONFIG = JSON.stringify({ pgms: [INITIAL_PROGRAM] }, null, 2);
+const INITIAL_PROGRAM_RAW = { program: "a.pli", pgroup: "default" };
+const INITIAL_PROGRAM = makeProgramConfig(INITIAL_PROGRAM_RAW);
+const INITIAL_CONFIG = JSON.stringify({ pgms: [INITIAL_PROGRAM_RAW] }, null, 2);
 
 describe("commandCreateConfig", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
+  let workspace: WorkspaceContext;
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    pluginConfig = new PluginConfigurationProvider();
-    setFileSystemProvider(vfs);
-    setPluginConfigurationProvider(pluginConfig);
+    workspace = new WorkspaceContext(vfs);
+    pluginConfig = workspace.config;
     await pluginConfig.init(WORKSPACE_PATH);
   });
 
   test("appends a new program to an existing config file", async () => {
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await vfs.writeFile(CONFIG_FILE_PATH, INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-    await commandCreateConfig({
-      command: Commands.CREATE_CONFIG,
-      arguments: ["b.pli"],
-    });
-
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
+    await commandCreateConfig(
+      {
+        command: Commands.CREATE_CONFIG,
+        arguments: ["b.pli"],
+      },
+      workspace,
     );
+
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [
@@ -64,16 +60,17 @@ describe("commandCreateConfig", () => {
     });
   });
   test("appends a new nested program to an existing config file", async () => {
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await vfs.writeFile(CONFIG_FILE_PATH, INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-    await commandCreateConfig({
-      command: Commands.CREATE_CONFIG,
-      arguments: ["nested/b.pli"],
-    });
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
+    await commandCreateConfig(
+      {
+        command: Commands.CREATE_CONFIG,
+        arguments: ["nested/b.pli"],
+      },
+      workspace,
     );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [
@@ -84,14 +81,15 @@ describe("commandCreateConfig", () => {
   });
 
   test("creates a new config file when none exists", async () => {
-    await commandCreateConfig({
-      command: Commands.CREATE_CONFIG,
-      arguments: ["a.pli"],
-    });
-
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
+    await commandCreateConfig(
+      {
+        command: Commands.CREATE_CONFIG,
+        arguments: ["a.pli"],
+      },
+      workspace,
     );
+
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [{ program: "a.pli", pgroup: "default" }],
@@ -102,24 +100,22 @@ describe("commandCreateConfig", () => {
 describe("updateOrCreateConfig", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
+  let workspace: WorkspaceContext;
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    pluginConfig = new PluginConfigurationProvider();
-    setFileSystemProvider(vfs);
-    setPluginConfigurationProvider(pluginConfig);
+    workspace = new WorkspaceContext(vfs);
+    pluginConfig = workspace.config;
     await pluginConfig.init(WORKSPACE_PATH);
   });
 
   test("appends workspace-internal program to existing config file", async () => {
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await vfs.writeFile(CONFIG_FILE_PATH, INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-    await updateOrCreateConfig("/workspace/entryProgram.pli");
+    await updateOrCreateConfig("/workspace/entryProgram.pli", workspace);
 
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
-    );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [
@@ -130,16 +126,15 @@ describe("updateOrCreateConfig", () => {
   });
 
   test("appends external program from outside workspace to existing config file", async () => {
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await vfs.writeFile(CONFIG_FILE_PATH, INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
     await updateOrCreateConfig(
       "/Users/mockUser/anotherWorkspace/entryProgram.pli",
+      workspace,
     );
 
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
-    );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [
@@ -155,11 +150,10 @@ describe("updateOrCreateConfig", () => {
   test("creates new config file with external program when no configuration exists", async () => {
     await updateOrCreateConfig(
       "/Users/mockUser/anotherWorkspace/entryProgram.pli",
+      workspace,
     );
 
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
-    );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [
@@ -172,11 +166,9 @@ describe("updateOrCreateConfig", () => {
   });
 
   test("creates new config file with workspace-internal program when no configuration exists", async () => {
-    await updateOrCreateConfig("/workspace/entryProgram.pli");
+    await updateOrCreateConfig("/workspace/entryProgram.pli", workspace);
 
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
-    );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(result).toBeDefined();
     expect(JSON.parse(result!)).toEqual({
       pgms: [{ program: "/workspace/entryProgram.pli", pgroup: "default" }],
@@ -189,7 +181,7 @@ describe("updateOrCreateConfig", () => {
       .fn()
       .mockRejectedValue(new Error("Write failed"));
 
-    await expect(updateOrCreateConfig("test.pli")).rejects.toThrow(
+    await expect(updateOrCreateConfig("test.pli", workspace)).rejects.toThrow(
       "Write failed",
     );
   });
@@ -203,26 +195,24 @@ describe("updateOrCreateConfig", () => {
       .fn()
       .mockRejectedValue(new Error("Permission denied"));
 
-    await expect(updateOrCreateConfig("test.pli")).rejects.toThrow(
+    await expect(updateOrCreateConfig("test.pli", workspace)).rejects.toThrow(
       "Permission denied",
     );
   });
 
   test("returns early when config file exists but readFile returns null/undefined", async () => {
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await vfs.writeFile(CONFIG_FILE_PATH, INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
     // Mock readFile to return null
     const originalRead = vfs.readFile.bind(vfs);
     vfs.readFile = vi.fn().mockResolvedValue(null);
 
-    await updateOrCreateConfig("test.pli");
+    await updateOrCreateConfig("test.pli", workspace);
 
     // Verify no changes were made (file should still have initial content)
     vfs.readFile = originalRead;
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
-    );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(JSON.parse(result!)).toEqual({
       pgms: [{ program: "a.pli", pgroup: "default" }],
     });
@@ -231,7 +221,7 @@ describe("updateOrCreateConfig", () => {
   test("returns early when config file has invalid structure", async () => {
     // Write invalid config structure (missing pgms array)
     await vfs.writeFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
+      CONFIG_FILE_PATH,
       JSON.stringify({ invalid: "structure" }, null, 2),
     );
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
@@ -240,29 +230,27 @@ describe("updateOrCreateConfig", () => {
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    await updateOrCreateConfig("test.pli");
+    await updateOrCreateConfig("test.pli", workspace);
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unexpected format in program config file",
     );
 
     // Verify file was not modified
-    const result = await FileSystemProviderInstance.readFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
-    );
+    const result = await workspace.fs.readFile(CONFIG_FILE_PATH);
     expect(JSON.parse(result!)).toEqual({ invalid: "structure" });
   });
 
   test("returns early when config file contains null", async () => {
     // Write null as config content
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), "null");
+    await vfs.writeFile(CONFIG_FILE_PATH, "null");
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    await updateOrCreateConfig("test.pli");
+    await updateOrCreateConfig("test.pli", workspace);
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unexpected format in program config file",
@@ -272,7 +260,7 @@ describe("updateOrCreateConfig", () => {
   test("returns early when config file has non-array pgms field", async () => {
     // Write config with pgms as non-array
     await vfs.writeFile(
-      UriUtils.toUri(CONFIG_FILE_PATH),
+      CONFIG_FILE_PATH,
       JSON.stringify({ pgms: "not-an-array" }, null, 2),
     );
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
@@ -281,7 +269,7 @@ describe("updateOrCreateConfig", () => {
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    await updateOrCreateConfig("test.pli");
+    await updateOrCreateConfig("test.pli", workspace);
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unexpected format in program config file",
@@ -289,22 +277,22 @@ describe("updateOrCreateConfig", () => {
   });
 
   test("throws error when reading or updating config file fails", async () => {
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), INITIAL_CONFIG);
+    await vfs.writeFile(CONFIG_FILE_PATH, INITIAL_CONFIG);
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
     // Mock readFile to throw an error
     vfs.readFile = vi.fn().mockRejectedValue(new Error("Read failed"));
 
-    await expect(updateOrCreateConfig("test.pli")).rejects.toThrow(
+    await expect(updateOrCreateConfig("test.pli", workspace)).rejects.toThrow(
       "Read failed",
     );
   });
 
   test("throws error when JSON.parse fails on malformed config", async () => {
     // Write malformed JSON
-    await vfs.writeFile(UriUtils.toUri(CONFIG_FILE_PATH), "{ invalid json }");
+    await vfs.writeFile(CONFIG_FILE_PATH, "{ invalid json }");
     await pluginConfig.setProgramConfigs(WORKSPACE_PATH, [INITIAL_PROGRAM]);
 
-    await expect(updateOrCreateConfig("test.pli")).rejects.toThrow();
+    await expect(updateOrCreateConfig("test.pli", workspace)).rejects.toThrow();
   });
 });

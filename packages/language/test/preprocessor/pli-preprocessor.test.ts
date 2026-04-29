@@ -11,58 +11,48 @@
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import {
-  PluginConfigurationProviderInstance,
   ProcessGroup,
   ProgramConfig,
-  setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
 import { parse } from "../utils";
-import {
-  FileSystemProviderInstance,
-  setFileSystemProvider,
-  VirtualFileSystemProvider,
-} from "../../src/workspace/file-system-provider";
-import { resetDocumentProviders } from "../../src/language-server/text-documents";
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { DiagnosticCategory } from "../../src/validation/diagnostics-store";
 import { Diagnostic } from "vscode-languageserver-types";
 import { UriUtils } from "../../src/utils/uri";
+import { makeProcessGroup, makeProgramConfig } from "../config-fixtures";
+import {
+  createTestWorkspace,
+  defaultTestWorkspace,
+  setDefaultTestWorkspace,
+} from "../test-workspace";
 
 /**
  * Helper to modify the program config & process group w/ a given lib for each os-specific test
  */
 async function init(libPath: string): Promise<Diagnostic[]> {
-  const programConfig: ProgramConfig = {
+  const programConfig: ProgramConfig = makeProgramConfig({
     program: "test.pli",
     pgroup: "testGroup",
-  };
-  const processGroupConfig: ProcessGroup = {
+  });
+  const processGroupConfig: ProcessGroup = makeProcessGroup({
     name: "testGroup",
-    compilerOptions: [],
-    includeExtensions: [],
     libs: [libPath],
-    $computedLibs: [],
-    $computedLibsSet: new Set<string>(),
-    lspOptions: {
-      checkMargins: false,
-      instructionCounterLimit: 5000,
-      caseUpperValidation: false,
-    },
-  };
+    checkMargins: false,
+    instructionCounterLimit: 5000,
+    caseUpperValidation: false,
+  });
 
-  await PluginConfigurationProviderInstance.init("/test");
-  PluginConfigurationProviderInstance.setProgramConfigs("/test", [
-    programConfig,
-  ]);
-  return await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-    processGroupConfig,
-  ]);
+  const workspace = defaultTestWorkspace();
+  await workspace.config.init(UriUtils.toUri("/test"));
+  workspace.config.setProgramConfigs(UriUtils.toUri("/test"), [programConfig]);
+  return await workspace.config.setProcessGroupConfigs([processGroupConfig]);
 }
 
 /**
  * Helper for writing library files to the vfs
  */
 async function writeLibFile(path: string, content: string): Promise<void> {
-  await FileSystemProviderInstance.writeFile(UriUtils.toUri(path), content);
+  await defaultTestWorkspace().fs.writeFile(UriUtils.toUri(path), content);
 }
 
 /**
@@ -98,16 +88,13 @@ async function expectTokensForWorkspace(
 
 describe("Preprocessor Tests", () => {
   beforeEach(() => {
-    const vfs = new VirtualFileSystemProvider();
-    setFileSystemProvider(vfs);
-    resetDocumentProviders();
+    setDefaultTestWorkspace(
+      createTestWorkspace(new VirtualFileSystemProvider()),
+    );
   });
 
   afterEach(async () => {
-    setFileSystemProvider(undefined);
-    setPluginConfigurationProvider(undefined);
-    PluginConfigurationProviderInstance.setProgramConfigs("", []);
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+    setDefaultTestWorkspace(undefined);
   });
 
   // macOS + linux absolute path resolution

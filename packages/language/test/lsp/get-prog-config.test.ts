@@ -10,68 +10,66 @@
  */
 
 import { describe, expect, test } from "vitest";
-import {
-  PluginConfigurationProvider,
-  PluginConfigurationProviderInstance,
-  setPluginConfigurationProvider,
-} from "../../src/workspace/plugin-configuration-provider";
+import { PluginConfigurationProvider } from "../../src/workspace/plugin-configuration-provider";
+import { EmptyFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { UriUtils } from "../../src/utils/uri";
+import { makeProgramConfig } from "../config-fixtures";
 
-async function setupConfig(
+function setupConfig(
   programConfig: { program: string; pgroup: string }[],
-) {
-  const pluginConfig = new PluginConfigurationProvider();
-  setPluginConfigurationProvider(pluginConfig);
-  pluginConfig.setProgramConfigs("/workspace", programConfig);
+): PluginConfigurationProvider {
+  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider);
+  pluginConfig.setProgramConfigs(
+    UriUtils.toUri("/workspace"),
+    programConfig.map(makeProgramConfig),
+  );
+  return pluginConfig;
 }
 
 describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retrieve proper values.", () => {
   (test("Matches workspace-relative program - most common use case", async () => {
-    await setupConfig([{ program: "*.pli", pgroup: "default" }]);
+    const pluginConfig = setupConfig([{ program: "*.pli", pgroup: "default" }]);
     const testUri = UriUtils.toUri("workspace/a.pli");
-    const config =
-      PluginConfigurationProviderInstance.getProgramConfig(testUri);
+    const config = pluginConfig.getProgramConfig(testUri);
 
     expect(config).toBeDefined();
   }),
     test("does NOT match absolute path outside workspace that isn't explicitely included as program", async () => {
-      await setupConfig([{ program: "*.pli", pgroup: "default" }]);
+      const pluginConfig = setupConfig([
+        { program: "*.pli", pgroup: "default" },
+      ]);
       const testUri = UriUtils.toUri("C:/Users/pgm/ext-pgm.pli");
-      const config =
-        PluginConfigurationProviderInstance.getProgramConfig(testUri);
+      const config = pluginConfig.getProgramConfig(testUri);
 
       expect(config).toBeUndefined();
     }),
     test("return match for absolute Windows-style path properly registered", async () => {
-      await setupConfig([
+      const pluginConfig = setupConfig([
         { program: "*.pli", pgroup: "default" },
         { program: "C:/Users/pgm/ext-pgm.pli", pgroup: "default" },
       ]);
       const testUri = UriUtils.toUri("C:/Users/pgm/ext-pgm.pli");
-      const config =
-        PluginConfigurationProviderInstance.getProgramConfig(testUri);
+      const config = pluginConfig.getProgramConfig(testUri);
 
       expect(config).toBeDefined();
     }),
     test("return match for properly registered absolute Windows-style with backslashes against normalized URI path.", async () => {
-      await setupConfig([
+      const pluginConfig = setupConfig([
         { program: "*.pli", pgroup: "default" },
         { program: "C:\\Users\\pgm\\ext-pgm.pli", pgroup: "default" },
       ]);
       const testUri = UriUtils.toUri("C:/Users/pgm/ext-pgm.pli");
-      const config =
-        PluginConfigurationProviderInstance.getProgramConfig(testUri);
+      const config = pluginConfig.getProgramConfig(testUri);
 
       expect(config).toBeDefined();
     }),
     test("matches absolute UNIX style path", async () => {
-      await setupConfig([
+      const pluginConfig = setupConfig([
         { program: "*.pli", pgroup: "default" },
         { program: "/Users/pgm/ext-pgm.pli", pgroup: "default" },
       ]);
       const testUri = UriUtils.toUri("/Users/pgm/ext-pgm.pli");
-      const config =
-        PluginConfigurationProviderInstance.getProgramConfig(testUri);
+      const config = pluginConfig.getProgramConfig(testUri);
 
       expect(config).toBeDefined();
     }));

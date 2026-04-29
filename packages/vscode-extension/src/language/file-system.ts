@@ -9,14 +9,7 @@
  *
  */
 
-import {
-  FileSystemProvider,
-  isPathSearch,
-  SearchOptions,
-  Stats,
-  URI,
-  UriUtils,
-} from "pli-language";
+import { FileSystemProvider, FileType, Stats, URI } from "pli-language";
 import { Connection } from "vscode-languageserver";
 import { Messages } from "../common/messages";
 
@@ -39,17 +32,13 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
     }
   }
 
-  /**
-   * Submits a request to the client to read the contents of a directory.
-   * Returns an array of file & directory names as strings
-   */
-  async readDir(uri: URI): Promise<string[]> {
+  async readDir(uri: URI): Promise<[string, FileType][]> {
     const result = await this._connection.sendRequest(
       Messages.ReadDir,
       uri.toString(),
     );
     if (Array.isArray(result)) {
-      return result as string[];
+      return result as [string, FileType][];
     } else {
       return [];
     }
@@ -62,21 +51,18 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
     );
     return Boolean(result);
   }
-  async search(options: SearchOptions): Promise<URI | undefined> {
-    const result = (await this._connection.sendRequest(
-      Messages.Search,
-      options,
-    )) as string | undefined;
+  async findFile(
+    path: URI,
+    extensions: readonly string[],
+  ): Promise<URI | undefined> {
+    const result = (await this._connection.sendRequest(Messages.FindFile, {
+      path: path.toString(),
+      extensions: [...extensions],
+    })) as string | undefined;
     if (result) {
-      if (isPathSearch(options)) {
-        return options.path.with({ path: result });
-      } else {
-        // not a path, take result as full URI
-        return UriUtils.toUri(result);
-      }
-    } else {
-      return undefined;
+      return path.with({ path: result });
     }
+    return undefined;
   }
 
   async stat(uri: URI): Promise<Stats> {
