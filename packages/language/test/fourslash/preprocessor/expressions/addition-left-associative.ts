@@ -9,10 +9,10 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
 //// %DCL X FIXED;
-//// %X = -123;
+//// %X = 1 + 2 + 3 + 4;
 //// X
 
-preprocessor.expectTokens("-123");
+preprocessor.expectTokens("10");

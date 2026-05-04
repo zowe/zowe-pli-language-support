@@ -84,6 +84,10 @@ const binaryPrecedence = buildPrecendenceMap([
   [BinaryOperator.Pipe, BinaryOperator.Not],
 ]);
 
+const rightAssociativeOperators = new Set<BinaryOperator>([
+  BinaryOperator.StarStar,
+]);
+
 /**
  * Constructs a binary expression from an intermediate representation,
  * used when popping infix exprs from the stack,
@@ -111,10 +115,14 @@ export function constructBinaryExpression(
   for (let i = 0; i < obj.operators.length; i++) {
     const operator = obj.operators[i];
     const precedenceValue = binaryPrecedence.get(operator) ?? Infinity;
+    const isRightAssociative = rightAssociativeOperators.has(operator);
 
-    // If we find an operator with lower precedence or equal precedence
-    // (for left-to-right evaluation), update our tracking
-    if (precedenceValue > lowestPrecedenceValue) {
+    // Pick right-to-left/left-to-right based on operator associativity.
+    const shouldUpdate = isRightAssociative
+      ? precedenceValue > lowestPrecedenceValue
+      : precedenceValue >= lowestPrecedenceValue;
+
+    if (shouldUpdate) {
       lowestPrecedenceValue = precedenceValue;
       lowestPrecedenceIdx = i;
     }

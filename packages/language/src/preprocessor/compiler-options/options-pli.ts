@@ -1458,6 +1458,7 @@ export function getDefaultCompilerOptions(): CompilerOptions {
       string: 32 * $1K,
     },
     lineCount: 31415,
+    LP: CompilerOptions.LP.LP32,
     initAuto: CompilerOptions.InitAuto.FULL,
     margini: " ",
     margins: {

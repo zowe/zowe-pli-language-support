@@ -4,6 +4,7 @@
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "lib": ["ESNext"],
+    "types": ["node"],
     "sourceMap": true,
     "strict": true,
     "noUnusedLocals": true,

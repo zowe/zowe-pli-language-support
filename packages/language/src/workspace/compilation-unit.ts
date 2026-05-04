@@ -403,8 +403,10 @@ export class CompilationUnitHandler {
       }
       const allDiagnostics = diagnosticsToLSP(unit, unit.diagnostics.getAll());
       for (const file of unit.services.files.keys()) {
-        if (!EditorDocuments.get(file) || isVirtualFile(file)) {
-          // do not report diagnostics for virtual files or files not currently open in the editor
+        // Check synchronously if the file is currently open in the editor.
+        // Use has() not get() - we don't want to load from disk, just check if already open.
+        // Do not report diagnostics for virtual files or files not currently open in the editor.
+        if (!EditorDocuments.has(file) || isVirtualFile(file)) {
           continue;
         }
         const fileDiagnostics = allDiagnostics.get(file);
@@ -440,7 +442,15 @@ export class CompilationUnitHandler {
           unit.mutex.run(async (cancellationToken) => {
             const textDocument = await TextDocuments.get(unit.uri.toString());
             if (textDocument) {
-              this.process(unit, textDocument, connection, cancellationToken);
+              await this.process(
+                unit,
+                textDocument,
+                connection,
+                cancellationToken,
+              );
+              // Revalidate request caches (margins, skipped code, etc.)
+              // This is necessary so that changes to the plugin configuration are reflected immediately.
+              unit.requestCaches.revalidateAll({ connection, unit });
             }
           }),
         );

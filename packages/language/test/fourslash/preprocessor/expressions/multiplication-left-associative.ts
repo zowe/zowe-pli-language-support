@@ -9,11 +9,10 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-////*PROCESS SYSPARM(TEST_VAR);
-//// %DCL Y CHAR;
-//// %Y = SYSPARM;
-//// Y
+//// %DCL X FIXED;
+//// %X = 2 * 3 * 4;
+//// X
 
-preprocessor.expectTokens("TEST_VAR");
+preprocessor.expectTokens("24");
