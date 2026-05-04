@@ -20,7 +20,7 @@ import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";
-import { WorkspaceDidChangePlipluginConfigNotification } from "pli-language";
+import { Messages } from "pli-language";
 import { TelemetryReporter } from "@vscode/extension-telemetry";
 import { handleMissingConfig } from "../common/missing-config-handler";
 import { registerPliDocumentIdentifier } from "./document-identification";
@@ -49,7 +49,7 @@ export async function activate(
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
-    watchPlipluginFolder(client, workspaceFolder, context, telemetryReporter);
+    watchPluginFolder(client, workspaceFolder, context, telemetryReporter);
   }
 
   void handleMissingConfig(vscode.window.activeTextEditor);
@@ -170,9 +170,12 @@ async function startLanguageClient(
   );
 
   // Register custom connection message handlers.
-  registerCustomDecorators(client, settings);
   registerFileSystemProvider(client);
-  registerProgressReporter(client);
+  context.subscriptions.push(
+    client,
+    registerProgressReporter(client),
+    registerCustomDecorators(client, settings),
+  );
 
   // Start the client. This will also launch the server
   await client.start();
@@ -183,7 +186,7 @@ async function startLanguageClient(
  * Watches the .pliplugin folder for changes to pgm_conf.json and proc_grps.json files.
  * Sends a notification to the LS when changes are detected
  */
-function watchPlipluginFolder(
+function watchPluginFolder(
   client: LanguageClient,
   workspaceFolder: string,
   context: vscode.ExtensionContext,
@@ -203,7 +206,9 @@ function watchPlipluginFolder(
 
   // watch for folder create/delete events
   folderWatcher.onDidCreate(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    client.sendNotification(
+      Messages.WorkspaceDidChangePluginConfigNotification,
+    );
     sendTelemetryEvent(
       "pli.language.support.onDidCreate.folder",
       telemetryReporter,
@@ -211,7 +216,9 @@ function watchPlipluginFolder(
   });
 
   folderWatcher.onDidDelete(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    client.sendNotification(
+      Messages.WorkspaceDidChangePluginConfigNotification,
+    );
     sendTelemetryEvent(
       "pli.language.support.onDidDelete.folder",
       telemetryReporter,
@@ -220,7 +227,9 @@ function watchPlipluginFolder(
 
   // watch for file create/update/delete events
   fileWatcher.onDidChange(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    client.sendNotification(
+      Messages.WorkspaceDidChangePluginConfigNotification,
+    );
     sendTelemetryEvent(
       "pli.language.support.onDidChange.file",
       telemetryReporter,
@@ -228,7 +237,9 @@ function watchPlipluginFolder(
   });
 
   fileWatcher.onDidCreate(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    client.sendNotification(
+      Messages.WorkspaceDidChangePluginConfigNotification,
+    );
     sendTelemetryEvent(
       "pli.language.support.onDidCreate.file",
       telemetryReporter,
@@ -236,7 +247,9 @@ function watchPlipluginFolder(
   });
 
   fileWatcher.onDidDelete(() => {
-    client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+    client.sendNotification(
+      Messages.WorkspaceDidChangePluginConfigNotification,
+    );
     sendTelemetryEvent(
       "pli.language.support.onDidDelete.file",
       telemetryReporter,

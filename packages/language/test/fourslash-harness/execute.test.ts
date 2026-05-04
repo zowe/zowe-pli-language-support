@@ -11,7 +11,7 @@
 
 import { readdirSync } from "fs";
 import path from "path";
-import { afterEach, beforeEach, describe, test } from "vitest";
+import { afterEach, describe, test } from "vitest";
 import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
@@ -45,13 +45,6 @@ const projectRoot = path.join(__dirname, "../../../..");
  * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
  */
 const fourslashPath = path.join(__dirname, "../fourslash");
-
-let fs: VirtualFileSystemProvider;
-
-beforeEach(async () => {
-  fs = new VirtualFileSystemProvider();
-  setDefaultTestWorkspace(createTestWorkspace(fs));
-});
 
 afterEach(async () => {
   defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
@@ -194,6 +187,10 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
 
       // We want to load the files in reverse order, so that the included files are inserted in the correct order.
       const files = getFiles(testFile).toReversed();
+      const fs = new VirtualFileSystemProvider(
+        testFile.tags["case-sensitive"] === "true",
+      );
+      setDefaultTestWorkspace(createTestWorkspace(fs));
       const testBuilder = await TestBuilder.create(files, {
         fs,
         validate: true,

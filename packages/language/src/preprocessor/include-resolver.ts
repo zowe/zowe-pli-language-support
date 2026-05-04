@@ -320,7 +320,9 @@ function tryResolveDDNameMember(
   workspace: URI,
   scheme: string,
 ): URI | undefined {
-  if (!lib.path.toLowerCase().endsWith(ddname.toLowerCase())) {
+  // Ensure that we match the whole ddname, not just a suffix of it
+  const partialDDNamePath = "/" + ddname.toLowerCase();
+  if (!lib.path.toLowerCase().endsWith(partialDDNamePath)) {
     return undefined;
   }
   const memberFileName = lib.members.get(memberName.toLowerCase());

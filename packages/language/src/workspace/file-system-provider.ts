@@ -121,12 +121,18 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   private sortedFilesCache: string[] | undefined;
 
+  private caseSensitive: boolean;
+
+  constructor(caseSensitive = false) {
+    this.caseSensitive = caseSensitive;
+  }
+
   /**
    * Write a file to the virtualized file system
    * Clears the sorted files cache
    */
   async writeFile(uri: URI, value: string): Promise<void> {
-    this.files.set(UriUtils.toNormalizedKey(uri), value);
+    this.files.set(UriUtils.toNormalizedKey(uri, !this.caseSensitive), value);
     this.sortedFilesCache = undefined;
   }
 
@@ -135,7 +141,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(UriUtils.toNormalizedKey(uri));
+    return this.files.get(UriUtils.toNormalizedKey(uri, !this.caseSensitive));
   }
 
   /**
@@ -146,12 +152,8 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file system is empty, an empty array is returned (assuming uninitialized)
    */
   async readDir(uri: URI): Promise<[string, FileType][]> {
-    if (this.files.size === 0) {
-      // not populated yet
-      return [];
-    }
     // collect all entries which start with the given path
-    let path = UriUtils.toNormalizedKey(uri);
+    let path = UriUtils.toNormalizedKey(uri, !this.caseSensitive);
     if (!path.endsWith("/")) {
       path += "/";
     }
@@ -182,7 +184,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Checks if a file exists in the virtualized file system
    */
   async fileExists(uri: URI): Promise<boolean> {
-    return this.files.has(UriUtils.toNormalizedKey(uri));
+    return this.files.has(UriUtils.toNormalizedKey(uri, !this.caseSensitive));
   }
 
   /**
@@ -190,9 +192,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Drops the associated sorted files cache entry as well
    */
   async deleteFile(uri: URI): Promise<void> {
-    const key = UriUtils.toNormalizedKey(uri);
+    const key = UriUtils.toNormalizedKey(uri, !this.caseSensitive);
     this.files.delete(key);
-    this.sortedFilesCache?.splice(this.sortedFilesCache.indexOf(key), 1);
+    const cacheIndex = this.sortedFilesCache?.indexOf(key);
+    if (cacheIndex !== undefined && cacheIndex >= 0) {
+      this.sortedFilesCache?.splice(cacheIndex, 1);
+    }
   }
 
   /**
@@ -210,7 +215,6 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         return aSlashes - bSlashes;
       });
     }
-
     return this.sortedFilesCache;
   }
 
@@ -224,7 +228,10 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
     path: URI,
     extensions: readonly string[],
   ): Promise<URI | undefined> {
-    const targetPath = path.path.toLowerCase().replace(/\\/g, "/");
+    let targetPath = path.path.replace(/\\/g, "/");
+    if (!this.caseSensitive) {
+      targetPath = targetPath.toLowerCase();
+    }
     const sortedFiles = this.getSortedFiles();
     for (const filePath of sortedFiles) {
       if (filePath.endsWith(targetPath)) {
@@ -248,7 +255,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * @returns Stats object
    */
   async stat(uri: URI): Promise<Stats> {
-    const key = UriUtils.toNormalizedKey(uri);
+    const key = UriUtils.toNormalizedKey(uri, !this.caseSensitive);
     const isFile = this.files.has(key);
     let isDirectory = false;
     if (!isFile) {

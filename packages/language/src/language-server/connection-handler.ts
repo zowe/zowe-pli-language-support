@@ -55,10 +55,7 @@ import {
 } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
-import {
-  ExistingFileRequest,
-  WorkspaceDidChangePlipluginConfigNotification,
-} from "../utils/messages";
+import { Messages } from "../utils/messages";
 export { PluginConfiguration } from "./constants";
 
 export function startLanguageServer(
@@ -366,7 +363,7 @@ export function startLanguageServer(
     });
   });
   connection.onNotification(
-    WorkspaceDidChangePlipluginConfigNotification,
+    Messages.WorkspaceDidChangePluginConfigNotification,
     async () => {
       // handle changes to the .pliplugin config folder's contents
       const diagnosticsByUri = await workspace.config.reloadConfigurations();
@@ -376,11 +373,14 @@ export function startLanguageServer(
       await compilationUnitHandler.reindex(connection, CancellationToken.None);
     },
   );
-  connection.onRequest(ExistingFileRequest, (uriString: string): boolean => {
-    const uri = UriUtils.toUri(uriString);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-    return compilationUnit !== undefined;
-  });
+  connection.onRequest(
+    Messages.ExistingFileRequest,
+    (uriString: string): boolean => {
+      const uri = UriUtils.toUri(uriString);
+      const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+      return compilationUnit !== undefined;
+    },
+  );
 
   connection.onCodeAction(async (params) => {
     const requestedKinds = params.context.only;

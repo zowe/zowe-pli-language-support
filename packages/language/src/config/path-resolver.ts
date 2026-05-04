@@ -27,6 +27,7 @@ export function resolveLibUri(
   workspace: URI,
   scheme?: string,
 ): URI {
+  lib = lib.replace(/\\/g, "/");
   const pathType = UriUtils.computePathType(lib);
   if (pathType === UriUtils.PathType.URI) {
     return UriUtils.parse(lib);

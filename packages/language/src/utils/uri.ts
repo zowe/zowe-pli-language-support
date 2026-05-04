@@ -26,12 +26,9 @@ export namespace UriUtils {
   export const joinPath = Utils.joinPath;
   export const resolvePath = Utils.resolvePath;
 
-  export const isWindows =
-    typeof process === "object" && process?.platform === "win32";
-
   export const isWindowsAbsolutePath = (path: string) =>
     path.charAt(1) === ":" &&
-    path.charAt(2) === "/" &&
+    (path.charAt(2) === "/" || path.charAt(2) === "\\") &&
     /^[a-zA-Z]/.test(path.charAt(0));
   export const isUnixAbsolutePath = (path: string) => path.startsWith("/");
   export const isHomePath = (path: string) =>
@@ -116,11 +113,17 @@ export namespace UriUtils {
    * equality comparisons. Built from decoded path components to avoid
    * encoding variance.
    */
-  export function toNormalizedKey(input: URI | string): string {
+  export function toNormalizedKey(
+    input: URI | string,
+    lowerCase = true,
+  ): string {
     const uri = typeof input === "string" ? toUri(input) : input;
-    const path = uri.path.replace(/\\/g, "/").toLowerCase();
-    const scheme = uri.scheme ? uri.scheme.toLowerCase() + "://" : "";
-    const authority = uri.authority ? uri.authority.toLowerCase() : "";
+    const convert = lowerCase
+      ? (s: string) => s.toLowerCase()
+      : (s: string) => s;
+    const path = convert(uri.path.replace(/\\/g, "/"));
+    const scheme = uri.scheme ? convert(uri.scheme) + "://" : "";
+    const authority = uri.authority ? convert(uri.authority) : "";
     return `${scheme}${authority}${path}`;
   }
 

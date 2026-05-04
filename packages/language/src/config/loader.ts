@@ -361,15 +361,16 @@ function createStructureDiagnostic(
  */
 export function toLspDiagnostic(
   diagnostic: Diagnostic,
-  document: TextDocument,
+  document: TextDocument | undefined,
 ): LspDiagnostic {
   const rangeFallback = {
     start: { line: 0, character: 0 },
     end: { line: 0, character: 1 },
   };
-  const range = diagnostic.range
-    ? rangeToLSP(document, diagnostic.range)
-    : rangeFallback;
+  const range =
+    diagnostic.range && document
+      ? rangeToLSP(document, diagnostic.range)
+      : rangeFallback;
   return {
     severity: severityToLsp(diagnostic.severity),
     message: diagnostic.message,

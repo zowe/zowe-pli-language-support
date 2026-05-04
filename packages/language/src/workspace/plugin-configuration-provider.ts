@@ -16,14 +16,13 @@ import {
   Diagnostic,
   diagnosticFromCodeAtRange,
   offsetLengthToRange,
-  rangeToLSP,
-  severityToLsp,
 } from "../language-server/types";
 import { mergeAbstractOptions } from "../config/compiler-options-merge";
 import { expandGroup } from "../config/lib-expander";
 import {
   parseProcessGroupConfigs,
   parseProgramConfigs,
+  toLspDiagnostic,
 } from "../config/loader";
 import {
   GroupRecord,
@@ -153,8 +152,7 @@ export class PluginConfigurationProvider {
    * Maps a lower-cased URI prefix (`<workspace>/<libDir>/`) to the set of
    * lower-cased extensions allowed in that lib. A file is a lib candidate
    * iff its parent directory matches a prefix and its extension matches the
-   * prefix's set. Replaces the previous minimatch-based glob patterns —
-   * cheaper per call and avoids depending on minimatch for this hot path.
+   * prefix's set.
    */
   private libFileMatchers: Map<string, Set<string>> | undefined;
 
@@ -508,7 +506,7 @@ export class PluginConfigurationProvider {
         };
         unresolvedLibEntries.push({ lib, pgroup: pgroupName, path });
         diagnostics.push(
-          this.toLspDiagnostic(unresolvedLibDiagnostic, configDocument),
+          toLspDiagnostic(unresolvedLibDiagnostic, configDocument),
         );
       }
     }
@@ -653,28 +651,6 @@ export class PluginConfigurationProvider {
     ).toString();
   }
 
-  private toLspDiagnostic(
-    diagnostic: Diagnostic,
-    document?: TextDocument,
-  ): LspDiagnostic {
-    const rangeFallback = {
-      start: { line: 0, character: 0 },
-      end: { line: 0, character: 1 },
-    };
-    const range =
-      diagnostic.range && document
-        ? rangeToLSP(document, diagnostic.range)
-        : rangeFallback;
-    return {
-      severity: severityToLsp(diagnostic.severity),
-      message: diagnostic.message,
-      code: diagnostic.code,
-      source: diagnostic.source ?? "PL/I",
-      range,
-      data: diagnostic.data,
-    };
-  }
-
   /**
    * Sets the process group configs of this plugin configuration provider, overwriting any existing configs.
    * Also invalidates the saved library file patterns & post-processes program configs.
@@ -712,13 +688,6 @@ export class PluginConfigurationProvider {
     workspacePath: URI,
     programConfig: ProgramConfig,
   ) {
-    const existing = this.programConfigs.get(programConfig.program.value);
-    if (existing) {
-      console.error(
-        `The following configuration entry already exists: ${existing}`,
-      );
-      return;
-    }
     this.setProgramConfigs(workspacePath, [
       ...this.programConfigs.values(),
       programConfig,

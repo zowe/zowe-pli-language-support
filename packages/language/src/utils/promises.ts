@@ -14,7 +14,7 @@ import {
   CancellationTokenSource,
   Connection,
 } from "vscode-languageserver";
-import { UpdateOperation } from "./messages";
+import { Messages } from "./messages";
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -135,7 +135,7 @@ export function startLongRunningOperation(
   }
   let running = false;
   const startTimeout = setTimeout(() => {
-    connection?.sendNotification(UpdateOperation, { title });
+    connection?.sendNotification(Messages.UpdateOperation, { title });
     running = true;
   }, timeout);
   return () => {
@@ -143,7 +143,7 @@ export function startLongRunningOperation(
     clearTimeout(startTimeout);
     if (running) {
       // Clear the progress info again
-      connection?.sendNotification(UpdateOperation, { title: "" });
+      connection?.sendNotification(Messages.UpdateOperation, { title: "" });
     }
   };
 }

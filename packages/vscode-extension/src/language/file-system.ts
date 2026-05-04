@@ -74,9 +74,9 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
   }
 
   async writeFile(uri: URI, value: string): Promise<void> {
-    const stringUri = uri.toString();
+    const uriString = uri.toString();
     await this._connection.sendRequest(Messages.WriteFile, {
-      stringUri,
+      uriString,
       value,
     });
   }

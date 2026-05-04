@@ -71,15 +71,14 @@ export async function updateOrCreateConfig(
       console.error("Unexpected format in program config file");
       return;
     }
+    parsedTextContent.pgms.push({ program: programPath, pgroup: "default" });
+    await config.writeProgramConfigFile(parsedTextContent);
 
     config.addProgramConfig(workspaceFolderUri, {
       program: plainItem(programPath),
       pgroup: plainItem("default"),
       compilerOptions: [],
     });
-
-    parsedTextContent.pgms.push({ program: programPath, pgroup: "default" });
-    await config.writeProgramConfigFile(parsedTextContent);
   } catch (err) {
     console.error("Failed to read or update program config file:", err);
     throw err;

@@ -89,8 +89,10 @@ export async function quickFixResolveInclude(
       return;
     }
     newFileContent = JSON.parse(originalFileContent);
-    if (!newFileContent.pgroups) {
-      console.error("Missing 'pgroups' property under 'proc_grps.json' file");
+    if (!Array.isArray(newFileContent.pgroups)) {
+      console.error(
+        "Missing 'pgroups' array property under 'proc_grps.json' file",
+      );
       return;
     }
   } catch (err) {
@@ -105,11 +107,19 @@ export async function quickFixResolveInclude(
   const groupToUpdate = newFileContent.pgroups.find(
     (g: { name: string }) => g.name === progConfig.pgroup.value,
   );
-  if (!groupToUpdate) {
+  if (
+    !groupToUpdate ||
+    !Array.isArray(groupToUpdate.libs) ||
+    groupToUpdate.libs.includes(parentFolder)
+  ) {
     return;
   }
   groupToUpdate.libs.push(parentFolder);
-  const newContent = JSON.stringify(newFileContent, undefined, 2);
+  const newContent = JSON.stringify(
+    newFileContent,
+    undefined,
+    JSONC_FORMAT.formattingOptions.tabSize,
+  );
 
   const action: CodeAction = {
     title: `Add '${parentFolder}' to INCLUDE libs.`,

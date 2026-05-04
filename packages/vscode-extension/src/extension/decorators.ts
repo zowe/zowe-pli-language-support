@@ -12,20 +12,25 @@
 import * as vscode from "vscode";
 import { LanguageClient, Range } from "vscode-languageclient/node.js";
 import { Settings } from "./settings";
+import { collectDisposables } from "./disposable";
 
 export function registerCustomDecorators(
   client: LanguageClient,
   settings: Settings,
 ) {
-  SkippedCodeDecorator.register(client, settings);
-  MarginIndicatorDecorator.register(client, settings);
+  const skippedCode = SkippedCodeDecorator.register(client, settings);
+  const marginIndicator = MarginIndicatorDecorator.register(client, settings);
+  return collectDisposables(skippedCode, marginIndicator);
 }
 
 export namespace SkippedCodeDecorator {
   let skippedCodeDecorationType: vscode.TextEditorDecorationType;
   const skippedRangesByUri = new Map<string, vscode.Range[]>();
 
-  export function register(client: LanguageClient, settings: Settings): void {
+  export function register(
+    client: LanguageClient,
+    settings: Settings,
+  ): vscode.Disposable {
     updateDecoratorType(settings, false);
 
     client.onNotification(
@@ -42,16 +47,21 @@ export namespace SkippedCodeDecorator {
         updateURI(params.uri, settings);
       },
     );
+    const disposables: vscode.Disposable[] = [];
+    disposables.push(
+      vscode.window.onDidChangeVisibleTextEditors((editors) => {
+        for (const editor of editors) {
+          updateEditor(editor, settings);
+        }
+      }),
+    );
 
-    vscode.window.onDidChangeVisibleTextEditors((editors) => {
-      for (const editor of editors) {
-        updateEditor(editor, settings);
-      }
-    });
-
-    vscode.workspace.onDidCloseTextDocument((doc) => {
-      skippedRangesByUri.delete(doc.uri.toString());
-    });
+    disposables.push(
+      vscode.workspace.onDidCloseTextDocument((doc) => {
+        skippedRangesByUri.delete(doc.uri.toString());
+      }),
+    );
+    return collectDisposables(...disposables, skippedCodeDecorationType);
   }
 
   export function updateAll(settings: Settings): void {
@@ -102,7 +112,10 @@ export namespace MarginIndicatorDecorator {
   >();
   let revalidate = false;
 
-  export function register(client: LanguageClient, settings: Settings): void {
+  export function register(
+    client: LanguageClient,
+    settings: Settings,
+  ): vscode.Disposable {
     client.onNotification(
       "pli/marginIndicator",
       (params: { uri: string; m: number; n: number }) => {
@@ -114,21 +127,26 @@ export namespace MarginIndicatorDecorator {
         updateRulers(settings);
       },
     );
+    const disposables: vscode.Disposable[] = [];
+    disposables.push(
+      vscode.workspace.onDidCloseTextDocument((doc) => {
+        const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
+        if (!margins) return;
+        margins.active = false;
+        revalidate = true; // Force subsequent update
+        updateRulers(settings);
+      }),
+    );
 
-    vscode.workspace.onDidCloseTextDocument((doc) => {
-      const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
-      if (!margins) return;
-      margins.active = false;
-      revalidate = true; // Force subsequent update
-      updateRulers(settings);
-    });
-
-    vscode.workspace.onDidOpenTextDocument((doc) => {
-      const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
-      if (!margins) return;
-      margins.active = true;
-      updateRulers(settings);
-    });
+    disposables.push(
+      vscode.workspace.onDidOpenTextDocument((doc) => {
+        const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
+        if (!margins) return;
+        margins.active = true;
+        updateRulers(settings);
+      }),
+    );
+    return collectDisposables(...disposables);
   }
 
   export function updateRulers(settings: Settings): void {

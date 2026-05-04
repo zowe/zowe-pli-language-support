@@ -10,19 +10,23 @@
  */
 
 import * as vscode from "vscode";
-import { UpdateOperation } from "pli-language";
+import { Messages } from "pli-language";
 import { BaseLanguageClient } from "vscode-languageclient";
 
-export function registerProgressReporter(client: BaseLanguageClient): void {
-  let dispose = new vscode.Disposable(() => {});
-  client.onNotification(UpdateOperation, (operation) => {
+export function registerProgressReporter(
+  client: BaseLanguageClient,
+): vscode.Disposable {
+  let statusBarItem = new vscode.Disposable(() => {});
+  client.onNotification(Messages.UpdateOperation, (operation) => {
     if (operation && typeof operation.title === "string") {
       const title = operation.title;
-      if (title === "") {
-        dispose.dispose();
-      } else {
-        dispose = vscode.window.setStatusBarMessage("$(loading~spin) " + title);
+      statusBarItem.dispose();
+      if (title) {
+        statusBarItem = vscode.window.setStatusBarMessage(
+          "$(loading~spin) " + title,
+        );
       }
     }
   });
+  return statusBarItem;
 }

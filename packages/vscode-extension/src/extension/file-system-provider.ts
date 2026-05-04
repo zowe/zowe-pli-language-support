@@ -62,10 +62,16 @@ export function registerFileSystemProvider(client: BaseLanguageClient): void {
       isDirectory: stat.type === vscode.FileType.Directory,
     };
   });
-  client.onRequest(Messages.WriteFile, async (uriString, value) => {
-    const uri = vscode.Uri.parse(uriString);
-    await vscode.workspace.fs.writeFile(uri, value);
-  });
+  client.onRequest(
+    Messages.WriteFile,
+    async (params: { uriString: string; value: string }) => {
+      const uri = vscode.Uri.parse(params.uriString);
+      await vscode.workspace.fs.writeFile(
+        uri,
+        new TextEncoder().encode(params.value),
+      );
+    },
+  );
   client.onRequest(Messages.ReadDir, async (uriString: string) => {
     const uri = vscode.Uri.parse(uriString);
     const result = await vscode.workspace.fs.readDirectory(uri);

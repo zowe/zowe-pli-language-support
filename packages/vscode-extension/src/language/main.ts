@@ -37,7 +37,11 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
     if (uri.scheme !== "file") {
       return super.readFile(uri);
     }
-    return fs.promises.readFile(uri.fsPath, "utf8");
+    try {
+      return fs.promises.readFile(uri.fsPath, "utf8");
+    } catch {
+      return Promise.resolve(undefined);
+    }
   }
 
   override async readDir(uri: URI): Promise<[string, FileType][]> {
@@ -84,12 +88,17 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
       return super.writeFile(uri, value);
     }
     const dir = dirname(uri.fsPath);
+    let failure = false;
     try {
       await fs.promises.mkdir(dir, { recursive: true });
     } catch (err) {
       console.log(`Failed to create directory "${dir}":`, err);
+      failure = true;
     }
-    await fs.promises.writeFile(uri.fsPath, value, "utf8");
+    if (!failure) {
+      // Only write if the directory creation succeeded (or was not needed)
+      await fs.promises.writeFile(uri.fsPath, value, "utf8");
+    }
   }
   override async findFile(
     path: URI,
@@ -114,13 +123,13 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
       return undefined;
     }
     const result = UriUtils.toUri(files[0]);
-    return result ?? undefined;
+    return result;
   }
 
   /**
    * Stats for file or directory
    * @param uri URI of file or directory to stat
-   * @returns Stats object. If stat fails, returns a stats object with both isFile and isDirectory false.
+   * @returns Stats object. If stat fails, this function throws.
    */
   override async stat(uri: URI): Promise<Stats> {
     if (uri.scheme !== "file") {

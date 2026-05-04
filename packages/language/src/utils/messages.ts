@@ -9,12 +9,21 @@
  *
  */
 
-/**
- * Notification sent to the LS when the workspace's plugin configuration changes.
- */
-export const WorkspaceDidChangePlipluginConfigNotification =
-  "workspace/didChangePlipluginConfig";
+export namespace Messages {
+  /**
+   * Notification sent to the LS when the workspace's plugin configuration changes.
+   */
+  export const WorkspaceDidChangePluginConfigNotification =
+    "workspace/didChangePluginConfig";
 
-export const ExistingFileRequest = "pli/existingFileRequest";
+  /**
+   * Request sent to the LS to check if a file is already present in the workspace (i.e. included in a program)
+   */
+  export const ExistingFileRequest = "pli/existingFileRequest";
 
-export const UpdateOperation = "pli/updateOperation";
+  /**
+   * Notification sent to the language client to inform that an operation is in progress.
+   * Client should show a progress indicator until the operation is complete.
+   */
+  export const UpdateOperation = "pli/updateOperation";
+}
