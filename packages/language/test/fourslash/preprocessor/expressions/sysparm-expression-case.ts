@@ -9,11 +9,15 @@
  *
  */
 
-/// <reference path="../../../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-////*PROCESS SYSPARM(TEST_VAR);
-//// %DCL Y CHAR;
-//// %Y = SYSPARM;
-//// Y
+//// %DCL X FIXED;
+//// %DCL POS FIXED;
+//// %POS = 26;
+//// %X = 34 - POS - 5;
+//// X
 
-preprocessor.expectTokens("TEST_VAR");
+// This tests the bug scenario associated with #633.
+// Left-associative: (34 - 26) - 5 = 8 - 5 = 3
+// NOT right-associative: 34 - (26 - 5) = 34 - 21 = 13
+preprocessor.expectTokens("3");
