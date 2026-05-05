@@ -123,23 +123,37 @@ function performIfLookahead(state: ParserState): boolean {
   return false;
 }
 
-export function performEndStatementLookahead(state: ParserState): boolean {
+export function performEndStatementLookahead(
+  state: ParserState,
+): { hasEnd: true; label: string | null } | { hasEnd: false } {
   const lookahead = (la: number) => state.peek(la);
   let index: number = 1;
   let token: tokens.Token | undefined = undefined;
+
   while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
     const idToken = lookahead(index);
     const colonToken = lookahead(index + 1);
     if (!idToken || !colonToken) {
-      return false;
+      return { hasEnd: false };
     }
     if (
       !tokenMatcher(idToken, tokens.ID) ||
       !tokenMatcher(colonToken, tokens.Colon)
     ) {
-      return false;
+      return { hasEnd: false };
     }
     index += 2;
   }
-  return token !== undefined && tokenMatcher(token, tokens.END);
+
+  if (!token || !tokenMatcher(token, tokens.END)) {
+    return { hasEnd: false };
+  }
+
+  // Check for label reference after END
+  const labelToken = lookahead(index + 1);
+  if (labelToken && tokenMatcher(labelToken, tokens.ID)) {
+    return { hasEnd: true, label: labelToken.image };
+  } else {
+    return { hasEnd: true, label: null };
+  }
 }

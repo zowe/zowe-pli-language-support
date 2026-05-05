@@ -10,7 +10,7 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
-import { SyntaxNode } from "../syntax-tree/ast";
+import { SyntaxNode, LabelPrefix } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import {
@@ -29,6 +29,7 @@ import {
 } from "../validation/pli-codes";
 import { tokenIdxToClass } from "./token-type-factory";
 import * as environment from "../workspace/environment";
+import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 
 export enum RecoveryResult {
   /**
@@ -50,14 +51,16 @@ export type RecoveryFunction = () => RecoveryResult;
 export class ParserState {
   readonly tokens: t.Token[];
   readonly diagnostics: Diagnostic[];
+  readonly compilerOptions?: CompilerOptions;
+  private inProcedure = false;
   public index: number;
   public inError = false;
+  public currentStatementLabels: LabelPrefix[] = [];
 
-  private inProcedure = false;
-
-  constructor(tokens: t.Token[]) {
+  constructor(tokens: t.Token[], compilerOptions?: CompilerOptions) {
     this.tokens = tokens;
     this.diagnostics = [];
+    this.compilerOptions = compilerOptions;
     this.index = 0;
   }
 
@@ -131,6 +134,20 @@ export class ParserState {
 
   isInProcedure() {
     return this.inProcedure;
+  }
+
+  isEndOptional(): boolean {
+    return this.compilerOptions?.rules?.multiClose ?? false;
+  }
+
+  endLabelMatches(endLabel: string | null): boolean {
+    if (endLabel === null) {
+      // Unlabeled END matches any statement
+      return true;
+    }
+    return this.currentStatementLabels.some(
+      (labelPrefix) => labelPrefix.name === endLabel,
+    );
   }
 
   /**

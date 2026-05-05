@@ -33,12 +33,16 @@ import {
   performEndStatementLookahead,
 } from "./parser-lookahead";
 import { Token } from "./tokens";
+import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 
-export function parsePli(input: tokens.Token[]): {
+export function parsePli(
+  input: tokens.Token[],
+  compilerOptions?: CompilerOptions,
+): {
   tree: ast.Program;
   diagnostics: Diagnostic[];
 } {
-  const state = new ParserState(input);
+  const state = new ParserState(input, compilerOptions);
   const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
@@ -75,15 +79,13 @@ const packageRule = rule(
     }
     state.consume(element, CstNodeKind.Package_Semicolon, tokens.Semicolon);
     const { inc } = state.createLoopContext("Package");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
-    // END statement for PACKAGE is optional
-    if (performEndStatementLookahead(state)) {
-      element.end = endStatement.rule(state);
-    }
+    // END statement for PACKAGE is always optional
+    element.end = parseMulticloseEnd(state, true);
     return element;
   },
 );
@@ -500,12 +502,12 @@ const procedureStatement = rule(
     );
 
     const { inc: inc3 } = state.createLoopContext("ProcedureStatement 3");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
       inc3();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
-    element.end = endStatement.rule(state);
+    element.end = parseMulticloseEnd(state);
     return element;
   },
 );
@@ -663,11 +665,18 @@ const statement = rule(
       label && element.labels.push(label);
     }
 
+    // Store labels in state so compound statements can access them
+    const previousLabels = state.currentStatementLabels;
+    state.currentStatementLabels = element.labels;
+
     if (performAssignmentLookahead(state)) {
       element.value = assignmentStatement.rule(state);
     } else {
       element.value = unit.rule(state);
     }
+
+    // Restore previous labels
+    state.currentStatementLabels = previousLabels;
 
     element.endToken = state.last ?? null;
 
@@ -1175,13 +1184,13 @@ const beginStatement = rule(
       tokens.Semicolon,
     );
     const { inc } = state.createLoopContext("BeginStatement");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
 
-    element.end = endStatement.rule(state);
+    element.end = parseMulticloseEnd(state);
 
     return element;
   },
@@ -1220,6 +1229,57 @@ const endStatement = rule(
     return element;
   },
 );
+
+/**
+ * Parses an END statement with RULES(MULTICLOSE) and label-matching logic.
+ *
+ * With RULES(MULTICLOSE) (or alwaysOptional=true):
+ * - Unlabeled END: Consumed by first (innermost) compound statement that sees it
+ * - Labeled END: Only consumed if label matches one of the current statement's labels
+ * - If END exists but doesn't match, it's left for outer scope
+ *
+ * With RULES(NOMULTICLOSE) (and alwaysOptional=false):
+ * - END is required - parsing error reported if missing
+ *
+ * @param state Parser state
+ * @param alwaysOptional If true, END is always optional regardless of MULTICLOSE setting (for PACKAGE)
+ * @returns EndStatement if END is present/required, null if optional and not present/matching
+ */
+function parseMulticloseEnd(
+  state: ParserState,
+  alwaysOptional: boolean = false,
+): ast.EndStatement | null {
+  const endInfo = performEndStatementLookahead(state);
+
+  if (alwaysOptional) {
+    // PACKAGE: END is truly optional (can be omitted entirely)
+    if (!endInfo.hasEnd) {
+      return null;
+    }
+    // END present for PACKAGE - always consume it
+    return endStatement.rule(state);
+  }
+
+  if (state.isEndOptional()) {
+    // MULTICLOSE mode: END can skip levels via labels, but must exist somewhere
+    if (!endInfo.hasEnd) {
+      // No END found (at EOF) - ERROR even with MULTICLOSE
+      return endStatement.rule(state); // Will generate parser error
+    }
+
+    // END found - check if label matches this statement
+    if (state.endLabelMatches(endInfo.label)) {
+      // Label matches (or unlabeled END for innermost) - consume it
+      return endStatement.rule(state);
+    } else {
+      // Label doesn't match - leave END for outer scope to consume
+      return null;
+    }
+  } else {
+    // NOMULTICLOSE: END is required for each compound
+    return endStatement.rule(state);
+  }
+}
 
 const callStatement = rule(
   sequence(tokens.CALL),
@@ -2165,13 +2225,13 @@ const doStatement = rule(
 
     // Parse statements until END
     const { inc } = state.createLoopContext("DoStatement");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
 
-    element.end = endStatement.rule(state);
+    element.end = parseMulticloseEnd(state);
 
     return element;
   },
@@ -3880,13 +3940,13 @@ const qualifyStatement = rule(
     );
 
     const { inc } = state.createLoopContext("QualifyStatement");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
     }
 
-    element.end = endStatement.rule(state);
+    element.end = parseMulticloseEnd(state);
 
     return element;
   },
@@ -4252,7 +4312,7 @@ const selectStatement = rule(
       }
     }
 
-    element.end = endStatement.rule(state);
+    element.end = parseMulticloseEnd(state);
 
     return element;
   },
