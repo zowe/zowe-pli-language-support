@@ -14,7 +14,6 @@ import { PliLexer } from "../../src/preprocessor/pli-lexer";
 import { UriUtils } from "../../src/utils/uri";
 import { createCompilationUnit } from "../../src/workspace/compilation-unit";
 import {
-  PluginConfigurationProviderInstance,
   ProcessGroup,
   ProgramConfig,
 } from "../../src/workspace/plugin-configuration-provider";
@@ -23,6 +22,8 @@ import { tokenize } from "../../src/parser/tokenizer";
 import { fullCode } from "../../src/language-server/types";
 import { PLICodes } from "../../src/validation/pli-codes";
 import { CompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
+import { makeProcessGroup, makeProgramConfig } from "../config-fixtures";
+import { defaultTestWorkspace } from "../test-workspace";
 
 type TokenizeFunction = (text: string) => Promise<string[]>;
 
@@ -34,7 +35,7 @@ describe("PL/1 Lexer", () => {
     tokenizeWithErrors = async (text: string) => {
       const uri = UriUtils.toUri("/test/test.pli");
       const document = TextDocument.create(uri.toString(), "pli", 0, text);
-      const unit = await createCompilationUnit(uri);
+      const unit = await createCompilationUnit(uri, defaultTestWorkspace());
       await lexer.tokenize(unit, document, uri);
       return unit.diagnostics.getAll().map((e) => e.message);
     };
@@ -105,8 +106,8 @@ describe("PL/1 Lexer", () => {
   describe("Compiler Options", () => {
     afterAll(async () => {
       // Reset the plugin configuration state
-      PluginConfigurationProviderInstance.setProgramConfigs("", []);
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+      defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
+      await defaultTestWorkspace().config.setProcessGroupConfigs([]);
     });
 
     test("Inject process group compiler options after *PROCESS directive", async () => {
@@ -115,37 +116,31 @@ describe("PL/1 Lexer", () => {
       const inputText = `*PROCESS ARCH(10);
       DCL A fixed bin(31);`;
 
-      const programConfig: ProgramConfig = {
+      const programConfig: ProgramConfig = makeProgramConfig({
         program: "test.pli",
         pgroup: "testGroup",
-      };
-      const processGroupConfig: ProcessGroup = {
+      });
+      const processGroupConfig: ProcessGroup = makeProcessGroup({
         name: "testGroup",
         compilerOptions: ["ASSERT(ENTRY)"],
-        includeExtensions: [],
-        libs: [],
-        $computedLibs: [],
-        $computedLibsSet: new Set<string>(),
-        lspOptions: {
-          checkMargins: false,
-          instructionCounterLimit: 5000,
-          caseUpperValidation: false,
-        },
-      };
+        checkMargins: false,
+        instructionCounterLimit: 5000,
+        caseUpperValidation: false,
+      });
 
-      await PluginConfigurationProviderInstance.init("/test");
-      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+      await defaultTestWorkspace().config.init(UriUtils.toUri("/test"));
+      defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri("/test"), [
         programConfig,
       ]);
       const diagnostics =
-        await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+        await defaultTestWorkspace().config.setProcessGroupConfigs([
           processGroupConfig,
         ]);
 
       expect(diagnostics).toHaveLength(0);
 
       const { compilerOptions } = await lexer.tokenize(
-        await createCompilationUnit(uri),
+        await createCompilationUnit(uri, defaultTestWorkspace()),
         TextDocument.create(uri.toString(), "pli", 0, inputText),
         uri,
       );
@@ -163,18 +158,18 @@ describe("PL/1 Lexer", () => {
       const inputText = `*PROCESS ARCH(10);
       DCL A fixed bin(31);`;
 
-      const programConfig: ProgramConfig = {
+      const programConfig: ProgramConfig = makeProgramConfig({
         program: "test.pli",
         pgroup: "missingGroup",
-      };
+      });
 
-      await PluginConfigurationProviderInstance.init("/test");
-      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+      await defaultTestWorkspace().config.init(UriUtils.toUri("/test"));
+      defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri("/test"), [
         programConfig,
       ]);
 
       const { compilerOptions } = await lexer.tokenize(
-        await createCompilationUnit(uri),
+        await createCompilationUnit(uri, defaultTestWorkspace()),
         TextDocument.create(uri.toString(), "pli", 0, inputText),
         uri,
       );
@@ -187,34 +182,28 @@ describe("PL/1 Lexer", () => {
       const uri = UriUtils.toUri("/test/test.pli");
       const inputText = " DCL A fixed bin(31);";
 
-      const programConfig: ProgramConfig = {
+      const programConfig: ProgramConfig = makeProgramConfig({
         program: "test.pli",
         pgroup: "testGroup",
-      };
-      const processGroupConfig: ProcessGroup = {
+      });
+      const processGroupConfig: ProcessGroup = makeProcessGroup({
         name: "testGroup",
         compilerOptions: ["ASSERT(ENTRY)"],
-        includeExtensions: [],
-        libs: [],
-        $computedLibs: [],
-        $computedLibsSet: new Set<string>(),
-        lspOptions: {
-          checkMargins: false,
-          instructionCounterLimit: 5000,
-          caseUpperValidation: false,
-        },
-      };
+        checkMargins: false,
+        instructionCounterLimit: 5000,
+        caseUpperValidation: false,
+      });
 
-      await PluginConfigurationProviderInstance.init("/test");
-      PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+      await defaultTestWorkspace().config.init(UriUtils.toUri("/test"));
+      defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri("/test"), [
         programConfig,
       ]);
-      await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+      await defaultTestWorkspace().config.setProcessGroupConfigs([
         processGroupConfig,
       ]);
 
       const { compilerOptions } = await lexer.tokenize(
-        await createCompilationUnit(uri),
+        await createCompilationUnit(uri, defaultTestWorkspace()),
         TextDocument.create(uri.toString(), "pli", 0, inputText),
         uri,
       );

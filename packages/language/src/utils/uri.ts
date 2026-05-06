@@ -26,14 +26,34 @@ export namespace UriUtils {
   export const joinPath = Utils.joinPath;
   export const resolvePath = Utils.resolvePath;
 
-  export const isWindows =
-    typeof process === "object" && process?.platform === "win32";
-
   export const isWindowsAbsolutePath = (path: string) =>
     path.charAt(1) === ":" &&
-    path.charAt(2) === "/" &&
+    (path.charAt(2) === "/" || path.charAt(2) === "\\") &&
     /^[a-zA-Z]/.test(path.charAt(0));
   export const isUnixAbsolutePath = (path: string) => path.startsWith("/");
+  export const isHomePath = (path: string) =>
+    path.charAt(0) === "~" &&
+    (path.charAt(1) === "/" || path.charAt(1) === "\\" || path.length === 1);
+
+  export enum PathType {
+    Absolute,
+    Relative,
+    URI,
+  }
+
+  export function computePathType(path: string): PathType {
+    if (
+      isWindowsAbsolutePath(path) ||
+      isUnixAbsolutePath(path) ||
+      isHomePath(path)
+    ) {
+      return PathType.Absolute;
+    }
+    if (SCHEME_REGEX.test(path)) {
+      return PathType.URI;
+    }
+    return PathType.Relative;
+  }
 
   /**
    * Smart constructor: detects whether input is a URI string or a file path
@@ -60,15 +80,23 @@ export namespace UriUtils {
         : input;
     }
     if (WINDOWS_DRIVE_REGEX.test(input)) {
-      return URI.file(input.replace(/\\/g, "/"));
+      return file(input);
     }
     if (SCHEME_REGEX.test(input)) {
-      const safeInput = FRAGMENTLESS_SCHEME_REGEX.test(input)
-        ? input.replace(/#/g, "%23")
-        : input;
-      return URI.parse(safeInput);
+      return parse(input);
     }
     return URI.file(input);
+  }
+
+  export function parse(uri: string): URI {
+    const safeInput = FRAGMENTLESS_SCHEME_REGEX.test(uri)
+      ? uri.replace(/#/g, "%23")
+      : uri;
+    return URI.parse(safeInput);
+  }
+
+  export function file(path: string): URI {
+    return URI.file(path.replace(/\\/g, "/"));
   }
 
   export function equals(a?: URI | string, b?: URI | string): boolean {
@@ -85,11 +113,17 @@ export namespace UriUtils {
    * equality comparisons. Built from decoded path components to avoid
    * encoding variance.
    */
-  export function toNormalizedKey(input: URI | string): string {
+  export function toNormalizedKey(
+    input: URI | string,
+    lowerCase = true,
+  ): string {
     const uri = typeof input === "string" ? toUri(input) : input;
-    const path = uri.path.replace(/\\/g, "/").toLowerCase();
-    const scheme = uri.scheme ? uri.scheme.toLowerCase() + "://" : "";
-    const authority = uri.authority ? uri.authority.toLowerCase() : "";
+    const convert = lowerCase
+      ? (s: string) => s.toLowerCase()
+      : (s: string) => s;
+    const path = convert(uri.path.replace(/\\/g, "/"));
+    const scheme = uri.scheme ? convert(uri.scheme) + "://" : "";
+    const authority = uri.authority ? convert(uri.authority) : "";
     return `${scheme}${authority}${path}`;
   }
 

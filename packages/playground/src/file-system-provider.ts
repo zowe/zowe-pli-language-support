@@ -17,11 +17,7 @@ import {
 } from "@codingame/monaco-vscode-files-service-override";
 import { IStoredWorkspace } from "@codingame/monaco-vscode-configuration-service-override";
 import { ConfigResult } from "./config";
-import {
-  Builtins,
-  BuiltinsUriSchema,
-  WorkspaceDidChangePlipluginConfigNotification,
-} from "pli-language";
+import { Builtins, BuiltinsUriSchema, Messages } from "pli-language";
 import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
 import {
   FILE_SYSTEM_NAMESPACE,
@@ -173,7 +169,9 @@ export function watchWorkspaceChanges(
       const client = wrapper.getLanguageClient("pli");
       if (client) {
         console.debug("Change detected in", uriPath);
-        client.sendNotification(WorkspaceDidChangePlipluginConfigNotification);
+        client.sendNotification(
+          Messages.WorkspaceDidChangePluginConfigNotification,
+        );
       }
     }
   });

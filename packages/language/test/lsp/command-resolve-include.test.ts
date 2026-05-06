@@ -10,17 +10,12 @@
  */
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  FileSystemProviderInstance,
-  VirtualFileSystemProvider,
-  setFileSystemProvider,
-} from "../../src/workspace/file-system-provider";
-
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import {
   deserializeProcessGroup,
   PluginConfigurationProvider,
-  setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
+import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { commandResolveInclude } from "../../src/language-server/commands";
 import { Commands } from "../../src/language-server/constants";
 import { UriUtils } from "../../src/utils/uri";
@@ -31,13 +26,13 @@ const CONFIG_FILE_PATH = "/workspace/.pliplugin/proc_grps.json";
 describe("commandResolveInclude", () => {
   let vfs: VirtualFileSystemProvider;
   let pluginConfig: PluginConfigurationProvider;
+  let workspace: WorkspaceContext;
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    pluginConfig = new PluginConfigurationProvider();
-    setFileSystemProvider(vfs);
-    setPluginConfigurationProvider(pluginConfig);
-    await pluginConfig.init(WORKSPACE_PATH);
+    workspace = new WorkspaceContext(vfs);
+    pluginConfig = workspace.config;
+    await pluginConfig.init(UriUtils.toUri(WORKSPACE_PATH));
 
     // Base config setup
     const processGroup = deserializeProcessGroup({
@@ -49,18 +44,21 @@ describe("commandResolveInclude", () => {
   });
 
   test("Appends a new lib to the process group configuration.", async () => {
-    await commandResolveInclude({
-      command: Commands.RESOLVE_INCLUDE,
-      arguments: [
-        CONFIG_FILE_PATH,
-        JSON.stringify({
-          name: "default",
-          libs: ["cpy"],
-        }),
-      ],
-    });
+    await commandResolveInclude(
+      {
+        command: Commands.RESOLVE_INCLUDE,
+        arguments: [
+          CONFIG_FILE_PATH,
+          JSON.stringify({
+            name: "default",
+            libs: ["cpy"],
+          }),
+        ],
+      },
+      workspace,
+    );
 
-    const result = await FileSystemProviderInstance.readFile(
+    const result = await workspace.fs.readFile(
       UriUtils.toUri(CONFIG_FILE_PATH),
     );
     expect(result).toBeDefined();
@@ -71,18 +69,21 @@ describe("commandResolveInclude", () => {
   });
 
   test("Appends a new lib from an absolute file path to the process group configuration.", async () => {
-    await commandResolveInclude({
-      command: Commands.RESOLVE_INCLUDE,
-      arguments: [
-        CONFIG_FILE_PATH,
-        JSON.stringify({
-          name: "default",
-          libs: ["/Users/mockUser/mockWorkspace"],
-        }),
-      ],
-    });
+    await commandResolveInclude(
+      {
+        command: Commands.RESOLVE_INCLUDE,
+        arguments: [
+          CONFIG_FILE_PATH,
+          JSON.stringify({
+            name: "default",
+            libs: ["/Users/mockUser/mockWorkspace"],
+          }),
+        ],
+      },
+      workspace,
+    );
 
-    const result = await FileSystemProviderInstance.readFile(
+    const result = await workspace.fs.readFile(
       UriUtils.toUri(CONFIG_FILE_PATH),
     );
     expect(result).toBeDefined();
@@ -93,18 +94,21 @@ describe("commandResolveInclude", () => {
   });
 
   test("Handles content with special characters and escaping.", async () => {
-    await commandResolveInclude({
-      command: Commands.RESOLVE_INCLUDE,
-      arguments: [
-        CONFIG_FILE_PATH,
-        JSON.stringify({
-          name: "default",
-          libs: ["path/with spaces", "path\\with\\backslashes"],
-        }),
-      ],
-    });
+    await commandResolveInclude(
+      {
+        command: Commands.RESOLVE_INCLUDE,
+        arguments: [
+          CONFIG_FILE_PATH,
+          JSON.stringify({
+            name: "default",
+            libs: ["path/with spaces", "path\\with\\backslashes"],
+          }),
+        ],
+      },
+      workspace,
+    );
 
-    const result = await FileSystemProviderInstance.readFile(
+    const result = await workspace.fs.readFile(
       UriUtils.toUri(CONFIG_FILE_PATH),
     );
     expect(result).toBeDefined();
@@ -119,13 +123,16 @@ describe("commandResolveInclude", () => {
     vfs.writeFile = vi.fn().mockRejectedValue(new Error("Permission denied"));
 
     await expect(
-      commandResolveInclude({
-        command: Commands.RESOLVE_INCLUDE,
-        arguments: [
-          CONFIG_FILE_PATH,
-          JSON.stringify({ name: "default", libs: [] }),
-        ],
-      }),
+      commandResolveInclude(
+        {
+          command: Commands.RESOLVE_INCLUDE,
+          arguments: [
+            CONFIG_FILE_PATH,
+            JSON.stringify({ name: "default", libs: [] }),
+          ],
+        },
+        workspace,
+      ),
     ).resolves.toBeUndefined();
   });
 
@@ -135,13 +142,16 @@ describe("commandResolveInclude", () => {
       .mockImplementation(() => {});
     vfs.writeFile = vi.fn().mockRejectedValue(new Error("Write failed"));
 
-    await commandResolveInclude({
-      command: Commands.RESOLVE_INCLUDE,
-      arguments: [
-        CONFIG_FILE_PATH,
-        JSON.stringify({ name: "default", libs: [] }),
-      ],
-    });
+    await commandResolveInclude(
+      {
+        command: Commands.RESOLVE_INCLUDE,
+        arguments: [
+          CONFIG_FILE_PATH,
+          JSON.stringify({ name: "default", libs: [] }),
+        ],
+      },
+      workspace,
+    );
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       `Failed to write file at URI: ${CONFIG_FILE_PATH}`,

@@ -27,11 +27,13 @@ import { URI, UriUtils } from "../utils/uri";
 import { LspCodes } from "../validation/lsp-codes";
 import { PLICodes } from "../validation/pli-codes";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import {
-  isLibsDir,
-  PluginConfigurationProviderInstance,
-} from "../workspace/plugin-configuration-provider";
+  getFileNameOrPartialName,
+  IncludeItem,
+  isFileIncludeItem,
+  isMemberIncludeItem,
+  resolveIncludeFileUri,
+} from "./include-resolver";
 import { CompilerOptionResult } from "./compiler-options/options";
 import { CompilerOptions as MacroCompilerOptions } from "./compiler-options/options-macro";
 import { CompilerOptions as PliCompilerOptions } from "./compiler-options/options-pli";
@@ -42,12 +44,6 @@ import {
 import * as inst from "./instructions";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
-import {
-  BuiltinsSqlcaName,
-  BuiltinsSqlcaUri,
-  BuiltinsSqldaName,
-  BuiltinsSqldaUri,
-} from "../workspace/builtins";
 
 interface Variable {
   name: string;
@@ -370,7 +366,7 @@ export async function runInstructions(
     },
     macname: "",
     instructionCounterLimit:
-      unit.processGroup?.lspOptions.instructionCounterLimit ??
+      unit.processGroup?.lspOptions.instructionCounterLimit.value ??
       MAX_INSTRUCTION_COUNTER,
   };
   for (const [key, value] of instruction.procedures.entries()) {
@@ -2227,52 +2223,10 @@ function setFilePath(
   if (!filePath) return;
   item.filePath = filePath;
   if (!context.currentUri) return;
-  const workspace = PluginConfigurationProviderInstance.getWorkspacePath();
-  item.relativeFilePath = UriUtils.composeRelativePath(workspace, filePath);
-}
-
-/**
- * Represents an include item to be processed
- * Either by fileName or member
- */
-type IncludeItem = FileIncludeItem | MemberIncludeItem;
-
-/**
- * Literal file include
- */
-interface FileIncludeItem {
-  fileName: string;
-  token?: Token | null;
-  idempotent: boolean;
-  sql: boolean;
-}
-
-/**
- * Include by member item, possibly with a ddname to further clarify
- */
-interface MemberIncludeItem {
-  memberName: string;
-  ddname: string | null;
-  ddnameTokens: Token[] | null;
-  token?: Token | null;
-  idempotent: boolean;
-}
-
-function isFileIncludeItem(obj: any): obj is FileIncludeItem {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "fileName" in obj &&
-    typeof obj.fileName === "string"
-  );
-}
-
-function isMemberIncludeItem(obj: any): obj is MemberIncludeItem {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "memberName" in obj &&
-    typeof obj.memberName === "string"
+  const workspace = context.unit.services.workspace.config.getWorkspacePath();
+  item.relativeFilePath = UriUtils.composeRelativePath(
+    workspace.path,
+    filePath,
   );
 }
 
@@ -2350,6 +2304,7 @@ async function runInclude(
           text: content,
         },
         uri,
+        context.unit.services.workspace,
       );
       const tokenizeResult = tokenize(processedContent, uri);
       const subState = new ParserState(tokenizeResult.tokens);
@@ -2388,244 +2343,6 @@ async function runInclude(
     failToResolve(err);
   }
   return uri.toString();
-}
-
-/**
- * Returns the appropriate file name or partial name for an include item.
- * Partial names refer to member includes that do not have an explicit ddname specified, but can still be resolved
- * in the context of a known process group lib that may contain the member.
- * Before checking we can't state whether a standalone member returned here is partial or not, as that depends on the libs.
- * @returns Relevant fileName or member w/ or w/out a ddname, otherwise undefined when none are found
- */
-function getFileNameOrPartialName(item: IncludeItem): string | undefined {
-  if (isMemberIncludeItem(item) && item.ddname) {
-    // fully resolvable member w/ ddname
-    return `${item.ddname}(${item.memberName})`;
-  } else if (isMemberIncludeItem(item)) {
-    // standalone member w/out a ddname, may be partial depending on libs
-    return item.memberName;
-  } else if (item.fileName) {
-    // literal file include
-    return item.fileName;
-  } else {
-    // no fileName or memberName to work with
-    return undefined;
-  }
-}
-
-/**
- * Attempts to resolve the URI of an include file factoring in process group libs, relative & absolute paths
- *
- * @param item Include item to resolve a URI for
- * @param context Interpreter context used for resolution & diagnostic collection
- * @returns URI of the included file if found, otherwise undefined
- */
-async function resolveIncludeFileUri(
-  item: IncludeItem,
-  context: InterpreterContext,
-): Promise<URI | undefined> {
-  if (!context.entryUri || (!isFileIncludeItem(item) && !item.memberName)) {
-    return undefined;
-  }
-  const pgroup =
-    context.unit.processGroup ??
-    PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(
-      context.currentUri,
-    );
-
-  if (!pgroup) {
-    // no process group to resolve libs from
-    return undefined;
-  }
-
-  // TODO @montymxb Jun 24th, 2025: Disabled relative & absolute pathing per request, however mainframe tests do show this works w/ the right JCL config
-  // temporarily retaining here until we know we won't need this going forward, or we decide to re-enable it based on some configuration setting
-  /*
-  const absPathRegex = /^\/|[A-Z]:|~/i;
-  const relativePathRegex = /^\.\.\/|^\.\//;
-  if (absPathRegex.test(item.file)) {
-    // absolute path, use as is
-    return URI.parse(item.file);
-  } else if (relativePathRegex.test(item.file)) {
-    // relative path, combine with currentDir
-    return UriUtils.joinPath(currentDir, item.file);
-  } else ....
-  */
-
-  // lib file as either a string or a member from a known process group
-  const computedLibs = pgroup.$computedLibs;
-
-  // construct the appropriate file name or partial name for members
-  const fileNameOrPartial = getFileNameOrPartialName(item);
-  if (!fileNameOrPartial) {
-    // no fileName or memberName to work with, abandon resolution
-    return undefined;
-  }
-
-  /**
-   * Computes the URI for a lib file based on whether the path is absolute or relative.
-   * Relative paths are combined w/ the workspace path.
-   *
-   * @param path Lib path from the process group
-   * @param fileName Optional file name to append to the lib path (generally the include file name)
-   */
-  function resolveLibFileUri(path: string, fileName?: string): URI {
-    const absPathRegex = /^(?:\/|\\|[A-Z]:)/i;
-    if (!absPathRegex.test(path)) {
-      return UriUtils.joinPath(
-        UriUtils.toUri(PluginConfigurationProviderInstance.getWorkspacePath()),
-        path,
-        fileName ?? "",
-      );
-    } else {
-      const libUri = UriUtils.toUri(path).with({
-        scheme: context.entryUri.scheme,
-      });
-      return UriUtils.joinPath(libUri, fileName ?? "");
-    }
-  }
-
-  // what constitutes a valid member name, whether it's a member or file include
-  const memberNameRegex = /^[A-Z][A-Z0-9@#_$]*$/i;
-
-  /**
-   * Helper to check & validate member names when member name validations are enabled.
-   * Pushes diagnostics to the context when validation fails.
-   * Effectively a noop when member name validation is disabled in the process group.
-   * @param memberName Member to validate, implied to be a member of an existing ddlib entry
-   */
-  function checkToValidateMember(memberName: string): void {
-    if (!pgroup?.memberNameValidation) {
-      return;
-    }
-    // apply additional validation to the member name
-    if (memberName.length > 8) {
-      // emit diagnostic for member names > 8 characters
-      context.diagnostics.push(
-        diagnosticFromCode(
-          LspCodes.MemberValidation.ExceedsMaxLength,
-          item.token,
-        ),
-      );
-    }
-
-    if (!memberNameRegex.test(memberName)) {
-      // emit a diagnostic for invalid member names
-      context.diagnostics.push(
-        diagnosticFromCode(LspCodes.MemberValidation.InvalidName, item.token),
-      );
-    }
-  }
-
-  /**
-   * Type guard to check if an include item is a standalone member without a DDName specified.
-   * In such cases, this member may be the suffix of a DDName entry in the libs (e.g., `A.B.C(member)`).
-   * Following mainframe behavior, if `cpy/A.B.C` or `cpy` is in libs, we should be able to resolve `member`.
-   *
-   * @param item - The include item to check
-   * @returns True if the item is a member include without a ddname
-   */
-  function isMemberWithoutDDName(item: IncludeItem): item is MemberIncludeItem {
-    return isMemberIncludeItem(item) && !item.ddname;
-  }
-
-  /**
-   * Type guard to check if an include item is a member with an explicitly specified DDName (ex. `ABC.DEF(MEMBER)`).
-   *
-   * @param item - The include item to check
-   * @returns True if the item is a member include with both ddname and memberName populated
-   */
-  function isMemberWithDDName(
-    item: IncludeItem,
-  ): item is MemberIncludeItem & { ddname: string; memberName: string } {
-    return (
-      isMemberIncludeItem(item) &&
-      item.ddname !== null &&
-      item.memberName.length > 0
-    );
-  }
-
-  let libMatch: URI | undefined;
-  // whether a match was found for a member include
-  let needsMemberValidation =
-    isMemberWithoutDDName(item) || isMemberWithDDName(item);
-
-  for (const lib of computedLibs) {
-    if (isLibsDir(lib)) {
-      const libFileUri = resolveLibFileUri(lib.dir, fileNameOrPartial);
-
-      if (memberNameRegex.test(fileNameOrPartial)) {
-        // attempt to first resolve for any DDName that may introduce a member by this name
-        // This is done to ensure resolution order of libs is maintained as members > files
-        // Same applies for both member & file includes, to ensure behavior is consistent.
-        // Ex. If we have both `cpy/member.pli` and `cpy/A.B.C(member)`, with `cpy` in the libs list
-        // We want to ensure that `A.B.C(member)` is resolved first before falling back to `member.pli`
-        libMatch = await FileSystemProviderInstance.search({
-          dirPath: resolveLibFileUri(lib.dir),
-          member: fileNameOrPartial,
-        });
-        if (libMatch) {
-          break;
-        }
-      }
-
-      // perform standard search
-      libMatch = await FileSystemProviderInstance.search({
-        path: libFileUri,
-        extensions: pgroup.includeExtensions,
-      });
-      if (libMatch) {
-        // regular file match, no member to validate
-        needsMemberValidation = isMemberWithDDName(item);
-        break;
-      }
-    } else if (isMemberWithoutDDName(item)) {
-      // standalone member w/out an explicit ddname, search within ddlib for a match
-      const ddLibUri = resolveLibFileUri(lib.ddLib);
-      libMatch = await FileSystemProviderInstance.search({
-        path: UriUtils.toUri(ddLibUri.toString() + `(${fileNameOrPartial})`),
-        extensions: [],
-      });
-      if (libMatch) {
-        break;
-      }
-    } else if (
-      isMemberWithDDName(item) &&
-      lib.ddLib.toLowerCase().endsWith(item.ddname.toLowerCase())
-    ) {
-      // member w/ ddname, search for an exact match using ddlib
-      const end = lib.ddLib.length - item.ddname.length;
-      const libPath = lib.ddLib.substring(0, end);
-      const ddLibUri = resolveLibFileUri(libPath, fileNameOrPartial);
-      libMatch = await FileSystemProviderInstance.search({
-        path: ddLibUri,
-        extensions: [],
-      });
-      if (libMatch) {
-        break;
-      }
-    }
-  }
-
-  // depending on whether we matched a member, check to apply validation on the name
-  if (needsMemberValidation) {
-    const memberToValidate = isMemberWithDDName(item)
-      ? item.memberName
-      : fileNameOrPartial;
-
-    checkToValidateMember(memberToValidate);
-  }
-  if (!libMatch && isFileIncludeItem(item) && item.sql) {
-    // Special handling for missing SQL includes
-    // SQLCA and SQLDA are builtins that can be included, even if they are not present on disk
-    if (item.fileName.toUpperCase() === BuiltinsSqlcaName) {
-      libMatch = UriUtils.toUri(BuiltinsSqlcaUri);
-    } else if (item.fileName.toUpperCase() === BuiltinsSqldaName) {
-      libMatch = UriUtils.toUri(BuiltinsSqldaUri);
-    }
-  }
-
-  return libMatch;
 }
 
 type PreprocessorBuiltin = (

@@ -9,8 +9,14 @@
  *
  */
 
-export * from "./workspace/builtins";
-export * from "./workspace/file-system-provider.js";
-export * from "./language-server/connection-handler.js";
-export * from "./utils/uri";
-export * from "./utils/messages";
+import * as vscode from "vscode";
+
+export function collectDisposables(
+  ...disposables: vscode.Disposable[]
+): vscode.Disposable {
+  return new vscode.Disposable(() => {
+    for (const disposable of disposables) {
+      disposable.dispose();
+    }
+  });
+}

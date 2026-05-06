@@ -11,46 +11,6 @@
 
 import { URI, UriUtils } from "../utils/uri";
 
-export type SearchOptions = PathSearch | MemberSearchInDir;
-
-/**
- * Search by full path with optional extensions.
- * Global option indicates whether to perform a global lookup or not
- */
-interface PathSearch {
-  path: URI;
-  extensions: string[];
-  global?: boolean;
-}
-
-/**
- * Search by member name in given directory
- * We don't know the ddname up front, but we know the member.
- * So we'll need to perform a search in the given directory for any file matching the member
- * Ex. a/b/c ... m1, where we search for any file in a/b/c that ends with (m1)
- */
-interface MemberSearchInDir {
-  /**
-   * Path to candidate directory, which may contain this member under a ddname
-   */
-  dirPath: URI;
-
-  /**
-   * Member we're looking for
-   */
-  member: string;
-}
-
-export function isPathSearch(obj: any): obj is PathSearch {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    "path" in obj &&
-    "extensions" in obj &&
-    Array.isArray(obj.extensions)
-  );
-}
-
 /**
  * File or directory stats
  */
@@ -59,21 +19,36 @@ export interface Stats {
   isDirectory: boolean;
 }
 
+export const enum FileType {
+  Unknown = 0,
+  File = 1,
+  Directory = 2,
+  SymbolicLink = 64,
+}
+
 export interface FileSystemProvider {
   readFile(uri: URI): Promise<string | undefined>;
   /**
    * Reads the contents of a directory.
-   * The result is an array of file & directory names as strings
+   * The result is an array of [name, FileType] tuples.
    */
-  readDir(uri: URI): Promise<string[]>;
+  readDir(uri: URI): Promise<[string, FileType][]>;
   fileExists(uri: URI): Promise<boolean>;
   writeFile(uri: URI, value: string): Promise<void>;
   deleteFile(uri: URI): Promise<void>;
+
   /**
-   * Performs a file search. Implementation depends on the provider.
-   * Returns a singular URI if found, otherwise undefined.
+   * Locates a file anywhere in the workspace whose path ends with the given
+   * `path` (optionally followed by one of the supplied extensions). Returns
+   * the URI of the first match, or undefined.
+   *
+   * Used by code actions like "add this file's parent dir to libs" — i.e.
+   * the user has an unresolved include and we want to discover the file's
+   * location regardless of the configured lib paths. Lib-aware include
+   * resolution does NOT use this; it consults the per-lib indexes built at
+   * configuration-load time.
    */
-  search(options: SearchOptions): Promise<URI | undefined>;
+  findFile(path: URI, extensions: readonly string[]): Promise<URI | undefined>;
 
   /**
    * Retrieve file or directory stats.
@@ -91,7 +66,7 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
     return Promise.resolve("");
   }
 
-  readDir(_uri: URI): Promise<string[]> {
+  readDir(_uri: URI): Promise<[string, FileType][]> {
     return Promise.resolve([]);
   }
 
@@ -107,7 +82,10 @@ class _EmptyFileSystemProvider implements FileSystemProvider {
     return Promise.resolve();
   }
 
-  search(_options: SearchOptions): Promise<URI | undefined> {
+  findFile(
+    _path: URI,
+    _extensions: readonly string[],
+  ): Promise<URI | undefined> {
     return Promise.resolve(undefined);
   }
 
@@ -143,12 +121,18 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    */
   private sortedFilesCache: string[] | undefined;
 
+  private caseSensitive: boolean;
+
+  constructor(caseSensitive = false) {
+    this.caseSensitive = caseSensitive;
+  }
+
   /**
    * Write a file to the virtualized file system
    * Clears the sorted files cache
    */
   async writeFile(uri: URI, value: string): Promise<void> {
-    this.files.set(UriUtils.toNormalizedKey(uri), value);
+    this.files.set(UriUtils.toNormalizedKey(uri, !this.caseSensitive), value);
     this.sortedFilesCache = undefined;
   }
 
@@ -157,7 +141,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If the file does not exist, undefined is returned.
    */
   async readFile(uri: URI): Promise<string | undefined> {
-    return this.files.get(UriUtils.toNormalizedKey(uri));
+    return this.files.get(UriUtils.toNormalizedKey(uri, !this.caseSensitive));
   }
 
   /**
@@ -167,23 +151,24 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * If no matching directory entry is found (i.e. no entries), an exception is thrown
    * If the file system is empty, an empty array is returned (assuming uninitialized)
    */
-  async readDir(uri: URI): Promise<string[]> {
-    if (this.files.size === 0) {
-      // not populated yet
-      return [];
-    }
+  async readDir(uri: URI): Promise<[string, FileType][]> {
     // collect all entries which start with the given path
-    let path = UriUtils.toNormalizedKey(uri);
+    let path = UriUtils.toNormalizedKey(uri, !this.caseSensitive);
     if (!path.endsWith("/")) {
       path += "/";
     }
-    const entries: Set<string> = new Set<string>();
+    const entries = new Map<string, FileType>();
     for (const filePath of this.files.keys()) {
       if (filePath.startsWith(path)) {
         const relativePath = filePath.substring(path.length);
         const parts = UriUtils.parts(relativePath);
-        if (parts.length > 0 && !entries.has(parts[0])) {
-          entries.add(parts[0]);
+        if (parts.length > 0) {
+          const name = parts[0];
+          const type = parts.length === 1 ? FileType.File : FileType.Directory;
+          // Directory wins if an entry appears as both (e.g. /foo file and /foo/bar file)
+          if (!entries.has(name) || type === FileType.Directory) {
+            entries.set(name, type);
+          }
         }
       }
     }
@@ -199,7 +184,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Checks if a file exists in the virtualized file system
    */
   async fileExists(uri: URI): Promise<boolean> {
-    return this.files.has(UriUtils.toNormalizedKey(uri));
+    return this.files.has(UriUtils.toNormalizedKey(uri, !this.caseSensitive));
   }
 
   /**
@@ -207,9 +192,12 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * Drops the associated sorted files cache entry as well
    */
   async deleteFile(uri: URI): Promise<void> {
-    const key = UriUtils.toNormalizedKey(uri);
+    const key = UriUtils.toNormalizedKey(uri, !this.caseSensitive);
     this.files.delete(key);
-    this.sortedFilesCache?.splice(this.sortedFilesCache.indexOf(key), 1);
+    const cacheIndex = this.sortedFilesCache?.indexOf(key);
+    if (cacheIndex !== undefined && cacheIndex >= 0) {
+      this.sortedFilesCache?.splice(cacheIndex, 1);
+    }
   }
 
   /**
@@ -227,69 +215,35 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
         return aSlashes - bSlashes;
       });
     }
-
     return this.sortedFilesCache;
   }
 
   /**
-   * Performs a simple search in the virtualized file system.
-   * Checks if the exact path exists, otherwise tries with each of the given extensions.
-   * @param options Options to configure the search
-   * @returns First match, or undefined if no match found
+   * Workspace-wide file lookup: returns the first virtual file whose path
+   * ends with the given URI's path, optionally followed by one of the
+   * supplied extensions. Used for code actions that suggest configuring a
+   * lib path for a file the resolver couldn't find.
    */
-  async search(options: SearchOptions): Promise<URI | undefined> {
-    if (isPathSearch(options)) {
-      const searchKey = UriUtils.toNormalizedKey(options.path);
-      const extensions = options.extensions ?? [];
-
-      if (!options.global) {
-        if (this.files.has(searchKey)) {
-          return options.path;
-        }
-        for (const ext of extensions) {
-          const fullKey = searchKey + (ext.startsWith(".") ? ext : `.${ext}`);
-          if (this.files.has(fullKey)) {
-            return UriUtils.toUri(fullKey).with({
-              scheme: options.path.scheme,
-            });
-          }
-        }
-      } else {
-        const globalSearchPath = options.path.path
-          .toLowerCase()
-          .replace(/\\/g, "/");
-        const sortedFiles = this.getSortedFiles();
-        for (const filePath of sortedFiles) {
-          if (filePath.endsWith(globalSearchPath)) {
-            return UriUtils.toUri(filePath).with({
-              scheme: options.path.scheme,
-            });
-          }
-          for (const ext of extensions) {
-            const fullPath =
-              globalSearchPath + (ext.startsWith(".") ? ext : `.${ext}`);
-            if (filePath.endsWith(fullPath)) {
-              return UriUtils.toUri(filePath).with({
-                scheme: options.path.scheme,
-              });
-            }
-          }
-        }
+  async findFile(
+    path: URI,
+    extensions: readonly string[],
+  ): Promise<URI | undefined> {
+    let targetPath = path.path.replace(/\\/g, "/");
+    if (!this.caseSensitive) {
+      targetPath = targetPath.toLowerCase();
+    }
+    const sortedFiles = this.getSortedFiles();
+    for (const filePath of sortedFiles) {
+      if (filePath.endsWith(targetPath)) {
+        return UriUtils.toUri(filePath).with({ scheme: path.scheme });
       }
-    } else {
-      const memberPart = `(${options.member})`.toLowerCase();
-      const normalizedDirKey = UriUtils.toNormalizedKey(options.dirPath);
-      const sortedFiles = this.getSortedFiles();
-      for (const filePath of sortedFiles) {
-        if (
-          filePath.endsWith(memberPart) &&
-          filePath.startsWith(normalizedDirKey)
-        ) {
-          return UriUtils.toUri(filePath);
+      for (const ext of extensions) {
+        const fullPath = targetPath + (ext.startsWith(".") ? ext : `.${ext}`);
+        if (filePath.endsWith(fullPath)) {
+          return UriUtils.toUri(filePath).with({ scheme: path.scheme });
         }
       }
     }
-
     return undefined;
   }
 
@@ -301,7 +255,7 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * @returns Stats object
    */
   async stat(uri: URI): Promise<Stats> {
-    const key = UriUtils.toNormalizedKey(uri);
+    const key = UriUtils.toNormalizedKey(uri, !this.caseSensitive);
     const isFile = this.files.has(key);
     let isDirectory = false;
     if (!isFile) {
@@ -318,19 +272,4 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
       isDirectory,
     };
   }
-}
-
-/**
- * Global file system provider instance. Defaults to an empty file system provider.
- */
-export let FileSystemProviderInstance: FileSystemProvider =
-  EmptyFileSystemProvider;
-
-/**
- * Sets the global file system provider
- */
-export function setFileSystemProvider(
-  provider: FileSystemProvider | undefined,
-): void {
-  FileSystemProviderInstance = provider ?? EmptyFileSystemProvider;
 }

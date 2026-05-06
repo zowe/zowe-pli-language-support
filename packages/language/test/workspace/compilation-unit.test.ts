@@ -12,17 +12,18 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { UriUtils } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
-import { PluginConfigurationProviderInstance } from "../../src/workspace/plugin-configuration-provider";
+import { makeProcessGroup, makeProgramConfig } from "../config-fixtures";
+import { defaultTestWorkspace } from "../test-workspace";
 
 describe("Compilation Unit Tests", () => {
   afterEach(async () => {
-    PluginConfigurationProviderInstance.setProgramConfigs("", []);
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+    defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
+    await defaultTestWorkspace().config.setProcessGroupConfigs([]);
   });
 
   test("Create", async () => {
     const uri = UriUtils.toUri("memory:///test/test.pli");
-    const ch = new CompilationUnitHandler();
+    const ch = new CompilationUnitHandler(defaultTestWorkspace());
 
     const unit0 = ch.getCompilationUnit(uri);
     expect(unit0).toBeUndefined();
@@ -36,7 +37,7 @@ describe("Compilation Unit Tests", () => {
 
   test("Delete", async () => {
     const uri = UriUtils.toUri("memory:///test/test.pli");
-    const ch = new CompilationUnitHandler();
+    const ch = new CompilationUnitHandler(defaultTestWorkspace());
 
     const unit1 = await ch.getOrCreateCompilationUnit(uri);
     expect(unit1).toBeDefined();
@@ -54,24 +55,20 @@ describe("Compilation Unit Tests", () => {
   test("Create with config", async () => {
     const uriEntry = UriUtils.toUri("file:///test/entry.pli");
     const uriLib = UriUtils.toUri("file:///test/lib.pli");
-    const ch = new CompilationUnitHandler();
+    const ch = new CompilationUnitHandler(defaultTestWorkspace());
 
     // register configs
-    expect(
-      PluginConfigurationProviderInstance.hasRegisteredProgramConfigs(),
-    ).toBe(false);
-    PluginConfigurationProviderInstance.setProgramConfigs("", [
-      {
-        program: "test/entry.pli",
-        pgroup: "",
-      },
+    expect(defaultTestWorkspace().config.hasRegisteredProgramConfigs()).toBe(
+      false,
+    );
+    defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), [
+      makeProgramConfig({ program: "test/entry.pli", pgroup: "" }),
     ]);
-    expect(
-      PluginConfigurationProviderInstance.hasRegisteredProgramConfigs(),
-    ).toBe(true);
+    expect(defaultTestWorkspace().config.hasRegisteredProgramConfigs()).toBe(
+      true,
+    );
 
-    const config =
-      PluginConfigurationProviderInstance.getProgramConfig(uriEntry);
+    const config = defaultTestWorkspace().config.getProgramConfig(uriEntry);
     expect(config).toBeDefined();
 
     // lib is not an entry point, but still valid for generating a compilation unit
@@ -87,29 +84,24 @@ describe("Compilation Unit Tests", () => {
     const uriEntry1 = UriUtils.toUri("file:///test/entry1.pli");
     const uriEntry2 = UriUtils.toUri("file:///test/entry2.pli");
     const uriOther = UriUtils.toUri("file:///other/entry3.pli");
-    const ch = new CompilationUnitHandler();
+    const ch = new CompilationUnitHandler(defaultTestWorkspace());
 
     // register wildcard config
-    PluginConfigurationProviderInstance.setProgramConfigs("", [
-      {
-        program: "test/*.pli",
-        pgroup: "",
-      },
+    defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), [
+      makeProgramConfig({ program: "test/*.pli", pgroup: "" }),
     ]);
 
     // entry 1 should match wildcard config
-    const config1 =
-      PluginConfigurationProviderInstance.getProgramConfig(uriEntry1);
+    const config1 = defaultTestWorkspace().config.getProgramConfig(uriEntry1);
     expect(config1).toBeDefined();
 
     // entry 2 should also match
-    const config2 =
-      PluginConfigurationProviderInstance.getProgramConfig(uriEntry2);
+    const config2 = defaultTestWorkspace().config.getProgramConfig(uriEntry2);
     expect(config2).toBeDefined();
 
     // entry 3 should not match
     const configOther =
-      PluginConfigurationProviderInstance.getProgramConfig(uriOther);
+      defaultTestWorkspace().config.getProgramConfig(uriOther);
     expect(configOther).toBeUndefined();
 
     // compilation units should be created for matching uris
@@ -123,32 +115,25 @@ describe("Compilation Unit Tests", () => {
   });
 
   test("Cannot create compile unit from copybook directly", async () => {
-    const ch = new CompilationUnitHandler();
+    const ch = new CompilationUnitHandler(defaultTestWorkspace());
 
-    await PluginConfigurationProviderInstance.init("file:///");
+    await defaultTestWorkspace().config.init(UriUtils.toUri("file:///"));
 
     // Simulate a process group 'default' with a cpy folder and include-extensions
-    PluginConfigurationProviderInstance.setProgramConfigs("file:///", [
-      {
-        program: "src/*.pli",
-        pgroup: "default",
-      },
-    ]);
+    defaultTestWorkspace().config.setProgramConfigs(
+      UriUtils.toUri("file:///"),
+      [makeProgramConfig({ program: "src/*.pli", pgroup: "default" })],
+    );
     // Simulate the process group config (normally this would be loaded from a config file)
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([
-      {
+    await defaultTestWorkspace().config.setProcessGroupConfigs([
+      makeProcessGroup({
         name: "default",
-        compilerOptions: [],
         libs: ["cpy"],
-        $computedLibs: [],
-        $computedLibsSet: new Set<string>(),
         includeExtensions: [".inc"],
-        lspOptions: {
-          checkMargins: false,
-          instructionCounterLimit: 5000,
-          caseUpperValidation: false,
-        },
-      },
+        checkMargins: false,
+        instructionCounterLimit: 5000,
+        caseUpperValidation: false,
+      }),
     ]);
 
     // File in the cpy folder

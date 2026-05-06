@@ -14,7 +14,7 @@ import {
   BrowserMessageWriter,
   createConnection,
 } from "vscode-languageserver/browser.js";
-import { setFileSystemProvider, startLanguageServer } from "pli-language";
+import { startLanguageServer } from "pli-language";
 import { VSCodeFileSystemProvider } from "./file-system";
 
 /* browser specific setup code */
@@ -23,5 +23,4 @@ const messageWriter = new BrowserMessageWriter(self);
 
 const connection = createConnection(messageReader, messageWriter);
 
-setFileSystemProvider(new VSCodeFileSystemProvider(connection));
-startLanguageServer(connection);
+startLanguageServer(connection, new VSCodeFileSystemProvider(connection));

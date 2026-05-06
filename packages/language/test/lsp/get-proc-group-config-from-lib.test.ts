@@ -13,55 +13,52 @@ import { describe, expect, test } from "vitest";
 import {
   deserializeProcessGroup,
   PluginConfigurationProvider,
-  PluginConfigurationProviderInstance,
-  setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
+import { EmptyFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { UriUtils } from "../../src/utils/uri";
 
-async function setupConfig(testLibs: string[]) {
-  const pluginConfig = new PluginConfigurationProvider();
-  setPluginConfigurationProvider(pluginConfig);
+async function setupConfig(
+  testLibs: string[],
+): Promise<PluginConfigurationProvider> {
+  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider);
   const processGroup = deserializeProcessGroup({
     name: "default",
     "include-extensions": [".pli"],
     libs: testLibs,
   });
   await pluginConfig.setProcessGroupConfigs([processGroup]);
+  return pluginConfig;
 }
 
 describe("Process group library path matching", () => {
   test("matches library under workspace-relative lib directory", async () => {
-    await setupConfig(["cpy"]);
+    const pluginConfig = await setupConfig(["cpy"]);
     const testUri = UriUtils.toUri("/workspace/cpy/a.pli");
-    const config =
-      PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
+    const config = pluginConfig.getProcessGroupConfigFromLib(testUri);
 
     expect(config).toBeDefined();
   });
 
   test("matches absolute Windows-style library path", async () => {
-    await setupConfig(["cpy", "C:/Users/mockUser/pgm"]);
+    const pluginConfig = await setupConfig(["cpy", "C:/Users/mockUser/pgm"]);
     const testUri = UriUtils.toUri("C:/Users/mockUser/pgm/ext-pgm.pli");
-    const config =
-      PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
+    const config = pluginConfig.getProcessGroupConfigFromLib(testUri);
 
     expect(config).toBeDefined();
   });
 
   test("matches backslash Windows library path against normalized URI", async () => {
-    await setupConfig(["cpy", "C:\\Users\\mockUser\\pgm"]);
+    const pluginConfig = await setupConfig(["cpy", "C:\\Users\\mockUser\\pgm"]);
     const testUri = UriUtils.toUri("C:/Users/mockUser/pgm/ext-pgm.pli");
-    const config =
-      PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
+    const config = pluginConfig.getProcessGroupConfigFromLib(testUri);
 
     expect(config).toBeDefined();
   });
 
   test("matches absolute path lib for Unix environments", async () => {
-    await setupConfig(["cpy", "/Users/mockUser/pgm"]);
+    const pluginConfig = await setupConfig(["cpy", "/Users/mockUser/pgm"]);
     const testUri = UriUtils.toUri("/Users/mockUser/pgm/ext-pgm.pli");
-    const config =
-      PluginConfigurationProviderInstance.getProcessGroupConfigFromLib(testUri);
+    const config = pluginConfig.getProcessGroupConfigFromLib(testUri);
 
     expect(config).toBeDefined();
   });

@@ -23,7 +23,8 @@ export function MACRO_Case(
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ) {
-  if (!compilationUnit.processGroup?.lspOptions.caseUpperValidation) return;
+  if (!compilationUnit.processGroup?.lspOptions.caseUpperValidation.value)
+    return;
   if (
     compilationUnit.compilerOptions.macroOptions.case === undefined ||
     !compilationUnit.compilerOptions.macroOptions.case.explicitlySet ||

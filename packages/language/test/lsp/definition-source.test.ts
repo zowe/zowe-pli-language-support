@@ -10,32 +10,33 @@
  */
 
 import { describe, expect, test } from "vitest";
-import {
-  setFileSystemProvider,
-  VirtualFileSystemProvider,
-} from "../../src/workspace/file-system-provider";
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import {
   deserializeProcessGroup,
   PluginConfigurationProvider,
-  setPluginConfigurationProvider,
 } from "../../src/workspace/plugin-configuration-provider";
 import { UriUtils } from "../../src/utils/uri";
 import { parseAndLink } from "../utils";
 import { definitionRequest } from "../../src/language-server/definition-request";
+import { makeProgramConfig } from "../config-fixtures";
+import {
+  createTestWorkspace,
+  setDefaultTestWorkspace,
+} from "../test-workspace";
 
 let vfs: VirtualFileSystemProvider;
 let pluginConfig: PluginConfigurationProvider;
 
 async function setupIncludes(path: string, libEntry: string): Promise<void> {
   vfs = new VirtualFileSystemProvider();
-  pluginConfig = new PluginConfigurationProvider();
-  setFileSystemProvider(vfs);
-  setPluginConfigurationProvider(pluginConfig);
+  const workspace = createTestWorkspace(vfs);
+  setDefaultTestWorkspace(workspace);
+  pluginConfig = workspace.config;
 
   const pathUri = UriUtils.toUri(path);
   await vfs.writeFile(pathUri, "");
 
-  await pluginConfig.init("/workspace");
+  await pluginConfig.init(UriUtils.toUri("/workspace"));
 
   // Base config setup
   const processGroup = deserializeProcessGroup({
@@ -45,8 +46,8 @@ async function setupIncludes(path: string, libEntry: string): Promise<void> {
   });
 
   await pluginConfig.setProcessGroupConfigs([processGroup]);
-  pluginConfig.setProgramConfigs("/workspace", [
-    { program: "*.pli", pgroup: "default" },
+  pluginConfig.setProgramConfigs(UriUtils.toUri("/workspace"), [
+    makeProgramConfig({ program: "*.pli", pgroup: "default" }),
   ]);
 }
 

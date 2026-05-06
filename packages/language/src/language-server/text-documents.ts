@@ -33,7 +33,10 @@ import {
   TextDocumentContentChangeEvent,
 } from "vscode-languageserver-textdocument";
 import { URI, UriUtils } from "../utils/uri.js";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider.js";
+import {
+  EmptyFileSystemProvider,
+  FileSystemProvider,
+} from "../workspace/file-system-provider.js";
 import {
   BuiltinsMacroTextDocument,
   BuiltinsSqlcaDocument,
@@ -178,15 +181,19 @@ export class NormalizedTextDocuments<
     | RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>
     | undefined;
 
+  private readonly _fs: FileSystemProvider;
+
   public constructor(
     configuration: TextDocumentsConfiguration<T>,
     options: {
       loadFromURI?: boolean;
+      fs?: FileSystemProvider;
     } = {},
   ) {
     this._configuration = configuration;
     this._syncedDocuments = new Map();
     this._loadFromURI = options.loadFromURI ?? false;
+    this._fs = options.fs ?? EmptyFileSystemProvider;
 
     this._onDidChangeContent = new Emitter<TextDocumentChangeEvent<T>>();
     this._onDidOpen = new Emitter<TextDocumentChangeEvent<T>>();
@@ -230,9 +237,7 @@ export class NormalizedTextDocuments<
     if (syncedDocument === undefined && this._loadFromURI) {
       try {
         const uriName = UriUtils.normalize(uri);
-        const content = await FileSystemProviderInstance.readFile(
-          UriUtils.toUri(uriName),
-        );
+        const content = await this._fs.readFile(UriUtils.toUri(uriName));
         if (content === undefined) {
           return undefined;
         }
@@ -431,12 +436,18 @@ export let TextDocuments: DocumentConsolidator<TextDocument>;
 /**
  * Reset the document providers to their default values.
  *
- * This is useful for testing purposes, to ensure that the document providers are cleared.
+ * `fs` is the file system used by the URI-loading document store
+ * (`FileDocuments`); pass the workspace's provider so on-demand loads of
+ * include files actually find anything. Defaults to {@link EmptyFileSystemProvider}
+ * for callers (tests, module init) that don't have one yet — those callers
+ * should call `resetDocumentProviders` again with a real provider once one
+ * is available.
  */
-export function resetDocumentProviders() {
+export function resetDocumentProviders(fs?: FileSystemProvider) {
   EditorDocuments = new NormalizedTextDocuments(TextDocument);
   FileDocuments = new NormalizedTextDocuments(TextDocument, {
     loadFromURI: true,
+    fs,
   });
   BuiltinDocuments = new BuiltinTextDocuments<TextDocument>();
   TextDocuments = new DocumentConsolidator(

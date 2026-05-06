@@ -41,7 +41,9 @@ import { renameRequest } from "./rename-request";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { FileSystemProvider } from "../workspace/file-system-provider";
+import { WorkspaceContext } from "../workspace/workspace-context";
+import { resetDocumentProviders } from "./text-documents";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
@@ -53,18 +55,18 @@ import {
 } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
+import { Messages } from "../utils/messages";
 export { PluginConfiguration } from "./constants";
 
-/**
- * Notification sent to the LS when the workspace's plugin configuration changes.
- */
-export const WorkspaceDidChangePlipluginConfigNotification =
-  "workspace/didChangePlipluginConfig";
-
-export const ExistingFileRequest = "pli/existingFileRequest";
-
-export function startLanguageServer(connection: Connection): void {
-  const compilationUnitHandler = new CompilationUnitHandler();
+export function startLanguageServer(
+  connection: Connection,
+  fs: FileSystemProvider,
+): void {
+  const workspace = new WorkspaceContext(fs, connection);
+  // Wire the on-demand file loader for include URIs to the workspace's fs
+  // so the document store doesn't reach for any module-level singleton.
+  resetDocumentProviders(fs);
+  const compilationUnitHandler = new CompilationUnitHandler(workspace);
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
 
@@ -154,11 +156,11 @@ export function startLanguageServer(connection: Connection): void {
     const promises: Promise<void>[] = [];
     for (const folder of folders) {
       promises.push(
-        PluginConfigurationProviderInstance.init(folder.uri).then(
-          (diagnosticsByUri) => {
+        workspace.config
+          .init(UriUtils.toUri(folder.uri))
+          .then((diagnosticsByUri) => {
             publishPluginConfigDiagnostics(diagnosticsByUri);
-          },
-        ),
+          }),
       );
     }
     await Promise.all(promises);
@@ -361,22 +363,24 @@ export function startLanguageServer(connection: Connection): void {
     });
   });
   connection.onNotification(
-    WorkspaceDidChangePlipluginConfigNotification,
+    Messages.WorkspaceDidChangePluginConfigNotification,
     async () => {
       // handle changes to the .pliplugin config folder's contents
-      const diagnosticsByUri =
-        await PluginConfigurationProviderInstance.reloadConfigurations();
+      const diagnosticsByUri = await workspace.config.reloadConfigurations();
       publishPluginConfigDiagnostics(diagnosticsByUri);
 
       // reindex reachable compilation units
       await compilationUnitHandler.reindex(connection, CancellationToken.None);
     },
   );
-  connection.onRequest(ExistingFileRequest, (uriString: string): boolean => {
-    const uri = UriUtils.toUri(uriString);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-    return compilationUnit !== undefined;
-  });
+  connection.onRequest(
+    Messages.ExistingFileRequest,
+    (uriString: string): boolean => {
+      const uri = UriUtils.toUri(uriString);
+      const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+      return compilationUnit !== undefined;
+    },
+  );
 
   connection.onCodeAction(async (params) => {
     const requestedKinds = params.context.only;
@@ -396,6 +400,7 @@ export function startLanguageServer(connection: Connection): void {
 
       const actions = await applyQuickFixes(
         diagnostics,
+        workspace,
         params.textDocument.uri,
       );
       return actions || [];
@@ -405,13 +410,13 @@ export function startLanguageServer(connection: Connection): void {
   connection.onExecuteCommand(async (params) => {
     switch (params.command) {
       case Commands.RESOLVE_INCLUDE:
-        await commandResolveInclude(params);
+        await commandResolveInclude(params, workspace);
         break;
       case Commands.CREATE_CONFIG:
-        await commandCreateConfig(params);
+        await commandCreateConfig(params, workspace);
         break;
       case Commands.REMOVE_DEAD_LIB:
-        await commandRemoveUnresolvedLib(params);
+        await commandRemoveUnresolvedLib(params, workspace);
         break;
     }
   });

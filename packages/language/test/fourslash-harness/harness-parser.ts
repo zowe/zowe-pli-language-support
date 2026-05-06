@@ -30,7 +30,7 @@ const HarnessFileTag = {
 const HARNESS_TAG_PREFIX = "//";
 export const HARNESS_FILE_PREFIX = "////";
 const REFERENCE_PATH_PREFIX = "/// <reference path=";
-const HARNESS_TAG_PATTERN = /^\/\/\s*@(?<name>\w+)\s*(?<value>:.*)?$/;
+const HARNESS_TAG_PATTERN = /^\/\/\s*@(?<name>[\w\-]+)\s*(?<value>:.*)?$/;
 const HARNESS_ESCAPE_CHARACTERS = [
   ["\\n", "\n"],
   ["\\r", "\r"],
@@ -170,7 +170,7 @@ class HarnessTestParser {
       fileName,
       wrap,
       content,
-      tags: Object.keys(tags),
+      tags,
       lineOffset,
       characterOffset,
     };
@@ -230,7 +230,7 @@ class HarnessTestParser {
 
     // Get tags from the last parsed file, if any
     const lastFile = Array.from(files.values()).at(-1);
-    const tags = lastFile ? lastFile.tags : [];
+    const tags = lastFile ? lastFile.tags : {};
 
     return {
       fileName: this.fileName,

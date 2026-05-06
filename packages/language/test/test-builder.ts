@@ -30,10 +30,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
 import { CodeAction, TextEdit } from "vscode-languageserver-types";
 import { skippedCodeRanges } from "../src/language-server/skipped-code";
-import {
-  PluginConfigurationProviderInstance,
-  setPluginConfigurationProvider,
-} from "../src/workspace/plugin-configuration-provider";
+import { defaultTestWorkspace } from "./test-workspace";
 import { InternalCodes } from "../src/validation/internal-codes";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
@@ -42,6 +39,7 @@ import { isPLICode, PLICode } from "../src/validation/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
+import { makeProgramConfig } from "./config-fixtures";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import {
   SemanticTokenModifiersValues,
@@ -279,13 +277,14 @@ export class TestBuilder {
     this.diagnostics = this.unit.diagnostics.getAll();
     this.checkDiagnosticsURIs();
 
-    // After the test-builder is done with its tests, reset the plugin configuration provider
-    // so that potential test functions that invoke functions of the lifecycle are not affected
-    // by a potential test-builder's plugin configuration.
-    // If some test functions in the future need to access the actual test plugin configuration
-    // in the future, we can add a dedicated tag to the harness implementation.
+    // After the test-builder is done, clear the workspace's plugin configuration
+    // so that subsequent test functions that invoke parts of the lifecycle aren't
+    // affected by this test-builder's configuration. Tests that need to inspect the
+    // configuration can opt out via `options.preservePluginConfiguration`.
     if (!this.options.preservePluginConfiguration) {
-      setPluginConfigurationProvider(undefined);
+      const config = defaultTestWorkspace().config;
+      config.setProgramConfigs(UriUtils.toUri(""), []);
+      await config.setProcessGroupConfigs([]);
     }
   }
 
@@ -336,14 +335,13 @@ export class TestBuilder {
     // check if the files contain a program config or process group.
     for (const [uri, file] of this.files) {
       if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
-        hasProgramConfig =
-          PluginConfigurationProviderInstance.parseProgramConfigs(
-            "",
-            file.output,
-          );
+        hasProgramConfig = defaultTestWorkspace().config.parseProgramConfigs(
+          UriUtils.toUri(""),
+          file.output,
+        );
       }
       if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
-        await PluginConfigurationProviderInstance.parseProcessGroupConfigs(
+        await defaultTestWorkspace().config.parseProcessGroupConfigs(
           file.output,
         );
         hasProcessGroupConfig = true;
@@ -352,18 +350,18 @@ export class TestBuilder {
 
     // add program config if not present on disc
     if (!hasProgramConfig) {
-      PluginConfigurationProviderInstance.setProgramConfigs("", [
-        {
+      defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), [
+        makeProgramConfig({
           program: "*.pli",
           pgroup:
             PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0].pgroup,
-        },
+        }),
       ]);
     }
 
     // add process group config if not present on disc
     if (!hasProcessGroupConfig) {
-      await PluginConfigurationProviderInstance.parseProcessGroupConfigs(
+      await defaultTestWorkspace().config.parseProcessGroupConfigs(
         JSON.stringify(PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT),
       );
     }
@@ -486,7 +484,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
         )
         .map(([uri, diagnostic]) => ({
           uri: uri!,
-          actions: applyQuickFixes([diagnostic!]),
+          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace()),
         }));
       codeActions = [];
       for (const { uri, actions } of asyncActionsByUri) {

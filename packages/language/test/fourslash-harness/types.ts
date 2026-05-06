@@ -33,7 +33,7 @@ export interface HarnessFile {
   fileName: string | undefined;
   wrap: string | undefined;
   content: string;
-  tags: string[];
+  tags: Record<string, string>;
 
   /**
    * The line offset of the file, e.g. the number of lines to skip before the file content
@@ -50,5 +50,5 @@ export interface HarnessTest {
   fileName: string;
   files: Map<string, HarnessFile>;
   commands: string;
-  tags: string[];
+  tags: Record<string, string>;
 }

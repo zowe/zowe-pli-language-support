@@ -127,7 +127,7 @@ describe("Harness test framework tests", () => {
       commands,
       fileName: "test.pli",
       files: new Map(),
-      tags: [],
+      tags: {},
     };
 
     await runHarnessTest(file, implementation);
@@ -167,7 +167,7 @@ describe("Harness test framework tests", () => {
       commands,
       fileName: "test.pli",
       files: new Map(),
-      tags: [],
+      tags: {},
     };
 
     await runHarnessTest(file, implementation);

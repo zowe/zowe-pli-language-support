@@ -12,7 +12,9 @@
 import {
   CancellationToken,
   CancellationTokenSource,
+  Connection,
 } from "vscode-languageserver";
+import { Messages } from "./messages";
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -118,4 +120,30 @@ export class Deferred<T = void> {
       return this;
     };
   });
+}
+
+export type Cancellation = () => void;
+
+export function startLongRunningOperation(
+  connection: Connection | undefined,
+  title: string,
+  timeout = 500,
+): Cancellation {
+  if (!connection) {
+    // If no connection is available, we can't send progress updates, so we return a no-op cancellation function.
+    return () => {};
+  }
+  let running = false;
+  const startTimeout = setTimeout(() => {
+    connection?.sendNotification(Messages.UpdateOperation, { title });
+    running = true;
+  }, timeout);
+  return () => {
+    // Prevent the info from being sent
+    clearTimeout(startTimeout);
+    if (running) {
+      // Clear the progress info again
+      connection?.sendNotification(Messages.UpdateOperation, { title: "" });
+    }
+  };
 }

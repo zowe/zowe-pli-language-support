@@ -18,7 +18,7 @@ import {
 import { CompilerOptionsProcessorResult } from "./compiler-options-processor";
 import { URI } from "../utils/uri";
 import { Warning } from "../validation/pli-codes";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { WorkspaceContext } from "../workspace/workspace-context";
 
 const NEWLINE = "\n".charCodeAt(0);
 const SPACE = " ".charCodeAt(0);
@@ -27,7 +27,11 @@ const SEQUENCE_PATTERN = /^\s*[A-Z0-9]*\r?\n?$/;
 
 export interface MarginsProcessor {
   issues: Diagnostic[];
-  processMargins(input: CompilerOptionsProcessorResult, uri: URI): string;
+  processMargins(
+    input: CompilerOptionsProcessorResult,
+    uri: URI,
+    workspace: WorkspaceContext,
+  ): string;
 }
 
 /**
@@ -46,18 +50,20 @@ export class PliMarginsProcessor implements MarginsProcessor {
 
   protected checkMargins: boolean = false;
 
-  processMargins(input: CompilerOptionsProcessorResult, uri: URI): string {
+  processMargins(
+    input: CompilerOptionsProcessorResult,
+    uri: URI,
+    workspace: WorkspaceContext,
+  ): string {
     this.issues = [];
 
-    const programConfig =
-      PluginConfigurationProviderInstance.getProgramConfig(uri);
+    const programConfig = workspace.config.getProgramConfig(uri);
     if (programConfig) {
-      const processGroup =
-        PluginConfigurationProviderInstance.getProcessGroupConfig(
-          programConfig.pgroup,
-        );
+      const processGroup = workspace.config.getProcessGroupConfig(
+        programConfig.pgroup.value,
+      );
       if (processGroup) {
-        this.checkMargins = processGroup.lspOptions.checkMargins;
+        this.checkMargins = processGroup.lspOptions.checkMargins.value;
       }
     }
 

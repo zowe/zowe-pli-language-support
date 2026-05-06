@@ -15,19 +15,20 @@ import { Connection } from "vscode-languageserver";
 import { UriUtils } from "../../src/utils/uri";
 import { parse } from "../utils";
 import {
-  PluginConfigurationProviderInstance,
   ProcessGroup,
   ProgramConfig,
 } from "../../src/workspace/plugin-configuration-provider";
+import { makeProcessGroup, makeProgramConfig } from "../config-fixtures";
+import { defaultTestWorkspace } from "../test-workspace";
 
 describe("marginIndicator", () => {
   beforeAll(async () => {
-    await PluginConfigurationProviderInstance.init("/test");
+    await defaultTestWorkspace().config.init(UriUtils.toUri("/test"));
   });
 
   afterAll(async () => {
-    PluginConfigurationProviderInstance.setProgramConfigs("", []);
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+    defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
+    await defaultTestWorkspace().config.setProcessGroupConfigs([]);
   });
 
   test("sends notification with margins from *PROCESS directive", async () => {
@@ -154,28 +155,22 @@ describe("marginIndicator", () => {
     const uri = UriUtils.toUri("/test/test.pli");
     const inputText = `DCL A fixed bin(31);`;
 
-    const programConfig: ProgramConfig = {
+    const programConfig: ProgramConfig = makeProgramConfig({
       program: "test.pli",
       pgroup: "testGroup",
-    };
-    const processGroupConfig: ProcessGroup = {
+    });
+    const processGroupConfig: ProcessGroup = makeProcessGroup({
       name: "testGroup",
       compilerOptions: ["MARGINS(15, 85)"],
-      includeExtensions: [],
-      libs: [],
-      $computedLibs: [],
-      $computedLibsSet: new Set<string>(),
-      lspOptions: {
-        checkMargins: false,
-        instructionCounterLimit: 5000,
-        caseUpperValidation: false,
-      },
-    };
+      checkMargins: false,
+      instructionCounterLimit: 5000,
+      caseUpperValidation: false,
+    });
 
-    PluginConfigurationProviderInstance.setProgramConfigs("/test", [
+    defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri("/test"), [
       programConfig,
     ]);
-    await PluginConfigurationProviderInstance.setProcessGroupConfigs([
+    await defaultTestWorkspace().config.setProcessGroupConfigs([
       processGroupConfig,
     ]);
 

@@ -11,11 +11,11 @@
 
 import { readdirSync } from "fs";
 import path from "path";
-import { afterEach, beforeEach, describe, test } from "vitest";
+import { afterEach, describe, test } from "vitest";
 import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
-import { setFileSystemProvider, VirtualFileSystemProvider } from "../../src";
+import { UriUtils, VirtualFileSystemProvider } from "../../src";
 import {
   extractTestModeFromFileName,
   HarnessTest,
@@ -23,11 +23,11 @@ import {
 } from "./types";
 import { LocationOverride, PliTestFile, TestBuilder } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
-import { resetDocumentProviders } from "../../src/language-server/text-documents";
 import {
-  PluginConfigurationProviderInstance,
-  setPluginConfigurationProvider,
-} from "../../src/workspace/plugin-configuration-provider";
+  createTestWorkspace,
+  defaultTestWorkspace,
+  setDefaultTestWorkspace,
+} from "../test-workspace";
 
 const frameworkFileName = "framework.ts";
 const testsPath = "packages/language/test/fourslash";
@@ -46,20 +46,10 @@ const projectRoot = path.join(__dirname, "../../../..");
  */
 const fourslashPath = path.join(__dirname, "../fourslash");
 
-let fs: VirtualFileSystemProvider;
-
-beforeEach(async () => {
-  fs = new VirtualFileSystemProvider();
-  setFileSystemProvider(fs);
-  resetDocumentProviders();
-  setPluginConfigurationProvider(undefined);
-});
-
 afterEach(async () => {
-  setFileSystemProvider(undefined);
-  setPluginConfigurationProvider(undefined);
-  PluginConfigurationProviderInstance.setProgramConfigs("", []);
-  await PluginConfigurationProviderInstance.setProcessGroupConfigs([]);
+  defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
+  await defaultTestWorkspace().config.setProcessGroupConfigs([]);
+  setDefaultTestWorkspace(undefined);
 });
 
 function getTestFiles() {
@@ -197,6 +187,10 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
 
       // We want to load the files in reverse order, so that the included files are inserted in the correct order.
       const files = getFiles(testFile).toReversed();
+      const fs = new VirtualFileSystemProvider(
+        testFile.tags["case-sensitive"] === "true",
+      );
+      setDefaultTestWorkspace(createTestWorkspace(fs));
       const testBuilder = await TestBuilder.create(files, {
         fs,
         validate: true,
