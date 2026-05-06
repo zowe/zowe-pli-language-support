@@ -140,8 +140,8 @@ export class ParserState {
     return this.compilerOptions?.rules?.multiClose ?? false;
   }
 
-  endLabelMatches(endLabel: string | null): boolean {
-    if (endLabel === null) {
+  endLabelMatches(endLabel: true | string): boolean {
+    if (endLabel === true) {
       // Unlabeled END matches any statement
       return true;
     }

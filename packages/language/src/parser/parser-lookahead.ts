@@ -123,37 +123,60 @@ function performIfLookahead(state: ParserState): boolean {
   return false;
 }
 
+/**
+ * Performs lookahead to detect END statement and its optional label.
+ * Skips any label prefixes (e.g., "FOO: END") before the END keyword.
+ * 
+ * @returns 
+ *   - `false` if no END statement found
+ *   - `true` if unlabeled END found (e.g., "END;")
+ *   - `string` if labeled END found (e.g., "END FOO;" returns "FOO")
+ */
 export function performEndStatementLookahead(
   state: ParserState,
-): { hasEnd: true; label: string | null } | { hasEnd: false } {
+): boolean | string {
   const lookahead = (la: number) => state.peek(la);
   let index: number = 1;
   let token: tokens.Token | undefined = undefined;
-
+  
   while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
     const idToken = lookahead(index);
     const colonToken = lookahead(index + 1);
     if (!idToken || !colonToken) {
-      return { hasEnd: false };
+      return false;
     }
     if (
       !tokenMatcher(idToken, tokens.ID) ||
       !tokenMatcher(colonToken, tokens.Colon)
     ) {
-      return { hasEnd: false };
+      return false;
     }
     index += 2;
   }
-
+  
   if (!token || !tokenMatcher(token, tokens.END)) {
-    return { hasEnd: false };
+    return false;
   }
-
-  // Check for label reference after END
-  const labelToken = lookahead(index + 1);
-  if (labelToken && tokenMatcher(labelToken, tokens.ID)) {
-    return { hasEnd: true, label: labelToken.image };
-  } else {
-    return { hasEnd: true, label: null };
+  
+  // To verify that the end is actually an END statement and not part of an expression,
+  // we check for the semicolon, potentially preceded by an ID label.
+  let nextToken = lookahead(index + 1);
+  if (!nextToken) {
+    return false; 
   }
+  
+  if (tokenMatcher(nextToken, tokens.Semicolon)) {
+    return true;
+  }
+  
+  if (!tokenMatcher(nextToken, tokens.ID)) {
+    return false;
+  }
+  
+  const semicolonToken = lookahead(index + 2);
+  if (!semicolonToken || !tokenMatcher(semicolonToken, tokens.Semicolon)) {
+    return false; 
+  }
+  
+  return nextToken.image;
 }

@@ -79,7 +79,7 @@ const packageRule = rule(
     }
     state.consume(element, CstNodeKind.Package_Semicolon, tokens.Semicolon);
     const { inc } = state.createLoopContext("Package");
-    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -502,7 +502,7 @@ const procedureStatement = rule(
     );
 
     const { inc: inc3 } = state.createLoopContext("ProcedureStatement 3");
-    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc3();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -1184,7 +1184,7 @@ const beginStatement = rule(
       tokens.Semicolon,
     );
     const { inc } = state.createLoopContext("BeginStatement");
-    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -1253,7 +1253,7 @@ function parseMulticloseEnd(
 
   if (alwaysOptional) {
     // PACKAGE: END is truly optional (can be omitted entirely)
-    if (!endInfo.hasEnd) {
+    if (endInfo === false) {
       return null;
     }
     // END present for PACKAGE - always consume it
@@ -1262,13 +1262,13 @@ function parseMulticloseEnd(
 
   if (state.isEndOptional()) {
     // MULTICLOSE mode: END can skip levels via labels, but must exist somewhere
-    if (!endInfo.hasEnd) {
+    if (endInfo === false) {
       // No END found (at EOF) - ERROR even with MULTICLOSE
       return endStatement.rule(state); // Will generate parser error
     }
 
     // END found - check if label matches this statement
-    if (state.endLabelMatches(endInfo.label)) {
+    if (state.endLabelMatches(endInfo)) {
       // Label matches (or unlabeled END for innermost) - consume it
       return endStatement.rule(state);
     } else {
@@ -2225,7 +2225,7 @@ const doStatement = rule(
 
     // Parse statements until END
     const { inc } = state.createLoopContext("DoStatement");
-    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -3940,7 +3940,7 @@ const qualifyStatement = rule(
     );
 
     const { inc } = state.createLoopContext("QualifyStatement");
-    while (!state.eof && !performEndStatementLookahead(state).hasEnd) {
+    while (!state.eof && !performEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
