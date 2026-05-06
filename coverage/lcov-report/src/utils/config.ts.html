@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.66% </span>
+                <span class="strong">96.77% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>29/30</span>
+                <span class='fraction'>30/31</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.66% </span>
+                <span class="strong">96.77% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>29/30</span>
+                <span class='fraction'>30/31</span>
             </div>
         
             
@@ -149,11 +149,10 @@
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
 <a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a>
-<a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a>
-<a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L87'></a><a href='#L87'>87</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -181,14 +180,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -198,10 +196,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -218,7 +213,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -228,14 +222,12 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,10 +246,10 @@
  *
  */
 &nbsp;
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
+import { plainItem } from "../workspace/plugin-configuration-provider";
 import { UriUtils } from "./uri";
 import { PluginConfiguration } from "../language-server/constants";
+import { WorkspaceContext } from "../workspace/workspace-context";
 &nbsp;
 /**
  * Creates or updates the program configuration for the given program path.
@@ -267,19 +259,21 @@ import { PluginConfiguration } from "../language-server/constants";
  * program config file is read and updated with the new program entry.
  *
  * @param programPath - Absolute path to the program to register.
+ * @param workspace - Workspace context owning the file system and config.
  */
-export async function updateOrCreateConfig(programPath: string): Promise&lt;void&gt; {
-  const hasExistingConfigs =
-    PluginConfigurationProviderInstance.hasRegisteredProgramConfigs();
+export async function updateOrCreateConfig(
+  programPath: string,
+  workspace: WorkspaceContext,
+): Promise&lt;void&gt; {
+  const config = workspace.config;
+  const hasExistingConfigs = config.hasRegisteredProgramConfigs();
 &nbsp;
   if (!hasExistingConfigs) {
     try {
-      await PluginConfigurationProviderInstance.writeProgramConfigFile(
-        PluginConfigurationProviderInstance.defaultProgramConfigContent(
-          programPath,
-        ),
+      await config.writeProgramConfigFile(
+        config.defaultProgramConfigContent(programPath),
       );
-      await PluginConfigurationProviderInstance.writeProcessGroupsFile();
+      await config.writeProcessGroupsFile();
     } catch (err) {
       console.error("Failed to create initial config files:", err);
       throw err;
@@ -287,19 +281,16 @@ export async function updateOrCreateConfig(programPath: string): Promise&lt;void
     return;
   }
 &nbsp;
-  const workspaceFolderUri = UriUtils.toUri(
-    PluginConfigurationProviderInstance.getWorkspacePath(),
-  );
+  const workspaceFolderUri = config.getWorkspacePath();
   const configFilePath = UriUtils.joinPath(
     workspaceFolderUri,
     PluginConfiguration.PROGRAM_FILE_PATH,
   );
 &nbsp;
-  const fileExists =
-    await FileSystemProviderInstance.fileExists(configFilePath);
+  const fileExists = await workspace.fs.fileExists(configFilePath);
   if (!fileExists) {
     try {
-      await PluginConfigurationProviderInstance.writeProgramConfigFile();
+      await config.writeProgramConfigFile();
     } catch (err) {
       console.error("Failed to create program config file:", err);
       throw err;
@@ -308,8 +299,7 @@ export async function updateOrCreateConfig(programPath: string): Promise&lt;void
   }
 &nbsp;
   try {
-    const progConfigFile =
-      await FileSystemProviderInstance.readFile(configFilePath);
+    const progConfigFile = await workspace.fs.readFile(configFilePath);
     if (!progConfigFile) {
       return;
     }
@@ -318,16 +308,14 @@ export async function updateOrCreateConfig(programPath: string): Promise&lt;void
       console.error("Unexpected format in program config file");
       return;
     }
-&nbsp;
-    PluginConfigurationProviderInstance.addProgramConfig(workspaceFolderUri, {
-      program: programPath,
-      pgroup: "default",
-    });
-&nbsp;
     parsedTextContent.pgms.push({ program: programPath, pgroup: "default" });
-    await PluginConfigurationProviderInstance.writeProgramConfigFile(
-      parsedTextContent,
-    );
+    await config.writeProgramConfigFile(parsedTextContent);
+&nbsp;
+    config.addProgramConfig(workspaceFolderUri, {
+      program: plainItem(programPath),
+      pgroup: plainItem("default"),
+      compilerOptions: [],
+    });
   } catch (err) {
     console.error("Failed to read or update program config file:", err);
     throw err;
@@ -340,7 +328,7 @@ export async function updateOrCreateConfig(programPath: string): Promise&lt;void
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-04T09:04:08.192Z
+                at 2026-05-06T10:11:11.341Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

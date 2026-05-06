@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.28% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/156</span>
+                <span class='fraction'>0/156</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.29% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/154</span>
+                <span class='fraction'>0/154</span>
             </div>
         
             
@@ -483,7 +483,12 @@
 <a name='L418'></a><a href='#L418'>418</a>
 <a name='L419'></a><a href='#L419'>419</a>
 <a name='L420'></a><a href='#L420'>420</a>
-<a name='L421'></a><a href='#L421'>421</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L421'></a><a href='#L421'>421</a>
+<a name='L422'></a><a href='#L422'>422</a>
+<a name='L423'></a><a href='#L423'>423</a>
+<a name='L424'></a><a href='#L424'>424</a>
+<a name='L425'></a><a href='#L425'>425</a>
+<a name='L426'></a><a href='#L426'>426</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -544,14 +549,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -641,8 +648,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -849,7 +856,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -858,11 +864,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -880,6 +889,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -946,7 +956,9 @@ import { renameRequest } from "./rename-request";
 import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
-import { PluginConfigurationProviderInstance } from "../workspace/plugin-configuration-provider";
+import { FileSystemProvider } from "../workspace/file-system-provider";
+import { WorkspaceContext } from "../workspace/workspace-context";
+import { resetDocumentProviders } from "./text-documents";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
@@ -958,18 +970,18 @@ import {
 } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
+import { Messages } from "../utils/messages";
 export { PluginConfiguration } from "./constants";
 &nbsp;
-/**
- * Notification sent to the LS when the workspace's plugin configuration changes.
- */
-export const WorkspaceDidChangePlipluginConfigNotification =
-  "workspace/didChangePlipluginConfig";
-&nbsp;
-export const ExistingFileRequest = "pli/existingFileRequest";
-&nbsp;
-export function <span class="fstat-no" title="function not covered" >startLanguageServer(c</span>onnection: Connection): void {
-  const compilationUnitHandler = <span class="cstat-no" title="statement not covered" >new CompilationUnitHandler();</span>
+export function <span class="fstat-no" title="function not covered" >startLanguageServer(</span>
+  connection: Connection,
+  fs: FileSystemProvider,
+): void {
+  const workspace = <span class="cstat-no" title="statement not covered" >new WorkspaceContext(fs, connection);</span>
+  // Wire the on-demand file loader for include URIs to the workspace's fs
+  // so the document store doesn't reach for any module-level singleton.
+<span class="cstat-no" title="statement not covered" >  resetDocumentProviders(fs);</span>
+  const compilationUnitHandler = <span class="cstat-no" title="statement not covered" >new CompilationUnitHandler(workspace);</span>
 <span class="cstat-no" title="statement not covered" >  compilationUnitHandler.listen(connection);</span>
   let folders: WorkspaceFolder[] = <span class="cstat-no" title="statement not covered" >[];</span>
 &nbsp;
@@ -1059,11 +1071,11 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     const promises: Promise&lt;void&gt;[] = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >    for (const folder of folders) {</span>
 <span class="cstat-no" title="statement not covered" >      promises.push(</span>
-        PluginConfigurationProviderInstance.init(folder.uri).then(
-<span class="fstat-no" title="function not covered" >          (d</span>iagnosticsByUri) =&gt; {
+        workspace.config
+          .init(UriUtils.toUri(folder.uri))
+          .then(<span class="fstat-no" title="function not covered" >(d</span>iagnosticsByUri) =&gt; {
 <span class="cstat-no" title="statement not covered" >            publishPluginConfigDiagnostics(diagnosticsByUri);</span>
-          },
-        ),
+          }),
       );
     }
 <span class="cstat-no" title="statement not covered" >    await Promise.all(promises);</span>
@@ -1266,22 +1278,24 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     });
   });
 <span class="cstat-no" title="statement not covered" >  connection.onNotification(</span>
-    WorkspaceDidChangePlipluginConfigNotification,
+    Messages.WorkspaceDidChangePluginConfigNotification,
 <span class="fstat-no" title="function not covered" >    async () =&gt; {</span>
       // handle changes to the .pliplugin config folder's contents
-      const diagnosticsByUri =
-<span class="cstat-no" title="statement not covered" >        await PluginConfigurationProviderInstance.reloadConfigurations();</span>
+      const diagnosticsByUri = <span class="cstat-no" title="statement not covered" >await workspace.config.reloadConfigurations();</span>
 <span class="cstat-no" title="statement not covered" >      publishPluginConfigDiagnostics(diagnosticsByUri);</span>
 &nbsp;
       // reindex reachable compilation units
 <span class="cstat-no" title="statement not covered" >      await compilationUnitHandler.reindex(connection, CancellationToken.None);</span>
     },
   );
-<span class="cstat-no" title="statement not covered" >  connection.onRequest(ExistingFileRequest, <span class="fstat-no" title="function not covered" >(u</span>riString: string): boolean =&gt; {</span>
-    const uri = <span class="cstat-no" title="statement not covered" >UriUtils.toUri(uriString);</span>
-    const compilationUnit = <span class="cstat-no" title="statement not covered" >compilationUnitHandler.getCompilationUnit(uri);</span>
-<span class="cstat-no" title="statement not covered" >    return compilationUnit !== undefined;</span>
-  });
+<span class="cstat-no" title="statement not covered" >  connection.onRequest(</span>
+    Messages.ExistingFileRequest,
+<span class="fstat-no" title="function not covered" >    (u</span>riString: string): boolean =&gt; {
+      const uri = <span class="cstat-no" title="statement not covered" >UriUtils.toUri(uriString);</span>
+      const compilationUnit = <span class="cstat-no" title="statement not covered" >compilationUnitHandler.getCompilationUnit(uri);</span>
+<span class="cstat-no" title="statement not covered" >      return compilationUnit !== undefined;</span>
+    },
+  );
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  connection.onCodeAction(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
     const requestedKinds = <span class="cstat-no" title="statement not covered" >params.context.only;</span>
@@ -1301,6 +1315,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 &nbsp;
       const actions = <span class="cstat-no" title="statement not covered" >await applyQuickFixes(</span>
         diagnostics,
+        workspace,
         params.textDocument.uri,
       );
 <span class="cstat-no" title="statement not covered" >      return actions || [];</span>
@@ -1310,13 +1325,13 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >  connection.onExecuteCommand(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    switch (params.command) {</span>
       case Commands.RESOLVE_INCLUDE:
-<span class="cstat-no" title="statement not covered" >        await commandResolveInclude(params);</span>
+<span class="cstat-no" title="statement not covered" >        await commandResolveInclude(params, workspace);</span>
 <span class="cstat-no" title="statement not covered" >        break;</span>
       case Commands.CREATE_CONFIG:
-<span class="cstat-no" title="statement not covered" >        await commandCreateConfig(params);</span>
+<span class="cstat-no" title="statement not covered" >        await commandCreateConfig(params, workspace);</span>
 <span class="cstat-no" title="statement not covered" >        break;</span>
       case Commands.REMOVE_DEAD_LIB:
-<span class="cstat-no" title="statement not covered" >        await commandRemoveUnresolvedLib(params);</span>
+<span class="cstat-no" title="statement not covered" >        await commandRemoveUnresolvedLib(params, workspace);</span>
 <span class="cstat-no" title="statement not covered" >        break;</span>
     }
   });
@@ -1330,7 +1345,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-04T09:04:08.012Z
+                at 2026-05-06T10:11:11.144Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
