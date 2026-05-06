@@ -26,6 +26,17 @@
     }
   },
   "scripts": {
-    "clean": "shx rm -fr *.tsbuildinfo out"
+    "clean": "shx rm -fr *.tsbuildinfo out generated",
+    "grammar": "pnpm run lexer && pnpm run parser",
+    "lexer": "antlr-ng -Dlanguage=TypeScript -l -o src/generated ./src/antlr/CICSLexer.g4",
+    "parser": "antlr-ng -Dlanguage=TypeScript -v -o src/generated ./src/antlr/CICSParser.g4"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.67.0",
+    "antlr-ng": "^1.0.10"
+  },
+  "dependencies": {
+    "antlr4ng": "^3.0.16",
+    "vscode": "npm:@codingame/monaco-vscode-extension-api@~17.2.1"
   }
 }
