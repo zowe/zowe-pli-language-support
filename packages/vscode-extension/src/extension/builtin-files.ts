@@ -73,7 +73,7 @@ export class BuiltinFileSystemProvider implements vscode.FileSystemProvider {
     };
   }
 
-  readDirectory(): [] {
+  readDirectory(): [string, vscode.FileType][] {
     throw vscode.FileSystemError.NoPermissions();
   }
 

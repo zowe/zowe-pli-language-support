@@ -9,15 +9,18 @@
  *
  */
 
-import { FileSystemProviderInstance } from "../workspace/file-system-provider";
 import { ExecuteCommandParams } from "vscode-languageserver";
 import { updateOrCreateConfig } from "../utils/config";
 import { UriUtils } from "../utils/uri";
+import { WorkspaceContext } from "../workspace/workspace-context";
 
-export async function commandResolveInclude(params: ExecuteCommandParams) {
+export async function commandResolveInclude(
+  params: ExecuteCommandParams,
+  workspace: WorkspaceContext,
+) {
   const [uri, content] = params.arguments as string[];
   try {
-    await FileSystemProviderInstance.writeFile(UriUtils.toUri(uri), content);
+    await workspace.fs.writeFile(UriUtils.toUri(uri), content);
   } catch (err) {
     console.error(`Failed to write file at URI: ${uri}`, err);
   }
@@ -25,6 +28,7 @@ export async function commandResolveInclude(params: ExecuteCommandParams) {
 
 export async function commandCreateConfig(
   params: ExecuteCommandParams,
+  workspace: WorkspaceContext,
 ): Promise<void> {
   if (!params.arguments) {
     return;
@@ -33,16 +37,19 @@ export async function commandCreateConfig(
   if (!programPath) {
     return;
   }
-  await updateOrCreateConfig(programPath);
+  await updateOrCreateConfig(programPath, workspace);
 }
 
-export async function commandRemoveUnresolvedLib(params: ExecuteCommandParams) {
+export async function commandRemoveUnresolvedLib(
+  params: ExecuteCommandParams,
+  workspace: WorkspaceContext,
+) {
   const [uri, content] = params.arguments as string[];
   if (!uri || content === undefined) {
     return;
   }
   try {
-    await FileSystemProviderInstance.writeFile(UriUtils.toUri(uri), content);
+    await workspace.fs.writeFile(UriUtils.toUri(uri), content);
   } catch (err) {
     console.error(`Failed to write file at URI: ${uri}`, err);
   }

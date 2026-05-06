@@ -14,6 +14,6 @@ export namespace Messages {
   export const ReadFile = "fs/readFile";
   export const WriteFile = "fs/writeFile";
   export const FileExists = "fs/fileExists";
-  export const Search = "fs/search";
+  export const FindFile = "fs/findFile";
   export const Stat = "fs/stat";
 }

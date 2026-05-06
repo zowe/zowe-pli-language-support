@@ -62,7 +62,11 @@ export class PliLexer {
   ): Promise<LexerResult> {
     const inputText = document.getText();
     const compilerOptionsResult =
-      this.compilerOptionsPreprocessor.extractCompilerOptions(inputText, uri);
+      this.compilerOptionsPreprocessor.extractCompilerOptions(
+        inputText,
+        uri,
+        unit.services.workspace,
+      );
     const opts =
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
     unit.compilerOptions = opts;
@@ -74,6 +78,7 @@ export class PliLexer {
       const textWithoutMargins = this.marginsProcessor.processMargins(
         compilerOptionsResult,
         uri,
+        unit.services.workspace,
       );
       const tokenizeResult = tokenize(textWithoutMargins, uri);
       const state = new ParserState(tokenizeResult.tokens);

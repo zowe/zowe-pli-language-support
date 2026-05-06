@@ -14,12 +14,12 @@ import { fullCode, Severity } from "../src/language-server/types";
 import * as PLICodes from "../src/validation/pli-codes";
 import { assertDiagnostic, assertNoDiagnostics, parse } from "./utils";
 import { TestBuilder } from "./test-builder";
-import {
-  deserializeProcessGroup,
-  PluginConfigurationProvider,
-  setPluginConfigurationProvider,
-} from "../src/workspace/plugin-configuration-provider";
+import { deserializeProcessGroup } from "../src/workspace/plugin-configuration-provider";
 import { LspCodes } from "../src/validation/lsp-codes";
+import { UriUtils } from "../src/utils/uri";
+import { makeProgramConfig } from "./config-fixtures";
+import { createTestWorkspace, setDefaultTestWorkspace } from "./test-workspace";
+import { EmptyFileSystemProvider } from "../src/workspace/file-system-provider";
 
 // beforeAll(async () => {
 //   services = createPliServices(EmptyFileSystem);
@@ -369,15 +369,16 @@ describe("Validating", () => {
     });
 
     test("Error on invalid %INCLUDE directive (file doesn't exist)", async () => {
-      const pluginConfig = new PluginConfigurationProvider();
-      setPluginConfigurationProvider(pluginConfig);
-      await pluginConfig.init("/");
+      const workspace = createTestWorkspace(EmptyFileSystemProvider);
+      setDefaultTestWorkspace(workspace);
+      const pluginConfig = workspace.config;
+      await pluginConfig.init(UriUtils.toUri("/"));
       const processGroup = deserializeProcessGroup({
         name: "default",
       });
       await pluginConfig.setProcessGroupConfigs([processGroup]);
-      pluginConfig.setProgramConfigs("/", [
-        { program: "**/*.pli", pgroup: "default" },
+      pluginConfig.setProgramConfigs(UriUtils.toUri("/"), [
+        makeProgramConfig({ program: "**/*.pli", pgroup: "default" }),
       ]);
 
       const doc = await parseWithValidations(` %INCLUDE 'nonexistent.pli';
@@ -388,7 +389,7 @@ describe("Validating", () => {
         message: "The INCLUDE file for nonexistent.pli could not be found.",
         severity: Severity.S,
       });
-      setPluginConfigurationProvider(undefined);
+      setDefaultTestWorkspace(undefined);
     });
 
     test("Error on invalid %INCLUDE directive (config doesn't exist)", async () => {

@@ -17,6 +17,7 @@ import {
 import * as lifecycle from "../src/workspace/lifecycle";
 import { URI } from "vscode-uri";
 import { Diagnostic, Severity } from "../src/language-server/types";
+import { defaultTestWorkspace } from "./test-workspace";
 import { SyntaxKind, SyntaxNode } from "../src/syntax-tree/ast";
 import { forEachNode } from "../src/syntax-tree/ast-iterator";
 import { IntermediateBinaryExpression } from "../src/parser/binary-expressions";
@@ -131,7 +132,7 @@ export async function parse(
   options?: { validate?: boolean; uri?: URI },
 ): Promise<CompilationUnit> {
   const uri = options?.uri ?? UriUtils.toUri("test.pli");
-  const sourceFile = await createCompilationUnit(uri);
+  const sourceFile = await createCompilationUnit(uri, defaultTestWorkspace());
   const document = TextDocument.create(uri.toString(), "pli", 0, text);
   if (!options?.validate) {
     await lifecycle.tokenize(sourceFile, document);
@@ -276,7 +277,7 @@ export async function parseAndLink(
 ): Promise<CompilationUnit> {
   const uri = options?.uri ?? UriUtils.toUri("test.pli");
   const document = TextDocument.create(uri.toString(), "pli", 0, text);
-  const unit = await createCompilationUnit(uri);
+  const unit = await createCompilationUnit(uri, defaultTestWorkspace());
 
   await lifecycle.tokenize(unit, document);
   lifecycle.parse(unit);

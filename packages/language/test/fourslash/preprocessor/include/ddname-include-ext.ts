@@ -9,8 +9,16 @@
  *
  */
 
-export * from "./workspace/builtins";
-export * from "./workspace/file-system-provider.js";
-export * from "./language-server/connection-handler.js";
-export * from "./utils/uri";
-export * from "./utils/messages";
+// Tests including a ddname(member) directly.
+
+/// <reference path="../../framework.ts" />
+
+// @filename: cpy/MYLIB(member).pli
+//// DECLARE LIB_VAR FIXED;
+
+// @filename: main.pli
+//// %INCLUDE MYLIB(member);
+
+preprocessor.expectTokens(`
+  DECLARE LIB_VAR FIXED;
+`);
