@@ -2,6 +2,12 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/dialect-cics/tsconfig.src.json"
+    },
+    {
+      "path": "./packages/dialect-cics/tsconfig.test.json"
+    },
+    {
       "path": "./packages/language/tsconfig.src.json"
     },
     {
