@@ -1,3 +1,13 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
 /*
  * Copyright (c) 2026 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
@@ -12,7 +22,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 import { Parser, Token } from "antlr4ng";
-import { MessageService } from "../engine/services/MessageService";
+import { MessageService } from "../engine/services/message-service";
 
 export abstract class MessageServiceParser extends Parser {
   private static readonly ALPHANUMERIC: RegExp = /[a-zA-Z0-9]+/;

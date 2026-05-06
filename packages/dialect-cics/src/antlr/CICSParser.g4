@@ -15,7 +15,7 @@ parser grammar CICSParser;
 options {tokenVocab = CICSLexer; superClass = MessageServiceParser;}
 
 @header {
-import { MessageServiceParser } from "../antlr/MessageServiceParser";
+import { MessageServiceParser } from "../antlr/message-service-parser";
 }
 
 startRule: (cicsExecBlock | cicsDfhValue | cicsDfhResp | ~(EXEC_CICS|DFHRESP|DFHVALUE))* EOF;

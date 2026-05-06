@@ -1,0 +1,66 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+import * as vscode from "vscode";
+import {
+  BaseErrorListener,
+  Recognizer,
+  ATNSimulator,
+  RecognitionException,
+  Token,
+} from "antlr4ng";
+
+export interface ParseError {
+  line: number;
+  column: number;
+  message: string;
+  range: vscode.Range;
+}
+
+export class CollectingErrorListener extends BaseErrorListener {
+  public readonly errors: ParseError[] = [];
+
+  override syntaxError<S extends Token, T extends ATNSimulator>(
+    _recognizer: Recognizer<T>,
+    offendingSymbol: S | null,
+    line: number,
+    charPositionInLine: number,
+    msg: string,
+    _e: RecognitionException | null,
+  ): void {
+    this.errors.push({
+      line,
+      column: charPositionInLine,
+      message: msg,
+      range: this.getRangeForSyntaxError(
+        offendingSymbol,
+        line,
+        charPositionInLine,
+      ),
+    });
+  }
+
+  private getRangeForSyntaxError(
+    offendingSymbol: Token | null,
+    line: number,
+    charPositionInLine: number,
+  ) {
+    const tokenLength = offendingSymbol
+      ? offendingSymbol.stop - offendingSymbol.start + 1
+      : 0;
+    return new vscode.Range(
+      line - 1,
+      charPositionInLine,
+      line - 1,
+      charPositionInLine + tokenLength,
+    );
+  }
+}

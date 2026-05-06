@@ -8,3 +8,5 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
+
+export * from "./engine/preprocessor";
