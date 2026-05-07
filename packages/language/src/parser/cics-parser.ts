@@ -15,20 +15,14 @@ import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { CICSPreprocessor } from "dialect-cics";
 import { binaryTokenSearch } from "../utils/search";
+import { embeddedUnknownStatement } from "./unknown-parser";
 
 export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExecStatement> {
   const execStatement = ast.createCicsExecStatement();
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
 
-  const unknownStatement = ast.createEmbeddedUnknownStatement();
-  execStatement.content = unknownStatement;
   const startOffset = state.token?.startOffset ?? 0;
-  while (!state.eof && !state.canConsume(t.Semicolon) && state.token) {
-    const token = state.token;
-    token.element = unknownStatement;
-    token.kind = CstNodeKind.ExecCicsStatement_COMMAND;
-    state.index++;
-  }
+  const unknownStatement = execStatement.content = embeddedUnknownStatement(state, CstNodeKind.ExecCicsStatement_COMMAND);
   const endOffset = state.last ? state.last.endOffset + 1 : startOffset;
   const statementText = state.textDocument.getText().substring(startOffset, endOffset);
 
