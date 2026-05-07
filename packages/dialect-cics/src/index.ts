@@ -10,3 +10,4 @@
  */
 
 export * from "./engine/preprocessor";
+export * from "./engine/parsing";

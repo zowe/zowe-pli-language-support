@@ -21,7 +21,6 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
-import * as vscode from "vscode";
 import {
   BaseErrorListener,
   Recognizer,
@@ -29,12 +28,13 @@ import {
   RecognitionException,
   Token,
 } from "antlr4ng";
+import { Range } from "vscode-languageserver";
 
 export interface ParseError {
   line: number;
   column: number;
   message: string;
-  range: vscode.Range;
+  range: Range;
 }
 
 export class CollectingErrorListener extends BaseErrorListener {
@@ -68,7 +68,7 @@ export class CollectingErrorListener extends BaseErrorListener {
     const tokenLength = offendingSymbol
       ? offendingSymbol.stop - offendingSymbol.start + 1
       : 0;
-    return new vscode.Range(
+    return Range.create(
       line - 1,
       charPositionInLine,
       line - 1,

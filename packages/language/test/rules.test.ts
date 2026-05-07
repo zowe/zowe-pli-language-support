@@ -138,7 +138,7 @@ describe("Rule tests", () => {
       TokenInstances.Hello,
       TokenInstances.IdAlice,
       TokenInstances.Exclamation,
-    ]);
+    ], "dummy");
 
     const result = Rules.program.rule(state)!;
 
@@ -153,7 +153,7 @@ describe("Rule tests", () => {
     const state = new ParserState([
       TokenInstances.Person,
       TokenInstances.IdPerson,
-    ]);
+    ], "dummy");
 
     const result = Rules.program.rule(state)!;
 
@@ -163,7 +163,7 @@ describe("Rule tests", () => {
   });
 
   test("Error", () => {
-    const state = new ParserState([TokenInstances.IdBob]);
+    const state = new ParserState([TokenInstances.IdBob], "dummy");
 
     Rules.program.rule(state)!;
 

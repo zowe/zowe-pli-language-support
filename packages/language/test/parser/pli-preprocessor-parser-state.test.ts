@@ -17,7 +17,7 @@ import { tokenize } from "../../src/parser/tokenizer";
 
 function parserStateFromText(text: string, uri: URI) {
   const result = tokenize(text, uri);
-  const state = new ParserState(result.tokens);
+  const state = new ParserState(result.tokens, text);
   return state;
 }
 

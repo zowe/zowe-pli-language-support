@@ -25,7 +25,6 @@
 import * as antlr from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { CICSParser } from "../generated/CICSParser";
-import { MessageService } from "./services/message-service";
 import { CollectingErrorListener, ParseError } from "./parsing";
 
 export interface ICICSPreprocessorResult {
@@ -33,13 +32,11 @@ export interface ICICSPreprocessorResult {
 }
 
 export class CICSPreprocessor {
-  constructor(private readonly messageService: MessageService) {}
   public async execute(textSnippet: string): Promise<ICICSPreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new CICSLexer(charStream);
     const tokenStream = new antlr.CommonTokenStream(lexer);
     const parser = new CICSParser(tokenStream);
-    parser.setMessageService(this.messageService);
     tokenStream.fill();
 
     lexer.removeErrorListeners();

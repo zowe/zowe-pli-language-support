@@ -21,23 +21,10 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
-import { Parser, Token } from "antlr4ng";
-import { MessageService } from "../engine/services/message-service";
+import { Parser } from "antlr4ng";
 
 export abstract class MessageServiceParser extends Parser {
   private static readonly ALPHANUMERIC: RegExp = /[a-zA-Z0-9]+/;
-  private messageService?: MessageService;
-
-  public setMessageService(messageService: MessageService) {
-    this.messageService = messageService;
-  }
-
-  protected getMessageService(): MessageService {
-    if (!this.messageService) {
-      throw new Error("Message service is not set");
-    }
-    return this.messageService;
-  }
 
   private notifyError(
     template: string,
@@ -46,12 +33,6 @@ export abstract class MessageServiceParser extends Parser {
   ): string {
     const message = "";
     super.notifyErrorListeners(message, this.getCurrentToken(), null);
-    return message;
-  }
-
-  private notifyErrorEx(template: string, token?: Token): string {
-    const message = this.getMessageService().get(template, token?.text ?? "");
-    super.notifyErrorListeners(message, token || this.getCurrentToken(), null);
     return message;
   }
 
@@ -143,16 +124,6 @@ export abstract class MessageServiceParser extends Parser {
       objectType,
       validLength,
     );
-  }
-
-  protected validateTokenWithRegex(
-    token: Token,
-    regex: RegExp,
-    template: string,
-  ) {
-    if (!token || !regex.test(token.text ?? "")) {
-      this.notifyErrorEx(template, token);
-    }
   }
 
   /**

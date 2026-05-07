@@ -68,12 +68,10 @@ export async function tokenize(
   compilationUnit.referencesCache.addAll(result.tokenReferences);
   return result;
 }
-
+  
 export function parse(compilationUnit: CompilationUnit): Program {
-  const { tree, diagnostics } = parsePli(
-    compilationUnit.tokens,
-    compilationUnit.compilerOptions,
-  );
+  const textDocument = compilationUnit.services.files.getDocument(compilationUnit.uri)!;
+  const { tree, diagnostics } = parsePli(compilationUnit.tokens, compilationUnit.compilerOptions, textDocument.getText());
   compilationUnit.ast = tree;
   compilationUnit.diagnostics.addAll(DiagnosticCategory.Parser, diagnostics);
 

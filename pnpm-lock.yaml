@@ -43,13 +43,19 @@ importers:
       antlr4ng:
         specifier: ^3.0.16
         version: 3.0.16
-      vscode:
-        specifier: npm:@codingame/monaco-vscode-extension-api@~17.2.1
-        version: '@codingame/monaco-vscode-extension-api@17.2.1'
+      vscode-languageserver:
+        specifier: ~9.0.1
+        version: 9.0.1
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
+      vscode-languageserver-types:
+        specifier: ^3.17.5
+        version: 3.17.5
+      vscode-uri:
+        specifier: ^3.1.0
+        version: 3.1.0
     devDependencies:
-      '@types/vscode':
-        specifier: 1.67.0
-        version: 1.67.0
       antlr-ng:
         specifier: ^1.0.10
         version: 1.0.10
@@ -68,6 +74,9 @@ importers:
       chevrotain:
         specifier: ^11.1.1
         version: 11.1.1
+      dialect-cics:
+        specifier: workspace:*
+        version: link:../dialect-cics
       jsonc-parser:
         specifier: ^3.3.1
         version: 3.3.1

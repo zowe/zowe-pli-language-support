@@ -2297,7 +2297,7 @@ async function runInclude(
       throw new Error("Document not found after URI resolution.");
     }
     const content = document.getText();
-    const cachedResult = context.unit.instructionCache.get(uri, content, () => {
+    const cachedResult = await context.unit.instructionCache.get(uri, content, async () => {
       const processedContent = context.options.marginsProcessor.processMargins(
         {
           result: context.options.compilerOptions,
@@ -2307,8 +2307,8 @@ async function runInclude(
         context.unit.services.workspace,
       );
       const tokenizeResult = tokenize(processedContent, uri);
-      const subState = new ParserState(tokenizeResult.tokens);
-      const subProgram = preprocessorParse(
+      const subState = new ParserState(tokenizeResult.tokens, processedContent);
+      const subProgram = await preprocessorParse(
         subState,
         context.options.compilerOptions?.options,
       );
