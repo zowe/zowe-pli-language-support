@@ -18,7 +18,7 @@ options {tokenVocab = CICSLexer; superClass = MessageServiceParser;}
 import { MessageServiceParser } from "../antlr/message-service-parser";
 }
 
-startRule: (allCicsRule)* EOF;
+startRule: allCicsRule EOF;
 //startRule: (cicsExecBlock | cicsDfhValue | cicsDfhResp | ~(EXEC_CICS|DFHRESP|DFHVALUE))* EOF;
 //cicsExecBlock: EXEC_CICS (allCicsRule)* END_EXEC ;
 

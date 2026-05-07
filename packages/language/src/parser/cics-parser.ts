@@ -19,6 +19,7 @@ import { embeddedUnknownStatement } from "./unknown-parser";
 
 export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExecStatement> {
   const execStatement = ast.createCicsExecStatement();
+  state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
 
   const startOffset = state.token?.startOffset ?? 0;
