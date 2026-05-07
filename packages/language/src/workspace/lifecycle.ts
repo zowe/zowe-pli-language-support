@@ -68,7 +68,7 @@ export async function tokenize(
   compilationUnit.referencesCache.addAll(result.tokenReferences);
   return result;
 }
-
+  
 export function parse(compilationUnit: CompilationUnit): Program {
   const textDocument = compilationUnit.services.files.getDocument(
     compilationUnit.uri,
