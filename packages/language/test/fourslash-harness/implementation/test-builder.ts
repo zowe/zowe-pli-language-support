@@ -24,6 +24,7 @@ import { PLICode } from "../../../src/validation/pli-codes";
 import { HarnessTypeAttributes } from "./type-attributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 import { DiagnosticCategory } from "../../../src/validation/diagnostics-store";
+import { Severity } from "../../../src/language-server/types";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -62,6 +63,11 @@ export function createTestBuilderHarnessImplementation(
         testBuilder.noDiagnosticsExcept(regex, label),
       noParserDiagnostics: () =>
         testBuilder.expectNoCategoryDiagnostics(DiagnosticCategory.Parser),
+      noParserErrors: () =>
+        testBuilder.expectNoCategoryDiagnostics(
+          DiagnosticCategory.Parser,
+          (d) => d.severity === Severity.E || d.severity === Severity.S,
+        ),
       noLinkingDiagnostics: () =>
         testBuilder.expectNoCategoryDiagnostics(DiagnosticCategory.Linking),
       expectToThrow: (fn, messageToThrow) =>

@@ -10,7 +10,7 @@
  */
 
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
-import { Diagnostic, type Severity } from "../../src/language-server/types";
+import { type Severity } from "../../src/language-server/types";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
 import { CompilerOptions as PliCompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
 import { CompilerOptions as MacroCompilerOptions } from "../../src/preprocessor/compiler-options/options-macro";
@@ -48,7 +48,12 @@ import {
 } from "../../src/validation/internal-codes";
 import { LspCodes } from "../../src/validation/lsp-codes";
 import { PLICode, PLICodes } from "../../src/validation/pli-codes";
-import { ExpectedCompletion, Label, TestBuilder } from "../test-builder";
+import {
+  ExpectedCompletion,
+  Label,
+  TestBuilder,
+  DiagnosticExpectation,
+} from "../test-builder";
 import {
   SemanticTokenModifiers,
   SemanticTokenTypes,
@@ -162,29 +167,18 @@ export interface HarnessTesterInterface {
     /**
      * Expect that the given label has _only_ the given diagnostics.
      * @param label The label to expect the diagnostics at.
-     * @param diagnostics The only diagnostics to expect.
+     * @param diagnostics The only diagnostics to expect. Message field can be a string or RegExp for flexible matching.
      */
     expectExclusiveDiagnosticsAt(
       label: Label,
-      diagnostics:
-        | Partial<Diagnostic>
-        | Partial<Diagnostic>[]
-        | PLICode
-        | PLICode[],
+      diagnostics: DiagnosticExpectation,
     ): void;
     /**
      * Expect that the given label has the given diagnostics.
      * @param label The label to expect the diagnostics at.
-     * @param diagnostics The diagnostics to expect.
+     * @param diagnostics The diagnostics to expect. Message field can be a string or RegExp for flexible matching.
      */
-    expectDiagnosticsAt(
-      label: Label,
-      diagnostics:
-        | Partial<Diagnostic>
-        | Partial<Diagnostic>[]
-        | PLICode
-        | PLICode[],
-    ): void;
+    expectDiagnosticsAt(label: Label, diagnostics: DiagnosticExpectation): void;
     /**
      * Expect that there are no code actions at the given label.
      * @param label The label to expect no code actions at.
@@ -210,6 +204,12 @@ export interface HarnessTesterInterface {
      * Expect that the compilation unit has no parser diagnostics.
      */
     noParserDiagnostics(): void;
+
+    /**
+     * Expect that the compilation unit has no parser errors.
+     * Warnings and info diagnostics are allowed.
+     */
+    noParserErrors(): void;
 
     /**
      * Expect that the compilation unit has no linking diagnostics.

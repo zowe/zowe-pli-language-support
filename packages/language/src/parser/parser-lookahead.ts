@@ -123,23 +123,82 @@ function performIfLookahead(state: ParserState): boolean {
   return false;
 }
 
-export function performEndStatementLookahead(state: ParserState): boolean {
+/**
+ * Simple check for whether an END statement is present in the lookahead.
+ * Use this when you just need to know if an END is coming.
+ *
+ * @returns true if an END statement is found, false otherwise
+ */
+export function hasEndStatementLookahead(state: ParserState): boolean {
+  return performEndStatementLookahead(state).endStatement !== false;
+}
+
+export interface EndStatementLookahead {
+  /**
+   * Information about the END statement:
+   * - `false` if no END statement found
+   * - `true` if unlabeled END found (e.g., "END;")
+   * - `string` if labeled END found (e.g., "END FOO;" returns "FOO")
+   */
+  endStatement: boolean | string;
+  /**
+   * The lookahead index of the END token, if found.
+   * Undefined if no END statement was found.
+   */
+  endTokenIndex?: number;
+}
+
+/**
+ * Performs lookahead to detect END statement and its optional label.
+ * Skips any label prefixes (e.g., "FOO: END") before the END keyword.
+ *
+ * @returns Object containing END statement information and token position
+ */
+export function performEndStatementLookahead(
+  state: ParserState,
+): EndStatementLookahead {
   const lookahead = (la: number) => state.peek(la);
   let index: number = 1;
   let token: tokens.Token | undefined = undefined;
+
   while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
     const idToken = lookahead(index);
     const colonToken = lookahead(index + 1);
     if (!idToken || !colonToken) {
-      return false;
+      return { endStatement: false };
     }
     if (
       !tokenMatcher(idToken, tokens.ID) ||
       !tokenMatcher(colonToken, tokens.Colon)
     ) {
-      return false;
+      return { endStatement: false };
     }
     index += 2;
   }
-  return token !== undefined && tokenMatcher(token, tokens.END);
+
+  if (!token || !tokenMatcher(token, tokens.END)) {
+    return { endStatement: false };
+  }
+
+  // To verify that the end is actually an END statement and not part of an expression,
+  // we check for the semicolon, potentially preceded by an ID label.
+  let nextToken = lookahead(index + 1);
+  if (!nextToken) {
+    return { endStatement: false };
+  }
+
+  if (tokenMatcher(nextToken, tokens.Semicolon)) {
+    return { endStatement: true, endTokenIndex: index };
+  }
+
+  if (!tokenMatcher(nextToken, tokens.ID)) {
+    return { endStatement: false };
+  }
+
+  const semicolonToken = lookahead(index + 2);
+  if (!semicolonToken || !tokenMatcher(semicolonToken, tokens.Semicolon)) {
+    return { endStatement: false };
+  }
+
+  return { endStatement: nextToken.image, endTokenIndex: index };
 }
