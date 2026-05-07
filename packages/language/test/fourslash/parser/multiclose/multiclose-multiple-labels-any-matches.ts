@@ -15,6 +15,7 @@
 //// L1: L2: L3: PROC OPTIONS(MAIN);
 ////    DO;
 ////       PUT SKIP LIST('HELLO');
-//// END L2;
+//// <|END|> L2;
 
-verify.noParserDiagnostics();
+verify.noParserErrors();
+verify.expectDiagnosticsAt("END", code.Warning.IBM1120I);

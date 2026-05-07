@@ -206,6 +206,12 @@ export interface HarnessTesterInterface {
     noParserDiagnostics(): void;
 
     /**
+     * Expect that the compilation unit has no parser errors.
+     * Warnings and info diagnostics are allowed.
+     */
+    noParserErrors(): void;
+
+    /**
      * Expect that the compilation unit has no linking diagnostics.
      */
     noLinkingDiagnostics(): void;

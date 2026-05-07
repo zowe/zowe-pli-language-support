@@ -26,9 +26,10 @@ import {
   constructBinaryExpression,
   IntermediateBinaryExpression,
 } from "./binary-expressions";
-import { Severe } from "../validation/pli-codes";
+import { Severe, Warning } from "../validation/pli-codes";
 import { Diagnostic, Severity } from "../language-server/types";
 import {
+  hasEndStatementLookahead,
   performAssignmentLookahead,
   performEndStatementLookahead,
 } from "./parser-lookahead";
@@ -79,7 +80,7 @@ const packageRule = rule(
     }
     state.consume(element, CstNodeKind.Package_Semicolon, tokens.Semicolon);
     const { inc } = state.createLoopContext("Package");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !hasEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -502,7 +503,7 @@ const procedureStatement = rule(
     );
 
     const { inc: inc3 } = state.createLoopContext("ProcedureStatement 3");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !hasEndStatementLookahead(state)) {
       inc3();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -1184,7 +1185,7 @@ const beginStatement = rule(
       tokens.Semicolon,
     );
     const { inc } = state.createLoopContext("BeginStatement");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !hasEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -1253,7 +1254,7 @@ function parseMulticloseEnd(
 
   if (alwaysOptional) {
     // PACKAGE: END is truly optional (can be omitted entirely)
-    if (endInfo === false) {
+    if (endInfo.endStatement === false) {
       return null;
     }
     // END present for PACKAGE - always consume it
@@ -1262,17 +1263,24 @@ function parseMulticloseEnd(
 
   if (state.isEndOptional()) {
     // MULTICLOSE mode: END can skip levels via labels, but must exist somewhere
-    if (endInfo === false) {
+    if (endInfo.endStatement === false) {
       // No END found (at EOF) - ERROR even with MULTICLOSE
       return endStatement.rule(state); // Will generate parser error
     }
 
     // END found - check if label matches this statement
-    if (state.endLabelMatches(endInfo)) {
+    if (state.endLabelMatches(endInfo.endStatement)) {
       // Label matches (or unlabeled END for innermost) - consume it
       return endStatement.rule(state);
     } else {
       // Label doesn't match - leave END for outer scope to consume
+      // This is a multiclose - emit warning on the END token
+      if (endInfo.endTokenIndex !== undefined) {
+        const endToken = state.peek(endInfo.endTokenIndex);
+        if (endToken) {
+          state.diagnostic(Warning.IBM1120I, endToken);
+        }
+      }
       return null;
     }
   } else {
@@ -2225,7 +2233,7 @@ const doStatement = rule(
 
     // Parse statements until END
     const { inc } = state.createLoopContext("DoStatement");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !hasEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);
@@ -3940,7 +3948,7 @@ const qualifyStatement = rule(
     );
 
     const { inc } = state.createLoopContext("QualifyStatement");
-    while (!state.eof && !performEndStatementLookahead(state)) {
+    while (!state.eof && !hasEndStatementLookahead(state)) {
       inc();
       const stmt = statement.rule(state);
       stmt && element.statements.push(stmt);

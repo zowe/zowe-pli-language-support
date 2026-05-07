@@ -1010,10 +1010,15 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     return this;
   }
 
-  expectNoCategoryDiagnostics(category: DiagnosticCategory): TestBuilder {
+  expectNoCategoryDiagnostics(
+    category: DiagnosticCategory,
+    filter?: (d: Diagnostic) => boolean,
+  ): TestBuilder {
     const diagnostics = this.unit.diagnostics.get(category);
-    if (diagnostics.length > 0) {
-      const message = diagnostics
+    const filtered = filter ? diagnostics.filter(filter) : diagnostics;
+
+    if (filtered.length > 0) {
+      const message = filtered
         .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
         .join("\n- ");
       fail(`Expected no diagnostics but received:\n- ${message}`);

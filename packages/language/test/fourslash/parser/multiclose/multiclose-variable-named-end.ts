@@ -11,11 +11,22 @@
 
 /// <reference path="../../framework.ts" />
 
+/**
+ * Test that a variable named END can be used in multiclose scenarios.
+ * The parser should correctly distinguish between "END = ..." (variable assignment)
+ * and "END LABEL;" (END statement for multiclose).
+ */
+
 ////*PROCESS RULES(MULTICLOSE);
-//// P: PROC OPTIONS(MAIN);
-////    DO;
-////       PUT SKIP LIST('HELLO');
-//// <|END|> P;
+//// TEST: PROC OPTIONS(MAIN);
+////    DCL END CHAR(20);
+////    OUTER: DO;
+////       INNER: DO;
+////          END = 'HELLO_WORLD';
+////          PUT SKIP LIST(END);
+//// <|END|> OUTER;
+////    PUT SKIP LIST('AFTER');
+//// END TEST;
 
 verify.noParserErrors();
 verify.expectDiagnosticsAt("END", code.Warning.IBM1120I);

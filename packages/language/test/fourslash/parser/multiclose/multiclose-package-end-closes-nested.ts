@@ -17,6 +17,7 @@
 ////    P: PROC OPTIONS(MAIN);
 ////       IF 0 THEN DO;
 ////          PUT SKIP LIST('IF BODY STATEMENT 1');
-//// END MY_PKG;
+//// <|END|> MY_PKG;
 
-verify.noParserDiagnostics();
+verify.noParserErrors();
+verify.expectDiagnosticsAt("END", code.Warning.IBM1120I);

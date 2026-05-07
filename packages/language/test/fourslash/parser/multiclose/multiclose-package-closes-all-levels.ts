@@ -18,6 +18,7 @@
 ////       DO I = 1 TO 10;
 ////          BEGIN;
 ////             PUT SKIP LIST('NESTED');
-//// END PKG;
+//// <|END|> PKG;
 
-verify.noParserDiagnostics();
+verify.noParserErrors();
+verify.expectDiagnosticsAt("END", code.Warning.IBM1120I);

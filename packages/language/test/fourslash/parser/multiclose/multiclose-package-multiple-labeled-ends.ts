@@ -19,8 +19,9 @@
 ////          PUT SKIP LIST('IF BODY STATEMENT 1');
 ////          IF 0 THEN DO;
 ////             PUT SKIP LIST('IF BODY STATEMENT 2');
-////       END IFG0;
+////       <|END|> IFG0;
 ////    END P;
 //// END MY_PKG;
 
-verify.noParserDiagnostics();
+verify.noParserErrors();
+verify.expectDiagnosticsAt("END", code.Warning.IBM1120I);
