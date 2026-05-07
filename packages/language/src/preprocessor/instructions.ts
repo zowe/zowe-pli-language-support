@@ -145,7 +145,7 @@ export function createCicsExecInstruction(
 ): CicsExecInstruction {
   return {
     kind: InstructionKind.CicsExecStatement,
-    variables: statement.hostVariables.map((token) =>
+    variables: (statement.content?.hostVariables ?? []).map((token) =>
       createCicsVariableInstruction(token),
     ),
   };

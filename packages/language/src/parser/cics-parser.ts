@@ -17,7 +17,7 @@ import { CICSPreprocessor } from "dialect-cics";
 
 export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExecStatement> {
   const execStatement = ast.createCicsExecStatement();
-  state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
+  const firstToken = state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
 
   const unknownStatement = ast.createEmbeddedUnknownStatement();
@@ -30,15 +30,34 @@ export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExe
     state.index++;
   }
   const endOffset = state.last ? state.last.endOffset + 1 : startOffset;
-  const statementText = state.text.substring(startOffset, endOffset);
+  const statementText = state.textDocument.getText().substring(startOffset, endOffset);
 
   const preprocessor = new CICSPreprocessor();
-  const { diagnostics } = await preprocessor.execute(statementText);
+  const { diagnostics, identifiers } = await preprocessor.execute(statementText);
   for (const diagnostic of diagnostics) {
     state.error(diagnostic.message, state.token);
   }
-  //TODO
-  unknownStatement.hostVariables = [];
+  for (const token of identifiers) {
+    if(!token.text) {
+      continue;
+    }
+    const tokenStart = startOffset + token.start;
+    const tokenEnd = startOffset + token.stop + 1;
+    const tokenStartPosition = state.textDocument.positionAt(tokenStart);
+    const tokenEndPosition = state.textDocument.positionAt(tokenEnd);
+    const pliToken = t.createTokenInstance(
+      token.text,
+      token.text,
+      t.ID,
+      tokenStart, tokenStartPosition.line, tokenStartPosition.character,
+      tokenEnd, tokenEndPosition.line, tokenEndPosition.character, 
+      firstToken?.uri
+    );
+    pliToken.element = unknownStatement;
+    unknownStatement.hostVariables.push(pliToken);
+  }
+
+  execStatement.content = unknownStatement;
 
   state.consume(
     execStatement,

@@ -248,23 +248,6 @@ export enum SyntaxKind {
 
   CicsResponseStatement,
   CicsExecStatement,
-  CicsLinkStatement,
-
-  CicsProgramSpecification,
-  CicsLengthSpecification,
-  CicsDataLengthSpecification,
-  CicsChannelSpecification,
-  CicsInputMessageSpecification,
-  CicsInputMessageLengthSpecification,
-  CicsSystemIdSpecification,
-  CicsSyncOnReturnSpecification,
-  CicsTransactionIdSpecification,
-  CicsCommAreaSpecification,
-
-  CicsReferenceItem,
-  CicsStringLiteral,
-  CicsAreaLiteral,
-  CicsNumericLiteral,
 
   CicsVariableReference,
 
@@ -984,21 +967,6 @@ export type SyntaxNode =
   | ProcedureOrderOption
   | ProcedureRecursiveOption
   | ProcedureScopeOption
-  | CicsLinkStatement
-  | CicsLengthSpecification
-  | CicsChannelSpecification
-  | CicsProgramSpecification
-  | CicsDataLengthSpecification
-  | CicsInputMessageSpecification
-  | CicsInputMessageLengthSpecification
-  | CicsSystemIdSpecification
-  | CicsSyncOnReturnSpecification
-  | CicsTransactionIdSpecification
-  | CicsCommAreaSpecification
-  | CicsAreaLiteral
-  | CicsStringLiteral
-  | CicsNumericLiteral
-  | CicsReferenceItem
   | CicsVariableReference;
 
 export type AllocateAttribute =
@@ -4392,258 +4360,18 @@ export function createCicsResponseStatement(): CicsResponseStatement {
 
 export interface CicsExecStatement extends AstNode {
   kind: SyntaxKind.CicsExecStatement;
-  hostVariables: Token[];
   content: CicsEmbeddedStatement | null;
 }
 
 export function createCicsExecStatement(): CicsExecStatement {
   return {
     kind: SyntaxKind.CicsExecStatement,
-    hostVariables: [],
     container: null,
     content: null,
   };
 }
 
-export type CicsStatement = CicsLinkStatement;
-export type CicsEmbeddedStatement = EmbeddedUnknownStatement | CicsStatement;
-
-export interface CicsLinkStatement extends AstNode {
-  kind: SyntaxKind.CicsLinkStatement;
-  commandToken: Token | null;
-  program: CicsProgramSpecification | null;
-  commArea: CicsCommAreaSpecification | null;
-  length: CicsLengthSpecification | null;
-  dataLength: CicsDataLengthSpecification | null;
-  channel: CicsChannelSpecification | null;
-  inputMessage: CicsInputMessageSpecification | null;
-  inputMessageLength: CicsInputMessageLengthSpecification | null;
-  systemId: CicsSystemIdSpecification | null;
-  syncOnReturn: CicsSyncOnReturnSpecification | null;
-  transactionId: CicsTransactionIdSpecification | null;
-}
-
-export function createCicsLinkStatement(): CicsLinkStatement {
-  return {
-    kind: SyntaxKind.CicsLinkStatement,
-    container: null,
-    commandToken: null,
-    program: null,
-    length: null,
-    dataLength: null,
-    channel: null,
-    commArea: null,
-    inputMessage: null,
-    inputMessageLength: null,
-    systemId: null,
-    syncOnReturn: null,
-    transactionId: null,
-  };
-}
-
-export interface CicsProgramSpecification extends AstNode {
-  kind: SyntaxKind.CicsProgramSpecification;
-  specToken: Token | null;
-  name: CicsNameExpression | null;
-}
-
-export function createCicsProgramSpecification(): CicsProgramSpecification {
-  return {
-    kind: SyntaxKind.CicsProgramSpecification,
-    container: null,
-    specToken: null,
-    name: null,
-  };
-}
-
-export interface CicsCommAreaSpecification extends AstNode {
-  kind: SyntaxKind.CicsCommAreaSpecification;
-  specToken: Token | null;
-  commArea: CicsDataAreaExpression | null;
-}
-
-export function createCicsCommAreaSpecification(): CicsCommAreaSpecification {
-  return {
-    kind: SyntaxKind.CicsCommAreaSpecification,
-    container: null,
-    specToken: null,
-    commArea: null,
-  };
-}
-
-export interface CicsLengthSpecification extends AstNode {
-  kind: SyntaxKind.CicsLengthSpecification;
-  specToken: Token | null;
-  length: CicsDataValueExpression | null;
-}
-
-export function createCicsLengthSpecification(): CicsLengthSpecification {
-  return {
-    kind: SyntaxKind.CicsLengthSpecification,
-    container: null,
-    specToken: null,
-    length: null,
-  };
-}
-
-export interface CicsDataLengthSpecification extends AstNode {
-  kind: SyntaxKind.CicsDataLengthSpecification;
-  specToken: Token | null;
-  length: CicsDataValueExpression | null;
-}
-
-export function createCicsDataLengthSpecification(): CicsDataLengthSpecification {
-  return {
-    kind: SyntaxKind.CicsDataLengthSpecification,
-    container: null,
-    specToken: null,
-    length: null,
-  };
-}
-
-export interface CicsChannelSpecification extends AstNode {
-  kind: SyntaxKind.CicsChannelSpecification;
-  specToken: Token | null;
-  channelName: CicsNameExpression | null;
-}
-
-export function createCicsChannelSpecification(): CicsChannelSpecification {
-  return {
-    kind: SyntaxKind.CicsChannelSpecification,
-    container: null,
-    specToken: null,
-    channelName: null,
-  };
-}
-
-export interface CicsInputMessageSpecification extends AstNode {
-  kind: SyntaxKind.CicsInputMessageSpecification;
-  specToken: Token | null;
-  inputMessage: CicsDataAreaExpression | null;
-}
-
-export function createCicsInputMessageSpecification(): CicsInputMessageSpecification {
-  return {
-    kind: SyntaxKind.CicsInputMessageSpecification,
-    container: null,
-    specToken: null,
-    inputMessage: null,
-  };
-}
-
-export interface CicsInputMessageLengthSpecification extends AstNode {
-  kind: SyntaxKind.CicsInputMessageLengthSpecification;
-  specToken: Token | null;
-  length: CicsDataValueExpression | null;
-}
-
-export function createCicsInputMessageLengthSpecification(): CicsInputMessageLengthSpecification {
-  return {
-    kind: SyntaxKind.CicsInputMessageLengthSpecification,
-    container: null,
-    specToken: null,
-    length: null,
-  };
-}
-
-export interface CicsSystemIdSpecification extends AstNode {
-  kind: SyntaxKind.CicsSystemIdSpecification;
-  specToken: Token | null;
-  id: CicsNameExpression | null;
-}
-
-export function createCicsSystemIdSpecification(): CicsSystemIdSpecification {
-  return {
-    kind: SyntaxKind.CicsSystemIdSpecification,
-    container: null,
-    specToken: null,
-    id: null,
-  };
-}
-
-export interface CicsSyncOnReturnSpecification extends AstNode {
-  kind: SyntaxKind.CicsSyncOnReturnSpecification;
-  specToken: Token | null;
-}
-
-export function createCicsSyncOnReturnSpecification(): CicsSyncOnReturnSpecification {
-  return {
-    kind: SyntaxKind.CicsSyncOnReturnSpecification,
-    container: null,
-    specToken: null,
-  };
-}
-
-export interface CicsTransactionIdSpecification extends AstNode {
-  kind: SyntaxKind.CicsTransactionIdSpecification;
-  specToken: Token | null;
-  id: CicsNameExpression | null;
-}
-
-export function createCicsTransactionIdSpecification(): CicsTransactionIdSpecification {
-  return {
-    kind: SyntaxKind.CicsTransactionIdSpecification,
-    container: null,
-    specToken: null,
-    id: null,
-  };
-}
-
-export type CicsNameExpression = CicsReferenceItem | CicsStringLiteral;
-export type CicsDataAreaExpression = CicsReferenceItem | CicsAreaLiteral;
-export type CicsDataValueExpression = CicsReferenceItem | CicsNumericLiteral;
-
-export interface CicsReferenceItem extends AstNode {
-  kind: SyntaxKind.CicsReferenceItem;
-  ref: Reference<NamedElement> | null;
-}
-
-export function createCicsReferenceItem(): CicsReferenceItem {
-  return {
-    kind: SyntaxKind.CicsReferenceItem,
-    container: null,
-    ref: null,
-  };
-}
-
-export interface CicsStringLiteral extends AstNode {
-  kind: SyntaxKind.CicsStringLiteral;
-  value: string | null;
-}
-
-export function createCicsStringLiteral(): CicsStringLiteral {
-  return {
-    kind: SyntaxKind.CicsStringLiteral,
-    container: null,
-    value: null,
-  };
-}
-
-export interface CicsAreaLiteral extends AstNode {
-  kind: SyntaxKind.CicsAreaLiteral;
-  value: string | null;
-}
-
-export function createCicsAreaLiteral(): CicsAreaLiteral {
-  return {
-    kind: SyntaxKind.CicsAreaLiteral,
-    container: null,
-    value: null,
-  };
-}
-
-export interface CicsNumericLiteral extends AstNode {
-  kind: SyntaxKind.CicsNumericLiteral;
-  value: string | null;
-}
-
-export function createCicsNumericLiteral(): CicsNumericLiteral {
-  return {
-    kind: SyntaxKind.CicsNumericLiteral,
-    container: null,
-    value: null,
-  };
-}
+export type CicsEmbeddedStatement = EmbeddedUnknownStatement;
 
 export interface CicsVariableReference extends AstNode {
   kind: SyntaxKind.CicsVariableReference;

@@ -81,7 +81,7 @@ export class PliLexer {
         unit.services.workspace,
       );
       const tokenizeResult = tokenize(textWithoutMargins, uri);
-      const state = new ParserState(tokenizeResult.tokens, textWithoutMargins);
+      const state = new ParserState(tokenizeResult.tokens, document);
       // Do a full parsing of the input text to extract all *local* statements
       const { statements, diagnostics } = await preprocessorParse(state, opts);
       const result = generateInstructions(statements);

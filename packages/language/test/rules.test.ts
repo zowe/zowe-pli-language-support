@@ -19,6 +19,7 @@ import {
   Token,
 } from "../src/parser/tokens";
 import { createToken } from "../src/parser/token-type-factory";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 namespace Tokens {
   export const ID = createToken({
@@ -131,6 +132,7 @@ namespace Rules {
 }
 
 describe("Rule tests", () => {
+  const textDocument = TextDocument.create("dummy", "pli", 1, "");
   test("Simple rule set", () => {
     const state = new ParserState([
       TokenInstances.Person,
@@ -138,7 +140,7 @@ describe("Rule tests", () => {
       TokenInstances.Hello,
       TokenInstances.IdAlice,
       TokenInstances.Exclamation,
-    ], "dummy");
+    ], textDocument);
 
     const result = Rules.program.rule(state)!;
 
@@ -153,7 +155,7 @@ describe("Rule tests", () => {
     const state = new ParserState([
       TokenInstances.Person,
       TokenInstances.IdPerson,
-    ], "dummy");
+    ], textDocument);
 
     const result = Rules.program.rule(state)!;
 
@@ -163,7 +165,7 @@ describe("Rule tests", () => {
   });
 
   test("Error", () => {
-    const state = new ParserState([TokenInstances.IdBob], "dummy");
+    const state = new ParserState([TokenInstances.IdBob], textDocument);
 
     Rules.program.rule(state)!;
 

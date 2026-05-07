@@ -29,6 +29,8 @@ import {
   Token,
 } from "antlr4ng";
 import { Range } from "vscode-languageserver";
+import { CICSParserVisitor } from "../generated/CICSParserVisitor";
+import { CicsWordContext } from "../generated/CICSParser";
 
 export interface ParseError {
   line: number;
@@ -75,4 +77,14 @@ export class CollectingErrorListener extends BaseErrorListener {
       charPositionInLine + tokenLength,
     );
   }
+}
+
+export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
+  readonly identifiers: Token[] = [];
+  override visitCicsWord = (ctx: CicsWordContext): void => {
+    const symbol = ctx.WORD_IDENTIFIER()?.getSymbol();
+    if (symbol) {
+      this.identifiers.push(symbol);
+    }
+  };
 }

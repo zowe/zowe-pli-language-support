@@ -25,10 +25,11 @@
 import * as antlr from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { CICSParser } from "../generated/CICSParser";
-import { CollectingErrorListener, ParseError } from "./parsing";
+import { CollectingErrorListener, CollectingIdentifierVisitor, ParseError } from "./parsing";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];
+  identifiers: antlr.Token[];
 }
 
 export class CICSPreprocessor {
@@ -44,14 +45,17 @@ export class CICSPreprocessor {
 
     const lexerErrors = new CollectingErrorListener();
     const parserErrors = new CollectingErrorListener();
+    const identifierVisitor = new CollectingIdentifierVisitor();
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
 
     const tree = parser.startRule();
-    console.log(tree.toStringTree(parser));
+    tree.accept(identifierVisitor);
+
     return {
       diagnostics: [...lexerErrors.errors, ...parserErrors.errors],
+      identifiers: identifierVisitor.identifiers,
     };
   }
 }

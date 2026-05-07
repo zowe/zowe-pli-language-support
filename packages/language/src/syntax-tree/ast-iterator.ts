@@ -964,51 +964,6 @@ export function forEachNode(
     case SyntaxKind.CicsExecStatement:
       node.content && action(node.content);
       break;
-    case SyntaxKind.CicsLinkStatement:
-      node.channel && action(node.channel);
-      node.dataLength && action(node.dataLength);
-      node.inputMessage && action(node.inputMessage);
-      node.inputMessageLength && action(node.inputMessageLength);
-      node.program && action(node.program);
-      node.syncOnReturn && action(node.syncOnReturn);
-      node.systemId && action(node.systemId);
-      node.transactionId && action(node.transactionId);
-      node.commArea && action(node.commArea);
-      node.length && action(node.length);
-      break;
-    case SyntaxKind.CicsProgramSpecification:
-      node.name && action(node.name);
-      break;
-    case SyntaxKind.CicsLengthSpecification:
-      node.length && action(node.length);
-      break;
-    case SyntaxKind.CicsDataLengthSpecification:
-      node.length && action(node.length);
-      break;
-    case SyntaxKind.CicsChannelSpecification:
-      node.channelName && action(node.channelName);
-      break;
-    case SyntaxKind.CicsInputMessageSpecification:
-      node.inputMessage && action(node.inputMessage);
-      break;
-    case SyntaxKind.CicsInputMessageLengthSpecification:
-      node.length && action(node.length);
-      break;
-    case SyntaxKind.CicsSystemIdSpecification:
-      node.id && action(node.id);
-      break;
-    case SyntaxKind.CicsSyncOnReturnSpecification:
-      break;
-    case SyntaxKind.CicsTransactionIdSpecification:
-      node.id && action(node.id);
-      break;
-    case SyntaxKind.CicsCommAreaSpecification:
-      node.commArea && action(node.commArea);
-      break;
-    case SyntaxKind.CicsReferenceItem:
-    case SyntaxKind.CicsStringLiteral:
-    case SyntaxKind.CicsAreaLiteral:
-    case SyntaxKind.CicsNumericLiteral:
     case SyntaxKind.CicsVariableReference:
       break;
     case SyntaxKind.SqlExecStatement:

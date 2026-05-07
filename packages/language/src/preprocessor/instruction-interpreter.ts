@@ -2307,7 +2307,7 @@ async function runInclude(
         context.unit.services.workspace,
       );
       const tokenizeResult = tokenize(processedContent, uri);
-      const subState = new ParserState(tokenizeResult.tokens, processedContent);
+      const subState = new ParserState(tokenizeResult.tokens, document);
       const subProgram = await preprocessorParse(
         subState,
         context.options.compilerOptions?.options,
