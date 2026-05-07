@@ -14,10 +14,10 @@ import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { CICSPreprocessor } from "dialect-cics";
+import { binaryTokenSearch } from "../utils/search";
 
 export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExecStatement> {
   const execStatement = ast.createCicsExecStatement();
-  const firstToken = state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.CICS);
 
   const unknownStatement = ast.createEmbeddedUnknownStatement();
@@ -42,19 +42,10 @@ export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExe
       continue;
     }
     const tokenStart = startOffset + token.start;
-    const tokenEnd = startOffset + token.stop + 1;
-    const tokenStartPosition = state.textDocument.positionAt(tokenStart);
-    const tokenEndPosition = state.textDocument.positionAt(tokenEnd);
-    const pliToken = t.createTokenInstance(
-      token.text,
-      token.text,
-      t.ID,
-      tokenStart, tokenStartPosition.line, tokenStartPosition.character,
-      tokenEnd, tokenEndPosition.line, tokenEndPosition.character, 
-      firstToken?.uri
-    );
-    pliToken.element = unknownStatement;
-    unknownStatement.hostVariables.push(pliToken);
+    const pliToken = binaryTokenSearch(state.tokens, tokenStart);
+    if(pliToken) {
+      unknownStatement.hostVariables.push(pliToken);
+    }
   }
 
   execStatement.content = unknownStatement;
