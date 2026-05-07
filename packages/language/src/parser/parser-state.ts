@@ -10,7 +10,7 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
-import { SyntaxNode } from "../syntax-tree/ast";
+import { SyntaxNode, LabelPrefix } from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import * as t from "./tokens";
 import {
@@ -29,6 +29,7 @@ import {
 } from "../validation/pli-codes";
 import { tokenIdxToClass } from "./token-type-factory";
 import * as environment from "../workspace/environment";
+import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 
 export enum RecoveryResult {
   /**
@@ -50,14 +51,16 @@ export type RecoveryFunction = () => RecoveryResult;
 export class ParserState {
   readonly tokens: t.Token[];
   readonly diagnostics: Diagnostic[];
+  readonly compilerOptions?: CompilerOptions;
+  private inProcedure = false;
   public index: number;
   public inError = false;
+  public currentStatementLabels: LabelPrefix[] = [];
 
-  private inProcedure = false;
-
-  constructor(tokens: t.Token[]) {
+  constructor(tokens: t.Token[], compilerOptions?: CompilerOptions) {
     this.tokens = tokens;
     this.diagnostics = [];
+    this.compilerOptions = compilerOptions;
     this.index = 0;
   }
 
@@ -133,6 +136,52 @@ export class ParserState {
     return this.inProcedure;
   }
 
+  isEndOptional(): boolean {
+    return this.compilerOptions?.rules?.multiClose ?? false;
+  }
+
+  endLabelMatches(endLabel: true | string): boolean {
+    if (endLabel === true) {
+      // Unlabeled END matches any statement
+      return true;
+    }
+    return this.currentStatementLabels.some(
+      (labelPrefix) => labelPrefix.name === endLabel,
+    );
+  }
+
+  /**
+   * Emits a diagnostic without setting the parser in error state.
+   * Use this for warnings, info diagnostics, or any diagnostic that shouldn't
+   * trigger error recovery.
+   */
+  diagnostic(message: SimplePLICode, token?: t.Token): void;
+  diagnostic<T extends ParametricPLICode>(
+    message: T,
+    args: Parameters<T["message"]>,
+    token?: t.Token,
+  ): void;
+  diagnostic(
+    message: SimplePLICode | ParametricPLICode,
+    tokenOrArgs?: t.Token | Parameters<ParametricPLICode["message"]>,
+    token?: t.Token,
+  ): void {
+    if (isParametricPLICode(message)) {
+      // Cast the args and token parameters to fit with the parametric code signature
+      const args = tokenOrArgs as Parameters<ParametricPLICode["message"]>;
+      const finalToken = (token || this.token || this.last) as
+        | t.Token
+        | undefined;
+      this.diagnostics.push(diagnosticFromCode(message, finalToken, ...args));
+    } else if (isSimplePLICode(message)) {
+      // Cast the token parameter to fit with the simple code signature
+      const finalToken = (tokenOrArgs || this.token || this.last) as
+        | t.Token
+        | undefined;
+      this.diagnostics.push(diagnosticFromCode(message, finalToken));
+    }
+  }
+
   /**
    * Generates an error diagnostic at the current token or the last token if at EOF
    * and sets the parser in error state to avoid multiple errors for the same issue.
@@ -154,33 +203,29 @@ export class ParserState {
     if (this.inError) {
       return;
     }
+
+    // Handle custom string messages (or default error when no message)
     if (!message || typeof message === "string") {
-      // We have a simple string message (or none at all)
       const token = (tokenOrArgs || this.token || this.last) as
         | t.Token
         | undefined;
       const severity = (tokenOrSeverity || Severity.S) as Severity;
       const msg =
         message ??
-        // Generate our own simple message
         (this.eof
           ? "Unexpected end of file."
           : `Unexpected token '${generateTokenErrorName(token)}'.`);
       this.diagnostics.push(diagnostic(severity, msg, token));
     } else if (isParametricPLICode(message)) {
-      // Cast the args and token parameters to fit with the parametric code signature
-      const args = tokenOrArgs as Parameters<ParametricPLICode["message"]>;
-      const token = (tokenOrSeverity || this.token || this.last) as
-        | t.Token
-        | undefined;
-      this.diagnostics.push(diagnosticFromCode(message, token, ...args));
-    } else if (isSimplePLICode(message)) {
-      // Cast the token parameter to fit with the simple code signature
-      const token = (tokenOrArgs || this.token || this.last) as
-        | t.Token
-        | undefined;
-      this.diagnostics.push(diagnosticFromCode(message, token));
+      this.diagnostic(
+        message,
+        tokenOrArgs as Parameters<ParametricPLICode["message"]>,
+        tokenOrSeverity as t.Token | undefined,
+      );
+    } else {
+      this.diagnostic(message, tokenOrArgs as t.Token | undefined);
     }
+
     this.inError = true;
   }
 

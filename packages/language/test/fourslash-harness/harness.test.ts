@@ -65,6 +65,7 @@ async function createTestingHarnessImplementation(
       noDiagnosticsExcept: listen("verify.noDiagnosticsExcept"),
       noDiagnosticsExceptAt: listen("verify.noDiagnosticsExceptAt"),
       noParserDiagnostics: listen("verify.noParserDiagnostics"),
+      noParserErrors: listen("verify.noParserErrors"),
       noLinkingDiagnostics: listen("verify.noLinkingDiagnostics"),
       expectToThrow: listen("verify.expectToThrow"),
       expectCompilerOptions: listen("verify.expectCompilerOptions"),

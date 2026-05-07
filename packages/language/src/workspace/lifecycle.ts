@@ -70,7 +70,10 @@ export async function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): Program {
-  const { tree, diagnostics } = parsePli(compilationUnit.tokens);
+  const { tree, diagnostics } = parsePli(
+    compilationUnit.tokens,
+    compilationUnit.compilerOptions,
+  );
   compilationUnit.ast = tree;
   compilationUnit.diagnostics.addAll(DiagnosticCategory.Parser, diagnostics);
 
