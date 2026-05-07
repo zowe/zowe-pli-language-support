@@ -9,6 +9,7 @@
  *
  */
 
+import { CodeAction, Command } from "vscode-languageserver-types";
 import { CompletionKeywords } from "../../src/language-server/completion/keywords";
 import { type Severity } from "../../src/language-server/types";
 import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/codes";
@@ -430,6 +431,85 @@ export interface HarnessTesterInterface {
     CompilerOptions: typeof PliCompilerOptions & {
       Macro: typeof MacroCompilerOptions;
       SQL: typeof SQLCompilerOptions;
+    };
+  };
+
+  /**
+   * Server mode testing: Routes requests through a running LSP server.
+   * Tests the full LSP protocol stack including connection-handler.ts,
+   * message serialization, and protocol compliance.
+   *
+   * All methods are async since they communicate via LSP.
+   */
+  server: {
+    cleanup?: () => Promise<void>;
+    verify: {
+      expectErrorCodesAt(
+        label: Label,
+        codes: string[] | string | PLICode | PLICode[],
+      ): Promise<void>;
+      expectDiagnosticsAt(
+        label: Label,
+        diagnostics: DiagnosticExpectation,
+      ): Promise<void>;
+      noDiagnostics(label?: Label, ...errorCodes: PLICode[]): Promise<void>;
+    };
+
+    hover: {
+      expectMarkdownAt(label: Label, markdown: string): Promise<void>;
+      expectTextAt(label: Label, text: string): Promise<void>;
+    };
+
+    completion: {
+      expectAt(label: Label, expected: ExpectedCompletion): Promise<void>;
+    };
+
+    linker: {
+      expectLinks(): Promise<void>;
+      expectNoLinksAt(label: Label): Promise<void>;
+    };
+
+    semanticTokens: {
+      expectAt(
+        label: Label,
+        tokenType: SemanticTokenTypesValues,
+        ...tokenModifiers: SemanticTokenModifiersValues[]
+      ): Promise<void>;
+    };
+
+    signatureHelp: {
+      expectMarkdownSignatureAt(label: Label, markdown: string): Promise<void>;
+    };
+
+    references: {
+      expectAt(label: Label, expectedCount?: number): Promise<void>;
+    };
+
+    documentHighlight: {
+      expectAt(label: Label, expectedCount?: number): Promise<void>;
+    };
+
+    rename: {
+      expectAt(label: Label, newName: string): Promise<void>;
+    };
+
+    documentSymbols: {
+      expectSymbols(expectedSymbols: string[]): Promise<void>;
+      expectSymbols(filename: string, expectedSymbols: string[]): Promise<void>;
+    };
+
+    workspaceSymbols: {
+      expectSymbols(query: string, expectedSymbols: string[]): Promise<void>;
+    };
+
+    codeActions: {
+      expectAt(
+        label: Label,
+        kind?: string,
+        expectedCount?: number,
+      ): Promise<(CodeAction | Command)[]>;
+      getAt(label: Label, kind?: string): Promise<any[]>;
+      apply(action: any): Promise<void>;
     };
   };
 }

@@ -114,6 +114,58 @@ async function createTestingHarnessImplementation(
     },
     code: HarnessCodes,
     constants: HarnessConstants,
+    server: {
+      verify: {
+        expectErrorCodesAt: listen("server.verify.expectErrorCodesAt"),
+        expectDiagnosticsAt: listen("server.verify.expectDiagnosticsAt"),
+        noDiagnostics: listen("server.verify.noDiagnostics"),
+      },
+      hover: {
+        expectMarkdownAt: listen("server.hover.expectMarkdownAt"),
+        expectTextAt: listen("server.hover.expectTextAt"),
+      },
+      completion: {
+        expectAt: listen("server.completion.expectAt"),
+      },
+      linker: {
+        expectLinks: listen("server.linker.expectLinks"),
+        expectNoLinksAt: listen("server.linker.expectNoLinksAt"),
+      },
+      semanticTokens: {
+        expectAt: listen("server.semanticTokens.expectAt"),
+      },
+      signatureHelp: {
+        expectMarkdownSignatureAt: listen(
+          "server.signatureHelp.expectMarkdownSignatureAt",
+        ),
+      },
+      references: {
+        expectAt: listen("server.references.expectAt"),
+      },
+      documentHighlight: {
+        expectAt: listen("server.documentHighlight.expectAt"),
+      },
+      rename: {
+        expectAt: listen("server.rename.expectAt"),
+      },
+      documentSymbols: {
+        expectSymbols: listen("server.documentSymbols.expectSymbols"),
+      },
+      workspaceSymbols: {
+        expectSymbols: listen("server.workspaceSymbols.expectSymbols"),
+      },
+      codeActions: {
+        expectAt: async (...args: any[]) => {
+          await listen("server.codeActions.expectAt")(...args);
+          return [];
+        },
+        getAt: async (...args: any[]) => {
+          await listen("server.codeActions.getAt")(...args);
+          return [];
+        },
+        apply: listen("server.codeActions.apply"),
+      },
+    },
   };
 }
 

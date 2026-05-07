@@ -306,6 +306,10 @@ export class TestBuilder {
     }
   }
 
+  public getFiles(): Map<string, TestFile> {
+    return this.files;
+  }
+
   /**
    * Create a test builder that does not validate the PL/I text after linking.
    *
@@ -722,7 +726,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     );
   }
 
-  private getMatchingDiagnostics(label: string): MatchingDiagnosticsResult {
+  public getMatchingDiagnostics(label: string): MatchingDiagnosticsResult {
     const ranges = this.ranges[label];
     if (!ranges || ranges.length === 0) {
       throw new Error(`Label "${label}" not found`);
@@ -1086,11 +1090,11 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
 
   /**
    * Get the positions of a label
-   * @param label - The label to get the positions for
+   * @param label - The label to get the positions of
    * @returns The positions of the label
    * @throws If the label is not found
    */
-  private getLabelPositions(label: string): TestIndex[] {
+  public getLabelPositions(label: string): TestIndex[] {
     const indices = this.indices[label];
     if (!indices) {
       throw new Error(`Label "${label}" not found`);
@@ -1578,12 +1582,12 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     }
   }
 
-  private createLabelPositionMessage(label: string): string {
+  public createLabelPositionMessage(label: string): string {
     const { uri, offset } = this.getLabelPosition(label);
     return this.createPositionMessage(offset, uri);
   }
 
-  private getLabelRanges(label: string): TestRange[] {
+  public getLabelRanges(label: string): TestRange[] {
     const ranges = this.ranges[label];
     if (!ranges || ranges.length === 0) {
       throw new Error(`Label "${label}" not found`);

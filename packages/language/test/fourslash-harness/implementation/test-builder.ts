@@ -25,6 +25,9 @@ import { HarnessTypeAttributes } from "./type-attributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 import { DiagnosticCategory } from "../../../src/validation/diagnostics-store";
 import { Severity } from "../../../src/language-server/types";
+import { LspServerAdapter } from "../../test-builder/lsp-server-adapter";
+import { TestLspClient } from "../../test-builder/lsp-client";
+import { VirtualFileSystemProvider } from "../../../src/workspace/file-system-provider";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -35,6 +38,40 @@ import { Severity } from "../../../src/language-server/types";
 export function createTestBuilderHarnessImplementation(
   testBuilder: TestBuilder,
 ): HarnessTesterInterface {
+  let lspClient: TestLspClient | undefined;
+  let serverAdapter: LspServerAdapter | undefined;
+
+  function getServerAdapter(): LspServerAdapter {
+    if (!serverAdapter) {
+      // Get test files from TestBuilder
+      const files = testBuilder.getFiles();
+      const fileInfoMap = new Map(
+        Array.from(files.entries()).map(([uri, file]) => [
+          uri,
+          {
+            uri,
+            content: file.output,
+            languageId: "pli",
+          },
+        ]),
+      );
+
+      const fs = new VirtualFileSystemProvider();
+      lspClient = new TestLspClient(fileInfoMap, fs);
+
+      serverAdapter = new LspServerAdapter(testBuilder, lspClient);
+    }
+    return serverAdapter;
+  }
+
+  async function cleanup() {
+    if (lspClient) {
+      await lspClient.shutdown();
+      lspClient = undefined;
+      serverAdapter = undefined;
+    }
+  }
+
   return {
     Syntax: SyntaxKind,
     testAPI: {
@@ -151,5 +188,94 @@ export function createTestBuilderHarnessImplementation(
     },
     code: HarnessCodes,
     constants: HarnessConstants,
+
+    // Server mode: Routes requests through a running LSP server
+    server: {
+      cleanup: cleanup,
+      verify: {
+        expectErrorCodesAt: async (label, codes) =>
+          getServerAdapter().expectErrorCodesAt(label.toString(), codes),
+        expectDiagnosticsAt: async (label, diagnostics) =>
+          getServerAdapter().expectDiagnosticsAt(label.toString(), diagnostics),
+        noDiagnostics: async (label, ...errorCodes: PLICode[]) =>
+          getServerAdapter().noDiagnostics(label?.toString(), ...errorCodes),
+      },
+      hover: {
+        expectMarkdownAt: async (label, markdown) =>
+          getServerAdapter().expectHover(label.toString(), {
+            kind: MarkupKind.Markdown,
+            value: markdown,
+          }),
+        expectTextAt: async (label, text) =>
+          getServerAdapter().expectHover(label.toString(), {
+            kind: MarkupKind.PlainText,
+            value: text,
+          }),
+      },
+      completion: {
+        expectAt: async (label, expected) =>
+          getServerAdapter().expectCompletionAt(label.toString(), expected),
+      },
+      linker: {
+        expectLinks: async () => getServerAdapter().expectLinks(),
+        expectNoLinksAt: async (label) =>
+          getServerAdapter().expectNoLinksAt(label.toString()),
+      },
+      semanticTokens: {
+        expectAt: async (label, tokenType, ...tokenModifiers) =>
+          getServerAdapter().expectSemanticTokenTypeAt(
+            label.toString(),
+            tokenType,
+            ...tokenModifiers,
+          ),
+      },
+      signatureHelp: {
+        expectMarkdownSignatureAt: async (label, markdown) =>
+          getServerAdapter().expectMarkdownSignatureAt(
+            label.toString(),
+            markdown,
+          ),
+      },
+      references: {
+        expectAt: async (label, expectedCount) =>
+          getServerAdapter().expectReferences(label.toString(), expectedCount),
+      },
+      documentHighlight: {
+        expectAt: async (label, expectedCount) =>
+          getServerAdapter().expectDocumentHighlight(
+            label.toString(),
+            expectedCount,
+          ),
+      },
+      rename: {
+        expectAt: async (label, newName) =>
+          getServerAdapter().expectRename(label.toString(), newName),
+      },
+      documentSymbols: {
+        expectSymbols: async (
+          filenameOrSymbols: string | string[],
+          expectedSymbols?: string[],
+        ) =>
+          getServerAdapter().expectDocumentSymbols(
+            filenameOrSymbols,
+            expectedSymbols,
+          ),
+      },
+      workspaceSymbols: {
+        expectSymbols: async (query, expectedSymbols) =>
+          getServerAdapter().expectWorkspaceSymbols(query, expectedSymbols),
+      },
+      codeActions: {
+        expectAt: async (label, kind, expectedCount) =>
+          getServerAdapter().expectCodeActions(
+            label.toString(),
+            kind,
+            expectedCount,
+          ),
+        getAt: async (label, kind) =>
+          getServerAdapter().getCodeActionsAt(label.toString(), kind),
+        apply: async (action) => getServerAdapter().applyCodeAction(action),
+      },
+    },
   };
 }

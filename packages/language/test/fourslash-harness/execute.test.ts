@@ -199,7 +199,14 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
       const implementation =
         createTestBuilderHarnessImplementation(testBuilder);
 
-      await runHarnessTest(testFile, implementation);
+      try {
+        await runHarnessTest(testFile, implementation);
+      } finally {
+        // Cleanup LSP server resources if they were used
+        if (implementation.server.cleanup) {
+          await implementation.server.cleanup();
+        }
+      }
     },
   );
 }
