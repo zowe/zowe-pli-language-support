@@ -86,7 +86,8 @@ describe("configCompletionRequest", () => {
     expect(result.map((completion) => completion.label)).toEqual(expected);
   });
   test("returns items with edit range covering existing typed text", () => {
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "def<CURSOR>" }] }`;
+    const stringFragment = "def";
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${stringFragment}<CURSOR>" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -94,9 +95,15 @@ describe("configCompletionRequest", () => {
       offset,
       pgmConfigUri(),
     );
-    const expected = pluginConfig.getProcessGroupNames();
-    expect(result).toHaveLength(expected.length);
-    expect(result.map((completion) => completion.label)).toEqual(expected);
+    const expectedStart = text.indexOf(stringFragment);
+    const expectedEnd = expectedStart + stringFragment.length;
+    for (const completion of result) {
+      expect(completion.edit.range).toEqual({
+        start: expectedStart,
+        end: expectedEnd,
+      });
+      expect(completion.edit.text).toEqual(completion.label);
+    }
   });
   test("returns [] when cursor is inside the property key", () => {
     const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgr<CURSOR>oup": "" }] }`;
