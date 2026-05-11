@@ -35,7 +35,6 @@ jobs:
         pnpm install --frozen-lockfile
     - name: Build & package extension
       run: |
-        pnpm --dir packages/dialect-cics grammar
         pnpm package
     - name: Upload
       uses: actions/upload-artifact@v4

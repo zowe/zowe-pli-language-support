@@ -39,9 +39,6 @@ jobs:
       shell: bash
       run: |
         pnpm install --frozen-lockfile
-    - name: Build ANTLR grammars
-      run: |
-        pnpm --dir packages/dialect-cics grammar 
     - name: Build monorepo
       run: |
         pnpm build
