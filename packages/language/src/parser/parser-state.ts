@@ -30,7 +30,7 @@ import {
 import { tokenIdxToClass } from "./token-type-factory";
 import * as environment from "../workspace/environment";
 import { TextDocument } from "vscode-languageserver-textdocument";
-  
+
 import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 
 export enum RecoveryResult {
@@ -60,9 +60,11 @@ export class ParserState {
   public inError = false;
   public currentStatementLabels: LabelPrefix[] = [];
 
-  private inProcedure = false;
-
-  constructor(tokens: t.Token[], compilerOptions?: CompilerOptions, textDocument: TextDocument) {
+  constructor(
+    tokens: t.Token[],
+    textDocument: TextDocument,
+    compilerOptions?: CompilerOptions,
+  ) {
     this.tokens = tokens;
     this.textDocument = textDocument;
     this.diagnostics = [];

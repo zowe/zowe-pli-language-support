@@ -37,11 +37,15 @@ import { Token } from "./tokens";
 import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-export function parsePli(input: tokens.Token[], compilerOptions?: CompilerOptions, textDocument: TextDocument): {
+export function parsePli(
+  input: tokens.Token[],
+  textDocument: TextDocument,
+  compilerOptions?: CompilerOptions,
+): {
   tree: ast.Program;
   diagnostics: Diagnostic[];
 } {
-  const state = new ParserState(input, compilerOptions, textDocument);
+  const state = new ParserState(input, textDocument, compilerOptions);
   const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
