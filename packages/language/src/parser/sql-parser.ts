@@ -11,25 +11,13 @@
 
 import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
-import * as sql from "./tokens/sql-tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { embeddedUnknownStatement } from "./unknown-parser";
-import { tokenToRange } from "../language-server/types";
 
 export function sqlExecStatement(state: ParserState): ast.SqlExecStatement {
   const execStatement = ast.createSqlExecStatement();
   state.consume(execStatement, CstNodeKind.ExecSqlStatement_EXEC, t.EXEC);
-  state.consume(execStatement, CstNodeKind.ExecSqlStatement_SQL, t.SQL);
-  if (state.canConsume(sql.INCLUDE)) {
-    execStatement.content = parseSqlIncludeStatement(state);
-  } else {
-    // Use unknown SQL statement for now - we will get to more of the SQL spec later.
-    execStatement.content = embeddedUnknownStatement(
-      state,
-      CstNodeKind.EmbeddedUnknownStatement_Token,
-    );
-  }
+  state.consume(execStatement, CstNodeKind.ExecSqlStatement_SQL, t.ExecFragment);
   state.consume(
     execStatement,
     CstNodeKind.ExecSqlStatement_Semicolon,
@@ -38,6 +26,7 @@ export function sqlExecStatement(state: ParserState): ast.SqlExecStatement {
   return execStatement;
 }
 
+/* TODO maybe needed when implementing SQL again
 function parseSqlIncludeStatement(state: ParserState): ast.IncludeDirective {
   const includeDirective = ast.createIncludeDirective();
   state.consume(
@@ -56,3 +45,4 @@ function parseSqlIncludeStatement(state: ParserState): ast.IncludeDirective {
   }
   return includeDirective;
 }
+*/

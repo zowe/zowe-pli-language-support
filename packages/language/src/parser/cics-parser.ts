@@ -19,11 +19,11 @@ import { URI } from "vscode-uri";
 export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExecStatement> {
   const execStatement = ast.createCicsExecStatement();
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
-  const cicsFragmentToken = state.consume(execStatement, CstNodeKind.ExecCicsStatement_CICS, t.ExecFragment);
+  const cicsFragmentToken = state.consume(execStatement, CstNodeKind.ExecCicsStatement_COMMAND, t.ExecFragment);
   if(!cicsFragmentToken) {
     return execStatement;
   }
-  const prefixLength = /^CICS\s*/.exec(cicsFragmentToken.image)?.[0].length || 0;
+  const prefixLength = /^CICS\s*/i.exec(cicsFragmentToken.image)?.[0].length || 0;
   const startOffset = cicsFragmentToken.startOffset + prefixLength;
   const endOffset = cicsFragmentToken.endOffset+1;
   const statementText = state.textDocument.getText().substring(startOffset, endOffset);
