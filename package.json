@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "clean": "pnpm --dir packages/language clean && pnpm --dir packages/dialect-cics clean && pnpm --dir packages/vscode-extension clean",
-    "compile": "tsc -b tsconfig.build.json",
+    "tsc": "tsc -b tsconfig.build.json",
+    "compile": "pnpm --dir packages/dialect-cics grammar && pnpm tsc",
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
     "merge": "tsx ./scripts/generate-tmlanguage.mts",
     "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",

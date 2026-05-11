@@ -45,7 +45,6 @@ jobs:
         if: github.event.action != 'closed'
         run: |
           pnpm install --frozen-lockfile
-          pnpm --dir packages/dialect-cics grammar
           pnpm build
           pnpm playground
       - uses: rossjrw/pr-preview-action@v1.6.0
