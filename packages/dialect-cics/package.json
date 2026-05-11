@@ -27,7 +27,9 @@
   },
   "scripts": {
     "clean": "shx rm -fr *.tsbuildinfo out generated",
-    "grammar": "tsx ./src/scripts/rebuildGrammar.ts"
+     "grammar": "pnpm run lexer && pnpm run parser",
+     "lexer": "antlr-ng -Dlanguage=TypeScript -l -o src/generated ./src/antlr/CICSLexer.g4",
+     "parser": "antlr-ng -Dlanguage=TypeScript -v -o src/generated ./src/antlr/CICSParser.g4"
   },
   "devDependencies": {
     "antlr-ng": "^1.0.10"
