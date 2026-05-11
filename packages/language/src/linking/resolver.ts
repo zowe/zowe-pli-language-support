@@ -40,6 +40,7 @@ import {
 } from "./symbol-table";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { MultiMap } from "../utils/collections";
+import { CstNodeKind } from "../syntax-tree/cst";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -472,10 +473,8 @@ export function getReferenceLocations(
   uri: URI,
   offset: number,
 ): Location[] {
-  const token = binaryTokenSearch(
-    unit.services.files.getTokens(uri) ?? [],
-    offset,
-  );
+  let token = getTokenAt(unit, uri, offset);
+
   if (!token) {
     return [];
   }
@@ -506,4 +505,20 @@ export function getReferenceLocations(
   }
 
   return locations;
+}
+
+export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
+  let token = binaryTokenSearch(
+    unit.services.files.getTokens(uri) ?? [],
+    offset,
+  );
+
+  if (token && token.kind === CstNodeKind.ExecCicsStatement_COMMAND) {
+    const element = token.element;
+    if (element && element.kind === SyntaxKind.CicsExecStatement) {
+      const hostVariableReferences = element.hostVariables;
+      token = binaryTokenSearch(hostVariableReferences, offset);
+    }
+  }
+  return token;
 }
