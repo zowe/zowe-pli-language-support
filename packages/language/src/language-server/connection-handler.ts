@@ -43,7 +43,7 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { FileSystemProvider } from "../workspace/file-system-provider";
 import { WorkspaceContext } from "../workspace/workspace-context";
-import { resetDocumentProviders } from "./text-documents";
+import { EditorDocuments, resetDocumentProviders } from "./text-documents";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
@@ -56,6 +56,7 @@ import {
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages } from "../utils/messages";
+import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 export { PluginConfiguration } from "./constants";
 
 export function startLanguageServer(
@@ -115,7 +116,8 @@ export function startLanguageServer(
           openClose: true,
         },
         completionProvider: {
-          triggerCharacters: [".", "%"],
+          //When updating: update also TRIGGER_CHAR_LANG.
+          triggerCharacters: [".", "%", '"'],
         },
         hoverProvider: true,
         renameProvider: true,
@@ -201,8 +203,43 @@ export function startLanguageServer(
       },
     );
   });
+  const TRIGGER_CHAR_LANG: Record<string, "pli" | "config"> = {
+    // PLI
+    ".": "pli",
+    "%": "pli",
+    // CONFIG
+    '"': "config",
+  };
   connection.onCompletion(async (params) => {
+    const docUri = UriUtils.toUri(params.textDocument.uri);
     const position = params.position;
+    const isConfigDocument = workspace.config.isPluginConfigDocumentUri(
+      params.textDocument.uri,
+    );
+    const triggerLang = params.context?.triggerCharacter
+      ? TRIGGER_CHAR_LANG[params.context.triggerCharacter]
+      : undefined;
+    if (
+      (triggerLang === "config" && !isConfigDocument) ||
+      (triggerLang === "pli" && isConfigDocument)
+    ) {
+      return [];
+    }
+    if (isConfigDocument) {
+      const textDocument = await EditorDocuments.get(docUri);
+      if (!textDocument) {
+        return [];
+      }
+      const offset = textDocument.offsetAt(position);
+      return configCompletionRequest(
+        workspace.config,
+        textDocument.getText(),
+        offset,
+        docUri,
+      ).map((completionItem) =>
+        completionItemToLSP(textDocument, completionItem),
+      );
+    }
     return withReadMutex(
       params.textDocument.uri,
       async (uri, compilationUnit) => {
@@ -214,7 +251,6 @@ export function startLanguageServer(
         const result = completionRequest(compilationUnit, uri, offset).map(
           (completionItem) => completionItemToLSP(textDocument, completionItem),
         );
-
         return result;
       },
     );

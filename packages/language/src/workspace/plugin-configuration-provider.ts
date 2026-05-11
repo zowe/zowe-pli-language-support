@@ -433,6 +433,34 @@ export class PluginConfigurationProvider {
     return this.workspacePath;
   }
 
+  public isPgmConfigDocumentUri(uri: URI | string): boolean {
+    const inputUri = typeof uri === "string" ? UriUtils.toUri(uri) : uri;
+    const pgmConfigUri = UriUtils.joinPath(
+      this.getWorkspacePath(),
+      ".pliplugin",
+      "pgm_conf.json",
+    );
+    return UriUtils.equals(pgmConfigUri, inputUri);
+  }
+
+  public isProcGrpsDocumentUri(uri: URI | string): boolean {
+    const inputUri = typeof uri === "string" ? UriUtils.toUri(uri) : uri;
+    const procGrpsUri = UriUtils.joinPath(
+      this.getWorkspacePath(),
+      ".pliplugin",
+      "proc_grps.json",
+    );
+    return UriUtils.equals(procGrpsUri, inputUri);
+  }
+
+  public isPluginConfigDocumentUri(uri: URI | string): boolean {
+    return this.isPgmConfigDocumentUri(uri) || this.isProcGrpsDocumentUri(uri);
+  }
+
+  public getProcessGroupNames(): string[] {
+    return Array.from(this.processGroupConfigs.keys());
+  }
+
   /**
    * Loads the process group config from the given path, and sets it in this provider.
    * @param processGroupConfigUri URI to the process group config file

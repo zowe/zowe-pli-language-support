@@ -12,6 +12,7 @@
 import {
   applyEdits,
   findNodeAtLocation,
+  findNodeAtOffset,
   modify,
   parseTree,
   type JSONPath,
@@ -24,6 +25,7 @@ import {
 export {
   applyEdits as jsoncApplyEdits,
   findNodeAtLocation as jsoncFindNodeAtLocation,
+  findNodeAtOffset as jsoncFindNodeAtOffset,
   modify as jsoncModify,
   parseTree as jsoncParseTree,
   type JSONPath,
