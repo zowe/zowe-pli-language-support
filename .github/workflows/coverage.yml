@@ -36,6 +36,7 @@ jobs:
       - name: Build
         run: |
           pnpm install --frozen-lockfile
+          pnpm --dir packages/dialect-cics grammar
           pnpm build
       - name: Run Coverage
         run: |

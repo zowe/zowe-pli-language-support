@@ -37,6 +37,7 @@ jobs:
       - name: Build Playground
         run: |
           pnpm install --frozen-lockfile
+          pnpm --dir packages/dialect-cics grammar
           pnpm build
           pnpm playground
       - name: Deploy Main 🚀
