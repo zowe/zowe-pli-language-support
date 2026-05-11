@@ -15,6 +15,7 @@
  * Must handle use before declaration (variant)
  */
 
+// @compiler: true
 // @wrap: main
 //// PUT(<|1>A);
 //// DCL <|1:A|> CHAR(8) INIT("A");

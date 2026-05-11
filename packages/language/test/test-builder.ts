@@ -18,7 +18,16 @@ import {
   Severity,
   Range,
 } from "../src/language-server/types";
-import { parseAndLink, replaceNamedIndices } from "./utils";
+import {
+  createTestFiles,
+  extractIndices,
+  extractRanges,
+  MatchingDiagnosticsResult,
+  parseAndLink,
+  PliTestFile,
+  TestIndex,
+  TestRange,
+} from "./utils";
 import { expect } from "vitest";
 import { FileSystemProvider } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
@@ -104,24 +113,6 @@ export type TestBuilderOptions = {
   preservePluginConfiguration?: boolean;
 };
 
-export type PliTestFile = {
-  uri: Path;
-  content: string;
-};
-
-/** uri, index */
-export type TestIndex = {
-  uri: string;
-  offset: number;
-};
-
-/** uri, start, end */
-export type TestRange = {
-  uri: string;
-  start: number;
-  end: number;
-};
-
 type LinkingRequest = {
   label: string;
   offset: TestIndex;
@@ -139,37 +130,6 @@ type TestFile = {
   ranges: Record<string, TestRange[]>;
   textDocument: TextDocument;
 };
-
-type MatchingDiagnosticsResult = {
-  exactMatches: Diagnostic[];
-  containingMatches: Diagnostic[];
-};
-
-function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
-  const { output, indices, ranges } = replaceNamedIndices(file.content);
-  const textDocument = TextDocument.create(file.uri, "pli", 1, output);
-
-  return {
-    output,
-    indices: Object.fromEntries(
-      Object.entries(indices).map(([label, indices]) => [
-        label,
-        indices.map((offset) => ({ uri: file.uri, offset })),
-      ]),
-    ),
-    ranges: Object.fromEntries(
-      Object.entries(ranges).map(([label, ranges]) => [
-        label,
-        ranges.map((range) => ({
-          uri: file.uri,
-          start: range.start,
-          end: range.end,
-        })),
-      ]),
-    ),
-    textDocument,
-  };
-}
 
 export class TestBuilder {
   private unit!: CompilationUnit;
@@ -222,12 +182,7 @@ export class TestBuilder {
   ) {
     this.options = options;
 
-    this.files = new Map(
-      TestBuilder.getFiles(textOrFiles).map((file) => [
-        file.uri,
-        replaceNamedIndicesWithDocument(file),
-      ]),
-    );
+    this.files = createTestFiles(TestBuilder.getFiles(textOrFiles));
   }
 
   get not(): TestBuilder {
@@ -260,34 +215,8 @@ export class TestBuilder {
 
     const [[firstFileUri, firstFile]] = this.files.entries();
     this.output = firstFile.output;
-    this.indices = [...this.files.entries()]
-      .map(([_, file]) => file.indices)
-      .reduce(
-        (acc, indices) => {
-          for (const [label, labelIndices] of Object.entries(indices)) {
-            if (!acc[label]) {
-              acc[label] = [];
-            }
-            acc[label].push(...labelIndices);
-          }
-          return acc;
-        },
-        {} as Record<string, TestIndex[]>,
-      );
-    this.ranges = [...this.files.entries()]
-      .map(([_, file]) => file.ranges)
-      .reduce(
-        (acc, ranges) => {
-          for (const [label, labelRanges] of Object.entries(ranges)) {
-            if (!acc[label]) {
-              acc[label] = [];
-            }
-            acc[label].push(...labelRanges);
-          }
-          return acc;
-        },
-        {} as Record<string, TestRange[]>,
-      );
+    this.indices = extractIndices(this.files);
+    this.ranges = extractRanges(this.files);
     this.unit = await parseAndLink(this.output, {
       validate: this.options.validate,
       uri: UriUtils.toUri(firstFileUri),

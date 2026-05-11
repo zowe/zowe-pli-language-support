@@ -41,7 +41,7 @@
     "@chevrotain/utils": "^11.1.1",
     "chevrotain": "^11.1.1",
     "dialect-cics": "workspace:*",
-    "jsonc-parser": "^3.3.1",
+    "jsonc-parser": "4.0.0-next.1",
     "lodash-es": "^4.17.23",
     "lru-cache": "^11.2.5",
     "minimatch": "10.2.4",

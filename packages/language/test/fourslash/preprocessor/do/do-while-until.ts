@@ -11,17 +11,14 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DCL X FIXED;
 //// %X = 1;
 //// %DO
 ////   WHILE(X > 0)
 ////   UNTIL(X > 3);
-////   DCL Variable%;X FIXED;
+////   X
 ////   %X = X + 1;
 //// %END;
 
-preprocessor.expectTokens(`
-  DCL Variable1 FIXED;
-  DCL Variable2 FIXED;
-  DCL Variable3 FIXED;  
-`);
+preprocessor.expectTokens("1 2 3");

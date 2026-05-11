@@ -11,6 +11,7 @@
 
 /// <reference path="../../../framework.ts" />
 
+// @compiler: true
 //// %DCL I FIXED;
 //// %I = 1;
 ////
@@ -24,12 +25,15 @@
 //// %END;
 ////
 //// %ACTIVATE MYMACRO;
-////
+//// MAIN: PROC OPTIONS(MAIN);
 //// DCL VAR FIXED;
 //// MYMACRO
+//// END MAIN;
 
 preprocessor.expectTokens(`
- DCL VAR FIXED;
- VAR = 2;
+    MAIN: PROC OPTIONS(MAIN);
+    DCL VAR FIXED;
+    VAR = 2;
+    END MAIN;
 `);
 verify.noDiagnostics();

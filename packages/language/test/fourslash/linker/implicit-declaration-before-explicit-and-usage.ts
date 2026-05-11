@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 // @wrap: main
 //// <|1>C = 1;
 //// PUT(<|1>C);

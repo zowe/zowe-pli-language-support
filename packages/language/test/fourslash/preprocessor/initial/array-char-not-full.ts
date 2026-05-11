@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DECLARE A(4) CHAR INIT("a", "b", "c");
 //// %A1 = A(1);
 //// %A2 = A(2);

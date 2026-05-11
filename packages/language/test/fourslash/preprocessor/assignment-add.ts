@@ -11,9 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %DCL A FIXED;
 //// %A = 5;
 //// %A += 8;
-//// A
+//// X = A;
 
-preprocessor.expectTokens("13");
+preprocessor.expectTokens("X = 13;");

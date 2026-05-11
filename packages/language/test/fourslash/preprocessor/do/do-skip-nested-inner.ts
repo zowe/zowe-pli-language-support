@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DCL X FIXED;
 //// %X = 1;
 //// %DO;
@@ -18,10 +19,8 @@
 ////     DCL Inner%;X FIXED;
 ////     %LEAVE;
 ////   %END;
-////   DCL Outer%;X FIXED;
+////   X
 ////   %LEAVE;
 //// %END;
 
-preprocessor.expectTokens(`
-    DCL Outer1 FIXED;
-`);
+preprocessor.expectTokens("1");

@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %VAR = 42;
 //// %SELECT (VAR);
 //// %WHEN (21) DO; X %END;

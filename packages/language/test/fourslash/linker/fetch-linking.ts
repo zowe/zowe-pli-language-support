@@ -14,6 +14,7 @@
 /**
  * fetch linking
  */
+// @compiler: true
 // @wrap: main
 //// dcl <|a:A|> entry;
 //// fetch <|a>A;

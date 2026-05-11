@@ -13,6 +13,7 @@
     "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",
     "package": "pnpm build && pnpm --dir packages/vscode-extension package",
     "test": "vitest",
+    "test:fourslash": "vitest run packages/language/test/fourslash-harness/execute.test.ts",
     "coverage": "vitest run --coverage",
     "lint": "prettier -c \"**/*.{ts,mts}\"",
     "pretty": "prettier -w \"**/*.{ts,mts}\"",
@@ -20,7 +21,8 @@
     "playground:clean": "pnpm --dir packages/playground clean",
     "watch": "tsc -b tsconfig.build.json --watch",
     "license:check": "tsx ./scripts/check-license-headers.mts",
-    "license:fix": "tsx ./scripts/check-license-headers.mts --fix"
+    "license:fix": "tsx ./scripts/check-license-headers.mts --fix",
+    "extract-compiler-tests": "tsx ./scripts/extract-compiler-tests.mts"
   },
   "devDependencies": {
     "@types/node": "^22.19.8",

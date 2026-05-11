@@ -14,6 +14,7 @@
 /**
  Must work before declaration
  */
+// @compiler: true
 // @wrap: main
 //// PUT(<|a>A);
 //// <|a>A = "A2";

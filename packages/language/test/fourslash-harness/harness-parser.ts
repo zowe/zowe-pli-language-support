@@ -10,7 +10,7 @@
  */
 
 import { HarnessFile, HarnessTest, UnnamedFile } from "./types";
-import { getFileName } from "./utils";
+import { getFileName, harnessPath } from "./utils";
 import { Wrapper } from "./wrapper";
 import path from "path";
 import fs from "fs";
@@ -276,7 +276,7 @@ export async function parseHarnessTestFile(
   try {
     return parseHarnessTest(text, fileName, context);
   } catch (e: unknown) {
-    const relativePath = path.relative(__dirname, fileName);
+    const relativePath = path.relative(harnessPath, fileName);
     throw new Error(
       `Error in harness test: ${relativePath}: ${(e as Error).message}`,
     );

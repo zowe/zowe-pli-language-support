@@ -11,14 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %declare A fixed;
 //// %A = 3;
 //// %myLoop: DO;
 ////   %A = A - 1;
 ////   %IF A <> 0 %THEN %GOTO myLoop;
-////   DCL X%;A FIXED;
+////   A
 //// %END;
 
-preprocessor.expectTokens(`
-  DCL X0 FIXED;
-`);
+preprocessor.expectTokens("0");

@@ -15,7 +15,7 @@
  * DO Type 3 - UNTIL condition starts false then becomes true
  * Tests case where UNTIL condition controls loop termination
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DO I = 1 TO 10 UNTIL(I >= 3);
 ////   I

@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - DO with UNTIL condition followed by WHILE condition
  */
-
+// @compiler: true
 //// %DCL NUM FIXED;
 //// %DCL PRODUCT FIXED;
 //// %PRODUCT = 1;

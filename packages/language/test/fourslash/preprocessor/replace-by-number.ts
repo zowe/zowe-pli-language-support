@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %REPLACE X BY 5;
 //// dcl A fixed bin(X);
 

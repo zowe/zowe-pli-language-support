@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - DO with WHILE condition followed by UNTIL condition
  */
-
+// @compiler: true
 //// %DCL COUNT FIXED;
 //// %DCL SUM FIXED;
 //// %SUM = 0;

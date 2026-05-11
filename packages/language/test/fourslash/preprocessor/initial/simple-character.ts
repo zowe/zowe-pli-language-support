@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DECLARE A CHAR INIT("Y");
 //// A
 

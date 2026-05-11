@@ -504,3 +504,103 @@ export async function expectReferences(text: string) {
 /**
  * ---------- End of Linking utilities ----------
  */
+
+export type PliTestFile = {
+  uri: string;
+  content: string;
+};
+
+/** uri, index */
+export type TestIndex = {
+  uri: string;
+  offset: number;
+};
+
+/** uri, start, end */
+export type TestRange = {
+  uri: string;
+  start: number;
+  end: number;
+};
+
+export type TestFile = {
+  output: string;
+  indices: Record<string, TestIndex[]>;
+  ranges: Record<string, TestRange[]>;
+  textDocument: TextDocument;
+};
+
+export type MatchingDiagnosticsResult = {
+  exactMatches: Diagnostic[];
+  containingMatches: Diagnostic[];
+};
+
+function replaceNamedIndicesWithDocument(file: PliTestFile): TestFile {
+  const { output, indices, ranges } = replaceNamedIndices(file.content);
+  const textDocument = TextDocument.create(file.uri, "pli", 1, output);
+
+  return {
+    output,
+    indices: Object.fromEntries(
+      Object.entries(indices).map(([label, indices]) => [
+        label,
+        indices.map((offset) => ({ uri: file.uri, offset })),
+      ]),
+    ),
+    ranges: Object.fromEntries(
+      Object.entries(ranges).map(([label, ranges]) => [
+        label,
+        ranges.map((range) => ({
+          uri: file.uri,
+          start: range.start,
+          end: range.end,
+        })),
+      ]),
+    ),
+    textDocument,
+  };
+}
+
+export function createTestFiles(files: PliTestFile[]): Map<string, TestFile> {
+  return new Map(
+    files.map((file) => [file.uri, replaceNamedIndicesWithDocument(file)]),
+  );
+}
+
+export function extractIndices(
+  files: Map<string, TestFile>,
+): Record<string, TestIndex[]> {
+  return [...files.entries()]
+    .map(([_, file]) => file.indices)
+    .reduce(
+      (acc, indices) => {
+        for (const [label, labelIndices] of Object.entries(indices)) {
+          if (!acc[label]) {
+            acc[label] = [];
+          }
+          acc[label].push(...labelIndices);
+        }
+        return acc;
+      },
+      {} as Record<string, TestIndex[]>,
+    );
+}
+
+export function extractRanges(
+  files: Map<string, TestFile>,
+): Record<string, TestRange[]> {
+  return [...files.entries()]
+    .map(([_, file]) => file.ranges)
+    .reduce(
+      (acc, ranges) => {
+        for (const [label, labelRanges] of Object.entries(ranges)) {
+          if (!acc[label]) {
+            acc[label] = [];
+          }
+          acc[label].push(...labelRanges);
+        }
+        return acc;
+      },
+      {} as Record<string, TestRange[]>,
+    );
+}

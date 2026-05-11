@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - DO with BY before TO
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DO I = 5 BY 5 TO 10;
 ////   I

@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %A = "HELLO";
 //// %IF A = "HELLO" %THEN DO;
 ////   CORRECT

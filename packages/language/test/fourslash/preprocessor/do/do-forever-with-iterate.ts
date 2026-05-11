@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %declare A fixed;
 //// %A = 3;
 //// %DO FOREVER;
@@ -19,6 +20,5 @@
 ////   %ELSE %ITERATE;
 ////   dcl X%;A fixed;
 //// %END;
-////
 
 preprocessor.expectTokens([]);

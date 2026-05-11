@@ -11,20 +11,20 @@
 
 /// <reference path="../../../framework.ts" />
 
-//// %Deactivated_macro: procedure returns( character );
-////   return( 'DCL DEACTIVATED FIXED;' );
-//// %end;
+// @compiler: true
 //// %MYMACRO: PROC;
-////   ANSWER (Deactivated_macro);
+////   ANSWER (Counter);
 //// %END;
-//// %DEACTIVATE Deactivated_macro;
 //// %ACTIVATE MYMACRO;
-//// ppp: PROC;
-////   MYMACRO
-//// END;
+//// MAIN: PROC OPTIONS(MAIN);
+//// DCL VAR FIXED;
+//// VAR = MYMACRO;
+//// END MAIN;
 
 preprocessor.expectTokens(`
-    ppp: PROC; 
-        DCL DEACTIVATED FIXED;
-    END;
+    MAIN: PROC OPTIONS(MAIN);
+    DCL VAR FIXED;
+    VAR = 00001;
+    END MAIN;
 `);
+verify.noDiagnostics();

@@ -11,15 +11,28 @@
 
 /// <reference path="../../../framework.ts" />
 
+// @compiler: true
+//// %DCL VAL FIXED;
+//// %VAL = 100;
+//// %DEACTIVATE VAL;
 //// %MYMACRO: PROC;
-////   ANSWER (Counter);
+////   ANSWER ('VAR = VAL;') NOSCAN;
 //// %END;
 //// %ACTIVATE MYMACRO;
+//// MAIN: PROC OPTIONS(MAIN);
+//// DCL VAL FIXED;
+//// VAL = 200;
 //// DCL VAR FIXED;
-//// VAR = MYMACRO;
+//// %ACTIVATE VAL;
+//// MYMACRO
+//// END MAIN;
 
 preprocessor.expectTokens(`
-    DCL VAR FIXED;
-    VAR = 00001;
+    MAIN: PROC OPTIONS(MAIN);
+    DCL VAL FIXED;
+    VAL = 200;
+    DCL VAR FIXED; 
+    VAR = VAL;
+    END MAIN;
 `);
 verify.noDiagnostics();

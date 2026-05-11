@@ -15,15 +15,16 @@
  * Must ignore case differences
  */
 
+// @compiler: true
 // @wrap: main
-//// DCL <|1:ABc|>;
-//// CALL <|1>ABC;
-//// CALL <|1>ABc;
-//// CALL <|1>AbC;
-//// CALL <|1>aBC;
-//// CALL <|1>aBc;
-//// CALL <|1>abC;
-//// CALL <|1>Abc;
-//// CALL <|1>abc;
+//// DCL <|1:ABc|> CHAR(8);
+//// PUT(<|1>ABC);
+//// PUT(<|1>ABc);
+//// PUT(<|1>AbC);
+//// PUT(<|1>aBC);
+//// PUT(<|1>aBc);
+//// PUT(<|1>abC);
+//// PUT(<|1>Abc);
+//// PUT(<|1>abc);
 
 linker.expectLinks();

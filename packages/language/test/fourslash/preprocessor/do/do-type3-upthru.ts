@@ -14,7 +14,8 @@
 /**
  * DO Type 3 - DO with UPTHRU
  */
-
+// The compiler will actually show a parser error on UPTHRU and execute the DO body once
+// @compiler: fail
 //// %DCL I FIXED;
 //// %DO I = 1 UPTHRU 3;
 ////   I

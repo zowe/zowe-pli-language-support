@@ -15,8 +15,9 @@
  * A nested assignment should not be handled as an implicit declaration if there are explicit declarations in the scope.
  */
 
+// @compiler: true
 // @wrap: main
-//// DCL 1 <|1:A|> CHAR(10) VALUE("123");
+//// DCL 1 <|1:A|> CHAR(10) INIT("123");
 //// MY_PROC: PROC;
 ////   <|1>A = 123;
 ////   PUT(<|1>A);

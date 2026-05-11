@@ -14,6 +14,7 @@
 /**
  Must work in structured declaration
  */
+// @compiler: true
 // @wrap: main
 //// DCL ARRAY_ENTRY;
 //// DCL TWO_DIM_TABLE_ENTRY;

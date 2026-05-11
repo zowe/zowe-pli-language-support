@@ -15,6 +15,7 @@
  * Must find declaration in SELECT/WHEN construct
  */
 
+// @compiler: true
 // @wrap: main
 //// SELECT (123);
 ////    WHEN (123)

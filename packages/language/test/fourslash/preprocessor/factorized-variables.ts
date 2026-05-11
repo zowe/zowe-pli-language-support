@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %declare (A, B) character;
 //// %A = 'Hello';
 //// %B = 'World';

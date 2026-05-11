@@ -9,68 +9,41 @@
  *
  */
 
-import { readdirSync } from "fs";
 import path from "path";
 import { afterEach, describe, test } from "vitest";
 import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
 import { getWrappers } from "./wrapper";
-import { UriUtils, VirtualFileSystemProvider } from "../../src";
 import {
   extractTestModeFromFileName,
   HarnessTest,
   HarnessTestMode,
 } from "./types";
-import { LocationOverride, PliTestFile, TestBuilder } from "../test-builder";
+import { LocationOverride, TestBuilder } from "../test-builder";
 import { createTestBuilderHarnessImplementation } from "./implementation/test-builder";
 import {
   createTestWorkspace,
   defaultTestWorkspace,
   setDefaultTestWorkspace,
 } from "../test-workspace";
-
-const frameworkFileName = "framework.ts";
-const testsPath = "packages/language/test/fourslash";
-
-/**
- * The root of the project.
- *
- * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
- */
-const projectRoot = path.join(__dirname, "../../../..");
-
-/**
- * The path to the `fourslash` directory.
- *
- * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
- */
-const fourslashPath = path.join(__dirname, "../fourslash");
+import { HarnessTesterInterface } from "./harness-interface";
+import { UriUtils } from "../../src/utils/uri";
+import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
+import {
+  fourslashPath,
+  getFiles,
+  getTestFiles,
+  projectRoot,
+  testsPath,
+} from "./utils";
+import { createCompilerTestHarnessImplementation } from "./implementation/compiler-test-builder";
+import { CompilerTestBuilder } from "../compiler-test-builder";
 
 afterEach(async () => {
   defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
   await defaultTestWorkspace().config.setProcessGroupConfigs([]);
   setDefaultTestWorkspace(undefined);
 });
-
-function getTestFiles() {
-  return readdirSync(testsPath, { recursive: true })
-    .map((file) => file.toString())
-    .filter((file) => file.endsWith(".ts")) // Only .ts files
-    .filter((file) => file !== frameworkFileName); // No framework file
-}
-
-/**
- * Get the files to load for a harness test.
- *
- * @param testFile - The test file to get the files for.
- * @returns The files to load for the harness test.
- */
-function getFiles(testFile: HarnessTest): PliTestFile[] {
-  return Array.from(testFile.files.entries()).map(([uri, file]) => ({
-    uri: uri,
-    content: file.content,
-  }));
-}
 
 function getLocationOverrides(
   testFile: HarnessTest,
@@ -174,7 +147,7 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
     {
       timeout,
     },
-    async () => {
+    async (testRun) => {
       const wrappers = getWrappers();
       const testFile = await parseHarnessTestFile(relativePath, filePath, {
         wrappers,
@@ -187,17 +160,34 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
 
       // We want to load the files in reverse order, so that the included files are inserted in the correct order.
       const files = getFiles(testFile).toReversed();
-      const fs = new VirtualFileSystemProvider(
-        testFile.tags["case-sensitive"] === "true",
-      );
-      setDefaultTestWorkspace(createTestWorkspace(fs));
-      const testBuilder = await TestBuilder.create(files, {
-        fs,
-        validate: true,
-        locationOverrides,
-      });
-      const implementation =
-        createTestBuilderHarnessImplementation(testBuilder);
+      let implementation: HarnessTesterInterface;
+      if (TEST_COMPILER_OUTPUT) {
+        if (testFile.tags["compiler"] !== "true") {
+          // If the test is not marked as a compiler test, simply skip it
+          testRun.skip();
+        }
+        const outputDir = relativePath.endsWith(".ts")
+          ? relativePath.slice(0, -3)
+          : relativePath;
+        const fullOutputDir = path.join(TEST_COMPILER_OUTPUT, outputDir);
+        const testBuilder = await CompilerTestBuilder.create(
+          files,
+          fullOutputDir,
+        );
+        implementation =
+          await createCompilerTestHarnessImplementation(testBuilder);
+      } else {
+        const fs = new VirtualFileSystemProvider(
+          testFile.tags["case-sensitive"] === "true",
+        );
+        setDefaultTestWorkspace(createTestWorkspace(fs));
+        const testBuilder = await TestBuilder.create(files, {
+          fs,
+          validate: true,
+          locationOverrides,
+        });
+        implementation = createTestBuilderHarnessImplementation(testBuilder);
+      }
 
       await runHarnessTest(testFile, implementation);
     },
@@ -208,6 +198,10 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
  * Used by launch.json to run a single test file
  */
 const { HARNESS_TEST_FILE } = process.env;
+/**
+ * Used by the compiler tests, not set by the normal test runs
+ */
+const { TEST_COMPILER_OUTPUT } = process.env;
 
 /**
  * If HARNESS_TEST_FILE is set, run the test file specified by the environment variable.

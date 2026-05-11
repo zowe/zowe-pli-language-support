@@ -11,7 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
-// @filename: main.pli
+// @compiler: true
 //// %A = "B";
 //// %ACT A;
 //// DCL A CHARACTER;

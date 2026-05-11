@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DECLARE A FIXED INIT(42);
 //// %DCL B FIXED INIT(A);
 //// B

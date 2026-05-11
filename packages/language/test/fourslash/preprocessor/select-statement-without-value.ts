@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %FAL = 0;
 //// %TRU = 1;
 //// %SELECT;

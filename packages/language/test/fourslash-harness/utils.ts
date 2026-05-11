@@ -9,7 +9,55 @@
  *
  */
 
-import { UnnamedFile } from "./types";
+import { readdirSync } from "fs";
+import path from "path";
+import { HarnessTest, UnnamedFile } from "./types";
+import { PliTestFile } from "../utils";
+
+export const frameworkFileName = "framework.ts";
+export const testsPath = "packages/language/test/fourslash";
+
+const url = new URL(import.meta.url);
+const __dirname =
+  process.platform === "win32"
+    ? path.dirname(url.pathname).slice(1)
+    : path.dirname(url.pathname);
+
+/**
+ * The root of the project.
+ *
+ * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
+ */
+export const projectRoot = path.join(__dirname, "../../../..");
+
+/**
+ * The path to the `fourslash` directory.
+ *
+ * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
+ */
+export const fourslashPath = path.join(__dirname, "../fourslash");
+
+export const harnessPath = __dirname;
+
+export function getTestFiles() {
+  return readdirSync(fourslashPath, { recursive: true })
+    .map((file) => file.toString())
+    .filter((file) => file.endsWith(".ts")) // Only .ts files
+    .filter((file) => file !== frameworkFileName); // No framework file
+}
+
+/**
+ * Get the files to load for a harness test.
+ *
+ * @param testFile - The test file to get the files for.
+ * @returns The files to load for the harness test.
+ */
+export function getFiles(testFile: HarnessTest): PliTestFile[] {
+  return Array.from(testFile.files.entries()).map(([uri, file]) => ({
+    uri: uri,
+    content: file.content,
+  }));
+}
 
 export function getFileName(
   fileName: string | undefined,

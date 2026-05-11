@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - Complex DO with BY and WHILE
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DO I = 10 TO 30 BY 10 WHILE(I < 25);
 ////   I

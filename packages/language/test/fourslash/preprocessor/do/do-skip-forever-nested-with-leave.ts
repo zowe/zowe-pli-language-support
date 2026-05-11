@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DCL VAR FIXED;
 //// %VAR = 0;
 //// %outer: DO SKIP; FOREVER;

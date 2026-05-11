@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %REPLACE X BY "HELLO";
 //// DCL A CHAR INIT(X);
 
