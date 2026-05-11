@@ -31,13 +31,7 @@
             "type": "array",
             "description": "List of file extensions to treat as include files.",
             "items": {
-              "type": "string",
-              "enum": [
-                ".pli",
-                ".pl1",
-                ".cpy",
-                ".inc"
-              ]
+              "type": "string"
             }
           },
           "member-name-validation": {
