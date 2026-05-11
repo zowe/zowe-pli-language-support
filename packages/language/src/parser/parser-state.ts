@@ -59,9 +59,11 @@ export class ParserState {
   public inError = false;
   public currentStatementLabels: LabelPrefix[] = [];
 
-  private inProcedure = false;
-
-  constructor(tokens: t.Token[], compilerOptions?: CompilerOptions, textDocument: TextDocument) {
+  constructor(
+    tokens: t.Token[],
+    textDocument: TextDocument,
+    compilerOptions?: CompilerOptions,
+  ) {
     this.tokens = tokens;
     this.textDocument = textDocument;
     this.diagnostics = [];

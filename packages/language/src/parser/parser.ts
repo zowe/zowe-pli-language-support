@@ -45,7 +45,7 @@ export function parsePli(
   tree: ast.Program;
   diagnostics: Diagnostic[];
 } {
-  const state = new ParserState(input, compilerOptions, textDocument);
+  const state = new ParserState(input, textDocument, compilerOptions);
   const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
