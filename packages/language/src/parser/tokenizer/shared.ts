@@ -366,7 +366,10 @@ export function tokenizeIdentifier(
       : originalImage;
     const previousToken = context.tokens[context.tokens.length - 1];
     // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
-    if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx && (image === "SQL" || image === "CICS")) {
+    if (
+      previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx &&
+      (image === "SQL" || image === "CICS")
+    ) {
       while (i < context.length && context.input[i] !== ";") {
         i++;
       }

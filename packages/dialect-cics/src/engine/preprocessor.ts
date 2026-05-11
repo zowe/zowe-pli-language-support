@@ -25,7 +25,11 @@
 import * as antlr from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { CICSParser } from "../generated/CICSParser";
-import { CollectingErrorListener, CollectingIdentifierVisitor, ParseError } from "./parsing";
+import {
+  CollectingErrorListener,
+  CollectingIdentifierVisitor,
+  ParseError,
+} from "./parsing";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];

@@ -134,13 +134,16 @@ namespace Rules {
 describe("Rule tests", () => {
   const textDocument = TextDocument.create("dummy", "pli", 1, "");
   test("Simple rule set", () => {
-    const state = new ParserState([
-      TokenInstances.Person,
-      TokenInstances.IdBob,
-      TokenInstances.Hello,
-      TokenInstances.IdAlice,
-      TokenInstances.Exclamation,
-    ], textDocument);
+    const state = new ParserState(
+      [
+        TokenInstances.Person,
+        TokenInstances.IdBob,
+        TokenInstances.Hello,
+        TokenInstances.IdAlice,
+        TokenInstances.Exclamation,
+      ],
+      textDocument,
+    );
 
     const result = Rules.program.rule(state)!;
 
@@ -152,10 +155,10 @@ describe("Rule tests", () => {
   });
 
   test("Keyword IDs", () => {
-    const state = new ParserState([
-      TokenInstances.Person,
-      TokenInstances.IdPerson,
-    ], textDocument);
+    const state = new ParserState(
+      [TokenInstances.Person, TokenInstances.IdPerson],
+      textDocument,
+    );
 
     const result = Rules.program.rule(state)!;
 

@@ -2297,31 +2297,36 @@ async function runInclude(
       throw new Error("Document not found after URI resolution.");
     }
     const content = document.getText();
-    const cachedResult = await context.unit.instructionCache.get(uri, content, async () => {
-      const processedContent = context.options.marginsProcessor.processMargins(
-        {
-          result: context.options.compilerOptions,
-          text: content,
-        },
-        uri,
-        context.unit.services.workspace,
-      );
-      const tokenizeResult = tokenize(processedContent, uri);
-      const subState = new ParserState(tokenizeResult.tokens, document);
-      const subProgram = await preprocessorParse(
-        subState,
-        context.options.compilerOptions?.options,
-      );
-      subProgram.diagnostics.push(...tokenizeResult.diagnostics);
-      const result = generateInstructions(subProgram.statements);
-      return {
-        tokens: tokenizeResult.tokens,
-        comments: tokenizeResult.comments,
-        diagnostics: subProgram.diagnostics,
-        statements: subProgram.statements,
-        result,
-      };
-    });
+    const cachedResult = await context.unit.instructionCache.get(
+      uri,
+      content,
+      async () => {
+        const processedContent =
+          context.options.marginsProcessor.processMargins(
+            {
+              result: context.options.compilerOptions,
+              text: content,
+            },
+            uri,
+            context.unit.services.workspace,
+          );
+        const tokenizeResult = tokenize(processedContent, uri);
+        const subState = new ParserState(tokenizeResult.tokens, document);
+        const subProgram = await preprocessorParse(
+          subState,
+          context.options.compilerOptions?.options,
+        );
+        subProgram.diagnostics.push(...tokenizeResult.diagnostics);
+        const result = generateInstructions(subProgram.statements);
+        return {
+          tokens: tokenizeResult.tokens,
+          comments: tokenizeResult.comments,
+          diagnostics: subProgram.diagnostics,
+          statements: subProgram.statements,
+          result,
+        };
+      },
+    );
     context.statements.push(...cachedResult.statements);
     context.unit.services.files.set({
       textDocument: document,

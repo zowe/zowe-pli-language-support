@@ -43,7 +43,9 @@ export type PreprocessorParserResult = {
  * - null: Failed to parse (error condition)
  * - undefined: This handler doesn't recognize this token (pass to next handler)
  */
-type StatementParser = (state: ParserState) => Promise<ast.Statement | null | undefined>;
+type StatementParser = (
+  state: ParserState,
+) => Promise<ast.Statement | null | undefined>;
 
 function createPreprocessorHandler(): StatementParser {
   return async (state) => {
@@ -130,13 +132,15 @@ function createExecHandler(): StatementParser {
   };
 }
 
-async function parseExecStatement(state: ParserState): Promise<ast.Statement | undefined> {
+async function parseExecStatement(
+  state: ParserState,
+): Promise<ast.Statement | undefined> {
   const statement = ast.createStatement();
   if (state.canConsume(t.EXEC, t.ExecFragment)) {
     const nextToken = state.peek(2);
-    if(/^SQL\b/i.test(nextToken?.image || "")) {
+    if (/^SQL\b/i.test(nextToken?.image || "")) {
       statement.value = sqlExecStatement(state);
-    } else if(/^CICS\b/i.test(nextToken?.image || "")) {
+    } else if (/^CICS\b/i.test(nextToken?.image || "")) {
       statement.value = await cicsExecStatement(state);
     } else {
       // Unrecognized EXEC statement, treat as token statement

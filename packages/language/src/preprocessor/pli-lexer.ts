@@ -74,26 +74,33 @@ export class PliLexer {
     updateCicsTokenizer();
     updateSqlTokenizer();
     unit.instructionCache.update(opts);
-    const instruction = await unit.instructionCache.get(uri, inputText, async () => {
-      const textWithoutMargins = this.marginsProcessor.processMargins(
-        compilerOptionsResult,
-        uri,
-        unit.services.workspace,
-      );
-      const tokenizeResult = tokenize(textWithoutMargins, uri);
-      const state = new ParserState(tokenizeResult.tokens, document);
-      // Do a full parsing of the input text to extract all *local* statements
-      const { statements, diagnostics } = await preprocessorParse(state, opts);
-      const result = generateInstructions(statements);
-      diagnostics.push(...tokenizeResult.diagnostics);
-      return {
-        tokens: tokenizeResult.tokens,
-        comments: tokenizeResult.comments,
-        diagnostics: diagnostics,
-        statements: statements,
-        result,
-      };
-    });
+    const instruction = await unit.instructionCache.get(
+      uri,
+      inputText,
+      async () => {
+        const textWithoutMargins = this.marginsProcessor.processMargins(
+          compilerOptionsResult,
+          uri,
+          unit.services.workspace,
+        );
+        const tokenizeResult = tokenize(textWithoutMargins, uri);
+        const state = new ParserState(tokenizeResult.tokens, document);
+        // Do a full parsing of the input text to extract all *local* statements
+        const { statements, diagnostics } = await preprocessorParse(
+          state,
+          opts,
+        );
+        const result = generateInstructions(statements);
+        diagnostics.push(...tokenizeResult.diagnostics);
+        return {
+          tokens: tokenizeResult.tokens,
+          comments: tokenizeResult.comments,
+          diagnostics: diagnostics,
+          statements: statements,
+          result,
+        };
+      },
+    );
     unit.diagnostics.addAll(DiagnosticCategory.Lexer, instruction.diagnostics);
     unit.diagnostics.addAll(
       DiagnosticCategory.Lexer,

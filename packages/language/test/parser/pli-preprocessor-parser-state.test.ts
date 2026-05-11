@@ -18,7 +18,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 function parserStateFromText(text: string, uri: URI) {
   const result = tokenize(text, uri);
-  const state = new ParserState(result.tokens, TextDocument.create(uri.toString(), "pli", 1, text));
+  const state = new ParserState(
+    result.tokens,
+    TextDocument.create(uri.toString(), "pli", 1, text),
+  );
   return state;
 }
 

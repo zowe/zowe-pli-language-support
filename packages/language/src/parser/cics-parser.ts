@@ -16,24 +16,34 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { CICSPreprocessor } from "dialect-cics";
 import { URI } from "vscode-uri";
 
-export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExecStatement> {
+export async function cicsExecStatement(
+  state: ParserState,
+): Promise<ast.CicsExecStatement> {
   const execStatement = ast.createCicsExecStatement();
   state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
-  const cicsFragmentToken = state.consume(execStatement, CstNodeKind.ExecCicsStatement_COMMAND, t.ExecFragment);
-  if(!cicsFragmentToken) {
+  const cicsFragmentToken = state.consume(
+    execStatement,
+    CstNodeKind.ExecCicsStatement_COMMAND,
+    t.ExecFragment,
+  );
+  if (!cicsFragmentToken) {
     return execStatement;
   }
-  const prefixLength = /^CICS\s*/i.exec(cicsFragmentToken.image)?.[0].length || 0;
+  const prefixLength =
+    /^CICS\s*/i.exec(cicsFragmentToken.image)?.[0].length || 0;
   const startOffset = cicsFragmentToken.startOffset + prefixLength;
-  const endOffset = cicsFragmentToken.endOffset+1;
-  const statementText = state.textDocument.getText().substring(startOffset, endOffset);
+  const endOffset = cicsFragmentToken.endOffset + 1;
+  const statementText = state.textDocument
+    .getText()
+    .substring(startOffset, endOffset);
   const preprocessor = new CICSPreprocessor();
-  const { diagnostics, identifiers } = await preprocessor.execute(statementText);
+  const { diagnostics, identifiers } =
+    await preprocessor.execute(statementText);
   for (const diagnostic of diagnostics) {
     state.error(diagnostic.message, state.token);
   }
   for (const token of identifiers) {
-    if(!token.text) {
+    if (!token.text) {
       continue;
     }
     const tokenStart = startOffset + token.start;
@@ -41,7 +51,8 @@ export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExe
     const positionStart = state.textDocument.positionAt(tokenStart);
     const positionEnd = state.textDocument.positionAt(tokenEnd);
     const pliToken = t.createTokenInstance(
-      token.text, token.text,
+      token.text,
+      token.text,
       t.ID,
       tokenStart,
       positionStart.line,
@@ -49,7 +60,7 @@ export async function cicsExecStatement(state: ParserState): Promise<ast.CicsExe
       tokenEnd,
       positionEnd.line,
       positionEnd.character,
-      URI.parse(state.textDocument.uri.toString())
+      URI.parse(state.textDocument.uri.toString()),
     );
     execStatement.hostVariables.push(pliToken);
   }

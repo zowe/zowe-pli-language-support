@@ -17,7 +17,11 @@ import { CstNodeKind } from "../syntax-tree/cst";
 export function sqlExecStatement(state: ParserState): ast.SqlExecStatement {
   const execStatement = ast.createSqlExecStatement();
   state.consume(execStatement, CstNodeKind.ExecSqlStatement_EXEC, t.EXEC);
-  state.consume(execStatement, CstNodeKind.ExecSqlStatement_SQL, t.ExecFragment);
+  state.consume(
+    execStatement,
+    CstNodeKind.ExecSqlStatement_SQL,
+    t.ExecFragment,
+  );
   state.consume(
     execStatement,
     CstNodeKind.ExecSqlStatement_Semicolon,

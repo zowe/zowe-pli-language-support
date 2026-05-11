@@ -1,5 +1,5 @@
 import { statSync } from "fs";
-import { spawnSync } from  "child_process";
+import { spawnSync } from "child_process";
 import { exit } from "process";
 
 const LEXER_INPUT = "./src/antlr/CICSLexer.g4",
@@ -9,14 +9,36 @@ const LEXER_INPUT = "./src/antlr/CICSLexer.g4",
 
 if (shouldRebuild(LEXER_INPUT, LEXER_OUTPUT)) {
   console.log("Rebuilding lexer...");
-  spawnSync("npx", ["antlr-ng", "-Dlanguage=TypeScript", "-l", "-o", "src/generated", "./src/antlr/CICSLexer.g4"], { stdio: "inherit" });
+  spawnSync(
+    "npx",
+    [
+      "antlr-ng",
+      "-Dlanguage=TypeScript",
+      "-l",
+      "-o",
+      "src/generated",
+      "./src/antlr/CICSLexer.g4",
+    ],
+    { stdio: "inherit" },
+  );
 } else {
   console.log("Lexer is up to date.");
 }
 
 if (shouldRebuild(PARSER_INPUT, PARSER_OUTPUT)) {
   console.log("Rebuilding parser...");
-  spawnSync("npx", ["antlr-ng", "-Dlanguage=TypeScript", "-v", "-o", "src/generated", "./src/antlr/CICSParser.g4"], { stdio: "inherit" });
+  spawnSync(
+    "npx",
+    [
+      "antlr-ng",
+      "-Dlanguage=TypeScript",
+      "-v",
+      "-o",
+      "src/generated",
+      "./src/antlr/CICSParser.g4",
+    ],
+    { stdio: "inherit" },
+  );
 } else {
   console.log("Parser is up to date.");
 }
