@@ -17,7 +17,6 @@ import { PLICodes } from "../validation/pli-codes";
 import {
   TokenizeFunc,
   TokenizerContext,
-  TokenizerMode,
 } from "./tokenizer/shared";
 import {
   tokenizeIncludeAlt,
@@ -45,7 +44,6 @@ export function tokenize(
     context.char = char;
     context.store();
 
-    if (context.mode === TokenizerMode.Default) {
       // VERY special case for include alt
       const includeAltToken = tokenizeIncludeAlt(context);
       if (includeAltToken) {
@@ -53,7 +51,6 @@ export function tokenize(
         previous = includeAltToken;
         continue;
       }
-    }
 
     const fn: TokenizeFunc | undefined =
       context.funcs[input.charCodeAt(context.index)];

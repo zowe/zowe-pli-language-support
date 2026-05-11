@@ -132,10 +132,16 @@ function createExecHandler(): StatementParser {
 
 async function parseExecStatement(state: ParserState): Promise<ast.Statement | undefined> {
   const statement = ast.createStatement();
-  if (state.canConsume(t.EXEC, t.CICS)) {
-    statement.value = await cicsExecStatement(state);
-  } else if (state.canConsume(t.EXEC, t.SQL)) {
-    statement.value = sqlExecStatement(state);
+  if (state.canConsume(t.EXEC, t.ExecFragment)) {
+    const nextToken = state.peek(2);
+    if(/^SQL\b/i.test(nextToken?.image || "")) {
+      statement.value = sqlExecStatement(state);
+    } else if(/^CICS\b/i.test(nextToken?.image || "")) {
+      statement.value = await cicsExecStatement(state);
+    } else {
+      // Unrecognized EXEC statement, treat as token statement
+      return undefined;
+    }
   } else {
     // Failure; fall back to token statement
     return undefined;

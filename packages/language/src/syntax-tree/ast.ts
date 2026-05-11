@@ -4360,14 +4360,14 @@ export function createCicsResponseStatement(): CicsResponseStatement {
 
 export interface CicsExecStatement extends AstNode {
   kind: SyntaxKind.CicsExecStatement;
-  content: CicsEmbeddedStatement | null;
+  hostVariables: Token[];
 }
 
 export function createCicsExecStatement(): CicsExecStatement {
   return {
     kind: SyntaxKind.CicsExecStatement,
     container: null,
-    content: null,
+    hostVariables: [],
   };
 }
 

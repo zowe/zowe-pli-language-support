@@ -15,14 +15,6 @@ import { URI } from "../../utils/uri";
 import { Diagnostic, diagnosticFromCode } from "../../language-server/types";
 import { pliFuncs } from "./pli-tokenizer";
 import { PLICodes } from "../../validation/pli-codes";
-import { cicsFuncs } from "./cics-tokenizer";
-import { sqlFuncs } from "./sql-tokenizer";
-
-export enum TokenizerMode {
-  Default,
-  CICS,
-  SQL,
-}
 
 export class TokenizerContext {
   public tokens: tokens.Token[] = [];
@@ -36,7 +28,6 @@ export class TokenizerContext {
   public uri: URI | undefined;
   public diagnostics: Diagnostic[] = [];
   public caseUpper: boolean;
-  public mode: TokenizerMode = TokenizerMode.Default;
   public funcs: TokenizeFunc[] = [];
 
   private storedIndex: number = 0;
@@ -49,21 +40,6 @@ export class TokenizerContext {
     this.uri = uri;
     this.caseUpper = caseUpper;
     this.funcs = pliFuncs;
-  }
-
-  switchMode(mode: TokenizerMode) {
-    this.mode = mode;
-    switch (mode) {
-      case TokenizerMode.Default:
-        this.funcs = pliFuncs;
-        break;
-      case TokenizerMode.CICS:
-        this.funcs = cicsFuncs;
-        break;
-      case TokenizerMode.SQL:
-        this.funcs = sqlFuncs;
-        break;
-    }
   }
 
   store() {
@@ -358,10 +334,6 @@ export function tokenizeSemicolon(
   context: TokenizerContext,
 ): tokens.Token | undefined {
   context.advance(1, false);
-  if (context.mode !== TokenizerMode.Default) {
-    // Reset to default mode on semicolon, as it acts as a delimiter for all EXEC statements
-    context.switchMode(TokenizerMode.Default);
-  }
   return context.createTokenInstance(tokens.Semicolon);
 }
 
@@ -371,7 +343,7 @@ export function tokenizeIdentifier(
   keywords: Map<bigint, KeywordToken>,
 ): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
-    const start = context.index;
+    let start = context.index;
     let hash = FNV_OFFSET_BASIS;
     let i = context.index;
     let charCode: number;
@@ -394,16 +366,12 @@ export function tokenizeIdentifier(
       : originalImage;
     const previousToken = context.tokens[context.tokens.length - 1];
     // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
-    if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
-      if (image === "SQL") {
-        context.advance(3, false);
-        context.switchMode(TokenizerMode.SQL);
-        return context.createTokenInstance(tokens.SQL);
-      } else if (image === "CICS") {
-        context.advance(4, false);
-        context.switchMode(TokenizerMode.CICS);
-        return context.createTokenInstance(tokens.CICS);
+    if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx && (image === "SQL" || image === "CICS")) {
+      while (i < context.length && context.input[i] !== ";") {
+        i++;
       }
+      context.advance(i - start, true);
+      return context.createTokenInstance(tokens.ExecFragment);
     }
     let tokenType = tokens.ID;
     const keyword = keywords.get(hash);

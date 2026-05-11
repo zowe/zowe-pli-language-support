@@ -961,9 +961,6 @@ export function forEachNode(
       break;
     case SyntaxKind.CicsResponseStatement:
       break;
-    case SyntaxKind.CicsExecStatement:
-      node.content && action(node.content);
-      break;
     case SyntaxKind.CicsVariableReference:
       break;
     case SyntaxKind.SqlExecStatement:
