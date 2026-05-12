@@ -87,7 +87,7 @@ describe("configCompletionRequest", () => {
   });
   test("returns items with edit range covering existing typed text", () => {
     const stringFragment = "def";
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${stringFragment}<CURSOR>" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${stringFragment}${MARKER}" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -106,7 +106,7 @@ describe("configCompletionRequest", () => {
     }
   });
   test("returns [] when cursor is inside the property key", () => {
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgr<CURSOR>oup": "" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgr${MARKER}oup": "" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -117,7 +117,7 @@ describe("configCompletionRequest", () => {
     expect(result).toHaveLength(0);
   });
   test("returns [] when cursor is inside a non-pgroup property value", () => {
-    const mockPgmConf = `{ "pgms": [{ "program": "*<CURSOR>.pli", "pgroup": "" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*${MARKER}.pli", "pgroup": "" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -128,7 +128,7 @@ describe("configCompletionRequest", () => {
     expect(result).toHaveLength(0);
   });
   test("returns [] when cursor is in whitespace between properties", () => {
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli",<CURSOR> "pgroup": "" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli",${MARKER} "pgroup": "" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -139,7 +139,7 @@ describe("configCompletionRequest", () => {
     expect(result).toHaveLength(0);
   });
   test("returns [] when URI is proc_grps.json", () => {
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "<CURSOR>" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${MARKER}" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -177,7 +177,7 @@ describe("configCompletionRequest", () => {
         libs: [],
       }),
     ];
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "<CURSOR>" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${MARKER}" }] }`;
     await pluginConfig.setProcessGroupConfigs(processGroups);
 
     const { text, offset } = fromMarker(mockPgmConf);
@@ -192,7 +192,7 @@ describe("configCompletionRequest", () => {
     expect(result.map((completion) => completion.label)).toEqual(expected);
   });
   test("returns [] when no process groups are loaded", async () => {
-    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "<CURSOR>" }] }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${MARKER}" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     await pluginConfig.setProcessGroupConfigs([]);
     const result = configCompletionRequest(
