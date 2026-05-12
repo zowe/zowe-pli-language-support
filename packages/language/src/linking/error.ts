@@ -253,7 +253,7 @@ export class LinkerErrorReporter {
    */
   reportImplicitDeclaration(node: QualifiedSyntaxNode) {
     // This should only emit a warning during the 'NOLAXDCL' compiler flag.
-    if (this.unit.compilerOptions.rules?.laxDef) {
+    if (this.unit.compilerOptions.rules?.laxDcl) {
       return;
     }
 
