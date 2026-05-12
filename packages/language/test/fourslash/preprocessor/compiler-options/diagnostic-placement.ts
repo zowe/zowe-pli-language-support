@@ -46,10 +46,9 @@
 //// }
 
 // @filename: main.pli
-// @wrap: process
 ////*<|1:PROCESS|> NOPP;
 ////*PROCESS <|2:pp|>(cics(''));
-////*PROCESS pp(<|3:include|>   /*Error4: no validation */
+////*PROCESS pp(<|3:include|>   /*Error4: no validation */;
 //// MPPROG: PROCEDURE OPTIONS (MAIN);
 ////    DCL TRUE BIT(1) INIT(1);
 //// END MPPROG;
