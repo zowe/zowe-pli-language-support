@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.22% </span>
+                <span class="strong">83.46% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>531/638</span>
+                <span class='fraction'>530/635</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.59% </span>
+                <span class="strong">71.13% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>413/585</span>
+                <span class='fraction'>414/582</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.2% </span>
+                <span class="strong">83.43% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>530/637</span>
+                <span class='fraction'>529/634</span>
             </div>
         
             
@@ -1162,12 +1162,7 @@
 <a name='L1097'></a><a href='#L1097'>1097</a>
 <a name='L1098'></a><a href='#L1098'>1098</a>
 <a name='L1099'></a><a href='#L1099'>1099</a>
-<a name='L1100'></a><a href='#L1100'>1100</a>
-<a name='L1101'></a><a href='#L1101'>1101</a>
-<a name='L1102'></a><a href='#L1102'>1102</a>
-<a name='L1103'></a><a href='#L1103'>1103</a>
-<a name='L1104'></a><a href='#L1104'>1104</a>
-<a name='L1105'></a><a href='#L1105'>1105</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1100'></a><a href='#L1100'>1100</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2129,15 +2124,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-yes">36x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">12x</span>
@@ -3232,16 +3222,11 @@ export function forEachNode(
         action(node.value);
       }
       break;
-    case SyntaxKind.CicsExecStatement:
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (node.content) {
-        action(node.content);
-      }
-      break;
     case SyntaxKind.CicsResponseStatement:
       break;
-<span class="branch-201 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsExecStatement:</span>
-<span class="cstat-no" title="statement not covered" >      node.content &amp;&amp; action(node.content);</span>
-<span class="cstat-no" title="statement not covered" >      break;</span>
+    case SyntaxKind.CicsExecStatement:
+      node.content &amp;&amp; action(node.content);
+      break;
     case SyntaxKind.CicsLinkStatement:
       node.channel &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >action(node.channel);</span>
       node.dataLength &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >action(node.dataLength);</span>
@@ -3260,24 +3245,24 @@ export function forEachNode(
     case SyntaxKind.CicsLengthSpecification:
       node.length &amp;&amp; action(node.length);
       break;
-<span class="branch-205 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsDataLengthSpecification:</span>
+<span class="branch-204 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsDataLengthSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      node.length &amp;&amp; action(node.length);</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
-<span class="branch-206 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsChannelSpecification:</span>
+<span class="branch-205 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsChannelSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      node.channelName &amp;&amp; action(node.channelName);</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
-<span class="branch-207 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsInputMessageSpecification:</span>
+<span class="branch-206 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsInputMessageSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      node.inputMessage &amp;&amp; action(node.inputMessage);</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
-<span class="branch-208 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsInputMessageLengthSpecification:</span>
+<span class="branch-207 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsInputMessageLengthSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      node.length &amp;&amp; action(node.length);</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
-<span class="branch-209 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsSystemIdSpecification:</span>
+<span class="branch-208 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsSystemIdSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      node.id &amp;&amp; action(node.id);</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
-<span class="branch-210 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsSyncOnReturnSpecification:</span>
+<span class="branch-209 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsSyncOnReturnSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
-<span class="branch-211 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsTransactionIdSpecification:</span>
+<span class="branch-210 cbranch-no" title="branch not covered" >    case SyntaxKind.CicsTransactionIdSpecification:</span>
 <span class="cstat-no" title="statement not covered" >      node.id &amp;&amp; action(node.id);</span>
 <span class="cstat-no" title="statement not covered" >      break;</span>
     case SyntaxKind.CicsCommAreaSpecification:
@@ -3308,7 +3293,7 @@ export function forEachNode(
     case SyntaxKind.SqlHostVariableReference:
     case SyntaxKind.AnyAttribute:
       break;
-<span class="branch-232 cbranch-no" title="branch not covered" >    default:</span>
+<span class="branch-231 cbranch-no" title="branch not covered" >    default:</span>
 <span class="cstat-no" title="statement not covered" >      assertUnreachable(node);</span>
   }
 }
@@ -3382,7 +3367,7 @@ export function <span class="fstat-no" title="function not covered" >collectNode
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-12T08:35:12.563Z
+                at 2026-05-12T16:02:04.053Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
