@@ -1311,20 +1311,15 @@ translator.rule(
       options.initAuto = getDefaultCompilerOptions().initAuto;
     } else {
       ensureType(option.values[0], "plain");
-      const value = option.values[0].value.toUpperCase();
-      if (["SHORT", "FULL"].includes(value)) {
-        options.initAuto = ensureEnum(
-          option.values[0],
-          CompilerOptionsCodes.InitAuto.InvalidParameter,
-          CompilerOptions.InitAuto,
-        );
-      } else {
-        throw diagnosticFromCode(
-          CompilerOptionsCodes.InitAuto.InvalidParameter,
-          option.values[0].token,
-          option.values[0].value,
-        );
-      }
+      options.initAuto = ensureEnum(
+        option.values[0],
+        CompilerOptionsCodes.InitAuto.InvalidParameter,
+        CompilerOptions.InitAuto,
+        [
+          ["FULL", "F"],
+          ["SHORT", "S"],
+        ],
+      );
     }
   },
   ["NOINITAUTO"],
@@ -2011,7 +2006,7 @@ translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
 translator.flag("object", ["OBJECT", "OBJ"], ["NOOBJECT", "NOBJ"]);
 
 /** {@link CompilerOptions.offset} */
-translator.flag("offset", ["OFFSET"], ["NOOFFSET"]);
+translator.flag("offset", ["OFFSET", "OF"], ["NOOFFSET", "NOF"]);
 
 /** {@link CompilerOptions.offsetSize} */
 translator.rule(["OFFSETSIZE"], (option, options) => {
@@ -3247,20 +3242,15 @@ translator.rule(["STATIC"], (option, options) => {
   ensureArguments(option, 1, 1);
   const value = option.values[0];
   ensureType(value, "plainNotEmpty");
-  const name = value.value.toUpperCase();
-  if (["SHORT", "FULL"].includes(name)) {
-    options.static = ensureEnum(
-      value,
-      CompilerOptionsCodes.Static.InvalidParameter,
-      CompilerOptions.Length,
-    );
-  } else {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Static.InvalidParameter,
-      value.token,
-      name,
-    );
-  }
+  options.static = ensureEnum(
+    value,
+    CompilerOptionsCodes.Static.InvalidParameter,
+    CompilerOptions.Length,
+    [
+      ["FULL", "F"],
+      ["SHORT", "S"],
+    ],
+  );
 });
 
 /** {@link CompilerOptions.stdsys} */
@@ -3712,7 +3702,9 @@ translator.rule(
         continue;
       }
       switch (value.value.toUpperCase()) {
+        case "F":
         case "FULL":
+        case "S":
         case "SHORT":
           options.xRef = {
             ...options.xRef,
@@ -3720,6 +3712,10 @@ translator.rule(
               value,
               CompilerOptionsCodes.XRef.InvalidLengthParameter,
               CompilerOptions.Length,
+              [
+                ["FULL", "F"],
+                ["SHORT", "S"],
+              ],
             ),
           };
           break;
