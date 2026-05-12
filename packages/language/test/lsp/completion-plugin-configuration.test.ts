@@ -69,11 +69,7 @@ beforeEach(async () => {
 
 describe("configCompletionRequest", () => {
   test("returns all process group names when cursor is inside an empty pgroup value", () => {
-    const mockPgmConf = `{
-            "pgms": [
-                { "program": "*.pli", "pgroup": "${MARKER}" }
-            ]
-        }`;
+    const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${MARKER}" }] }`;
     const { text, offset } = fromMarker(mockPgmConf);
     const result = configCompletionRequest(
       pluginConfig,
@@ -81,9 +77,8 @@ describe("configCompletionRequest", () => {
       offset,
       pgmConfigUri(),
     );
-    const expected = pluginConfig.getProcessGroupNames();
-    expect(result).toHaveLength(expected.length);
-    expect(result.map((completion) => completion.label)).toEqual(expected);
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toEqual("default");
   });
   test("returns items with edit range covering existing typed text", () => {
     const stringFragment = "def";
@@ -181,15 +176,20 @@ describe("configCompletionRequest", () => {
     await pluginConfig.setProcessGroupConfigs(processGroups);
 
     const { text, offset } = fromMarker(mockPgmConf);
-    const expected = pluginConfig.getProcessGroupNames();
     const result = configCompletionRequest(
       pluginConfig,
       text,
       offset,
       pgmConfigUri(),
     );
-    expect(result).toHaveLength(expected.length);
-    expect(result.map((completion) => completion.label)).toEqual(expected);
+    expect(result).toHaveLength(5);
+    expect(result.map((completion) => completion.label)).toEqual([
+      "default",
+      "completion-test",
+      "completion-test-2",
+      "completion-test-3",
+      "completion-test-4",
+    ]);
   });
   test("returns [] when no process groups are loaded", async () => {
     const mockPgmConf = `{ "pgms": [{ "program": "*.pli", "pgroup": "${MARKER}" }] }`;

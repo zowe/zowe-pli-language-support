@@ -203,29 +203,60 @@ export function startLanguageServer(
       },
     );
   });
-  const TRIGGER_CHAR_LANG: Record<string, "pli" | "config"> = {
+  type LANG_LIST = "pli" | "config";
+  const TRIGGER_CHAR_LANG: Record<string, LANG_LIST> = {
     // PLI
     ".": "pli",
     "%": "pli",
     // CONFIG
     '"': "config",
   };
-  connection.onCompletion(async (params) => {
-    const docUri = UriUtils.toUri(params.textDocument.uri);
-    const position = params.position;
-    const isConfigDocument = workspace.config.isPluginConfigDocumentUri(
-      params.textDocument.uri,
-    );
-    const triggerLang = params.context?.triggerCharacter
-      ? TRIGGER_CHAR_LANG[params.context.triggerCharacter]
+  function selectCompletionMode(
+    triggerChar: string | undefined,
+    docUri: string,
+  ): LANG_LIST | undefined {
+    const isConfigDocument = workspace.config.isPluginConfigDocumentUri(docUri);
+    const triggerLang = triggerChar
+      ? TRIGGER_CHAR_LANG[triggerChar]
       : undefined;
     if (
       (triggerLang === "config" && !isConfigDocument) ||
       (triggerLang === "pli" && isConfigDocument)
     ) {
-      return [];
+      return;
     }
     if (isConfigDocument) {
+      return "config";
+    } else {
+      return "pli";
+    }
+  }
+  connection.onCompletion(async (params) => {
+    const docUri = UriUtils.toUri(params.textDocument.uri);
+    const position = params.position;
+    const completionMode = selectCompletionMode(
+      params.context?.triggerCharacter,
+      params.textDocument.uri,
+    );
+    if (!completionMode) {
+      return [];
+    } else if (completionMode === "pli") {
+      return withReadMutex(
+        params.textDocument.uri,
+        async (uri, compilationUnit) => {
+          const textDocument = compilationUnit?.services.files.getDocument(uri);
+          if (!textDocument || !compilationUnit) {
+            return [];
+          }
+          const offset = textDocument.offsetAt(position);
+          const result = completionRequest(compilationUnit, uri, offset).map(
+            (completionItem) =>
+              completionItemToLSP(textDocument, completionItem),
+          );
+          return result;
+        },
+      );
+    } else {
       const textDocument = await EditorDocuments.get(docUri);
       if (!textDocument) {
         return [];
@@ -240,20 +271,6 @@ export function startLanguageServer(
         completionItemToLSP(textDocument, completionItem),
       );
     }
-    return withReadMutex(
-      params.textDocument.uri,
-      async (uri, compilationUnit) => {
-        const textDocument = compilationUnit?.services.files.getDocument(uri);
-        if (!textDocument || !compilationUnit) {
-          return [];
-        }
-        const offset = textDocument.offsetAt(position);
-        const result = completionRequest(compilationUnit, uri, offset).map(
-          (completionItem) => completionItemToLSP(textDocument, completionItem),
-        );
-        return result;
-      },
-    );
   });
   connection.onDefinition(async (params) => {
     const position = params.position;
