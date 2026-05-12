@@ -568,7 +568,41 @@ class JSDocCommentImpl implements JSDocComment {
         value += fillNewlines(value) + text;
       }
     }
-    return value.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return this.escapeNonVerbatimCode(value.trim());
+  }
+
+  private escapeNonVerbatimCode(text: string): string {
+    const matches = text.matchAll(/```.*?```/gms);
+    let lastIndex = 0;
+    let result = "";
+    for (const match of matches) {
+      const matchIndex = match.index!;
+      const before = text.substring(lastIndex, matchIndex);
+      const code = match[0];
+      result += this.escapeNonInlineCode(before) + code;
+      lastIndex = matchIndex + code.length;
+    }
+    result += this.escapeNonInlineCode(text.substring(lastIndex));
+    return result;
+  }
+
+  private escapeNonInlineCode(text: string): string {
+    const matches = text.matchAll(/`.*?`/g);
+    let lastIndex = 0;
+    let result = "";
+    for (const match of matches) {
+      const matchIndex = match.index!;
+      const before = text.substring(lastIndex, matchIndex);
+      const code = match[0];
+      result += this.escapeHtmlTags(before) + code;
+      lastIndex = matchIndex + code.length;
+    }
+    result += this.escapeHtmlTags(text.substring(lastIndex));
+    return result;
+  }
+
+  private escapeHtmlTags(text: string): string {
+    return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 }
 
