@@ -959,11 +959,6 @@ export function forEachNode(
         action(node.value);
       }
       break;
-    case SyntaxKind.CicsExecStatement:
-      if (node.content) {
-        action(node.content);
-      }
-      break;
     case SyntaxKind.CicsResponseStatement:
       break;
     case SyntaxKind.CicsExecStatement:
