@@ -177,10 +177,7 @@ export class CompilerTestBuilder {
     }
   }
 
-  expectDiagnosticsAt(
-    label: Label,
-    diagnostics: DiagnosticExpectation,
-  ): void {
+  expectDiagnosticsAt(label: Label, diagnostics: DiagnosticExpectation): void {
     if (Array.isArray(label)) {
       for (const l of label) {
         this.expectDiagnosticsAt(l, diagnostics);
@@ -230,9 +227,12 @@ export class CompilerTestBuilder {
         if (expected.severity && diag.severity !== expected.severity) {
           return false;
         }
-        if (expected.message && (typeof expected.message === "string"
+        if (
+          expected.message &&
+          (typeof expected.message === "string"
             ? diag.message === expected.message
-            : expected.message.test(diag.message))) {
+            : expected.message.test(diag.message))
+        ) {
           return false;
         }
         return true;
