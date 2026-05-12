@@ -12,7 +12,9 @@
 import type { PluginConfigurationProvider } from "../../workspace/plugin-configuration-provider";
 import type { CompletionItem, Range } from "../types";
 import {
-  jsoncFindNodeAtOffset,
+  jsoncFindNodeAtLocation,
+  jsoncGetLocation,
+  jsoncLocation,
   jsoncParseTree,
   type JsonNode,
 } from "../../utils/jsonc";
@@ -25,20 +27,20 @@ export function configCompletionRequest(
   offset: number,
   uri: URI,
 ): CompletionItem[] {
-  const rootNode = jsoncParseTree(documentText);
-  if (!rootNode) {
-    return [];
-  }
-  const currentNode = jsoncFindNodeAtOffset(rootNode, offset, true);
-  if (!currentNode) {
-    return [];
-  }
-
   if (configProvider.isPgmConfigDocumentUri(uri)) {
-    return pgroupValueCompletions(
-      currentNode,
-      configProvider.getProcessGroupNames(),
+    const rootNode = jsoncParseTree(documentText);
+    if (!rootNode) {
+      return [];
+    }
+    const nodeLocation = jsoncGetLocation(documentText, offset);
+    const pgroupNames = configProvider.getProcessGroupNames();
+    const completions = pgroupValueCompletions(
+      rootNode,
+      offset,
+      nodeLocation,
+      pgroupNames,
     );
+    return completions;
   }
 
   // If completion for proc_grps.json file becomes necessary, add an
@@ -46,43 +48,33 @@ export function configCompletionRequest(
   return [];
 }
 
-function nodeContentRange(node: JsonNode): Range {
-  const start = node.offset + 1;
-  const end = Math.max(start, node.offset + node.length - 1);
-  return { start, end };
-}
-
 function pgroupValueCompletions(
-  node: JsonNode,
+  rootNode: JsonNode,
+  offset: number,
+  nodeLocation: jsoncLocation,
   pgroupNames: string[],
 ): CompletionItem[] {
-  if (!pgroupNames.length || node.type !== "string") {
-    return [];
-  }
-  const parentNode = node.parent;
-  if (!parentNode) {
-    return [];
-  }
-  const parentNodeChildren = parentNode.children;
   if (
-    parentNode.type !== "property" ||
-    !parentNodeChildren ||
-    !parentNodeChildren.length ||
-    parentNodeChildren[0].value !== "pgroup" ||
-    parentNodeChildren[1] !== node
+    !pgroupNames.length ||
+    nodeLocation.isAtPropertyKey ||
+    !nodeLocation.matches(["pgms", "*", "pgroup"])
   ) {
     return [];
   }
-  const range = nodeContentRange(node);
+  const nodeValue = jsoncFindNodeAtLocation(rootNode, nodeLocation.path);
+  const range: Range =
+    nodeValue?.type === "string"
+      ? { start: nodeValue.offset, end: nodeValue.offset + nodeValue.length }
+      : { start: offset, end: offset };
 
   const processGroupCompletions: CompletionItem[] = pgroupNames.map((name) => {
     return {
       label: name,
       kind: CompletionItemKind.Value,
       detail: "Process group from 'proc_grps.json'",
-      edit: { range, text: name },
+      filterText: `"${name}"`,
+      edit: { range, text: `"${name}"` },
     };
   });
-
   return processGroupCompletions;
 }
