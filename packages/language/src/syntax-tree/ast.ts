@@ -626,7 +626,7 @@ export enum UnaryOperator {
   Not,
 }
 
-export enum Boolean {
+export enum BooleanType {
   FALSE,
   TRUE,
 }

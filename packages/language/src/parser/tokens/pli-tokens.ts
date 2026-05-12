@@ -68,7 +68,7 @@ export const WriteStatementType =
   registerCombination<ast.WriteStatementType>("WriteStatementType");
 export const RewriteStatementType =
   registerCombination<ast.RewriteStatementType>("RewriteStatementType");
-export const Boolean = registerCombination<ast.Boolean>("Boolean");
+export const BooleanType = registerCombination<ast.BooleanType>("BooleanType");
 export const LocateType = registerCombination<ast.LocateType>("LocateType");
 export const OpenOptionType =
   registerCombination<ast.OpenOptionType>("OpenOptionType");
@@ -1173,7 +1173,7 @@ export const UCHAR = registerKeyword({
 });
 export const FALSE = registerKeyword({
   name: "FALSE",
-  categories: [[Boolean, ast.Boolean.FALSE]],
+  categories: [[BooleanType, ast.BooleanType.FALSE]],
 });
 export const BEGIN = registerKeyword({
   name: "BEGIN",
@@ -1321,7 +1321,7 @@ export const AREA = registerKeyword({
 });
 export const TRUE = registerKeyword({
   name: "TRUE",
-  categories: [[Boolean, ast.Boolean.TRUE]],
+  categories: [[BooleanType, ast.BooleanType.TRUE]],
 });
 export const TEXT = registerKeyword({
   name: "TEXT",

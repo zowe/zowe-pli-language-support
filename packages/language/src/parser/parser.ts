@@ -913,11 +913,11 @@ const assertStatement = rule(
 
     state.consume(element, CstNodeKind.AssertStatement_ASSERT, tokens.ASSERT);
 
-    if (state.canConsume(tokens.Boolean)) {
+    if (state.canConsume(tokens.BooleanType)) {
       const boolToken = state.consume(
         element,
         CstNodeKind.AssertStatement_Boolean,
-        tokens.Boolean,
+        tokens.BooleanType,
       );
       if (boolToken) {
         if (boolToken.image.toUpperCase() === "TRUE") {
