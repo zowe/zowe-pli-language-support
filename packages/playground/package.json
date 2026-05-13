@@ -16,30 +16,30 @@
     "dev:debug": "vite -c vite.config.ts --debug --force"
   },
   "dependencies": {
+    "@codingame/monaco-vscode-api": "~17.2.1",
+    "@codingame/monaco-vscode-configuration-service-override": "~17.2.1",
     "@codingame/monaco-vscode-editor-api": "~17.2.1",
     "@codingame/monaco-vscode-explorer-service-override": "~17.2.1",
     "@codingame/monaco-vscode-files-service-override": "~17.2.1",
     "@codingame/monaco-vscode-keybindings-service-override": "~17.2.1",
     "@codingame/monaco-vscode-markers-service-override": "~17.2.1",
+    "@codingame/monaco-vscode-outline-service-override": "~17.2.1",
     "@codingame/monaco-vscode-textmate-service-override": "~17.2.1",
     "@codingame/monaco-vscode-views-service-override": "~17.2.1",
-    "@codingame/monaco-vscode-configuration-service-override": "~17.2.1",
-    "@codingame/monaco-vscode-outline-service-override": "~17.2.1",
-    "@codingame/monaco-vscode-api": "~17.2.1",
     "lz-string": "^1.5.0",
-    "pli-language": "workspace:*",
-    "vscode-languageserver-protocol": "~3.17.5",
     "monaco-editor-wrapper": "~6.8.1",
     "monaco-languageclient": "~9.7.1",
+    "pli-language": "workspace:*",
     "vscode": "npm:@codingame/monaco-vscode-extension-api@~17.2.1",
-    "vscode-json-languageservice": "~5.4.2",
+    "vscode-json-languageservice": "~5.4.4",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1",
-    "vscode-uri": "~3.0.8",
+    "vscode-languageserver-protocol": "~3.17.5",
+    "vscode-uri": "^3.1.0",
     "vscode-ws-jsonrpc": "~3.4.0"
   },
   "devDependencies": {
-    "vite": "^7.3.1",
-    "@codingame/esbuild-import-meta-url-plugin": "~1.0.3"
+    "@codingame/esbuild-import-meta-url-plugin": "~1.0.3",
+    "vite": "^7.3.5"
   }
 }
