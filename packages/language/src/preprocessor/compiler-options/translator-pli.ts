@@ -1614,7 +1614,7 @@ translator.rule(["LP"], (option, options) => {
 });
 
 /** {@link CompilerOptions.macro} */
-translator.flag("macro", ["MACRO"], ["NOMACRO"]);
+translator.flag("macro", ["MACRO", "M"], ["NOMACRO", "NM"]);
 
 /** {@link CompilerOptions.map} */
 translator.flag("map", ["MAP"], ["NOMAP"]);
