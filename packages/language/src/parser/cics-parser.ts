@@ -42,17 +42,14 @@ export async function cicsExecStatement(
   for (const diagnostic of diagnostics) {
     state.error(diagnostic.message, state.token);
   }
-  for (const token of identifiers) {
-    if (!token.text) {
-      continue;
-    }
-    const tokenStart = startOffset + token.start;
-    const tokenEnd = startOffset + token.stop;
+  for (const identifier of identifiers) {
+    const tokenStart = startOffset + identifier.startOffset;
+    const tokenEnd = startOffset + identifier.endOffset;
     const positionStart = state.textDocument.positionAt(tokenStart);
     const positionEnd = state.textDocument.positionAt(tokenEnd);
     const pliToken = t.createTokenInstance(
-      token.text,
-      token.text,
+      identifier.name,
+      identifier.name,
       t.ID,
       tokenStart,
       positionStart.line,

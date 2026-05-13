@@ -29,11 +29,12 @@ import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
   ParseError,
+  Identifier,
 } from "./parsing";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];
-  identifiers: antlr.Token[];
+  identifiers: Identifier[];
 }
 
 export class CICSPreprocessor {

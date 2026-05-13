@@ -32,6 +32,12 @@ import { Range } from "vscode-languageserver";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 import { CicsWordContext } from "../generated/CICSParser";
 
+export interface Identifier {
+  name: string;
+  startOffset: number;
+  endOffset: number;
+}
+
 export interface ParseError {
   line: number;
   column: number;
@@ -80,11 +86,15 @@ export class CollectingErrorListener extends BaseErrorListener {
 }
 
 export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
-  readonly identifiers: Token[] = [];
+  readonly identifiers: Identifier[] = [];
   override visitCicsWord = (ctx: CicsWordContext): void => {
     const symbol = ctx.WORD_IDENTIFIER()?.getSymbol();
-    if (symbol) {
-      this.identifiers.push(symbol);
+    if (symbol && symbol.text) {
+      this.identifiers.push({
+        name: symbol.text,
+        startOffset: symbol.start,
+        endOffset: symbol.stop,
+      });
     }
   };
 }
