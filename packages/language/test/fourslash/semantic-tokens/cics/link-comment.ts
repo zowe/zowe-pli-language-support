@@ -12,10 +12,8 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// EXEC CICS <|SEND|> <|FROM|>(<|XXX:'XXX'|>) <|LENGTH|>(<|100|>);
+//// EXEC CICS <|LINK|> <|ACTIVITY|>("BOOT") <|comment:*> Hallo|>;
 
-semanticTokens.expectAt("SEND", "keyword");
-semanticTokens.expectAt("FROM", "modifier");
-semanticTokens.expectAt("XXX", "string");
-semanticTokens.expectAt("LENGTH", "modifier");
-semanticTokens.expectAt("100", "number");
+semanticTokens.expectAt("LINK", "keyword");
+semanticTokens.expectAt("ACTIVITY", "keyword");
+semanticTokens.expectAt("comment", "comment");

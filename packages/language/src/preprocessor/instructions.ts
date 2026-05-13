@@ -9,6 +9,7 @@
  *
  */
 
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 import { Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { ScanMode } from "../syntax-tree/ast";

@@ -9,6 +9,7 @@
  *
  */
 
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 import { Range } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { assertUnreachable } from "../utils/common";

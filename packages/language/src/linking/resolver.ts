@@ -41,6 +41,7 @@ import {
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { MultiMap } from "../utils/collections";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {

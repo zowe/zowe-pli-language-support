@@ -24,14 +24,12 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import {
   controlTokens,
-  ID,
   modifierTokens,
   NUMBER,
   STRING_TERM,
   Token,
 } from "../parser/tokens";
 import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
-import { tokenMatcher } from "chevrotain";
 
 export enum SemanticTokenTypes {
   variable,
@@ -82,6 +80,22 @@ export function semanticTokens(
       const comment = comments[commentIndex++];
       handleCommentTokens(textDocument, semanticTokens, comment);
     }
+
+    if (token.kind === CstNodeKind.ExecCicsStatement_COMMAND && token.element?.kind === SyntaxKind.CicsExecStatement) {
+      for (let index = 0; index < token.element.tokens.length; index++) {
+        const subToken = token.element.tokens[index];
+        const type = token.element.semanticsTokenTypes[index];
+        semanticTokens.push(
+          subToken.startLine,
+          subToken.startColumn,
+          subToken.image.length,
+          type,
+          0,
+        );
+      }
+      continue;
+    }
+
     const type = tokenType(token);
     if (type !== undefined) {
       const modifier = tokenModifier(compilationUnit, token);
@@ -206,15 +220,6 @@ function tokenType(token: Token): number | undefined {
   if (controlTokens.has(token.tokenType)) {
     return SemanticTokenTypes.keyword;
   } else if (modifierTokens.has(token.tokenType)) {
-    return SemanticTokenTypes.modifier;
-  }
-
-  // Temporary solution for semantic EXEC tokens
-  // Remove, once we support parsing CICS and SQL statements properly
-  if (
-    token.kind === CstNodeKind.EmbeddedUnknownStatement_Token &&
-    tokenMatcher(token, ID)
-  ) {
     return SemanticTokenTypes.modifier;
   }
 
