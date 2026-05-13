@@ -16,7 +16,7 @@ describe("CICS Dialect: Positives", () => {
       const { diagnostics } = await cicsPreprocessor.execute(statement);
       expect(
         diagnostics,
-        `Diagnostics for statement at line ${line}: ${statement}`,
+        `Error at line ${line}: ${diagnostics[0].message}`,
       ).toHaveLength(0);
       line++;
     }
