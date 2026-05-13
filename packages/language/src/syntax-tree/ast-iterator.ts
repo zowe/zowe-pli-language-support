@@ -960,8 +960,8 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.CicsResponseStatement:
-      break;
     case SyntaxKind.CicsVariableReference:
+    case SyntaxKind.CicsExecStatement:
       break;
     case SyntaxKind.SqlExecStatement:
       if (node.content) {
