@@ -9,7 +9,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 describe("CICS Dialect: Positives", () => {
   test("should parse statements", async () => {
     const content = await readFile(join(__dirname, "positives.txt"), "utf-8");
-    const statements = content.split("\n");
+    const statements = content.split(/\r?\n/);
     const cicsPreprocessor = new CICSPreprocessor();
     let line = 1;
     for (const statement of statements) {
