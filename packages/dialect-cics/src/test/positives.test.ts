@@ -12,7 +12,7 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { fileURLToPath } from "url";
 import { describe, expect, test } from "vitest";
-import { CICSPreprocessor } from "../preprocessor";
+import { CICSPreprocessor } from "../engine/preprocessor";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
