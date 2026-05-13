@@ -58,9 +58,9 @@ export class CICSPreprocessor {
     const tree = parser.startRule();
     tree.accept(identifierVisitor);
 
-    const diagnostics = [...lexerErrors.errors, ...parserErrors.errors].filter(
-      Boolean,
-    );
+    const diagnostics: ParseError[] = [];
+    diagnostics.push(...lexerErrors.errors);
+    diagnostics.push(...parserErrors.errors);
     return {
       diagnostics,
       identifiers: identifierVisitor.identifiers,
