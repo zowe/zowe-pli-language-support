@@ -65,27 +65,30 @@ export class CICSPreprocessor {
     const stringPattern = /^'.*'$|^".*"$/;
     const keywordPattern = /^[a-z_][a-z0-9_\-]*$/i;
     let idIndex = 0;
-    const tokens = tokenStream.getTokens()
+    const tokens = tokenStream
+      .getTokens()
       .filter((token) => token.text !== undefined)
       .map((token) => {
         let semanticsKind: SemanticsKind;
-        if (idIndex < identifierTokens.length && token.start === identifierTokens[idIndex].startOffset) {
+        if (
+          idIndex < identifierTokens.length &&
+          token.start === identifierTokens[idIndex].startOffset
+        ) {
           return identifierTokens[idIndex++];
-        } else
-          if (token.channel === COMMENTS) {
-            semanticsKind = SemanticsKind.Comment;
-          } else if (keywordPattern.test(token.text!)) {
-            semanticsKind = SemanticsKind.Keyword;
-          } else if (stringPattern.test(token.text!)) {
-            semanticsKind = SemanticsKind.String;
-          } else {
-            return undefined;
-          }
+        } else if (token.channel === COMMENTS) {
+          semanticsKind = SemanticsKind.Comment;
+        } else if (keywordPattern.test(token.text!)) {
+          semanticsKind = SemanticsKind.Keyword;
+        } else if (stringPattern.test(token.text!)) {
+          semanticsKind = SemanticsKind.String;
+        } else {
+          return undefined;
+        }
         return <Token>{
           image: token.text!,
           startOffset: token.start,
           endOffset: token.stop,
-          semanticsKind
+          semanticsKind,
         };
       })
       .filter((token): token is Token => token !== undefined)

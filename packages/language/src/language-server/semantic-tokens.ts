@@ -81,7 +81,10 @@ export function semanticTokens(
       handleCommentTokens(textDocument, semanticTokens, comment);
     }
 
-    if (token.kind === CstNodeKind.ExecCicsStatement_COMMAND && token.element?.kind === SyntaxKind.CicsExecStatement) {
+    if (
+      token.kind === CstNodeKind.ExecCicsStatement_COMMAND &&
+      token.element?.kind === SyntaxKind.CicsExecStatement
+    ) {
       for (let index = 0; index < token.element.tokens.length; index++) {
         const subToken = token.element.tokens[index];
         const type = token.element.semanticsTokenTypes[index];
