@@ -43,7 +43,7 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { FileSystemProvider } from "../workspace/file-system-provider";
 import { WorkspaceContext } from "../workspace/workspace-context";
-import { resetDocumentProviders } from "./text-documents";
+import { EditorDocuments, resetDocumentProviders } from "./text-documents";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
@@ -56,6 +56,7 @@ import {
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages } from "../utils/messages";
+import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 export { PluginConfiguration } from "./constants";
 
 export function startLanguageServer(
@@ -115,7 +116,8 @@ export function startLanguageServer(
           openClose: true,
         },
         completionProvider: {
-          triggerCharacters: [".", "%"],
+          //When updating: update also TRIGGER_CHAR_LANG.
+          triggerCharacters: [".", "%", '"'],
         },
         hoverProvider: true,
         renameProvider: true,
@@ -201,23 +203,74 @@ export function startLanguageServer(
       },
     );
   });
+  type LANG_LIST = "pli" | "config";
+  const TRIGGER_CHAR_LANG: Record<string, LANG_LIST> = {
+    // PLI
+    ".": "pli",
+    "%": "pli",
+    // CONFIG
+    '"': "config",
+  };
+  function selectCompletionMode(
+    triggerChar: string | undefined,
+    docUri: string,
+  ): LANG_LIST | undefined {
+    const isConfigDocument = workspace.config.isPluginConfigDocumentUri(docUri);
+    const triggerLang = triggerChar
+      ? TRIGGER_CHAR_LANG[triggerChar]
+      : undefined;
+    if (
+      (triggerLang === "config" && !isConfigDocument) ||
+      (triggerLang === "pli" && isConfigDocument)
+    ) {
+      return;
+    }
+    if (isConfigDocument) {
+      return "config";
+    } else {
+      return "pli";
+    }
+  }
   connection.onCompletion(async (params) => {
+    const docUri = UriUtils.toUri(params.textDocument.uri);
     const position = params.position;
-    return withReadMutex(
+    const completionMode = selectCompletionMode(
+      params.context?.triggerCharacter,
       params.textDocument.uri,
-      async (uri, compilationUnit) => {
-        const textDocument = compilationUnit?.services.files.getDocument(uri);
-        if (!textDocument || !compilationUnit) {
-          return [];
-        }
-        const offset = textDocument.offsetAt(position);
-        const result = completionRequest(compilationUnit, uri, offset).map(
-          (completionItem) => completionItemToLSP(textDocument, completionItem),
-        );
-
-        return result;
-      },
     );
+    if (!completionMode) {
+      return [];
+    } else if (completionMode === "pli") {
+      return withReadMutex(
+        params.textDocument.uri,
+        async (uri, compilationUnit) => {
+          const textDocument = compilationUnit?.services.files.getDocument(uri);
+          if (!textDocument || !compilationUnit) {
+            return [];
+          }
+          const offset = textDocument.offsetAt(position);
+          const result = completionRequest(compilationUnit, uri, offset).map(
+            (completionItem) =>
+              completionItemToLSP(textDocument, completionItem),
+          );
+          return result;
+        },
+      );
+    } else {
+      const textDocument = await EditorDocuments.get(docUri);
+      if (!textDocument) {
+        return [];
+      }
+      const offset = textDocument.offsetAt(position);
+      return configCompletionRequest(
+        workspace.config,
+        textDocument.getText(),
+        offset,
+        docUri,
+      ).map((completionItem) =>
+        completionItemToLSP(textDocument, completionItem),
+      );
+    }
   });
   connection.onDefinition(async (params) => {
     const position = params.position;
