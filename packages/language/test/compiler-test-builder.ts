@@ -17,27 +17,21 @@ import {
   File,
   Diagnostic as ListDiagnostic,
 } from "./list-file";
-import {
-  createTestFiles,
-  extractIndices,
-  extractRanges,
-  PliTestFile,
-  TestFile,
-  TestIndex,
-  TestRange,
-} from "./utils";
+import { PliTestFile } from "./utils";
 import { parseListFile } from "./list-file-parser";
 import { UriUtils } from "../src/utils/uri";
 import { tokenize } from "../src/parser/tokenizer";
-import { isPLICode, PLICodes } from "../src/validation/pli-codes";
-import { DiagnosticExpectation, Label } from "./test-builder";
-import { fullCode, Severity } from "../src/language-server/types";
+import { PLICodes } from "../src/validation/pli-codes";
+import { Severity } from "../src/language-server/types";
+import {
+  AbstractTestBuilder,
+  DiagnosticExpectation,
+  DiagnosticLike,
+  Label,
+} from "./abstract-test-builder";
 
-export class CompilerTestBuilder {
-  private files: Map<string, TestFile> = new Map();
+export class CompilerTestBuilder extends AbstractTestBuilder {
   private listing!: ListFile;
-  private indices!: Record<string, TestIndex[]>;
-  private ranges!: Record<string, TestRange[]>;
 
   private async init(files: PliTestFile[], outputDir: string): Promise<void> {
     // The path of the listing is always the path to the main .pli file but with a .list extension
@@ -49,9 +43,7 @@ export class CompilerTestBuilder {
     const listingContent = await fs.readFile(outputListing, "utf-8");
     const listFileContent = parseListFile(listingContent);
     this.listing = fromParsedListFile(listFileContent);
-    this.files = createTestFiles(files);
-    this.indices = extractIndices(this.files);
-    this.ranges = extractRanges(this.files);
+    this.initMarkerState(files);
   }
 
   static async create(
@@ -92,15 +84,7 @@ export class CompilerTestBuilder {
     for (const [label, indices] of Object.entries(this.indices)) {
       for (const index of indices) {
         const position = this.deriveFilePosition(index.uri, index.offset);
-        const ranges = this.ranges[label];
-        if (!ranges || ranges.length === 0) {
-          throw new Error(`No ranges found for label ${label}`);
-        } else if (ranges.length > 1) {
-          throw new Error(
-            `Multiple ranges found for label ${label}, expected only one.`,
-          );
-        }
-        const range = ranges[0];
+        const range = this.resolveSingleRange(label);
         const target = this.deriveFilePosition(range.uri, range.start);
         this.expectLink(position, target);
       }
@@ -149,15 +133,10 @@ export class CompilerTestBuilder {
     if (!sourceFile) {
       throw new Error(`File with URI ${uri} not found in source files.`);
     }
-    const line = this.getLine(sourceFile, offset);
     return {
       file: listingFile,
-      line,
+      line: this.offsetToLine(sourceFile, offset),
     };
-  }
-
-  private getLine(sourceFile: TestFile, offset: number): number {
-    return sourceFile.output.slice(0, offset).split("\n").length;
   }
 
   private findListingFile(uri: string): File | undefined {
@@ -170,81 +149,50 @@ export class CompilerTestBuilder {
 
   noDiagnostics(): void {
     if (this.listing.diagnostics.length > 0) {
-      const messages = this.generateDiagnosticsErrorMessage(
-        this.listing.diagnostics,
-      );
+      const messages = this.formatDiagnostics(this.listing.diagnostics);
       throw new Error(`Expected no diagnostics, but got:\n${messages}`);
     }
   }
 
   expectDiagnosticsAt(label: Label, diagnostics: DiagnosticExpectation): void {
-    if (Array.isArray(label)) {
-      for (const l of label) {
-        this.expectDiagnosticsAt(l, diagnostics);
-      }
-      return;
-    }
-    if (typeof label === "number") {
-      label = label.toString();
-    }
-    const ranges = this.ranges[label];
-    if (!ranges || ranges.length === 0) {
-      throw new Error(`No range found for label ${label}`);
-    } else if (ranges.length > 1) {
-      throw new Error(
-        `Multiple ranges found for label ${label}, expected only one.`,
-      );
-    }
-    const range = ranges[0];
-    const file = this.files.get(range.uri);
-    if (!file) {
-      throw new Error(`File with URI ${range.uri} not found in source files.`);
-    }
-    const line = this.getLine(file, range.start);
-    const diagnosticsAtLine = this.listing.getDiagnostics(line);
-    const diagnosticsArray = Array.isArray(diagnostics)
+    const expectedArray = Array.isArray(diagnostics)
       ? diagnostics
       : [diagnostics];
-    const expectedDiagnostics = diagnosticsArray.map((diag) => {
-      if (isPLICode(diag)) {
-        return { code: fullCode(diag) };
-      }
-      return diag;
-    });
-    if (diagnosticsAtLine.length !== expectedDiagnostics.length) {
-      const messages = this.generateDiagnosticsErrorMessage(diagnosticsAtLine);
-      throw new Error(
-        `Expected ${expectedDiagnostics.length} diagnostics at label ${label}, but got ${diagnosticsAtLine.length}:\n${messages}`,
-      );
-    }
-    for (const expected of expectedDiagnostics) {
-      const match = diagnosticsAtLine.find((diag) => {
-        // Compute the full code as the code plus severity
-        const fullDiagCode = diag.code + Severity[diag.severity];
-        if (expected.code && fullDiagCode !== expected.code) {
-          return false;
-        }
-        if (expected.severity && diag.severity !== expected.severity) {
-          return false;
-        }
-        if (
-          expected.message &&
-          (typeof expected.message === "string"
-            ? diag.message === expected.message
-            : expected.message.test(diag.message))
-        ) {
-          return false;
-        }
-        return true;
-      });
-      if (!match) {
-        const messages =
-          this.generateDiagnosticsErrorMessage(diagnosticsAtLine);
+
+    this.forEachLabel(label, (l) => {
+      const range = this.resolveSingleRange(l);
+      const file = this.files.get(range.uri);
+      if (!file) {
         throw new Error(
-          `Expected diagnostic not found at label ${label}:\n${messages}`,
+          `File with URI ${range.uri} not found in source files.`,
         );
       }
-    }
+      const line = this.offsetToLine(file, range.start);
+      const actual = this.listing.getDiagnostics(line).map(toDiagnosticLike);
+
+      if (actual.length !== expectedArray.length) {
+        const messages = this.formatDiagnostics(
+          this.listing.getDiagnostics(line),
+        );
+        throw new Error(
+          `Expected ${expectedArray.length} diagnostics at label ${l}, but got ${actual.length}:\n${messages}`,
+        );
+      }
+
+      for (const expected of expectedArray) {
+        const match = actual.some((a) =>
+          this.diagnosticMatchesExpectation(a, expected),
+        );
+        if (!match) {
+          const messages = this.formatDiagnostics(
+            this.listing.getDiagnostics(line),
+          );
+          throw new Error(
+            `Expected diagnostic not found at label ${l}: ${this.formatExpectedDiagnostic(expected)}\nActual:\n${messages}`,
+          );
+        }
+      }
+    });
   }
 
   noParserDiagnostics(): void {
@@ -282,14 +230,12 @@ export class CompilerTestBuilder {
       parserCodes.includes(diag.code),
     );
     if (parserDiagnostics.length > 0) {
-      const messages = this.generateDiagnosticsErrorMessage(parserDiagnostics);
+      const messages = this.formatDiagnostics(parserDiagnostics);
       throw new Error(`Expected no parser diagnostics, but got:\n${messages}`);
     }
   }
 
-  private generateDiagnosticsErrorMessage(
-    diagnostics: ListDiagnostic[],
-  ): string {
+  private formatDiagnostics(diagnostics: ListDiagnostic[]): string {
     return diagnostics
       .map(
         (msg) =>
@@ -297,4 +243,17 @@ export class CompilerTestBuilder {
       )
       .join("\n");
   }
+}
+
+/**
+ * Adapt a listing diagnostic to the structural shape consumed by the shared matcher.
+ * The compiler doesn't distinguish severity in the diagnostic code itself, so we
+ * synthesize the full code (`code + Severity`) the way fourslash tests express it.
+ */
+function toDiagnosticLike(diag: ListDiagnostic): DiagnosticLike {
+  return {
+    code: diag.code + Severity[diag.severity],
+    severity: diag.severity,
+    message: diag.message,
+  };
 }

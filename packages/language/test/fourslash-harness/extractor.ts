@@ -23,26 +23,26 @@ export async function extractCompilerTestFiles(
   const wrappers = getWrappers();
   const files = getTestFiles();
   const failures: string[] = [];
-  for (const file of files) {
-    const fullPath = path.join(fourslashPath, file);
-    const testFile = await parseHarnessTestFile(file, fullPath, {
+  for (const relativeFile of files) {
+    const fullPath = path.join(fourslashPath, relativeFile);
+    const testFile = await parseHarnessTestFile(relativeFile, fullPath, {
       wrappers,
     });
     if (testFile.tags["compiler"] !== "true") {
       if (testFile.tags["compiler"] === "fail") {
-        failures.push(file);
+        failures.push(relativeFile);
       }
       continue; // Only extract compiler tests
     }
     // Target path for the generated workspace - based on the test path/name
-    let testTargetPath = path.join(targetDir, file);
+    let testTargetPath = path.join(targetDir, relativeFile);
     if (testTargetPath.endsWith(".ts")) {
       testTargetPath = testTargetPath.slice(0, -3);
     }
     const entries = Array.from(testFile.files.entries());
     const [[firstFileUri]] = entries;
     if (!firstFileUri) {
-      console.warn(`No files found in test ${file}`);
+      console.warn(`No files found in test ${relativeFile}`);
       continue;
     }
     const firstFilePath = UriUtils.toFilePath(firstFileUri);
@@ -58,7 +58,7 @@ export async function extractCompilerTestFiles(
       await fs.promises.mkdir(targetDirPath, { recursive: true });
       await fs.promises.writeFile(targetPath, fileContent);
     }
-    console.log(`Extracted test ${file}`);
+    console.log(`Extracted test ${relativeFile}`);
   }
   if (failures.length) {
     console.warn(

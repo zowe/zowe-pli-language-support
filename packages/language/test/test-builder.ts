@@ -19,9 +19,6 @@ import {
   Range,
 } from "../src/language-server/types";
 import {
-  createTestFiles,
-  extractIndices,
-  extractRanges,
   MatchingDiagnosticsResult,
   parseAndLink,
   PliTestFile,
@@ -62,28 +59,16 @@ import { UriUtils } from "../src/utils/uri";
 import { applyQuickFixes } from "../src/language-server/code-actions/apply-quick-fixes";
 import { signatureHelpRequest } from "../src/language-server/signature-help-request";
 import { assertType } from "../src/preprocessor/util";
+import {
+  AbstractTestBuilder,
+  DiagnosticExpectation,
+  Label,
+  TestDiagnostic,
+} from "./abstract-test-builder";
 
-export type Label = string | number | string[] | number[];
+export type { DiagnosticExpectation, Label, TestDiagnostic };
 
 export const DEFAULT_FILE_URI = "file:///main.pli";
-
-/**
- * Extended Diagnostic type that allows RegExp for message field in tests.
- * This enables more flexible message matching that is less brittle to, e.g., parser changes.
- */
-export type TestDiagnostic = Omit<Partial<Diagnostic>, "message"> & {
-  message?: string | RegExp;
-};
-
-/**
- * Type for diagnostic expectations in tests.
- * Accepts TestDiagnostic (with optional RegExp message), PLICode, or arrays of either.
- */
-export type DiagnosticExpectation =
-  | TestDiagnostic
-  | TestDiagnostic[]
-  | PLICode
-  | PLICode[];
 
 type Path = string;
 export type LocationOverride = {
@@ -124,19 +109,9 @@ export type ExpectedCompletion = {
   excludes?: string[];
 };
 
-type TestFile = {
-  output: string;
-  indices: Record<string, TestIndex[]>;
-  ranges: Record<string, TestRange[]>;
-  textDocument: TextDocument;
-};
-
-export class TestBuilder {
+export class TestBuilder extends AbstractTestBuilder {
   private unit!: CompilationUnit;
-  private files: Map<string, TestFile> = new Map();
   private output!: string;
-  private indices!: Record<string, TestIndex[]>;
-  private ranges!: Record<string, TestRange[]>;
   private diagnostics!: Diagnostic[];
   private options: TestBuilderOptions;
 
@@ -180,9 +155,10 @@ export class TestBuilder {
     textOrFiles: string | PliTestFile | PliTestFile[],
     options: TestBuilderOptions = {},
   ) {
+    super();
     this.options = options;
 
-    this.files = createTestFiles(TestBuilder.getFiles(textOrFiles));
+    this.initMarkerState(TestBuilder.getFiles(textOrFiles));
   }
 
   get not(): TestBuilder {
@@ -215,8 +191,6 @@ export class TestBuilder {
 
     const [[firstFileUri, firstFile]] = this.files.entries();
     this.output = firstFile.output;
-    this.indices = extractIndices(this.files);
-    this.ranges = extractRanges(this.files);
     this.unit = await parseAndLink(this.output, {
       validate: this.options.validate,
       uri: UriUtils.toUri(firstFileUri),
@@ -692,74 +666,6 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     };
   }
 
-  /**
-   * Check if a diagnostic matches an expected diagnostic specification.
-   * Supports RegExp patterns for string fields (e.g., message).
-   */
-  private diagnosticMatchesExpectation(
-    actual: Diagnostic,
-    expected: TestDiagnostic | PLICode,
-  ): boolean {
-    if (isPLICode(expected)) {
-      return actual.code === fullCode(expected);
-    }
-
-    for (const key of Object.keys(expected)) {
-      const expectedValue = (expected as any)[key];
-      const actualValue = (actual as any)[key];
-
-      if (typeof expectedValue === "object" && expectedValue !== null) {
-        // Check if it is a RegExp. We cannot use instance of here,
-        // because the RegExp might come from a different context.
-        if (typeof expectedValue.test === "function") {
-          if (
-            typeof actualValue !== "string" ||
-            !expectedValue.test(actualValue)
-          ) {
-            return false;
-          }
-        } else {
-          // It is a plain object: check deep equality
-          if (JSON.stringify(actualValue) !== JSON.stringify(expectedValue)) {
-            return false;
-          }
-        }
-      } else {
-        // Check primitive
-        if (actualValue !== expectedValue) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Format an expected diagnostic for display in error messages.
-   * Properly handles RegExp objects by converting them to strings.
-   */
-  private formatExpectedDiagnostic(expected: TestDiagnostic | PLICode): string {
-    if (isPLICode(expected)) {
-      return `code: ${fullCode(expected)}`;
-    }
-
-    const parts: string[] = [];
-    for (const key of Object.keys(expected)) {
-      const value = (expected as any)[key];
-
-      if (typeof value === "object" && value !== null) {
-        if (typeof value.test === "function") {
-          parts.push(`${key}: ${value.toString()}`);
-        } else {
-          parts.push(`${key}: ${JSON.stringify(value)}`);
-        }
-      } else {
-        parts.push(`${key}: ${JSON.stringify(value)}`);
-      }
-    }
-    return `{ ${parts.join(", ")} }`;
-  }
-
   expectExclusiveDiagnosticsAt(
     label: string,
     diagnostics: DiagnosticExpectation,
@@ -805,45 +711,37 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     label: Label,
     diagnostics: DiagnosticExpectation,
   ): TestBuilder {
-    if (Array.isArray(label)) {
-      for (const l of label) {
-        this.expectDiagnosticsAt(l, diagnostics);
-      }
-      return this;
-    }
-    if (typeof label === "number") {
-      label = label.toString();
-    }
-
     const diagnosticsArray = Array.isArray(diagnostics)
       ? diagnostics
       : [diagnostics];
 
-    const { exactMatches, containingMatches } =
-      this.getMatchingDiagnostics(label);
+    this.forEachLabel(label, (l) => {
+      const { exactMatches, containingMatches } =
+        this.getMatchingDiagnostics(l);
 
-    const getMessage = () => {
-      if (containingMatches.length > 0) {
-        return `At label "${label}" (${this.createLabelRangeMessage(label)}), but also contains other diagnostics: ${JSON.stringify(containingMatches, null, 2)}`;
-      } else {
-        return `At label "${label}" (${this.createLabelRangeMessage(label)})`;
-      }
-    };
+      const getMessage = () => {
+        if (containingMatches.length > 0) {
+          return `At label "${l}" (${this.createLabelRangeMessage(l)}), but also contains other diagnostics: ${JSON.stringify(containingMatches, null, 2)}`;
+        } else {
+          return `At label "${l}" (${this.createLabelRangeMessage(l)})`;
+        }
+      };
 
-    // Check both exactMatches and containingMatches since the diagnostic range
-    // might not exactly match the label range (especially for parser errors)
-    for (const expected of diagnosticsArray) {
-      const allMatches = [...exactMatches, ...containingMatches];
-      const found = allMatches.some((actual) =>
-        this.diagnosticMatchesExpectation(actual, expected),
-      );
-
-      if (!found) {
-        fail(
-          `${getMessage()}\n\nExpected diagnostic not found:\n${this.formatExpectedDiagnostic(expected)}\n\nActual diagnostics:\n${JSON.stringify(allMatches, null, 2)}`,
+      // Check both exactMatches and containingMatches since the diagnostic range
+      // might not exactly match the label range (especially for parser errors)
+      for (const expected of diagnosticsArray) {
+        const allMatches = [...exactMatches, ...containingMatches];
+        const found = allMatches.some((actual) =>
+          this.diagnosticMatchesExpectation(actual, expected),
         );
+
+        if (!found) {
+          fail(
+            `${getMessage()}\n\nExpected diagnostic not found:\n${this.formatExpectedDiagnostic(expected)}\n\nActual diagnostics:\n${JSON.stringify(allMatches, null, 2)}`,
+          );
+        }
       }
-    }
+    });
 
     return this;
   }
