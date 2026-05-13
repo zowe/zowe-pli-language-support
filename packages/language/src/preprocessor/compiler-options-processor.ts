@@ -154,7 +154,7 @@ export class CompilerOptionsProcessor {
       index + n < text.length ? text.charCodeAt(index + n) : -1;
 
     const consumeLine = () => {
-      while (index < text.length && text.charCodeAt(index) != 10) {
+      while (index < text.length && text.charCodeAt(index) != LF) {
         index++;
       }
       if (index < text.length) {
@@ -237,7 +237,7 @@ export class CompilerOptionsProcessor {
         }
       }
 
-      if (code == 10) {
+      if (code == LF) {
         consumeLine();
         continue;
       }
@@ -299,6 +299,7 @@ const SEMICOLON = ";".charCodeAt(0);
 const SPACE = " ".charCodeAt(0);
 const SINGLE_QUOTE = "'".charCodeAt(0);
 const DOUBLE_QUOTE = '"'.charCodeAt(0);
+const LF = "\n".charCodeAt(0);
 
 const P = "p".charCodeAt(0);
 const R = "r".charCodeAt(0);
