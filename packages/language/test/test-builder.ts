@@ -195,7 +195,26 @@ export class TestBuilder extends AbstractTestBuilder {
       validate: this.options.validate,
       uri: UriUtils.toUri(firstFileUri),
     });
+    // Register every test file's document with the compilation unit's file
+    // store. This lets LSP conversions (e.g. diagnosticToLSP) resolve
+    // diagnostics that target non-PL/I files such as the plugin
+    // configuration JSON, which are otherwise not part of the unit.
+    for (const [uri, file] of this.files) {
+      if (!this.unit.services.files.has(uri)) {
+        this.unit.services.files.set({
+          uri: UriUtils.toUri(uri),
+          tokens: [],
+          comments: [],
+          textDocument: file.textDocument,
+        });
+      }
+    }
     this.diagnostics = this.unit.diagnostics.getAll();
+    const configDiagnostics =
+      defaultTestWorkspace().config.getConfigInternalDiagnostics();
+    for (const diagnostic of configDiagnostics) {
+      this.diagnostics.push(...diagnostic[1]);
+    }
     this.checkDiagnosticsURIs();
 
     // After the test-builder is done, clear the workspace's plugin configuration
@@ -250,23 +269,44 @@ export class TestBuilder extends AbstractTestBuilder {
    * so that we can build $computedLibs correctly
    */
   private async configurePluginConfigurationProvider() {
-    let hasProgramConfig = false;
-    let hasProcessGroupConfig = false;
+    let pgmConfUri: string | undefined;
+    let procGrpsUri: string | undefined;
+    let pgmConfOutput: string | undefined;
+    let procGrpsOutput: string | undefined;
 
-    // check if the files contain a program config or process group.
     for (const [uri, file] of this.files) {
       if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
-        hasProgramConfig = defaultTestWorkspace().config.parseProgramConfigs(
-          UriUtils.toUri(""),
-          file.output,
-        );
+        pgmConfUri = uri;
+        pgmConfOutput = file.output;
       }
       if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
-        await defaultTestWorkspace().config.parseProcessGroupConfigs(
-          file.output,
-        );
-        hasProcessGroupConfig = true;
+        procGrpsUri = uri;
+        procGrpsOutput = file.output;
       }
+    }
+    if (pgmConfUri && procGrpsUri) {
+      await defaultTestWorkspace().config.init(
+        UriUtils.toUri(
+          pgmConfUri.replace(PluginConfiguration.PROGRAM_FILE_PATH, ""),
+        ),
+      );
+      return;
+    }
+
+    // check if the files contain a program config or process group.
+    const hasProgramConfig = !!(
+      pgmConfOutput &&
+      defaultTestWorkspace().config.parseProgramConfigs(
+        UriUtils.toUri(""),
+        pgmConfOutput,
+      )
+    );
+    let hasProcessGroupConfig = false;
+    if (procGrpsOutput) {
+      await defaultTestWorkspace().config.parseProcessGroupConfigs(
+        procGrpsOutput,
+      );
+      hasProcessGroupConfig = true;
     }
 
     // add program config if not present on disc
@@ -405,7 +445,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
         )
         .map(([uri, diagnostic]) => ({
           uri: uri!,
-          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace()),
+          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace(), uri),
         }));
       codeActions = [];
       for (const { uri, actions } of asyncActionsByUri) {

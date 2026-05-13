@@ -42,6 +42,7 @@ import { type JSONPath } from "../utils/jsonc";
 import { LspCodes } from "../validation/lsp-codes";
 import { Connection } from "vscode-languageserver";
 import { startLongRunningOperation } from "../utils/promises";
+import { validatePgroupReferences } from "../config/cross-validation";
 
 // Re-export the schema types so existing imports of the provider module
 // keep working without churn at every call site.
@@ -134,7 +135,8 @@ export function deserializeProcessGroup(
   };
 }
 
-export type PluginConfigDiagnostics = Map<string, LspDiagnostic[]>;
+export type PluginConfigLspDiagnostics = Map<string, LspDiagnostic[]>;
+export type PluginConfigInternalDiagnostics = Map<string, Diagnostic[]>;
 
 type ProcGrpsSnapshot = {
   entries: PluginConfigUnresolvedLibData[];
@@ -181,6 +183,13 @@ export class PluginConfigurationProvider {
   private lastProcGrpsSnapshot?: ProcGrpsSnapshot;
 
   /**
+   * Most recent config diagnostics from the last loadConfigurations() run
+   */
+  private configLspDiagnostics: PluginConfigLspDiagnostics;
+
+  private configInternalDiagnostics: PluginConfigInternalDiagnostics;
+
+  /**
    * File system provider this configuration loads through. Injected at
    * construction so the provider has no dependency on a global FS singleton.
    */
@@ -199,6 +208,8 @@ export class PluginConfigurationProvider {
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
+    this.configLspDiagnostics = new Map<string, LspDiagnostic[]>();
+    this.configInternalDiagnostics = new Map<string, Diagnostic[]>();
   }
 
   /**
@@ -209,12 +220,23 @@ export class PluginConfigurationProvider {
   }
 
   /**
+   * Returns the stored config diagnostics for both 'proc_grps.json' and 'pgm_conf.json' files.
+   */
+  public getConfigLspDiagnostics(): ReadonlyMap<string, LspDiagnostic[]> {
+    return this.configLspDiagnostics;
+  }
+
+  public getConfigInternalDiagnostics(): ReadonlyMap<string, Diagnostic[]> {
+    return this.configInternalDiagnostics;
+  }
+
+  /**
    * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
    *
    * @param workspacePath The full path to the workspace to load plugin configurations from
    * @returns Diagnostics keyed by config URI
    */
-  public async init(workspacePath: URI): Promise<PluginConfigDiagnostics> {
+  public async init(workspacePath: URI): Promise<PluginConfigLspDiagnostics> {
     this.workspacePath = workspacePath;
     return this.loadConfigurations();
   }
@@ -298,7 +320,7 @@ export class PluginConfigurationProvider {
    *
    * @returns Diagnostics keyed by config URI
    */
-  public async reloadConfigurations(): Promise<PluginConfigDiagnostics> {
+  public async reloadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     console.log("Reloading .pliplugin configurations...");
     return this.loadConfigurations();
   }
@@ -308,24 +330,46 @@ export class PluginConfigurationProvider {
    *
    * @returns Diagnostics keyed by config URI
    */
-  private async loadConfigurations(): Promise<PluginConfigDiagnostics> {
+  private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
 
     const cancel = startLongRunningOperation(
       this.connection,
       "Processing plugin configuration...",
     );
-    const programConfigDiagnostics = await this.loadProgramConfig(
-      UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
-    );
+    const { diagnostics: programConfigDiagnostics, document } =
+      await this.loadProgramConfig(
+        UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
+      );
     const processGroupDiagnostics = await this.loadProcessGroupConfig(
       UriUtils.joinPath(workspaceUri, ".pliplugin", "proc_grps.json"),
     );
+    let unknownProcessGroupsDiagnostic: Diagnostic[] = [];
+    if (document && this.processGroupConfigs.size) {
+      // Check for unknown process groups references under "pgm_conf.json"
+      const pgroupNames = new Set(this.getProcessGroupNames());
+      const pgroupReferences: Iterable<ProgramConfig> =
+        this.programConfigs.values();
+      unknownProcessGroupsDiagnostic = validatePgroupReferences(
+        pgroupReferences,
+        pgroupNames,
+        document.uri,
+      );
+      for (const diagnostic of unknownProcessGroupsDiagnostic) {
+        const lspDiag = toLspDiagnostic(diagnostic, document);
+        programConfigDiagnostics.push(lspDiag);
+      }
+    }
     cancel();
-    return new Map<string, LspDiagnostic[]>([
+
+    this.configInternalDiagnostics = new Map<string, Diagnostic[]>([
+      [this.getConfigUri("pgm_conf.json"), unknownProcessGroupsDiagnostic],
+    ]);
+    this.configLspDiagnostics = new Map<string, LspDiagnostic[]>([
       [this.getConfigUri("pgm_conf.json"), programConfigDiagnostics],
       [this.getConfigUri("proc_grps.json"), processGroupDiagnostics],
     ]);
+    return this.configLspDiagnostics;
   }
 
   /**
@@ -334,7 +378,7 @@ export class PluginConfigurationProvider {
    */
   private async loadProgramConfig(
     programConfigUri: URI,
-  ): Promise<LspDiagnostic[]> {
+  ): Promise<{ diagnostics: LspDiagnostic[]; document?: TextDocument }> {
     const diagnostics: LspDiagnostic[] = [];
     // attempt to read configs
     if (await this.fs.fileExists(programConfigUri)) {
@@ -351,7 +395,13 @@ export class PluginConfigurationProvider {
         ) {
           console.error("Failed to load program config, skipping.");
         } else {
-          return diagnostics;
+          const document = TextDocument.create(
+            programConfigUri.toString(),
+            "jsonc",
+            0,
+            progConfig.toString(),
+          );
+          return { diagnostics, document };
         }
       } else {
         console.warn("No program config found.");
@@ -361,7 +411,7 @@ export class PluginConfigurationProvider {
     // clear otherwise, no valid program config to use
     this.programConfigs.clear();
     console.warn("No program config found, clearing existing configurations.");
-    return diagnostics;
+    return { diagnostics, document: undefined };
   }
 
   /**
