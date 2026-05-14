@@ -1,55 +1,62 @@
-name: Deploy PR preview
-
-permissions:
-  pages: write
-  id-token: write
-  contents: write
+name: Build PR Preview
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - reopened
       - synchronize
       - closed
 
-concurrency: preview-${{ github.ref }}
+concurrency: preview-build-${{ github.ref }}
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  preview:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
+      - name: Save PR metadata
+        run: |
+          mkdir -p /tmp/pr-meta
+          echo "${{ github.event.action }}" > /tmp/pr-meta/action
+          echo "${{ github.event.number }}" > /tmp/pr-meta/number
+
       - name: Checkout
+        if: github.event.action != 'closed'
         uses: actions/checkout@v4
-        with:
-          # Actually checkout the PR branch
-          ref: ${{ github.event.pull_request.head.sha }}
+
       - name: Install pnpm
         if: github.event.action != 'closed'
         uses: pnpm/action-setup@v4
         with:
           version: 9
+
       - name: Use Node.js
         if: github.event.action != 'closed'
         uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
+
       - name: Build PR Preview
         if: github.event.action != 'closed'
         run: |
           pnpm install --frozen-lockfile
           pnpm build
           pnpm playground
-      - uses: rossjrw/pr-preview-action@v1.6.0
+
+      - name: Upload preview artifact
+        if: github.event.action != 'closed'
+        uses: actions/upload-artifact@v4
         with:
-          source-dir: ./packages/playground/out
-          preview-branch: previews
-          umbrella-dir: pr
-          token: ${{ secrets.PREVIEW_PAT_TOKEN }}
+          name: pr-preview
+          path: ./packages/playground/out
+
+      - name: Upload PR metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-meta
+          path: /tmp/pr-meta

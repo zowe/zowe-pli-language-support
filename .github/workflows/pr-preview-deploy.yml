@@ -1,0 +1,74 @@
+name: Deploy PR Preview
+
+on:
+  workflow_run:
+    workflows:
+      - Build PR Preview
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: preview-deploy-${{ github.event.workflow_run.head_branch }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only deploy when the build succeeded (skipped steps on 'closed' still succeed)
+    if: github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: pull-request-preview
+      url: ${{ steps.deployment.outputs.deployment-url }}
+    steps:
+      - name: Download PR metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-meta
+          path: /tmp/pr-meta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read PR metadata
+        id: pr-meta
+        run: |
+          echo "action=$(cat /tmp/pr-meta/action)" >> "$GITHUB_OUTPUT"
+          echo "number=$(cat /tmp/pr-meta/number)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout base repo
+        uses: actions/checkout@v4
+
+      - name: Download preview artifact
+        if: steps.pr-meta.outputs.action != 'closed'
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-preview
+          path: ./packages/playground/out
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Deploy or remove PR preview
+        uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9 #v1.8.1
+        with:
+          source-dir: ./packages/playground/out
+          preview-branch: previews
+          umbrella-dir: pr
+          token: ${{ secrets.PREVIEW_PAT_TOKEN }}
+          action: ${{ steps.pr-meta.outputs.action == 'closed' && 'remove' || 'deploy' }}
+          pr-number: ${{ steps.pr-meta.outputs.number }}
+          # TODO
+          # Temporarily disable built-in comment since it doesn't support workflow_run
+          # Workaround until upstream fix is merged: https://github.com/rossjrw/pr-preview-action/pull/131
+          comment: false
+      - name: Leave a comment on the PR
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        with:
+          header: pr-preview
+          number: ${{ steps.pr.outputs.number }}
+          message: |
+            :rocket: Deployed preview to ${{ steps.deployment.outputs.deployment-url }}
