@@ -76,12 +76,12 @@ export class CICSPreprocessor {
           return identifierTokens[idIndex++];
         } else if (token.channel === COMMENTS) {
           semanticsKind = SemanticsKind.Comment;
-        } else if (keywordPattern.test(token.text!)) {
-          semanticsKind = SemanticsKind.Keyword;
         } else if (token.type === CICSLexer.NONNUMERICLITERAL) {
           semanticsKind = SemanticsKind.String;
         } else if (token.type === CICSLexer.NUMERICLITERAL) {
           semanticsKind = SemanticsKind.Number;
+        } else if (keywordPattern.test(token.text!)) {
+          semanticsKind = SemanticsKind.Keyword;
         } else {
           return undefined;
         }

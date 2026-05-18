@@ -215,12 +215,10 @@ function generateExecInstruction(
   return {
     kind: inst.InstructionKind.ExecStatement,
     preprocessorType: stmt.preprocessorType,
-    variables: stmt.tokens
-      .filter(
-        (_, index) => stmt.semanticTypes[index] === SemanticTokenTypes.variable,
-      )
+    variables: stmt.dialectTokens
+      .filter((t) => t.semanticType === SemanticTokenTypes.variable)
       .map(
-        (token) =>
+        ({ token }) =>
           <inst.ExecVariableInstruction>{
             kind: inst.InstructionKind.ExecVariable,
             token,

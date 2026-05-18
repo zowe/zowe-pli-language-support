@@ -517,10 +517,9 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
   if (token && token.kind === CstNodeKind.ExecStatement_ExecFragment) {
     const element = token.element;
     if (element && element.kind === SyntaxKind.ExecStatement) {
-      const hostVariableReferences = element.tokens.filter(
-        (_, index) =>
-          element.semanticTypes[index] === SemanticTokenTypes.variable,
-      );
+      const hostVariableReferences = element.dialectTokens
+        .filter((t) => t.semanticType === SemanticTokenTypes.variable)
+        .map(({ token }) => token);
       token = binaryTokenSearch(hostVariableReferences, offset);
     }
   }

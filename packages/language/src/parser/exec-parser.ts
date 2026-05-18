@@ -72,7 +72,6 @@ export async function execStatement(
       positionEnd.character,
       URI.parse(textDocument.uri.toString()),
     );
-    execStatement.tokens.push(pliToken);
 
     let semanticType: SemanticTokenTypes = SemanticTokenTypes.modifier;
     switch (token.semanticsKind) {
@@ -92,7 +91,8 @@ export async function execStatement(
         semanticType = SemanticTokenTypes.string;
         break;
     }
-    execStatement.semanticTypes.push(semanticType);
+
+    execStatement.dialectTokens.push({ token: pliToken, semanticType });
   }
   state.consume(
     execStatement,
