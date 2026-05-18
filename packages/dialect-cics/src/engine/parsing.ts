@@ -37,6 +37,7 @@ export enum SemanticsKind {
   Keyword,
   String,
   Comment,
+  Number,
 }
 
 export interface Token {

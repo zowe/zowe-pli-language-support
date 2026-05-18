@@ -62,7 +62,6 @@ export class CICSPreprocessor {
     tree.accept(identifierVisitor);
 
     const identifierTokens = identifierVisitor.identifiers;
-    const stringPattern = /^'.*'$|^".*"$/;
     const keywordPattern = /^[a-z_][a-z0-9_\-]*$/i;
     let idIndex = 0;
     const tokens = tokenStream
@@ -79,8 +78,10 @@ export class CICSPreprocessor {
           semanticsKind = SemanticsKind.Comment;
         } else if (keywordPattern.test(token.text!)) {
           semanticsKind = SemanticsKind.Keyword;
-        } else if (stringPattern.test(token.text!)) {
+        } else if (token.type === CICSLexer.NONNUMERICLITERAL) {
           semanticsKind = SemanticsKind.String;
+        } else if (token.type === CICSLexer.NUMERICLITERAL) {
+          semanticsKind = SemanticsKind.Number;
         } else {
           return undefined;
         }

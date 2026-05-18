@@ -13,6 +13,7 @@ import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { assertType, getAttributes } from "./util";
 import { createCicsResponseInstruction } from "./instructions";
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -214,13 +215,17 @@ function generateExecInstruction(
   return {
     kind: inst.InstructionKind.ExecStatement,
     preprocessorType: stmt.preprocessorType,
-    variables: stmt.hostVariables.map(
-      (token) =>
-        <inst.ExecVariableInstruction>{
-          kind: inst.InstructionKind.ExecVariable,
-          token,
-        },
-    ),
+    variables: stmt.tokens
+      .filter(
+        (_, index) => stmt.semanticTypes[index] === SemanticTokenTypes.variable,
+      )
+      .map(
+        (token) =>
+          <inst.ExecVariableInstruction>{
+            kind: inst.InstructionKind.ExecVariable,
+            token,
+          },
+      ),
   };
 }
 function generateReturnInstruction(

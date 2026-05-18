@@ -14,14 +14,10 @@ import { PreprocessorTokens } from "../../src/preprocessor/pli-preprocessor-toke
 import { ParserState } from "../../src/parser/parser-state";
 import { URI, UriUtils } from "../../src/utils/uri";
 import { tokenize } from "../../src/parser/tokenizer";
-import { TextDocument } from "vscode-languageserver-textdocument";
 
 function parserStateFromText(text: string, uri: URI) {
   const result = tokenize(text, uri);
-  const state = new ParserState(
-    result.tokens,
-    TextDocument.create(uri.toString(), "pli", 1, text),
-  );
+  const state = new ParserState(result.tokens);
   return state;
 }
 

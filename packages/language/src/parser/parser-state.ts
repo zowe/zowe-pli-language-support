@@ -50,7 +50,6 @@ export enum RecoveryResult {
 export type RecoveryFunction = () => RecoveryResult;
 
 export class ParserState {
-  readonly textDocument: TextDocument;
   readonly tokens: t.Token[];
   readonly diagnostics: Diagnostic[];
   readonly compilerOptions?: CompilerOptions;
@@ -59,13 +58,8 @@ export class ParserState {
   public inError = false;
   public currentStatementLabels: LabelPrefix[] = [];
 
-  constructor(
-    tokens: t.Token[],
-    textDocument: TextDocument,
-    compilerOptions?: CompilerOptions,
-  ) {
+  constructor(tokens: t.Token[], compilerOptions?: CompilerOptions) {
     this.tokens = tokens;
-    this.textDocument = textDocument;
     this.diagnostics = [];
     this.compilerOptions = compilerOptions;
     this.index = 0;

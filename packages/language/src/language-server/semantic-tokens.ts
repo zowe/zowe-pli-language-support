@@ -82,12 +82,12 @@ export function semanticTokens(
     }
 
     if (
-      token.kind === CstNodeKind.ExecCicsStatement_COMMAND &&
-      token.element?.kind === SyntaxKind.CicsExecStatement
+      token.kind === CstNodeKind.ExecStatement_ExecFragment &&
+      token.element?.kind === SyntaxKind.ExecStatement
     ) {
       for (let index = 0; index < token.element.tokens.length; index++) {
         const subToken = token.element.tokens[index];
-        const type = token.element.semanticsTokenTypes[index];
+        const type = token.element.semanticTypes[index];
         semanticTokens.push(
           subToken.startLine,
           subToken.startColumn,
