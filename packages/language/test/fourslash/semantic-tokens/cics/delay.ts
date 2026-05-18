@@ -12,7 +12,9 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// EXEC CICS <|ASKTIME|> <|ABSTIME|>(123);
+//// EXEC CICS <|DELAY|> <|FOR|> <|HOURS|>(1) <|REQID|>("TEST");
 
-semanticTokens.expectAt("ASKTIME", "keyword");
-semanticTokens.expectAt("ABSTIME", "modifier");
+semanticTokens.expectAt("DELAY", "keyword");
+semanticTokens.expectAt("FOR", "keyword");
+semanticTokens.expectAt("HOURS", "keyword");
+semanticTokens.expectAt("REQID", "keyword");

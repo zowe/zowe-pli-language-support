@@ -41,6 +41,7 @@ import {
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { MultiMap } from "../utils/collections";
 import { CstNodeKind } from "../syntax-tree/cst";
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -516,7 +517,9 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
   if (token && token.kind === CstNodeKind.ExecStatement_ExecFragment) {
     const element = token.element;
     if (element && element.kind === SyntaxKind.ExecStatement) {
-      const hostVariableReferences = element.hostVariables;
+      const hostVariableReferences = element.dialectTokens
+        .filter((t) => t.semanticType === SemanticTokenTypes.variable)
+        .map(({ token }) => token);
       token = binaryTokenSearch(hostVariableReferences, offset);
     }
   }

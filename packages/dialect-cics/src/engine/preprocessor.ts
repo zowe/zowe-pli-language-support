@@ -29,13 +29,16 @@ import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
   ParseError,
-  Identifier,
+  SemanticsKind,
+  Token,
 } from "./parsing";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];
-  identifiers: Identifier[];
+  tokens: Token[];
 }
+
+const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export class CICSPreprocessor {
   public async execute(textSnippet: string): Promise<ICICSPreprocessorResult> {
@@ -58,12 +61,47 @@ export class CICSPreprocessor {
     const tree = parser.startRule();
     tree.accept(identifierVisitor);
 
+    const identifierTokens = identifierVisitor.identifiers;
+    const keywordPattern = /^[a-z_]/i;
+    let idIndex = 0;
+    const tokens = tokenStream
+      .getTokens()
+      .filter((token) => token.text !== undefined)
+      .map((token) => {
+        let semanticsKind: SemanticsKind;
+        if (
+          idIndex < identifierTokens.length &&
+          token.start === identifierTokens[idIndex].startOffset
+        ) {
+          return identifierTokens[idIndex++];
+        } else if (token.channel === COMMENTS) {
+          semanticsKind = SemanticsKind.Comment;
+        } else if (token.type === CICSLexer.NONNUMERICLITERAL) {
+          semanticsKind = SemanticsKind.String;
+        } else if (token.type === CICSLexer.NUMERICLITERAL) {
+          semanticsKind = SemanticsKind.Number;
+        } else if (keywordPattern.test(token.text!)) {
+          semanticsKind = SemanticsKind.Keyword;
+        } else {
+          return undefined;
+        }
+        return <Token>{
+          image: token.text!,
+          startOffset: token.start,
+          endOffset: token.stop,
+          semanticsKind,
+        };
+      })
+      .filter((token): token is Token => token !== undefined)
+      // Add any remaining identifier tokens that were not matched in the token stream
+      .concat(identifierTokens.slice(idIndex));
+
     const diagnostics: ParseError[] = [];
     diagnostics.push(...lexerErrors.errors);
     diagnostics.push(...parserErrors.errors);
     return {
       diagnostics,
-      identifiers: identifierVisitor.identifiers,
+      tokens,
     };
   }
 }

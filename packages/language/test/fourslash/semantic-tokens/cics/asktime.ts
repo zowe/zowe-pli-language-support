@@ -12,8 +12,7 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// EXEC CICS <|LINK|> <|ACTIVITY|>("BOOT") <|INPUTEVENT|>("START");
+//// EXEC CICS <|ASKTIME|> <|ABSTIME|>(123);
 
-semanticTokens.expectAt("LINK", "keyword");
-semanticTokens.expectAt("ACTIVITY", "keyword");
-semanticTokens.expectAt("INPUTEVENT", "modifier");
+semanticTokens.expectAt("ASKTIME", "keyword");
+semanticTokens.expectAt("ABSTIME", "keyword");

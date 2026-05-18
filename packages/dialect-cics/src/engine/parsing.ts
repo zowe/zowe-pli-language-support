@@ -26,16 +26,25 @@ import {
   Recognizer,
   ATNSimulator,
   RecognitionException,
-  Token,
+  Token as AntlrToken,
 } from "antlr4ng";
 import { Range } from "vscode-languageserver";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 import { CicsWordContext } from "../generated/CICSParser";
 
-export interface Identifier {
-  name: string;
+export enum SemanticsKind {
+  Identifier,
+  Keyword,
+  String,
+  Comment,
+  Number,
+}
+
+export interface Token {
+  image: string;
   startOffset: number;
   endOffset: number;
+  semanticsKind: SemanticsKind;
 }
 
 export interface ParseError {
@@ -48,7 +57,7 @@ export interface ParseError {
 export class CollectingErrorListener extends BaseErrorListener {
   public readonly errors: ParseError[] = [];
 
-  override syntaxError<S extends Token, T extends ATNSimulator>(
+  override syntaxError<S extends AntlrToken, T extends ATNSimulator>(
     _recognizer: Recognizer<T>,
     offendingSymbol: S | null,
     line: number,
@@ -69,7 +78,7 @@ export class CollectingErrorListener extends BaseErrorListener {
   }
 
   private getRangeForSyntaxError(
-    offendingSymbol: Token | null,
+    offendingSymbol: AntlrToken | null,
     line: number,
     charPositionInLine: number,
   ) {
@@ -86,14 +95,15 @@ export class CollectingErrorListener extends BaseErrorListener {
 }
 
 export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
-  readonly identifiers: Identifier[] = [];
+  readonly identifiers: Token[] = [];
   override visitCicsWord = (ctx: CicsWordContext): void => {
     const symbol = ctx.WORD_IDENTIFIER()?.getSymbol();
     if (symbol && symbol.text) {
       this.identifiers.push({
-        name: symbol.text,
+        image: symbol.text,
         startOffset: symbol.start,
         endOffset: symbol.stop,
+        semanticsKind: SemanticsKind.Identifier,
       });
     }
   };
