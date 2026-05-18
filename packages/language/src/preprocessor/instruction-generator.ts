@@ -208,13 +208,19 @@ function generateInstructionForStatement(
   return node;
 }
 
-function generateExecInstruction(stmt: ast.ExecStatement): inst.ExecInstruction {
+function generateExecInstruction(
+  stmt: ast.ExecStatement,
+): inst.ExecInstruction {
   return {
     kind: inst.InstructionKind.ExecStatement,
-    variables: stmt.hostVariables.map((token) => <inst.ExecVariableInstruction>{
-      kind: inst.InstructionKind.ExecVariable,
-      token,
-    }),
+    preprocessorType: stmt.preprocessorType,
+    variables: stmt.hostVariables.map(
+      (token) =>
+        <inst.ExecVariableInstruction>{
+          kind: inst.InstructionKind.ExecVariable,
+          token,
+        },
+    ),
   };
 }
 function generateReturnInstruction(
@@ -312,11 +318,11 @@ function generateNoteInstruction(
   const code = generateExpressionInstruction(node.code) || DefaultCode;
   return message && node.noteToken
     ? {
-      kind: inst.InstructionKind.Note,
-      noteToken: node.noteToken,
-      message,
-      code,
-    }
+        kind: inst.InstructionKind.Note,
+        noteToken: node.noteToken,
+        message,
+        code,
+      }
     : undefined;
 }
 

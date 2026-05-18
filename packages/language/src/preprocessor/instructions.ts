@@ -117,8 +117,7 @@ export type Instruction =
   | CicsResponseInstruction
   | ExecVariableInstruction
   | ExecInstruction
-  | SqlAttributeInstruction
-  ;
+  | SqlAttributeInstruction;
 
 export interface SqlAttributeInstruction {
   kind: InstructionKind.SqlAttribute;
@@ -141,6 +140,7 @@ export function createCicsResponseInstruction(
 
 export interface ExecInstruction {
   kind: InstructionKind.ExecStatement;
+  preprocessorType: ast.PreprocessorType;
   variables: ExecVariableInstruction[];
 }
 

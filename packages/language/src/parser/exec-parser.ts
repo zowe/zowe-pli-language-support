@@ -31,8 +31,19 @@ export async function execStatement(
   if (!cicsFragmentToken) {
     return execStatement;
   }
-  const prefixLength =
-    /^[\w+]\s*/i.exec(cicsFragmentToken.image)?.[0].length || 0;
+  const prefixMatch = /^(\w+)\s*/i.exec(cicsFragmentToken.image);
+  switch (prefixMatch?.[1].toUpperCase()) {
+    case "CICS":
+      execStatement.preprocessorType = ast.PreprocessorType.CICS;
+      break;
+    case "SQL":
+      execStatement.preprocessorType = ast.PreprocessorType.SQL;
+      break;
+    default:
+      execStatement.preprocessorType = ast.PreprocessorType.UNKNOWN;
+      break;
+  }
+  const prefixLength = prefixMatch?.[0].length || 0;
   const startOffset = cicsFragmentToken.startOffset + prefixLength;
   const endOffset = cicsFragmentToken.endOffset + 1;
   const statementText = textDocument

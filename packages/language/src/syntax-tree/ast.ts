@@ -4349,8 +4349,15 @@ export function createCicsResponseStatement(): CicsResponseStatement {
   };
 }
 
+export enum PreprocessorType {
+  CICS,
+  SQL,
+  UNKNOWN,
+}
+
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
+  preprocessorType: PreprocessorType;
   hostVariables: Token[];
 }
 
@@ -4358,6 +4365,7 @@ export function createExecStatement(): ExecStatement {
   return {
     kind: SyntaxKind.ExecStatement,
     container: null,
+    preprocessorType: PreprocessorType.UNKNOWN,
     hostVariables: [],
   };
 }
