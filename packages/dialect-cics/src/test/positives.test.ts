@@ -16,21 +16,20 @@ import { CICSPreprocessor } from "../engine/preprocessor";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
-describe("CICS Dialect: Positives", () => {
-  test("should parse statements", async () => {
-    const content = await readFile(join(__dirname, "positives.txt"), "utf-8");
-    const statements = content.split(/\r?\n/);
-    const cicsPreprocessor = new CICSPreprocessor();
-    let line = 1;
-    for (const statement of statements) {
-      const { diagnostics } = await cicsPreprocessor.execute(statement);
-      expect(
-        diagnostics,
-        diagnostics.length > 0
-          ? `Error at line ${line}: ${diagnostics[0].message}`
-          : undefined,
-      ).toHaveLength(0);
-      line++;
-    }
+describe("CICS Dialect: Positives", async () => {
+  const cicsPreprocessor = new CICSPreprocessor();
+  const fileName = join(__dirname, "positives.txt");
+  const content = await readFile(fileName, "utf-8");
+  const statements = content.split(/\r?\n/)
+    .map((statement, index) => ({line: index+1, statement}));
+
+  test.each(statements)("should parse statements", async ({line, statement}) => {
+    const { diagnostics } = await cicsPreprocessor.execute(statement);
+    expect(
+      diagnostics,
+      diagnostics.length > 0
+        ? `Error at ${fileName}:${line}: ${diagnostics[0].message}`
+        : undefined,
+    ).toHaveLength(0);
   });
 });
