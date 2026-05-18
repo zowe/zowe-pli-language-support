@@ -535,6 +535,9 @@ function runInstructionSync(
     case inst.InstructionKind.ExecStatement:
       runExecInstruction(instruction, context);
       break;
+    case inst.InstructionKind.SqlAttribute:
+      runSqlAttributeInstruction(instruction, context);
+      break;
   }
   return undefined;
 }
@@ -547,21 +550,21 @@ function runCicsResponseInstruction(
   context.tokens.push(...lex(codeValue));
 }
 
-// function getGenerationCacheEntry(
-//   context: InterpreterContext,
-//   offset: number,
-// ): GenerationCacheEntry {
-//   let entry = context.generationCache.entries.get(offset);
-//   if (!entry) {
-//     entry = {
-//       hasSqlLobFile: false,
-//       hasCicsExec: false,
-//       sqlLobSizes: new Set(),
-//     };
-//     context.generationCache.entries.set(offset, entry);
-//   }
-//   return entry;
-// }
+function getGenerationCacheEntry(
+  context: InterpreterContext,
+  offset: number,
+): GenerationCacheEntry {
+  let entry = context.generationCache.entries.get(offset);
+  if (!entry) {
+    entry = {
+      hasSqlLobFile: false,
+      hasCicsExec: false,
+      sqlLobSizes: new Set(),
+    };
+    context.generationCache.entries.set(offset, entry);
+  }
+  return entry;
+}
 
 function emitMarker(
   context: InterpreterContext,
@@ -594,7 +597,6 @@ function runExecVariableInstruction(
 ): void {
   emitMarker(context, instruction.token, EXEC_VARIABLE_MARKER);
 }
-/*
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
 const ROWID_TYPE = "CHAR(40) VARYING";
@@ -697,7 +699,7 @@ function insertSqlAttributeLobFileTokens(
     DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
   `),
   );
-}*/
+}
 
 function runExecInstruction(
   instruction: inst.ExecInstruction,
@@ -777,44 +779,44 @@ function runExecInstruction(
 //   );
 // }
 
-// function insertSqlAttributeLobTokens(
-//   context: InterpreterContext,
-//   offset: number,
-//   length: number,
-// ): void {
-//   context.tokens.splice(
-//     offset,
-//     0,
-//     ...lex(`
-//     DCL
-//       1 SQL_LOB${length} BASED,
-//         2 SQL_LOB_LEN FIXED BIN(31),
-//         2 SQL_LOB_BUF(10) CHAR(1);
-//   `),
-//   );
-// }
+function insertSqlAttributeLobTokens(
+  context: InterpreterContext,
+  offset: number,
+  length: number,
+): void {
+  context.tokens.splice(
+    offset,
+    0,
+    ...lex(`
+    DCL
+      1 SQL_LOB${length} BASED,
+        2 SQL_LOB_LEN FIXED BIN(31),
+        2 SQL_LOB_BUF(10) CHAR(1);
+  `),
+  );
+}
 
 /**
  * Searches for the nearest procedure semicolon token before the current position
  */
-// function findProcSemicolon(context: InterpreterContext): number | undefined {
-//   const min = context.generationCache.lastProcedureTokenIndex;
-//   const max = context.tokens.length - 1;
-//   for (let i = max; i >= min; i--) {
-//     const token = context.tokens[i];
-//     if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
-//       context.generationCache.lastProcedureTokenIndex = i;
-//       for (let j = i + 1; j <= max; j++) {
-//         const nextToken = context.tokens[j].tokenTypeIdx;
-//         if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
-//           return j + 1;
-//         }
-//       }
-//       return undefined;
-//     }
-//   }
-//   return undefined;
-// }
+function findProcSemicolon(context: InterpreterContext): number | undefined {
+  const min = context.generationCache.lastProcedureTokenIndex;
+  const max = context.tokens.length - 1;
+  for (let i = max; i >= min; i--) {
+    const token = context.tokens[i];
+    if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
+      context.generationCache.lastProcedureTokenIndex = i;
+      for (let j = i + 1; j <= max; j++) {
+        const nextToken = context.tokens[j].tokenTypeIdx;
+        if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
+          return j + 1;
+        }
+      }
+      return undefined;
+    }
+  }
+  return undefined;
+}
 
 function runCallInstruction(
   instruction: inst.CallInstruction,
