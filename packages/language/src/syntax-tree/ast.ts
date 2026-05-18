@@ -1279,7 +1279,7 @@ export interface AllocatedVariable extends AstNode {
   kind: SyntaxKind.AllocatedVariable;
   level: string | null;
   var: ReferenceItem | null;
-  attribute: AllocateAttribute | null;
+  attributes: AllocateAttribute[];
 }
 
 export function createAllocatedVariable(): AllocatedVariable {
@@ -1288,7 +1288,7 @@ export function createAllocatedVariable(): AllocatedVariable {
     container: null,
     level: null,
     var: null,
-    attribute: null,
+    attributes: [],
   };
 }
 export interface AllocateLocationReferenceIn extends AstNode {
