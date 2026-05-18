@@ -13,9 +13,10 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { CICSPreprocessor } from "dialect-cics";
+import { CICSPreprocessor, SemanticsKind } from "dialect-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 export async function execStatement(
   state: ParserState,
@@ -50,19 +51,18 @@ export async function execStatement(
     .getText()
     .substring(startOffset, endOffset);
   const preprocessor = new CICSPreprocessor();
-  const { diagnostics, identifiers } =
-    await preprocessor.execute(statementText);
+  const { diagnostics, tokens } = await preprocessor.execute(statementText);
   for (const diagnostic of diagnostics) {
     state.error(diagnostic.message, state.token);
   }
-  for (const identifier of identifiers) {
-    const tokenStart = startOffset + identifier.startOffset;
-    const tokenEnd = startOffset + identifier.endOffset;
+  for (const token of tokens) {
+    const tokenStart = startOffset + token.startOffset;
+    const tokenEnd = startOffset + token.endOffset;
     const positionStart = textDocument.positionAt(tokenStart);
     const positionEnd = textDocument.positionAt(tokenEnd);
     const pliToken = t.createTokenInstance(
-      identifier.name,
-      identifier.name,
+      token.image,
+      token.image,
       t.ID,
       tokenStart,
       positionStart.line,
@@ -72,7 +72,27 @@ export async function execStatement(
       positionEnd.character,
       URI.parse(textDocument.uri.toString()),
     );
-    execStatement.hostVariables.push(pliToken);
+
+    let semanticType: SemanticTokenTypes = SemanticTokenTypes.modifier;
+    switch (token.semanticsKind) {
+      case SemanticsKind.Comment:
+        semanticType = SemanticTokenTypes.comment;
+        break;
+      case SemanticsKind.Identifier:
+        semanticType = SemanticTokenTypes.variable;
+        break;
+      case SemanticsKind.Keyword:
+        semanticType = SemanticTokenTypes.keyword;
+        break;
+      case SemanticsKind.Number:
+        semanticType = SemanticTokenTypes.number;
+        break;
+      case SemanticsKind.String:
+        semanticType = SemanticTokenTypes.string;
+        break;
+    }
+
+    execStatement.dialectTokens.push({ token: pliToken, semanticType });
   }
   state.consume(
     execStatement,

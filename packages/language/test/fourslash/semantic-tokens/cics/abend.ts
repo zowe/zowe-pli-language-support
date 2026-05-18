@@ -12,9 +12,8 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// EXEC CICS <|DELAY|> <|FOR|> <|HOURS|>(1) <|REQID|>("TEST");
+//// EXEC CICS <|ABEND|> <|ABCODE|>(<|str:'AB01'|>) CANCEL;
 
-semanticTokens.expectAt("DELAY", "keyword");
-semanticTokens.expectAt("FOR", "modifier");
-semanticTokens.expectAt("HOURS", "modifier");
-semanticTokens.expectAt("REQID", "modifier");
+semanticTokens.expectAt("ABEND", "keyword");
+semanticTokens.expectAt("ABCODE", "keyword");
+semanticTokens.expectAt("str", "string");

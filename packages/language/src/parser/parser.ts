@@ -35,11 +35,9 @@ import {
 } from "./parser-lookahead";
 import { Token } from "./tokens";
 import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
-import { TextDocument } from "vscode-languageserver-textdocument";
 
 export function parsePli(
   input: tokens.Token[],
-  textDocument: TextDocument,
   compilerOptions?: CompilerOptions,
 ): {
   tree: ast.Program;

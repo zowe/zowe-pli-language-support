@@ -14,6 +14,7 @@ import { Token } from "../parser/tokens";
 import { assertUnreachable } from "../utils/common";
 import { isObject } from "../utils/types";
 import type { CompilationUnit } from "../workspace/compilation-unit";
+import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 export enum DataType {
   Area,
@@ -4355,10 +4356,15 @@ export enum PreprocessorType {
   UNKNOWN,
 }
 
+export interface DialectToken {
+  token: Token;
+  semanticType: SemanticTokenTypes;
+}
+
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
   preprocessorType: PreprocessorType;
-  hostVariables: Token[];
+  dialectTokens: DialectToken[];
 }
 
 export function createExecStatement(): ExecStatement {
@@ -4366,7 +4372,7 @@ export function createExecStatement(): ExecStatement {
     kind: SyntaxKind.ExecStatement,
     container: null,
     preprocessorType: PreprocessorType.UNKNOWN,
-    hostVariables: [],
+    dialectTokens: [],
   };
 }
 
