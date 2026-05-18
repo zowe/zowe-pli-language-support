@@ -708,6 +708,8 @@ function runExecInstruction(
   for (const instr of instruction.variables) {
     runExecVariableInstruction(instr, context);
   }
+  // Emit a simple DO; END; statement to ensure that the main parser always receives a valid statement
+  context.tokens.push(...lex("DO; END;"));
   if (instruction.preprocessorType === ast.PreprocessorType.CICS) {
     const procSemicolonIndex = findProcSemicolon(context);
     if (procSemicolonIndex === undefined) {
