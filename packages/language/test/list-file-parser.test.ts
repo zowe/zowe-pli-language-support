@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { parseListFile } from "./list-file-parser.js";
+import { parseListFile } from "./list-file-parser";
 
 const minimalListFileContent = `
 15655-PL6  IBM(R) Enterprise PL/I for z/OS                                                      2026.05.07 03:26:52   Page     2

@@ -33,8 +33,11 @@ export async function createCompilerTestHarnessImplementation(
       expectNoLinksAt: notImplemented("linker.expectNoLinksAt"),
     },
     testAPI: {
-      // Stub, will not be used during testing
-      testBuilder: await TestBuilder.create("", {}),
+      get testBuilder(): TestBuilder {
+        throw new Error(
+          "testAPI.testBuilder is not available in compiler tests. ",
+        );
+      },
     },
     verify: {
       expectExclusiveErrorCodesAt: notImplemented(

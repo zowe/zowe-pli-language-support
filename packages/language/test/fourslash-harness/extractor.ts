@@ -22,15 +22,15 @@ export async function extractCompilerTestFiles(
 ): Promise<void> {
   const wrappers = getWrappers();
   const files = getTestFiles();
-  const failures: string[] = [];
+  const skipped: string[] = [];
   for (const relativeFile of files) {
     const fullPath = path.join(fourslashPath, relativeFile);
     const testFile = await parseHarnessTestFile(relativeFile, fullPath, {
       wrappers,
     });
     if (testFile.tags["compiler"] !== "true") {
-      if (testFile.tags["compiler"] === "fail") {
-        failures.push(relativeFile);
+      if (testFile.tags["compiler"] === "skip") {
+        skipped.push(relativeFile);
       }
       continue; // Only extract compiler tests
     }
@@ -60,9 +60,9 @@ export async function extractCompilerTestFiles(
     }
     console.log(`Extracted test ${relativeFile}`);
   }
-  if (failures.length) {
+  if (skipped.length) {
     console.warn(
-      `The following tests were marked as expected to fail and were not extracted:\n${failures
+      `The following tests were explicitly marked as skipped and were not extracted:\n${skipped
         .map((f) => `- ${f}`)
         .join("\n")}`,
     );

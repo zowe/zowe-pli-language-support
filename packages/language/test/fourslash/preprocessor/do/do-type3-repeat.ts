@@ -15,7 +15,7 @@
  * DO Type 3 - DO with REPEAT
  */
 // The compiler will actually show a parser error on REPEAT and execute the DO body once
-// @compiler: fail
+// @compiler: skip
 //// %DCL I FIXED;
 //// %DO I = 1 REPEAT 2*I UNTIL(I > 6);
 ////   I

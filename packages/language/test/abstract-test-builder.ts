@@ -60,8 +60,8 @@ export type DiagnosticLike = {
  */
 export abstract class AbstractTestBuilder {
   protected files: Map<string, TestFile> = new Map();
-  protected indices!: Record<string, TestIndex[]>;
-  protected ranges!: Record<string, TestRange[]>;
+  protected indices: Record<string, TestIndex[]> = {};
+  protected ranges: Record<string, TestRange[]> = {};
 
   /**
    * Populate `files`, `indices`, and `ranges` from the marker-annotated source files.

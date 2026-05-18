@@ -11,7 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
-// @compiler: fail
+// @compiler: skip
 //// %A = 12;
 //// %IF A = "12" %THEN DO;
 ////   CORRECT

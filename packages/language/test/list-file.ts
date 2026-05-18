@@ -50,8 +50,12 @@ export class ListFile {
     return result.tokens;
   }
 
-  getFile(index: number): File | undefined {
-    return this.files.find((file) => file.index === index);
+  getFile(index: number): File {
+    const file = this.files.find((f) => f.index === index);
+    if (!file) {
+      throw new Error(`File with index ${index} not found in listing.`);
+    }
+    return file;
   }
 
   getDiagnostics(line: number): Diagnostic[] {
@@ -81,17 +85,17 @@ export function fromParsedListFile(parsed: ParsedListFile): ListFile {
     position: entry.definedAt
       ? {
           line: entry.definedAt.line,
-          file: listFile.getFile(entry.definedAt.file)!,
+          file: listFile.getFile(entry.definedAt.file),
         }
       : undefined,
     name: entry.identifier,
     refs: entry.refs.map((ref) => ({
       line: ref.line,
-      file: listFile.getFile(ref.file)!,
+      file: listFile.getFile(ref.file),
     })),
     sets: entry.sets.map((set) => ({
       line: set.line,
-      file: listFile.getFile(set.file)!,
+      file: listFile.getFile(set.file),
     })),
   }));
   return listFile;
@@ -118,6 +122,8 @@ function compilerMessageToDiagnostic(
     case "U":
       severity = Severity.U;
       break;
+    case "L":
+      throw new Error("Severity L is not supported in diagnostics.");
   }
   return {
     code: msg.code,
@@ -125,7 +131,7 @@ function compilerMessageToDiagnostic(
     message: msg.description,
     position: {
       line: msg.position.line,
-      file: listFile.getFile(msg.position.file)!,
+      file: listFile.getFile(msg.position.file),
     },
   };
 }

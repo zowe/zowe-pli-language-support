@@ -9,6 +9,7 @@
  *
  */
 
+import path from "path";
 import fs from "fs/promises";
 import {
   FilePosition,
@@ -39,7 +40,7 @@ export class CompilerTestBuilder extends AbstractTestBuilder {
     const lastIndex = first.uri.lastIndexOf("/");
     const baseName =
       lastIndex >= 0 ? first.uri.slice(lastIndex + 1) : first.uri;
-    const outputListing = `${outputDir}/${baseName}.list`;
+    const outputListing = path.join(outputDir, `${baseName}.list`);
     const listingContent = await fs.readFile(outputListing, "utf-8");
     const listFileContent = parseListFile(listingContent);
     this.listing = fromParsedListFile(listFileContent);
@@ -67,8 +68,10 @@ export class CompilerTestBuilder extends AbstractTestBuilder {
       undefined,
     ).tokens.map((t) => t.image);
     if (expectedTokens.length !== actualTokens.length) {
+      const expectedPreview = expectedTokens.join(" ");
+      const actualPreview = actualTokens.join(" ");
       throw new Error(
-        `Expected ${expectedTokens.length} tokens, but got ${actualTokens.length}.`,
+        `Expected ${expectedTokens.length} tokens, but got ${actualTokens.length}.\nExpected: ${expectedPreview}\nActual: ${actualPreview}`,
       );
     }
     for (let i = 0; i < expectedTokens.length; i++) {
@@ -141,6 +144,7 @@ export class CompilerTestBuilder extends AbstractTestBuilder {
 
   private findListingFile(uri: string): File | undefined {
     const index = uri.lastIndexOf("/");
+    // Includes the leading slash to avoid collisions with files that have the same suffix
     const baseName = index >= 0 ? uri.slice(index) : uri;
     return this.listing.files.find((f) =>
       UriUtils.normalize(f.uri).endsWith(baseName),

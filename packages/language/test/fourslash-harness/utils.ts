@@ -11,22 +11,17 @@
 
 import { readdirSync } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { HarnessTest, UnnamedFile } from "./types";
 import { PliTestFile } from "../utils";
 
 export const frameworkFileName = "framework.ts";
 export const testsPath = "packages/language/test/fourslash";
 
-const url = new URL(import.meta.url);
-const __dirname =
-  process.platform === "win32"
-    ? path.dirname(url.pathname).slice(1)
-    : path.dirname(url.pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * The root of the project.
- *
- * Important: Assume that the test files exist in the `packages/language/test/fourslash` directory.
  */
 export const projectRoot = path.join(__dirname, "../../../..");
 
@@ -39,7 +34,7 @@ export const fourslashPath = path.join(__dirname, "../fourslash");
 
 export const harnessPath = __dirname;
 
-export function getTestFiles() {
+export function getTestFiles(): string[] {
   return readdirSync(fourslashPath, { recursive: true })
     .map((file) => file.toString())
     .filter((file) => file.endsWith(".ts")) // Only .ts files

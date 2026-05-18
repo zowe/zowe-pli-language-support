@@ -12,7 +12,7 @@
 /// <reference path="../../framework.ts" />
 
 // The actual compiler does not throw here at all
-// @compiler: fail
+// @compiler: skip
 // @wrap: main
 //// DCL XXX FIXED;
 //// DCL YYY CHARACTER(8) INITIAL("abc");
