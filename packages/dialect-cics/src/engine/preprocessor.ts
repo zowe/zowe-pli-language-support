@@ -62,7 +62,7 @@ export class CICSPreprocessor {
     tree.accept(identifierVisitor);
 
     const identifierTokens = identifierVisitor.identifiers;
-    const keywordPattern = /^[a-z_][a-z0-9_\-]*$/i;
+    const keywordPattern = /^[a-z_]/i;
     let idIndex = 0;
     const tokens = tokenStream
       .getTokens()
