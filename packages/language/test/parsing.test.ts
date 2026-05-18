@@ -264,7 +264,7 @@ describe("PL/I Parsing tests", () => {
   // tests fro declarations
   describe("Declaration tests", async () => {
     test("simple char declarations", async () => {
-      const doc = await parseStmts(`*PROCESS MARGINS(2,200)
+      const doc = await parseStmts(`*PROCESS MARGINS(2,200);
  declare UserA character (15); // 15 character var
  declare UserB character (15) varying; // varying
  declare UserC character (15) varyingz; // varying w/ null termination
@@ -277,7 +277,7 @@ describe("PL/I Parsing tests", () => {
     });
 
     test("char declaration w/ overflow assignment", async () => {
-      const doc = await parseStmts(`*PROCESS MARGINS(2,200)
+      const doc = await parseStmts(`*PROCESS MARGINS(2,200);
  declare Subject char(10);
  Subject = 'Transformations'; // will truncate the last 5 chars, emitting a warning (but valid nonetheless)
 `);
@@ -395,7 +395,7 @@ describe("PL/I Parsing tests", () => {
     });
 
     test("multi-declaration", async () => {
-      const doc = await parseStmts(`*PROCESS MARGINS(2,200)
+      const doc = await parseStmts(`*PROCESS MARGINS(2,200);
     declare Result bit(3),
         A fixed decimal(1),
         B fixed binary (15), // precison lower than 15 will trigger a compiler warning, less than storage allows

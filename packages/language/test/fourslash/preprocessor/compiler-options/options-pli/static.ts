@@ -15,9 +15,10 @@
 ////*PROCESS <|1:STATIC|>;
 ////*PROCESS <|2:STATIC|>(<|3:)|>;
 ////*PROCESS <|4:STATIC|>(<|5:INVALID|>);
-////*PROCESS <|6:STATIC|>(FULL);
+////*PROCESS <|6:STATIC|>(<|7:FULL|>);
+////*PROCESS <|8:STATIC|>(<|9:F|>);
 
-verify.expectDiagnosticsAt([2, 4, 6], {
+verify.expectDiagnosticsAt([2, 4, 6, 8], {
   message: code.CompilerOptions.DupeOptionIssue.message("STATIC"),
 });
 verify.expectDiagnosticsAt(1, {
@@ -29,6 +30,7 @@ verify.expectDiagnosticsAt(3, {
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Static.InvalidParameter.message("INVALID"),
 });
+verify.noDiagnostics([7, 9]);
 verify.expectCompilerOptions({
   static: constants.CompilerOptions.Length.FULL,
 });

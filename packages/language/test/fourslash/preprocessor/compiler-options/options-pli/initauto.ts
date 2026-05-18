@@ -18,8 +18,9 @@
 ////*PROCESS <|4:INITAUTO|>(<|5:'SHORT'|>);
 ////*PROCESS <|6:INITAUTO|>(<|7:LONG|>);
 ////*PROCESS <|8:INITAUTO|>(<|9:FULL|>);
+////*PROCESS <|10:INITAUTO|>(<|11:F|>);
 
-verify.expectDiagnosticsAt([1, 2, 4, 6, 8], {
+verify.expectDiagnosticsAt([1, 2, 4, 6, 8, 10], {
   message: code.CompilerOptions.MutexOptionIssue.message("INITAUTO"),
 });
 verify.expectDiagnosticsAt(3, {
@@ -31,6 +32,7 @@ verify.expectDiagnosticsAt(7, {
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.ExpectedPlain.message(),
 });
+verify.noDiagnostics([9, 11]);
 verify.expectCompilerOptions({
   initAuto: constants.CompilerOptions.InitAuto.FULL,
 });

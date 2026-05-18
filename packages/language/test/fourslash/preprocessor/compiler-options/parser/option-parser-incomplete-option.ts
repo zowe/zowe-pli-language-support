@@ -12,7 +12,6 @@
 /// <reference path="../../../framework.ts" />
 
 // @filename: main.pli
-// @wrap: process
 ////*PROCESS pp(<|1:include|>
 
 verify.expectExclusiveDiagnosticsAt(1, {
