@@ -15,25 +15,27 @@ import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { CICSPreprocessor } from "dialect-cics";
 import { URI } from "vscode-uri";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
-export async function cicsExecStatement(
+export async function execStatement(
   state: ParserState,
-): Promise<ast.CicsExecStatement> {
-  const execStatement = ast.createCicsExecStatement();
-  state.consume(execStatement, CstNodeKind.ExecCicsStatement_EXEC, t.EXEC);
+  textDocument: TextDocument,
+): Promise<ast.ExecStatement> {
+  const execStatement = ast.createExecStatement();
+  state.consume(execStatement, CstNodeKind.ExecStatement_EXEC, t.EXEC);
   const cicsFragmentToken = state.consume(
     execStatement,
-    CstNodeKind.ExecCicsStatement_COMMAND,
+    CstNodeKind.ExecStatement_ExecFragment,
     t.ExecFragment,
   );
   if (!cicsFragmentToken) {
     return execStatement;
   }
   const prefixLength =
-    /^CICS\s*/i.exec(cicsFragmentToken.image)?.[0].length || 0;
+    /^[\w+]\s*/i.exec(cicsFragmentToken.image)?.[0].length || 0;
   const startOffset = cicsFragmentToken.startOffset + prefixLength;
   const endOffset = cicsFragmentToken.endOffset + 1;
-  const statementText = state.textDocument
+  const statementText = textDocument
     .getText()
     .substring(startOffset, endOffset);
   const preprocessor = new CICSPreprocessor();
@@ -45,8 +47,8 @@ export async function cicsExecStatement(
   for (const identifier of identifiers) {
     const tokenStart = startOffset + identifier.startOffset;
     const tokenEnd = startOffset + identifier.endOffset;
-    const positionStart = state.textDocument.positionAt(tokenStart);
-    const positionEnd = state.textDocument.positionAt(tokenEnd);
+    const positionStart = textDocument.positionAt(tokenStart);
+    const positionEnd = textDocument.positionAt(tokenEnd);
     const pliToken = t.createTokenInstance(
       identifier.name,
       identifier.name,
@@ -57,13 +59,13 @@ export async function cicsExecStatement(
       tokenEnd,
       positionEnd.line,
       positionEnd.character,
-      URI.parse(state.textDocument.uri.toString()),
+      URI.parse(textDocument.uri.toString()),
     );
     execStatement.hostVariables.push(pliToken);
   }
   state.consume(
     execStatement,
-    CstNodeKind.ExecCicsStatement_Semicolon,
+    CstNodeKind.ExecStatement_Semicolon,
     t.Semicolon,
   );
   return execStatement;

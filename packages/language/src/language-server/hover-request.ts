@@ -23,7 +23,6 @@ import {
   DimensionBound,
   Dimensions,
   Expression,
-  getContainer,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
@@ -303,10 +302,11 @@ function computeIncludeType(unit: CompilationUnit, node: SyntaxNode): string {
   const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
   if (node.container?.kind === SyntaxKind.IncludeAltDirective && ppInclude) {
     type = ppInclude;
-  } else if (getContainer(node, SyntaxKind.SqlExecStatement)) {
-    // Include as part of an EXEC SQL statement
-    type = "EXEC SQL INCLUDE";
   }
+  // else if (getContainer(node, SyntaxKind.SqlExecStatement)) {
+  //   // Include as part of an EXEC SQL statement
+  //   type = "EXEC SQL INCLUDE";
+  // }
   return type;
 }
 

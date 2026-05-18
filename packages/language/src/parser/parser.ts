@@ -45,7 +45,7 @@ export function parsePli(
   tree: ast.Program;
   diagnostics: Diagnostic[];
 } {
-  const state = new ParserState(input, textDocument, compilerOptions);
+  const state = new ParserState(input, compilerOptions);
   const program = pliProgram.rule(state);
   const tree = program ?? ast.createProgram();
   return { tree, diagnostics: state.diagnostics };
@@ -754,8 +754,7 @@ const unit = orRule<ast.Unit, []>(
   () => writeStatement,
   () => procedureStatement,
   () => packageRule,
-  () => sqlHostVariableReference,
-  () => cicsVariableReference,
+  () => execVariableReference,
 );
 
 const allocateStatement = rule(
@@ -6583,39 +6582,14 @@ const numberLiteral = rule(
   },
 );
 
-const sqlHostVariableReference = rule(
-  sequence(tokens.SQL_HOST_VARIABLE_MARKER),
-  (state: ParserState): ast.SqlHostVariableReference => {
-    const element = ast.createSqlHostVariableReference();
-    state.consume(
-      element,
-      CstNodeKind.SqlHostVariableReference_Marker,
-      tokens.SQL_HOST_VARIABLE_MARKER,
-    );
-    const id = state.consume(
-      element,
-      CstNodeKind.SqlHostVariableReference_HostVariable,
-      tokens.ID,
-    );
-    if (id) {
-      element.ref = ast.createReference(
-        element,
-        id,
-        ast.ReferenceType.Variable,
-      );
-    }
-    return element;
-  },
-);
-
-const cicsVariableReference = rule(
-  sequence(tokens.CICS_VARIABLE_MARKER),
-  (state: ParserState): ast.CicsVariableReference => {
-    const element = ast.createCicsVariableReference();
+const execVariableReference = rule(
+  sequence(tokens.EXEC_VARIABLE_MARKER),
+  (state: ParserState): ast.ExecVariableReference => {
+    const element = ast.createExecVariableReference();
     state.consume(
       element,
       CstNodeKind.CicsVariableReference_Marker,
-      tokens.CICS_VARIABLE_MARKER,
+      tokens.EXEC_VARIABLE_MARKER,
     );
     const id = state.consume(
       element,

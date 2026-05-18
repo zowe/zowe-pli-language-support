@@ -103,9 +103,7 @@ export function getReference(node: SyntaxNode): Reference | undefined {
       return node.entry?.ref ?? undefined;
     case SyntaxKind.ExportsItem:
       return node.reference ?? undefined;
-    case SyntaxKind.SqlHostVariableReference:
-      return node.ref ?? undefined;
-    case SyntaxKind.CicsVariableReference:
+    case SyntaxKind.ExecVariableReference:
       return node.ref ?? undefined;
   }
   return undefined;

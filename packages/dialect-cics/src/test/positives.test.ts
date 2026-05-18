@@ -20,16 +20,20 @@ describe("CICS Dialect: Positives", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
   const fileName = join(__dirname, "positives.txt");
   const content = await readFile(fileName, "utf-8");
-  const statements = content.split(/\r?\n/)
-    .map((statement, index) => ({line: index+1, statement}));
+  const statements = content
+    .split(/\r?\n/)
+    .map((statement, index) => ({ line: index + 1, statement }));
 
-  test.each(statements)("should parse statements", async ({line, statement}) => {
-    const { diagnostics } = await cicsPreprocessor.execute(statement);
-    expect(
-      diagnostics,
-      diagnostics.length > 0
-        ? `Error at ${fileName}:${line}: ${diagnostics[0].message}`
-        : undefined,
-    ).toHaveLength(0);
-  });
+  test.each(statements)(
+    "should parse statements",
+    async ({ line, statement }) => {
+      const { diagnostics } = await cicsPreprocessor.execute(statement);
+      expect(
+        diagnostics,
+        diagnostics.length > 0
+          ? `Error at ${fileName}:${line}: ${diagnostics[0].message}`
+          : undefined,
+      ).toHaveLength(0);
+    },
+  );
 });

@@ -960,13 +960,6 @@ export function forEachNode(
       }
       break;
     case SyntaxKind.CicsResponseStatement:
-    case SyntaxKind.CicsVariableReference:
-    case SyntaxKind.CicsExecStatement:
-      break;
-    case SyntaxKind.SqlExecStatement:
-      if (node.content) {
-        action(node.content);
-      }
       break;
     case SyntaxKind.EnvironmentOptionSymbol:
     case SyntaxKind.EnvironmentOptionOrganization:
@@ -978,9 +971,9 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeRowId:
     case SyntaxKind.SqlAttributeTableLocator:
     case SyntaxKind.SqlAttributeResultSetLocator:
-    case SyntaxKind.EmbeddedUnknownStatement:
-    case SyntaxKind.SqlHostVariableReference:
     case SyntaxKind.AnyAttribute:
+    case SyntaxKind.ExecVariableReference:
+    case SyntaxKind.ExecStatement:
       break;
     default:
       assertUnreachable(node);

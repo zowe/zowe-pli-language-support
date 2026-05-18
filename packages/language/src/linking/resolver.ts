@@ -513,9 +513,9 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
     offset,
   );
 
-  if (token && token.kind === CstNodeKind.ExecCicsStatement_COMMAND) {
+  if (token && token.kind === CstNodeKind.ExecStatement_ExecFragment) {
     const element = token.element;
-    if (element && element.kind === SyntaxKind.CicsExecStatement) {
+    if (element && element.kind === SyntaxKind.ExecStatement) {
       const hostVariableReferences = element.hostVariables;
       token = binaryTokenSearch(hostVariableReferences, offset);
     }

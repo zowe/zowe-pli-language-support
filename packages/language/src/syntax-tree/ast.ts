@@ -247,13 +247,9 @@ export enum SyntaxKind {
   XFormatItem,
 
   CicsResponseStatement,
-  CicsExecStatement,
 
-  CicsVariableReference,
-
-  SqlExecStatement,
-  SqlHostVariableReference,
-  EmbeddedUnknownStatement,
+  ExecStatement,
+  ExecVariableReference,
 }
 
 export enum KeywordConditions {
@@ -758,10 +754,6 @@ export type SyntaxNode =
   | AnswerStatement
   | DeactivateStatement
   | TokenStatement
-  | SqlExecStatement
-  | SqlHostVariableReference
-  | EmbeddedUnknownStatement
-  | CicsExecStatement
   | CicsResponseStatement
   | SqlAttributeStatement
   | SqlAttributeBinary
@@ -967,7 +959,8 @@ export type SyntaxNode =
   | ProcedureOrderOption
   | ProcedureRecursiveOption
   | ProcedureScopeOption
-  | CicsVariableReference;
+  | ExecStatement
+  | ExecVariableReference;
 
 export type AllocateAttribute =
   | AllocateDimension
@@ -1150,11 +1143,9 @@ export type Unit =
   | NoPrintDirective
   | SkipDirective
   | SqlAttributeStatement
-  | SqlHostVariableReference
   | CicsResponseStatement
-  | CicsExecStatement
-  | SqlExecStatement
-  | CicsVariableReference;
+  | ExecVariableReference
+  | ExecStatement;
 
 // Preprocessor AST
 
@@ -4358,79 +4349,27 @@ export function createCicsResponseStatement(): CicsResponseStatement {
   };
 }
 
-export interface CicsExecStatement extends AstNode {
-  kind: SyntaxKind.CicsExecStatement;
+export interface ExecStatement extends AstNode {
+  kind: SyntaxKind.ExecStatement;
   hostVariables: Token[];
 }
 
-export function createCicsExecStatement(): CicsExecStatement {
+export function createExecStatement(): ExecStatement {
   return {
-    kind: SyntaxKind.CicsExecStatement,
+    kind: SyntaxKind.ExecStatement,
     container: null,
     hostVariables: [],
   };
 }
 
-export type CicsEmbeddedStatement = EmbeddedUnknownStatement;
-
-export interface CicsVariableReference extends AstNode {
-  kind: SyntaxKind.CicsVariableReference;
+export interface ExecVariableReference extends AstNode {
+  kind: SyntaxKind.ExecVariableReference;
   ref: Reference<NamedVariable> | null;
 }
 
-export function createCicsVariableReference(): CicsVariableReference {
+export function createExecVariableReference(): ExecVariableReference {
   return {
-    kind: SyntaxKind.CicsVariableReference,
-    container: null,
-    ref: null,
-  };
-}
-
-export interface SqlExecStatement extends AstNode {
-  kind: SyntaxKind.SqlExecStatement;
-  content: SqlEmbeddedStatement | null;
-}
-
-export function createSqlExecStatement(): SqlExecStatement {
-  return {
-    kind: SyntaxKind.SqlExecStatement,
-    container: null,
-    content: null,
-  };
-}
-
-export type SqlEmbeddedStatement = IncludeDirective | EmbeddedUnknownStatement;
-
-export interface EmbeddedUnknownStatement extends AstNode {
-  kind: SyntaxKind.EmbeddedUnknownStatement;
-  hostVariables: Token[];
-}
-
-export function createEmbeddedUnknownStatement(): EmbeddedUnknownStatement {
-  return {
-    kind: SyntaxKind.EmbeddedUnknownStatement,
-    container: null,
-    hostVariables: [],
-  };
-}
-
-/**
- * Reference to a host variable used in embedded SQL statements.
- * This reference is a standalone statement in the syntax tree.
- * This is because, even though SQL statements are part of the preprocessor,
- * they reference variables that are part of the main syntax tree.
- *
- * SqlHostVariableReference nodes cannot be created,
- * unless they are part of an EXEC SQL statement.
- */
-export interface SqlHostVariableReference extends AstNode {
-  kind: SyntaxKind.SqlHostVariableReference;
-  ref: Reference<NamedVariable> | null;
-}
-
-export function createSqlHostVariableReference(): SqlHostVariableReference {
-  return {
-    kind: SyntaxKind.SqlHostVariableReference,
+    kind: SyntaxKind.ExecVariableReference,
     container: null,
     ref: null,
   };
