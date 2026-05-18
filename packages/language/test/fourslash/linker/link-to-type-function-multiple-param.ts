@@ -11,9 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+//// TEST_PCK: PACKAGE;
 //// DEFINE STRUCT 1 <|A|>, 2 B FIXED;
-//// TEST: PROC;
+//// TEST: PROC OPTIONS(MAIN);
 ////   DCL <|H|> POINTER;
+////   DCL VAR HANDLE(A);
 ////   VAR = BIND(:<|A>A, <|H>H:);
 //// END TEST;
 

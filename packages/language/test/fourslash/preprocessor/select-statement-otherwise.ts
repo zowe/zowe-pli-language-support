@@ -11,9 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %SELECT;
-//// %WHEN (0) DO; X %END;
-//// %OTHERWISE DO; Y %END;
+//// %WHEN (0) %DO; X %END;
+//// %OTHERWISE %DO; Y %END;
 //// %END;
 
 preprocessor.expectTokens("Y");

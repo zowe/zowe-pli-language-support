@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %SELECT;
 //// %WHEN (0, 1, 2) DO; X %END;
 //// %OTHERWISE DO; Y %END;

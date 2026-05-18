@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %A = "B";
 //// %ACTIVATE A;
 //// DCL A CHARACTER;

@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DCL X FIXED;
 //// %X = 10 - 5 - 2;
 //// X

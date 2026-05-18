@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %dcl A char;
 //// %A = 'B';
 //// dcl A%;C fixed bin(31);

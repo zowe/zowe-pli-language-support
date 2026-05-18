@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DCL VAR CHARACTER;
 //// %VAR = "A";
 //// %DO SKIP; FOREVER;

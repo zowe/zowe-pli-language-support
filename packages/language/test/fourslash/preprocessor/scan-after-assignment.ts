@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// DCL WHAT FIXED;
 //// %DECLARE A CHARACTER;
 //// %A = '123';

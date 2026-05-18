@@ -15,6 +15,7 @@
  * Must handle use before declaration
  */
 
+// @compiler: true
 // @wrap: main
 //// DCL <|1:A|> CHAR(8) INIT("A");
 //// PUT(<|1>A); // -> "A"

@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 // @wrap: main
 //// <|A.B|> = 1;
 

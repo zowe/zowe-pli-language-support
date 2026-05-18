@@ -11,17 +11,14 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %declare A fixed;
 //// %A = 3;
 //// %DO FOREVER;
-////   dcl X%;A fixed;
+////   A
 ////   %A = A - 1;
 ////   %IF A = 0 %THEN %LEAVE;
 //// %END;
 ////
 
-preprocessor.expectTokens(`
-  dcl X3 fixed;
-  dcl X2 fixed;
-  dcl X1 fixed;  
-`);
+preprocessor.expectTokens("3 2 1");

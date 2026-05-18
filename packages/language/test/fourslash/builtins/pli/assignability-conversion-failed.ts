@@ -11,8 +11,11 @@
 
 /// <reference path="../../framework.ts" />
 
+// The actual compiler does not throw here at all
+// @compiler: skip
+// @wrap: main
 //// DCL XXX FIXED;
-//// DCL YYY CHARACTER INITIAL("abc");
+//// DCL YYY CHARACTER(8) INITIAL("abc");
 //// XXX = <|MAX|>(YYY, 2, 3);
 
 verify.expectDiagnosticsAt("MAX", code.Severe.IBM3948I);

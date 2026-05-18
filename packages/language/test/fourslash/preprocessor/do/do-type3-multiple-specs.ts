@@ -14,7 +14,8 @@
 /**
  * DO Type 3 - DO with multiple specifications
  */
-
+// The compiler will show an error on the second specification and execute the DO body once with the first specification
+// @compiler: skip
 //// %DCL I FIXED;
 //// %DO I = 1 TO 2, 4 TO 6 BY 2;
 ////   I

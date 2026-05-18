@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 // @wrap: main
 //// DCL A FIXED BIN;
 //// DCL 1 X, 2 Y FIXED BIN;

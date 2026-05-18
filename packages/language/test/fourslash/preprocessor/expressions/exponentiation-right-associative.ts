@@ -11,6 +11,8 @@
 
 /// <reference path="../../framework.ts" />
 
+// This currently fails on the compiler, because the preprocessor does not support exponentiation.
+// @compiler: skip
 //// %DCL X FIXED;
 //// %X = 2 ** 3 ** 2;
 //// X

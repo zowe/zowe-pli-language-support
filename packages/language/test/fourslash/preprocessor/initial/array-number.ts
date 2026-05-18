@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DECLARE A(4) FIXED INIT(10, 20, 30, 40);
 //// %A1 = A(1);
 //// %A2 = A(2);

@@ -15,7 +15,7 @@
  * DO Type 3 - WHILE condition starts true then becomes false
  * Tests case where WHILE condition controls loop termination
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DO I = 1 TO 10 WHILE(I <= 2);
 ////   I

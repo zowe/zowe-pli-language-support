@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// dcl A fixed bin(31);
 
 preprocessor.expectTokens(["DCL", "A", "FIXED", "BIN", "(", "31", ")", ";"]);
