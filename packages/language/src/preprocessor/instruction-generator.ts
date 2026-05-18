@@ -188,11 +188,8 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.CicsResponseStatement:
       instruction = generateCicsResponseInstruction(value);
       break;
-    case ast.SyntaxKind.CicsExecStatement:
-      instruction = inst.createCicsExecInstruction(value);
-      break;
-    case ast.SyntaxKind.SqlExecStatement:
-      instruction = inst.createSqlExecInstruction(value);
+    case ast.SyntaxKind.ExecStatement:
+      instruction = generateExecInstruction(value);
       break;
     default:
       return undefined;
@@ -211,6 +208,21 @@ function generateInstructionForStatement(
   return node;
 }
 
+function generateExecInstruction(
+  stmt: ast.ExecStatement,
+): inst.ExecInstruction {
+  return {
+    kind: inst.InstructionKind.ExecStatement,
+    preprocessorType: stmt.preprocessorType,
+    variables: stmt.hostVariables.map(
+      (token) =>
+        <inst.ExecVariableInstruction>{
+          kind: inst.InstructionKind.ExecVariable,
+          token,
+        },
+    ),
+  };
+}
 function generateReturnInstruction(
   node: ast.ReturnStatement,
 ): inst.HaltInstruction {

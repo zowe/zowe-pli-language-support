@@ -10,7 +10,6 @@
  */
 
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { binaryTokenSearch } from "../utils/search";
 import { Location, tokenToRange } from "./types";
 import {
   getNameToken,
@@ -21,18 +20,15 @@ import {
 } from "../linking/tokens";
 import { URI } from "../utils/uri";
 import { SyntaxKind, iterateReferenceNodes } from "../syntax-tree/ast";
+import { getTokenAt } from "../linking/resolver";
 
 export function definitionRequest(
   compilationUnit: CompilationUnit,
   uri: URI,
   offset: number,
 ): Location[] {
-  const tokens = compilationUnit.services.files.getTokens(uri);
   const locations: Location[] = [];
-  if (!tokens) {
-    return locations;
-  }
-  const token = binaryTokenSearch(tokens, offset);
+  const token = getTokenAt(compilationUnit, uri, offset);
   if (!token) {
     return locations;
   }
