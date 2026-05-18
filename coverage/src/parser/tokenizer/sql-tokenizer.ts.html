@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.12% </span>
+                <span class="strong">62.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>54/77</span>
+                <span class='fraction'>48/77</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">36% </span>
+                <span class="strong">8% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>9/25</span>
+                <span class='fraction'>2/25</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.91% </span>
+                <span class="strong">60.81% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>51/74</span>
+                <span class='fraction'>45/74</span>
             </div>
         
             
@@ -359,19 +359,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1334x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -380,7 +380,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
@@ -518,9 +518,9 @@ function <span class="fstat-no" title="function not covered" >tokenizeMinusWithC
 }
 &nbsp;
 function sqlId(id: TokenizeFunc): TokenizeFunc {
-  return function (context: TokenizerContext): Token | undefined {
-    const startChar = context.char.toLowerCase();
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (startChar === "x") {
+  return <span class="fstat-no" title="function not covered" >function (c</span>ontext: TokenizerContext): Token | undefined {
+    const startChar = <span class="cstat-no" title="statement not covered" >context.char.toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >    if (startChar === "x") {</span>
       // Hexadecimal string literal
       const nextChar = <span class="cstat-no" title="statement not covered" >context.input[context.index + 1];</span>
 <span class="cstat-no" title="statement not covered" >      if (nextChar === "'" || nextChar === '"') {</span>
@@ -528,10 +528,10 @@ function sqlId(id: TokenizeFunc): TokenizeFunc {
 <span class="cstat-no" title="statement not covered" >        context.advance(1, false);</span>
 <span class="cstat-no" title="statement not covered" >        return tokenizeString(context);</span>
       }
-    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (startChar === "b" || startChar === "u" || <span class="branch-2 cbranch-no" title="branch not covered" >startChar === "g") {</span>
+<span class="cstat-no" title="statement not covered" >    } else if (startChar === "b" || startChar === "u" || startChar === "g") {</span>
       // binary, unicode or graphic string literal
-      const nextChar = context.input[context.index + 1];
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (nextChar === "x" || nextChar === "X") {
+      const nextChar = <span class="cstat-no" title="statement not covered" >context.input[context.index + 1];</span>
+<span class="cstat-no" title="statement not covered" >      if (nextChar === "x" || nextChar === "X") {</span>
         const stringChar = <span class="cstat-no" title="statement not covered" >context.input[context.index + 2];</span>
 <span class="cstat-no" title="statement not covered" >        if (stringChar === "'" || stringChar === '"') {</span>
           // Consume the "b"/"u"/"g" and the "x"
@@ -540,7 +540,7 @@ function sqlId(id: TokenizeFunc): TokenizeFunc {
         }
       }
     }
-    return id(context);
+<span class="cstat-no" title="statement not covered" >    return id(context);</span>
   };
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -550,7 +550,7 @@ function sqlId(id: TokenizeFunc): TokenizeFunc {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-14T19:26:34.627Z
+                at 2026-05-18T11:11:58.589Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
