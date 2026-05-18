@@ -14,7 +14,8 @@
 /**
  * DO Type 3 - DO with DOWNTHRU
  */
-
+// The compiler will actually show a parser error on DOWNTHRU and execute the DO body once
+// @compiler: skip
 //// %DCL I FIXED;
 //// %DO I = 3 DOWNTHRU 1;
 ////   I

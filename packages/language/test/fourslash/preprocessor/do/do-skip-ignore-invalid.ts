@@ -11,6 +11,7 @@
 
 /// <reference path="../../framework.ts" />
 
+// @compiler: true
 //// %DCL X FIXED;
 //// %X = 1;
 //// %DO SKIP;
@@ -18,8 +19,6 @@
 ////   WHILE(X <= 3);
 ////   %X = X + 1;
 //// %END;
-//// DCL Variable%;X FIXED;
+//// X
 
-preprocessor.expectTokens(`
-    DCL Variable1 FIXED;
-`);
+preprocessor.expectTokens("1");

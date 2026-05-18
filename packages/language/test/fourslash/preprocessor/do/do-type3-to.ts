@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - Basic DO i = 1 TO 10
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DCL X FIXED;
 //// %X = 2;

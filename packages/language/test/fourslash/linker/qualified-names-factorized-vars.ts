@@ -14,8 +14,12 @@
 /**
  Factorized names can be used as variables
  */
+// @compiler: true
 // @wrap: main
-//// DCL (<|1:A|>, <|2:B|>) CHAR(8);
+//// DCL (
+////   <|1:A|>,
+////   <|2:B|>
+//// ) CHAR(8);
 //// PUT(<|1>A);
 //// PUT(<|2>B);
 

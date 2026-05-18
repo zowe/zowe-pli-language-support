@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %DECLARE A(3) CHARACTER;
 //// %A(1) = 'A';
 //// %A(2) = 'B';

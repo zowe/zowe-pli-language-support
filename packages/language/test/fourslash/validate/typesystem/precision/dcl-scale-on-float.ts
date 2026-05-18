@@ -11,6 +11,8 @@
 
 /// <reference path="../../../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL NUMBER FLOAT <|PREC|>(10, 5);
 
 verify.expectDiagnosticsAt("PREC", code.Error.IBM2424I);

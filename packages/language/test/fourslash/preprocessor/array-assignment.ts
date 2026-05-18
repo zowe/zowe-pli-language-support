@@ -11,10 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: skip
 //// %DECLARE A(3) CHARACTER;
 //// %A(1) = 'A';
 //// %A(2) = 'B';
 //// %A(3) = 'C';
+//// %DECLARE B(3) CHARACTER;
 //// // This should assign the whole array
 //// %B = A;
 //// %DECLARE Y CHAR;

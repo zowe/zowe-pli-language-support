@@ -17,7 +17,7 @@
  * This will implicitly declare an incactive loop variable I (and set it to 1).
  * In this test, we activate the loop variable such that it can be observed.
  */
-
+// @compiler: true
 //// %DO I = 1 TO 2;
 ////   %ACTIVATE I;
 ////   I

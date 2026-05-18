@@ -18,7 +18,7 @@
  * specification by ensuring that the TO and BY expressions are evaluated only
  * once at loop entry, not re-evaluated on each iteration.
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DCL X FIXED;
 //// %X = 4;

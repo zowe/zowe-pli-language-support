@@ -14,6 +14,7 @@
 /**
  Must infer partially qualified names
  */
+// @compiler: true
 // @wrap: main
 //// DCL 1 A,
 ////        2 <|b1:B|>,

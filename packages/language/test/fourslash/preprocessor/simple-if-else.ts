@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %IF 0 %THEN DO; X %END;
 //// %ELSE DO; Y %END;
 

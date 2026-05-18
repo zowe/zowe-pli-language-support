@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 // @wrap: main
 //// PUT(<|1><|2:A|>);
 //// <|1:A|> = 123;

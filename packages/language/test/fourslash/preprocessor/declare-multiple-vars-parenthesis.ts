@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %DCL (A INIT("X"), B INIT("Y"), C INIT("Z"));
 //// A B C
 

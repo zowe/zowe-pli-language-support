@@ -11,6 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
 //// %A = 12;
 //// %IF A = 3 %THEN DO;
 ////   ERROR

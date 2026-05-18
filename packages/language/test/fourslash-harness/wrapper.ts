@@ -12,6 +12,7 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { HARNESS_FILE_PREFIX } from "./harness-parser";
+import { harnessPath } from "./utils";
 
 /**
  * Used to mark where content will be inserted in the wrapper file.
@@ -60,7 +61,7 @@ export function parseWrapperFile(content: string): Wrapper {
  * @returns
  */
 export function getWrappers(): Record<string, Wrapper> {
-  const wrapperPaths = path.resolve(__dirname, "wrappers");
+  const wrapperPaths = path.resolve(harnessPath, "wrappers");
 
   const files = readdirSync(wrapperPaths);
   const wrappers: Record<string, Wrapper> = {};

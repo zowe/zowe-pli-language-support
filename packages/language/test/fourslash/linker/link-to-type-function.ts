@@ -11,8 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+//// TEST_PCK: PACKAGE;
 //// DEFINE ORDINAL <|1:T|>(A, B);
 //// TEST: PROC;
+////   DCL VAR TYPE(T);
 ////   VAR = <|FIRST|>(:<|1>T:);
 //// END TEST;
 

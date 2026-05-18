@@ -17,7 +17,7 @@
  * This will implicitly declare an incactive loop variable I (and set it to 1).
  * In this test, we don't activate the loop variable such it is not substituted by its value.
  */
-
+// @compiler: true
 //// %DO I = 1 TO 2;
 ////   I
 //// %END;

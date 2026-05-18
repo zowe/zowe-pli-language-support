@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - DO with WHILE condition
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DO I = 1 TO 10 WHILE(I < 4);
 ////   I

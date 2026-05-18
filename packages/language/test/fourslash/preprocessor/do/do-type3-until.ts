@@ -14,7 +14,7 @@
 /**
  * DO Type 3 - DO with UNTIL condition
  */
-
+// @compiler: true
 //// %DCL I FIXED;
 //// %DO I = 1 TO 10 UNTIL(I >= 3);
 ////   I
