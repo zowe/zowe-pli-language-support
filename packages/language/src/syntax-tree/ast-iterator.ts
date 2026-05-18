@@ -80,8 +80,8 @@ export function forEachNode(
       if (node.var) {
         action(node.var);
       }
-      if (node.attribute) {
-        action(node.attribute);
+      for (const attribute of node.attributes) {
+        action(attribute);
       }
       break;
     case SyntaxKind.AllocateLocationReferenceIn:

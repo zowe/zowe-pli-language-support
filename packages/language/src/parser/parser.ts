@@ -793,21 +793,24 @@ const allocatedVariable = rule(
   (state: ParserState): ast.AllocatedVariable => {
     const element = ast.createAllocatedVariable();
 
-    if (
-      state.tryConsume(
-        element,
-        CstNodeKind.AllocatedVariable_LevelNumber,
-        tokens.NUMBER,
-      )
-    ) {
-      const levelToken = state.last;
-      element.level = levelToken!.image;
+    const levelToken = state.tryConsume(
+      element,
+      CstNodeKind.AllocatedVariable_LevelNumber,
+      tokens.NUMBER,
+    );
+    if (levelToken) {
+      element.level = levelToken.image;
     }
 
     element.var = referenceItem.rule(state, ast.ReferenceType.Variable);
 
-    if (state.canConsumeFirst(allocateAttribute.first())) {
-      element.attribute = allocateAttribute.rule(state);
+    const { inc } = state.createLoopContext("AllocatedVariable");
+    while (state.canConsumeFirst(allocateAttribute.first())) {
+      inc();
+      const attribute = allocateAttribute.rule(state);
+      if (attribute) {
+        element.attributes.push(attribute);
+      }
     }
 
     return element;
