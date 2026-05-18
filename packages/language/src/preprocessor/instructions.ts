@@ -85,11 +85,10 @@ export enum InstructionKind {
   Inscan,
   Goto,
   Note,
-  SqlAttribute,
-  SqlHostVariable,
-  CicsVariable,
   CicsResponseCode,
-  CicsExecStatement,
+  ExecVariable,
+  ExecStatement,
+  SqlAttribute,
 
   // Expression types
   BinaryExpression,
@@ -115,11 +114,15 @@ export type Instruction =
   | DeclareInstruction
   | NoteInstruction
   | CallInstruction
-  | SqlAttributeInstruction
-  | SqlHostVariableInstruction
   | CicsResponseInstruction
-  | CicsVariableInstruction
-  | CicsExecInstruction;
+  | ExecVariableInstruction
+  | ExecInstruction
+  | SqlAttributeInstruction;
+
+export interface SqlAttributeInstruction {
+  kind: InstructionKind.SqlAttribute;
+  attribute: ast.SqlAttributeStatement;
+}
 
 export interface CicsResponseInstruction {
   kind: InstructionKind.CicsResponseCode;
@@ -135,79 +138,15 @@ export function createCicsResponseInstruction(
   };
 }
 
-export interface CicsExecInstruction {
-  kind: InstructionKind.CicsExecStatement;
-  variables: CicsVariableInstruction[];
+export interface ExecInstruction {
+  kind: InstructionKind.ExecStatement;
+  preprocessorType: ast.PreprocessorType;
+  variables: ExecVariableInstruction[];
 }
 
-export function createCicsExecInstruction(
-  statement: ast.CicsExecStatement,
-): CicsExecInstruction {
-  return {
-    kind: InstructionKind.CicsExecStatement,
-    variables: statement.hostVariables.map((token) =>
-      createCicsVariableInstruction(token),
-    ),
-  };
-}
-
-export function createSqlExecInstruction(
-  statement: ast.SqlExecStatement,
-): Instruction | undefined {
-  const content = statement.content;
-  if (!content) {
-    return undefined;
-  }
-  switch (content.kind) {
-    case ast.SyntaxKind.IncludeDirective:
-      return createIncludeInstruction(content.items, false);
-    case ast.SyntaxKind.EmbeddedUnknownStatement:
-      const hostVarInstructions = content.hostVariables.map((token) =>
-        createSqlHostVariableInstruction(token),
-      );
-      if (hostVarInstructions.length === 1) {
-        return hostVarInstructions[0];
-      } else if (hostVarInstructions.length > 1) {
-        return createCompoundInstruction(hostVarInstructions);
-      } else {
-        return undefined;
-      }
-    default:
-      return undefined;
-  }
-}
-
-export interface SqlHostVariableInstruction {
-  kind: InstructionKind.SqlHostVariable;
+export interface ExecVariableInstruction {
+  kind: InstructionKind.ExecVariable;
   token: Token;
-}
-
-export function createSqlHostVariableInstruction(
-  token: Token,
-): SqlHostVariableInstruction {
-  return {
-    kind: InstructionKind.SqlHostVariable,
-    token,
-  };
-}
-
-export interface SqlAttributeInstruction {
-  kind: InstructionKind.SqlAttribute;
-  attribute: ast.SqlAttributeStatement;
-}
-
-export interface CicsVariableInstruction {
-  kind: InstructionKind.CicsVariable;
-  token: Token;
-}
-
-export function createCicsVariableInstruction(
-  token: Token,
-): CicsVariableInstruction {
-  return {
-    kind: InstructionKind.CicsVariable,
-    token,
-  };
 }
 
 export interface ProcedureInstructionContainer {

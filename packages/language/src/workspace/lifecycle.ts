@@ -70,8 +70,12 @@ export async function tokenize(
 }
 
 export function parse(compilationUnit: CompilationUnit): Program {
+  const textDocument = compilationUnit.services.files.getDocument(
+    compilationUnit.uri,
+  )!;
   const { tree, diagnostics } = parsePli(
     compilationUnit.tokens,
+    textDocument,
     compilationUnit.compilerOptions,
   );
   compilationUnit.ast = tree;

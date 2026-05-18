@@ -31,6 +31,7 @@ describe("PL/I Token-to-Enum Mapping", () => {
     "SyntaxKind",
     "SkipModeType",
     "ReferenceType",
+    "PreprocessorType",
   ]);
 
   test("Token-to-Enum Mapping is gapless", async () => {

@@ -49,11 +49,11 @@ export class InstructionCache {
     this.previousCompilerOptions = compilerOptions;
   }
 
-  get(
+  async get(
     uri: URI,
     text: string,
-    getter: () => FileInstructionResult,
-  ): FileInstructionResult {
+    getter: () => Promise<FileInstructionResult>,
+  ): Promise<FileInstructionResult> {
     const key = uri.toString();
     if (this.cache.has(key)) {
       const cached = this.cache.get(key)!;
@@ -61,7 +61,7 @@ export class InstructionCache {
         return cached.instructions;
       }
     }
-    const instructions = getter();
+    const instructions = await getter();
     this.cache.set(key, { text, instructions });
     return instructions;
   }

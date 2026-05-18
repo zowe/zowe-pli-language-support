@@ -16,9 +16,8 @@ import { preprocessorParse } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
 import {
-  CICS_VARIABLE_MARKER,
   createTokenInstance,
-  SQL_HOST_VARIABLE_MARKER,
+  EXEC_VARIABLE_MARKER,
   Token,
 } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
@@ -530,17 +529,14 @@ function runInstructionSync(
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
-    case inst.InstructionKind.SqlAttribute:
-      runSqlAttributeInstruction(instruction, context);
-      break;
-    case inst.InstructionKind.SqlHostVariable:
-      runSqlHostVariableInstruction(instruction, context);
-      break;
     case inst.InstructionKind.CicsResponseCode:
       runCicsResponseInstruction(instruction, context);
       break;
-    case inst.InstructionKind.CicsExecStatement:
-      runCicsExecInstruction(instruction, context);
+    case inst.InstructionKind.ExecStatement:
+      runExecInstruction(instruction, context);
+      break;
+    case inst.InstructionKind.SqlAttribute:
+      runSqlAttributeInstruction(instruction, context);
       break;
   }
   return undefined;
@@ -595,18 +591,11 @@ function emitMarker(
   context.tokens.push(varMarkerToken, token);
 }
 
-function runCicsVariableInstruction(
-  instruction: inst.CicsVariableInstruction,
+function runExecVariableInstruction(
+  instruction: inst.ExecVariableInstruction,
   context: InterpreterContext,
 ): void {
-  emitMarker(context, instruction.token, CICS_VARIABLE_MARKER);
-}
-
-function runSqlHostVariableInstruction(
-  instruction: inst.SqlHostVariableInstruction,
-  context: InterpreterContext,
-): void {
-  emitMarker(context, instruction.token, SQL_HOST_VARIABLE_MARKER);
+  emitMarker(context, instruction.token, EXEC_VARIABLE_MARKER);
 }
 
 const LOCATOR_TYPE = "FIXED BIN(31)";
@@ -712,21 +701,23 @@ function insertSqlAttributeLobFileTokens(
   );
 }
 
-function runCicsExecInstruction(
-  instruction: inst.CicsExecInstruction,
+function runExecInstruction(
+  instruction: inst.ExecInstruction,
   context: InterpreterContext,
 ): void {
   for (const instr of instruction.variables) {
-    runCicsVariableInstruction(instr, context);
+    runExecVariableInstruction(instr, context);
   }
-  const procSemicolonIndex = findProcSemicolon(context);
-  if (procSemicolonIndex === undefined) {
-    return;
-  }
-  const entry = getGenerationCacheEntry(context, procSemicolonIndex);
-  if (!entry.hasCicsExec) {
-    entry.hasCicsExec = true;
-    insertCicsExecTokens(context, procSemicolonIndex);
+  if (instruction.preprocessorType === ast.PreprocessorType.CICS) {
+    const procSemicolonIndex = findProcSemicolon(context);
+    if (procSemicolonIndex === undefined) {
+      return;
+    }
+    const entry = getGenerationCacheEntry(context, procSemicolonIndex);
+    if (!entry.hasCicsExec) {
+      entry.hasCicsExec = true;
+      insertCicsExecTokens(context, procSemicolonIndex);
+    }
   }
 }
 
@@ -2297,31 +2288,37 @@ async function runInclude(
       throw new Error("Document not found after URI resolution.");
     }
     const content = document.getText();
-    const cachedResult = context.unit.instructionCache.get(uri, content, () => {
-      const processedContent = context.options.marginsProcessor.processMargins(
-        {
-          result: context.options.compilerOptions,
-          text: content,
-        },
-        uri,
-        context.unit.services.workspace,
-      );
-      const tokenizeResult = tokenize(processedContent, uri);
-      const subState = new ParserState(tokenizeResult.tokens);
-      const subProgram = preprocessorParse(
-        subState,
-        context.options.compilerOptions?.options,
-      );
-      subProgram.diagnostics.push(...tokenizeResult.diagnostics);
-      const result = generateInstructions(subProgram.statements);
-      return {
-        tokens: tokenizeResult.tokens,
-        comments: tokenizeResult.comments,
-        diagnostics: subProgram.diagnostics,
-        statements: subProgram.statements,
-        result,
-      };
-    });
+    const cachedResult = await context.unit.instructionCache.get(
+      uri,
+      content,
+      async () => {
+        const processedContent =
+          context.options.marginsProcessor.processMargins(
+            {
+              result: context.options.compilerOptions,
+              text: content,
+            },
+            uri,
+            context.unit.services.workspace,
+          );
+        const tokenizeResult = tokenize(processedContent, uri);
+        const subState = new ParserState(tokenizeResult.tokens);
+        const subProgram = await preprocessorParse(
+          subState,
+          document,
+          context.options.compilerOptions?.options,
+        );
+        subProgram.diagnostics.push(...tokenizeResult.diagnostics);
+        const result = generateInstructions(subProgram.statements);
+        return {
+          tokens: tokenizeResult.tokens,
+          comments: tokenizeResult.comments,
+          diagnostics: subProgram.diagnostics,
+          statements: subProgram.statements,
+          result,
+        };
+      },
+    );
     context.statements.push(...cachedResult.statements);
     context.unit.services.files.set({
       textDocument: document,

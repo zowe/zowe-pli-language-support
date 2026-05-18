@@ -18,3 +18,4 @@ coverage/
 !img/*
 **/pli.merged.json
 MISSING-TOKENS.md
+packages/dialect-cics/src/generated/

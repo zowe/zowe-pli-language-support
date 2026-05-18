@@ -14,11 +14,7 @@ import * as tokens from "./tokens";
 import { getDefaultCompilerOptions } from "../preprocessor/compiler-options/options";
 import { diagnostic, Diagnostic, fullCode } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
-import {
-  TokenizeFunc,
-  TokenizerContext,
-  TokenizerMode,
-} from "./tokenizer/shared";
+import { TokenizeFunc, TokenizerContext } from "./tokenizer/shared";
 import {
   tokenizeIncludeAlt,
   updatePliTokenizer,
@@ -45,14 +41,12 @@ export function tokenize(
     context.char = char;
     context.store();
 
-    if (context.mode === TokenizerMode.Default) {
-      // VERY special case for include alt
-      const includeAltToken = tokenizeIncludeAlt(context);
-      if (includeAltToken) {
-        context.tokens.push(includeAltToken);
-        previous = includeAltToken;
-        continue;
-      }
+    // VERY special case for include alt
+    const includeAltToken = tokenizeIncludeAlt(context);
+    if (includeAltToken) {
+      context.tokens.push(includeAltToken);
+      previous = includeAltToken;
+      continue;
     }
 
     const fn: TokenizeFunc | undefined =

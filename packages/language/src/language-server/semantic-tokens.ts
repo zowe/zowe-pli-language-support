@@ -248,11 +248,6 @@ function getReferenceTarget(token: Token): SyntaxNode | undefined {
         return token.element.type?.node ?? undefined;
       }
       break;
-    case CstNodeKind.SqlHostVariableReference_HostVariable:
-      if (token.element?.kind === SyntaxKind.SqlHostVariableReference) {
-        return token.element.ref?.node ?? undefined;
-      }
-      break;
   }
   return undefined;
 }
