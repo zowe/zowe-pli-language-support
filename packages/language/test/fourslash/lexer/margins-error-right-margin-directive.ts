@@ -24,7 +24,7 @@
 //// }
 
 // @filename: main.pli
-////*PROCESS MARGINS(2,40)
+////*PROCESS MARGINS(2,40);
 //// RGT005: PACKAGE EXPORTS(RGT005);  /* Th<|1:is is being truncated */|>
 ////   DCL SYSNULL BUILTIN;
 ////   RGT005: PROCEDURE(Z) OPTIONS(MAIN);

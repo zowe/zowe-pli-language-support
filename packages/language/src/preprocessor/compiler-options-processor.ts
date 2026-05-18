@@ -13,7 +13,8 @@ import { Range } from "../language-server/types";
 import { CompilerOptionResult } from "./compiler-options/options";
 import { parseAbstractCompilerOptions } from "./compiler-options/parser";
 import { CompilerOptionTranslator } from "./compiler-options/translate";
-import { createTokenInstance, PROCESS, Token } from "../parser/tokens";
+import { createTokenInstance, Token } from "../parser/tokens";
+import { PROCESS as PROCESS_TOKEN } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
 import { WorkspaceContext } from "../workspace/workspace-context";
@@ -23,14 +24,12 @@ export interface CompilerOptionsProcessorResult {
   result: CompilerOptionResult | undefined;
   text: string;
 }
-export class CompilerOptionsProcessor {
-  // constant for the *PROCESS token length
-  private static readonly PROCESS_TOKEN_LENGTH = 8;
 
+export class CompilerOptionsProcessor {
   protected translator = new CompilerOptionTranslator();
 
   /**
-   * Extracts compiler options from the given text
+   * Extracts compiler options from the given text and returns the modified text with the options removed.
    * @param text - The source text containing compiler options.
    * @param uri - The URI of the source file, for configuration lookup.
    * @returns Processed compiler options and modified text.
@@ -40,31 +39,32 @@ export class CompilerOptionsProcessor {
     uri: URI,
     workspace: WorkspaceContext,
   ): CompilerOptionsProcessorResult {
-    // Extract options and build modified text in a single pass
     const ranges = this.getCompilerOptionsRange(text, uri);
     const sourceCompilerOptions: string[] = [];
     const textSegments: string[] = [];
     let lastPosition = 0;
 
     for (const range of ranges) {
-      // Extract the compiler option text (after *PROCESS token)
-      const offset =
-        range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH;
+      const offset = range.start + PROCESS_TOKEN_LENGTH;
       sourceCompilerOptions.push(text.substring(offset, range.end));
-
-      // Build the modified text: keep text before range, replace range with spaces + newline
       textSegments.push(text.substring(lastPosition, range.start));
-      textSegments.push(" ".repeat(range.end - range.start - 1));
-      textSegments.push("\n");
+
+      // Preserve line structure
+      const directiveText = text.substring(range.start, range.end);
+      const lines = directiveText.split("\n");
+      for (let i = 0; i < lines.length; i++) {
+        if (i > 0) {
+          textSegments.push("\n");
+        }
+        textSegments.push(" ".repeat(lines[i].length));
+      }
 
       lastPosition = range.end;
     }
 
-    // Append remaining text after last range
     textSegments.push(text.substring(lastPosition));
     const newText = textSegments.join("");
 
-    // Start the compiler options translation here
     this.translator.clear();
 
     // Retrieve compiler options from the plugin configuration provider.
@@ -74,22 +74,20 @@ export class CompilerOptionsProcessor {
     const programConfig = workspace.config.getProgramConfig(uri);
 
     if (programConfig) {
-      if (ranges.length === 0) {
-        // If there is no anchor in the current file, diagnostics are not added at all.
-        // Just run the compiler options translation.
-        this.translator.setDiagnosticAnchor();
-      } else {
+      if (ranges.length > 0) {
         // If there is at least one process directive, use the first one as anchor
         // for the plugin configuration diagnostics.
         const range = ranges[0];
         this.translator.setDiagnosticAnchor(
           {
             start: range.start + 1,
-            end: range.start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+            end: range.start + PROCESS_TOKEN_LENGTH,
           },
           uri.toString(),
           (text) => `PLI Plugin Config: ${text}`,
         );
+      } else {
+        this.translator.setDiagnosticAnchor();
       }
 
       // Add the compiler option parser issues and start the translation.
@@ -110,9 +108,9 @@ export class CompilerOptionsProcessor {
       const sourceOptions = parseAbstractCompilerOptions(
         option,
         uri,
-        ranges[index].start + CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+        ranges[index].start + PROCESS_TOKEN_LENGTH,
         index,
-        CompilerOptionsProcessor.PROCESS_TOKEN_LENGTH,
+        PROCESS_TOKEN_LENGTH,
       );
 
       // Add parser errors and translate.
@@ -133,77 +131,179 @@ export class CompilerOptionsProcessor {
     uri: URI,
   ): (Range & { token: Token })[] {
     const ranges: (Range & { token: Token })[] = [];
-    // The PROCESS directive actually allows for further characters after the ;.
+    // The PROCESS directive allows for further characters after the ;.
     // *PROCESS MARGINS(2, 72) ; MARGINS(1, 72); is valid, but everything after the first ; is ignored.
-    // Just extract the complete line and let the parser decide what is valid.
-    // We still need the whole line to preserve original positions for diagnostics.
-    const processRegex = /([%*]PROCESS[^\n\r]*)(?:\r?\n|$)/iy;
-    let match: RegExpExecArray | null;
-    let currentPosition = 0;
+    // PROCESS directives can span multiple lines until a semicolon (outside comments) is encountered.
+    // Example: *PROCESS MARGINS(2,72,1),INCLUDE,LIST
+    // ,AG,A(F),MAP,NEST,NOF,NOPT,STG,X(F),
+    //  INITAUTO(F);
 
-    processRegex.lastIndex = this.advanceToNextProcessLocation(
-      currentPosition,
-      text,
-    );
-    let line = 0;
-    while ((match = processRegex.exec(text))) {
-      const directiveStart = match.index;
-      const directiveEnd = match.index + match[0].length;
-      const processStart = directiveStart + 1; // Skip the % or *
-      const tokenLength = "PROCESS".length;
-      const tokenEnd = processStart + tokenLength;
+    let col0 = true;
+    let index = 0;
+    let lineCounter = 0;
 
-      const image = text.substring(directiveStart, tokenEnd);
+    let inDirective = false;
+    let inMultiLineComment = false;
+    let inSingleLineComment = false;
+    let inString: number = 0; //charCode of the opening quote or 0
+
+    let processStart = 0;
+    let processStartLine = 0;
+
+    const la = (n: number): number =>
+      index + n < text.length ? text.charCodeAt(index + n) : -1;
+
+    const consumeLine = () => {
+      while (index < text.length && text.charCodeAt(index) != LF) {
+        index++;
+      }
+      if (index < text.length) {
+        index++;
+        lineCounter++;
+        col0 = true;
+        inSingleLineComment = false;
+      }
+    };
+
+    const createToken = (): Token => {
+      const image = text.substring(processStart, processStart + PROCESS.length);
       const token = createTokenInstance(
         image,
         image,
-        PROCESS,
-        directiveStart,
-        line,
+        PROCESS_TOKEN,
+        processStart,
+        processStartLine,
         0,
-        tokenEnd,
-        line++,
-        tokenLength,
+        processStart + PROCESS.length,
+        lineCounter,
+        PROCESS.length,
         uri,
       );
       token.kind = CstNodeKind.ProcessDirective_PROCESS;
+      return token;
+    };
 
-      ranges.push({
-        token,
-        start: directiveStart,
-        end: directiveEnd,
-      });
+    while (index < text.length) {
+      const code = text.charCodeAt(index);
 
-      processRegex.lastIndex = this.advanceToNextProcessLocation(
-        directiveEnd,
-        text,
-      );
+      const processDirective =
+        col0 &&
+        (code == STAR || code == PERCENT) &&
+        !inDirective &&
+        !inMultiLineComment &&
+        !inSingleLineComment &&
+        (la(1) | 0x20) == P &&
+        (la(2) | 0x20) == R &&
+        (la(3) | 0x20) == O &&
+        (la(4) | 0x20) == C &&
+        (la(5) | 0x20) == E &&
+        (la(6) | 0x20) == S &&
+        (la(7) | 0x20) == S;
+
+      col0 = false;
+
+      if (processDirective) {
+        inDirective = true;
+        processStart = index;
+        processStartLine = lineCounter;
+        index += PROCESS.length + 1;
+        continue;
+      }
+
+      if (!inString && !inMultiLineComment && !inSingleLineComment) {
+        if (code == SLASH && la(1) == STAR) {
+          inMultiLineComment = true;
+          index += 2;
+          continue;
+        }
+
+        if (code == SLASH && la(1) == SLASH) {
+          inSingleLineComment = true;
+          index += 2;
+          continue;
+        }
+
+        if (code == SEMICOLON) {
+          if (inDirective) {
+            consumeLine();
+            ranges.push({
+              token: createToken(),
+              start: processStart,
+              end: index,
+            });
+            inDirective = false;
+            continue;
+          }
+        }
+      }
+
+      if (code == LF) {
+        consumeLine();
+        continue;
+      }
+
+      if (inMultiLineComment && code == STAR && la(1) == SLASH) {
+        inMultiLineComment = false;
+        index += 2;
+        continue;
+      }
+
+      if (
+        !inDirective &&
+        !inMultiLineComment &&
+        !inSingleLineComment &&
+        code > SPACE
+      ) {
+        break; // If we encounter any non-whitespace character outside of a directive or comment, we can stop scanning
+      }
+
+      if (
+        !inMultiLineComment &&
+        !inSingleLineComment &&
+        (code == SINGLE_QUOTE || code == DOUBLE_QUOTE)
+      ) {
+        if (inString === 0) {
+          inString = code;
+        } else if (inString === code) {
+          if (la(1) === code) {
+            // Escaped quote, skip both
+            index += 2;
+            continue;
+          } else {
+            inString = 0;
+          }
+        }
+      }
+
+      index++;
     }
+
+    if (inDirective) {
+      ranges.push({
+        token: createToken(),
+        start: processStart,
+        end: text.length,
+      });
+    }
+
     return ranges;
   }
-
-  private advanceToNextProcessLocation(
-    currentPosition: number,
-    text: string,
-  ): number {
-    const skipPatterns: RegExp[] = [
-      /\s*\/\*[\s\S]*?\*\//my, // Multi-line comments
-      /\s*\/\/[^\n\r]*/y, // Single-line comments
-      /[ \t\r]*\n/y, // End on newline
-    ];
-
-    let patternIndex = 0;
-    while (patternIndex < skipPatterns.length) {
-      const pattern = skipPatterns[patternIndex];
-      patternIndex++;
-      pattern.lastIndex = currentPosition;
-      const match = pattern.exec(text);
-      if (match) {
-        currentPosition = match.index + match[0].length;
-        patternIndex = 0; // Restart patterns from currentPosition.
-      }
-    }
-
-    return currentPosition;
-  }
 }
+
+const PROCESS_TOKEN_LENGTH = 8;
+const STAR = "*".charCodeAt(0);
+const PERCENT = "%".charCodeAt(0);
+const PROCESS = "PROCESS";
+const SLASH = "/".charCodeAt(0);
+const SEMICOLON = ";".charCodeAt(0);
+const SPACE = " ".charCodeAt(0);
+const SINGLE_QUOTE = "'".charCodeAt(0);
+const DOUBLE_QUOTE = '"'.charCodeAt(0);
+const LF = "\n".charCodeAt(0);
+
+const P = "p".charCodeAt(0);
+const R = "r".charCodeAt(0);
+const O = "o".charCodeAt(0);
+const C = "c".charCodeAt(0);
+const E = "e".charCodeAt(0);
+const S = "s".charCodeAt(0);
