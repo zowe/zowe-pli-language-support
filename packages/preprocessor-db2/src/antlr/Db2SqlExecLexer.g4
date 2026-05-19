@@ -815,7 +815,7 @@ DATELITERAL: '\'' (DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT | //y
                    DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT DIGIT DIGIT) TIMESTAMPLITERAL? '\'';//yyyy-mm-dd
 
 INTEGERLITERAL : DIGIT+;
-IDENTIFIER : [\\w] [-_\\w]*;
+IDENTIFIER : [a-zA-Z] [-_a-zA-Z0-9]*;
 NUMERICLITERAL : (PLUSCHAR | MINUSCHAR)?
     (
         (DOT_FS | COMMACHAR { this.commaCharAllowed }?) DIGIT+ (('e' | 'E') (PLUSCHAR | MINUSCHAR)? DIGIT+)?

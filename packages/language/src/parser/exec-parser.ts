@@ -37,7 +37,7 @@ export async function execStatement(
     t.ExecFragment,
   );
   if (cicsFragmentToken) {
-    var { preprocessor, statementText, startOffset } = handleExecFragment(
+    const { preprocessor, statementText, startOffset } = handleExecFragment(
       cicsFragmentToken,
       textDocument,
       execStatement,
