@@ -29,31 +29,9 @@ import {
   RecognitionException,
   Token as AntlrToken,
 } from "antlr4ng";
-import { Range } from "vscode-languageserver";
 import { Db2SqlExecParserVisitor } from "../generated/Db2SqlExecParserVisitor";
 import { Dbs_sql_identifierContext } from "../generated/Db2SqlExecParser";
-
-export enum SemanticsKind {
-  Identifier,
-  Keyword,
-  String,
-  Comment,
-  Number,
-}
-
-export interface Token {
-  image: string;
-  startOffset: number;
-  endOffset: number;
-  semanticsKind: SemanticsKind;
-}
-
-export interface ParseError {
-  line: number;
-  column: number;
-  message: string;
-  range: Range;
-}
+import { ParseError, SemanticsKind, Token } from "dialect-api";
 
 export class CollectingErrorListener extends BaseErrorListener {
   public readonly errors: ParseError[] = [];
@@ -61,37 +39,16 @@ export class CollectingErrorListener extends BaseErrorListener {
   override syntaxError<S extends AntlrToken, T extends ATNSimulator>(
     _recognizer: Recognizer<T>,
     offendingSymbol: S | null,
-    line: number,
-    charPositionInLine: number,
+    _line: number,
+    _charPositionInLine: number,
     msg: string,
     _e: RecognitionException | null,
   ): void {
     this.errors.push({
-      line,
-      column: charPositionInLine,
       message: msg,
-      range: this.getRangeForSyntaxError(
-        offendingSymbol,
-        line,
-        charPositionInLine,
-      ),
+      startOffset: offendingSymbol?.start ?? 0,
+      endOffset: offendingSymbol?.stop ?? 0,
     });
-  }
-
-  private getRangeForSyntaxError(
-    offendingSymbol: AntlrToken | null,
-    line: number,
-    charPositionInLine: number,
-  ) {
-    const tokenLength = offendingSymbol
-      ? offendingSymbol.stop - offendingSymbol.start + 1
-      : 0;
-    return Range.create(
-      line - 1,
-      charPositionInLine,
-      line - 1,
-      charPositionInLine + tokenLength,
-    );
   }
 }
 

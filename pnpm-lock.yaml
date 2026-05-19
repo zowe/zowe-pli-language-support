@@ -45,6 +45,9 @@ importers:
       antlr4ng:
         specifier: ^3.0.16
         version: 3.0.16
+      dialect-api:
+        specifier: workspace:*
+        version: link:../dialect-api
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1
@@ -67,6 +70,9 @@ importers:
       antlr4ng:
         specifier: ^3.0.16
         version: 3.0.16
+      dialect-api:
+        specifier: workspace:*
+        version: link:../dialect-api
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1
@@ -98,9 +104,15 @@ importers:
       chevrotain:
         specifier: ^11.1.1
         version: 11.1.1
+      dialect-api:
+        specifier: workspace:*
+        version: link:../dialect-api
       dialect-cics:
         specifier: workspace:*
         version: link:../dialect-cics
+      dialect-sql:
+        specifier: workspace:*
+        version: link:../dialect-sql
       jsonc-parser:
         specifier: 4.0.0-next.1
         version: 4.0.0-next.1

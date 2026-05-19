@@ -28,10 +28,8 @@ import { Db2SqlExecParser } from "../generated/Db2SqlExecParser";
 import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
-  ParseError,
-  SemanticsKind,
-  Token,
 } from "./parsing";
+import { ParseError, SemanticsKind, Token } from "dialect-api";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];
@@ -81,7 +79,12 @@ export class SQLPreprocessor {
           return identifierTokens[idIndex++];
         } else if (token.channel === COMMENTS) {
           semanticsKind = SemanticsKind.Comment;
-        } else if ([Db2SqlExecLexer.CHAR_STRING_LITERAL_DOUBLE_QUOTE, Db2SqlExecLexer.CHAR_STRING_LITERAL_SINGLE_QUOTE].includes(token.type)) {
+        } else if (
+          [
+            Db2SqlExecLexer.CHAR_STRING_LITERAL_DOUBLE_QUOTE,
+            Db2SqlExecLexer.CHAR_STRING_LITERAL_SINGLE_QUOTE,
+          ].includes(token.type)
+        ) {
           semanticsKind = SemanticsKind.String;
         } else if (token.type === Db2SqlExecLexer.NUMERICLITERAL) {
           semanticsKind = SemanticsKind.Number;

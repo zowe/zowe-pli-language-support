@@ -333,7 +333,11 @@ export abstract class MessageServiceParser extends Parser {
    * @param regexp regular expression to match
    * @param message error message to display
    */
-  protected validateTokenWithRegex(text: string, regexp: string, message: string) {
+  protected validateTokenWithRegex(
+    text: string,
+    regexp: string,
+    message: string,
+  ) {
     if (!new RegExp(regexp).test(text)) {
       this.notifyError(message, text);
     }

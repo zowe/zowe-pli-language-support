@@ -28,10 +28,8 @@ import { CICSParser } from "../generated/CICSParser";
 import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
-  ParseError,
-  SemanticsKind,
-  Token,
 } from "./parsing";
+import { ParseError, SemanticsKind, Token } from "dialect-api";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];
