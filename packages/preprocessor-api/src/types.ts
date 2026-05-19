@@ -29,3 +29,12 @@ export interface Token extends WithRange {
 export interface ParseError extends WithRange {
   message: string;
 }
+
+export interface PreprocessorResult {
+  diagnostics: ParseError[];
+  tokens: Token[];
+}
+
+export interface Preprocessor {
+  execute(input: string): Promise<PreprocessorResult>;
+}

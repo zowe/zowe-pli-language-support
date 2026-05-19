@@ -29,22 +29,18 @@ import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
 } from "./parsing";
-import { ParseError, SemanticsKind, Token } from "preprocessor-api";
-
-export interface ICICSPreprocessorResult {
-  diagnostics: ParseError[];
-  tokens: Token[];
-}
+import {
+  ParseError,
+  Preprocessor,
+  SemanticsKind,
+  Token,
+  PreprocessorResult,
+} from "preprocessor-api";
 
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
 
-export interface ISQLPreprocessorResult {
-  diagnostics: ParseError[];
-  tokens: Token[];
-}
-
-export class SQLPreprocessor {
-  public async execute(textSnippet: string): Promise<ISQLPreprocessorResult> {
+export class Db2SqlPreprocessor implements Preprocessor {
+  public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new Db2SqlExecLexer(charStream);
     const tokenStream = new antlr.CommonTokenStream(lexer);

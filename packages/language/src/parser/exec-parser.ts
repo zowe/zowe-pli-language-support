@@ -13,11 +13,17 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { SemanticsKind } from "preprocessor-api";
+import {
+  SemanticsKind,
+  Preprocessor,
+  ParseError,
+  Token,
+} from "preprocessor-api";
 import { CICSPreprocessor } from "preprocessor-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
+import { Db2SqlPreprocessor } from "preprocessor-db2";
 
 export async function execStatement(
   state: ParserState,
@@ -30,32 +36,32 @@ export async function execStatement(
     CstNodeKind.ExecStatement_ExecFragment,
     t.ExecFragment,
   );
-  if (!cicsFragmentToken) {
-    return execStatement;
+  if (cicsFragmentToken) {
+    var { preprocessor, statementText, startOffset } = handleExecFragment(
+      cicsFragmentToken,
+      textDocument,
+      execStatement,
+    );
+    if (preprocessor) {
+      const { diagnostics, tokens } = await preprocessor.execute(statementText);
+      handleDiagnostics(diagnostics, state);
+      handleTokens(tokens, startOffset, textDocument, execStatement);
+    }
   }
-  const prefixMatch = /^(\w+)\s*/i.exec(cicsFragmentToken.image);
-  switch (prefixMatch?.[1].toUpperCase()) {
-    case "CICS":
-      execStatement.preprocessorType = ast.PreprocessorType.CICS;
-      break;
-    case "SQL":
-      execStatement.preprocessorType = ast.PreprocessorType.SQL;
-      break;
-    default:
-      execStatement.preprocessorType = ast.PreprocessorType.UNKNOWN;
-      break;
-  }
-  const prefixLength = prefixMatch?.[0].length || 0;
-  const startOffset = cicsFragmentToken.startOffset + prefixLength;
-  const endOffset = cicsFragmentToken.endOffset + 1;
-  const statementText = textDocument
-    .getText()
-    .substring(startOffset, endOffset);
-  const preprocessor = new CICSPreprocessor();
-  const { diagnostics, tokens } = await preprocessor.execute(statementText);
-  for (const diagnostic of diagnostics) {
-    state.error(diagnostic.message, state.token);
-  }
+  state.consume(
+    execStatement,
+    CstNodeKind.ExecStatement_Semicolon,
+    t.Semicolon,
+  );
+  return execStatement;
+}
+
+function handleTokens(
+  tokens: Token[],
+  startOffset: number,
+  textDocument: TextDocument,
+  execStatement: ast.ExecStatement,
+) {
   for (const token of tokens) {
     const tokenStart = startOffset + token.startOffset;
     const tokenEnd = startOffset + token.endOffset;
@@ -95,10 +101,39 @@ export async function execStatement(
 
     execStatement.preprocessorTokens.push({ token: pliToken, semanticType });
   }
-  state.consume(
-    execStatement,
-    CstNodeKind.ExecStatement_Semicolon,
-    t.Semicolon,
-  );
-  return execStatement;
+}
+
+function handleDiagnostics(diagnostics: ParseError[], state: ParserState) {
+  for (const diagnostic of diagnostics) {
+    state.error(diagnostic.message, state.token);
+  }
+}
+
+function handleExecFragment(
+  cicsFragmentToken: t.Token,
+  textDocument: TextDocument,
+  execStatement: ast.ExecStatement,
+) {
+  const prefixMatch = /^(\w+)\s*/i.exec(cicsFragmentToken.image);
+  const prefixLength = prefixMatch?.[0].length || 0;
+  const startOffset = cicsFragmentToken.startOffset + prefixLength;
+  const endOffset = cicsFragmentToken.endOffset + 1;
+  const statementText = textDocument
+    .getText()
+    .substring(startOffset, endOffset);
+  let preprocessor: Preprocessor | undefined;
+  switch (prefixMatch?.[1].toUpperCase()) {
+    case "CICS":
+      execStatement.preprocessorType = ast.PreprocessorType.CICS;
+      preprocessor = new CICSPreprocessor();
+      break;
+    case "SQL":
+      execStatement.preprocessorType = ast.PreprocessorType.SQL;
+      preprocessor = new Db2SqlPreprocessor();
+      break;
+    default:
+      execStatement.preprocessorType = ast.PreprocessorType.UNKNOWN;
+      break;
+  }
+  return { preprocessor, statementText, startOffset };
 }
