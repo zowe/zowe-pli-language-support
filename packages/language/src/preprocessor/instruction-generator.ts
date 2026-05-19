@@ -215,6 +215,7 @@ function generateExecInstruction(
   return {
     kind: inst.InstructionKind.ExecStatement,
     preprocessorType: stmt.preprocessorType,
+    replaceWithText: stmt.replaceWithText ?? undefined,
     variables: stmt.preprocessorTokens
       .filter((t) => t.semanticType === SemanticTokenTypes.variable)
       .map(

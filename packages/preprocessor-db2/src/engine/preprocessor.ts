@@ -106,6 +106,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
     return {
       diagnostics,
       tokens,
+      replacement: undefined,
     };
   }
 }

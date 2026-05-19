@@ -43,9 +43,10 @@ export async function execStatement(
       execStatement,
     );
     if (preprocessor) {
-      const { diagnostics, tokens } = await preprocessor.execute(statementText);
+      const { diagnostics, tokens, replacement } = await preprocessor.execute(statementText);
       handleDiagnostics(diagnostics, state);
-      handleTokens(tokens, startOffset, textDocument, execStatement);
+      execStatement.preprocessorTokens =handleTokens(tokens, startOffset, textDocument);
+      execStatement.replaceWithText = replacement ?? null;
     }
   }
   state.consume(
@@ -60,8 +61,8 @@ function handleTokens(
   tokens: Token[],
   startOffset: number,
   textDocument: TextDocument,
-  execStatement: ast.ExecStatement,
 ) {
+  const result: ast.PreprocessorToken[] = [];
   for (const token of tokens) {
     const tokenStart = startOffset + token.startOffset;
     const tokenEnd = startOffset + token.endOffset;
@@ -99,8 +100,9 @@ function handleTokens(
         break;
     }
 
-    execStatement.preprocessorTokens.push({ token: pliToken, semanticType });
+    result.push({ token: pliToken, semanticType });
   }
+  return result;
 }
 
 function handleDiagnostics(diagnostics: ParseError[], state: ParserState) {

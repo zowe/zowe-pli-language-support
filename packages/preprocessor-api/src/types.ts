@@ -33,6 +33,7 @@ export interface ParseError extends WithRange {
 export interface PreprocessorResult {
   diagnostics: ParseError[];
   tokens: Token[];
+  replacement: string;
 }
 
 export interface Preprocessor {
