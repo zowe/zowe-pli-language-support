@@ -19,3 +19,4 @@ coverage/
 **/pli.merged.json
 MISSING-TOKENS.md
 packages/dialect-cics/src/generated/
+packages/dialect-sql/src/generated/

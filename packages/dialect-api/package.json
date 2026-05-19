@@ -1,0 +1,31 @@
+{
+  "name": "dialect-api",
+  "description": "The dialect API package",
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "out",
+    "src"
+  ],
+  "main": "./out/index.js",
+  "module": "./out/index.js",
+  "exports": {
+    ".": {
+      "types": "./out/index.d.ts",
+      "default": "./out/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "out/index"
+      ]
+    }
+  },
+  "scripts": {
+    "clean": "shx rm -fr *.tsbuildinfo out"
+  }
+}

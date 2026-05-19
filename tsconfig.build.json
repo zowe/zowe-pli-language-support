@@ -2,6 +2,18 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/dialect-api/tsconfig.src.json"
+    },
+    {
+      "path": "./packages/dialect-api/tsconfig.test.json"
+    },
+    {
+      "path": "./packages/dialect-sql/tsconfig.src.json"
+    },
+    {
+      "path": "./packages/dialect-sql/tsconfig.test.json"
+    },
+    {
       "path": "./packages/dialect-cics/tsconfig.src.json"
     },
     {

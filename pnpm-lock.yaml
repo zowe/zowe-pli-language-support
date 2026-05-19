@@ -38,7 +38,31 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.8)(tsx@4.21.0)
 
+  packages/dialect-api: {}
+
   packages/dialect-cics:
+    dependencies:
+      antlr4ng:
+        specifier: ^3.0.16
+        version: 3.0.16
+      vscode-languageserver:
+        specifier: ~9.0.1
+        version: 9.0.1
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
+      vscode-languageserver-types:
+        specifier: ^3.17.5
+        version: 3.17.5
+      vscode-uri:
+        specifier: ^3.1.0
+        version: 3.1.0
+    devDependencies:
+      antlr-ng:
+        specifier: ^1.0.10
+        version: 1.0.10
+
+  packages/dialect-sql:
     dependencies:
       antlr4ng:
         specifier: ^3.0.16
