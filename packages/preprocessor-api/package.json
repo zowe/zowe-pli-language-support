@@ -1,6 +1,6 @@
 {
-  "name": "dialect-api",
-  "description": "The dialect API package",
+  "name": "preprocessor-api",
+  "description": "The preprocessor API package",
   "version": "1.0.0",
   "type": "module",
   "engines": {

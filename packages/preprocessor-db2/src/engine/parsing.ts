@@ -21,6 +21,7 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
+
 import {
   BaseErrorListener,
   Recognizer,
@@ -28,9 +29,9 @@ import {
   RecognitionException,
   Token as AntlrToken,
 } from "antlr4ng";
-import { CICSParserVisitor } from "../generated/CICSParserVisitor";
-import { CicsWordContext } from "../generated/CICSParser";
-import { ParseError, SemanticsKind, Token } from "dialect-api";
+import { Db2SqlExecParserVisitor } from "../generated/Db2SqlExecParserVisitor";
+import { Dbs_sql_identifierContext } from "../generated/Db2SqlExecParser";
+import { ParseError, SemanticsKind, Token } from "preprocessor-api";
 
 export class CollectingErrorListener extends BaseErrorListener {
   public readonly errors: ParseError[] = [];
@@ -38,28 +39,27 @@ export class CollectingErrorListener extends BaseErrorListener {
   override syntaxError<S extends AntlrToken, T extends ATNSimulator>(
     _recognizer: Recognizer<T>,
     offendingSymbol: S | null,
-    line: number,
-    charPositionInLine: number,
+    _line: number,
+    _charPositionInLine: number,
     msg: string,
     _e: RecognitionException | null,
   ): void {
     this.errors.push({
       message: msg,
-      startOffset: offendingSymbol?.start || 0,
-      endOffset: offendingSymbol?.stop || 0,
+      startOffset: offendingSymbol?.start ?? 0,
+      endOffset: offendingSymbol?.stop ?? 0,
     });
   }
 }
 
-export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
+export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
   readonly identifiers: Token[] = [];
-  override visitCicsWord = (ctx: CicsWordContext): void => {
-    const symbol = ctx.WORD_IDENTIFIER()?.getSymbol();
-    if (symbol && symbol.text) {
+  override visitDbs_sql_identifier = (ctx: Dbs_sql_identifierContext): void => {
+    if (ctx.start && ctx.stop) {
       this.identifiers.push({
-        image: symbol.text,
-        startOffset: symbol.start,
-        endOffset: symbol.stop,
+        image: ctx.getText(),
+        startOffset: ctx.start.start,
+        endOffset: ctx.stop.stop,
         semanticsKind: SemanticsKind.Identifier,
       });
     }

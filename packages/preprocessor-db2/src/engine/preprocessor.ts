@@ -29,7 +29,7 @@ import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
 } from "./parsing";
-import { ParseError, SemanticsKind, Token } from "dialect-api";
+import { ParseError, SemanticsKind, Token } from "preprocessor-api";
 
 export interface ICICSPreprocessorResult {
   diagnostics: ParseError[];

@@ -16,7 +16,7 @@ import { CICSPreprocessor } from "../engine/preprocessor";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
-describe("CICS Dialect: Positives", async () => {
+describe("CICS Preprocessor: Positives", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
   const fileName = join(__dirname, "positives.txt");
   const content = await readFile(fileName, "utf-8");

@@ -85,9 +85,9 @@ export function semanticTokens(
       token.kind === CstNodeKind.ExecStatement_ExecFragment &&
       token.element?.kind === SyntaxKind.ExecStatement
     ) {
-      for (let index = 0; index < token.element.dialectTokens.length; index++) {
-        const subToken = token.element.dialectTokens[index].token;
-        const type = token.element.dialectTokens[index].semanticType;
+      for (let index = 0; index < token.element.preprocessorTokens.length; index++) {
+        const subToken = token.element.preprocessorTokens[index].token;
+        const type = token.element.preprocessorTokens[index].semanticType;
         semanticTokens.push(
           subToken.startLine,
           subToken.startColumn,

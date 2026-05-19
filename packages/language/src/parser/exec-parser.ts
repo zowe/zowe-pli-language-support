@@ -13,8 +13,8 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { ParserState } from "./parser-state";
 import { CstNodeKind } from "../syntax-tree/cst";
-import { SemanticsKind } from "dialect-api";
-import { CICSPreprocessor } from "dialect-cics";
+import { SemanticsKind } from "preprocessor-api";
+import { CICSPreprocessor } from "preprocessor-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
@@ -93,7 +93,7 @@ export async function execStatement(
         break;
     }
 
-    execStatement.dialectTokens.push({ token: pliToken, semanticType });
+    execStatement.preprocessorTokens.push({ token: pliToken, semanticType });
   }
   state.consume(
     execStatement,
