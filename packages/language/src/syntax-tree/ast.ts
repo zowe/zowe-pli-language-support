@@ -4365,7 +4365,7 @@ export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
   preprocessorType: PreprocessorType;
   preprocessorTokens: PreprocessorToken[];
-  replaceWithText: string | null;
+  replacement: string | IncludeDirective | null;
 }
 
 export function createExecStatement(): ExecStatement {
@@ -4374,7 +4374,7 @@ export function createExecStatement(): ExecStatement {
     container: null,
     preprocessorType: PreprocessorType.UNKNOWN,
     preprocessorTokens: [],
-    replaceWithText: null,
+    replacement: null,
   };
 }
 

@@ -45,8 +45,19 @@ export async function execStatement(
     if (preprocessor) {
       const { diagnostics, tokens, replacement } = await preprocessor.execute(statementText);
       handleDiagnostics(diagnostics, state);
-      execStatement.preprocessorTokens =handleTokens(tokens, startOffset, textDocument);
-      execStatement.replaceWithText = replacement ?? null;
+      execStatement.preprocessorTokens = handleTokens(tokens, startOffset, textDocument);
+      if(replacement) {
+        if(replacement.type === "text") {
+          execStatement.replacement = replacement.text;
+        } else {
+          const item = ast.createIncludeItemFile();
+          item.sql = true;
+          item.fileName = replacement.filePath;
+          item.token = toPliToken(0, replacement.token, textDocument);
+          execStatement.replacement = ast.createIncludeDirective();
+          execStatement.replacement.items.push(item);
+        }
+      }
     }
   }
   state.consume(
@@ -64,22 +75,7 @@ function handleTokens(
 ) {
   const result: ast.PreprocessorToken[] = [];
   for (const token of tokens) {
-    const tokenStart = startOffset + token.startOffset;
-    const tokenEnd = startOffset + token.endOffset;
-    const positionStart = textDocument.positionAt(tokenStart);
-    const positionEnd = textDocument.positionAt(tokenEnd);
-    const pliToken = t.createTokenInstance(
-      token.image,
-      token.image,
-      t.ID,
-      tokenStart,
-      positionStart.line,
-      positionStart.character,
-      tokenEnd,
-      positionEnd.line,
-      positionEnd.character,
-      URI.parse(textDocument.uri.toString()),
-    );
+    const pliToken = toPliToken(startOffset, token, textDocument);
 
     let semanticType: SemanticTokenTypes = SemanticTokenTypes.modifier;
     switch (token.semanticsKind) {
@@ -103,6 +99,26 @@ function handleTokens(
     result.push({ token: pliToken, semanticType });
   }
   return result;
+}
+
+function toPliToken(startOffset: number, token: Token, textDocument: TextDocument) {
+  const tokenStart = startOffset + token.startOffset;
+  const tokenEnd = startOffset + token.endOffset;
+  const positionStart = textDocument.positionAt(tokenStart);
+  const positionEnd = textDocument.positionAt(tokenEnd);
+  const pliToken = t.createTokenInstance(
+    token.image,
+    token.image,
+    t.ID,
+    tokenStart,
+    positionStart.line,
+    positionStart.character,
+    tokenEnd,
+    positionEnd.line,
+    positionEnd.character,
+    URI.parse(textDocument.uri.toString())
+  );
+  return pliToken;
 }
 
 function handleDiagnostics(diagnostics: ParseError[], state: ParserState) {

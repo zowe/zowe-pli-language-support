@@ -211,11 +211,16 @@ function generateInstructionForStatement(
 
 function generateExecInstruction(
   stmt: ast.ExecStatement,
-): inst.ExecInstruction {
+): inst.Instruction {
+  if (stmt.replacement) {
+    if (typeof stmt.replacement === "object") {
+      return generateIncludeInstruction(stmt.replacement)!;
+    }
+  }
   return {
     kind: inst.InstructionKind.ExecStatement,
     preprocessorType: stmt.preprocessorType,
-    replaceWithText: stmt.replaceWithText ?? undefined,
+    replaceWithText: typeof stmt.replacement === "string" ? stmt.replacement : undefined,
     variables: stmt.preprocessorTokens
       .filter((t) => t.semanticType === SemanticTokenTypes.variable)
       .map(
@@ -227,6 +232,7 @@ function generateExecInstruction(
       ),
   };
 }
+
 function generateReturnInstruction(
   node: ast.ReturnStatement,
 ): inst.HaltInstruction {
@@ -322,11 +328,11 @@ function generateNoteInstruction(
   const code = generateExpressionInstruction(node.code) || DefaultCode;
   return message && node.noteToken
     ? {
-        kind: inst.InstructionKind.Note,
-        noteToken: node.noteToken,
-        message,
-        code,
-      }
+      kind: inst.InstructionKind.Note,
+      noteToken: node.noteToken,
+      message,
+      code,
+    }
     : undefined;
 }
 

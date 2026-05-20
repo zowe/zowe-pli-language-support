@@ -101,7 +101,7 @@ export class CICSPreprocessor implements Preprocessor {
     return {
       diagnostics,
       tokens,
-      replacement: undefined,
+      replacement: null,
     };
   }
 }

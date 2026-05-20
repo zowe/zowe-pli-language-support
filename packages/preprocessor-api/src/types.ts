@@ -8,6 +8,7 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
+
 export enum SemanticsKind {
   Identifier,
   Keyword,
@@ -30,10 +31,18 @@ export interface ParseError extends WithRange {
   message: string;
 }
 
+export type PreprocessorReplacement = {
+  type: "text";
+  text: string;
+} | {
+  type: "include";
+  filePath: string;
+}
+
 export interface PreprocessorResult {
   diagnostics: ParseError[];
   tokens: Token[];
-  replacement: string;
+  replacement: PreprocessorReplacement | null;
 }
 
 export interface Preprocessor {
