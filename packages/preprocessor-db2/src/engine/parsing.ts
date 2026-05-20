@@ -34,6 +34,7 @@ import {
 } from "antlr4ng";
 import { Db2SqlExecParserVisitor } from "../generated/Db2SqlExecParserVisitor";
 import {
+  Dbs_host_identifierContext,
   Dbs_include_sqlcaContext,
   Dbs_include_sqldaContext,
   Dbs_includeContext,
@@ -67,12 +68,20 @@ export class CollectingErrorListener extends BaseErrorListener {
 }
 
 export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
+  static collect(tree: ParseTree): Token[] {
+    const visitor = new CollectingIdentifierVisitor();
+    tree.accept(visitor);
+    return visitor.identifiers;
+  }
   readonly identifiers: Token[] = [];
-  override visitDbs_sql_identifier = (ctx: Dbs_sql_identifierContext): void => {
+  override visitDbs_host_identifier = (
+    ctx: Dbs_host_identifierContext,
+  ): void => {
     if (ctx.start && ctx.stop) {
       this.identifiers.push({
-        image: ctx.getText(),
-        startOffset: ctx.start.start,
+        //remove leading colon
+        image: ctx.getText().slice(1),
+        startOffset: ctx.start.start + 1,
         endOffset: ctx.stop.stop,
         semanticsKind: SemanticsKind.Identifier,
       });

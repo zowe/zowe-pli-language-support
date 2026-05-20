@@ -53,17 +53,14 @@ export class Db2SqlPreprocessor implements Preprocessor {
 
     const lexerErrors = new CollectingErrorListener();
     const parserErrors = new CollectingErrorListener();
-    const identifierVisitor = new CollectingIdentifierVisitor();
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
 
     const tree = parser.startSqlRule();
-    tree.accept(identifierVisitor);
-
     const replacement = CollectingIncludeVisitor.collect(tree);
+    const identifierTokens = CollectingIdentifierVisitor.collect(tree);
 
-    const identifierTokens = identifierVisitor.identifiers;
     const keywordPattern = /^[a-z_]/i;
     let idIndex = 0;
     const tokens = tokenStream
