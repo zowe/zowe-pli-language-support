@@ -209,9 +209,7 @@ function generateInstructionForStatement(
   return node;
 }
 
-function generateExecInstruction(
-  stmt: ast.ExecStatement,
-): inst.Instruction {
+function generateExecInstruction(stmt: ast.ExecStatement): inst.Instruction {
   if (stmt.replacement) {
     if (typeof stmt.replacement === "object") {
       return generateIncludeInstruction(stmt.replacement)!;
@@ -220,7 +218,8 @@ function generateExecInstruction(
   return {
     kind: inst.InstructionKind.ExecStatement,
     preprocessorType: stmt.preprocessorType,
-    replaceWithText: typeof stmt.replacement === "string" ? stmt.replacement : undefined,
+    replaceWithText:
+      typeof stmt.replacement === "string" ? stmt.replacement : undefined,
     variables: stmt.preprocessorTokens
       .filter((t) => t.semanticType === SemanticTokenTypes.variable)
       .map(
@@ -328,11 +327,11 @@ function generateNoteInstruction(
   const code = generateExpressionInstruction(node.code) || DefaultCode;
   return message && node.noteToken
     ? {
-      kind: inst.InstructionKind.Note,
-      noteToken: node.noteToken,
-      message,
-      code,
-    }
+        kind: inst.InstructionKind.Note,
+        noteToken: node.noteToken,
+        message,
+        code,
+      }
     : undefined;
 }
 

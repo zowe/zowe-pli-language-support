@@ -31,13 +31,15 @@ export interface ParseError extends WithRange {
   message: string;
 }
 
-export type PreprocessorReplacement = {
-  type: "text";
-  text: string;
-} | {
-  type: "include";
-  filePath: string;
-}
+export type PreprocessorReplacement =
+  | {
+      type: "text";
+      text: string;
+    }
+  | {
+      type: "include";
+      filePath: string;
+    };
 
 export interface PreprocessorResult {
   diagnostics: ParseError[];

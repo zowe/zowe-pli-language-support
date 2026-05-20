@@ -43,11 +43,16 @@ export async function execStatement(
       execStatement,
     );
     if (preprocessor) {
-      const { diagnostics, tokens, replacement } = await preprocessor.execute(statementText);
+      const { diagnostics, tokens, replacement } =
+        await preprocessor.execute(statementText);
       handleDiagnostics(diagnostics, state);
-      execStatement.preprocessorTokens = handleTokens(tokens, startOffset, textDocument);
-      if(replacement) {
-        if(replacement.type === "text") {
+      execStatement.preprocessorTokens = handleTokens(
+        tokens,
+        startOffset,
+        textDocument,
+      );
+      if (replacement) {
+        if (replacement.type === "text") {
           execStatement.replacement = replacement.text;
         } else {
           const item = ast.createIncludeItemFile();
@@ -101,7 +106,11 @@ function handleTokens(
   return result;
 }
 
-function toPliToken(startOffset: number, token: Token, textDocument: TextDocument) {
+function toPliToken(
+  startOffset: number,
+  token: Token,
+  textDocument: TextDocument,
+) {
   const tokenStart = startOffset + token.startOffset;
   const tokenEnd = startOffset + token.endOffset;
   const positionStart = textDocument.positionAt(tokenStart);
@@ -116,7 +125,7 @@ function toPliToken(startOffset: number, token: Token, textDocument: TextDocumen
     tokenEnd,
     positionEnd.line,
     positionEnd.character,
-    URI.parse(textDocument.uri.toString())
+    URI.parse(textDocument.uri.toString()),
   );
   return pliToken;
 }

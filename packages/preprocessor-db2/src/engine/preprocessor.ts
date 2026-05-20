@@ -24,7 +24,11 @@
 
 import * as antlr from "antlr4ng";
 import { Db2SqlExecLexer } from "../generated/Db2SqlExecLexer";
-import { Db2SqlExecParser, Dbs_includeContext, RulesAllowedInDataDivisionAndProcedureDivisionContext } from "../generated/Db2SqlExecParser";
+import {
+  Db2SqlExecParser,
+  Dbs_includeContext,
+  RulesAllowedInDataDivisionAndProcedureDivisionContext,
+} from "../generated/Db2SqlExecParser";
 import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
@@ -63,12 +67,14 @@ export class Db2SqlPreprocessor implements Preprocessor {
 
     //handle include
     let replacement: PreprocessorReplacement | null = null;
-    if(tree.getChildCount() >= 1) {
+    if (tree.getChildCount() >= 1) {
       const start = tree.getChild(0);
-      if(start instanceof RulesAllowedInDataDivisionAndProcedureDivisionContext) {
-        if(start.getChildCount() === 1) {
+      if (
+        start instanceof RulesAllowedInDataDivisionAndProcedureDivisionContext
+      ) {
+        if (start.getChildCount() === 1) {
           const firstChild = start.getChild(0);
-          if(firstChild instanceof Dbs_includeContext) {
+          if (firstChild instanceof Dbs_includeContext) {
             const filePath = firstChild.dbs_sql_identifier();
             replacement = {
               type: "include",
@@ -78,13 +84,12 @@ export class Db2SqlPreprocessor implements Preprocessor {
                 endOffset: firstChild.stop?.stop ?? 0,
                 image: firstChild.getText(),
                 semanticsKind: SemanticsKind.String,
-              }
+              },
             };
           }
         }
       }
     }
-    
 
     const identifierTokens = identifierVisitor.identifiers;
     const keywordPattern = /^[a-z_]/i;
