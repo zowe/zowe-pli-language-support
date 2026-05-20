@@ -31,14 +31,14 @@ export async function execStatement(
 ): Promise<ast.ExecStatement> {
   const execStatement = ast.createExecStatement();
   state.consume(execStatement, CstNodeKind.ExecStatement_EXEC, t.EXEC);
-  const cicsFragmentToken = state.consume(
+  const fragmentToken = state.consume(
     execStatement,
     CstNodeKind.ExecStatement_ExecFragment,
     t.ExecFragment,
   );
-  if (cicsFragmentToken) {
+  if (fragmentToken) {
     const { preprocessor, statementText, startOffset } = handleExecFragment(
-      cicsFragmentToken,
+      fragmentToken,
       textDocument,
       execStatement,
     );
@@ -137,14 +137,14 @@ function handleDiagnostics(diagnostics: ParseError[], state: ParserState) {
 }
 
 function handleExecFragment(
-  cicsFragmentToken: t.Token,
+  fragmentToken: t.Token,
   textDocument: TextDocument,
   execStatement: ast.ExecStatement,
 ) {
-  const prefixMatch = /^(\w+)\s*/i.exec(cicsFragmentToken.image);
+  const prefixMatch = /^(\w+)\s*/i.exec(fragmentToken.image);
   const prefixLength = prefixMatch?.[0].length || 0;
-  const startOffset = cicsFragmentToken.startOffset + prefixLength;
-  const endOffset = cicsFragmentToken.endOffset + 1;
+  const startOffset = fragmentToken.startOffset + prefixLength;
+  const endOffset = fragmentToken.endOffset + 1;
   const statementText = textDocument
     .getText()
     .substring(startOffset, endOffset);

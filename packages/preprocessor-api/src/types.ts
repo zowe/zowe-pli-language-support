@@ -39,6 +39,7 @@ export type PreprocessorReplacement =
   | {
       type: "include";
       filePath: string;
+      token: Token;
     };
 
 export interface PreprocessorResult {
