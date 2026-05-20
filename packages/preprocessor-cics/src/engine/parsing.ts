@@ -27,6 +27,7 @@ import {
   ATNSimulator,
   RecognitionException,
   Token as AntlrToken,
+  ParseTree,
 } from "antlr4ng";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 import { CicsWordContext } from "../generated/CICSParser";
@@ -52,6 +53,11 @@ export class CollectingErrorListener extends BaseErrorListener {
 }
 
 export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
+  static collect(tree: ParseTree): Token[] {
+    const visitor = new CollectingIdentifierVisitor();
+    tree.accept(visitor);
+    return visitor.identifiers;
+  }
   readonly identifiers: Token[] = [];
   override visitCicsWord = (ctx: CicsWordContext): void => {
     const symbol = ctx.WORD_IDENTIFIER()?.getSymbol();

@@ -52,15 +52,12 @@ export class CICSPreprocessor implements Preprocessor {
 
     const lexerErrors = new CollectingErrorListener();
     const parserErrors = new CollectingErrorListener();
-    const identifierVisitor = new CollectingIdentifierVisitor();
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
 
     const tree = parser.startRule();
-    tree.accept(identifierVisitor);
-
-    const identifierTokens = identifierVisitor.identifiers;
+    const identifierTokens = CollectingIdentifierVisitor.collect(tree);
     const keywordPattern = /^[a-z_]/i;
     let idIndex = 0;
     const tokens = tokenStream
