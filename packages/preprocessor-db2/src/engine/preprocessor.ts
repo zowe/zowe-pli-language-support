@@ -24,14 +24,11 @@
 
 import * as antlr from "antlr4ng";
 import { Db2SqlExecLexer } from "../generated/Db2SqlExecLexer";
-import {
-  Db2SqlExecParser,
-  Dbs_includeContext,
-  RulesAllowedInDataDivisionAndProcedureDivisionContext,
-} from "../generated/Db2SqlExecParser";
+import { Db2SqlExecParser } from "../generated/Db2SqlExecParser";
 import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
+  CollectingIncludeVisitor,
 } from "./parsing";
 import {
   ParseError,
@@ -39,7 +36,6 @@ import {
   SemanticsKind,
   Token,
   PreprocessorResult,
-  PreprocessorReplacement,
 } from "preprocessor-api";
 
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
@@ -65,31 +61,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
     const tree = parser.startSqlRule();
     tree.accept(identifierVisitor);
 
-    //handle include
-    let replacement: PreprocessorReplacement | null = null;
-    if (tree.getChildCount() >= 1) {
-      const start = tree.getChild(0);
-      if (
-        start instanceof RulesAllowedInDataDivisionAndProcedureDivisionContext
-      ) {
-        if (start.getChildCount() === 1) {
-          const firstChild = start.getChild(0);
-          if (firstChild instanceof Dbs_includeContext) {
-            const filePath = firstChild.dbs_sql_identifier();
-            replacement = {
-              type: "include",
-              filePath: filePath.getText(),
-              token: {
-                startOffset: firstChild.start?.start ?? 0,
-                endOffset: firstChild.stop?.stop ?? 0,
-                image: firstChild.getText(),
-                semanticsKind: SemanticsKind.String,
-              },
-            };
-          }
-        }
-      }
-    }
+    const replacement = CollectingIncludeVisitor.collect(tree);
 
     const identifierTokens = identifierVisitor.identifiers;
     const keywordPattern = /^[a-z_]/i;

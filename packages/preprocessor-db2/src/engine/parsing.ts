@@ -28,10 +28,24 @@ import {
   ATNSimulator,
   RecognitionException,
   Token as AntlrToken,
+  ParseTree,
+  ParserRuleContext,
+  TerminalNode,
 } from "antlr4ng";
 import { Db2SqlExecParserVisitor } from "../generated/Db2SqlExecParserVisitor";
-import { Dbs_sql_identifierContext } from "../generated/Db2SqlExecParser";
-import { ParseError, SemanticsKind, Token } from "preprocessor-api";
+import {
+  Dbs_include_sqlcaContext,
+  Dbs_include_sqldaContext,
+  Dbs_includeContext,
+  Dbs_sql_identifierContext,
+} from "../generated/Db2SqlExecParser";
+import {
+  ParseError,
+  PreprocessorReplacement,
+  PreprocessorResult,
+  SemanticsKind,
+  Token,
+} from "preprocessor-api";
 
 export class CollectingErrorListener extends BaseErrorListener {
   public readonly errors: ParseError[] = [];
@@ -64,4 +78,47 @@ export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
       });
     }
   };
+}
+
+export class CollectingIncludeVisitor extends Db2SqlExecParserVisitor<void> {
+  static collect(tree: ParseTree): PreprocessorReplacement | null {
+    const visitor = new CollectingIncludeVisitor();
+    tree.accept(visitor);
+    return visitor.includePath
+      ? {
+          type: "include",
+          token: visitor.includePath,
+          filePath: visitor.includePath.image ?? "",
+        }
+      : null;
+  }
+
+  includePath: Token | null = null;
+  override visitDbs_include = (ctx: Dbs_includeContext): void => {
+    this.addIncludePath(ctx.dbs_sql_identifier());
+  };
+  override visitDbs_include_sqlca = (ctx: Dbs_include_sqlcaContext): void => {
+    this.addIncludePath(ctx.SQLCA());
+  };
+  override visitDbs_include_sqlda = (ctx: Dbs_include_sqldaContext): void => {
+    this.addIncludePath(ctx.SQLDA());
+  };
+
+  private addIncludePath(path: ParserRuleContext | TerminalNode) {
+    if (path instanceof TerminalNode) {
+      this.includePath = {
+        image: path.getText(),
+        startOffset: path.symbol.start,
+        endOffset: path.symbol.stop,
+        semanticsKind: SemanticsKind.Identifier,
+      };
+    } else {
+      this.includePath = {
+        image: path.getText(),
+        startOffset: path.start?.start ?? 0,
+        endOffset: path.stop?.stop ?? 0,
+        semanticsKind: SemanticsKind.Identifier,
+      };
+    }
+  }
 }
