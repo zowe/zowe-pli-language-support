@@ -96,6 +96,9 @@ export enum InstructionKind {
   Number,
   String,
   ReferenceItem,
+  Repetition,
+  MultipleExpression,
+  Wildcard,
 }
 
 export type Instruction =
@@ -247,11 +250,38 @@ export type ExpressionInstruction =
   | StringInstruction
   | ReferenceItemInstruction
   | BinaryExpressionInstruction
-  | UnaryExpressionInstruction;
+  | UnaryExpressionInstruction
+  | RepetitionInstruction
+  | MultipleExpressionInstruction
+  | WildcardInstruction;
+
+export interface WildcardInstruction {
+  kind: InstructionKind.Wildcard;
+}
+
+export interface MultipleExpressionInstruction {
+  kind: InstructionKind.MultipleExpression;
+  instructions: ExpressionInstruction[];
+}
+
+export function createMultipleExpressionInstruction(
+  instructions: ExpressionInstruction[],
+): MultipleExpressionInstruction {
+  return {
+    kind: InstructionKind.MultipleExpression,
+    instructions,
+  };
+}
 
 export interface DimensionBoundsInstruction {
   lowerBound: ExpressionInstruction | null;
   upperBound: ExpressionInstruction | null;
+}
+
+export interface RepetitionInstruction {
+  kind: InstructionKind.Repetition;
+  expression: ExpressionInstruction;
+  count: ExpressionInstruction;
 }
 
 export interface BinaryExpressionInstruction {

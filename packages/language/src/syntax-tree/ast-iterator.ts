@@ -159,7 +159,7 @@ export function forEachNode(
       if (node.refer) {
         action(node.refer);
       }
-      if (node.expression && node.expression !== "*") {
+      if (node.expression) {
         action(node.expression);
       }
       break;
@@ -570,33 +570,22 @@ export function forEachNode(
         action(node.reference);
       }
       break;
-    case SyntaxKind.InitAcrossExpression:
+    case SyntaxKind.InitAcrossAttribute:
+      node.lists.forEach(action);
+      break;
+    case SyntaxKind.InitAcrossList:
       node.expressions.forEach(action);
       break;
     case SyntaxKind.InitialAttribute:
       node.expressions.forEach(action);
-      node.items.forEach(action);
+      break;
+    case SyntaxKind.InitialCallAttribute:
       if (node.procedureCall) {
         action(node.procedureCall);
       }
-      if (node.content) {
-        action(node.content);
-      }
       break;
-    case SyntaxKind.InitialAttributeItemStar:
-      break;
-    case SyntaxKind.InitialAttributeSpecification:
-      if (node.item) {
-        action(node.item);
-      }
-      if (node.expression) {
-        action(node.expression);
-      }
-      break;
-    case SyntaxKind.InitialAttributeSpecificationIterationValue:
-      node.items.forEach(action);
-      break;
-    case SyntaxKind.InitialToContent:
+    case SyntaxKind.InitialToAttribute:
+      node.expressions.forEach(action);
       break;
     case SyntaxKind.IterateStatement:
       if (node.label) {
@@ -630,12 +619,12 @@ export function forEachNode(
       break;
     case SyntaxKind.LinkageOptionsItem:
       break;
-    case SyntaxKind.Literal:
-      if (node.multiplier) {
-        action(node.multiplier);
+    case SyntaxKind.RepeatedExpression:
+      if (node.expression) {
+        action(node.expression);
       }
-      if (node.value) {
-        action(node.value);
+      if (node.count) {
+        action(node.count);
       }
       break;
     case SyntaxKind.LocateStatement:

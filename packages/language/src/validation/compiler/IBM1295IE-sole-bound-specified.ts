@@ -46,23 +46,16 @@ export function IBM1295IE_sole_bound_specified(
 function isBoundNegative(bound: Bound | null) {
   return (
     bound &&
-    bound.expression !== "*" &&
     bound.expression?.kind === SyntaxKind.UnaryExpression &&
     bound.expression.op === UnaryOperator.Minus &&
     bound.expression.expr &&
-    bound.expression.expr.kind === SyntaxKind.Literal &&
-    bound.expression.expr.value &&
-    bound.expression.expr.value.kind === SyntaxKind.NumberLiteral
+    bound.expression.expr.kind === SyntaxKind.NumberLiteral
   );
 }
 
 function isBoundZero(bound: Bound | null): boolean {
   return (bound &&
-    bound.expression &&
-    bound.expression !== "*" &&
-    bound.expression.kind === SyntaxKind.Literal &&
-    bound.expression.value &&
-    bound.expression.value.kind === SyntaxKind.NumberLiteral &&
-    //TODO find other cases when it is zero
-    bound.expression.value.value === "0")!!;
+    bound.expression?.kind === SyntaxKind.NumberLiteral &&
+    bound.expression.value !== null &&
+    parseInt(bound.expression.value, 10) === 0)!!;
 }

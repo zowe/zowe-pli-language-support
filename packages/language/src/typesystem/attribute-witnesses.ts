@@ -116,13 +116,43 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
       case ast.SyntaxKind.DateAttribute:
       case ast.SyntaxKind.DefinedAttribute:
         break;
-      case ast.SyntaxKind.InitialAttribute:
+      case ast.SyntaxKind.InitAcrossAttribute:
         if (attribute.token) {
+          this.addAttributeWitness(
+            AttributeKind.InitAcross,
+            attribute,
+            attribute,
+            attribute.token,
+          );
+        }
+        break;
+      case ast.SyntaxKind.InitialAttribute:
+        if (attribute.initial) {
           this.addAttributeWitness(
             AttributeKind.Initial,
             attribute,
             attribute,
-            attribute.token,
+            attribute.initial,
+          );
+        }
+        break;
+      case ast.SyntaxKind.InitialToAttribute:
+        if (attribute.initial) {
+          this.addAttributeWitness(
+            AttributeKind.InitialTo,
+            attribute,
+            attribute,
+            attribute.initial,
+          );
+        }
+        break;
+      case ast.SyntaxKind.InitialCallAttribute:
+        if (attribute.initial) {
+          this.addAttributeWitness(
+            AttributeKind.InitialCall,
+            attribute,
+            attribute,
+            attribute.initial,
           );
         }
         break;
@@ -846,13 +876,10 @@ export class DefaultTypeAttributeCollector implements TypeAttributeCollector {
         //TODO lower bound is not acceptable here, report error
         break;
       }
-      if (dim.upper?.expression === "*") {
-        // TODO We don't support * in dimension for now
-        break;
-      } else if (dim.upper?.expression?.kind === ast.SyntaxKind.Literal) {
+      if (dim.upper?.expression?.kind === ast.SyntaxKind.NumberLiteral) {
         const literal = dim.upper.expression.value;
-        if (literal?.kind === ast.SyntaxKind.NumberLiteral && literal.value) {
-          result.push(parseInt(literal.value));
+        if (literal) {
+          result.push(parseInt(literal));
         }
       }
     }

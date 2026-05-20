@@ -78,7 +78,13 @@ export enum AttributeKind {
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
   FloatFormat,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
+  InitAcross,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
   Initial,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
+  InitialTo,
+  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
+  InitialCall,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-list-attribute */
   List,
   /** TODO need to find out whether LocatorKind can be split into more attribute kinds */
@@ -174,7 +180,7 @@ export const AttributeKinds: AttributeKind[] = [
 
 export type Bound = {
   value: number | "*" | undefined;
-  expression: ast.Wildcard<ast.Expression> | null;
+  expression: ast.Expression | null;
   refersTo: ast.LocatorCall | null;
   node: ast.SyntaxNode | null;
   token: Token | null;
@@ -208,7 +214,10 @@ export type AttributeTypes = {
   [AttributeKind.Entry]: EntryData | undefined;
   [AttributeKind.FileUsage]: FileUsage;
   [AttributeKind.FloatFormat]: FloatFormat;
+  [AttributeKind.InitAcross]: ast.InitAcrossAttribute | undefined;
   [AttributeKind.Initial]: ast.InitialAttribute | undefined;
+  [AttributeKind.InitialTo]: ast.InitialToAttribute | undefined;
+  [AttributeKind.InitialCall]: ast.InitialCallAttribute | undefined;
   [AttributeKind.List]: boolean;
   [AttributeKind.LocatorKind]: LocatorKind;
   [AttributeKind.NumberMode]: NumberMode;
@@ -249,7 +258,10 @@ export const AttributePropertyNames = {
   [AttributeKind.Endianess]: "endianess" as const,
   [AttributeKind.FileUsage]: "fileUsage" as const,
   [AttributeKind.FloatFormat]: "floatFormat" as const,
+  [AttributeKind.InitAcross]: "initAcross" as const,
   [AttributeKind.Initial]: "initial" as const,
+  [AttributeKind.InitialTo]: "initialTo" as const,
+  [AttributeKind.InitialCall]: "initialCall" as const,
   [AttributeKind.Entry]: "entry" as const,
   [AttributeKind.List]: "list" as const,
   [AttributeKind.LocatorKind]: "locatorKind" as const,
@@ -490,6 +502,14 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
+  [AttributeKind.InitAcross]: function (
+    value: ast.InitAcrossAttribute | undefined,
+  ): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+    return "INITACROSS(...)";
+  },
   [AttributeKind.Initial]: function (
     value: ast.InitialAttribute | undefined,
   ): string | undefined {
@@ -498,6 +518,24 @@ export const AttributeStringifiers: {
     }
     // TODO: Implement stringification of InitialAttribute
     return "INITIAL(...)";
+  },
+  [AttributeKind.InitialTo]: function (
+    value: ast.InitialToAttribute | undefined,
+  ): string | undefined {
+    if (!value) {
+      return "";
+    }
+    // TODO: Implement stringification of InitialToAttribute
+    return "INITIAL TO(...)";
+  },
+  [AttributeKind.InitialCall]: function (
+    value: ast.InitialCallAttribute | undefined,
+  ): string | undefined {
+    if (!value) {
+      return "";
+    }
+    // TODO: Implement stringification of InitialCallAttribute
+    return "INITIAL CALL(...)";
   },
   [AttributeKind.List]: function (value: boolean): string | undefined {
     return value ? "LIST" : undefined;
@@ -1729,7 +1767,10 @@ export namespace TypeDescriptions {
     [AttributeKind.DataType]: DataType.Area,
     [AttributeKind.DataTypeIsGeneric]: false,
     [AttributeKind.Dimension]: undefined,
+    [AttributeKind.InitAcross]: undefined,
     [AttributeKind.Initial]: undefined,
+    [AttributeKind.InitialTo]: undefined,
+    [AttributeKind.InitialCall]: undefined,
     [AttributeKind.Alignment]: {
       type: AlignmentType.Aligned,
       alignment: 1,

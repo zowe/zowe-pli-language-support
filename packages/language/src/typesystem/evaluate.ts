@@ -44,30 +44,28 @@ export function evaluateExpression(expression: Expression): Value {
         value: "",
       };
     }
-    case SyntaxKind.Literal: {
-      const literal = expression.value;
-      if (literal && literal.value) {
-        switch (literal.kind) {
-          case SyntaxKind.StringLiteral:
-            return {
-              type: TypeDescriptions.String({
-                stringBits: {
-                  kind: StringKind.Character,
-                  length: literal.value.length,
-                },
-                format: StringFormat.NonVarying,
-              }),
-              value: literal.value,
-            };
-          case SyntaxKind.NumberLiteral:
-            return {
-              type: TypeDescriptions.Arithmetic({}),
-              value: parseFloat(literal.value),
-            };
-        }
+    case SyntaxKind.StringLiteral:
+      if (typeof expression.value === "string") {
+        return {
+          type: TypeDescriptions.String({
+            stringBits: {
+              kind: StringKind.Character,
+              length: expression.value.length,
+            },
+            format: StringFormat.NonVarying,
+          }),
+          value: expression.value,
+        };
       }
       break;
-    }
+    case SyntaxKind.NumberLiteral:
+      if (typeof expression.value === "string") {
+        return {
+          type: TypeDescriptions.Arithmetic({}),
+          value: parseFloat(expression.value),
+        };
+      }
+      break;
   }
 
   return {

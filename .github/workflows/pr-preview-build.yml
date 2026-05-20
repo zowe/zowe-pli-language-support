@@ -45,7 +45,7 @@ jobs:
         if: github.event.action != 'closed'
         run: |
           pnpm install --frozen-lockfile
-          pnpm build
+          pnpm build:full
           pnpm playground
 
       - name: Upload preview artifact

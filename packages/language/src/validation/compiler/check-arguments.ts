@@ -40,9 +40,6 @@ export function CallStatement_checkArguments(
   }
   const providedTypes =
     node.call?.dimensions[0].dimensions.map((d) => {
-      if (d.upper?.expression === "*") {
-        return TypeDescriptions.Unknown();
-      }
       return unit.services.inferer.inferType(d, unit);
     }) ?? [];
   checkArguments(

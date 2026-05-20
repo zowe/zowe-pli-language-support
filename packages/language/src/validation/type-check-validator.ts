@@ -139,7 +139,7 @@ function validateBound(
   compilationUnit: CompilationUnit,
 ) {
   if (bound.expression) {
-    if (bound.expression === "*") {
+    if (bound.expression.kind === ast.SyntaxKind.WildcardItem) {
       if (
         bound.token &&
         !ast.getContainer(bound.node, ast.SyntaxKind.ProcedureStatement)

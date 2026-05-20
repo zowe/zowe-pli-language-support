@@ -144,12 +144,11 @@ export enum SyntaxKind {
   IncludeItemFile,
   InscanDirective,
   IndForAttribute,
-  InitAcrossExpression,
+  InitAcrossAttribute,
+  InitAcrossList,
   InitialAttribute,
-  InitialAttributeItemStar,
-  InitialAttributeSpecification,
-  InitialAttributeSpecificationIterationValue,
-  InitialToContent,
+  InitialToAttribute,
+  InitialCallAttribute,
   IterateStatement,
   KeywordCondition,
   LabelPrefix,
@@ -160,7 +159,6 @@ export enum SyntaxKind {
   LineDirective,
   LineFormatItem,
   LinkageOptionsItem,
-  Literal,
   LocateStatement,
   LocateStatementOption,
   LocatorCall,
@@ -209,6 +207,7 @@ export enum SyntaxKind {
   ReferenceItem,
   ReinitStatement,
   ReleaseStatement,
+  RepeatedExpression,
   Reserves,
   ResignalStatement,
   ReturnsAttribute,
@@ -866,12 +865,11 @@ export type SyntaxNode =
   | IncludeItemFile
   | InscanDirective
   | IndForAttribute
-  | InitAcrossExpression
+  | InitAcrossAttribute
+  | InitAcrossList
   | InitialAttribute
-  | InitialAttributeItemStar
-  | InitialAttributeSpecification
-  | InitialAttributeSpecificationIterationValue
-  | InitialToContent
+  | InitialToAttribute
+  | InitialCallAttribute
   | IterateStatement
   | KeywordCondition
   | LabelPrefix
@@ -926,6 +924,7 @@ export type SyntaxNode =
   | ReferenceItem
   | ReinitStatement
   | ReleaseStatement
+  | RepeatedExpression
   | Reserves
   | ReservedAttribute
   | ResignalStatement
@@ -968,7 +967,9 @@ export type AllocateAttribute =
   | AllocateLocationReferenceIn
   | AllocateLocationReferenceSet
   | AllocateType
-  | InitialAttribute;
+  | InitialAttribute
+  | InitialCallAttribute
+  | InitialToAttribute;
 export type Condition =
   | FileReferenceCondition
   | KeywordCondition
@@ -984,6 +985,9 @@ export type CommonDeclarationAttribute =
   | EnvironmentAttribute
   | HandleAttribute
   | InitialAttribute
+  | InitialToAttribute
+  | InitialCallAttribute
+  | InitAcrossAttribute
   | LikeAttribute
   | PictureAttribute
   | ReturnsAttribute
@@ -1032,6 +1036,8 @@ export type EntryDescription =
 export type Expression =
   | BinaryExpression
   | Literal
+  | RepeatedExpression
+  | WildcardItem
   | LocatorCall
   | Parenthesis
   | UnaryExpression;
@@ -1053,13 +1059,7 @@ export type FormatItem =
   | XFormatItem;
 export type FQN = string;
 export type GetStatement = GetFileStatement | GetStringStatement;
-export type InitialAttributeItem =
-  | InitialAttributeItemStar
-  | InitialAttributeSpecification;
-export type InitialAttributeSpecificationIteration =
-  | InitialAttributeItemStar
-  | InitialAttributeSpecificationIterationValue;
-export type LiteralValue = NumberLiteral | StringLiteral;
+export type Literal = NumberLiteral | StringLiteral;
 export type NamedVariable = DeclaredVariable | OrdinalValue | LabelPrefix;
 export type NamedType =
   | DefineAliasStatement
@@ -1454,7 +1454,7 @@ export interface BinaryExpression extends AstNode {
 }
 export interface Bound extends AstNode {
   kind: SyntaxKind.Bound;
-  expression: Wildcard<Expression> | null;
+  expression: Expression | null;
   refer: LocatorCall | null;
   token: Token | null;
 }
@@ -1701,6 +1701,13 @@ export function createDateAttribute(): DateAttribute {
 export interface WildcardItem extends AstNode {
   kind: SyntaxKind.WildcardItem;
   token: Token | null;
+}
+export function createWildcardItem(): WildcardItem {
+  return {
+    kind: SyntaxKind.WildcardItem,
+    container: null,
+    token: null,
+  };
 }
 export type DeclaredItemElement =
   | DeclaredVariable
@@ -2908,14 +2915,29 @@ export function createIndForAttribute(): IndForAttribute {
   };
 }
 
-export interface InitAcrossExpression extends AstNode {
-  kind: SyntaxKind.InitAcrossExpression;
+export interface InitAcrossAttribute extends AstNode {
+  kind: SyntaxKind.InitAcrossAttribute;
+  token: Token | null;
+  lists: InitAcrossList[];
+}
+
+export function createInitAcrossAttribute(): InitAcrossAttribute {
+  return {
+    kind: SyntaxKind.InitAcrossAttribute,
+    container: null,
+    token: null,
+    lists: [],
+  };
+}
+
+export interface InitAcrossList extends AstNode {
+  kind: SyntaxKind.InitAcrossList;
   expressions: Expression[];
 }
 
-export function createInitAcrossExpression(): InitAcrossExpression {
+export function createInitAcrossList(): InitAcrossList {
   return {
-    kind: SyntaxKind.InitAcrossExpression,
+    kind: SyntaxKind.InitAcrossList,
     container: null,
     expressions: [],
   };
@@ -2923,80 +2945,44 @@ export function createInitAcrossExpression(): InitAcrossExpression {
 
 export interface InitialAttribute extends AstNode {
   kind: SyntaxKind.InitialAttribute;
-  across: boolean;
-  expressions: InitAcrossExpression[];
-  direct: boolean;
-  items: InitialAttributeItem[];
-  call: boolean;
-  procedureCall: ReferenceItem | null;
-  to: boolean;
-  content: InitialToContent | null;
-  token: Token | null;
+  initial: Token | null;
+  expressions: Expression[];
 }
 export function createInitialAttribute(): InitialAttribute {
   return {
     kind: SyntaxKind.InitialAttribute,
     container: null,
-    across: false,
+    initial: null,
     expressions: [],
-    direct: false,
-    items: [],
-    call: false,
+  };
+}
+export interface InitialCallAttribute extends AstNode {
+  kind: SyntaxKind.InitialCallAttribute;
+  initial: Token | null;
+  procedureCall: ReferenceItem | null;
+}
+
+export function createInitialCallAttribute(): InitialCallAttribute {
+  return {
+    kind: SyntaxKind.InitialCallAttribute,
+    container: null,
+    initial: null,
     procedureCall: null,
-    to: false,
-    content: null,
-    token: null,
   };
 }
-export interface InitialAttributeItemStar extends AstNode {
-  kind: SyntaxKind.InitialAttributeItemStar;
-}
-
-export function createInitialAttributeItemStar(): InitialAttributeItemStar {
-  return {
-    kind: SyntaxKind.InitialAttributeItemStar,
-    container: null,
-  };
-}
-
-export interface InitialAttributeSpecification extends AstNode {
-  kind: SyntaxKind.InitialAttributeSpecification;
-  star: boolean;
-  item: InitialAttributeSpecificationIteration | null;
-  expression: Expression | null;
-}
-export function createInitialAttributeSpecification(): InitialAttributeSpecification {
-  return {
-    kind: SyntaxKind.InitialAttributeSpecification,
-    container: null,
-    star: false,
-    item: null,
-    expression: null,
-  };
-}
-export interface InitialAttributeSpecificationIterationValue extends AstNode {
-  kind: SyntaxKind.InitialAttributeSpecificationIterationValue;
-  items: InitialAttributeItem[];
-}
-
-export function createInitialAttributeSpecificationIterationValue(): InitialAttributeSpecificationIterationValue {
-  return {
-    kind: SyntaxKind.InitialAttributeSpecificationIterationValue,
-    container: null,
-    items: [],
-  };
-}
-
-export interface InitialToContent extends AstNode {
-  kind: SyntaxKind.InitialToContent;
+export interface InitialToAttribute extends AstNode {
+  kind: SyntaxKind.InitialToAttribute;
+  initial: Token | null;
+  expressions: Expression[];
   varying: Varying | null;
   type: CharType | null;
 }
-
-export function createInitialToContent(): InitialToContent {
+export function createInitialToAttribute(): InitialToAttribute {
   return {
-    kind: SyntaxKind.InitialToContent,
+    kind: SyntaxKind.InitialToAttribute,
     container: null,
+    initial: null,
+    expressions: [],
     varying: null,
     type: null,
   };
@@ -3120,19 +3106,32 @@ export function createLinkageOptionsItem(): LinkageOptionsItem {
   };
 }
 
-export interface Literal extends AstNode {
-  kind: SyntaxKind.Literal;
-  multiplier: Parenthesis | null;
-  value: LiteralValue | null;
+/**
+ * Repeated expressions are used in two ways:
+ * 1. Repeat the following literal a certain number of times.
+ *    I.e. (5)"a" would repeat the string "a" 5 times, resulting in "aaaaa".
+ * 2. Generate an array from the following expression, repeated a certain number of times.
+ *    I.e. (5)(3)"a" would generate an array with 5 elements, each being the result of (3)"a" ("aaa").
+ *    This array syntax is only valid as part of the INITIAL attribute, used to initialize arrays.
+ *
+ * Note that the first form is only supported in the normal PL/I parser. The preprocessor exclusively supports the second form.
+ * Meaning that (5)"a" in the preprocessor would be treated as an array of 5 elements, each being "a".
+ */
+export interface RepeatedExpression extends AstNode {
+  kind: SyntaxKind.RepeatedExpression;
+  expression: Expression | null;
+  count: Expression | null;
 }
-export function createLiteral(): Literal {
+
+export function createRepeatedExpression(): RepeatedExpression {
   return {
-    kind: SyntaxKind.Literal,
+    kind: SyntaxKind.RepeatedExpression,
     container: null,
-    multiplier: null,
-    value: null,
+    expression: null,
+    count: null,
   };
 }
+
 export interface LocateStatement extends AstNode {
   kind: SyntaxKind.LocateStatement;
   variable: LocatorCall | null;
