@@ -73,6 +73,11 @@ export class Db2SqlPreprocessor implements Preprocessor {
           token.start === identifierTokens[idIndex].startOffset
         ) {
           return identifierTokens[idIndex++];
+        } else if (
+          replacement?.type === "include" &&
+          token.start === replacement.token.startOffset
+        ) {
+          semanticsKind = SemanticsKind.Identifier;
         } else if (token.channel === COMMENTS) {
           semanticsKind = SemanticsKind.Comment;
         } else if (

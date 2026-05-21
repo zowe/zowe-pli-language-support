@@ -517,6 +517,22 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
   if (token && token.kind === CstNodeKind.ExecStatement_ExecFragment) {
     const element = token.element;
     if (element && element.kind === SyntaxKind.ExecStatement) {
+      if (
+        typeof element.replacement === "object" &&
+        element.replacement?.items
+      ) {
+        for (const item of element.replacement.items) {
+          if (!item.token) {
+            continue;
+          }
+          if (
+            offset >= item.token.startOffset &&
+            offset <= item.token.endOffset
+          ) {
+            return item.token;
+          }
+        }
+      }
       const hostVariableReferences = element.preprocessorTokens
         .filter((t) => t.semanticType === SemanticTokenTypes.variable)
         .map(({ token }) => token);

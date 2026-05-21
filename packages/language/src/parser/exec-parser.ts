@@ -58,7 +58,9 @@ export async function execStatement(
           const item = ast.createIncludeItemFile();
           item.sql = true;
           item.fileName = replacement.filePath;
-          item.token = toPliToken(0, replacement.token, textDocument);
+          item.token = toPliToken(startOffset, replacement.token, textDocument);
+          item.token.kind = CstNodeKind.IncludeItem_MemberID;
+          item.token.element = item;
           execStatement.replacement = ast.createIncludeDirective();
           execStatement.replacement.items.push(item);
         }

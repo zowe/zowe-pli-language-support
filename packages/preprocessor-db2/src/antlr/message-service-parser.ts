@@ -23,6 +23,10 @@
  */
 import { Parser } from "antlr4ng";
 
+/**
+ * We need these methods for backwards compatibility with the
+ * COBOL DB2 implementation.
+ */
 export abstract class MessageServiceParser extends Parser {
   private static readonly ALPHANUMERIC: RegExp = /[a-zA-Z0-9]+/;
 
@@ -32,6 +36,7 @@ export abstract class MessageServiceParser extends Parser {
     param2?: string,
   ): string {
     const message = "";
+    //TODO find templates in the COBOL DB2 implementation and format message with parameters
     super.notifyErrorListeners(message, this.getCurrentToken(), null);
     return message;
   }

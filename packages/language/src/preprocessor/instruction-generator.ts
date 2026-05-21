@@ -210,10 +210,8 @@ function generateInstructionForStatement(
 }
 
 function generateExecInstruction(stmt: ast.ExecStatement): inst.Instruction {
-  if (stmt.replacement) {
-    if (typeof stmt.replacement === "object") {
-      return generateIncludeInstruction(stmt.replacement)!;
-    }
+  if (stmt.replacement && typeof stmt.replacement === "object") {
+    return generateIncludeInstruction(stmt.replacement)!;
   }
   return {
     kind: inst.InstructionKind.ExecStatement,
