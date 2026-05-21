@@ -28,20 +28,19 @@ import { CICSParser } from "../generated/CICSParser";
 import {
   CollectingErrorListener,
   CollectingIdentifierVisitor,
+} from "./parsing";
+import {
   ParseError,
+  Preprocessor,
+  PreprocessorResult,
   SemanticsKind,
   Token,
-} from "./parsing";
-
-export interface ICICSPreprocessorResult {
-  diagnostics: ParseError[];
-  tokens: Token[];
-}
+} from "preprocessor-api";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
-export class CICSPreprocessor {
-  public async execute(textSnippet: string): Promise<ICICSPreprocessorResult> {
+export class CICSPreprocessor implements Preprocessor {
+  public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new CICSLexer(charStream);
     const tokenStream = new antlr.CommonTokenStream(lexer);
@@ -53,15 +52,12 @@ export class CICSPreprocessor {
 
     const lexerErrors = new CollectingErrorListener();
     const parserErrors = new CollectingErrorListener();
-    const identifierVisitor = new CollectingIdentifierVisitor();
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
 
     const tree = parser.startRule();
-    tree.accept(identifierVisitor);
-
-    const identifierTokens = identifierVisitor.identifiers;
+    const identifierTokens = CollectingIdentifierVisitor.collect(tree);
     const keywordPattern = /^[a-z_]/i;
     let idIndex = 0;
     const tokens = tokenStream
@@ -102,6 +98,7 @@ export class CICSPreprocessor {
     return {
       diagnostics,
       tokens,
+      replacement: null,
     };
   }
 }

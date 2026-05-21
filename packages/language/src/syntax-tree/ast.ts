@@ -4356,7 +4356,7 @@ export enum PreprocessorType {
   UNKNOWN,
 }
 
-export interface DialectToken {
+export interface PreprocessorToken {
   token: Token;
   semanticType: SemanticTokenTypes;
 }
@@ -4364,7 +4364,8 @@ export interface DialectToken {
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
   preprocessorType: PreprocessorType;
-  dialectTokens: DialectToken[];
+  preprocessorTokens: PreprocessorToken[];
+  replacement: string | IncludeDirective | null;
 }
 
 export function createExecStatement(): ExecStatement {
@@ -4372,7 +4373,8 @@ export function createExecStatement(): ExecStatement {
     kind: SyntaxKind.ExecStatement,
     container: null,
     preprocessorType: PreprocessorType.UNKNOWN,
-    dialectTokens: [],
+    preprocessorTokens: [],
+    replacement: null,
   };
 }
 

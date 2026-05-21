@@ -5,9 +5,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "clean": "pnpm --dir packages/language clean && pnpm --dir packages/dialect-cics clean && pnpm --dir packages/vscode-extension clean",
+    "clean": "pnpm --dir packages/language clean && pnpm --dir packages/preprocessor-cics clean && pnpm --dir packages/preprocessor-db2 clean && pnpm --dir packages/vscode-extension clean",
     "tsc": "tsc -b tsconfig.build.json",
-    "compile": "pnpm --dir packages/dialect-cics grammar && pnpm tsc",
+    "compile": "pnpm --dir packages/preprocessor-cics grammar && pnpm --dir packages/preprocessor-db2 grammar && pnpm tsc",
     "bundle": "pnpm --dir packages/vscode-extension esbuild:bundle",
     "merge": "tsx ./scripts/generate-tmlanguage.mts",
     "build": "pnpm clean && pnpm compile && pnpm bundle && pnpm merge",

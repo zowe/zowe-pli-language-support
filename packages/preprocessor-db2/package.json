@@ -1,0 +1,45 @@
+{
+  "name": "preprocessor-db2",
+  "description": "The DB2 preprocessor package",
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "out",
+    "src"
+  ],
+  "main": "./out/index.js",
+  "module": "./out/index.js",
+  "exports": {
+    ".": {
+      "types": "./out/index.d.ts",
+      "default": "./out/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "out/index"
+      ]
+    }
+  },
+  "scripts": {
+    "clean": "shx rm -fr *.tsbuildinfo out",
+    "grammar": "pnpm run lexer && pnpm run parser",
+    "lexer": "antlr-ng -Dlanguage=TypeScript -l -o src/generated ./src/antlr/Db2SqlExecLexer.g4",
+    "parser": "antlr-ng -Dlanguage=TypeScript -v -o src/generated ./src/antlr/Db2SqlExecParser.g4"
+  },
+  "devDependencies": {
+    "antlr-ng": "^1.0.10"
+  },
+  "dependencies": {
+    "preprocessor-api": "workspace:*",
+    "antlr4ng": "^3.0.16",
+    "vscode-languageserver": "~9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-languageserver-types": "^3.17.5",
+    "vscode-uri": "^3.1.0"
+  }
+}
