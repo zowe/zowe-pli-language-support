@@ -12,6 +12,7 @@
 import { Location, tokenToRange } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import {
+  DeclaredItem,
   getContainer,
   iterateReferenceNodes,
   MemberCall,
@@ -281,7 +282,7 @@ function getMatchingSymbols(
 
   const getFullName = () => qualifiedName.toReversed().join(".");
 
-  const explicitlyDeclaredSymbols = scope
+  let explicitlyDeclaredSymbols = scope
     .getExplicitSymbols(qualifiedName, {
       /**
        * If the symbol is a procedure parameter, it is only permitted to
@@ -290,6 +291,15 @@ function getMatchingSymbols(
       searchOnlyImmediateScope: isProcedureParameterReference(reference),
     })
     .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
+
+  if (reference.owner) {
+    const rootComposite = tryExtractRootStructureIfBasedMember(reference.owner);
+    if (rootComposite) {
+      explicitlyDeclaredSymbols = explicitlyDeclaredSymbols.filter((symbol) =>
+        isMemberOfComposite(symbol.node, rootComposite),
+      );
+    }
+  }
 
   const isAmbiguous = checkRedeclaration(explicitlyDeclaredSymbols);
   if (isAmbiguous) {
@@ -524,4 +534,48 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
     }
   }
   return token;
+}
+
+function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {
+  let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
+  if (declaredItem && declaredItem.level !== 1) {
+    const parentDeclaration = getContainer(
+      declaredItem,
+      SyntaxKind.DeclareStatement,
+    )!;
+    let index = parentDeclaration.items.indexOf(declaredItem);
+    if (index === -1) {
+      return null;
+    }
+    let previousItem: DeclaredItem = declaredItem;
+    do {
+      index--;
+    } while (
+      index > -1 &&
+      (previousItem = parentDeclaration.items[index]) &&
+      typeof previousItem.level === "number" &&
+      previousItem.level > 1
+    );
+    if (typeof previousItem.level === "number" && previousItem.level === 1) {
+      declaredItem = previousItem;
+    }
+  }
+  if (declaredItem?.level !== 1) {
+    return null;
+  }
+  return declaredItem;
+}
+
+function tryExtractRootStructureIfBasedMember(
+  node: SyntaxNode,
+): DeclaredItem | null {
+  const referNode = getContainer(node, SyntaxKind.Bound);
+  if (referNode?.refer?.element?.element !== node) {
+    return null;
+  }
+  return getRootCompositeNode(referNode);
+}
+
+function isMemberOfComposite(node: SyntaxNode, rootComposite: DeclaredItem) {
+  return getRootCompositeNode(node) === rootComposite;
 }

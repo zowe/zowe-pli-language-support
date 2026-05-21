@@ -12,23 +12,25 @@
 /// <reference path="../../framework.ts" />
 
 //// DCL S FIXED;
-//// DCL 1 A,
-////       2 B FIXED,
-////     1 AA,
-////       2 B FIXED,
-////       2 C (S REFER(<|B|>));
+//// DCL 1 ZERO,
+////       2 A,
+////         3 B FIXED,
+////       2 AA,
+////         3 B FIXED,
+////         3 C (S REFER(<|B|>));
 
 verify.expectDiagnosticsAt("B", code.Severe.IBM1881I);
-await verify.expectCodeActionCountAt("B", 1);
+await verify.expectCodeActionCountAt("B", 2);
 await verify.expectCodeActionAt(
   "B",
   'Change to "AA.B"',
   `
   DCL S FIXED;
-  DCL 1 A,
-        2 B FIXED,
-      1 AA,
-        2 B FIXED,
-        2 C (S REFER(AA.B));
+  DCL 1 ZERO,
+        2 A,
+          3 B FIXED,
+        2 AA,
+          3 B FIXED,
+          3 C (S REFER(AA.B));
 `,
 );
