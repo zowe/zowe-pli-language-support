@@ -12,12 +12,15 @@
 import { Location, tokenToRange } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import {
+  Bound,
   DeclaredItem,
   getContainer,
   iterateReferenceNodes,
+  LocatorCall,
   MemberCall,
   ProcedureParameter,
   Reference,
+  ReferenceItem,
   ReferenceType,
   SyntaxKind,
   SyntaxNode,
@@ -537,8 +540,10 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
 }
 
 function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {
+  //pick the first parent that is a declared item
   let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
   if (declaredItem && declaredItem.level !== 1) {
+    //if it is not a level 1 item, go up until we find the declare statement, and then pick the first level 1 item before it
     const parentDeclaration = getContainer(
       declaredItem,
       SyntaxKind.DeclareStatement,
@@ -547,6 +552,7 @@ function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {
     if (index === -1) {
       return null;
     }
+    // walk up the declaration items until we find a level 1 item, which should be the root composite item
     let previousItem: DeclaredItem = declaredItem;
     do {
       index--;
@@ -569,11 +575,41 @@ function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {
 function tryExtractRootStructureIfBasedMember(
   node: SyntaxNode,
 ): DeclaredItem | null {
-  const referNode = getContainer(node, SyntaxKind.Bound);
-  if (referNode?.refer?.element?.element !== node) {
+  if (node.kind !== SyntaxKind.ReferenceItem) {
     return null;
   }
-  return getRootCompositeNode(referNode);
+  const memberCall = traverseUpwardsExpect<ReferenceItem, MemberCall>(
+    node,
+    SyntaxKind.MemberCall,
+  );
+  if (!memberCall) {
+    return null;
+  }
+  const locatorCall = traverseUpwardsExpect<MemberCall, LocatorCall>(
+    memberCall,
+    SyntaxKind.LocatorCall,
+  );
+  if (!locatorCall) {
+    return null;
+  }
+  const bound = traverseUpwardsExpect<LocatorCall, Bound>(
+    locatorCall,
+    SyntaxKind.Bound,
+  );
+  if (!bound || !bound.refer || bound.refer !== locatorCall) {
+    return null;
+  }
+  return getRootCompositeNode(bound.refer);
+}
+
+function traverseUpwardsExpect<N extends SyntaxNode, M extends SyntaxNode>(
+  node: N,
+  kind: M["kind"],
+): M | null {
+  if (node.container && node.container.kind === kind) {
+    return node.container as M;
+  }
+  return null;
 }
 
 function isMemberOfComposite(node: SyntaxNode, rootComposite: DeclaredItem) {
