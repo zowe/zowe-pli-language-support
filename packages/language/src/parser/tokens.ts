@@ -15,7 +15,6 @@ import * as pli from "./tokens/pli-tokens";
 
 export * from "./tokens/shared";
 export * from "./tokens/pli-tokens";
-import "./tokens/cics-tokens.generated";
 
 /**
  * Characters which start a preprocessor directive.

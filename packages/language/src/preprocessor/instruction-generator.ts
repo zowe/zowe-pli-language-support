@@ -209,13 +209,16 @@ function generateInstructionForStatement(
   return node;
 }
 
-function generateExecInstruction(
-  stmt: ast.ExecStatement,
-): inst.ExecInstruction {
+function generateExecInstruction(stmt: ast.ExecStatement): inst.Instruction {
+  if (stmt.replacement && typeof stmt.replacement === "object") {
+    return generateIncludeInstruction(stmt.replacement)!;
+  }
   return {
     kind: inst.InstructionKind.ExecStatement,
     preprocessorType: stmt.preprocessorType,
-    variables: stmt.dialectTokens
+    replaceWithText:
+      typeof stmt.replacement === "string" ? stmt.replacement : undefined,
+    variables: stmt.preprocessorTokens
       .filter((t) => t.semanticType === SemanticTokenTypes.variable)
       .map(
         ({ token }) =>
@@ -226,6 +229,7 @@ function generateExecInstruction(
       ),
   };
 }
+
 function generateReturnInstruction(
   node: ast.ReturnStatement,
 ): inst.HaltInstruction {

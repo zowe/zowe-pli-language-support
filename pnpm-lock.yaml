@@ -38,28 +38,6 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.8)(tsx@4.21.0)
 
-  packages/dialect-cics:
-    dependencies:
-      antlr4ng:
-        specifier: ^3.0.16
-        version: 3.0.16
-      vscode-languageserver:
-        specifier: ~9.0.1
-        version: 9.0.1
-      vscode-languageserver-textdocument:
-        specifier: ^1.0.12
-        version: 1.0.12
-      vscode-languageserver-types:
-        specifier: ^3.17.5
-        version: 3.17.5
-      vscode-uri:
-        specifier: ^3.1.0
-        version: 3.1.0
-    devDependencies:
-      antlr-ng:
-        specifier: ^1.0.10
-        version: 1.0.10
-
   packages/language:
     dependencies:
       '@chevrotain/regexp-to-ast':
@@ -74,9 +52,6 @@ importers:
       chevrotain:
         specifier: ^11.1.1
         version: 11.1.1
-      dialect-cics:
-        specifier: workspace:*
-        version: link:../dialect-cics
       jsonc-parser:
         specifier: 4.0.0-next.1
         version: 4.0.0-next.1
@@ -89,6 +64,15 @@ importers:
       minimatch:
         specifier: 10.2.4
         version: 10.2.4
+      preprocessor-api:
+        specifier: workspace:*
+        version: link:../preprocessor-api
+      preprocessor-cics:
+        specifier: workspace:*
+        version: link:../preprocessor-cics
+      preprocessor-db2:
+        specifier: workspace:*
+        version: link:../preprocessor-db2
       vscode-languageserver:
         specifier: ~9.0.1
         version: 9.0.1
@@ -178,6 +162,58 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@22.19.8)(tsx@4.21.0)
+
+  packages/preprocessor-api: {}
+
+  packages/preprocessor-cics:
+    dependencies:
+      antlr4ng:
+        specifier: ^3.0.16
+        version: 3.0.16
+      preprocessor-api:
+        specifier: workspace:*
+        version: link:../preprocessor-api
+      vscode-languageserver:
+        specifier: ~9.0.1
+        version: 9.0.1
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
+      vscode-languageserver-types:
+        specifier: ^3.17.5
+        version: 3.17.5
+      vscode-uri:
+        specifier: ^3.1.0
+        version: 3.1.0
+    devDependencies:
+      antlr-ng:
+        specifier: ^1.0.10
+        version: 1.0.10
+
+  packages/preprocessor-db2:
+    dependencies:
+      antlr4ng:
+        specifier: ^3.0.16
+        version: 3.0.16
+      preprocessor-api:
+        specifier: workspace:*
+        version: link:../preprocessor-api
+      vscode-languageserver:
+        specifier: ~9.0.1
+        version: 9.0.1
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
+      vscode-languageserver-types:
+        specifier: ^3.17.5
+        version: 3.17.5
+      vscode-uri:
+        specifier: ^3.1.0
+        version: 3.1.0
+    devDependencies:
+      antlr-ng:
+        specifier: ^1.0.10
+        version: 1.0.10
 
   packages/vscode-extension:
     dependencies:

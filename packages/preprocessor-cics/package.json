@@ -1,6 +1,6 @@
 {
-  "name": "dialect-cics",
-  "description": "The CICS dialect package",
+  "name": "preprocessor-cics",
+  "description": "The CICS preprocessor package",
   "version": "1.0.0",
   "type": "module",
   "engines": {
@@ -35,6 +35,7 @@
     "antlr-ng": "^1.0.10"
   },
   "dependencies": {
+    "preprocessor-api": "workspace:*",
     "antlr4ng": "^3.0.16",
     "vscode-languageserver": "~9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12",

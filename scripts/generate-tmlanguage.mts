@@ -12,8 +12,6 @@
 
 import * as fs from "fs/promises";
 import * as tokens from "../packages/language/src/parser/tokens.js";
-import * as sqlTokens from "../packages/language/src/parser/tokens/sql-tokens.js";
-import * as cicsTokens from "../packages/language/src/parser/tokens/cics-tokens.generated.js";
 
 const manual = JSON.parse(
   await fs.readFile(
@@ -25,13 +23,7 @@ const manual = JSON.parse(
 const controlKeywords: string[] = [];
 const storageKeywords: string[] = [];
 
-const mergedMap = new Map([
-  ...sqlTokens.keywordMap,
-  ...cicsTokens.keywordMap,
-  ...tokens.keywordMap,
-]);
-
-for (const [text, type] of mergedMap.entries()) {
+for (const [text, type] of tokens.keywordMap.entries()) {
   const lowerText = text.toLowerCase();
   if (tokens.controlTokens.has(type)) {
     controlKeywords.push(lowerText);

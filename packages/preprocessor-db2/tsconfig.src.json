@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "out",
+    //current solution to ignore generated file linting errors
+    "noUnusedLocals": false
+  },
+  "include": ["src/**/*.ts"]
+}

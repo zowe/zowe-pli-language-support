@@ -2,10 +2,22 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/dialect-cics/tsconfig.src.json"
+      "path": "./packages/preprocessor-api/tsconfig.src.json"
     },
     {
-      "path": "./packages/dialect-cics/tsconfig.test.json"
+      "path": "./packages/preprocessor-api/tsconfig.test.json"
+    },
+    {
+      "path": "./packages/preprocessor-db2/tsconfig.src.json"
+    },
+    {
+      "path": "./packages/preprocessor-db2/tsconfig.test.json"
+    },
+    {
+      "path": "./packages/preprocessor-cics/tsconfig.src.json"
+    },
+    {
+      "path": "./packages/preprocessor-cics/tsconfig.test.json"
     },
     {
       "path": "./packages/language/tsconfig.src.json"

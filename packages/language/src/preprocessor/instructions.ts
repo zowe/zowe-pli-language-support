@@ -142,6 +142,7 @@ export interface ExecInstruction {
   kind: InstructionKind.ExecStatement;
   preprocessorType: ast.PreprocessorType;
   variables: ExecVariableInstruction[];
+  replaceWithText?: string;
 }
 
 export interface ExecVariableInstruction {

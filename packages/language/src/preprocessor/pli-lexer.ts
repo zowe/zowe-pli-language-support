@@ -31,8 +31,6 @@ import { getDefaultCompilerOptions } from "./compiler-options/options";
 import { CompilerOptions } from "./compiler-options/options-pli";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { updatePliTokenizer } from "../parser/tokenizer/pli-tokenizer";
-import { updateCicsTokenizer } from "../parser/tokenizer/cics-tokenizer";
-import { updateSqlTokenizer } from "../parser/tokenizer/sql-tokenizer";
 
 export interface LexerResult {
   all: Token[];
@@ -71,8 +69,6 @@ export class PliLexer {
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
     unit.compilerOptions = opts;
     updatePliTokenizer(opts);
-    updateCicsTokenizer();
-    updateSqlTokenizer();
     unit.instructionCache.update(opts);
     const instruction = await unit.instructionCache.get(
       uri,
