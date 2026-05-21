@@ -1684,19 +1684,48 @@ function primary(
     return parenthesis(state, params);
   } else if (state.canConsume(t.UnaryOperator)) {
     return unaryExpression(state);
+  } else if (state.canConsume(t.Star)) {
+    return wildcard(state);
   }
   state.error();
   return null;
 }
 
 function canConsumeExpression(state: ParserState): boolean {
-  return (
+  if (
     state.canConsume(t.NUMBER) ||
     state.canConsume(t.STRING_TERM) ||
     state.canConsume(t.ID) ||
     state.canConsume(t.OpenParen) ||
     state.canConsume(t.UnaryOperator)
+  ) {
+    return true;
+  }
+  if (state.canConsume(t.Star)) {
+    // Can only be a wildcard expression if the next token after is not another expression token
+    const nextToken = state.peek(2);
+    if (!nextToken) {
+      return true;
+    }
+    return !(
+      tokenMatcher(nextToken, t.NUMBER) ||
+      tokenMatcher(nextToken, t.STRING_TERM) ||
+      tokenMatcher(nextToken, t.ID) ||
+      tokenMatcher(nextToken, t.OpenParen) ||
+      tokenMatcher(nextToken, t.UnaryOperator)
+    );
+  }
+  return false;
+}
+
+function wildcard(state: ParserState): ast.WildcardItem {
+  const wildcard = ast.createWildcardItem();
+  wildcard.token = state.consume(
+    wildcard,
+    CstNodeKind.WildcardItem_Asterisk,
+    t.Star,
   );
+  return wildcard;
 }
 
 function parenthesis(
@@ -1737,8 +1766,8 @@ function parenthesis(
     const repeated = parseBinary(state, params);
     if (repeated !== null) {
       const repeatedExpr = ast.createRepeatedExpression();
-      repeatedExpr.expression = element;
-      repeatedExpr.count = repeated;
+      repeatedExpr.count = element;
+      repeatedExpr.expression = repeated;
       return repeatedExpr;
     }
   }

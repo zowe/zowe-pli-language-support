@@ -6362,8 +6362,8 @@ const parenthesizedExpression = rule(
       const repeated = expression.rule(state, params);
       if (repeated !== null) {
         const repeatedExpr = ast.createRepeatedExpression();
-        repeatedExpr.expression = repeated;
         repeatedExpr.count = element;
+        repeatedExpr.expression = repeated;
         return repeatedExpr;
       }
     }
