@@ -253,7 +253,12 @@ function generateVariableValue(
 }
 
 export interface EvaluationResults {
-  branchExecutions: Map<ast.SyntaxNode, Set<number>>;
+  // If the map is undefined, the condition could not be evaluated.
+  // Undefined values inside the map indicate the same for specific cases.
+  branchExecutions: Map<
+    ast.SyntaxNode,
+    Map<number, true | undefined> | undefined
+  >;
 }
 
 interface SymbolTable {
@@ -1286,28 +1291,29 @@ function runSelectInstruction(
     condition = evaluateExpression(instruction.compare, context);
   }
   if (!isScalarValue(condition)) {
-    // Condition cannot be evaluated, simply skip the whole if instruction
+    context.evaluations.branchExecutions.set(instruction.element, undefined);
     return undefined;
   }
-  const set =
-    context.evaluations.branchExecutions.get(instruction.element) ?? new Set();
-  context.evaluations.branchExecutions.set(instruction.element, set);
+  const map =
+    context.evaluations.branchExecutions.get(instruction.element) ?? new Map();
+  context.evaluations.branchExecutions.set(instruction.element, map);
   for (let i = 0; i < instruction.cases.length; i++) {
     const selectCase = instruction.cases[i];
     // No conditions indicates that this is the OTHERWISE/false branch
     // If we have arrived here, we can safely return the branch
     if (selectCase.conditions.length === 0) {
-      set.add(i);
+      map.set(i, true);
       return selectCase.body;
     }
     for (const caseCondition of selectCase.conditions) {
       const caseValue = evaluateExpression(caseCondition, context);
       if (!isScalarValue(caseValue)) {
-        // Condition cannot be evaluated, skip this case
+        // Condition cannot be evaluated
+        map.set(i, undefined);
         continue;
       }
       if (condition.value === caseValue.value) {
-        set.add(i);
+        map.set(i, true);
         return selectCase.body;
       }
     }

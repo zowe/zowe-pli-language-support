@@ -77,27 +77,22 @@ export function skippedCodeRanges(
         compilationUnit.preprocessorEvaluationResults.branchExecutions.get(
           element,
         );
-      if (
-        // If the code block hasn't been evaluated, it likely was included in another un-evaluated block
-        // This will automatically skip the block already, so we don't have to do anything
-        evaluationResult !== undefined
-      ) {
-        const { elseRange, unitRange } = element;
-        const executedThen = evaluationResult.has(0);
-        const executedElse = evaluationResult.has(1);
-        if (elseRange && executedThen && !executedElse) {
-          // If the "then" branch has been exclusively evaluated, it means we need to skip the "else" branch
-          result.push({
-            start: textDocument.positionAt(elseRange.start),
-            end: textDocument.positionAt(elseRange.end),
-          });
-        } else if (unitRange && !executedThen && executedElse) {
-          // If the "else" branch has been exclusively evaluated, it means we need to skip the "then" branch
-          result.push({
-            start: textDocument.positionAt(unitRange.start),
-            end: textDocument.positionAt(unitRange.end),
-          });
-        }
+      if (evaluationResult === undefined) {
+        continue;
+      }
+      const { elseRange, unitRange } = element;
+      const executedThen = evaluationResult.has(0);
+      const executedElse = evaluationResult.has(1);
+      if (unitRange && !executedThen) {
+        result.push({
+          start: textDocument.positionAt(unitRange.start),
+          end: textDocument.positionAt(unitRange.end),
+        });
+      } else if (elseRange && !executedElse) {
+        result.push({
+          start: textDocument.positionAt(elseRange.start),
+          end: textDocument.positionAt(elseRange.end),
+        });
       }
     } else if (
       token.kind === CstNodeKind.SelectStatement_SELECT &&
@@ -108,17 +103,18 @@ export function skippedCodeRanges(
         compilationUnit.preprocessorEvaluationResults.branchExecutions.get(
           element,
         );
-      if (evaluationResult !== undefined) {
-        for (let i = 0; i < element.cases.length; i++) {
-          const caseElement = element.cases[i];
-          const caseRange = caseElement.range;
-          // If the case hasn't been executed, we display it as skipped
-          if (caseRange && !evaluationResult.has(i)) {
-            result.push({
-              start: textDocument.positionAt(caseRange.start),
-              end: textDocument.positionAt(caseRange.end),
-            });
-          }
+      if (evaluationResult === undefined) {
+        continue;
+      }
+      for (let i = 0; i < element.cases.length; i++) {
+        const caseElement = element.cases[i];
+        const caseRange = caseElement.range;
+        // If the case hasn't been executed, we display it as skipped
+        if (caseRange && !evaluationResult.has(i)) {
+          result.push({
+            start: textDocument.positionAt(caseRange.start),
+            end: textDocument.positionAt(caseRange.end),
+          });
         }
       }
     } else if (
