@@ -69,6 +69,6 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: pr-preview
-          number: ${{ steps.pr.outputs.number }}
+          number: ${{ steps.pr-meta.outputs.number }}
           message: |
-            :rocket: Deployed preview to ${{ steps.deployment.outputs.deployment-url }}
+            :rocket: Deployed preview for [#${{ steps.pr-meta.outputs.number }}](${{ steps.deployment.outputs.deployment-url }})
