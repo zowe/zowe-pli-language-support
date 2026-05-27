@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.47% </span>
+                <span class="strong">70.58% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/17</span>
+                <span class='fraction'>12/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.42% </span>
+                <span class="strong">61.11% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/19</span>
+                <span class='fraction'>11/18</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.47% </span>
+                <span class="strong">70.58% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/17</span>
+                <span class='fraction'>12/17</span>
             </div>
         
             
@@ -138,9 +138,7 @@
 <a name='L73'></a><a href='#L73'>73</a>
 <a name='L74'></a><a href='#L74'>74</a>
 <a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a>
-<a name='L77'></a><a href='#L77'>77</a>
-<a name='L78'></a><a href='#L78'>78</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -161,7 +159,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">78x</span>
+<span class="cline-any cline-yes">97x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -187,10 +185,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">63x</span>
-<span class="cline-any cline-yes">63x</span>
-<span class="cline-any cline-yes">63x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -202,14 +197,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">61x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">80x</span>
+<span class="cline-any cline-yes">80x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">13x</span>
@@ -263,30 +259,28 @@ export function evaluateExpression(expression: Expression): Value {
         value: "",
       };
     }
-    case SyntaxKind.Literal: {
-      const literal = expression.value;
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (literal &amp;&amp; literal.value) {
-        switch (literal.kind) {
-          case SyntaxKind.StringLiteral:
-            return {
-              type: TypeDescriptions.String({
-                stringBits: {
-                  kind: StringKind.Character,
-                  length: literal.value.length,
-                },
-                format: StringFormat.NonVarying,
-              }),
-              value: literal.value,
-            };
-          case SyntaxKind.NumberLiteral:
-            return {
-              type: TypeDescriptions.Arithmetic({}),
-              value: parseFloat(literal.value),
-            };
-        }
+    case SyntaxKind.StringLiteral:
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (typeof expression.value === "string") {
+        return {
+          type: TypeDescriptions.String({
+            stringBits: {
+              kind: StringKind.Character,
+              length: expression.value.length,
+            },
+            format: StringFormat.NonVarying,
+          }),
+          value: expression.value,
+        };
       }
 <span class="cstat-no" title="statement not covered" >      break;</span>
-    }
+    case SyntaxKind.NumberLiteral:
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (typeof expression.value === "string") {
+        return {
+          type: TypeDescriptions.Arithmetic({}),
+          value: parseFloat(expression.value),
+        };
+      }
+<span class="cstat-no" title="statement not covered" >      break;</span>
   }
 &nbsp;
   return {
@@ -301,7 +295,7 @@ export function evaluateExpression(expression: Expression): Value {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-27T14:26:33.910Z
+                at 2026-05-27T14:27:55.709Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
