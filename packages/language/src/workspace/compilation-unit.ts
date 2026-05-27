@@ -10,7 +10,7 @@
  */
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
-import { URI, UriUtils } from "../utils/uri.js";
+import { isVirtualFile, URI, UriUtils } from "../utils/uri.js";
 import { CancellationToken, Connection } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
@@ -474,10 +474,4 @@ export class CompilationUnitHandler {
     });
     return Promise.all(promises).then(() => undefined);
   }
-}
-
-const virtualSchemes = ["git", "untitled", BuiltinsUriSchema];
-
-function isVirtualFile(uri: string): boolean {
-  return virtualSchemes.some((scheme) => uri.startsWith(`${scheme}:`));
 }

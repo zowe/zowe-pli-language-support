@@ -45,6 +45,15 @@ export interface RuleConfiguration {
 
 export interface RuleSettings {
   allowDuplicates?: boolean;
+  /**
+   * When true, indicates that whenever this rule applies (or whenever its concrete
+   * argument values change), downstream caches (notably InstructionCache) must
+   * invalidate and the file must be re-tokenized/re-parsed.
+   *
+   * Set this on any rule whose effect reaches the lexer, preprocessor, or parser
+   * (e.g. MARGINS, MARGINI, OR, NOT, PROCESS, CASE, GRAPHIC, BRACKETS, BLANK, NAMES, ...).
+   */
+  recompile?: boolean;
 }
 
 type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
@@ -64,6 +73,15 @@ enum RuleAlignment {
   NEGATIVE = -1,
 }
 
+/**
+ * Tracks how a rule was applied, including alignment and serialized arguments
+ */
+type AppliedRuleRecord = {
+  alignment: RuleAlignment;
+  /** Serialized argument values, used for the recompile fingerprint. */
+  args?: string;
+};
+
 export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   options: T;
   diagnostics: Diagnostic[] = [];
@@ -74,9 +92,10 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
 
   /**
    * Translator rules that have been applied to the current options,
-   * along w/ info on whether they were applied positively or negatively
+   * along w/ info on whether they were applied positively or negatively,
+   * and their concrete argument values (for recompile fingerprinting).
    */
-  appliedRules = new Map<TranslatorRule<T>, RuleAlignment>();
+  appliedRules = new Map<TranslatorRule<T>, AppliedRuleRecord>();
 
   private rules: TranslatorRule<T>[] = [];
 
@@ -101,6 +120,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     positive: string[],
     negative: string[],
     callback?: (option: CompilerOption, options: T) => void,
+    settings?: RuleSettings,
   ) {
     this.rules.push({
       positive,
@@ -115,6 +135,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
         (options as any)[key] = false;
         callback?.(option, options);
       },
+      settings,
     });
   }
 
@@ -142,7 +163,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     rule: TranslatorRule<T>,
     alignment: RuleAlignment,
   ): boolean {
-    return this.appliedRules.get(rule) === alignment;
+    return this.appliedRules.get(rule)?.alignment === alignment;
   }
 
   translate(option: CompilerOption, configuration?: RuleConfiguration): void {
@@ -174,7 +195,8 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
           : rule.negativeTranslate;
 
       if (!this.isRuleApplied(rule)) {
-        this.appliedRules.set(rule, alignment);
+        const args = this.serializeOptionValues(option);
+        this.appliedRules.set(rule, { alignment, args });
       } else if (this.isRuleAlignedWith(rule, alignment)) {
         if (!rule.settings?.allowDuplicates) {
           this.reportDupeOptIssue(option, name);
@@ -230,6 +252,41 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
         name,
       ),
     );
+  }
+
+  /**
+   * Serializes the arguments of a compiler option for fingerprint comparison.
+   */
+  private serializeOptionValues(option: CompilerOption): string {
+    const parts: string[] = [];
+    for (const value of option.values) {
+      if (value.kind === SyntaxKind.CompilerOption) {
+        parts.push(`${value.name}(${this.serializeOptionValues(value)})`);
+      } else if (
+        value.kind === SyntaxKind.CompilerOptionText ||
+        value.kind === SyntaxKind.CompilerOptionString
+      ) {
+        parts.push(value.value);
+      }
+    }
+    return parts.join(",");
+  }
+
+  /**
+   * Stable string identifying which forceRecompile-flagged rules applied, and how.
+   * Used to invalidate InstructionCache when recompile-relevant options change.
+   * @param prefix Optional prefix to distinguish between PLI/Macro/SQL translators
+   */
+  getRecompileFingerprint(prefix?: string): string {
+    const parts: string[] = [];
+    for (const [rule, rec] of this.appliedRules) {
+      if (!rule.settings?.recompile) continue;
+      const id = (rule.positive?.[0] ?? rule.negative?.[0]) || "?";
+      const entry = `${id}|${rec.alignment}|${rec.args ?? ""}`;
+      parts.push(prefix ? `${prefix}:${entry}` : entry);
+    }
+    parts.sort();
+    return parts.join("\n");
   }
 }
 

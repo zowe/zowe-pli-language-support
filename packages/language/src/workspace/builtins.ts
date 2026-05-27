@@ -11,14 +11,10 @@
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { UriUtils } from "../utils/uri";
+import { BuiltinsUriSchema } from "./builtins-constants";
 
 export const KNOWN_BUILTINS = "/* Known Builtins */";
-
-/**
- * For CTRL+F: pli-builtin:///builtins.pli
- */
-
-export const BuiltinsUriSchema = "pli-builtin";
+export { BuiltinsUriSchema };
 
 export const BuiltinsBoolean = `
  /* Boolean built-in constants */

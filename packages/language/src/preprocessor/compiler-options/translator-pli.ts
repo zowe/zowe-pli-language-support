@@ -147,29 +147,35 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.blank} */
-translator.rule(["BLANK"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "string");
+translator.rule(
+  ["BLANK"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
 
-  if (value.value.length !== 1) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Blank.InvalidParameterLength,
-      value.token,
-      value.value,
-    );
-  }
+    if (value.value.length !== 1) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Blank.InvalidParameterLength,
+        value.token,
+        value.value,
+      );
+    }
 
-  if (Options.PLI_CHARACTER_REGEX.test(value.value)) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Blank.InvalidParameter,
-      value.token,
-      value.value,
-    );
-  }
+    if (Options.PLI_CHARACTER_REGEX.test(value.value)) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Blank.InvalidParameter,
+        value.token,
+        value.value,
+      );
+    }
 
-  options.blank = value.value;
-});
+    options.blank = value.value;
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.blkoff} */
 translator.flag("blkoff", ["BLKOFF"], ["NOBLKOFF"]);
@@ -210,42 +216,57 @@ translator.rule(
 
     options.brackets = [start, end];
   }),
+  undefined,
+  undefined,
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.case} */
-translator.rule(["CASE"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  ensureType(option.values[0], "plainNotEmpty");
-  options.case = ensureEnum(
-    option.values[0],
-    CompilerOptionsCodes.Case.InvalidParameter,
-    CompilerOptions.Case,
-  );
-});
+translator.rule(
+  ["CASE"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    ensureType(option.values[0], "plainNotEmpty");
+    options.case = ensureEnum(
+      option.values[0],
+      CompilerOptionsCodes.Case.InvalidParameter,
+      CompilerOptions.Case,
+    );
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.caserules} */
-translator.rule(["CASERULES"], (option, options, acceptor) => {
-  ensureArguments(option, 1);
-  for (const keyword of option.values) {
-    ensureType(keyword, "option");
-    if (keyword.name !== "KEYWORD") {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.CaseRules.InvalidParameter,
-        keyword.token,
-        keyword.token.image,
+translator.rule(
+  ["CASERULES"],
+  (option, options, acceptor) => {
+    ensureArguments(option, 1);
+    for (const keyword of option.values) {
+      ensureType(keyword, "option");
+      if (keyword.name !== "KEYWORD") {
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.CaseRules.InvalidParameter,
+          keyword.token,
+          keyword.token.image,
+        );
+      }
+      ensureArguments(keyword, 1, 1);
+      const keywordCase = keyword.values[0];
+      ensureType(keywordCase, "plainNotEmpty");
+      options.caserules = ensureEnum(
+        keywordCase,
+        CompilerOptionsCodes.CaseRules.InvalidKeywordParameter,
+        CompilerOptions.CaseRules,
       );
+      reportDuplicateSubOptions(option, acceptor);
     }
-    ensureArguments(keyword, 1, 1);
-    const keywordCase = keyword.values[0];
-    ensureType(keywordCase, "plainNotEmpty");
-    options.caserules = ensureEnum(
-      keywordCase,
-      CompilerOptionsCodes.CaseRules.InvalidKeywordParameter,
-      CompilerOptions.CaseRules,
-    );
-    reportDuplicateSubOptions(option, acceptor);
-  }
-});
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.check} */
 translator.rule(["CHECK"], (option, options, acceptor) => {
@@ -294,22 +315,31 @@ translator.rule(
     CompilerOptionsCodes.CmPat.InvalidParameter,
     CompilerOptions.CMPat,
   ),
+  undefined,
+  undefined,
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.codepage} */
-translator.rule(["CODEPAGE", "CP"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  ensureType(option.values[0], "plainNotEmpty");
+translator.rule(
+  ["CODEPAGE", "CP"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    ensureType(option.values[0], "plainNotEmpty");
 
-  if (!Options.PLI_CODEPAGE_SET.has(option.values[0].value)) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.CodePage.InvalidParameter,
-      option.values[0].token,
-      option.values[0].value,
-    );
-  }
-  options.codepage = option.values[0].value;
-});
+    if (!Options.PLI_CODEPAGE_SET.has(option.values[0].value)) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.CodePage.InvalidParameter,
+        option.values[0].token,
+        option.values[0].value,
+      );
+    }
+    options.codepage = option.values[0].value;
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.common} */
 translator.flag("common", ["COMMON"], ["NOCOMMON"]);
@@ -550,329 +580,339 @@ translator.rule(["DECIMAL", "DEC"], (option, options, acceptor) => {
 translator.flag("decomp", ["DECOMP"], ["NODECOMP"]);
 
 /** {@link CompilerOptions.default} */
-translator.rule(["DEFAULT", "DFT"], (option, options, acceptor) => {
-  ensureArguments(option, 1);
-  ensureToBeDefined(options.default);
-  const def = options.default;
-  for (const opt of option.values) {
-    if (opt.kind === SyntaxKind.CompilerOptionText) {
-      const val = opt.value;
-      switch (val) {
-        case "ALIGNED":
-        case "UNALIGNED":
-          def.aligned = val === "ALIGNED";
-          break;
-        case "IBM":
-        case "ANS":
-          def.architecture = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultArchitecture,
-          );
-          break;
-        case "EBCDIC":
-        case "ASCII":
-          def.encoding = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultEncoding,
-          );
-          break;
-        case "ASSIGNABLE":
-        case "NONASSIGNABLE":
-          def.assignable = val === "ASSIGNABLE";
-          break;
-        case "BIN1ARG":
-        case "NOBIN1ARG":
-          def.bin1arg = val === "BIN1ARG";
-          break;
-        case "BYADDR":
-        case "BYVALUE":
-          def.allocator = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultAllocator,
-          );
-          break;
-        case "CONNECTED":
-        case "NONCONNECTED":
-          def.connected = val === "CONNECTED";
-          break;
-        case "DESCLIST":
-        case "DESCLOCATOR":
-          def.desc = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultDesc,
-            [
-              ["LIST", "DESCLIST"],
-              ["LOCATOR", "DESCLOCATOR"],
-            ],
-          );
-          break;
-        case "DESCRIPTOR":
-        case "NODESCRIPTOR":
-          def.descriptor = val === "DESCRIPTOR";
-          break;
-        case "EVENDEC":
-        case "NOEVENDEC":
-          def.evendec = val === "EVENDEC";
-          break;
-        case "HEXADEC":
-        case "IEEE":
-          def.format = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultFormat,
-          );
-          break;
-        case "INITFILL":
-        case "NOINITFILL":
-          // Initfill is actually valid without a parameter and falls back to 00 in that case.
-          def.initfill = val === "INITFILL" ? "00" : false;
-          break;
-        case "INLINE":
-        case "NOINLINE":
-          def.inline = val === "INLINE";
-          break;
-        case "LAXQUAL":
-        case "NOLAXQUAL":
-          def.laxqual = val === "LAXQUAL";
-          break;
-        case "LOWERINC":
-        case "UPPERINC":
-          def.inc = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultInc,
-          );
-          break;
-        case "NATIVE":
-        case "NONNATIVE":
-          def.native = val === "NATIVE";
-          break;
-        case "NATIVEADDR":
-        case "NONNATIVEADDR":
-          def.nativeAddr = val === "NATIVEADDR";
-          break;
-        case "NULLSYS":
-        case "NULL370":
-          def.nullsys = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultNullSys,
-          );
-          break;
-        case "NULLSTRADDR":
-        case "NONULLSTRADDR":
-          def.nullStrAddr = val === "NULLSTRADDR";
-          break;
-        case "ORDER":
-        case "REORDER":
-          def.order = ensureEnum(
-            opt,
-            CompilerOptionsCodes.Default.InvalidParameter,
-            CompilerOptions.DefaultOrder,
-          );
-          break;
-        case "OVERLAP":
-        case "NOOVERLAP":
-          def.overlap = val === "OVERLAP";
-          break;
-        case "PADDING":
-        case "NOPADDING":
-          def.padding = val === "PADDING";
-          break;
-        case "PSEUDODUMMY":
-        case "NOPSEUDODUMMY":
-          def.pseudodummy = val === "PSEUDODUMMY";
-          break;
-        case "RECURSIVE":
-        case "NORECURSIVE":
-          def.recursive = val === "RECURSIVE";
-          break;
-        case "RETCODE":
-        case "NORETCODE":
-          def.retcode = val === "RETCODE";
-          break;
-        case "":
-          // Empty is valid.
-          break;
-        case "DUMMY":
-        case "E":
-        case "LINKAGE":
-        case "NULLINIT":
-        case "NULLSTRPTR":
-        case "ORDINAL":
-        case "RETURNS":
-        case "SHORT":
-          // All option values should report an expected option error.
-          throw diagnosticFromCode(
-            CompilerOptionsCodes.ExpectedOption,
-            opt.token,
-          );
-        default:
-          throw diagnosticFromCode(
-            CompilerOptionsCodes.Default.InvalidParameter,
-            opt.token,
-            val,
-          );
-      }
-    } else if (opt.kind === SyntaxKind.CompilerOption) {
-      ensureArguments(opt, 1, 1);
-      ensureType(opt.values[0], "plainNotEmpty");
-      const value = opt.values[0].value;
+translator.rule(
+  ["DEFAULT", "DFT"],
+  (option, options, acceptor) => {
+    ensureArguments(option, 1);
+    ensureToBeDefined(options.default);
+    const def = options.default;
+    for (const opt of option.values) {
+      if (opt.kind === SyntaxKind.CompilerOptionText) {
+        const val = opt.value;
+        switch (val) {
+          case "ALIGNED":
+          case "UNALIGNED":
+            def.aligned = val === "ALIGNED";
+            break;
+          case "IBM":
+          case "ANS":
+            def.architecture = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultArchitecture,
+            );
+            break;
+          case "EBCDIC":
+          case "ASCII":
+            def.encoding = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultEncoding,
+            );
+            break;
+          case "ASSIGNABLE":
+          case "NONASSIGNABLE":
+            def.assignable = val === "ASSIGNABLE";
+            break;
+          case "BIN1ARG":
+          case "NOBIN1ARG":
+            def.bin1arg = val === "BIN1ARG";
+            break;
+          case "BYADDR":
+          case "BYVALUE":
+            def.allocator = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultAllocator,
+            );
+            break;
+          case "CONNECTED":
+          case "NONCONNECTED":
+            def.connected = val === "CONNECTED";
+            break;
+          case "DESCLIST":
+          case "DESCLOCATOR":
+            def.desc = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultDesc,
+              [
+                ["LIST", "DESCLIST"],
+                ["LOCATOR", "DESCLOCATOR"],
+              ],
+            );
+            break;
+          case "DESCRIPTOR":
+          case "NODESCRIPTOR":
+            def.descriptor = val === "DESCRIPTOR";
+            break;
+          case "EVENDEC":
+          case "NOEVENDEC":
+            def.evendec = val === "EVENDEC";
+            break;
+          case "HEXADEC":
+          case "IEEE":
+            def.format = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultFormat,
+            );
+            break;
+          case "INITFILL":
+          case "NOINITFILL":
+            // Initfill is actually valid without a parameter and falls back to 00 in that case.
+            def.initfill = val === "INITFILL" ? "00" : false;
+            break;
+          case "INLINE":
+          case "NOINLINE":
+            def.inline = val === "INLINE";
+            break;
+          case "LAXQUAL":
+          case "NOLAXQUAL":
+            def.laxqual = val === "LAXQUAL";
+            break;
+          case "LOWERINC":
+          case "UPPERINC":
+            def.inc = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultInc,
+            );
+            break;
+          case "NATIVE":
+          case "NONNATIVE":
+            def.native = val === "NATIVE";
+            break;
+          case "NATIVEADDR":
+          case "NONNATIVEADDR":
+            def.nativeAddr = val === "NATIVEADDR";
+            break;
+          case "NULLSYS":
+          case "NULL370":
+            def.nullsys = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultNullSys,
+            );
+            break;
+          case "NULLSTRADDR":
+          case "NONULLSTRADDR":
+            def.nullStrAddr = val === "NULLSTRADDR";
+            break;
+          case "ORDER":
+          case "REORDER":
+            def.order = ensureEnum(
+              opt,
+              CompilerOptionsCodes.Default.InvalidParameter,
+              CompilerOptions.DefaultOrder,
+            );
+            break;
+          case "OVERLAP":
+          case "NOOVERLAP":
+            def.overlap = val === "OVERLAP";
+            break;
+          case "PADDING":
+          case "NOPADDING":
+            def.padding = val === "PADDING";
+            break;
+          case "PSEUDODUMMY":
+          case "NOPSEUDODUMMY":
+            def.pseudodummy = val === "PSEUDODUMMY";
+            break;
+          case "RECURSIVE":
+          case "NORECURSIVE":
+            def.recursive = val === "RECURSIVE";
+            break;
+          case "RETCODE":
+          case "NORETCODE":
+            def.retcode = val === "RETCODE";
+            break;
+          case "":
+            // Empty is valid.
+            break;
+          case "DUMMY":
+          case "E":
+          case "LINKAGE":
+          case "NULLINIT":
+          case "NULLSTRPTR":
+          case "ORDINAL":
+          case "RETURNS":
+          case "SHORT":
+            // All option values should report an expected option error.
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.ExpectedOption,
+              opt.token,
+            );
+          default:
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Default.InvalidParameter,
+              opt.token,
+              val,
+            );
+        }
+      } else if (opt.kind === SyntaxKind.CompilerOption) {
+        ensureArguments(opt, 1, 1);
+        ensureType(opt.values[0], "plainNotEmpty");
+        const value = opt.values[0].value;
 
-      const invalidOption = () => {
+        const invalidOption = () => {
+          throw diagnosticFromCode(
+            CompilerOptionsCodes.Default.InvalidParameter,
+            opt.values[0].token,
+            value,
+          );
+        };
+
+        switch (opt.name) {
+          case "DUMMY":
+            def.dummy = {};
+            if (value === "ALIGNED" || value === "") {
+              def.dummy.aligned = true;
+            } else if (value === "UNALIGNED") {
+              def.dummy.aligned = false;
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "E":
+            def.e = {};
+            if (value === "HEXADEC" || value === "") {
+              def.e.format = CompilerOptions.DefaultFormat.HEXADEC;
+            } else if (value === "IEEE") {
+              def.e.format = CompilerOptions.DefaultFormat.IEEE;
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "INITFILL":
+            // TODO ssmifi: INITFILL can also accept a string value in which case the hex value should not have an X suffix.
+            if (/[0-9a-fA-F]{2}x/i.test(value)) {
+              def.initfill = value;
+            } else {
+              throw diagnosticFromCode(
+                CompilerOptionsCodes.Default.InvalidInitFillParameter,
+                opt.values[0].token,
+                value,
+              );
+            }
+            break;
+
+          case "LINKAGE":
+            def.linkage = {};
+            if (value === "OPTLINK" || value === "") {
+              def.linkage.type = CompilerOptions.DefaultLinkageType.OPTLINK;
+            } else if (value === "SYSTEM") {
+              def.linkage.type = CompilerOptions.DefaultLinkageType.SYSTEM;
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "NULLINIT":
+            def.nullinit = {};
+            if (value === "NULL" || value === "") {
+              def.nullinit.type = CompilerOptions.DefaultNullInitType.NULL;
+            } else if (value === "SYSNULL") {
+              def.nullinit.type = CompilerOptions.DefaultNullInitType.SYSNULL;
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "NULLSTRPTR":
+            def.nullStrPtr = {};
+            if (value === "NULL") {
+              def.nullStrPtr.type = CompilerOptions.DefaultNullStrPtrType.NULL;
+            } else if (value === "STRICT") {
+              def.nullStrPtr.type =
+                CompilerOptions.DefaultNullStrPtrType.STRICT;
+            } else if (value === "SYSNULL") {
+              def.nullStrPtr.type =
+                CompilerOptions.DefaultNullStrPtrType.SYSNULL;
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "ORDINAL":
+            if (value === "MIN") {
+              def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MIN };
+            } else if (value === "MAX") {
+              def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MAX };
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "RETURNS":
+            // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
+            if (value === "" || value === "BYADDR") {
+              def.returns = { type: CompilerOptions.DefaultReturnsType.BYADDR };
+            } else if (value === "BYVALUE") {
+              def.returns = {
+                type: CompilerOptions.DefaultReturnsType.BYVALUE,
+              };
+            } else {
+              invalidOption();
+            }
+            break;
+
+          case "SHORT":
+            // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
+            if (value === "" || value === "HEXADEC") {
+              def.short = { format: CompilerOptions.DefaultFormat.HEXADEC };
+            } else if (value === "IEEE") {
+              def.short = { format: CompilerOptions.DefaultFormat.IEEE };
+            } else {
+              invalidOption();
+            }
+            break;
+
+          default:
+            invalidOption();
+        }
+      } else {
         throw diagnosticFromCode(
           CompilerOptionsCodes.Default.InvalidParameter,
-          opt.values[0].token,
-          value,
+          opt.token,
+          opt.value,
         );
-      };
-
-      switch (opt.name) {
-        case "DUMMY":
-          def.dummy = {};
-          if (value === "ALIGNED" || value === "") {
-            def.dummy.aligned = true;
-          } else if (value === "UNALIGNED") {
-            def.dummy.aligned = false;
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "E":
-          def.e = {};
-          if (value === "HEXADEC" || value === "") {
-            def.e.format = CompilerOptions.DefaultFormat.HEXADEC;
-          } else if (value === "IEEE") {
-            def.e.format = CompilerOptions.DefaultFormat.IEEE;
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "INITFILL":
-          // TODO ssmifi: INITFILL can also accept a string value in which case the hex value should not have an X suffix.
-          if (/[0-9a-fA-F]{2}x/i.test(value)) {
-            def.initfill = value;
-          } else {
-            throw diagnosticFromCode(
-              CompilerOptionsCodes.Default.InvalidInitFillParameter,
-              opt.values[0].token,
-              value,
-            );
-          }
-          break;
-
-        case "LINKAGE":
-          def.linkage = {};
-          if (value === "OPTLINK" || value === "") {
-            def.linkage.type = CompilerOptions.DefaultLinkageType.OPTLINK;
-          } else if (value === "SYSTEM") {
-            def.linkage.type = CompilerOptions.DefaultLinkageType.SYSTEM;
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "NULLINIT":
-          def.nullinit = {};
-          if (value === "NULL" || value === "") {
-            def.nullinit.type = CompilerOptions.DefaultNullInitType.NULL;
-          } else if (value === "SYSNULL") {
-            def.nullinit.type = CompilerOptions.DefaultNullInitType.SYSNULL;
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "NULLSTRPTR":
-          def.nullStrPtr = {};
-          if (value === "NULL") {
-            def.nullStrPtr.type = CompilerOptions.DefaultNullStrPtrType.NULL;
-          } else if (value === "STRICT") {
-            def.nullStrPtr.type = CompilerOptions.DefaultNullStrPtrType.STRICT;
-          } else if (value === "SYSNULL") {
-            def.nullStrPtr.type = CompilerOptions.DefaultNullStrPtrType.SYSNULL;
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "ORDINAL":
-          if (value === "MIN") {
-            def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MIN };
-          } else if (value === "MAX") {
-            def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MAX };
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "RETURNS":
-          // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
-          if (value === "" || value === "BYADDR") {
-            def.returns = { type: CompilerOptions.DefaultReturnsType.BYADDR };
-          } else if (value === "BYVALUE") {
-            def.returns = { type: CompilerOptions.DefaultReturnsType.BYVALUE };
-          } else {
-            invalidOption();
-          }
-          break;
-
-        case "SHORT":
-          // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
-          if (value === "" || value === "HEXADEC") {
-            def.short = { format: CompilerOptions.DefaultFormat.HEXADEC };
-          } else if (value === "IEEE") {
-            def.short = { format: CompilerOptions.DefaultFormat.IEEE };
-          } else {
-            invalidOption();
-          }
-          break;
-
-        default:
-          invalidOption();
       }
-    } else {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.Default.InvalidParameter,
-        opt.token,
-        opt.value,
-      );
     }
-  }
-  reportDuplicateSubOptions(option, acceptor);
-  reportMutexSubOptions(option, acceptor, [
-    ["ALIGNED", "UNALIGNED"],
-    ["IBM", "ANS"],
-    ["EBCDIC", "ASCII"],
-    ["ASSIGNABLE", "NONASSIGNABLE"],
-    ["BIN1ARG", "NOBIN1ARG"],
-    ["BYADDR", "BYVALUE"],
-    ["CONNECTED", "NONCONNECTED"],
-    ["DESCLIST", "DESCLOCATOR"],
-    ["DESCRIPTOR", "NODESCRIPTOR"],
-    ["EVENDEC", "NOEVENDEC"],
-    ["HEXADEC", "IEEE"],
-    ["INLINE", "NOINLINE"],
-    ["LAXQUAL", "NOLAXQUAL"],
-    ["LOWERINC", "UPPERINC"],
-    ["NATIVE", "NONNATIVE"],
-    ["NATIVEADDR", "NONNATIVEADDR"],
-    ["NULLSYS", "NULL370"],
-    ["NULLSTRADDR", "NONULLSTRADDR"],
-    ["ORDER", "REORDER"],
-    ["OVERLAP", "NOOVERLAP"],
-    ["PADDING", "NOPADDING"],
-    ["PSEUDODUMMY", "NOPSEUDODUMMY"],
-    ["RECURSIVE", "NORECURSIVE"],
-    ["RETCODE", "NORETCODE"],
-  ]);
-});
+    reportDuplicateSubOptions(option, acceptor);
+    reportMutexSubOptions(option, acceptor, [
+      ["ALIGNED", "UNALIGNED"],
+      ["IBM", "ANS"],
+      ["EBCDIC", "ASCII"],
+      ["ASSIGNABLE", "NONASSIGNABLE"],
+      ["BIN1ARG", "NOBIN1ARG"],
+      ["BYADDR", "BYVALUE"],
+      ["CONNECTED", "NONCONNECTED"],
+      ["DESCLIST", "DESCLOCATOR"],
+      ["DESCRIPTOR", "NODESCRIPTOR"],
+      ["EVENDEC", "NOEVENDEC"],
+      ["HEXADEC", "IEEE"],
+      ["INLINE", "NOINLINE"],
+      ["LAXQUAL", "NOLAXQUAL"],
+      ["LOWERINC", "UPPERINC"],
+      ["NATIVE", "NONNATIVE"],
+      ["NATIVEADDR", "NONNATIVEADDR"],
+      ["NULLSYS", "NULL370"],
+      ["NULLSTRADDR", "NONULLSTRADDR"],
+      ["ORDER", "REORDER"],
+      ["OVERLAP", "NOOVERLAP"],
+      ["PADDING", "NOPADDING"],
+      ["PSEUDODUMMY", "NOPSEUDODUMMY"],
+      ["RECURSIVE", "NORECURSIVE"],
+      ["RETCODE", "NORETCODE"],
+    ]);
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.deprecate} */
 /** {@link CompilerOptions.deprecateNext} */
@@ -1158,7 +1198,9 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.graphic} */
-translator.flag("graphic", ["GRAPHIC", "GR"], ["NOGRAPHIC", "NGR"]);
+translator.flag("graphic", ["GRAPHIC", "GR"], ["NOGRAPHIC", "NGR"], undefined, {
+  recompile: true,
+});
 
 /** {@link CompilerOptions.header} */
 translator.rule(["HEADER"], (option, options) => {
@@ -1219,43 +1261,49 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.incAfter} */
-translator.rule(["INCAFTER"], (option, options) => {
-  ensureArguments(option, 0, 1);
-  // INCAFTER; and INCAFTER(); are accepted by the mainframe and treated as INCAFTER(PROCESS("")).
-  if (option.values.length === 0) {
-    options.incAfter = { process: "", token: option.token };
-    return;
-  }
-  const value = option.values[0];
-  if (value.kind === SyntaxKind.CompilerOptionText) {
-    if (value.value.length === 0) {
+translator.rule(
+  ["INCAFTER"],
+  (option, options) => {
+    ensureArguments(option, 0, 1);
+    // INCAFTER; and INCAFTER(); are accepted by the mainframe and treated as INCAFTER(PROCESS("")).
+    if (option.values.length === 0) {
       options.incAfter = { process: "", token: option.token };
       return;
     }
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.IncAfter.InvalidParameter,
-      value.token,
-      value.token.image,
-    );
-  }
+    const value = option.values[0];
+    if (value.kind === SyntaxKind.CompilerOptionText) {
+      if (value.value.length === 0) {
+        options.incAfter = { process: "", token: option.token };
+        return;
+      }
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.IncAfter.InvalidParameter,
+        value.token,
+        value.token.image,
+      );
+    }
 
-  ensureType(value, "option");
-  if (value.name.toUpperCase() !== "PROCESS") {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.IncAfter.InvalidParameter,
-      value.token,
-      value.token.image,
-    );
-  }
-  ensureType(value, "option");
-  ensureArguments(value, 1, 1);
-  const processValue = value.values[0];
-  ensureType(processValue, "plainNotEmpty");
-  options.incAfter = {
-    process: processValue.token.image,
-    token: processValue.token,
-  };
-});
+    ensureType(value, "option");
+    if (value.name.toUpperCase() !== "PROCESS") {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.IncAfter.InvalidParameter,
+        value.token,
+        value.token.image,
+      );
+    }
+    ensureType(value, "option");
+    ensureArguments(value, 1, 1);
+    const processValue = value.values[0];
+    ensureType(processValue, "plainNotEmpty");
+    options.incAfter = {
+      process: processValue.token.image,
+      token: processValue.token,
+    };
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.incDir} */
 translator.rule(
@@ -1276,10 +1324,13 @@ translator.rule(
     ensureArguments(option, 0, 0);
     options.incDir = false;
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.include} */
-translator.flag("include", ["INCLUDE"], ["NOINCLUDE"]);
+translator.flag("include", ["INCLUDE"], ["NOINCLUDE"], undefined, {
+  recompile: true,
+});
 
 /** {@link CompilerOptions.incPds} */
 translator.rule(
@@ -1644,6 +1695,7 @@ translator.rule(
     ensureArguments(option, 0, 0);
     options.margini = " ";
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.margins} */
@@ -1685,6 +1737,7 @@ translator.rule(
     ensureArguments(option, 0, 0);
     options.margins = false;
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.maxbranch} */
@@ -1907,49 +1960,55 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.names} */
-translator.rule(["NAMES"], (option, options) => {
-  const ensureSafeCharacters = (
-    value: CompilerOptionText | CompilerOptionString,
-  ) => {
-    const seen = new Set<string>();
-    for (const char of value.value) {
-      // The character must not be from the character or set nor occur more than once.
-      if (Options.PLI_CHARACTER_SET.has(char) || seen.has(char)) {
+translator.rule(
+  ["NAMES"],
+  (option, options) => {
+    const ensureSafeCharacters = (
+      value: CompilerOptionText | CompilerOptionString,
+    ) => {
+      const seen = new Set<string>();
+      for (const char of value.value) {
+        // The character must not be from the character or set nor occur more than once.
+        if (Options.PLI_CHARACTER_SET.has(char) || seen.has(char)) {
+          throw diagnosticFromCode(
+            CompilerOptionsCodes.Names.CharacterAlreadyDefined,
+            value.token,
+            char,
+            "NAMES",
+          );
+        }
+        seen.add(char);
+      }
+    };
+
+    ensureArguments(option, 1, 2);
+    const firstValue = option.values[0];
+    // TODO ssmifi: The mainframe accepts plain and string tokens.
+    // However, the options parser does not support special characters in plain tokens currently.
+    ensureType(firstValue, "plainOrString");
+    ensureSafeCharacters(firstValue);
+    options.names = {
+      extralingChar: firstValue.value,
+      uppExtralingChar: firstValue.value,
+    };
+    if (option.values.length > 1) {
+      const secondValue = option.values[1];
+      ensureType(secondValue, "plainOrString");
+      ensureSafeCharacters(secondValue);
+      if (firstValue.value.length !== secondValue.value.length) {
         throw diagnosticFromCode(
-          CompilerOptionsCodes.Names.CharacterAlreadyDefined,
-          value.token,
-          char,
+          CompilerOptionsCodes.Names.InvalidParameterLengths,
+          secondValue.token,
           "NAMES",
         );
       }
-      seen.add(char);
+      options.names.uppExtralingChar = secondValue.value;
     }
-  };
-
-  ensureArguments(option, 1, 2);
-  const firstValue = option.values[0];
-  // TODO ssmifi: The mainframe accepts plain and string tokens.
-  // However, the options parser does not support special characters in plain tokens currently.
-  ensureType(firstValue, "plainOrString");
-  ensureSafeCharacters(firstValue);
-  options.names = {
-    extralingChar: firstValue.value,
-    uppExtralingChar: firstValue.value,
-  };
-  if (option.values.length > 1) {
-    const secondValue = option.values[1];
-    ensureType(secondValue, "plainOrString");
-    ensureSafeCharacters(secondValue);
-    if (firstValue.value.length !== secondValue.value.length) {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.Names.InvalidParameterLengths,
-        secondValue.token,
-        "NAMES",
-      );
-    }
-    options.names.uppExtralingChar = secondValue.value;
-  }
-});
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.natlang} */
 translator.rule(["NATLANG"], (option, options) => {
@@ -1976,28 +2035,34 @@ translator.rule(["NATLANG"], (option, options) => {
 translator.flag("nest", ["NEST"], ["NONEST"]);
 
 /** {@link CompilerOptions.not} */
-translator.rule(["NOT"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "string");
-  if (value.value.length > 7) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Not.InvalidParameterLength,
-      value.token,
-      value.value.length,
-    );
-  }
-  for (const char of value.value) {
-    if (char !== NOT_CHARACTER && Options.PLI_CHARACTER_SET.has(char)) {
+translator.rule(
+  ["NOT"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (value.value.length > 7) {
       throw diagnosticFromCode(
-        CompilerOptionsCodes.Not.InvalidParameterCharacter,
+        CompilerOptionsCodes.Not.InvalidParameterLength,
         value.token,
-        char,
+        value.value.length,
       );
     }
-  }
-  options.not = value.value;
-});
+    for (const char of value.value) {
+      if (char !== NOT_CHARACTER && Options.PLI_CHARACTER_SET.has(char)) {
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Not.InvalidParameterCharacter,
+          value.token,
+          char,
+        );
+      }
+    }
+    options.not = value.value;
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.nullDate} */
 translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
@@ -2130,28 +2195,34 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.or} */
-translator.rule(["OR"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "string");
-  if (value.value.length > 7) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Or.InvalidParameterLength,
-      value.token,
-      value.value.length,
-    );
-  }
-  for (const char of value.value) {
-    if (char !== "|" && Options.PLI_CHARACTER_SET.has(char)) {
+translator.rule(
+  ["OR"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "string");
+    if (value.value.length > 7) {
       throw diagnosticFromCode(
-        CompilerOptionsCodes.Or.InvalidParameterCharacter,
+        CompilerOptionsCodes.Or.InvalidParameterLength,
         value.token,
-        char,
+        value.value.length,
       );
     }
-  }
-  options.or = value.value;
-});
+    for (const char of value.value) {
+      if (char !== "|" && Options.PLI_CHARACTER_SET.has(char)) {
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Or.InvalidParameterCharacter,
+          value.token,
+          char,
+        );
+      }
+    }
+    options.or = value.value;
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.pp} */
 translator.rule(
@@ -2217,7 +2288,7 @@ translator.rule(
     ensureArguments(option, 0, 0);
     options.pp = { items: [] };
   },
-  { allowDuplicates: true },
+  { allowDuplicates: true, recompile: true },
 );
 
 /** {@link CompilerOptions.ppCics} */
@@ -2234,6 +2305,7 @@ translator.rule(
     options.ppCics = false;
     ensureArguments(option, 0, 0);
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.ppInclude} */
@@ -2250,6 +2322,7 @@ translator.rule(
     options.ppInclude = false;
     ensureArguments(option, 0, 0);
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.ppList} */
@@ -2281,6 +2354,7 @@ translator.rule(
     options.ppMacro = false;
     ensureArguments(option, 0, 0);
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.ppSql} */
@@ -2300,6 +2374,7 @@ translator.rule(
     options.ppSql = false;
     ensureArguments(option, 0, 0);
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.ppTrace} */
@@ -2420,6 +2495,7 @@ translator.rule(
     options.process = false;
     ensureArguments(option, 0, 0);
   },
+  { recompile: true },
 );
 
 /** {@link CompilerOptions.quote} */
@@ -2500,674 +2576,680 @@ translator.rule(["RTCHECK"], (option, options) => {
 });
 
 /** {@link CompilerOptions.rules} */
-translator.rule(["RULES"], (option, options, acceptor) => {
-  ensureArguments(option, 1);
-  ensureToBeDefined(options.rules);
-  // Multiple RULES calls are accumulated.
-  for (const value of option.values) {
-    if (value.kind === SyntaxKind.CompilerOptionText) {
-      if (value.value.length === 0) {
-        throw diagnosticFromCode(
-          CompilerOptionsCodes.ExpectedPlainNotEmpty,
-          value.token,
-        );
-      }
-      const name = value.value.toUpperCase();
-      // TODO ssmifi: Refactor non-null assertions after #388.
-      switch (name) {
-        case "IBM":
-          options.rules.ibm = CompilerOptions.RulesIBM.IBM;
-          break;
-        case "ANS":
-          options.rules.ibm = CompilerOptions.RulesIBM.ANS;
-          break;
-        case "BYNAME":
-          options.rules.byName = true;
-          break;
-        case "NOBYNAME":
-          options.rules.byName = false;
-          break;
-        case "COMPLEX":
-          options.rules.complex = true;
-          break;
-        case "NOCOMPLEX":
-          options.rules.complex = CompilerOptions.RulesSource.ALL;
-          break;
-        case "CONTROLLED":
-          options.rules.controlled = true;
-          break;
-        case "NOCONTROLLED":
-          options.rules.controlled = false;
-          break;
-        case "DECSIZE":
-          options.rules.decSize = true;
-          break;
-        case "NODECSIZE":
-          options.rules.decSize = false;
-          break;
-        case "ELSEIF":
-          options.rules.elseIf = true;
-          break;
-        case "NOELSEIF":
-          options.rules.elseIf = false;
-          break;
-        case "EVENDEC":
-          options.rules.evenDec = true;
-          break;
-        case "NOEVENDEC":
-          options.rules.evenDec = false;
-          break;
-        case "GLOBAL":
-          options.rules.global = true;
-          break;
-        case "NOGLOBAL":
-          options.rules.global = CompilerOptions.RulesSource.ALL;
-          break;
-        case "GLOBALDO":
-          options.rules.globalDo = true;
-          break;
-        case "NOGLOBALDO":
-          options.rules.globalDo = false;
-          break;
-        case "GOTO":
-          options.rules.goto = true;
-          break;
-        case "NOGOTO":
-          options.rules.goto = CompilerOptions.RulesGoto.STRICT;
-          break;
-        case "LAXBIF":
-          options.rules.laxBIf = true;
-          break;
-        case "NOLAXBIF":
-          options.rules.laxBIf = false;
-          break;
-        case "LAXCONV":
-          options.rules.laxConv = true;
-          break;
-        case "NOLAXCONV":
-          options.rules.laxConv = CompilerOptions.RulesSource.ALL;
-          break;
-        case "LAXCTL":
-          options.rules.laxCtl = true;
-          break;
-        case "NOLAXCTL":
-          options.rules.laxCtl = false;
-          break;
-        case "LAXDCL":
-          options.rules.laxDcl = true;
-          break;
-        case "NOLAXDCL":
-          options.rules.laxDcl = false;
-          break;
-        case "LAXDEF":
-          options.rules.laxDef = true;
-          break;
-        case "NOLAXDEF":
-          options.rules.laxDef = false;
-          break;
-        case "LAXENTRY":
-          options.rules.laxEntry = true;
-          break;
-        case "NOLAXENTRY":
-          options.rules.laxEntry = CompilerOptions.RulesEntry.STRICT;
-          break;
-        case "LAXEXPORTS":
-          options.rules.laxExports = true;
-          break;
-        case "NOLAXEXPORTS":
-          options.rules.laxExports = false;
-          break;
-        case "LAXFIELDS":
-          options.rules.laxFields = true;
-          break;
-        case "NOLAXFIELDS":
-          options.rules.laxFields = false;
-          break;
-        case "LAXIF":
-          options.rules.laxIf = true;
-          break;
-        case "NOLAXIF":
-          options.rules.laxIf = false;
-          break;
-        case "LAXINOUT":
-          options.rules.laxInOut = true;
-          break;
-        case "NOLAXINOUT":
-          options.rules.laxInOut = {
-            source: CompilerOptions.RulesSource.ALL,
-            strict: CompilerOptions.RulesStrict.STRICT,
-          };
-          break;
-        case "LAXINTERFACE":
-          options.rules.laxInterface = true;
-          break;
-        case "NOLAXINTERFACE":
-          options.rules.laxInterface = false;
-          break;
-        case "LAXLINK":
-          options.rules.laxLink = true;
-          break;
-        case "NOLAXLINK":
-          options.rules.laxLink = false;
-          break;
-        case "LAXMARGINS":
-          options.rules.laxMargins = true;
-          break;
-        case "NOLAXMARGINS":
-          options.rules.laxMargins = CompilerOptions.RulesMargins.STRICT;
-          break;
-        case "LAXNESTED":
-          options.rules.laxNested = true;
-          break;
-        case "NOLAXNESTED":
-          options.rules.laxNested = CompilerOptions.RulesSource.ALL;
-          break;
-        case "LAXOPTIONAL":
-          options.rules.laxOptional = true;
-          break;
-        case "NOLAXOPTIONAL":
-          options.rules.laxOptional = CompilerOptions.RulesSource.ALL;
-          break;
-        case "LAXPACKAGE":
-          options.rules.laxPackage = true;
-          break;
-        case "NOLAXPACKAGE":
-          options.rules.laxPackage = false;
-          break;
-        case "LAXPARMS":
-          options.rules.laxParms = true;
-          break;
-        case "NOLAXPARMS":
-          options.rules.laxParms = CompilerOptions.RulesSource.ALL;
-          break;
-        case "LAXPUNC":
-          options.rules.laxPunc = true;
-          break;
-        case "NOLAXPUNC":
-          options.rules.laxPunc = false;
-          break;
-        case "LAXQUAL":
-          options.rules.laxQual = true;
-          break;
-        case "NOLAXQUAL":
-          options.rules.laxQual = {
-            source: CompilerOptions.RulesQualSource.ALL,
-            strict: CompilerOptions.RulesQualStrict.LOOSE,
-          };
-          break;
-        case "LAXRETURN":
-          options.rules.laxReturn = true;
-          break;
-        case "NOLAXRETURN":
-          options.rules.laxReturn = false;
-          break;
-        case "LAXSCALE":
-          options.rules.laxScale = true;
-          break;
-        case "NOLAXSCALE":
-          options.rules.laxScale = {
-            source: CompilerOptions.RulesSource.ALL,
-            strict: CompilerOptions.RulesStrict.LOOSE,
-          };
-          break;
-        case "LAXSEMI":
-          options.rules.laxSemi = true;
-          break;
-        case "NOLAXSEMI":
-          options.rules.laxSemi = false;
-          break;
-        case "LAXSTG":
-          options.rules.laxStg = true;
-          break;
-        case "NOLAXSTG":
-          options.rules.laxStg = false;
-          break;
-        case "LAXSTMT":
-          options.rules.laxStmt = true;
-          break;
-        case "NOLAXSTMT":
-          options.rules.laxStmt = CompilerOptions.RulesSource.ALL;
-          break;
-        case "LAXSTRZ":
-          options.rules.laxStrz = true;
-          break;
-        case "NOLAXSTRZ":
-          options.rules.laxStrz = false;
-          break;
-        case "MULTICLOSE":
-          options.rules.multiClose = true;
-          break;
-        case "NOMULTICLOSE":
-          options.rules.multiClose = false;
-          break;
-        case "MULTIENTRY":
-          options.rules.multiEntry = true;
-          break;
-        case "NOMULTIENTRY":
-          options.rules.multiEntry = CompilerOptions.RulesSource.ALL;
-          break;
-        case "MULTIEXIT":
-          options.rules.multiExit = true;
-          break;
-        case "NOMULTIEXIT":
-          options.rules.multiExit = CompilerOptions.RulesSource.ALL;
-          break;
-        case "MULTISEMI":
-          options.rules.multiSemi = true;
-          break;
-        case "NOMULTISEMI":
-          options.rules.multiSemi = CompilerOptions.RulesSource.ALL;
-          break;
-        case "PADDING":
-          options.rules.padding = true;
-          break;
-        case "NOPADDING":
-          options.rules.padding = {
-            source: CompilerOptions.RulesSource.ALL,
-            strict: CompilerOptions.RulesStrict.LOOSE,
-          };
-          break;
-        case "PROCENDONLY":
-          options.rules.procEndOnly = true;
-          break;
-        case "NOPROCENDONLY":
-          options.rules.procEndOnly = CompilerOptions.RulesSource.ALL;
-          break;
-        case "RECURSIVE":
-          options.rules.recursive = true;
-          break;
-        case "NORECURSIVE":
-          options.rules.recursive = false;
-          break;
-        case "SELFASSIGN":
-          options.rules.selfAssign = true;
-          break;
-        case "NOSELFASSIGN":
-          options.rules.selfAssign = false;
-          break;
-        case "UNREF":
-          options.rules.unref = true;
-          break;
-        case "NOUNREF":
-          options.rules.unref = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFBASED":
-          options.rules.unrefBased = true;
-          break;
-        case "NOUNREFBASED":
-          options.rules.unrefBased = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFCTL":
-          options.rules.unrefCtl = true;
-          break;
-        case "NOUNREFCTL":
-          options.rules.unrefCtl = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFDEFINED":
-          options.rules.unrefDefined = true;
-          break;
-        case "NOUNREFDEFINED":
-          options.rules.unrefDefined = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFENTRY":
-          options.rules.unrefEntry = true;
-          break;
-        case "NOUNREFENTRY":
-          options.rules.unrefEntry = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFFILE":
-          options.rules.unrefFile = true;
-          break;
-        case "NOUNREFFILE":
-          options.rules.unrefFile = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFSTATIC":
-          options.rules.unrefStatic = true;
-          break;
-        case "NOUNREFSTATIC":
-          options.rules.unrefStatic = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNREFVALUE":
-          options.rules.unrefValue = true;
-          break;
-        case "NOUNREFVALUE":
-          options.rules.unrefValue = CompilerOptions.RulesSource.ALL;
-          break;
-        case "UNSET":
-          options.rules.unset = true;
-          break;
-        case "NOUNSET":
-          options.rules.unset = false;
-          break;
-        case "YY":
-          options.rules.yy = true;
-          break;
-        case "NOYY":
-          options.rules.yy = false;
-          break;
-        default:
+translator.rule(
+  ["RULES"],
+  (option, options, acceptor) => {
+    ensureArguments(option, 1);
+    ensureToBeDefined(options.rules);
+    // Multiple RULES calls are accumulated.
+    for (const value of option.values) {
+      if (value.kind === SyntaxKind.CompilerOptionText) {
+        if (value.value.length === 0) {
           throw diagnosticFromCode(
-            CompilerOptionsCodes.Rules.InvalidParameter,
+            CompilerOptionsCodes.ExpectedPlainNotEmpty,
             value.token,
-            name,
           );
-      }
-    } else if (value.kind === SyntaxKind.CompilerOption) {
-      const subOption = value.values[0];
-      ensureType(subOption, "plainNotEmpty");
-      const name = value.name.toUpperCase();
-      switch (name) {
-        case "NOCOMPLEX":
-          options.rules.complex = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOGLOBAL":
-          options.rules.global = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOGOTO":
-          options.rules.goto = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.InvalidGotoParameter,
-            CompilerOptions.RulesGoto,
-          );
-          break;
-        case "NOLAXCONV":
-          options.rules.laxConv = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOLAXENTRY":
-          options.rules.laxEntry = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.InvalidLaxEntryParameter,
-            CompilerOptions.RulesEntry,
-          );
-          break;
-        case "NOLAXINOUT":
-          options.rules.laxInOut = {
-            source: CompilerOptions.RulesSource.ALL,
-            strict: CompilerOptions.RulesStrict.STRICT,
-          };
-          for (const sub of value.values) {
-            ensureType(sub, "plainNotEmpty");
-            const subName = sub.value.toUpperCase();
-            if (["ALL", "SOURCE"].includes(subName)) {
-              options.rules.laxInOut.source = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidLaxInOutParameter,
-                CompilerOptions.RulesSource,
-              );
-            } else {
-              options.rules.laxInOut.strict = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidLaxInOutParameter,
-                CompilerOptions.RulesStrict,
-              );
+        }
+        const name = value.value.toUpperCase();
+        // TODO ssmifi: Refactor non-null assertions after #388.
+        switch (name) {
+          case "IBM":
+            options.rules.ibm = CompilerOptions.RulesIBM.IBM;
+            break;
+          case "ANS":
+            options.rules.ibm = CompilerOptions.RulesIBM.ANS;
+            break;
+          case "BYNAME":
+            options.rules.byName = true;
+            break;
+          case "NOBYNAME":
+            options.rules.byName = false;
+            break;
+          case "COMPLEX":
+            options.rules.complex = true;
+            break;
+          case "NOCOMPLEX":
+            options.rules.complex = CompilerOptions.RulesSource.ALL;
+            break;
+          case "CONTROLLED":
+            options.rules.controlled = true;
+            break;
+          case "NOCONTROLLED":
+            options.rules.controlled = false;
+            break;
+          case "DECSIZE":
+            options.rules.decSize = true;
+            break;
+          case "NODECSIZE":
+            options.rules.decSize = false;
+            break;
+          case "ELSEIF":
+            options.rules.elseIf = true;
+            break;
+          case "NOELSEIF":
+            options.rules.elseIf = false;
+            break;
+          case "EVENDEC":
+            options.rules.evenDec = true;
+            break;
+          case "NOEVENDEC":
+            options.rules.evenDec = false;
+            break;
+          case "GLOBAL":
+            options.rules.global = true;
+            break;
+          case "NOGLOBAL":
+            options.rules.global = CompilerOptions.RulesSource.ALL;
+            break;
+          case "GLOBALDO":
+            options.rules.globalDo = true;
+            break;
+          case "NOGLOBALDO":
+            options.rules.globalDo = false;
+            break;
+          case "GOTO":
+            options.rules.goto = true;
+            break;
+          case "NOGOTO":
+            options.rules.goto = CompilerOptions.RulesGoto.STRICT;
+            break;
+          case "LAXBIF":
+            options.rules.laxBIf = true;
+            break;
+          case "NOLAXBIF":
+            options.rules.laxBIf = false;
+            break;
+          case "LAXCONV":
+            options.rules.laxConv = true;
+            break;
+          case "NOLAXCONV":
+            options.rules.laxConv = CompilerOptions.RulesSource.ALL;
+            break;
+          case "LAXCTL":
+            options.rules.laxCtl = true;
+            break;
+          case "NOLAXCTL":
+            options.rules.laxCtl = false;
+            break;
+          case "LAXDCL":
+            options.rules.laxDcl = true;
+            break;
+          case "NOLAXDCL":
+            options.rules.laxDcl = false;
+            break;
+          case "LAXDEF":
+            options.rules.laxDef = true;
+            break;
+          case "NOLAXDEF":
+            options.rules.laxDef = false;
+            break;
+          case "LAXENTRY":
+            options.rules.laxEntry = true;
+            break;
+          case "NOLAXENTRY":
+            options.rules.laxEntry = CompilerOptions.RulesEntry.STRICT;
+            break;
+          case "LAXEXPORTS":
+            options.rules.laxExports = true;
+            break;
+          case "NOLAXEXPORTS":
+            options.rules.laxExports = false;
+            break;
+          case "LAXFIELDS":
+            options.rules.laxFields = true;
+            break;
+          case "NOLAXFIELDS":
+            options.rules.laxFields = false;
+            break;
+          case "LAXIF":
+            options.rules.laxIf = true;
+            break;
+          case "NOLAXIF":
+            options.rules.laxIf = false;
+            break;
+          case "LAXINOUT":
+            options.rules.laxInOut = true;
+            break;
+          case "NOLAXINOUT":
+            options.rules.laxInOut = {
+              source: CompilerOptions.RulesSource.ALL,
+              strict: CompilerOptions.RulesStrict.STRICT,
+            };
+            break;
+          case "LAXINTERFACE":
+            options.rules.laxInterface = true;
+            break;
+          case "NOLAXINTERFACE":
+            options.rules.laxInterface = false;
+            break;
+          case "LAXLINK":
+            options.rules.laxLink = true;
+            break;
+          case "NOLAXLINK":
+            options.rules.laxLink = false;
+            break;
+          case "LAXMARGINS":
+            options.rules.laxMargins = true;
+            break;
+          case "NOLAXMARGINS":
+            options.rules.laxMargins = CompilerOptions.RulesMargins.STRICT;
+            break;
+          case "LAXNESTED":
+            options.rules.laxNested = true;
+            break;
+          case "NOLAXNESTED":
+            options.rules.laxNested = CompilerOptions.RulesSource.ALL;
+            break;
+          case "LAXOPTIONAL":
+            options.rules.laxOptional = true;
+            break;
+          case "NOLAXOPTIONAL":
+            options.rules.laxOptional = CompilerOptions.RulesSource.ALL;
+            break;
+          case "LAXPACKAGE":
+            options.rules.laxPackage = true;
+            break;
+          case "NOLAXPACKAGE":
+            options.rules.laxPackage = false;
+            break;
+          case "LAXPARMS":
+            options.rules.laxParms = true;
+            break;
+          case "NOLAXPARMS":
+            options.rules.laxParms = CompilerOptions.RulesSource.ALL;
+            break;
+          case "LAXPUNC":
+            options.rules.laxPunc = true;
+            break;
+          case "NOLAXPUNC":
+            options.rules.laxPunc = false;
+            break;
+          case "LAXQUAL":
+            options.rules.laxQual = true;
+            break;
+          case "NOLAXQUAL":
+            options.rules.laxQual = {
+              source: CompilerOptions.RulesQualSource.ALL,
+              strict: CompilerOptions.RulesQualStrict.LOOSE,
+            };
+            break;
+          case "LAXRETURN":
+            options.rules.laxReturn = true;
+            break;
+          case "NOLAXRETURN":
+            options.rules.laxReturn = false;
+            break;
+          case "LAXSCALE":
+            options.rules.laxScale = true;
+            break;
+          case "NOLAXSCALE":
+            options.rules.laxScale = {
+              source: CompilerOptions.RulesSource.ALL,
+              strict: CompilerOptions.RulesStrict.LOOSE,
+            };
+            break;
+          case "LAXSEMI":
+            options.rules.laxSemi = true;
+            break;
+          case "NOLAXSEMI":
+            options.rules.laxSemi = false;
+            break;
+          case "LAXSTG":
+            options.rules.laxStg = true;
+            break;
+          case "NOLAXSTG":
+            options.rules.laxStg = false;
+            break;
+          case "LAXSTMT":
+            options.rules.laxStmt = true;
+            break;
+          case "NOLAXSTMT":
+            options.rules.laxStmt = CompilerOptions.RulesSource.ALL;
+            break;
+          case "LAXSTRZ":
+            options.rules.laxStrz = true;
+            break;
+          case "NOLAXSTRZ":
+            options.rules.laxStrz = false;
+            break;
+          case "MULTICLOSE":
+            options.rules.multiClose = true;
+            break;
+          case "NOMULTICLOSE":
+            options.rules.multiClose = false;
+            break;
+          case "MULTIENTRY":
+            options.rules.multiEntry = true;
+            break;
+          case "NOMULTIENTRY":
+            options.rules.multiEntry = CompilerOptions.RulesSource.ALL;
+            break;
+          case "MULTIEXIT":
+            options.rules.multiExit = true;
+            break;
+          case "NOMULTIEXIT":
+            options.rules.multiExit = CompilerOptions.RulesSource.ALL;
+            break;
+          case "MULTISEMI":
+            options.rules.multiSemi = true;
+            break;
+          case "NOMULTISEMI":
+            options.rules.multiSemi = CompilerOptions.RulesSource.ALL;
+            break;
+          case "PADDING":
+            options.rules.padding = true;
+            break;
+          case "NOPADDING":
+            options.rules.padding = {
+              source: CompilerOptions.RulesSource.ALL,
+              strict: CompilerOptions.RulesStrict.LOOSE,
+            };
+            break;
+          case "PROCENDONLY":
+            options.rules.procEndOnly = true;
+            break;
+          case "NOPROCENDONLY":
+            options.rules.procEndOnly = CompilerOptions.RulesSource.ALL;
+            break;
+          case "RECURSIVE":
+            options.rules.recursive = true;
+            break;
+          case "NORECURSIVE":
+            options.rules.recursive = false;
+            break;
+          case "SELFASSIGN":
+            options.rules.selfAssign = true;
+            break;
+          case "NOSELFASSIGN":
+            options.rules.selfAssign = false;
+            break;
+          case "UNREF":
+            options.rules.unref = true;
+            break;
+          case "NOUNREF":
+            options.rules.unref = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFBASED":
+            options.rules.unrefBased = true;
+            break;
+          case "NOUNREFBASED":
+            options.rules.unrefBased = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFCTL":
+            options.rules.unrefCtl = true;
+            break;
+          case "NOUNREFCTL":
+            options.rules.unrefCtl = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFDEFINED":
+            options.rules.unrefDefined = true;
+            break;
+          case "NOUNREFDEFINED":
+            options.rules.unrefDefined = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFENTRY":
+            options.rules.unrefEntry = true;
+            break;
+          case "NOUNREFENTRY":
+            options.rules.unrefEntry = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFFILE":
+            options.rules.unrefFile = true;
+            break;
+          case "NOUNREFFILE":
+            options.rules.unrefFile = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFSTATIC":
+            options.rules.unrefStatic = true;
+            break;
+          case "NOUNREFSTATIC":
+            options.rules.unrefStatic = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNREFVALUE":
+            options.rules.unrefValue = true;
+            break;
+          case "NOUNREFVALUE":
+            options.rules.unrefValue = CompilerOptions.RulesSource.ALL;
+            break;
+          case "UNSET":
+            options.rules.unset = true;
+            break;
+          case "NOUNSET":
+            options.rules.unset = false;
+            break;
+          case "YY":
+            options.rules.yy = true;
+            break;
+          case "NOYY":
+            options.rules.yy = false;
+            break;
+          default:
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Rules.InvalidParameter,
+              value.token,
+              name,
+            );
+        }
+      } else if (value.kind === SyntaxKind.CompilerOption) {
+        const subOption = value.values[0];
+        ensureType(subOption, "plainNotEmpty");
+        const name = value.name.toUpperCase();
+        switch (name) {
+          case "NOCOMPLEX":
+            options.rules.complex = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOGLOBAL":
+            options.rules.global = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOGOTO":
+            options.rules.goto = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.InvalidGotoParameter,
+              CompilerOptions.RulesGoto,
+            );
+            break;
+          case "NOLAXCONV":
+            options.rules.laxConv = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOLAXENTRY":
+            options.rules.laxEntry = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.InvalidLaxEntryParameter,
+              CompilerOptions.RulesEntry,
+            );
+            break;
+          case "NOLAXINOUT":
+            options.rules.laxInOut = {
+              source: CompilerOptions.RulesSource.ALL,
+              strict: CompilerOptions.RulesStrict.STRICT,
+            };
+            for (const sub of value.values) {
+              ensureType(sub, "plainNotEmpty");
+              const subName = sub.value.toUpperCase();
+              if (["ALL", "SOURCE"].includes(subName)) {
+                options.rules.laxInOut.source = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidLaxInOutParameter,
+                  CompilerOptions.RulesSource,
+                );
+              } else {
+                options.rules.laxInOut.strict = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidLaxInOutParameter,
+                  CompilerOptions.RulesStrict,
+                );
+              }
             }
-          }
-          break;
-        case "NOLAXMARGINS":
-          options.rules.laxMargins = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.InvalidLaxMarginsParameter,
-            CompilerOptions.RulesMargins,
-          );
-          break;
-        case "NOLAXNESTED":
-          options.rules.laxNested = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOLAXOPTIONAL":
-          options.rules.laxOptional = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOLAXPARMS":
-          options.rules.laxParms = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOLAXQUAL":
-          options.rules.laxQual = {
-            source: CompilerOptions.RulesQualSource.ALL,
-            strict: CompilerOptions.RulesQualStrict.LOOSE,
-          };
-          for (const sub of value.values) {
-            ensureType(sub, "plainNotEmpty");
-            const subName = sub.value.toUpperCase();
-            if (["ALL", "FORCE"].includes(subName)) {
-              options.rules.laxQual.source = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidLaxQualParameter,
-                CompilerOptions.RulesQualSource,
-              );
-            } else {
-              options.rules.laxQual.strict = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidLaxQualParameter,
-                CompilerOptions.RulesQualStrict,
-              );
+            break;
+          case "NOLAXMARGINS":
+            options.rules.laxMargins = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.InvalidLaxMarginsParameter,
+              CompilerOptions.RulesMargins,
+            );
+            break;
+          case "NOLAXNESTED":
+            options.rules.laxNested = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOLAXOPTIONAL":
+            options.rules.laxOptional = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOLAXPARMS":
+            options.rules.laxParms = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOLAXQUAL":
+            options.rules.laxQual = {
+              source: CompilerOptions.RulesQualSource.ALL,
+              strict: CompilerOptions.RulesQualStrict.LOOSE,
+            };
+            for (const sub of value.values) {
+              ensureType(sub, "plainNotEmpty");
+              const subName = sub.value.toUpperCase();
+              if (["ALL", "FORCE"].includes(subName)) {
+                options.rules.laxQual.source = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidLaxQualParameter,
+                  CompilerOptions.RulesQualSource,
+                );
+              } else {
+                options.rules.laxQual.strict = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidLaxQualParameter,
+                  CompilerOptions.RulesQualStrict,
+                );
+              }
             }
-          }
-          break;
-        case "NOLAXSCALE":
-          options.rules.laxScale = {
-            source: CompilerOptions.RulesSource.ALL,
-            strict: CompilerOptions.RulesStrict.STRICT,
-          };
-          for (const sub of value.values) {
-            ensureType(sub, "plainNotEmpty");
-            const subName = sub.value.toUpperCase();
-            if (["ALL", "SOURCE"].includes(subName)) {
-              options.rules.laxScale.source = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidLaxScaleParameter,
-                CompilerOptions.RulesSource,
-              );
-            } else {
-              options.rules.laxScale.strict = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidLaxScaleParameter,
-                CompilerOptions.RulesStrict,
-              );
+            break;
+          case "NOLAXSCALE":
+            options.rules.laxScale = {
+              source: CompilerOptions.RulesSource.ALL,
+              strict: CompilerOptions.RulesStrict.STRICT,
+            };
+            for (const sub of value.values) {
+              ensureType(sub, "plainNotEmpty");
+              const subName = sub.value.toUpperCase();
+              if (["ALL", "SOURCE"].includes(subName)) {
+                options.rules.laxScale.source = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidLaxScaleParameter,
+                  CompilerOptions.RulesSource,
+                );
+              } else {
+                options.rules.laxScale.strict = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidLaxScaleParameter,
+                  CompilerOptions.RulesStrict,
+                );
+              }
             }
-          }
-          break;
-        case "NOLAXSTMT":
-          options.rules.laxStmt = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOMULTIENTRY":
-          options.rules.multiEntry = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOMULTIEXIT":
-          options.rules.multiExit = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOMULTISEMI":
-          options.rules.multiSemi = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOPADDING":
-          options.rules.padding = {
-            source: CompilerOptions.RulesSource.ALL,
-            strict: CompilerOptions.RulesStrict.LOOSE,
-          };
-          for (const sub of value.values) {
-            ensureType(sub, "plainNotEmpty");
-            const subName = sub.value.toUpperCase();
-            if (["ALL", "SOURCE"].includes(subName)) {
-              options.rules.padding.source = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidPaddingParameter,
-                CompilerOptions.RulesSource,
-              );
-            } else {
-              options.rules.padding.strict = ensureEnum(
-                sub,
-                CompilerOptionsCodes.Rules.InvalidPaddingParameter,
-                CompilerOptions.RulesStrict,
-              );
+            break;
+          case "NOLAXSTMT":
+            options.rules.laxStmt = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOMULTIENTRY":
+            options.rules.multiEntry = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOMULTIEXIT":
+            options.rules.multiExit = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOMULTISEMI":
+            options.rules.multiSemi = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOPADDING":
+            options.rules.padding = {
+              source: CompilerOptions.RulesSource.ALL,
+              strict: CompilerOptions.RulesStrict.LOOSE,
+            };
+            for (const sub of value.values) {
+              ensureType(sub, "plainNotEmpty");
+              const subName = sub.value.toUpperCase();
+              if (["ALL", "SOURCE"].includes(subName)) {
+                options.rules.padding.source = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidPaddingParameter,
+                  CompilerOptions.RulesSource,
+                );
+              } else {
+                options.rules.padding.strict = ensureEnum(
+                  sub,
+                  CompilerOptionsCodes.Rules.InvalidPaddingParameter,
+                  CompilerOptions.RulesStrict,
+                );
+              }
             }
-          }
-          break;
-        case "NOPROCENDONLY":
-          options.rules.procEndOnly = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREF":
-          options.rules.unref = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFBASED":
-          options.rules.unrefBased = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFCTL":
-          options.rules.unrefCtl = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFDEFINED":
-          options.rules.unrefDefined = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFENTRY":
-          options.rules.unrefEntry = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFFILE":
-          options.rules.unrefFile = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFSTATIC":
-          options.rules.unrefStatic = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        case "NOUNREFVALUE":
-          options.rules.unrefValue = ensureEnum(
-            subOption,
-            CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
-            CompilerOptions.RulesSource,
-          );
-          break;
-        default:
-          throw diagnosticFromCode(
-            CompilerOptionsCodes.Rules.InvalidParameter,
-            value.token,
-            name,
-          );
+            break;
+          case "NOPROCENDONLY":
+            options.rules.procEndOnly = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREF":
+            options.rules.unref = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFBASED":
+            options.rules.unrefBased = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFCTL":
+            options.rules.unrefCtl = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFDEFINED":
+            options.rules.unrefDefined = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFENTRY":
+            options.rules.unrefEntry = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFFILE":
+            options.rules.unrefFile = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFSTATIC":
+            options.rules.unrefStatic = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNREFVALUE":
+            options.rules.unrefValue = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          default:
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Rules.InvalidParameter,
+              value.token,
+              name,
+            );
+        }
       }
     }
-  }
-  reportDuplicateSubOptions(option, acceptor);
-  reportMutexSubOptions(option, acceptor, [
-    ["IBM", "ANS"],
-    ["BYNAME", "NOBYNAME"],
-    ["CONTROLLED", "NOCONTROLLED"],
-    ["DECSIZE", "NODECSIZE"],
-    ["ELSEIF", "NOELSEIF"],
-    ["EVENDEC", "NOEVENDEC"],
-    ["GLOBAL", "NOGLOBAL"],
-    ["GLOBALDO", "NOGLOBALDO"],
-    ["GOTO", "NOGOTO"],
-    ["LAXBIF", "NOLAXBIF"],
-    ["LAXCONV", "NOLAXCONV"],
-    ["LAXCTL", "NOLAXCTL"],
-    ["LAXDCL", "NOLAXDCL"],
-    ["LAXDEF", "NOLAXDEF"],
-    ["LAXENTRY", "NOLAXENTRY"],
-    ["LAXEXPORTS", "NOLAXEXPORTS"],
-    ["LAXFIELDS", "NOLAXFIELDS"],
-    ["LAXIF", "NOLAXIF"],
-    ["LAXINOUT", "NOLAXINOUT"],
-    ["LAXINTERFACE", "NOLAXINTERFACE"],
-    ["LAXLINK", "NOLAXLINK"],
-    ["LAXMARGINS", "NOLAXMARGINS"],
-    ["LAXNESTED", "NOLAXNESTED"],
-    ["LAXOPTIONAL", "NOLAXOPTIONAL"],
-    ["LAXPACKAGE", "NOLAXPACKAGE"],
-    ["LAXPARMS", "NOLAXPARMS"],
-    ["LAXPUNC", "NOLAXPUNC"],
-    ["LAXQUAL", "NOLAXQUAL"],
-    ["LAXRETURN", "NOLAXRETURN"],
-    ["LAXSCALE", "NOLAXSCALE"],
-    ["LAXSEMI", "NOLAXSEMI"],
-    ["LAXSTG", "NOLAXSTG"],
-    ["LAXSTMT", "NOLAXSTMT"],
-    ["LAXSTRZ", "NOLAXSTRZ"],
-    ["MULTICLOSE", "NOMULTICLOSE"],
-    ["MULTIENTRY", "NOMULTIENTRY"],
-    ["MULTIEXIT", "NOMULTIEXIT"],
-    ["MULTISEMI", "NOMULTISEMI"],
-    ["PADDING", "NOPADDING"],
-    ["PROCENDONLY", "NOPROCENDONLY"],
-    ["RECURSIVE", "NORECURSIVE"],
-    ["SELFASSIGN", "NOSELFASSIGN"],
-    ["UNREF", "NOUNREF"],
-    ["UNREFBASED", "NOUNREFBASED"],
-    ["UNREFCTL", "NOUNREFCTL"],
-    ["UNREFDEFINED", "NOUNREFDEFINED"],
-    ["UNREFENTRY", "NOUNREFENTRY"],
-    ["UNREFFILE", "NOUNREFFILE"],
-    ["UNREFSTATIC", "NOUNREFSTATIC"],
-    ["UNREFVALUE", "NOUNREFVALUE"],
-    ["UNSET", "NOUNSET"],
-    ["YY", "NOYY"],
-  ]);
-});
+    reportDuplicateSubOptions(option, acceptor);
+    reportMutexSubOptions(option, acceptor, [
+      ["IBM", "ANS"],
+      ["BYNAME", "NOBYNAME"],
+      ["CONTROLLED", "NOCONTROLLED"],
+      ["DECSIZE", "NODECSIZE"],
+      ["ELSEIF", "NOELSEIF"],
+      ["EVENDEC", "NOEVENDEC"],
+      ["GLOBAL", "NOGLOBAL"],
+      ["GLOBALDO", "NOGLOBALDO"],
+      ["GOTO", "NOGOTO"],
+      ["LAXBIF", "NOLAXBIF"],
+      ["LAXCONV", "NOLAXCONV"],
+      ["LAXCTL", "NOLAXCTL"],
+      ["LAXDCL", "NOLAXDCL"],
+      ["LAXDEF", "NOLAXDEF"],
+      ["LAXENTRY", "NOLAXENTRY"],
+      ["LAXEXPORTS", "NOLAXEXPORTS"],
+      ["LAXFIELDS", "NOLAXFIELDS"],
+      ["LAXIF", "NOLAXIF"],
+      ["LAXINOUT", "NOLAXINOUT"],
+      ["LAXINTERFACE", "NOLAXINTERFACE"],
+      ["LAXLINK", "NOLAXLINK"],
+      ["LAXMARGINS", "NOLAXMARGINS"],
+      ["LAXNESTED", "NOLAXNESTED"],
+      ["LAXOPTIONAL", "NOLAXOPTIONAL"],
+      ["LAXPACKAGE", "NOLAXPACKAGE"],
+      ["LAXPARMS", "NOLAXPARMS"],
+      ["LAXPUNC", "NOLAXPUNC"],
+      ["LAXQUAL", "NOLAXQUAL"],
+      ["LAXRETURN", "NOLAXRETURN"],
+      ["LAXSCALE", "NOLAXSCALE"],
+      ["LAXSEMI", "NOLAXSEMI"],
+      ["LAXSTG", "NOLAXSTG"],
+      ["LAXSTMT", "NOLAXSTMT"],
+      ["LAXSTRZ", "NOLAXSTRZ"],
+      ["MULTICLOSE", "NOMULTICLOSE"],
+      ["MULTIENTRY", "NOMULTIENTRY"],
+      ["MULTIEXIT", "NOMULTIEXIT"],
+      ["MULTISEMI", "NOMULTISEMI"],
+      ["PADDING", "NOPADDING"],
+      ["PROCENDONLY", "NOPROCENDONLY"],
+      ["RECURSIVE", "NORECURSIVE"],
+      ["SELFASSIGN", "NOSELFASSIGN"],
+      ["UNREF", "NOUNREF"],
+      ["UNREFBASED", "NOUNREFBASED"],
+      ["UNREFCTL", "NOUNREFCTL"],
+      ["UNREFDEFINED", "NOUNREFDEFINED"],
+      ["UNREFENTRY", "NOUNREFENTRY"],
+      ["UNREFFILE", "NOUNREFFILE"],
+      ["UNREFSTATIC", "NOUNREFSTATIC"],
+      ["UNREFVALUE", "NOUNREFVALUE"],
+      ["UNSET", "NOUNSET"],
+      ["YY", "NOYY"],
+    ]);
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.semantic} */
 translator.rule(
@@ -3334,19 +3416,25 @@ translator.rule(["SYSPARM"], (option, options) => {
 });
 
 /** {@link CompilerOptions.system} */
-translator.rule(["SYSTEM"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  ensureType(option.values[0], "plain");
-  if (option.values[0].value.length === 0) {
-    options.system = CompilerOptions.System.MVS; // No parameter defaults to MVS.
-    return;
-  }
-  options.system = ensureEnum(
-    option.values[0],
-    CompilerOptionsCodes.System.InvalidParameter,
-    CompilerOptions.System,
-  );
-});
+translator.rule(
+  ["SYSTEM"],
+  (option, options) => {
+    ensureArguments(option, 1, 1);
+    ensureType(option.values[0], "plain");
+    if (option.values[0].value.length === 0) {
+      options.system = CompilerOptions.System.MVS; // No parameter defaults to MVS.
+      return;
+    }
+    options.system = ensureEnum(
+      option.values[0],
+      CompilerOptionsCodes.System.InvalidParameter,
+      CompilerOptions.System,
+    );
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 /** {@link CompilerOptions.terminal} */
 translator.flag("terminal", ["TERMINAL", "TERM"], ["NOTERMINAL", "NTERM"]);

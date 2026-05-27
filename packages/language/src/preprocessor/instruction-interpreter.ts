@@ -2446,6 +2446,7 @@ async function runInclude(
             {
               result: context.options.compilerOptions,
               text: content,
+              recompileFingerprint: "", // Not used in this context
             },
             uri,
             context.unit.services.workspace,

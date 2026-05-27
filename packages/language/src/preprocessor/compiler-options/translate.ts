@@ -127,6 +127,18 @@ export class CompilerOptionTranslator {
     return this.result;
   }
 
+  /**
+   * Returns a stable fingerprint of all forceRecompile-flagged rules and their arguments
+   * across PLI, Macro, and SQL translators. Used to invalidate InstructionCache.
+   */
+  getRecompileFingerprint(): string {
+    return [
+      this.translator.getRecompileFingerprint(),
+      this.translatorMacro.getRecompileFingerprint("MACRO"),
+      this.translatorSQL.getRecompileFingerprint("SQL"),
+    ].join("\n--\n");
+  }
+
   protected parseNestedOptions<T extends CompilerOptionsPP>(
     ppTranslator: Translator<T>,
     ppItemName: CompilerOptions.PPItemName,
