@@ -1201,7 +1201,7 @@ const beginStatement = rule(
 );
 
 const endStatement = rule(
-  () => throwHasManualLookahead(),
+  throwHasManualLookahead,
   (state: ParserState): ast.EndStatement => {
     const element = ast.createEndStatement();
 
@@ -4510,7 +4510,7 @@ const initAcrossAttribute = rule(
     );
     state.consume(
       element,
-      CstNodeKind.InitialAttribute_OpenParenInitAcross,
+      CstNodeKind.InitAcrossAttribute_OpenParen,
       tokens.OpenParen,
     );
     const list = initAcrossList.rule(state);
@@ -4533,7 +4533,7 @@ const initAcrossAttribute = rule(
     }
     state.consume(
       element,
-      CstNodeKind.InitialAttribute_CloseParenInitAcross,
+      CstNodeKind.InitAcrossAttribute_CloseParen,
       tokens.CloseParen,
     );
     return element;
@@ -4641,7 +4641,7 @@ const initialAttribute = rule(
 );
 
 const initialCallAttribute = rule(
-  sequence(tokens.INITIAL, tokens.CALL),
+  throwHasManualLookahead,
   (state: ParserState): ast.InitialCallAttribute => {
     const attribute = ast.createInitialCallAttribute();
     attribute.initial = state.consume(
@@ -4660,7 +4660,7 @@ const initialCallAttribute = rule(
 );
 
 const initialToAttribute = rule(
-  sequence(tokens.INITIAL, tokens.TO),
+  throwHasManualLookahead,
   (state: ParserState): ast.InitialToAttribute => {
     const attribute = ast.createInitialToAttribute();
     attribute.initial = state.consume(
@@ -6377,7 +6377,7 @@ function repeatedExpressionLookahead(state: ParserState): boolean {
   if (!state.canConsumeFirst(expression.first())) {
     return false;
   }
-  // Next, prevent ambuities with wildcard expressions (*)
+  // Next, prevent ambiguities with wildcard expressions (*)
   // I.e. an expression like (2 + 3) * 5 should not be parsed as a repeated expression
   // with count (2 + 3) and wildcard item *
   if (state.canConsume(tokens.Star)) {
@@ -6392,6 +6392,7 @@ function repeatedExpressionLookahead(state: ParserState): boolean {
     state.index--;
     return !canStartExpression;
   }
+  // We can safely assume that this is a repeated expression
   return true;
 }
 

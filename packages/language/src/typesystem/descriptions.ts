@@ -77,7 +77,10 @@ export enum AttributeKind {
   FileUsage,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-hexadec-ieee-attributes */
   FloatFormat,
-  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
+  /**
+   * Added in 6.1 as an option to initialize arrays
+   * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute
+   */
   InitAcross,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
   Initial,

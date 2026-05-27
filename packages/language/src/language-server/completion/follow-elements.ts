@@ -154,7 +154,7 @@ const expressionFollowKinds = new Set([
   CstNodeKind.SelectStatement_OpenParen,
   CstNodeKind.WhenStatement_OpenParen,
   CstNodeKind.WriteStatementFile_OpenParen,
-  CstNodeKind.InitialAttribute_OpenParenInitAcross,
+  CstNodeKind.InitAcrossAttribute_OpenParen,
   CstNodeKind.InitAcrossList_OpenParen,
   CstNodeKind.DefinedAttribute_OpenParenPos,
   CstNodeKind.ValueAttribute_OpenParen,
