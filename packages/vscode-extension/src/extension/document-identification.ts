@@ -12,27 +12,78 @@
 import * as vscode from "vscode";
 import { Settings } from "./settings";
 import { BaseLanguageClient } from "vscode-languageclient";
+import { UriUtils } from "pli-language";
 
 export function registerPliDocumentIdentifier(lc: BaseLanguageClient) {
   const proposedFiles = new Set<string>();
+  // Some files might be opened before the extension starts up
+  for (const document of vscode.workspace.textDocuments) {
+    checkFileType(proposedFiles, document, lc);
+  }
   return vscode.workspace.onDidOpenTextDocument(async (document) => {
-    if (!Settings.getInstance().autoDetect) {
-      // Auto-detection is disabled, so do not propose to set language for any file.
-      return;
-    }
-    if (proposedFiles.has(document.uri.toString())) {
-      // We've already proposed to change the language for this document.
-      return;
-    }
-    if (document.languageId !== "plaintext") {
-      // Only attempt to identify PL/I documents that are currently marked as plaintext
-      return;
-    }
-    proposedFiles.add(document.uri.toString());
-    if (await isPossiblePliDocument(document, lc)) {
-      proposePliLanguage(document);
-    }
+    checkFileType(proposedFiles, document, lc);
   });
+}
+
+async function checkFileType(
+  proposedFiles: Set<string>,
+  document: vscode.TextDocument,
+  lc: BaseLanguageClient,
+): Promise<void> {
+  if (!Settings.getInstance().autoDetect) {
+    // Auto-detection is disabled, so do not propose to set language for any file.
+    return;
+  }
+  if (proposedFiles.has(document.uri.toString())) {
+    // We've already proposed to change the language for this document.
+    return;
+  }
+  if (document.languageId !== "plaintext") {
+    // Only attempt to identify PL/I documents that are currently marked as plaintext
+    return;
+  }
+  proposedFiles.add(document.uri.toString());
+  if (
+    // Assert that this can even be a PL/I document
+    // (and isn't something else, like a .git file or a listing file)
+    !isNotPliDocument(document) &&
+    // Check that it likely is a PL/I document
+    (await isPossiblePliDocument(document, lc))
+  ) {
+    proposePliLanguage(document);
+  }
+}
+
+const nonPliFileTypes = new Set([
+  // VS Code will open .git files as plaintext in memory
+  "git",
+  // Listing files might contain PL/I code, but they are not PL/I source files
+  "lst",
+  "list",
+  // The compiler also outputs .xml files
+  "xml",
+]);
+
+function isNotPliDocument(document: vscode.TextDocument): boolean {
+  // Look for file types that are likely not PL/I source files
+  const ext = UriUtils.extname(document.uri).toLowerCase();
+  if (nonPliFileTypes.has(ext)) {
+    return true;
+  }
+  if (document.uri.scheme === "git") {
+    // Don't propose on files opened from git
+    return true;
+  }
+  const firstLine = document.lineAt(0).text;
+  if (firstLine.startsWith("<?xml")) {
+    return true;
+  }
+  // Example: 15655-PL6  IBM(R) Enterprise PL/I for z/OS
+  const listingFileRegex = /^\d+-PL\d+\s+IBM/;
+  if (listingFileRegex.test(firstLine)) {
+    return true;
+  }
+  return false;
 }
 
 async function isPossiblePliDocument(
@@ -40,7 +91,7 @@ async function isPossiblePliDocument(
   lc: BaseLanguageClient,
 ): Promise<boolean> {
   // Try to do a simple check based on file extension first.
-  const ext = document.uri.path.split(".").pop()?.toLowerCase();
+  const ext = UriUtils.extname(document.uri).toLowerCase();
   const possibleExt = ["pli", "pl1", "pl", "p1"];
   if (ext && possibleExt.includes(ext)) {
     return true;
