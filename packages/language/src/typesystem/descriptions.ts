@@ -84,10 +84,20 @@ export enum AttributeKind {
   InitAcross,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
   Initial,
-  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
-  InitialTo,
-  /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute */
+  /**
+   * Second form of initial attribute.
+   * Documented together with the initial attribute,
+   * but has a separate representation in the AST
+   * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute
+   */
   InitialCall,
+  /**
+   * Third form of initial attribute.
+   * Documented together with the initial attribute,
+   * but has a separate representation in the AST
+   * @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=control-initial-attribute
+   */
+  InitialTo,
   /** @see https://www.ibm.com/docs/en/epfz/6.1.0?topic=data-list-attribute */
   List,
   /** TODO need to find out whether LocatorKind can be split into more attribute kinds */
