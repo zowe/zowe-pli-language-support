@@ -12,11 +12,15 @@
 import { Location, tokenToRange } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import {
+  Bound,
+  DeclaredItem,
   getContainer,
   iterateReferenceNodes,
+  LocatorCall,
   MemberCall,
   ProcedureParameter,
   Reference,
+  ReferenceItem,
   ReferenceType,
   SyntaxKind,
   SyntaxNode,
@@ -281,7 +285,7 @@ function getMatchingSymbols(
 
   const getFullName = () => qualifiedName.toReversed().join(".");
 
-  const explicitlyDeclaredSymbols = scope
+  let explicitlyDeclaredSymbols = scope
     .getExplicitSymbols(qualifiedName, {
       /**
        * If the symbol is a procedure parameter, it is only permitted to
@@ -290,6 +294,16 @@ function getMatchingSymbols(
       searchOnlyImmediateScope: isProcedureParameterReference(reference),
     })
     .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
+
+  if (reference.owner) {
+    // edge case for type based on `C REFER(D)`
+    const rootComposite = tryExtractRootStructureIfBasedMember(reference.owner);
+    if (rootComposite) {
+      explicitlyDeclaredSymbols = explicitlyDeclaredSymbols.filter((symbol) =>
+        isMemberOfComposite(symbol.node, rootComposite),
+      );
+    }
+  }
 
   const isAmbiguous = checkRedeclaration(explicitlyDeclaredSymbols);
   if (isAmbiguous) {
@@ -540,4 +554,94 @@ export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
     }
   }
   return token;
+}
+
+function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {
+  //pick the first parent that is a declared item
+  let declaredItem = getContainer(node, SyntaxKind.DeclaredItem);
+  if (declaredItem && declaredItem.level !== 1) {
+    //if it is not a level 1 item, go up until we find the declare statement, and then pick the first level 1 item before it
+    const parentDeclaration = getContainer(
+      declaredItem,
+      SyntaxKind.DeclareStatement,
+    )!;
+    let index = parentDeclaration.items.indexOf(declaredItem);
+    if (index === -1) {
+      return null;
+    }
+    // walk up the declaration items until we find a level 1 item, which should be the root composite item
+    let previousItem: DeclaredItem = declaredItem;
+    do {
+      index--;
+    } while (
+      index > -1 &&
+      (previousItem = parentDeclaration.items[index]) &&
+      typeof previousItem.level === "number" &&
+      previousItem.level > 1
+    );
+    if (typeof previousItem.level === "number" && previousItem.level === 1) {
+      declaredItem = previousItem;
+    }
+  }
+  if (declaredItem?.level !== 1) {
+    return null;
+  }
+  return declaredItem;
+}
+
+/**
+ * Tries to extract the root `AAA` if `node` in in the role of `D`
+ * at REFER sub node.
+ *
+ * ```pli
+ * DCL C FIXED;
+ * DCL 1 AAA,
+ *     2 BBB (C REFER(D)),
+ *     2 D FIXED;
+ * ```
+ * @param node
+ * @returns the root composite item if the node is in the role of `D` at REFER sub node, otherwise null
+ */
+function tryExtractRootStructureIfBasedMember(
+  node: SyntaxNode,
+): DeclaredItem | null {
+  if (node.kind !== SyntaxKind.ReferenceItem) {
+    return null;
+  }
+  const memberCall = traverseUpwardsExpect<ReferenceItem, MemberCall>(
+    node,
+    SyntaxKind.MemberCall,
+  );
+  if (!memberCall) {
+    return null;
+  }
+  const locatorCall = traverseUpwardsExpect<MemberCall, LocatorCall>(
+    memberCall,
+    SyntaxKind.LocatorCall,
+  );
+  if (!locatorCall) {
+    return null;
+  }
+  const bound = traverseUpwardsExpect<LocatorCall, Bound>(
+    locatorCall,
+    SyntaxKind.Bound,
+  );
+  if (!bound || !bound.refer || bound.refer !== locatorCall) {
+    return null;
+  }
+  return getRootCompositeNode(bound.refer);
+}
+
+function traverseUpwardsExpect<N extends SyntaxNode, M extends SyntaxNode>(
+  node: N,
+  kind: M["kind"],
+): M | null {
+  if (node.container && node.container.kind === kind) {
+    return node.container as M;
+  }
+  return null;
+}
+
+function isMemberOfComposite(node: SyntaxNode, rootComposite: DeclaredItem) {
+  return getRootCompositeNode(node) === rootComposite;
 }
