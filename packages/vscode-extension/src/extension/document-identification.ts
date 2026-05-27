@@ -12,15 +12,16 @@
 import * as vscode from "vscode";
 import { Settings } from "./settings";
 import { BaseLanguageClient } from "vscode-languageclient";
+import { UriUtils } from "pli-language";
 
 export function registerPliDocumentIdentifier(lc: BaseLanguageClient) {
   const proposedFiles = new Set<string>();
   // Some files might be opened before the extension starts up
   for (const document of vscode.workspace.textDocuments) {
-    void checkFileType(proposedFiles, document, lc);
+    checkFileType(proposedFiles, document, lc);
   }
   return vscode.workspace.onDidOpenTextDocument(async (document) => {
-    void checkFileType(proposedFiles, document, lc);
+    checkFileType(proposedFiles, document, lc);
   });
 }
 
@@ -65,14 +66,17 @@ const nonPliFileTypes = new Set([
 
 function isNotPliDocument(document: vscode.TextDocument): boolean {
   // Look for file types that are likely not PL/I source files
-  const baseName = document.uri.path.split("/").pop()?.toLowerCase() ?? "";
-  const ext = baseName.split(".").pop() ?? "";
+  const ext = UriUtils.extname(document.uri).toLowerCase();
   if (nonPliFileTypes.has(ext)) {
+    return true;
+  }
+  if (document.uri.scheme === "git") {
+    // Don't propose on files opened from git
     return true;
   }
   const firstLine = document.lineAt(0).text;
   if (firstLine.startsWith("<?xml")) {
-    return false;
+    return true;
   }
   // Example: 15655-PL6  IBM(R) Enterprise PL/I for z/OS
   const listingFileRegex = /^\d+-PL\d+\s+IBM/;
@@ -87,7 +91,7 @@ async function isPossiblePliDocument(
   lc: BaseLanguageClient,
 ): Promise<boolean> {
   // Try to do a simple check based on file extension first.
-  const ext = document.uri.path.split(".").pop()?.toLowerCase();
+  const ext = UriUtils.extname(document.uri).toLowerCase();
   const possibleExt = ["pli", "pl1", "pl", "p1"];
   if (ext && possibleExt.includes(ext)) {
     return true;
