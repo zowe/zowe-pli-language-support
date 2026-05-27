@@ -37,7 +37,7 @@ jobs:
       - name: Build Playground
         run: |
           pnpm install --frozen-lockfile
-          pnpm build
+          pnpm build:full
           pnpm playground
       - name: Deploy Main 🚀
         if: github.ref == 'refs/heads/main'

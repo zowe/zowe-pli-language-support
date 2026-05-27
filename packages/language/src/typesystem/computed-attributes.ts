@@ -31,7 +31,7 @@ export function computeDimensions(dimension: ast.Dimensions): DimensionBound[] {
           token: bound?.token || null,
         };
       }
-      if (expr === "*") {
+      if (expr.kind === ast.SyntaxKind.WildcardItem) {
         return {
           value: "*",
           expression: expr,

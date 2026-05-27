@@ -19,6 +19,7 @@ import { DefaultPrimitiveTypeBuilder } from "./primitive-type-builder";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { DefaultTypeAttributeCollector } from "./attribute-witnesses";
 import { Token } from "../parser/tokens";
+import { assertUnreachable } from "../utils/common";
 
 export interface TypeInferer {
   inferType(node: ast.SyntaxNode, unit: CompilationUnit): TypeDescriptions.Any;
@@ -39,7 +40,10 @@ export class DefaultTypeInferer implements TypeInferer {
         ast.SyntaxKind.BinaryExpression,
         ast.SyntaxKind.UnaryExpression,
         ast.SyntaxKind.Parenthesis,
-        ast.SyntaxKind.Literal,
+        ast.SyntaxKind.WildcardItem,
+        ast.SyntaxKind.NumberLiteral,
+        ast.SyntaxKind.StringLiteral,
+        ast.SyntaxKind.RepeatedExpression,
         ast.SyntaxKind.LocatorCall,
         ast.SyntaxKind.MemberCall,
       ];
@@ -221,37 +225,29 @@ export class DefaultTypeInferer implements TypeInferer {
         // Infer type of the first expression inside the parenthesis
         return this.inferType(expression.expressions[0], compilationUnit);
       }
-      case ast.SyntaxKind.Literal: {
-        if (!expression.value) {
-          return TypeDescriptions.Unknown();
-        }
+      case ast.SyntaxKind.NumberLiteral: {
         const initial = ast.createInitialAttribute();
-        const item = ast.createInitialAttributeSpecification();
-        item.expression = expression;
-        initial.items = [item];
-        switch (expression.value.kind) {
-          case ast.SyntaxKind.StringLiteral:
-            return TypeDescriptions.String({
-              format: StringFormat.NonVarying,
-              initial,
-              stringBits: {
-                //TODO handle other string kinds
-                kind:
-                  expression.value.value &&
-                  expression.value.value.endsWith("wx")
-                    ? StringKind.WideChar
-                    : StringKind.Character,
-                //TODO set corrrect string length
-                length: expression.value.value!.length,
-              },
-            });
-          case ast.SyntaxKind.NumberLiteral:
-            //TODO handle other numeric literals
-            return TypeDescriptions.Arithmetic({
-              initial,
-            });
-        }
-        break;
+        initial.expressions.push(expression);
+        return TypeDescriptions.Arithmetic({
+          initial,
+        });
+      }
+      case ast.SyntaxKind.StringLiteral: {
+        const initial = ast.createInitialAttribute();
+        initial.expressions.push(expression);
+        const value = expression.value || "";
+        return TypeDescriptions.String({
+          format: StringFormat.NonVarying,
+          initial,
+          stringBits: {
+            //TODO handle other string kinds
+            kind: value.endsWith("wx")
+              ? StringKind.WideChar
+              : StringKind.Character,
+            //TODO set corrrect string length
+            length: value.length,
+          },
+        });
       }
       case ast.SyntaxKind.UnaryExpression:
         if (expression.expr) {
@@ -261,6 +257,19 @@ export class DefaultTypeInferer implements TypeInferer {
       case ast.SyntaxKind.BinaryExpression:
         //TODO implement
         return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.RepeatedExpression:
+        if (expression.expression) {
+          return this.inferExpressionType(
+            expression.expression,
+            compilationUnit,
+          );
+        }
+        return TypeDescriptions.Unknown();
+      case ast.SyntaxKind.WildcardItem:
+        //TODO: this is in most cases invalid, but not everywhere
+        return TypeDescriptions.Unknown();
+      default:
+        assertUnreachable(expression);
     }
   }
 
@@ -343,10 +352,8 @@ export class DefaultTypeInferer implements TypeInferer {
       const bound = ast.createDimensionBound();
       bound.lower = ast.createBound();
       bound.upper = ast.createBound();
-      const literal = ast.createLiteral();
-      const value = ast.createNumberLiteral();
-      literal.value = value;
-      value.value = node.precision;
+      const literal = ast.createNumberLiteral();
+      literal.value = node.precision;
       bound.upper.expression = literal;
       attr.dimensions.dimensions = [bound];
       collector.addAttribute(attr);
@@ -536,17 +543,10 @@ export class DefaultTypeInferer implements TypeInferer {
       TypeDescriptions.isString(source) &&
       TypeDescriptions.isArithmetic(target)
     ) {
-      if (
-        !source.initial ||
-        source.initial.items.length === 0 ||
-        source.initial.items[0].kind !==
-          ast.SyntaxKind.InitialAttributeSpecification
-      ) {
+      if (!source.initial || source.initial.expressions.length === 0) {
         return true;
       }
-      const value = this.extractLiteralValue(
-        source.initial.items[0].expression,
-      );
+      const value = this.extractLiteralValue(source.initial.expressions[0]);
       if (value !== undefined) {
         return !isNaN(Number(value)) && value.trim() !== "";
       }
@@ -560,11 +560,10 @@ export class DefaultTypeInferer implements TypeInferer {
   ): string | undefined {
     if (
       expression &&
-      expression.kind === ast.SyntaxKind.Literal &&
-      expression.value?.kind === ast.SyntaxKind.StringLiteral &&
-      typeof expression.value.value === "string"
+      expression.kind === ast.SyntaxKind.StringLiteral &&
+      typeof expression.value === "string"
     ) {
-      const literalValue = expression.value.value;
+      const literalValue = expression.value;
       const firstLetter = literalValue[0];
       if (firstLetter === '"' || firstLetter === "'") {
         const closeingQuoteIndex = literalValue.lastIndexOf(firstLetter);

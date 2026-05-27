@@ -14,6 +14,7 @@ import * as ast from "../syntax-tree/ast";
 import { assertType, getAttributes } from "./util";
 import { createCicsResponseInstruction } from "./instructions";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
+import { assertUnreachable } from "../utils/common";
 
 interface GenerateInstructionContext {
   labels: Map<string, inst.InstructionNode>;
@@ -491,12 +492,12 @@ function getDimensions(
   const dimensions = firstAttribute.dimensions.dimensions;
   for (const { lower, upper } of dimensions) {
     let upperBound: inst.ExpressionInstruction | undefined = undefined;
-    if (upper && upper.expression && upper.expression !== "*") {
+    if (upper && upper.expression) {
       upperBound = generateExpressionInstruction(upper.expression);
     }
 
     let lowerBound: inst.ExpressionInstruction | undefined = undefined;
-    if (lower && lower.expression && lower.expression !== "*") {
+    if (lower && lower.expression) {
       lowerBound = generateExpressionInstruction(lower.expression);
     }
 
@@ -516,15 +517,10 @@ function getInitial(
     for (const attribute of container.attributes) {
       if (attribute.kind === ast.SyntaxKind.InitialAttribute) {
         const initialExpressions: inst.ExpressionInstruction[] = [];
-        for (const item of attribute.items) {
-          if (
-            item.kind === ast.SyntaxKind.InitialAttributeSpecification &&
-            item.expression
-          ) {
-            const expr = generateExpressionInstruction(item.expression);
-            if (expr) {
-              initialExpressions.push(expr);
-            }
+        for (const expr of attribute.expressions) {
+          const exprInst = generateExpressionInstruction(expr);
+          if (exprInst) {
+            initialExpressions.push(exprInst);
           }
         }
         return initialExpressions;
@@ -811,24 +807,61 @@ function generateExpressionInstruction(
     return undefined;
   }
   switch (node.kind) {
-    case ast.SyntaxKind.Literal:
-      switch (node.value?.kind) {
-        case ast.SyntaxKind.NumberLiteral:
-          return generateNumberInstruction(node.value);
-        case ast.SyntaxKind.StringLiteral:
-          return generateStringInstruction(node.value, constant);
-        default:
-          return undefined; // Unsupported literal type
+    case ast.SyntaxKind.Parenthesis:
+      if (node.expressions.length === 1) {
+        return generateExpressionInstruction(node.expressions[0]);
+      } else if (node.expressions.length > 1) {
+        const instructions: inst.ExpressionInstruction[] = [];
+        for (const expr of node.expressions) {
+          const instruction = generateExpressionInstruction(expr);
+          if (instruction) {
+            instructions.push(instruction);
+          }
+        }
+        return inst.createMultipleExpressionInstruction(instructions);
+      } else {
+        return undefined;
       }
+    case ast.SyntaxKind.RepeatedExpression:
+      return generateRepeatedExpressionInstruction(node);
     case ast.SyntaxKind.BinaryExpression:
       return generateBinaryExpressionInstruction(node);
     case ast.SyntaxKind.UnaryExpression:
       return generateUnaryExpressionInstruction(node);
     case ast.SyntaxKind.LocatorCall:
       return generateLocatorCallInstruction(node);
+    case ast.SyntaxKind.NumberLiteral:
+      return generateNumberInstruction(node);
+    case ast.SyntaxKind.StringLiteral:
+      return generateStringInstruction(node, constant);
+    case ast.SyntaxKind.WildcardItem:
+      return generateWildcardInstruction(node);
     default:
-      return undefined; // Unsupported expression type
+      assertUnreachable(node);
   }
+}
+
+function generateWildcardInstruction(
+  node: ast.WildcardItem,
+): inst.WildcardInstruction {
+  return {
+    kind: inst.InstructionKind.Wildcard,
+  };
+}
+
+function generateRepeatedExpressionInstruction(
+  node: ast.RepeatedExpression,
+): inst.RepetitionInstruction | undefined {
+  const expression = generateExpressionInstruction(node.expression);
+  const count = generateExpressionInstruction(node.count);
+  if (!expression || !count) {
+    return undefined; // Cannot generate instruction without both expression and count
+  }
+  return {
+    kind: inst.InstructionKind.Repetition,
+    expression,
+    count,
+  };
 }
 
 function generateLocatorCallInstruction(
@@ -889,7 +922,7 @@ function generateReferenceItemInstruction(
         kind: inst.InstructionKind.String,
         value: "",
       };
-      if (dimension.upper?.expression && dimension.upper.expression !== "*") {
+      if (dimension.upper?.expression) {
         const instruction = generateExpressionInstruction(
           dimension.upper.expression,
         );

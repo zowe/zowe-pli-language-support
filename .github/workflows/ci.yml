@@ -41,7 +41,7 @@ jobs:
         pnpm install --frozen-lockfile
     - name: Build monorepo
       run: |
-        pnpm build
+        pnpm build:full
     - name: Test monorepo
       if: success() || failure()
       run: |

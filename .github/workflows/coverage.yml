@@ -36,7 +36,7 @@ jobs:
       - name: Build
         run: |
           pnpm install --frozen-lockfile
-          pnpm build
+          pnpm build:full
       - name: Run Coverage
         run: |
           pnpm coverage

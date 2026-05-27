@@ -22,12 +22,10 @@ import {
   DeclaredVariable,
   DimensionBound,
   Dimensions,
-  Expression,
   LabelPrefix,
   ProcedureStatement,
   SyntaxKind,
   SyntaxNode,
-  Wildcard,
 } from "../syntax-tree/ast";
 import { formatPliCodeBlock } from "../utils/code-block";
 import {
@@ -195,11 +193,14 @@ function decodeBound(bound: Bound | null): string | null {
   if (!bound || !bound.expression) {
     return null;
   }
-  const expr: Wildcard<Expression> = bound.expression;
-  if (expr === "*") {
+  const expr = bound.expression;
+  if (expr.kind === SyntaxKind.WildcardItem) {
     return "*";
-  } else if (expr.kind === SyntaxKind.Literal) {
-    return expr.value?.value ?? null;
+  } else if (
+    expr.kind === SyntaxKind.NumberLiteral ||
+    expr.kind === SyntaxKind.StringLiteral
+  ) {
+    return expr.value;
   } else {
     // fail to decode on non-literal exprs
     return null;

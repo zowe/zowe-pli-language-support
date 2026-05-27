@@ -43,6 +43,7 @@ import {
 import * as inst from "./instructions";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
+import { assertUnreachable } from "../utils/common";
 
 interface Variable {
   name: string;
@@ -76,6 +77,18 @@ interface ArrayValue {
   readonly array: Value[];
   readonly lower: number;
   readonly upper: number;
+}
+
+/**
+ * Creates a simple array value with the given elements and default lower bound of 1.
+ * (PL/I arrays are 1-based by default)
+ */
+function createArrayValue(array: Value[]): ArrayValue {
+  return {
+    array,
+    lower: 1,
+    upper: array.length,
+  };
 }
 
 function isArrayValue(value: Value): value is ArrayValue {
@@ -198,13 +211,15 @@ function generateVariableValue(
   instruction: inst.DeclareInstruction,
   context: InterpreterContext,
 ): Value {
-  let value: Value;
+  let defaultValue: ScalarValue;
   // Initial value is empty or 0 (for numbers)
   if (instruction.type === inst.DeclaredType.Character) {
-    value = defaultEmptyValue;
+    defaultValue = defaultEmptyValue;
   } else {
-    value = zero;
+    defaultValue = zero;
   }
+  let value: Value = defaultValue;
+  let length = 0;
   if (instruction.dimensions && instruction.dimensions.length > 0) {
     // Evaluate the dimensions in reverse order to construct the nested array correctly
     for (const { lowerBound, upperBound } of instruction.dimensions.reverse()) {
@@ -218,7 +233,7 @@ function generateVariableValue(
         const evaluatedUpper = evaluateExpression(upperBound, context);
         upper = valueToNumber(evaluatedUpper, 1);
       }
-      const length = upper - lower + 1;
+      length = upper - lower + 1;
       const array: Value[] = [];
       for (let i = 0; i < length; i++) {
         // Initialize the array with the copied value
@@ -232,21 +247,41 @@ function generateVariableValue(
     }
   }
   if (instruction.initial) {
-    // Currently only supports scalar initial values for simple arrays or scalar variables
     if (isArrayValue(value)) {
-      for (
-        let i = 0;
-        i < value.array.length && i < instruction.initial.length;
-        i++
-      ) {
-        const expr = instruction.initial[i];
-        const evaluated = evaluateExpression(expr, context);
-        value.array[i] = evaluated;
+      // Support the full INIT behavior (including repetitions and wildcards) for arrays
+      let currentIndex = 0;
+      const length = value.upper - value.lower + 1;
+      for (const expr of instruction.initial) {
+        const evaluated = evaluateExpression(
+          expr,
+          context,
+          // Pass the remaining length of the array so that wildcard repetitions can fill the rest
+          length - currentIndex,
+          // Pass the default value for that declaration as the value to use for missing/wildcard elements
+          defaultValue,
+        );
+        if (isArrayValue(evaluated)) {
+          for (
+            let i = 0;
+            i < evaluated.array.length && currentIndex < length;
+            i++
+          ) {
+            value.array[currentIndex++] = evaluated.array[i];
+          }
+        } else {
+          value.array[currentIndex++] = evaluated;
+        }
+        if (currentIndex >= length) {
+          break;
+        }
       }
     } else if (instruction.initial.length > 0) {
+      // For scalars, simply evaluate the first expression and ignore the rest
       const expr = instruction.initial[0];
       const evaluated = evaluateExpression(expr, context);
-      value = evaluated;
+      // If the evaluated value is an array, unroll it and take the first element
+      const unroll = unrollArrayValue(evaluated);
+      value = unroll[0] ?? defaultValue;
     }
   }
   return value;
@@ -1324,6 +1359,8 @@ function runSelectInstruction(
 function evaluateExpression(
   expression: inst.ExpressionInstruction,
   context: InterpreterContext,
+  arraySizeHint?: number,
+  wildcardValue?: Value,
 ): Value {
   switch (expression.kind) {
     case inst.InstructionKind.String:
@@ -1335,7 +1372,110 @@ function evaluateExpression(
       return evaluateUnaryExpression(expression, context);
     case inst.InstructionKind.ReferenceItem:
       return evaluateReferenceExpression(expression, context);
+    case inst.InstructionKind.Repetition:
+      return evaluateRepetitionExpression(
+        expression,
+        context,
+        arraySizeHint,
+        wildcardValue,
+      );
+    case inst.InstructionKind.MultipleExpression:
+      return evaluateMultipleExpression(expression, context, wildcardValue);
+    case inst.InstructionKind.Wildcard:
+      return evaluateWildcardExpression(expression, context, wildcardValue);
+    default:
+      assertUnreachable(expression);
   }
+}
+
+function evaluateWildcardExpression(
+  expression: inst.WildcardInstruction,
+  context: InterpreterContext,
+  value?: Value,
+): Value {
+  if (value === undefined) {
+    // No hint provided, this is just a placeholder value
+    return defaultEmptyValue;
+  } else {
+    // Simply return the hint
+    return value;
+  }
+}
+
+function evaluateMultipleExpression(
+  expression: inst.MultipleExpressionInstruction,
+  context: InterpreterContext,
+  wildcardValue?: Value,
+): Value {
+  const values = expression.instructions.map((expr) =>
+    evaluateExpression(expr, context, 0, wildcardValue),
+  );
+  if (values.length === 0) {
+    return defaultEmptyValue;
+  }
+  if (values.length === 1) {
+    return values[0];
+  }
+  const unrolledValues = values.flatMap(unrollArrayValue);
+  return createArrayValue(unrolledValues);
+}
+
+function evaluateRepetitionExpression(
+  repetition: inst.RepetitionInstruction,
+  context: InterpreterContext,
+  arraySizeHint?: number,
+  wildcardValue?: Value,
+): Value {
+  const sizeHintValue = numberToValue(arraySizeHint ?? 0);
+  const countValue = evaluateExpression(
+    repetition.count,
+    context,
+    0,
+    // Wildcard value is now the size hint
+    sizeHintValue,
+  );
+  const count = valueToNumber(countValue);
+  if (typeof count !== "number" || count < 0) {
+    // Invalid count value, return empty string
+    return defaultEmptyValue;
+  }
+  const exprValue = evaluateExpression(
+    repetition.expression,
+    context,
+    // Set the array hint to 0, we don't want nested repetitions with wildcards
+    0,
+    // Pass the wildcard value along as is
+    wildcardValue,
+  );
+  const unrolledValues = unrollArrayValue(exprValue);
+  const array: Value[] = [];
+  for (let i = 0; i < count; i++) {
+    for (const value of unrolledValues) {
+      array.push(copyValue(value));
+    }
+  }
+  const arrayValue: ArrayValue = {
+    array,
+    lower: 1,
+    upper: array.length,
+  };
+
+  return arrayValue;
+}
+
+function unrollArrayValue(value: Value): Value[] {
+  if (isScalarValue(value)) {
+    return [value];
+  }
+  const result: Value[] = [];
+  for (const item of value.array) {
+    if (isScalarValue(item)) {
+      result.push(item);
+    } else {
+      result.push(...unrollArrayValue(item));
+    }
+  }
+  return result;
 }
 
 type ValueOperation = (left: ScalarValue, right: ScalarValue) => ScalarValue;
