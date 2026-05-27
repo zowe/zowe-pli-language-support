@@ -296,6 +296,7 @@ function getMatchingSymbols(
     .filter((symbol) => !symbol.isRedeclared); // Don't resolve reference to redeclared symbols.
 
   if (reference.owner) {
+    // edge case for type based on `C REFER(D)`
     const rootComposite = tryExtractRootStructureIfBasedMember(reference.owner);
     if (rootComposite) {
       explicitlyDeclaredSymbols = explicitlyDeclaredSymbols.filter((symbol) =>
@@ -572,6 +573,19 @@ function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {
   return declaredItem;
 }
 
+/**
+ * Tries to extract the root `AAA` if `node` in in the role of `D`
+ * at REFER sub node.
+ *
+ * ```pli
+ * DCL C FIXED;
+ * DCL 1 AAA,
+ *     2 BBB (C REFER(D)),
+ *     2 D FIXED;
+ * ```
+ * @param node
+ * @returns the root composite item if the node is in the role of `D` at REFER sub node, otherwise null
+ */
 function tryExtractRootStructureIfBasedMember(
   node: SyntaxNode,
 ): DeclaredItem | null {
