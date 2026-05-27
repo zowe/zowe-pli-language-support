@@ -11,6 +11,7 @@
 
 import {
   choice,
+  ExpressionParameter,
   orRule,
   rule,
   RuleFirstPair,
@@ -1200,7 +1201,7 @@ const beginStatement = rule(
 );
 
 const endStatement = rule(
-  () => throwHasManualLookahead(),
+  throwHasManualLookahead,
   (state: ParserState): ast.EndStatement => {
     const element = ast.createEndStatement();
 
@@ -3927,7 +3928,7 @@ const dataSpecificationDataListItem = rule(
     const element = ast.createDataSpecificationDataListItem();
 
     // Allows multiple sub-expressions separated by comma
-    element.value = expression.rule(state, undefined, true);
+    element.value = expression.rule(state, { multiple: true });
 
     return element;
   },
@@ -4498,9 +4499,95 @@ const writeStatementOption = rule(
   },
 );
 
+const initAcrossAttribute = rule(
+  sequence(tokens.INITACROSS),
+  (state: ParserState): ast.InitAcrossAttribute => {
+    const element = ast.createInitAcrossAttribute();
+    element.token = state.consume(
+      element,
+      CstNodeKind.InitAcrossAttribute_INITACROSS,
+      tokens.INITACROSS,
+    );
+    state.consume(
+      element,
+      CstNodeKind.InitAcrossAttribute_OpenParen,
+      tokens.OpenParen,
+    );
+    const list = initAcrossList.rule(state);
+    if (list) {
+      element.lists.push(list);
+    }
+    const { inc } = state.createLoopContext("InitAcrossAttribute");
+    while (
+      state.tryConsume(
+        element,
+        CstNodeKind.InitAcrossAttribute_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const nextList = initAcrossList.rule(state);
+      if (nextList) {
+        element.lists.push(nextList);
+      }
+    }
+    state.consume(
+      element,
+      CstNodeKind.InitAcrossAttribute_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
+
+const initAcrossList = rule(
+  () => initAcrossExpression.first(),
+  (state: ParserState): ast.InitAcrossList => {
+    const element = ast.createInitAcrossList();
+    state.consume(
+      element,
+      CstNodeKind.InitAcrossList_OpenParen,
+      tokens.OpenParen,
+    );
+    const expr = expression.rule(state, { multiple: true, init: true });
+    if (expr) {
+      element.expressions.push(expr);
+    }
+    const { inc } = state.createLoopContext("InitAcrossList");
+    while (
+      state.tryConsume(element, CstNodeKind.InitAcrossList_Comma, tokens.Comma)
+    ) {
+      inc();
+      const nextExpr = expression.rule(state, { multiple: true, init: true });
+      if (nextExpr) {
+        element.expressions.push(nextExpr);
+      }
+    }
+    state.consume(
+      element,
+      CstNodeKind.InitAcrossList_CloseParen,
+      tokens.CloseParen,
+    );
+    return element;
+  },
+);
+
 const initialAttribute = rule(
-  choice(sequence(tokens.INITIAL), sequence(tokens.INITACROSS)),
-  (state: ParserState): ast.InitialAttribute => {
+  choice(sequence(tokens.INITIAL)),
+  (
+    state: ParserState,
+  ):
+    | ast.InitialAttribute
+    | ast.InitialCallAttribute
+    | ast.InitialToAttribute
+    | null => {
+    // Manual lookahead, because our lookahead can't decide between INITIAL CALL, INITIAL TO and just INITIAL
+    if (state.canConsume(tokens.INITIAL, tokens.CALL)) {
+      return initialCallAttribute.rule(state);
+    } else if (state.canConsume(tokens.INITIAL, tokens.TO)) {
+      return initialToAttribute.rule(state);
+    }
+
     const element = ast.createInitialAttribute();
 
     if (state.canConsume(tokens.INITIAL)) {
@@ -4509,202 +4596,180 @@ const initialAttribute = rule(
         CstNodeKind.InitialAttribute_INITIAL,
         tokens.INITIAL,
       );
-      element.token = token;
+      element.initial = token;
 
       if (
         state.tryConsume(
           element,
-          CstNodeKind.InitialAttribute_OpenParenDirect,
+          CstNodeKind.InitialAttribute_OpenParen,
           tokens.OpenParen,
         )
       ) {
-        // INITIAL (items) variant
-        if (state.canConsumeFirst(initialAttributeItem.first())) {
-          const lhs = initialAttributeItem.rule(state);
-          lhs && element.items.push(lhs);
-          const { inc } = state.createLoopContext("InitialAttribute 1");
+        // Allow empty parentheses
+        if (state.canConsumeFirst(expression.first())) {
+          const expr = expression.rule(state, {
+            multiple: true,
+            init: true,
+          });
+          expr && element.expressions.push(expr);
+          const { inc } = state.createLoopContext("InitialAttribute");
           while (
             state.tryConsume(
               element,
-              CstNodeKind.InitialAttribute_CommaDirect,
+              CstNodeKind.InitialAttribute_Comma,
               tokens.Comma,
             )
           ) {
             inc();
-            const rhs = initialAttributeItem.rule(state);
-            rhs && element.items.push(rhs);
+            const nextExpr = expression.rule(state, {
+              multiple: true,
+              init: true,
+            });
+            nextExpr && element.expressions.push(nextExpr);
           }
         }
         state.consume(
           element,
-          CstNodeKind.InitialAttribute_CloseParenDirect,
+          CstNodeKind.InitialAttribute_CloseParen,
           tokens.CloseParen,
         );
-      } else if (
-        state.tryConsume(
-          element,
-          CstNodeKind.InitialAttribute_Call,
-          tokens.CALL,
-        )
-      ) {
-        // INITIAL CALL variant
-        element.call = true;
-        element.procedureCall = referenceItem.rule(state);
-      } else if (
-        state.tryConsume(element, CstNodeKind.InitialAttribute_To, tokens.TO)
-      ) {
-        // INITIAL TO variant
-        element.to = true;
-        state.consume(
-          element,
-          CstNodeKind.InitialAttribute_OpenParenTo,
-          tokens.OpenParen,
-        );
-        element.content = initialToContent.rule(state);
-        state.consume(
-          element,
-          CstNodeKind.InitialAttribute_CloseParenTo,
-          tokens.CloseParen,
-        );
-        state.consume(
-          element,
-          CstNodeKind.InitialAttribute_OpenParenToItem,
-          tokens.OpenParen,
-        );
-        const lhs = initialAttributeItem.rule(state);
-        lhs && element.items.push(lhs);
-        const { inc } = state.createLoopContext("InitialAttribute 2");
-        while (
-          state.tryConsume(
-            element,
-            CstNodeKind.InitialAttribute_CommaToItem,
-            tokens.Comma,
-          )
-        ) {
-          inc();
-          const rhs = initialAttributeItem.rule(state);
-          rhs && element.items.push(rhs);
-        }
-        state.consume(
-          element,
-          CstNodeKind.InitialAttribute_CloseParenToItem,
-          tokens.CloseParen,
-        );
-      } else {
-        state.error(Severe.IBM3988I.message, state.token, Severity.S);
-        return element;
       }
-    } else if (
-      state.tryConsume(
-        element,
-        CstNodeKind.InitialAttribute_INITACROSS,
-        tokens.INITACROSS,
-      )
-    ) {
-      // INITACROSS variant
-      element.across = true;
-      state.consume(
-        element,
-        CstNodeKind.InitialAttribute_OpenParenInitAcross,
-        tokens.OpenParen,
-      );
-      const lhs = initAcrossExpression.rule(state);
-      lhs && element.expressions.push(lhs);
-      const { inc } = state.createLoopContext("InitialAttribute 3");
-      while (
-        state.tryConsume(
-          element,
-          CstNodeKind.InitialAttribute_CommaInitAcross,
-          tokens.Comma,
-        )
-      ) {
-        inc();
-        const rhs = initAcrossExpression.rule(state);
-        rhs && element.expressions.push(rhs);
-      }
-      state.consume(
-        element,
-        CstNodeKind.InitialAttribute_CloseParenInitAcross,
-        tokens.CloseParen,
-      );
-    } else {
-      state.error(Severe.IBM3988I.message, state.token, Severity.S);
-      return element;
     }
 
     return element;
   },
 );
 
-const initialToContent = rule(
-  choice(sequence(tokens.Varying), sequence(tokens.CharType)),
-  (state: ParserState): ast.InitialToContent => {
-    const element = ast.createInitialToContent();
+const initialCallAttribute = rule(
+  throwHasManualLookahead,
+  (state: ParserState): ast.InitialCallAttribute => {
+    const attribute = ast.createInitialCallAttribute();
+    attribute.initial = state.consume(
+      attribute,
+      CstNodeKind.InitialCallAttribute_INITIAL,
+      tokens.INITIAL,
+    );
+    state.consume(
+      attribute,
+      CstNodeKind.InitialCallAttribute_CALL,
+      tokens.CALL,
+    );
+    attribute.procedureCall = referenceItem.rule(state);
+    return attribute;
+  },
+);
 
-    // Varying and char tokens can appear in any order
+const initialToAttribute = rule(
+  throwHasManualLookahead,
+  (state: ParserState): ast.InitialToAttribute => {
+    const attribute = ast.createInitialToAttribute();
+    attribute.initial = state.consume(
+      attribute,
+      CstNodeKind.InitialToAttribute_INITIAL,
+      tokens.INITIAL,
+    );
+    state.consume(attribute, CstNodeKind.InitialToAttribute_TO, tokens.TO);
+    state.consume(
+      attribute,
+      CstNodeKind.InitialToAttribute_OpenParenTo,
+      tokens.OpenParen,
+    );
     if (state.canConsume(tokens.Varying)) {
       const varyingToken = state.consume(
-        element,
-        CstNodeKind.InitialToContent_VARYING0,
+        attribute,
+        CstNodeKind.InitialToAttribute_VARYING,
         tokens.Varying,
       );
       if (varyingToken) {
-        element.varying = tokens.Varying.mapToEnumLiteral(
+        attribute.varying = tokens.Varying.mapToEnumLiteral(
           varyingToken.tokenTypeIdx,
         );
       }
 
       if (state.canConsume(tokens.CharType)) {
         const typeToken = state.consume(
-          element,
-          CstNodeKind.InitialToContent_CHAR0,
+          attribute,
+          CstNodeKind.InitialToAttribute_CHAR,
           tokens.CharType,
         );
         if (typeToken) {
-          element.type = tokens.CharType.mapToEnumLiteral(
+          attribute.type = tokens.CharType.mapToEnumLiteral(
             typeToken.tokenTypeIdx,
           );
         }
       }
     } else if (state.canConsume(tokens.CharType)) {
       const typeToken = state.consume(
-        element,
-        CstNodeKind.InitialToContent_CHAR1,
+        attribute,
+        CstNodeKind.InitialToAttribute_CHAR,
         tokens.CharType,
       );
       if (typeToken) {
-        element.type = tokens.CharType.mapToEnumLiteral(typeToken.tokenTypeIdx);
+        attribute.type = tokens.CharType.mapToEnumLiteral(
+          typeToken.tokenTypeIdx,
+        );
       }
 
       if (state.canConsume(tokens.Varying)) {
         const varyingToken = state.consume(
-          element,
-          CstNodeKind.InitialToContent_VARYING1,
+          attribute,
+          CstNodeKind.InitialToAttribute_VARYING,
           tokens.Varying,
         );
         if (varyingToken) {
-          element.varying = tokens.Varying.mapToEnumLiteral(
+          attribute.varying = tokens.Varying.mapToEnumLiteral(
             varyingToken.tokenTypeIdx,
           );
         }
       }
     } else {
       state.error(Severe.IBM3988I.message, state.token, Severity.S);
-      return element;
     }
-
-    return element;
+    state.consume(
+      attribute,
+      CstNodeKind.InitialToAttribute_CloseParenTo,
+      tokens.CloseParen,
+    );
+    state.consume(
+      attribute,
+      CstNodeKind.InitialToAttribute_OpenParenItems,
+      tokens.OpenParen,
+    );
+    const item = expression.rule(state, { multiple: true, init: true });
+    if (item) {
+      attribute.expressions.push(item);
+    }
+    const { inc } = state.createLoopContext("InitialToAttribute");
+    while (
+      state.tryConsume(
+        attribute,
+        CstNodeKind.InitialToAttribute_Comma,
+        tokens.Comma,
+      )
+    ) {
+      inc();
+      const nextItem = expression.rule(state, { multiple: true, init: true });
+      if (nextItem) {
+        attribute.expressions.push(nextItem);
+      }
+    }
+    state.consume(
+      attribute,
+      CstNodeKind.InitialToAttribute_CloseParenItems,
+      tokens.CloseParen,
+    );
+    return attribute;
   },
 );
 
 const initAcrossExpression = rule(
   sequence(tokens.OpenParen),
-  (state: ParserState): ast.InitAcrossExpression => {
-    const element = ast.createInitAcrossExpression();
+  (state: ParserState): ast.InitAcrossList => {
+    const element = ast.createInitAcrossList();
 
     state.consume(
       element,
-      CstNodeKind.InitAcrossExpression_OpenParen,
+      CstNodeKind.InitAcrossList_OpenParen,
       tokens.OpenParen,
     );
     const lhs = expression.rule(state);
@@ -4712,11 +4777,7 @@ const initAcrossExpression = rule(
 
     const { inc } = state.createLoopContext("InitAcrossExpression");
     while (
-      state.tryConsume(
-        element,
-        CstNodeKind.InitAcrossExpression_Comma,
-        tokens.Comma,
-      )
+      state.tryConsume(element, CstNodeKind.InitAcrossList_Comma, tokens.Comma)
     ) {
       inc();
       const rhs = expression.rule(state);
@@ -4725,112 +4786,7 @@ const initAcrossExpression = rule(
 
     state.consume(
       element,
-      CstNodeKind.InitAcrossExpression_CloseParen,
-      tokens.CloseParen,
-    );
-
-    return element;
-  },
-);
-
-const initialAttributeItem = orRule<ast.InitialAttributeItem, []>(
-  () => initialAttributeItemStar,
-  () => initialAttributeSpecification,
-);
-
-const initialAttributeItemStar = rule(
-  sequence(tokens.Star),
-  (state: ParserState): ast.InitialAttributeItemStar => {
-    const element = ast.createInitialAttributeItemStar();
-    state.consume(
-      element,
-      CstNodeKind.InitialAttributeItemStar_Star,
-      tokens.Star,
-    );
-    return element;
-  },
-);
-
-const initialAttributeSpecification = rule(
-  choice(
-    //LL(2) conflicts expression, decide at runtime
-    //sequence(tokens.OpenParen, tokens.Star),
-    () => expression.first(),
-  ),
-  (state: ParserState): ast.InitialAttributeSpecification => {
-    const element = ast.createInitialAttributeSpecification();
-
-    if (state.canConsume(tokens.OpenParen, tokens.Star)) {
-      // (Star) variant
-      state.consume(
-        element,
-        CstNodeKind.InitialAttributeSpecification_OpenParen,
-        tokens.OpenParen,
-      );
-      state.consume(
-        element,
-        CstNodeKind.InitialAttributeSpecification_Star,
-        tokens.Star,
-      );
-      element.star = true;
-      state.consume(
-        element,
-        CstNodeKind.InitialAttributeSpecification_CloseParen,
-        tokens.CloseParen,
-      );
-    } else {
-      // Expression variant
-      element.expression = expression.rule(state);
-    }
-
-    // Optional iteration specification
-    if (state.canConsumeFirst(initialAttributeSpecificationIteration.first())) {
-      element.item = initialAttributeSpecificationIteration.rule(state);
-    }
-
-    return element;
-  },
-);
-
-const initialAttributeSpecificationIteration = orRule<
-  ast.InitialAttributeSpecificationIteration,
-  []
->(
-  () => initialAttributeItemStar,
-  () => initialAttributeSpecificationIterationValue,
-);
-
-const initialAttributeSpecificationIterationValue = rule(
-  sequence(tokens.OpenParen),
-  (state: ParserState): ast.InitialAttributeSpecificationIterationValue => {
-    const element = ast.createInitialAttributeSpecificationIterationValue();
-
-    state.consume(
-      element,
-      CstNodeKind.InitialAttributeSpecificationIterationValue_OpenParen,
-      tokens.OpenParen,
-    );
-
-    const lhs = initialAttributeItem.rule(state);
-    lhs && element.items.push(lhs);
-    const { inc } = state.createLoopContext(
-      "InitialAttributeSpecificationIterationValue",
-    );
-    while (
-      state.tryConsume(
-        element,
-        CstNodeKind.InitialAttributeSpecificationIterationValue_Comma,
-        tokens.Comma,
-      )
-    ) {
-      inc();
-      const rhs = initialAttributeItem.rule(state);
-      rhs && element.items.push(rhs);
-    }
-
-    state.consume(
-      element,
-      CstNodeKind.InitialAttributeSpecificationIterationValue_CloseParen,
+      CstNodeKind.InitAcrossList_CloseParen,
       tokens.CloseParen,
     );
 
@@ -4991,6 +4947,7 @@ const declaredVariable = rule(
 const commonDeclarationAttributes: (() => RuleFirstPair<ast.CommonDeclarationAttribute>)[] =
   [
     () => initialAttribute,
+    () => initAcrossAttribute,
     () => dateAttribute,
     () => handleAttribute,
     () => definedAttribute,
@@ -5759,25 +5716,21 @@ const dimensionBound = rule(
 );
 
 const bound = rule(
-  choice(sequence(tokens.Star), () => expression.first()),
+  () => expression.first(),
   (state: ParserState, refType?: ast.ReferenceType): ast.Bound => {
     const element = ast.createBound();
 
-    if (state.tryConsume(element, CstNodeKind.Bound_Star, tokens.Star)) {
-      // Star bound (indicates variable size)
-      element.token = state.last!;
-      element.expression = "*";
-    } else {
-      // Expression bound
-      element.token = state.token ?? null;
-      element.expression = expression.rule(state, refType);
+    // Expression bound
+    element.token = state.token ?? null;
+    element.expression = expression.rule(state, {
+      refType: refType,
+    });
 
-      // Optional REFER clause
-      if (state.tryConsume(element, CstNodeKind.Bound_REFER, tokens.REFER)) {
-        state.consume(element, CstNodeKind.Bound_OpenParen, tokens.OpenParen);
-        element.refer = locatorCall.rule(state);
-        state.consume(element, CstNodeKind.Bound_CloseParen, tokens.CloseParen);
-      }
+    // Optional REFER clause
+    if (state.tryConsume(element, CstNodeKind.Bound_REFER, tokens.REFER)) {
+      state.consume(element, CstNodeKind.Bound_OpenParen, tokens.OpenParen);
+      element.refer = locatorCall.rule(state);
+      state.consume(element, CstNodeKind.Bound_CloseParen, tokens.CloseParen);
     }
 
     return element;
@@ -6284,15 +6237,8 @@ const referenceItem = rule(
 
 const expression = rule(
   () => primaryExpression.first(),
-  (
-    state: ParserState,
-    // Some syntax nodes allow references to also target types (instead of just variables)
-    // This parameter indicates whether we are in such a context
-    refType?: ast.ReferenceType,
-    // Indicates whether we are parsing a data specification expression of a PUT/GET statement
-    // This enables some special syntax rules for parenthesized expressions
-    dataSpecification?: boolean,
-  ): ast.Expression | null => {
+  (state: ParserState, params?: ExpressionParameter): ast.Expression | null => {
+    params ??= {};
     const element: IntermediateBinaryExpression = {
       infix: true,
       items: [],
@@ -6301,7 +6247,7 @@ const expression = rule(
     };
 
     // Parse first primary expression
-    const lhs = primaryExpression.rule(state, refType, dataSpecification);
+    const lhs = primaryExpression.rule(state, params);
     lhs && element.items.push(lhs);
 
     // Parse zero or more operator-expression pairs
@@ -6319,7 +6265,7 @@ const expression = rule(
         );
         element.operatorTokens.push(operatorToken);
       }
-      const rhs = primaryExpression.rule(state, refType, dataSpecification);
+      const rhs = primaryExpression.rule(state, params);
       rhs && element.items.push(rhs);
     }
 
@@ -6327,49 +6273,68 @@ const expression = rule(
   },
 );
 
-const primaryExpression = orRule<
-  ast.Expression,
-  [
-    refType: ast.ReferenceType | undefined,
-    dataSpecification: boolean | undefined,
-  ]
->(
-  () => literal,
+const primaryExpression = orRule<ast.Expression, [ExpressionParameter]>(
+  () => stringLiteral,
+  () => numberLiteral,
   () => parenthesizedExpression,
   () => unaryExpression,
   () => locatorCall,
+  () => wildcardItem,
+);
+
+// Generally, wildcard expression (*) is not a valid expression on its own,
+// However, there are so many contexts in which it is allowed
+// (e.g. in array bounds, initial attribute values, initial attribute repetition).
+// Therefore, we allow it to be parsed as an expression.
+// We later have to check (in the type checker) whether it is used in a valid context or not
+const wildcardItem = rule(
+  sequence(tokens.Star),
+  (state: ParserState): ast.WildcardItem => {
+    const element = ast.createWildcardItem();
+
+    element.token = state.consume(
+      element,
+      CstNodeKind.WildcardExpression_Star,
+      tokens.Star,
+    );
+
+    return element;
+  },
 );
 
 const parenthesizedExpression = rule(
   sequence(tokens.OpenParen),
   (
     state: ParserState,
-    refType?: ast.ReferenceType,
-    dataSpecification?: boolean,
-  ): ast.Parenthesis | ast.Literal => {
+    params: ExpressionParameter,
+  ): ast.Parenthesis | ast.RepeatedExpression => {
     const element = ast.createParenthesis();
-
     state.consume(
       element,
       CstNodeKind.ParenthesizedExpression_OpenParen,
       tokens.OpenParen,
     );
-    const expr = expression.rule(state, refType, dataSpecification);
+    const expr = expression.rule(state, params);
     if (expr) {
       element.expressions.push(expr);
     }
 
     // Additional expressions separated by commas
-    // These are exclusively used for PUT statements, but the syntax for that is completely undocumented
+    // This is not a general syntax rule, but is only allowed in specific parser contexts:
+    // 1. In data specifications of PUT/GET statements, where it indicates multiple fields being specified together
+    // 2. In INITIAL attribute expressions, where it indicates how to initialize an array of values
+    // This is a workaround to allow parsing of both cases without having to introduce a separate syntax node
+    // for a comma-separated list of expressions.
+    // This would make both parsing and evaluation of ASTs exponentially more complicated.
     while (
-      dataSpecification &&
+      params.multiple &&
       state.tryConsume(
         element,
         CstNodeKind.ParenthesizedExpression_Comma,
         tokens.Comma,
       )
     ) {
-      const nextExpr = expression.rule(state, refType, dataSpecification);
+      const nextExpr = expression.rule(state, params);
       if (nextExpr) {
         element.expressions.push(nextExpr);
       }
@@ -6392,22 +6357,44 @@ const parenthesizedExpression = rule(
       tokens.CloseParen,
     );
 
-    // Optional literal multiplication - this is a special case where parentheses can be followed by a literal
-    if (state.canConsumeFirst(literalValue.first())) {
-      // Replace the parenthesis with a literal that has the parenthesis as its multiplier
-      const literal: ast.Literal = {
-        kind: ast.SyntaxKind.Literal,
-        container: null,
-        multiplier: element,
-        value: null,
-      };
-      literal.value = literalValue.rule(state);
-      return literal;
+    // See documentation of RepeatedExpression for details on this syntax
+    if (params.init && repeatedExpressionLookahead(state)) {
+      const repeated = expression.rule(state, params);
+      if (repeated !== null) {
+        const repeatedExpr = ast.createRepeatedExpression();
+        repeatedExpr.count = element;
+        repeatedExpr.expression = repeated;
+        return repeatedExpr;
+      }
     }
 
     return element;
   },
 );
+
+function repeatedExpressionLookahead(state: ParserState): boolean {
+  // First check for the syntax that indicates a repeated expression
+  if (!state.canConsumeFirst(expression.first())) {
+    return false;
+  }
+  // Next, prevent ambiguities with wildcard expressions (*)
+  // I.e. an expression like (2 + 3) * 5 should not be parsed as a repeated expression
+  // with count (2 + 3) and wildcard item *
+  if (state.canConsume(tokens.Star)) {
+    const nextToken = state.peek(2);
+    if (!nextToken) {
+      return true;
+    }
+    // if the next token can start a new expression,
+    // then the asterisk is not a wildcard, but a multiplication operator
+    state.index++; // Temporarily consume the asterisk to check the next token
+    const canStartExpression = state.canConsumeFirst(expression.first());
+    state.index--;
+    return !canStartExpression;
+  }
+  // We can safely assume that this is a repeated expression
+  return true;
+}
 
 const memberCall = rule(
   () => referenceItem.first(),
@@ -6439,11 +6426,11 @@ const memberCall = rule(
 
 const locatorCall = rule(
   () => memberCall.first(),
-  (state: ParserState, refType?: ast.ReferenceType): ast.LocatorCall => {
+  (state: ParserState, params?: ExpressionParameter): ast.LocatorCall => {
     let element = ast.createLocatorCall();
 
     // Parse first member call
-    element.element = memberCall.rule(state, refType);
+    element.element = memberCall.rule(state, params?.refType);
 
     // Parse zero or more pointer/handle chains
     const { inc } = state.createLoopContext("LocatorCall");
@@ -6482,7 +6469,7 @@ const locatorCall = rule(
         element.handle = true;
       }
 
-      element.element = memberCall.rule(state, refType);
+      element.element = memberCall.rule(state, params?.refType);
     }
 
     return element;
@@ -6513,7 +6500,7 @@ const labelReference = rule(
 
 const unaryExpression = rule(
   sequence(tokens.UnaryOperator),
-  (state: ParserState, refType?: ast.ReferenceType): ast.UnaryExpression => {
+  (state: ParserState, params: ExpressionParameter): ast.UnaryExpression => {
     const element = ast.createUnaryExpression();
 
     const operatorToken = state.consume(
@@ -6527,24 +6514,10 @@ const unaryExpression = rule(
       );
     }
 
-    element.expr = expression.rule(state, refType);
+    element.expr = expression.rule(state, params);
 
     return element;
   },
-);
-
-const literal = rule(
-  () => literalValue.first(),
-  (state: ParserState): ast.Literal => {
-    const element = ast.createLiteral();
-    element.value = literalValue.rule(state);
-    return element;
-  },
-);
-
-const literalValue = orRule<ast.LiteralValue, []>(
-  () => stringLiteral,
-  () => numberLiteral,
 );
 
 const stringLiteral = rule(

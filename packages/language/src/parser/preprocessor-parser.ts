@@ -31,6 +31,7 @@ import {
 } from "../language-server/types";
 import { PLICodes } from "../validation/pli-codes";
 import { performAssignmentLookahead } from "./parser-lookahead";
+import { ExpressionParameter } from "./parser-types";
 
 const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
 
@@ -1534,19 +1535,11 @@ function dimensions(state: ParserState): ast.Dimensions {
 function parseBound(state: ParserState): ast.DimensionBound {
   const bound = ast.createDimensionBound();
   const leftBound = ast.createBound();
-  const left = parseExpressionWildcard(
-    leftBound,
-    CstNodeKind.Bound_Star,
-    state,
-  );
+  const left = expression(state);
   leftBound.expression = left;
   if (state.tryConsume(bound, CstNodeKind.DimensionBound_Colon, t.Colon)) {
     const rightBound = ast.createBound();
-    const right = parseExpressionWildcard(
-      rightBound,
-      CstNodeKind.Bound_Star,
-      state,
-    );
+    const right = expression(state);
     rightBound.expression = right;
     bound.lower = leftBound;
     bound.upper = rightBound;
@@ -1554,18 +1547,6 @@ function parseBound(state: ParserState): ast.DimensionBound {
     bound.upper = leftBound;
   }
   return bound;
-}
-
-function parseExpressionWildcard(
-  element: ast.SyntaxNode,
-  kind: CstNodeKind,
-  state: ParserState,
-): ast.Wildcard<ast.Expression> | null {
-  if (state.tryConsume(element, kind, t.Star)) {
-    return "*";
-  } else {
-    return expression(state);
-  }
 }
 
 function attributes(state: ParserState): ast.DeclarationAttribute[] {
@@ -1606,39 +1587,41 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
       attributes.push(entryAttribute);
     } else if (state.canConsume(t.INITIAL)) {
       const initialAttribute = ast.createInitialAttribute();
-      initialAttribute.token = state.consume(
+      initialAttribute.initial = state.consume(
         initialAttribute,
         CstNodeKind.InitialAttribute_INITIAL,
         t.INITIAL,
       );
       state.consume(
         initialAttribute,
-        CstNodeKind.InitialAttribute_OpenParenDirect,
+        CstNodeKind.InitialAttribute_OpenParen,
         t.OpenParen,
       );
-      const firstExpr = expression(state);
+      const firstExpr = expression(state, {
+        multiple: true,
+        init: true,
+      });
       if (firstExpr) {
-        const spec = ast.createInitialAttributeSpecification();
-        spec.expression = firstExpr;
-        initialAttribute.items.push(spec);
+        initialAttribute.expressions.push(firstExpr);
       }
       while (
         state.tryConsume(
           initialAttribute,
-          CstNodeKind.InitialAttribute_CommaDirect,
+          CstNodeKind.InitialAttribute_Comma,
           t.Comma,
         )
       ) {
-        const expr = expression(state);
+        const expr = expression(state, {
+          multiple: true,
+          init: true,
+        });
         if (expr) {
-          const spec = ast.createInitialAttributeSpecification();
-          spec.expression = expr;
-          initialAttribute.items.push(spec);
+          initialAttribute.expressions.push(expr);
         }
       }
       state.consume(
         initialAttribute,
-        CstNodeKind.InitialAttribute_CloseParenDirect,
+        CstNodeKind.InitialAttribute_CloseParen,
         t.CloseParen,
       );
       attributes.push(initialAttribute);
@@ -1649,18 +1632,24 @@ function attributes(state: ParserState): ast.DeclarationAttribute[] {
   return attributes;
 }
 
-function expression(state: ParserState): ast.Expression | null {
-  return parseBinary(state);
+function expression(
+  state: ParserState,
+  params?: ExpressionParameter,
+): ast.Expression | null {
+  return parseBinary(state, params ?? {});
 }
 
-function parseBinary(state: ParserState): ast.Expression | null {
+function parseBinary(
+  state: ParserState,
+  params: ExpressionParameter,
+): ast.Expression | null {
   const infixOperatorItem: IntermediateBinaryExpression = {
     infix: true,
     items: [],
     operators: [],
     operatorTokens: [],
   };
-  infixOperatorItem.items.push(primary(state));
+  infixOperatorItem.items.push(primary(state, params));
   while (true) {
     const operatorToken = state.tryConsume(
       infixOperatorItem as any,
@@ -1671,7 +1660,7 @@ function parseBinary(state: ParserState): ast.Expression | null {
       break;
     }
 
-    const item = primary(state);
+    const item = primary(state, params);
     infixOperatorItem.items.push(item);
     infixOperatorItem.operators.push(
       t.BinaryOperator.mapToEnumLiteral(operatorToken.tokenTypeIdx),
@@ -1681,7 +1670,10 @@ function parseBinary(state: ParserState): ast.Expression | null {
   return constructBinaryExpression(infixOperatorItem);
 }
 
-function primary(state: ParserState): ast.Expression | null {
+function primary(
+  state: ParserState,
+  params: ExpressionParameter,
+): ast.Expression | null {
   if (state.canConsume(t.NUMBER)) {
     return numberLiteral(state);
   } else if (state.canConsume(t.STRING_TERM)) {
@@ -1689,23 +1681,98 @@ function primary(state: ParserState): ast.Expression | null {
   } else if (state.canConsume(t.ID)) {
     return locatorCall(state, true);
   } else if (state.canConsume(t.OpenParen)) {
-    state.consume(
-      undefined,
-      CstNodeKind.ParenthesizedExpression_OpenParen,
-      t.OpenParen,
-    );
-    const expr = expression(state);
-    state.consume(
-      undefined,
-      CstNodeKind.ParenthesizedExpression_CloseParen,
-      t.CloseParen,
-    );
-    return expr;
+    return parenthesis(state, params);
   } else if (state.canConsume(t.UnaryOperator)) {
     return unaryExpression(state);
+  } else if (state.canConsume(t.Star)) {
+    return wildcard(state);
   }
   state.error();
   return null;
+}
+
+function canConsumeExpression(state: ParserState): boolean {
+  if (
+    state.canConsume(t.NUMBER) ||
+    state.canConsume(t.STRING_TERM) ||
+    state.canConsume(t.ID) ||
+    state.canConsume(t.OpenParen) ||
+    state.canConsume(t.UnaryOperator)
+  ) {
+    return true;
+  }
+  if (state.canConsume(t.Star)) {
+    // Can only be a wildcard expression if the next token after is not another expression token
+    const nextToken = state.peek(2);
+    if (!nextToken) {
+      return true;
+    }
+    return !(
+      tokenMatcher(nextToken, t.NUMBER) ||
+      tokenMatcher(nextToken, t.STRING_TERM) ||
+      tokenMatcher(nextToken, t.ID) ||
+      tokenMatcher(nextToken, t.OpenParen) ||
+      tokenMatcher(nextToken, t.UnaryOperator)
+    );
+  }
+  return false;
+}
+
+function wildcard(state: ParserState): ast.WildcardItem {
+  const wildcard = ast.createWildcardItem();
+  wildcard.token = state.consume(
+    wildcard,
+    CstNodeKind.WildcardItem_Asterisk,
+    t.Star,
+  );
+  return wildcard;
+}
+
+function parenthesis(
+  state: ParserState,
+  params: ExpressionParameter,
+): ast.Parenthesis | ast.RepeatedExpression {
+  const element = ast.createParenthesis();
+  state.consume(
+    undefined,
+    CstNodeKind.ParenthesizedExpression_OpenParen,
+    t.OpenParen,
+  );
+  const expr = expression(state, params);
+  if (expr) {
+    element.expressions.push(expr);
+  }
+  while (
+    params.multiple &&
+    state.tryConsume(
+      element,
+      CstNodeKind.ParenthesizedExpression_Comma,
+      t.Comma,
+    )
+  ) {
+    const nextExpr = expression(state, params);
+    if (nextExpr) {
+      element.expressions.push(nextExpr);
+    }
+  }
+  state.consume(
+    undefined,
+    CstNodeKind.ParenthesizedExpression_CloseParen,
+    t.CloseParen,
+  );
+
+  // See documentation of RepeatedExpression for details on this syntax
+  if (params.init && canConsumeExpression(state)) {
+    const repeated = parseBinary(state, params);
+    if (repeated !== null) {
+      const repeatedExpr = ast.createRepeatedExpression();
+      repeatedExpr.count = element;
+      repeatedExpr.expression = repeated;
+      return repeatedExpr;
+    }
+  }
+
+  return element;
 }
 
 function unaryExpression(state: ParserState): ast.Expression | null {
@@ -1720,14 +1787,12 @@ function unaryExpression(state: ParserState): ast.Expression | null {
       operatorToken.tokenTypeIdx,
     );
   }
-  unaryExpression.expr = primary(state);
+  unaryExpression.expr = primary(state, {});
   return unaryExpression;
 }
 
-function numberLiteral(state: ParserState): ast.Literal {
-  const literal = ast.createLiteral();
+function numberLiteral(state: ParserState): ast.NumberLiteral {
   const numberLiteral = ast.createNumberLiteral();
-  literal.value = numberLiteral;
   const number = state.consume(
     numberLiteral,
     CstNodeKind.NumberLiteral_ValueNumber,
@@ -1736,13 +1801,11 @@ function numberLiteral(state: ParserState): ast.Literal {
   if (number) {
     numberLiteral.value = number.image;
   }
-  return literal;
+  return numberLiteral;
 }
 
-function stringLiteral(state: ParserState): ast.Literal {
-  const literal = ast.createLiteral();
+function stringLiteral(state: ParserState): ast.StringLiteral {
   const stringLiteral = ast.createStringLiteral();
-  literal.value = stringLiteral;
   const stringToken = state.consume(
     stringLiteral,
     CstNodeKind.StringLiteral_ValueString,
@@ -1752,7 +1815,7 @@ function stringLiteral(state: ParserState): ast.Literal {
     const content = unpackCharacterValue(stringToken.image);
     stringLiteral.value = content;
   }
-  return literal;
+  return stringLiteral;
 }
 
 function unpackCharacterValue(literal: string): string {

@@ -15,6 +15,13 @@ import { memoize } from "lodash-es";
 import { assertType } from "../preprocessor/util";
 import { diagnosticFromCode } from "../language-server/types";
 import { LspCodes } from "../validation/lsp-codes";
+import { ReferenceType } from "../syntax-tree/ast";
+
+export interface ExpressionParameter {
+  refType?: ReferenceType;
+  multiple?: boolean; // Whether multiple expressions are allowed, separated by commas
+  init?: boolean; // Whether we are in an INITIAL attribute expression
+}
 
 export type Rule<T, Args extends any[] = any[]> = (
   state: ParserState,
