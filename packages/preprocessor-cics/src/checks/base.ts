@@ -196,26 +196,36 @@ export abstract class CICSOptionsCheckerBase {
    */
   protected checkMutuallyExclusiveOptions<
     E extends ParserRuleContext | TerminalNode,
-  >(options: string, ...rules: E[]): void {
+  >(options: string, ...rules: Array<E | E[] | null>): void {
     if (rules.length <= 1) {
       return;
     }
 
     let rulesSeen = 0;
-    let isRuleList = false;
 
     for (const rule of rules) {
-      isRuleList = false;
       if (rule == null) {
         continue;
       }
 
-      rulesSeen++;
+      let target: E;
+      if (rule instanceof ParserRuleContext || rule instanceof TerminalNode) {
+        rulesSeen++;
+        target = rule as E;
+      } else if (Array.isArray(rule)) {
+        if (rule.length === 0) {
+          continue;
+        }
+        rulesSeen++;
+        target = rule[0];
+      } else {
+        continue;
+      }
 
       if (rulesSeen > 1) {
         this.throwException(
           Severity.Error,
-          VisitorUtility.constructLocality(rule),
+          VisitorUtility.constructLocality(target),
           'Options "' + options + '" are mutually exclusive.',
           "",
         );

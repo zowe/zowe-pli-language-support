@@ -29,6 +29,11 @@ import { ResyncEntrynameOptionsChecker } from "./check-resync-entryname-options"
 import { ForceOptionsChecker } from "./check-force-options";
 import { FreeMainOptionsChecker } from "./check-free-main-options";
 import { ResumeOptionsChecker } from "./check-resume-options";
+import { EnqOptionsChecker } from "./check-enq-options";
+import { EnterTracenumOptionsChecker } from "./check-enter-tracenum-options";
+import { PostOptionsChecker } from "./check-post-options";
+import { DelayOptionsChecker } from "./check-delay-options";
+import { FreeOptionsChecker } from "./check-free-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -136,9 +141,10 @@ export class OptionsRegistry {
       ForceOptionsChecker.RULE_INDEX,
       new ForceOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSEnterTracenumOptionsCheckUtility.RULE_INDEX,
-    //     new CICSEnterTracenumOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      EnterTracenumOptionsChecker.RULE_INDEX,
+      new EnterTracenumOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSDumpTransactionOptionsCheckUtility.RULE_INDEX,
     //     new CICSDumpTransactionOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -165,18 +171,20 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSHandleOptionsCheckUtility.RULE_INDEX,
     //     new CICSHandleOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSDelayOptionsCheckUtility.RULE_INDEX,
-    //     new CICSDelayOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      DelayOptionsChecker.RULE_INDEX,
+      new DelayOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSReadqOptionsCheckUtility.RULE_INDEX,
     //     new CICSReadqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
     // this.optionsMap.set(
     //     CICSConvertTimeOptionsCheckUtility.RULE_INDEX,
     //     new CICSConvertTimeOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSEnqOptionsCheckUtility.RULE_INDEX,
-    //     new CICSEnqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      EnqOptionsChecker.RULE_INDEX,
+      new EnqOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSWriteOptionsCheckUtility.RULE_INDEX,
     //     new CICSWriteOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -269,9 +277,10 @@ export class OptionsRegistry {
       ReleaseOptionsChecker.RULE_INDEX,
       new ReleaseOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSPostOptionsCheckUtility.RULE_INDEX,
-    //     new CICSPostOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      PostOptionsChecker.RULE_INDEX,
+      new PostOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSRemoveOptionsCheckUtility.RULE_INDEX,
     //     new CICSRemoveOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -342,9 +351,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSStartOptionsCheckUtility.RULE_INDEX,
     //     new CICSStartOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSFreeOptionsCheckUtility.RULE_INDEX,
-    //     new CICSFreeOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      FreeOptionsChecker.RULE_INDEX,
+      new FreeOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSGdsOptionsCheckUtility.RULE_INDEX,
     //     new CICSGdsOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
