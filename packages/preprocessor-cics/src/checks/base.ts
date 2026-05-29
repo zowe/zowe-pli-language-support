@@ -383,7 +383,10 @@ export abstract class CICSOptionsCheckerBase {
       let ruleId = child.ruleIndex;
       let name = subruleOptions.get(ruleId);
       if (name == null) continue;
-      if (seenRules.add(ruleId)) continue;
+      if (!seenRules.has(ruleId)) {
+        seenRules.add(ruleId);
+        continue;
+      }
       this.throwException(
         Severity.Error,
         VisitorUtility.constructLocality(child),
