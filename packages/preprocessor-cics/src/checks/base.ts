@@ -58,7 +58,7 @@ export abstract class CICSOptionsCheckerBase {
     utilityParameters: CICSCheckUtilityParameters,
   ) {
     //this.context = context;
-    this.errors.push(...errors);
+    this.errors = errors;
     duplicateOptions.forEach((value, key) =>
       this.baseDuplicateOptions.set(key, value),
     );
@@ -345,13 +345,15 @@ export abstract class CICSOptionsCheckerBase {
     children.forEach((child) => {
       let option = child.getSymbol().type;
       if (duplicateOptions.has(option)) {
-        if (!entries.add(option)) {
+        if (entries.has(option)) {
           this.throwException(
             duplicateOptions.get(option)!,
             VisitorUtility.constructLocality(child),
             "Excessive options provided for: ",
             child.getSymbol().text!,
           );
+        } else {
+          entries.add(option);
         }
       }
     });

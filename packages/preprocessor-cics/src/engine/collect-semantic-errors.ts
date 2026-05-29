@@ -4,24 +4,15 @@ import {
   CICSCheckUtilityParameters,
   CICSLiteralCheckOption,
 } from "../checks/base";
-import { CICSOptionsCheckUtility } from "../checks/check-options";
+import { CICSOptionsCheckUtility } from "../checks/check-options-base";
 import { Diagnostic } from "preprocessor-api";
-import {
-  AllExciRulesContext,
-  Cics_returnContext,
-  CicsDfhRespContext,
-  CicsDfhValueContext,
-  CICSParser,
-  DataNameContext,
-  ParagraphNameUsageContext,
-  QualifiedDataNameContext,
-  VariableNameUsageContext,
-} from "../generated/CICSParser";
 
-export class CICSVisitor extends CICSParserVisitor<ParseTree[] | null> {
+export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
+  ParseTree[] | null
+> {
   private readonly cicsOptionsCheckUtility: CICSOptionsCheckUtility;
   private readonly cicsOptionsCheckUtilityParams: CICSCheckUtilityParameters;
-  private readonly errors: Diagnostic[] = [];
+  public readonly errors: Diagnostic[] = [];
 
   constructor() {
     super();

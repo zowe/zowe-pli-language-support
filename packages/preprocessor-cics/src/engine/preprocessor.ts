@@ -25,8 +25,8 @@
 import * as antlr from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { CICSParser } from "../generated/CICSParser";
-import { CollectingErrorListener } from "./parsing";
-import { CollectingIdentifierVisitor } from "./CollectingIdentifierVisitor";
+import { CollectingSyntaxErrorListener } from "./collect-syntax-errors";
+import { CollectingIdentifierVisitor } from "./collect-identifiers";
 import {
   Diagnostic,
   Preprocessor,
@@ -34,6 +34,7 @@ import {
   SemanticsKind,
   Token,
 } from "preprocessor-api";
+import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
@@ -48,8 +49,8 @@ export class CICSPreprocessor implements Preprocessor {
     lexer.removeErrorListeners();
     parser.removeErrorListeners();
 
-    const lexerErrors = new CollectingErrorListener();
-    const parserErrors = new CollectingErrorListener();
+    const lexerErrors = new CollectingSyntaxErrorListener();
+    const parserErrors = new CollectingSyntaxErrorListener();
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
@@ -90,9 +91,13 @@ export class CICSPreprocessor implements Preprocessor {
       // Add any remaining identifier tokens that were not matched in the token stream
       .concat(identifierTokens.slice(idIndex));
 
+    const semanticErrorCollector = new CollectingSemanticErrorVisitor();
+    semanticErrorCollector.visit(tree);
+
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(...lexerErrors.errors);
     diagnostics.push(...parserErrors.errors);
+    diagnostics.push(...semanticErrorCollector.errors);
     return {
       diagnostics,
       tokens,

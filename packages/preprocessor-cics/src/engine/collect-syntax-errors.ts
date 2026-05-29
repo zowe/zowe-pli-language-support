@@ -30,7 +30,7 @@ import {
 } from "antlr4ng";
 import { Diagnostic, Severity } from "preprocessor-api";
 
-export class CollectingErrorListener extends BaseErrorListener {
+export class CollectingSyntaxErrorListener extends BaseErrorListener {
   public readonly errors: Diagnostic[] = [];
 
   override syntaxError<S extends AntlrToken, T extends ATNSimulator>(
