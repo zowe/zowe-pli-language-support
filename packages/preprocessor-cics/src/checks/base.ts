@@ -168,7 +168,7 @@ export abstract class CICSOptionsCheckerBase {
    * @param options Options checked to insert into error message
    */
   protected checkHasIllegalOptions<E extends ParserRuleContext | TerminalNode>(
-    rules: E | Array<E>,
+    rules: E | Array<E> | null,
     options: string,
   ): void {
     const throwError = (error: E) => {
@@ -179,9 +179,11 @@ export abstract class CICSOptionsCheckerBase {
         options,
       );
     };
-    Array.isArray(rules)
-      ? rules.forEach((rule) => throwError(rule))
-      : throwError(rules);
+    if (Array.isArray(rules)) {
+      rules.forEach((rule) => throwError(rule));
+    } else if (rules != null) {
+      throwError(rules);
+    }
   }
 
   /**
