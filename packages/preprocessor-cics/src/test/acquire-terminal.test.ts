@@ -12,17 +12,20 @@ import { describe, expect, test } from "vitest";
 import { CICSPreprocessor } from "../engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
-
 describe("CICS ACQUIRE TERMINAL", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ACQUIRE TERMINAL(123) NOQUEUE");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ACQUIRE TERMINAL(123) NOQUEUE",
+    );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ACQUIRE TERMINAL(123) BLA");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ACQUIRE TERMINAL(123) BLA",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /extraneous input 'BLA' expecting <EOF>/,

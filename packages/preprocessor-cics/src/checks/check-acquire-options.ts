@@ -1,6 +1,9 @@
 import { Diagnostic, Severity } from "preprocessor-api";
 import { CICSLexer } from "../generated/CICSLexer";
-import { Cics_acquire_processContext, CICSParser } from "../generated/CICSParser";
+import {
+  Cics_acquire_processContext,
+  CICSParser,
+} from "../generated/CICSParser";
 import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { ParserRuleContext } from "antlr4ng";
 

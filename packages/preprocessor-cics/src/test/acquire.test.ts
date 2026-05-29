@@ -12,17 +12,20 @@ import { describe, expect, test } from "vitest";
 import { CICSPreprocessor } from "../engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
-
 describe("CICS ACQUIRE", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ)",
+    );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) BLA");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) BLA",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /extraneous input 'BLA' expecting <EOF>/,
@@ -51,7 +54,7 @@ describe("CICS ACQUIRE", async () => {
     );
   });
 
-   test("Missing PROCESSTYPE", async () => {
+  test("Missing PROCESSTYPE", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "ACQUIRE PROCESS(ABC)",
     );

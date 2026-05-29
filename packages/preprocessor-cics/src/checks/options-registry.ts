@@ -4,6 +4,7 @@ import { AbendOptionsChecker } from "./check-abend-options";
 import { Diagnostic } from "preprocessor-api";
 import { AcquireOptionsChecker } from "./check-acquire-options";
 import { AcquireTerminalOptionsChecker } from "./check-acquire-terminal-options";
+import { AddressOptionsChecker } from "./check-address-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -51,8 +52,9 @@ export class OptionsRegistry {
     //     CICSBuildOptionsCheckUtility.RULE_INDEX,
     //     new CICSBuildOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
     this.optionsMap.set(
-        AcquireOptionsChecker.RULE_INDEX,
-        new AcquireOptionsChecker(errors, cicsCheckUtilityParameters));
+      AcquireOptionsChecker.RULE_INDEX,
+      new AcquireOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSWaitOptionsCheckUtility.RULE_INDEX,
     //     new CICSWaitOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -119,9 +121,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSFreeMainOptionsCheckUtility.RULE_INDEX,
     //     new CICSFreeMainOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSAddressOptionsCheckUtility.RULE_INDEX,
-    //     new CICSAddressOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      AddressOptionsChecker.RULE_INDEX,
+      new AddressOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSWriteqOptionsCheckUtility.RULE_INDEX,
     //     new CICSWriteqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -306,8 +309,9 @@ export class OptionsRegistry {
     //     CICSDisableProgramOptionsCheckUtility.RULE_INDEX,
     //     new CICSDisableProgramOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
     this.spOptionsMap.set(
-        AcquireTerminalOptionsChecker.RULE_INDEX,
-        new AcquireTerminalOptionsChecker(errors, cicsCheckUtilityParameters));
+      AcquireTerminalOptionsChecker.RULE_INDEX,
+      new AcquireTerminalOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.spOptionsMap.set(
     //     CICSDiscardOptionsUtility.RULE_INDEX,
     //     new CICSDiscardOptionsUtility(context, errors, cicsCheckUtilityParameters));

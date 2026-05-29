@@ -4,7 +4,7 @@ import {
   CICSCheckUtilityParameters,
   CICSLiteralCheckOption,
 } from "../checks/base";
-import { OptionsRegistry  } from "../checks/options-registry";
+import { OptionsRegistry } from "../checks/options-registry";
 import { Diagnostic } from "preprocessor-api";
 
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
