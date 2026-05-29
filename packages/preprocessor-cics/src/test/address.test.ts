@@ -12,7 +12,7 @@ import { describe, expect, test } from "vitest";
 import { CICSPreprocessor } from "../engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ADDRESS", async () => {
+describe("CICS ADDRESS (SET)", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
@@ -27,6 +27,14 @@ describe("CICS ADDRESS", async () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /extraneous input 'BLA' expecting <EOF>/,
+    );
+  });
+
+  test("Duplicate COMMAREA", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("ADDRESS COMMAREA(12) COMMAREA(34)");
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: COMMAREA/,
     );
   });
 
