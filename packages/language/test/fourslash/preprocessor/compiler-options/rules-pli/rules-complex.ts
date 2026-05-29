@@ -13,8 +13,7 @@
 
 // @wrap: process
 ////*PROCESS RULES(COMPLEX(<|1:)|>);
-////*PROCESS RULES(<|2:COMPLEX|>);
-////*PROCESS RULES(<|3:NOCOMPLEX|>);
+////*PROCESS RULES(<|2:COMPLEX|>, <|3:NOCOMPLEX|>);
 ////*PROCESS RULES(NOCOMPLEX(<|4:)|>);
 ////*PROCESS RULES(NOCOMPLEX(<|5:INVALID|>));
 ////*PROCESS RULES(NOCOMPLEX(<|6:SOURCE|>));
@@ -22,7 +21,10 @@
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
-verify.noDiagnostics([2, 3, 6]);
+verify.noDiagnostics([2, 6]);
+verify.expectDiagnosticsAt(3, {
+  message: code.CompilerOptions.MutexOptionIssue.message("RULES(NOCOMPLEX)"),
+});
 verify.expectDiagnosticsAt(4, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });

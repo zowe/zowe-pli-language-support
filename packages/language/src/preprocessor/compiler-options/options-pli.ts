@@ -1233,10 +1233,10 @@ export namespace CompilerOptions {
     unrefCtl?: RulesSource | true;
     unrefDefined?: RulesSource | true;
     unrefEntry?: RulesSource | true;
-    unrefFile?: RulesSource | true;
+    unrefDefFile?: RulesSource | true;
     unrefStatic?: RulesSource | true;
     unrefValue?: RulesSource | true;
-    unset?: boolean;
+    unset?: RulesSource | true;
     yy?: boolean;
   };
   export type Semantic = {
@@ -1580,7 +1580,7 @@ export function getDefaultCompilerOptions(): CompilerOptions {
       unrefCtl: true,
       unrefDefined: true,
       unrefEntry: true,
-      unrefFile: true,
+      unrefDefFile: true,
       unrefStatic: true,
       unrefValue: true,
       unset: true,

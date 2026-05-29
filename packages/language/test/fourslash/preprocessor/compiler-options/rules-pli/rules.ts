@@ -86,7 +86,7 @@ verify.expectCompilerOptions({
     multiClose: true,
     recursive: false,
     selfAssign: false,
-    unset: false,
+    unset: constants.CompilerOptions.RulesSource.ALL,
     yy: false,
   },
 });

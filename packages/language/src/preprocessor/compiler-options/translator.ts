@@ -686,10 +686,14 @@ export function getCompilerOptionValueName(value: CompilerOptionValue): string {
 export function reportDuplicateSubOptions(
   parent: CompilerOption,
   acceptor: TranslationDiagnosticAcceptor,
+  abbreviations?: Record<string, string>,
 ) {
   const seen = new Set<string>();
   for (const value of parent.values) {
-    const name = getCompilerOptionValueName(value);
+    let name = getCompilerOptionValueName(value);
+    if (abbreviations && abbreviations[name]) {
+      name = abbreviations[name];
+    }
     if (seen.has(name)) {
       acceptor(
         diagnosticFromCode(
