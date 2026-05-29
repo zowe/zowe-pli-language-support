@@ -31,10 +31,10 @@ import {
 } from "antlr4ng";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 import { CicsWordContext } from "../generated/CICSParser";
-import { ParseError, SemanticsKind, Token } from "preprocessor-api";
+import { Diagnostic, SemanticsKind, Severity, Token } from "preprocessor-api";
 
 export class CollectingErrorListener extends BaseErrorListener {
-  public readonly errors: ParseError[] = [];
+  public readonly errors: Diagnostic[] = [];
 
   override syntaxError<S extends AntlrToken, T extends ATNSimulator>(
     _recognizer: Recognizer<T>,
@@ -48,6 +48,8 @@ export class CollectingErrorListener extends BaseErrorListener {
       message: msg,
       startOffset: offendingSymbol?.start || 0,
       endOffset: offendingSymbol?.stop || 0,
+      severity: Severity.Error,
+      code: "cics.syntax.error",
     });
   }
 }

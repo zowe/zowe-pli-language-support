@@ -16,7 +16,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import {
   SemanticsKind,
   Preprocessor,
-  ParseError,
+  Diagnostic,
   Token,
 } from "preprocessor-api";
 import { CICSPreprocessor } from "preprocessor-cics";
@@ -132,7 +132,7 @@ function toPliToken(
   return pliToken;
 }
 
-function handleDiagnostics(diagnostics: ParseError[], state: ParserState) {
+function handleDiagnostics(diagnostics: Diagnostic[], state: ParserState) {
   for (const diagnostic of diagnostics) {
     state.error(diagnostic.message, state.token);
   }

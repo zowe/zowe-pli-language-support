@@ -27,8 +27,16 @@ export interface Token extends WithRange {
   semanticsKind: SemanticsKind;
 }
 
-export interface ParseError extends WithRange {
+export enum Severity {
+  Error,
+  Warning,
+  Info,
+}
+
+export interface Diagnostic extends WithRange {
+  severity: Severity;
   message: string;
+  code: string;
 }
 
 export type PreprocessorReplacement =
@@ -43,7 +51,7 @@ export type PreprocessorReplacement =
     };
 
 export interface PreprocessorResult {
-  diagnostics: ParseError[];
+  diagnostics: Diagnostic[];
   tokens: Token[];
   replacement: PreprocessorReplacement | null;
 }
