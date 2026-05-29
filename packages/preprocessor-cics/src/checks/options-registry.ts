@@ -5,6 +5,16 @@ import { Diagnostic } from "preprocessor-api";
 import { AcquireOptionsChecker } from "./check-acquire-options";
 import { AcquireTerminalOptionsChecker } from "./check-acquire-terminal-options";
 import { AddressOptionsChecker } from "./check-address-options";
+import { AsktimeOptionsChecker } from "./check-asktime-options";
+import { AssignOptionsChecker } from "./check-assign-options";
+import { PopHandleOptionsChecker } from "./check-pop-handle-options";
+import { SyncPointOptionsChecker } from "./check-sync-point-options";
+import { DiscardOptionsChecker } from "./check-discard-options";
+import { SuspendOptionsChecker } from "./check-suspend-options";
+import { XctlOptionsChecker } from "./check-xctl-options";
+import { LoadOptionsChecker } from "./check-load-options";
+import { MonitorOptionsChecker } from "./check-monitor-options";
+import { PointOptionsChecker } from "./check-point-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -26,9 +36,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSBifOptionsCheckUtility.RULE_INDEX,
     //     new CICSBifOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSAsktimeOptionsCheckUtility.RULE_INDEX,
-    //     new CICSAsktimeOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      AsktimeOptionsChecker.RULE_INDEX,
+      new AsktimeOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       AbendOptionsChecker.RULE_INDEX,
       new AbendOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -58,9 +69,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSWaitOptionsCheckUtility.RULE_INDEX,
     //     new CICSWaitOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSAssignOptionsCheckUtility.RULE_INDEX,
-    //     new CICSAssignOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      AssignOptionsChecker.RULE_INDEX,
+      new AssignOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSCancelOptionsCheckUtility.RULE_INDEX,
     //     new CICSCancelOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -182,12 +194,14 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSRunOptionsCheckUtility.RULE_INDEX,
     //     new CICSRunOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSXctlOptionsUtility.RULE_INDEX,
-    //     new CICSXctlOptionsUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSSuspendOptionsUtility.RULE_INDEX,
-    //     new CICSSuspendOptionsUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      XctlOptionsChecker.RULE_INDEX,
+      new XctlOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      SuspendOptionsChecker.RULE_INDEX,
+      new SuspendOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSGetMainOptionsUtility.RULE_INDEX,
     //     new CICSGetMainOptionsUtility(context, errors, cicsCheckUtilityParameters));
@@ -206,24 +220,28 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSSpoolOpenOptionsCheckUtility.RULE_INDEX,
     //     new CICSSpoolOpenOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSMonitorOptionsCheckUtility.RULE_INDEX,
-    //     new CICSMonitorOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSLoadOptionsCheckUtility.RULE_INDEX,
-    //     new CICSLoadOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSPointOptionsCheckUtility.RULE_INDEX,
-    //     new CICSPointOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      MonitorOptionsChecker.RULE_INDEX,
+      new MonitorOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      LoadOptionsChecker.RULE_INDEX,
+      new LoadOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      PointOptionsChecker.RULE_INDEX,
+      new PointOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSResetOptionsCheckUtility.RULE_INDEX,
     //     new CICSResetOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
     // this.optionsMap.set(
     //     CICSStartbrowseOptionsCheckUtility.RULE_INDEX,
     //     new CICSStartbrowseOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSPopHandleOptionsCheckUtility.RULE_INDEX,
-    //     new CICSPopHandleOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      PopHandleOptionsChecker.RULE_INDEX,
+      new PopHandleOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSRewindCounterOptionsCheckUtility.RULE_INDEX,
     //     new CICSRewindCounterOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -248,9 +266,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSUpdateOptionsCheckUtility.RULE_INDEX,
     //     new CICSUpdateOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSSyncPointOptionsCheckUtility.RULE_INDEX,
-    //     new CICSSyncPointOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      SyncPointOptionsChecker.RULE_INDEX,
+      new SyncPointOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSSignalOptionsCheckUtility.RULE_INDEX,
     //     new CICSSignalOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -312,9 +331,10 @@ export class OptionsRegistry {
       AcquireTerminalOptionsChecker.RULE_INDEX,
       new AcquireTerminalOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.spOptionsMap.set(
-    //     CICSDiscardOptionsUtility.RULE_INDEX,
-    //     new CICSDiscardOptionsUtility(context, errors, cicsCheckUtilityParameters));
+    this.spOptionsMap.set(
+      DiscardOptionsChecker.RULE_INDEX,
+      new DiscardOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.spOptionsMap.set(
     //     CICSCreateSPOptionsCheckUtility.RULE_INDEX,
     //     new CICSCreateSPOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
