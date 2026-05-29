@@ -34,6 +34,11 @@ import { EnterTracenumOptionsChecker } from "./check-enter-tracenum-options";
 import { PostOptionsChecker } from "./check-post-options";
 import { DelayOptionsChecker } from "./check-delay-options";
 import { FreeOptionsChecker } from "./check-free-options";
+import { RewriteOptionsChecker } from "./check-rewrite-options";
+import { ReturnOptionsChecker } from "./check-return-options";
+import { RouteOptionsChecker } from "./check-route-options";
+import { ConvertTimeOptionsChecker } from "./check-convert-time-options";
+import { FormatTimeOptionsChecker } from "./check-format-time-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -128,12 +133,14 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSReadNextReadPrevOptionsUtility.RULE_INDEX,
     //     new CICSReadNextReadPrevOptionsUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSRewriteOptionsCheckUtility.RULE_INDEX,
-    //     new CICSRewriteOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSReturnOptionsCheckUtility.RULE_INDEX,
-    //     new CICSReturnOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      RewriteOptionsChecker.RULE_INDEX,
+      new RewriteOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      ReturnOptionsChecker.RULE_INDEX,
+      new ReturnOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSSignonOptionsCheckUtility.RULE_INDEX,
     //     new CICSSignonOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -165,9 +172,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSLinkOptionsCheckUtility.RULE_INDEX,
     //     new CICSLinkOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSFormatTimeOptionsCheckUtility.RULE_INDEX,
-    //     new CICSFormatTimeOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      FormatTimeOptionsChecker.RULE_INDEX,
+      new FormatTimeOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSHandleOptionsCheckUtility.RULE_INDEX,
     //     new CICSHandleOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -178,9 +186,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSReadqOptionsCheckUtility.RULE_INDEX,
     //     new CICSReadqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSConvertTimeOptionsCheckUtility.RULE_INDEX,
-    //     new CICSConvertTimeOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      ConvertTimeOptionsChecker.RULE_INDEX,
+      new ConvertTimeOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       EnqOptionsChecker.RULE_INDEX,
       new EnqOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -336,9 +345,10 @@ export class OptionsRegistry {
       ResumeOptionsChecker.RULE_INDEX,
       new ResumeOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSRouteOptionsCheckUtility.RULE_INDEX,
-    //     new CICSRouteOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      RouteOptionsChecker.RULE_INDEX,
+      new RouteOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSWSAContextOptionsCheckUtility.RULE_INDEX,
     //     new CICSWSAContextOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));

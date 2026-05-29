@@ -265,11 +265,14 @@ export abstract class CICSOptionsCheckerBase {
    */
   protected checkHasAtLeastOneOption<
     E extends ParserRuleContext | TerminalNode,
-  >(options: string, ctx: ParserRuleContext, ...rules: E[]): void {
+  >(options: string, ctx: ParserRuleContext, ...rules: Array<E | E[] | null>): void {
     let rulesSeen = 0;
 
     for (const rule of rules) {
       if (rule == null) {
+        continue;
+      }
+      if (Array.isArray(rule) && rule.length === 0) {
         continue;
       }
       rulesSeen++;
