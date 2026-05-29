@@ -24,7 +24,7 @@ export class CICSCheckUtilityParameters {
   public literalChecks: CICSLiteralCheckOption = CICSLiteralCheckOption.APOST;
 }
 
-export abstract class CICSOptionsCheckBaseUtility {
+export abstract class CICSOptionsCheckerBase {
   //private context: DialectProcessingContext;
 
   private readonly errors: Diagnostic[] = [];

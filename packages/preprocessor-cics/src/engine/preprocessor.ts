@@ -25,10 +25,8 @@
 import * as antlr from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { CICSParser } from "../generated/CICSParser";
-import {
-  CollectingErrorListener,
-  CollectingIdentifierVisitor,
-} from "./parsing";
+import { CollectingErrorListener } from "./parsing";
+import { CollectingIdentifierVisitor } from "./CollectingIdentifierVisitor";
 import {
   Diagnostic,
   Preprocessor,
