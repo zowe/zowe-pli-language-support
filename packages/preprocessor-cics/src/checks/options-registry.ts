@@ -3,6 +3,7 @@ import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { AbendOptionsChecker } from "./check-abend-options";
 import { Diagnostic } from "preprocessor-api";
 import { AcquireOptionsChecker } from "./check-acquire-options";
+import { AcquireTerminalOptionsChecker } from "./check-acquire-terminal-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -304,9 +305,9 @@ export class OptionsRegistry {
     // this.spOptionsMap.set(
     //     CICSDisableProgramOptionsCheckUtility.RULE_INDEX,
     //     new CICSDisableProgramOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.spOptionsMap.set(
-    //     CICSAcquireTerminalOptionsCheckUtility.RULE_INDEX,
-    //     new CICSAcquireTerminalOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.spOptionsMap.set(
+        AcquireTerminalOptionsChecker.RULE_INDEX,
+        new AcquireTerminalOptionsChecker(errors, cicsCheckUtilityParameters));
     // this.spOptionsMap.set(
     //     CICSDiscardOptionsUtility.RULE_INDEX,
     //     new CICSDiscardOptionsUtility(context, errors, cicsCheckUtilityParameters));
