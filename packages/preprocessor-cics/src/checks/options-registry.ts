@@ -54,6 +54,12 @@ import { SoapfaultOptionsChecker } from "./check-soapfault-options";
 import { QueryOptionsChecker } from "./check-query-options";
 import { ConnectProcessOptionsChecker } from "./check-connect-process-options";
 import { ConverseOptionsChecker } from "./check-converse-options";
+import { EndbrOptionsChecker } from "./check-endbr-options";
+import { EndBrowseOptionsChecker } from "./check-end-browse-options";
+import { ResetbrOptionsChecker } from "./check-resetbr-options";
+import { StartbrOptionsChecker } from "./check-startbr-options";
+import { FetchOptionsChecker } from "./check-fetch-options";
+import { GetnextOptionsChecker } from "./check-getnext-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -136,12 +142,14 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSWebOptionsCheckUtility.RULE_INDEX,
     //     new CICSWebOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSEndbrOptionsUtility.RULE_INDEX,
-    //     new CICSEndbrOptionsUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSEndBrowseOptionsUtility.RULE_INDEX,
-    //     new CICSEndBrowseOptionsUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      EndbrOptionsChecker.RULE_INDEX,
+      new EndbrOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      EndBrowseOptionsChecker.RULE_INDEX,
+      new EndBrowseOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSDeleteOptionsCheckUtility.RULE_INDEX,
     //     new CICSDeleteOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -278,9 +286,10 @@ export class OptionsRegistry {
       VerifyOptionsChecker.RULE_INDEX,
       new VerifyOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSGetnextOptionsCheckUtility.RULE_INDEX,
-    //     new CICSGetnextOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      GetnextOptionsChecker.RULE_INDEX,
+      new GetnextOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSSpoolOpenOptionsCheckUtility.RULE_INDEX,
     //     new CICSSpoolOpenOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -345,9 +354,10 @@ export class OptionsRegistry {
       SignalOptionsChecker.RULE_INDEX,
       new SignalOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSStartbrOptionsCheckUtility.RULE_INDEX,
-    //     new CICSStartbrOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      StartbrOptionsChecker.RULE_INDEX,
+      new StartbrOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSIgnoreOptionsCheckUtility.RULE_INDEX,
     //     new CICSIgnoreOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -382,12 +392,14 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSWSAContextOptionsCheckUtility.RULE_INDEX,
     //     new CICSWSAContextOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSResetbrOptionsCheckUtility.RULE_INDEX,
-    //     new CICSResetbrOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSFetchOptionsCheckUtility.RULE_INDEX,
-    //     new CICSFetchOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      ResetbrOptionsChecker.RULE_INDEX,
+      new ResetbrOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      FetchOptionsChecker.RULE_INDEX,
+      new FetchOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSStartOptionsCheckUtility.RULE_INDEX,
     //     new CICSStartOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
