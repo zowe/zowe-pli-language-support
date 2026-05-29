@@ -194,9 +194,10 @@ export abstract class CICSOptionsCheckerBase {
    *     TerminalNode objects.
    * @param <E> Generic type to allow cross-rule context collection.
    */
-  protected checkMutuallyExclusiveOptions<
-    E extends ParserRuleContext | TerminalNode,
-  >(options: string, ...rules: Array<E | E[] | null>): void {
+  protected checkMutuallyExclusiveOptions(
+    options: string,
+    ...rules: Array<ParseTree | ParseTree[] | null>
+  ): void {
     if (rules.length <= 1) {
       return;
     }
@@ -208,10 +209,10 @@ export abstract class CICSOptionsCheckerBase {
         continue;
       }
 
-      let target: E;
+      let target: ParseTree;
       if (rule instanceof ParserRuleContext || rule instanceof TerminalNode) {
         rulesSeen++;
-        target = rule as E;
+        target = rule;
       } else if (Array.isArray(rule)) {
         if (rule.length === 0) {
           continue;

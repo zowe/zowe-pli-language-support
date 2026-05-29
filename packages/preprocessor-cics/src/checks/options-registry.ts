@@ -60,6 +60,12 @@ import { ResetbrOptionsChecker } from "./check-resetbr-options";
 import { StartbrOptionsChecker } from "./check-startbr-options";
 import { FetchOptionsChecker } from "./check-fetch-options";
 import { GetnextOptionsChecker } from "./check-getnext-options";
+import { ReadOptionsChecker } from "./check-read-options";
+import { ReadNextReadPrevOptionsChecker } from "./check-read-next-read-prev-options";
+import { StartbrowseOptionsChecker } from "./check-startbrowse-options";
+import { AddSubeventOptionsChecker } from "./check-add-subevent-options";
+import { RemoveOptionsChecker } from "./check-remove-options";
+import { RequestOptionsChecker } from "./check-request-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -103,9 +109,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSIssueOptionsCheckUtility.RULE_INDEX,
     //     new CICSIssueOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSAddSubeventOptionsCheckUtility.RULE_INDEX,
-    //     new CICSAddSubeventOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      AddSubeventOptionsChecker.RULE_INDEX,
+      new AddSubeventOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       BuildOptionsChecker.RULE_INDEX,
       new BuildOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -159,9 +166,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSDeleteqDeqOptionsCheckUtility.RULE_INDEX_DEQ,
     //     new CICSDeleteqDeqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSReadNextReadPrevOptionsUtility.RULE_INDEX,
-    //     new CICSReadNextReadPrevOptionsUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      ReadNextReadPrevOptionsChecker.RULE_INDEX,
+      new ReadNextReadPrevOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       RewriteOptionsChecker.RULE_INDEX,
       new RewriteOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -308,9 +316,10 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSResetOptionsCheckUtility.RULE_INDEX,
     //     new CICSResetOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSStartbrowseOptionsCheckUtility.RULE_INDEX,
-    //     new CICSStartbrowseOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      StartbrowseOptionsChecker.RULE_INDEX,
+      new StartbrowseOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       PopHandleOptionsChecker.RULE_INDEX,
       new PopHandleOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -327,9 +336,10 @@ export class OptionsRegistry {
       PostOptionsChecker.RULE_INDEX,
       new PostOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSRemoveOptionsCheckUtility.RULE_INDEX,
-    //     new CICSRemoveOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      RemoveOptionsChecker.RULE_INDEX,
+      new RemoveOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       SpoolWriteOptionsChecker.RULE_INDEX,
       new SpoolWriteOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -364,12 +374,14 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSDocumentOptionsCheckUtility.RULE_INDEX,
     //     new CICSDocumentOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSRequestOptionsCheckUtility.RULE_INDEX,
-    //     new CICSRequestOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSReadOptionsCheckUtility.RULE_INDEX,
-    //     new CICSReadOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      RequestOptionsChecker.RULE_INDEX,
+      new RequestOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      ReadOptionsChecker.RULE_INDEX,
+      new ReadOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       TransformOptionsChecker.RULE_INDEX,
       new TransformOptionsChecker(errors, cicsCheckUtilityParameters),
