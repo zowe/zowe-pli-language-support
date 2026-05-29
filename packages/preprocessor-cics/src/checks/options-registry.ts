@@ -2,8 +2,9 @@ import { ParserRuleContext } from "antlr4ng";
 import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { AbendOptionsChecker } from "./check-abend-options";
 import { Diagnostic } from "preprocessor-api";
+import { AcquireOptionsChecker } from "./check-acquire-options";
 
-export class CICSOptionsCheckUtility {
+export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
   private readonly spOptionsMap = new Map<number, CICSOptionsCheckerBase>();
 
@@ -48,9 +49,9 @@ export class CICSOptionsCheckUtility {
     // this.optionsMap.set(
     //     CICSBuildOptionsCheckUtility.RULE_INDEX,
     //     new CICSBuildOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSAcquireOptionsCheckUtility.RULE_INDEX,
-    //     new CICSAcquireOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+        AcquireOptionsChecker.RULE_INDEX,
+        new AcquireOptionsChecker(errors, cicsCheckUtilityParameters));
     // this.optionsMap.set(
     //     CICSWaitOptionsCheckUtility.RULE_INDEX,
     //     new CICSWaitOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));

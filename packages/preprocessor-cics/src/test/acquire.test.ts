@@ -12,41 +12,53 @@ import { describe, expect, test } from "vitest";
 import { CICSPreprocessor } from "../engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ABEND", async () => {
+
+describe("CICS ACQUIRE", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ABEND ABCODE(12)");
+    const { diagnostics } = await cicsPreprocessor.execute("ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ABEND BLA");
+    const { diagnostics } = await cicsPreprocessor.execute("ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /extraneous input 'BLA' expecting <EOF>/,
     );
   });
 
-  test("Duplicated ABCODE", async () => {
+  test("Duplicated PROCESS", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
-      "ABEND ABCODE(12) ABCODE(34)",
+      "ACQUIRE PROCESS(ABC) PROCESS(DEF) PROCESSTYPE(XYZ)",
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Excessive options provided for: ABCODE/,
+      /Excessive options provided for: PROCESS/,
     );
   });
 
-  test("Duplicated CANCEL", async () => {
+  test("Duplicated PROCESSTYPE", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
-      "ABEND CANCEL CANCEL",
+      "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) PROCESSTYPE(DEF)",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].severity).toBe(Severity.Warning);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Excessive options provided for: CANCEL/,
+      /Excessive options provided for: PROCESSTYPE/,
+    );
+  });
+
+   test("Missing PROCESSTYPE", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ACQUIRE PROCESS(ABC)",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: PROCESSTYPE/,
     );
   });
 });

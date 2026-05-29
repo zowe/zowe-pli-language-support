@@ -4,20 +4,20 @@ import {
   CICSCheckUtilityParameters,
   CICSLiteralCheckOption,
 } from "../checks/base";
-import { CICSOptionsCheckUtility } from "../checks/check-options-base";
+import { OptionsRegistry  } from "../checks/options-registry";
 import { Diagnostic } from "preprocessor-api";
 
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   ParseTree[] | null
 > {
-  private readonly cicsOptionsCheckUtility: CICSOptionsCheckUtility;
+  private readonly cicsOptionsCheckUtility: OptionsRegistry;
   private readonly cicsOptionsCheckUtilityParams: CICSCheckUtilityParameters;
   public readonly errors: Diagnostic[] = [];
 
   constructor() {
     super();
     this.cicsOptionsCheckUtilityParams = this.getCheckParams();
-    this.cicsOptionsCheckUtility = new CICSOptionsCheckUtility(
+    this.cicsOptionsCheckUtility = new OptionsRegistry(
       this.errors,
       this.cicsOptionsCheckUtilityParams,
     );
