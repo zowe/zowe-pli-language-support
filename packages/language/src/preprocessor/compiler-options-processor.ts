@@ -127,8 +127,11 @@ export class CompilerOptionsProcessor {
 
     this.translator.postProcessCompilerOptions();
 
+    const result = this.translator.getResults();
+    result.options.ranges = ranges;
+
     return {
-      result: this.translator.getResults(),
+      result,
       text: newText,
       recompileFingerprint: this.translator.getRecompileFingerprint(),
     };

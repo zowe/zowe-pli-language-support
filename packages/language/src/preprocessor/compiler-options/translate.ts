@@ -110,6 +110,8 @@ export class CompilerOptionTranslator {
       macroOptions: this.translatorMacro.options as CompilerOptionsMacro,
       sqlOptions: this.translatorSQL.options as CompilerOptionsSQL,
       cicsOptions: this.translatorCICS.options as CompilerOptionsCICS,
+      // Preserved as-is; the processor may set the real ranges after translation.
+      ranges: this.result.options.ranges,
     };
     if (configuration?.source === CompilerOptionSource.SOURCE_FILE) {
       this.result.tokens.push(...input.tokens);

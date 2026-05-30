@@ -25,12 +25,17 @@ import {
 import { generateCompletionItems } from "./completion-generator";
 import { fuzzyMatch } from "../../utils/fuzzy-matcher";
 import { Token } from "../../parser/tokens";
+import { compilerOptionsCompletionRequest } from "./compiler-options-completion-request";
 
 export function completionRequest(
   unit: CompilationUnit,
   uri: URI,
   offset: number,
 ): CompletionItem[] {
+  const coItems = compilerOptionsCompletionRequest(unit, uri, offset);
+  if (coItems.length > 0) {
+    return coItems;
+  }
   const tokens = unit.services.files.getTokens(uri);
   if (!tokens) {
     return [];
