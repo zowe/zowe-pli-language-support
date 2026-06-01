@@ -31,7 +31,7 @@ import {
   CollectingIncludeVisitor,
 } from "./parsing";
 import {
-  ParseError,
+  Diagnostic,
   Preprocessor,
   SemanticsKind,
   Token,
@@ -105,7 +105,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
       // Add any remaining identifier tokens that were not matched in the token stream
       .concat(identifierTokens.slice(idIndex));
 
-    const diagnostics: ParseError[] = [];
+    const diagnostics: Diagnostic[] = [];
     diagnostics.push(...lexerErrors.errors);
     diagnostics.push(...parserErrors.errors);
     return {
