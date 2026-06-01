@@ -84,6 +84,10 @@ import { WSAEPROptionsChecker } from "./check-wsaepr-options";
 import { RetrieveOptionsChecker } from "./check-retrieve-options";
 import { DumpTransactionOptionsChecker } from "./check-dump-transaction-options";
 import { StartOptionsChecker } from "./check-start-options";
+import { DeleteOptionsChecker } from "./check-delete-options";
+import { IgnoreOptionsChecker } from "./check-ignore-options";
+import { HandleOptionsChecker } from "./check-handle-options";
+import { WSAContextOptionsChecker } from "./check-wsacontext-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -177,9 +181,10 @@ export class OptionsRegistry {
       EndBrowseOptionsChecker.RULE_INDEX,
       new EndBrowseOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSDeleteOptionsCheckUtility.RULE_INDEX,
-    //     new CICSDeleteOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      DeleteOptionsChecker.RULE_INDEX,
+      new DeleteOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     const deleteqDeqChecker = new DeleteqDeqOptionsChecker(
       errors,
       cicsCheckUtilityParameters,
@@ -244,9 +249,10 @@ export class OptionsRegistry {
       FormatTimeOptionsChecker.RULE_INDEX,
       new FormatTimeOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSHandleOptionsCheckUtility.RULE_INDEX,
-    //     new CICSHandleOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      HandleOptionsChecker.RULE_INDEX,
+      new HandleOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       DelayOptionsChecker.RULE_INDEX,
       new DelayOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -404,9 +410,10 @@ export class OptionsRegistry {
       StartbrOptionsChecker.RULE_INDEX,
       new StartbrOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSIgnoreOptionsCheckUtility.RULE_INDEX,
-    //     new CICSIgnoreOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      IgnoreOptionsChecker.RULE_INDEX,
+      new IgnoreOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSDocumentOptionsCheckUtility.RULE_INDEX,
     //     new CICSDocumentOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -438,9 +445,10 @@ export class OptionsRegistry {
       RouteOptionsChecker.RULE_INDEX,
       new RouteOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSWSAContextOptionsCheckUtility.RULE_INDEX,
-    //     new CICSWSAContextOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      WSAContextOptionsChecker.RULE_INDEX,
+      new WSAContextOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       ResetbrOptionsChecker.RULE_INDEX,
       new ResetbrOptionsChecker(errors, cicsCheckUtilityParameters),
