@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.88% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/9</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -128,10 +128,7 @@
 <a name='L63'></a><a href='#L63'>63</a>
 <a name='L64'></a><a href='#L64'>64</a>
 <a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L66'></a><a href='#L66'>66</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -162,24 +159,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1350x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1350x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1342x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1342x</span>
+<span class="cline-any cline-yes">1356x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -187,16 +167,30 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1423x</span>
-<span class="cline-any cline-yes">1423x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1353x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1418x</span>
-<span class="cline-any cline-yes">1418x</span>
-<span class="cline-any cline-yes">1418x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1353x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1434x</span>
+<span class="cline-any cline-yes">1434x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1428x</span>
+<span class="cline-any cline-yes">1428x</span>
+<span class="cline-any cline-yes">1428x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
@@ -214,10 +208,6 @@ import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { Statement } from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
-import {
-  CompilerOptions,
-  getDefaultCompilerOptions,
-} from "./compiler-options/options";
 import { InstructionGeneratorResult } from "./instruction-generator";
 &nbsp;
 interface CachedInstructions {
@@ -236,18 +226,19 @@ export interface FileInstructionResult {
 export class InstructionCache {
   private cache = new Map&lt;string, CachedInstructions&gt;();
 &nbsp;
-  private previousCompilerOptions = getDefaultCompilerOptions();
+  private previousRecompileFingerprint: string | undefined;
 &nbsp;
-  update(compilerOptions: CompilerOptions): void {
+  /**
+   * Updates the recompile fingerprint and clears the cache if it changed.
+   */
+  update(fingerprint: string): void {
     if (
-      compilerOptions.or !== this.previousCompilerOptions.or ||
-      compilerOptions.not !== this.previousCompilerOptions.not ||
-      compilerOptions.pp?.ppInclude?.value !==
-        this.previousCompilerOptions.pp?.ppInclude?.value
+      this.previousRecompileFingerprint !== undefined &amp;&amp;
+      this.previousRecompileFingerprint !== fingerprint
     ) {
       this.cache.clear();
     }
-    this.previousCompilerOptions = compilerOptions;
+    this.previousRecompileFingerprint = fingerprint;
   }
 &nbsp;
   async get(
@@ -258,7 +249,7 @@ export class InstructionCache {
     const key = uri.toString();
     if (this.cache.has(key)) {
       const cached = this.cache.get(key)!;
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (cached.text === text) {
+      if (cached.text === text) {
         return cached.instructions;
       }
     }
@@ -274,7 +265,7 @@ export class InstructionCache {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-27T14:27:55.910Z
+                at 2026-06-01T10:57:50.545Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -254,7 +254,25 @@
 <a name='L189'></a><a href='#L189'>189</a>
 <a name='L190'></a><a href='#L190'>190</a>
 <a name='L191'></a><a href='#L191'>191</a>
-<a name='L192'></a><a href='#L192'>192</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -278,16 +296,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1356x</span>
+<span class="cline-any cline-yes">1357x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -301,6 +325,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
@@ -310,6 +336,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -361,7 +391,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -473,41 +509,53 @@ const translator = new Translator&lt;CompilerOptions&gt;(() =&gt;
   getDefaultCompilerOptions(),
 );
 &nbsp;
-translator.rule(["CASE"], (option, options, _, configuration) =&gt; {
-  ensureArguments(option, 1, 1);
-  ensureToBeDefined(options.case);
-  const value = option.values[0];
-  ensureType(value, "plain");
-  options.case = {
-    case: ensureEnum(
-      value,
-      CompilerOptionsCodes.PPMacro.Case.InvalidParameter,
-      CompilerOptions.Case,
-    ),
-    explicitlySet:
-      configuration?.source !== undefined
-        ? configuration.source === CompilerOptionSource.SOURCE_FILE
-        : <span class="branch-1 cbranch-no" title="branch not covered" >false,</span>
-  };
-});
+translator.rule(
+  ["CASE"],
+  (option, options, _, configuration) =&gt; {
+    ensureArguments(option, 1, 1);
+    ensureToBeDefined(options.case);
+    const value = option.values[0];
+    ensureType(value, "plain");
+    options.case = {
+      case: ensureEnum(
+        value,
+        CompilerOptionsCodes.PPMacro.Case.InvalidParameter,
+        CompilerOptions.Case,
+      ),
+      explicitlySet:
+        configuration?.source !== undefined
+          ? configuration.source === CompilerOptionSource.SOURCE_FILE
+          : <span class="branch-1 cbranch-no" title="branch not covered" >false,</span>
+    };
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 &nbsp;
-translator.rule(["DBCS"], (option, options, acceptor) =&gt; {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "plain");
-  options.dbcs = ensureEnum(
-    value,
-    CompilerOptionsCodes.PPMacro.Dbcs.InvalidParameter,
-    CompilerOptions.Dbcs,
-  );
-  acceptor(
-    diagnosticFromCode(
-      CompilerOptionsCodes.OptionNotSupported,
-      option.token,
-      "DBCS",
-    ),
-  );
-});
+translator.rule(
+  ["DBCS"],
+  (option, options, acceptor) =&gt; {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plain");
+    options.dbcs = ensureEnum(
+      value,
+      CompilerOptionsCodes.PPMacro.Dbcs.InvalidParameter,
+      CompilerOptions.Dbcs,
+    );
+    acceptor(
+      diagnosticFromCode(
+        CompilerOptionsCodes.OptionNotSupported,
+        option.token,
+        "DBCS",
+      ),
+    );
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 &nbsp;
 translator.rule(["DEPRECATE"], (option, options) =&gt; {
   ensureArguments(option, 1);
@@ -551,13 +599,19 @@ translator.rule(["DEPRECATENEXT"], (option, options) =&gt; {
   }
 });
 &nbsp;
-translator.flag("eolComm", ["EOLCOMM"], ["NOEOLCOMM"], (option) =&gt; {
-  throw diagnosticFromCode(
-    CompilerOptionsCodes.OptionNotSupported,
-    option.token,
-    "EOLCOMM",
-  );
-});
+translator.flag(
+  "eolComm",
+  ["EOLCOMM"],
+  ["NOEOLCOMM"],
+  (option) =&gt; {
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.OptionNotSupported,
+      option.token,
+      "EOLCOMM",
+    );
+  },
+  { recompile: true },
+);
 &nbsp;
 translator.rule(["FIXED"], (option, options) =&gt; {
   ensureArguments(option, 1, 1);
@@ -643,7 +697,7 @@ export function getTranslator(): Translator&lt;CompilerOptions&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-27T14:27:55.910Z
+                at 2026-06-01T10:57:50.545Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
