@@ -190,4 +190,30 @@ describe("marginIndicator", () => {
       { uri: uri.toString(), m: 15, n: 85 },
     ]);
   });
+
+  test("does not send notification for virtual files", async () => {
+    const sendNotification = vitest.fn();
+    const mockConnection = {
+      sendNotification,
+    } as unknown as Connection;
+
+    const uri = UriUtils.toUri(
+      'git:/test/test.pli.git?{"path":"/test/test.pli","ref":""}',
+    );
+    const inputText = `*PROCESS MARGINS(10, 80);
+      DCL A fixed bin(31);`;
+
+    const unit = await parse(inputText, { uri });
+
+    // Trigger the revalidation which calls marginIndicator
+    unit.requestCaches.revalidateAll({ connection: mockConnection, unit });
+
+    // Filter calls to only check MarginIndicatorNotification
+    const marginCalls = sendNotification.mock.calls.filter(
+      (call: any[]) => call[0] === MarginIndicatorNotification,
+    );
+
+    // Should NOT send notification for virtual git: URI
+    expect(marginCalls).toHaveLength(0);
+  });
 });

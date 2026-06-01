@@ -15,6 +15,7 @@ import { CstNodeKind } from "../syntax-tree/cst";
 import { isEqual } from "lodash-es";
 import { SyntaxKind } from "../syntax-tree/ast";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { isVirtualFile } from "../utils/uri";
 
 export interface SkippedCodeNotificationParams {
   uri: string;
@@ -32,6 +33,13 @@ export function skippedCode(
   connection: Connection,
   compilationUnit: CompilationUnit,
 ) {
+  const uriString = compilationUnit.uri.toString();
+
+  // Do not send skipped code notifications for virtual files
+  if (isVirtualFile(uriString)) {
+    return;
+  }
+
   const textDocument = compilationUnit.services.files.getDocument(
     compilationUnit.uri,
   );
@@ -47,7 +55,7 @@ export function skippedCode(
   ) {
     compilationUnit.requestCaches.set("skippedCodeRanges", ranges);
     connection.sendNotification(SkippedCodeNotification, {
-      uri: compilationUnit.uri.toString(),
+      uri: uriString,
       ranges,
     });
   }
