@@ -77,6 +77,13 @@ import { WriteqOptionsChecker } from "./check-writeq-options";
 import { SpoolOpenOptionsChecker } from "./check-spoolopen-options";
 import { WriteOptionsChecker } from "./check-write-options";
 import { PutContainerOptionsChecker } from "./check-put-container-options";
+import { GetOptionsChecker } from "./check-get-options";
+import { ResetOptionsChecker } from "./check-reset-options";
+import { DeleteqDeqOptionsChecker } from "./check-deleteq-deq-options";
+import { WSAEPROptionsChecker } from "./check-wsaepr-options";
+import { RetrieveOptionsChecker } from "./check-retrieve-options";
+import { DumpTransactionOptionsChecker } from "./check-dump-transaction-options";
+import { StartOptionsChecker } from "./check-start-options";
 
 export class OptionsRegistry {
   private readonly optionsMap = new Map<number, CICSOptionsCheckerBase>();
@@ -173,12 +180,18 @@ export class OptionsRegistry {
     // this.optionsMap.set(
     //     CICSDeleteOptionsCheckUtility.RULE_INDEX,
     //     new CICSDeleteOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSDeleteqDeqOptionsCheckUtility.RULE_INDEX_DELETEQ,
-    //     new CICSDeleteqDeqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSDeleteqDeqOptionsCheckUtility.RULE_INDEX_DEQ,
-    //     new CICSDeleteqDeqOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    const deleteqDeqChecker = new DeleteqDeqOptionsChecker(
+      errors,
+      cicsCheckUtilityParameters,
+    );
+    this.optionsMap.set(
+      DeleteqDeqOptionsChecker.RULE_INDEX_DELETEQ,
+      deleteqDeqChecker,
+    );
+    this.optionsMap.set(
+      DeleteqDeqOptionsChecker.RULE_INDEX_DEQ,
+      deleteqDeqChecker,
+    );
     this.optionsMap.set(
       ReadNextReadPrevOptionsChecker.RULE_INDEX,
       new ReadNextReadPrevOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -203,12 +216,14 @@ export class OptionsRegistry {
       EnterTracenumOptionsChecker.RULE_INDEX,
       new EnterTracenumOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSDumpTransactionOptionsCheckUtility.RULE_INDEX,
-    //     new CICSDumpTransactionOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
-    // this.optionsMap.set(
-    //     CICSGetOptionsCheckUtility.RULE_INDEX,
-    //     new CICSGetOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      DumpTransactionOptionsChecker.RULE_INDEX,
+      new DumpTransactionOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
+    this.optionsMap.set(
+      GetOptionsChecker.RULE_INDEX,
+      new GetOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       FreeMainOptionsChecker.RULE_INDEX,
       new FreeMainOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -251,16 +266,18 @@ export class OptionsRegistry {
       WriteOptionsChecker.RULE_INDEX,
       new WriteOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSRetrieveOptionsCheckUtility.RULE_INDEX,
-    //     new CICSRetrieveOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      RetrieveOptionsChecker.RULE_INDEX,
+      new RetrieveOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       InvokeOptionsChecker.RULE_INDEX,
       new InvokeOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSWSAEPRUtility.RULE_INDEX,
-    //     new CICSWSAEPRUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      WSAEPROptionsChecker.RULE_INDEX,
+      new WSAEPROptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     // this.optionsMap.set(
     //     CICSSysSetOptionsCheckUtility.RULE_INDEX,
     //     new CICSSysSetOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
@@ -331,9 +348,10 @@ export class OptionsRegistry {
       PointOptionsChecker.RULE_INDEX,
       new PointOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSResetOptionsCheckUtility.RULE_INDEX,
-    //     new CICSResetOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      ResetOptionsChecker.RULE_INDEX,
+      new ResetOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       StartbrowseOptionsChecker.RULE_INDEX,
       new StartbrowseOptionsChecker(errors, cicsCheckUtilityParameters),
@@ -431,9 +449,10 @@ export class OptionsRegistry {
       FetchOptionsChecker.RULE_INDEX,
       new FetchOptionsChecker(errors, cicsCheckUtilityParameters),
     );
-    // this.optionsMap.set(
-    //     CICSStartOptionsCheckUtility.RULE_INDEX,
-    //     new CICSStartOptionsCheckUtility(context, errors, cicsCheckUtilityParameters));
+    this.optionsMap.set(
+      StartOptionsChecker.RULE_INDEX,
+      new StartOptionsChecker(errors, cicsCheckUtilityParameters),
+    );
     this.optionsMap.set(
       FreeOptionsChecker.RULE_INDEX,
       new FreeOptionsChecker(errors, cicsCheckUtilityParameters),
