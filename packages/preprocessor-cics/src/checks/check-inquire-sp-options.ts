@@ -59,49 +59,51 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
   public static readonly RULE_INDEX =
     CICSParser.RULE_cics_inquire_system_programming;
 
-  private static readonly COMMON_INQUIRE_BROWSE_RULES = new Map<number, number>([
-    [CICSParser.RULE_cics_inquire_atomservice, CICSParser.ATOMSERVICE],
-    [CICSParser.RULE_cics_inquire_autinstmodel, CICSParser.AUTINSTMODEL],
-    [CICSParser.RULE_cics_inquire_brfacility, CICSParser.BRFACILITY],
-    [CICSParser.RULE_cics_inquire_connection, CICSParser.CONNECTION],
-    [CICSParser.RULE_cics_inquire_cfdtpool, CICSParser.CFDTPOOL],
-    [CICSParser.RULE_cics_inquire_db2entry, CICSParser.DB2ENTRY],
-    [CICSParser.RULE_cics_inquire_db2tran, CICSParser.DB2TRAN],
-    [CICSParser.RULE_cics_inquire_doctemplate, CICSParser.DOCTEMPLATE],
-    [CICSParser.RULE_cics_inquire_dsname, CICSParser.DSNAME],
-    [CICSParser.RULE_cics_inquire_enqmodel, CICSParser.ENQMODEL],
-    [CICSParser.RULE_cics_inquire_epadapter, CICSParser.EPADAPTER],
-    [CICSParser.RULE_cics_inquire_epadapterset, CICSParser.EPADAPTERSET],
-    [CICSParser.RULE_cics_inquire_eventbinding, CICSParser.EVENTBINDING],
-    [CICSParser.RULE_cics_inquire_exci, CICSParser.EXCI],
-    [CICSParser.RULE_cics_inquire_file, CICSParser.FILE],
-    [CICSParser.RULE_cics_inquire_host, CICSParser.HOST],
-    [CICSParser.RULE_cics_inquire_ipconn, CICSParser.IPCONN],
-    [CICSParser.RULE_cics_inquire_journalmodel, CICSParser.JOURNALMODEL],
-    [CICSParser.RULE_cics_inquire_journalname, CICSParser.JOURNALNAME],
-    [CICSParser.RULE_cics_inquire_jvmserver, CICSParser.JVMSERVER],
-    [CICSParser.RULE_cics_inquire_library, CICSParser.LIBRARY],
-    [CICSParser.RULE_cics_inquire_mqmonitor, CICSParser.MQMONITOR],
-    [CICSParser.RULE_cics_inquire_nodejsapp, CICSParser.NODEJSAPP],
-    [CICSParser.RULE_cics_inquire_partner, CICSParser.PARTNER],
-    [CICSParser.RULE_cics_inquire_pipeline, CICSParser.PIPELINE],
-    [CICSParser.RULE_cics_inquire_policy, CICSParser.POLICY],
-    [CICSParser.RULE_cics_inquire_processtype, CICSParser.PROCESSTYPE],
-    [CICSParser.RULE_cics_inquire_profile, CICSParser.PROFILE],
-    [CICSParser.RULE_cics_inquire_secrecording, CICSParser.SECRECORDING],
-    [CICSParser.RULE_cics_inquire_streamname, CICSParser.STREAMNAME],
-    [CICSParser.RULE_cics_inquire_sysdumpcode, CICSParser.SYSDUMPCODE],
-    [CICSParser.RULE_cics_inquire_tcpipservice, CICSParser.TCPIPSERVICE],
-    [CICSParser.RULE_cics_inquire_tdqueue, CICSParser.TDQUEUE],
-    [CICSParser.RULE_cics_inquire_trandumpcode, CICSParser.TRANDUMPCODE],
-    [CICSParser.RULE_cics_inquire_tsmodel, CICSParser.TSMODEL],
-    [CICSParser.RULE_cics_inquire_tspool, CICSParser.TSPOOL],
-    [CICSParser.RULE_cics_inquire_uow, CICSParser.UOW],
-    [CICSParser.RULE_cics_inquire_uowlink, CICSParser.UOWLINK],
-    [CICSParser.RULE_cics_inquire_urimap, CICSParser.URIMAP],
-    [CICSParser.RULE_cics_inquire_webservice, CICSParser.WEBSERVICE],
-    [CICSParser.RULE_cics_inquire_xmltransform, CICSParser.XMLTRANSFORM],
-  ]);
+  private static readonly COMMON_INQUIRE_BROWSE_RULES = new Map<number, number>(
+    [
+      [CICSParser.RULE_cics_inquire_atomservice, CICSParser.ATOMSERVICE],
+      [CICSParser.RULE_cics_inquire_autinstmodel, CICSParser.AUTINSTMODEL],
+      [CICSParser.RULE_cics_inquire_brfacility, CICSParser.BRFACILITY],
+      [CICSParser.RULE_cics_inquire_connection, CICSParser.CONNECTION],
+      [CICSParser.RULE_cics_inquire_cfdtpool, CICSParser.CFDTPOOL],
+      [CICSParser.RULE_cics_inquire_db2entry, CICSParser.DB2ENTRY],
+      [CICSParser.RULE_cics_inquire_db2tran, CICSParser.DB2TRAN],
+      [CICSParser.RULE_cics_inquire_doctemplate, CICSParser.DOCTEMPLATE],
+      [CICSParser.RULE_cics_inquire_dsname, CICSParser.DSNAME],
+      [CICSParser.RULE_cics_inquire_enqmodel, CICSParser.ENQMODEL],
+      [CICSParser.RULE_cics_inquire_epadapter, CICSParser.EPADAPTER],
+      [CICSParser.RULE_cics_inquire_epadapterset, CICSParser.EPADAPTERSET],
+      [CICSParser.RULE_cics_inquire_eventbinding, CICSParser.EVENTBINDING],
+      [CICSParser.RULE_cics_inquire_exci, CICSParser.EXCI],
+      [CICSParser.RULE_cics_inquire_file, CICSParser.FILE],
+      [CICSParser.RULE_cics_inquire_host, CICSParser.HOST],
+      [CICSParser.RULE_cics_inquire_ipconn, CICSParser.IPCONN],
+      [CICSParser.RULE_cics_inquire_journalmodel, CICSParser.JOURNALMODEL],
+      [CICSParser.RULE_cics_inquire_journalname, CICSParser.JOURNALNAME],
+      [CICSParser.RULE_cics_inquire_jvmserver, CICSParser.JVMSERVER],
+      [CICSParser.RULE_cics_inquire_library, CICSParser.LIBRARY],
+      [CICSParser.RULE_cics_inquire_mqmonitor, CICSParser.MQMONITOR],
+      [CICSParser.RULE_cics_inquire_nodejsapp, CICSParser.NODEJSAPP],
+      [CICSParser.RULE_cics_inquire_partner, CICSParser.PARTNER],
+      [CICSParser.RULE_cics_inquire_pipeline, CICSParser.PIPELINE],
+      [CICSParser.RULE_cics_inquire_policy, CICSParser.POLICY],
+      [CICSParser.RULE_cics_inquire_processtype, CICSParser.PROCESSTYPE],
+      [CICSParser.RULE_cics_inquire_profile, CICSParser.PROFILE],
+      [CICSParser.RULE_cics_inquire_secrecording, CICSParser.SECRECORDING],
+      [CICSParser.RULE_cics_inquire_streamname, CICSParser.STREAMNAME],
+      [CICSParser.RULE_cics_inquire_sysdumpcode, CICSParser.SYSDUMPCODE],
+      [CICSParser.RULE_cics_inquire_tcpipservice, CICSParser.TCPIPSERVICE],
+      [CICSParser.RULE_cics_inquire_tdqueue, CICSParser.TDQUEUE],
+      [CICSParser.RULE_cics_inquire_trandumpcode, CICSParser.TRANDUMPCODE],
+      [CICSParser.RULE_cics_inquire_tsmodel, CICSParser.TSMODEL],
+      [CICSParser.RULE_cics_inquire_tspool, CICSParser.TSPOOL],
+      [CICSParser.RULE_cics_inquire_uow, CICSParser.UOW],
+      [CICSParser.RULE_cics_inquire_uowlink, CICSParser.UOWLINK],
+      [CICSParser.RULE_cics_inquire_urimap, CICSParser.URIMAP],
+      [CICSParser.RULE_cics_inquire_webservice, CICSParser.WEBSERVICE],
+      [CICSParser.RULE_cics_inquire_xmltransform, CICSParser.XMLTRANSFORM],
+    ],
+  );
 
   private static readonly DUPLICATE_CHECK_OPTIONS = new Map<number, Severity>([
     [CICSLexer.ABENDCODE, Severity.Error],
@@ -1103,7 +1105,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
   public checkOptions<E extends ParserRuleContext>(ctx: E): void {
     switch (ctx.ruleIndex) {
       case CICSParser.RULE_cics_inquire_association_list: {
-        const listContext = ctx as unknown as Cics_inquire_association_listContext;
+        const listContext =
+          ctx as unknown as Cics_inquire_association_listContext;
         this.checkHasMandatoryOptions(listContext.LIST(), ctx, "LIST");
         this.checkHasMandatoryOptions(listContext.LISTSIZE(), ctx, "LISTSIZE");
         break;
@@ -1111,13 +1114,18 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
       case CICSParser.RULE_cics_inquire_bundle: {
         const bundleContext = ctx as unknown as Cics_inquire_bundleContext;
         this.checkBrowseMutuallyExclusive(bundleContext);
-        if (bundleContext.START().length !== 0 || bundleContext.END().length !== 0) {
+        if (
+          bundleContext.START().length !== 0 ||
+          bundleContext.END().length !== 0
+        ) {
           this.checkBrowsingInvalidOptions(bundleContext, CICSParser.BUNDLE);
-        } else this.checkStatementHasParameter(bundleContext, CICSParser.BUNDLE);
+        } else
+          this.checkStatementHasParameter(bundleContext, CICSParser.BUNDLE);
         break;
       }
       case CICSParser.RULE_cics_inquire_bundlepart: {
-        const bundlepartContext = ctx as unknown as Cics_inquire_bundlepartContext;
+        const bundlepartContext =
+          ctx as unknown as Cics_inquire_bundlepartContext;
         this.checkHasExactlyOneOption(
           "START or END or NEXT",
           bundlepartContext,
@@ -1157,7 +1165,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_capdatapred: {
-        const capdatapredContext = ctx as unknown as Cics_inquire_capdatapredContext;
+        const capdatapredContext =
+          ctx as unknown as Cics_inquire_capdatapredContext;
         this.checkHasExactlyOneOption(
           "START or END or NEXT",
           capdatapredContext,
@@ -1209,7 +1218,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_capinfosrce: {
-        const capinfosrceContext = ctx as unknown as Cics_inquire_capinfosrceContext;
+        const capinfosrceContext =
+          ctx as unknown as Cics_inquire_capinfosrceContext;
         this.checkHasExactlyOneOption(
           "START or END or NEXT",
           capinfosrceContext,
@@ -1261,7 +1271,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_capoptpred: {
-        const capoptpredContext = ctx as unknown as Cics_inquire_capoptpredContext;
+        const capoptpredContext =
+          ctx as unknown as Cics_inquire_capoptpredContext;
         this.checkHasExactlyOneOption(
           "START or END or NEXT",
           capoptpredContext,
@@ -1313,7 +1324,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_capturespec: {
-        const capturespecContext = ctx as unknown as Cics_inquire_capturespecContext;
+        const capturespecContext =
+          ctx as unknown as Cics_inquire_capturespecContext;
         this.checkBrowseMutuallyExclusive(capturespecContext);
         if (
           capturespecContext.START().length !== 0 ||
@@ -1347,7 +1359,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_deletshipped: {
-        const deletshippedContext = ctx as unknown as Cics_inquire_deletshippedContext;
+        const deletshippedContext =
+          ctx as unknown as Cics_inquire_deletshippedContext;
         this.checkHasMutuallyExclusiveOptions(
           "IDLEHRS with IDLE",
           deletshippedContext.IDLE(),
@@ -1433,7 +1446,11 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
           );
         }
         if (enqContext.RESOURCE().length !== 0)
-          this.checkHasMandatoryOptions(enqContext.RESLEN(), ctx, "RESLEN with RESOURCE");
+          this.checkHasMandatoryOptions(
+            enqContext.RESLEN(),
+            ctx,
+            "RESLEN with RESOURCE",
+          );
         else
           this.checkHasIllegalOptions(
             enqContext.RESLEN(),
@@ -1442,7 +1459,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_epadaptinset: {
-        const epadaptinsetContext = ctx as unknown as Cics_inquire_epadaptinsetContext;
+        const epadaptinsetContext =
+          ctx as unknown as Cics_inquire_epadaptinsetContext;
         this.checkBrowseMutuallyExclusive(epadaptinsetContext);
         if (
           epadaptinsetContext.START().length !== 0 ||
@@ -1477,14 +1495,18 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_exitprogram: {
-        const exitprogramContext = ctx as unknown as Cics_inquire_exitprogramContext;
+        const exitprogramContext =
+          ctx as unknown as Cics_inquire_exitprogramContext;
         this.checkBrowseMutuallyExclusive(exitprogramContext);
         if (
           exitprogramContext.START().length !== 0 ||
           exitprogramContext.END().length !== 0
         ) {
           if (exitprogramContext.END().length !== 0)
-            this.checkHasIllegalOptions(exitprogramContext.EXIT(), "EXIT with END");
+            this.checkHasIllegalOptions(
+              exitprogramContext.EXIT(),
+              "EXIT with END",
+            );
           this.checkBrowsingInvalidOptions(
             exitprogramContext,
             CICSParser.EXITPROGRAM,
@@ -1507,19 +1529,26 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_featurekey: {
-        const featurekeyContext = ctx as unknown as Cics_inquire_featurekeyContext;
+        const featurekeyContext =
+          ctx as unknown as Cics_inquire_featurekeyContext;
         this.checkBrowseMutuallyExclusive(featurekeyContext);
         if (
           featurekeyContext.START().length !== 0 ||
           featurekeyContext.END().length !== 0
         ) {
-          this.checkBrowsingInvalidOptions(featurekeyContext, CICSParser.FEATUREKEY);
+          this.checkBrowsingInvalidOptions(
+            featurekeyContext,
+            CICSParser.FEATUREKEY,
+          );
           this.checkBrowsingHasNotParameter(
             featurekeyContext,
             CICSParser.FEATUREKEY,
           );
         } else {
-          this.checkStatementHasParameter(featurekeyContext, CICSParser.FEATUREKEY);
+          this.checkStatementHasParameter(
+            featurekeyContext,
+            CICSParser.FEATUREKEY,
+          );
           this.checkHasMandatoryOptions(
             featurekeyContext.VALUE(),
             featurekeyContext,
@@ -1611,7 +1640,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_jvmendpoint: {
-        const jvmendpointContext = ctx as unknown as Cics_inquire_jvmendpointContext;
+        const jvmendpointContext =
+          ctx as unknown as Cics_inquire_jvmendpointContext;
         this.checkBrowseMutuallyExclusive(jvmendpointContext);
         if (
           jvmendpointContext.START().length !== 0 ||
@@ -1660,8 +1690,12 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             CICSParser.MODENAME,
             CICSParser.CONNECTION,
           );
-          this.checkBrowsingHasNotParameter(modenameContext, CICSParser.MODENAME);
-        } else this.checkStatementHasParameter(modenameContext, CICSParser.MODENAME);
+          this.checkBrowsingHasNotParameter(
+            modenameContext,
+            CICSParser.MODENAME,
+          );
+        } else
+          this.checkStatementHasParameter(modenameContext, CICSParser.MODENAME);
         break;
       }
       case CICSParser.RULE_cics_inquire_mvstcb: {
@@ -1673,7 +1707,10 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
           mvstcbContext.END(),
           mvstcbContext.NEXT(),
         );
-        if (mvstcbContext.START().length !== 0 || mvstcbContext.END().length !== 0) {
+        if (
+          mvstcbContext.START().length !== 0 ||
+          mvstcbContext.END().length !== 0
+        ) {
           this.checkBrowsingInvalidOptions(mvstcbContext, CICSParser.MVSTCB);
           this.checkBrowsingHasNotParameter(mvstcbContext, CICSParser.MVSTCB);
         } else if (mvstcbContext.NEXT().length !== 0) {
@@ -1695,11 +1732,13 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
           );
           this.checkBrowsingHasNotParameter(netnameContext, CICSParser.NETNAME);
           this.checkStatementHasParameter(netnameContext, CICSParser.TERMINAL);
-        } else this.checkStatementHasParameter(netnameContext, CICSParser.NETNAME);
+        } else
+          this.checkStatementHasParameter(netnameContext, CICSParser.NETNAME);
         break;
       }
       case CICSParser.RULE_cics_inquire_osgibundle: {
-        const osgibundleContext = ctx as unknown as Cics_inquire_osgibundleContext;
+        const osgibundleContext =
+          ctx as unknown as Cics_inquire_osgibundleContext;
         this.checkBrowseMutuallyExclusive(osgibundleContext);
         if (
           osgibundleContext.START().length !== 0 ||
@@ -1732,11 +1771,15 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             CICSParser.OSGIBUNDLE,
           );
         } else
-          this.checkStatementHasParameter(osgibundleContext, CICSParser.OSGIBUNDLE);
+          this.checkStatementHasParameter(
+            osgibundleContext,
+            CICSParser.OSGIBUNDLE,
+          );
         break;
       }
       case CICSParser.RULE_cics_inquire_osgiservice: {
-        const osgiserviceContext = ctx as unknown as Cics_inquire_osgiserviceContext;
+        const osgiserviceContext =
+          ctx as unknown as Cics_inquire_osgiserviceContext;
         this.checkBrowseMutuallyExclusive(osgiserviceContext);
         if (
           osgiserviceContext.START().length !== 0 ||
@@ -1771,7 +1814,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_policyrule: {
-        const policyruleContext = ctx as unknown as Cics_inquire_policyruleContext;
+        const policyruleContext =
+          ctx as unknown as Cics_inquire_policyruleContext;
         this.checkBrowseMutuallyExclusive(policyruleContext);
         if (
           policyruleContext.START().length !== 0 ||
@@ -1799,7 +1843,10 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             CICSParser.POLICYRULE,
           );
         } else
-          this.checkStatementHasParameter(policyruleContext, CICSParser.POLICYRULE);
+          this.checkStatementHasParameter(
+            policyruleContext,
+            CICSParser.POLICYRULE,
+          );
         break;
       }
       case CICSParser.RULE_cics_inquire_program: {
@@ -1821,7 +1868,11 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
               CICSParser.APPLMICROVER,
               CICSParser.PLATFORM,
             );
-          else this.checkBrowsingInvalidOptions(programContext, CICSParser.PROGRAM);
+          else
+            this.checkBrowsingInvalidOptions(
+              programContext,
+              CICSParser.PROGRAM,
+            );
           this.checkBrowsingHasNotParameter(programContext, CICSParser.PROGRAM);
         } else
           this.checkStatementHasParameter(
@@ -1875,13 +1926,19 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
       case CICSParser.RULE_cics_inquire_reqid: {
         const reqidContext = ctx as unknown as Cics_inquire_reqidContext;
         this.checkBrowseMutuallyExclusive(reqidContext);
-        if (reqidContext.START().length !== 0 || reqidContext.END().length !== 0) {
+        if (
+          reqidContext.START().length !== 0 ||
+          reqidContext.END().length !== 0
+        ) {
           this.checkBrowsingInvalidOptions(reqidContext, CICSParser.REQID);
           this.checkBrowsingHasNotParameter(reqidContext, CICSParser.REQID);
         } else {
           this.checkStatementHasParameter(reqidContext, CICSParser.REQID);
           if (reqidContext.SET().length === 0) {
-            this.checkHasIllegalOptions(reqidContext.LENGTH(), "LENGTH without SET");
+            this.checkHasIllegalOptions(
+              reqidContext.LENGTH(),
+              "LENGTH without SET",
+            );
             this.checkHasIllegalOptions(
               reqidContext.FMHSTATUS(),
               "FMHSTATUS without SET",
@@ -1899,7 +1956,10 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             reqidContext.AFTER(),
           );
           if (reqidContext.INTERVAL().length !== 0) {
-            this.checkHasIllegalOptions(reqidContext.HOURS(), "HOURS with INTERVAL");
+            this.checkHasIllegalOptions(
+              reqidContext.HOURS(),
+              "HOURS with INTERVAL",
+            );
             this.checkHasIllegalOptions(
               reqidContext.MINUTES(),
               "MINUTES with INTERVAL",
@@ -1948,7 +2008,10 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             storageContext.LENGTHLIST(),
             "LENGTHLIST with ADDRESS",
           );
-          this.checkHasIllegalOptions(storageContext.TASK(), "TASK with ADDRESS");
+          this.checkHasIllegalOptions(
+            storageContext.TASK(),
+            "TASK with ADDRESS",
+          );
         } else if (storageContext.NUMELEMENTS().length !== 0) {
           this.checkHasIllegalOptions(
             storageContext.ELEMENT(),
@@ -2006,7 +2069,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             this.checkHasIllegalOptions(subpoolContext.AT(), "AT with END");
           this.checkBrowsingInvalidOptions(subpoolContext, CICSParser.SUBPOOL);
           this.checkBrowsingHasNotParameter(subpoolContext, CICSParser.SUBPOOL);
-        } else this.checkStatementHasParameter(subpoolContext, CICSParser.SUBPOOL);
+        } else
+          this.checkStatementHasParameter(subpoolContext, CICSParser.SUBPOOL);
         if (subpoolContext.NEXT().length !== 0)
           this.checkHasIllegalOptions(subpoolContext.AT(), "AT with NEXT");
         break;
@@ -2027,7 +2091,11 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
       }
       case CICSParser.RULE_cics_inquire_task_list: {
         const taskListContext = ctx as unknown as Cics_inquire_task_listContext;
-        this.checkHasMandatoryOptions(taskListContext.LIST(), taskListContext, "LIST");
+        this.checkHasMandatoryOptions(
+          taskListContext.LIST(),
+          taskListContext,
+          "LIST",
+        );
         this.checkHasMandatoryOptions(
           taskListContext.LISTSIZE(),
           taskListContext,
@@ -2053,13 +2121,18 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
             CICSParser.TERMINAL,
             CICSParser.NETNAME,
           );
-          this.checkBrowsingHasNotParameter(terminalContext, CICSParser.TERMINAL);
+          this.checkBrowsingHasNotParameter(
+            terminalContext,
+            CICSParser.TERMINAL,
+          );
           this.checkStatementHasParameter(terminalContext, CICSParser.NETNAME);
-        } else this.checkStatementHasParameter(terminalContext, CICSParser.TERMINAL);
+        } else
+          this.checkStatementHasParameter(terminalContext, CICSParser.TERMINAL);
         break;
       }
       case CICSParser.RULE_cics_inquire_tracetype: {
-        const tracetypeContext = ctx as unknown as Cics_inquire_tracetypeContext;
+        const tracetypeContext =
+          ctx as unknown as Cics_inquire_tracetypeContext;
         this.checkCompIDMutuallyExclusive(tracetypeContext);
         this.checkHasExactlyOneOption(
           "FLAGSET or SPECIAL or STANDARD",
@@ -2071,7 +2144,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_tranclass: {
-        const tranclassContext = ctx as unknown as Cics_inquire_tranclassContext;
+        const tranclassContext =
+          ctx as unknown as Cics_inquire_tranclassContext;
         this.checkBrowseMutuallyExclusive(tranclassContext);
         if (
           tranclassContext.START().length !== 0 ||
@@ -2079,16 +2153,26 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         ) {
           if (tranclassContext.END().length !== 0)
             this.checkHasIllegalOptions(tranclassContext.AT(), "AT with END");
-          this.checkBrowsingInvalidOptions(tranclassContext, CICSParser.TRANCLASS);
-          this.checkBrowsingHasNotParameter(tranclassContext, CICSParser.TRANCLASS);
+          this.checkBrowsingInvalidOptions(
+            tranclassContext,
+            CICSParser.TRANCLASS,
+          );
+          this.checkBrowsingHasNotParameter(
+            tranclassContext,
+            CICSParser.TRANCLASS,
+          );
         } else
-          this.checkStatementHasParameter(tranclassContext, CICSParser.TRANCLASS);
+          this.checkStatementHasParameter(
+            tranclassContext,
+            CICSParser.TRANCLASS,
+          );
         if (tranclassContext.NEXT().length !== 0)
           this.checkHasIllegalOptions(tranclassContext.AT(), "AT with NEXT");
         break;
       }
       case CICSParser.RULE_cics_inquire_transaction: {
-        const transactionContext = ctx as unknown as Cics_inquire_transactionContext;
+        const transactionContext =
+          ctx as unknown as Cics_inquire_transactionContext;
         this.checkBrowsingCommon(transactionContext, CICSParser.TRANSACTION);
         if (transactionContext.NEXT().length !== 0)
           this.checkHasIllegalOptions(transactionContext.AT(), "AT with NEXT");
@@ -2136,7 +2220,8 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       case CICSParser.RULE_cics_inquire_uowdsnfail: {
-        const uowdsnfailContext = ctx as unknown as Cics_inquire_uowdsnfailContext;
+        const uowdsnfailContext =
+          ctx as unknown as Cics_inquire_uowdsnfailContext;
         this.checkHasExactlyOneOption(
           "START or END or NEXT",
           uowdsnfailContext,
@@ -2148,7 +2233,10 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
           uowdsnfailContext.START().length !== 0 ||
           uowdsnfailContext.END().length !== 0
         ) {
-          this.checkBrowsingInvalidOptions(uowdsnfailContext, CICSParser.UOWDSNFAIL);
+          this.checkBrowsingInvalidOptions(
+            uowdsnfailContext,
+            CICSParser.UOWDSNFAIL,
+          );
         }
         break;
       }
@@ -2184,7 +2272,11 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
           );
         }
         if (uowenqContext.RESOURCE().length !== 0)
-          this.checkHasMandatoryOptions(uowenqContext.RESLEN(), ctx, "RESLEN with RESOURCE");
+          this.checkHasMandatoryOptions(
+            uowenqContext.RESLEN(),
+            ctx,
+            "RESLEN with RESOURCE",
+          );
         else
           this.checkHasIllegalOptions(
             uowenqContext.RESLEN(),
@@ -2214,9 +2306,10 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
         break;
       }
       default: {
-        const ruleToken = InquireSpOptionsChecker.COMMON_INQUIRE_BROWSE_RULES.get(
-          ctx.ruleIndex,
-        );
+        const ruleToken =
+          InquireSpOptionsChecker.COMMON_INQUIRE_BROWSE_RULES.get(
+            ctx.ruleIndex,
+          );
         if (ruleToken != null) this.checkBrowsingCommon(ctx, ruleToken);
         break;
       }
@@ -2230,57 +2323,233 @@ export class InquireSpOptionsChecker extends CICSOptionsCheckerBase {
    * @param ctx Context Including COMPID identifiers
    */
   public checkCompIDMutuallyExclusive(ctx: Cics_inquire_tracetypeContext) {
-    this.checkHasMutuallyExclusiveOptions("AP and APPLICATION", ctx.AP(), ctx.APPLICATION());
-    this.checkHasMutuallyExclusiveOptions("AS and ASYNCSERVICE", ctx.AS(), ctx.ASYNCSERVICE());
-    this.checkHasMutuallyExclusiveOptions("BA and BUSAPPMGR", ctx.BA(), ctx.BUSAPPMGR());
-    this.checkHasMutuallyExclusiveOptions("BR and BRIDGE", ctx.BR(), ctx.BRIDGE());
+    this.checkHasMutuallyExclusiveOptions(
+      "AP and APPLICATION",
+      ctx.AP(),
+      ctx.APPLICATION(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "AS and ASYNCSERVICE",
+      ctx.AS(),
+      ctx.ASYNCSERVICE(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "BA and BUSAPPMGR",
+      ctx.BA(),
+      ctx.BUSAPPMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "BR and BRIDGE",
+      ctx.BR(),
+      ctx.BRIDGE(),
+    );
     this.checkHasMutuallyExclusiveOptions("CP and CPI", ctx.CP(), ctx.CPI());
-    this.checkHasMutuallyExclusiveOptions("DD and DIRMGR", ctx.DD(), ctx.DIRMGR());
-    this.checkHasMutuallyExclusiveOptions("DH and DOCUMENT", ctx.DH(), ctx.DOCUMENT());
-    this.checkHasMutuallyExclusiveOptions("DM and DOMAINMGR", ctx.DM(), ctx.DOMAINMGR());
-    this.checkHasMutuallyExclusiveOptions("DP and DEBUGTOOL", ctx.DP(), ctx.DEBUGTOOL());
-    this.checkHasMutuallyExclusiveOptions("DS and DISPATCHER", ctx.DS(), ctx.DISPATCHER());
+    this.checkHasMutuallyExclusiveOptions(
+      "DD and DIRMGR",
+      ctx.DD(),
+      ctx.DIRMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "DH and DOCUMENT",
+      ctx.DH(),
+      ctx.DOCUMENT(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "DM and DOMAINMGR",
+      ctx.DM(),
+      ctx.DOMAINMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "DP and DEBUGTOOL",
+      ctx.DP(),
+      ctx.DEBUGTOOL(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "DS and DISPATCHER",
+      ctx.DS(),
+      ctx.DISPATCHER(),
+    );
     this.checkHasMutuallyExclusiveOptions("DU and DUMP", ctx.DU(), ctx.DUMP());
-    this.checkHasMutuallyExclusiveOptions("EC and EVENTCAPTURE", ctx.EC(), ctx.EVENTCAPTURE());
-    this.checkHasMutuallyExclusiveOptions("EJ and ENTJAVA", ctx.EJ(), ctx.ENTJAVA());
-    this.checkHasMutuallyExclusiveOptions("EM and EVENTMGR", ctx.EM(), ctx.EVENTMGR());
-    this.checkHasMutuallyExclusiveOptions("EP and EVENTPROC", ctx.EP(), ctx.EVENTPROC());
-    this.checkHasMutuallyExclusiveOptions("GC and GLOBALCATLG", ctx.GC(), ctx.GLOBALCATLG());
-    this.checkHasMutuallyExclusiveOptions("IE and IPECI", ctx.IE(), ctx.IPECI());
-    this.checkHasMutuallyExclusiveOptions("KE and KERNEL", ctx.KE(), ctx.KERNEL());
-    this.checkHasMutuallyExclusiveOptions("LC and LOCALCATLG", ctx.LC(), ctx.LOCALCATLG());
-    this.checkHasMutuallyExclusiveOptions("LD and LOADER", ctx.LD(), ctx.LOADER());
-    this.checkHasMutuallyExclusiveOptions("LG and LOGGER", ctx.LG(), ctx.LOGGER());
-    this.checkHasMutuallyExclusiveOptions("LM and LOCKMGR", ctx.LM(), ctx.LOCKMGR());
-    this.checkHasMutuallyExclusiveOptions("ME and MESSAGE", ctx.ME(), ctx.MESSAGE());
-    this.checkHasMutuallyExclusiveOptions("MN and MONITOR", ctx.MN(), ctx.MONITOR());
-    this.checkHasMutuallyExclusiveOptions("MP and MANAGEDPLAT", ctx.MP(), ctx.MANAGEDPLAT());
-    this.checkHasMutuallyExclusiveOptions("NQ and ENQUEUE", ctx.NQ(), ctx.ENQUEUE());
-    this.checkHasMutuallyExclusiveOptions("OT and OBJECTTRAN", ctx.OT(), ctx.OBJECTTRAN());
-    this.checkHasMutuallyExclusiveOptions("PA and PARAMGR", ctx.PA(), ctx.PARAMGR());
-    this.checkHasMutuallyExclusiveOptions("PG and PROGMGR", ctx.PG(), ctx.PROGMGR());
-    this.checkHasMutuallyExclusiveOptions("PI and PIPEMGR", ctx.PI(), ctx.PIPEMGR());
-    this.checkHasMutuallyExclusiveOptions("PT and PARTNER", ctx.PT(), ctx.PARTNER());
-    this.checkHasMutuallyExclusiveOptions("RA and RMIADAPTERS", ctx.RA(), ctx.RMIADAPTERS());
+    this.checkHasMutuallyExclusiveOptions(
+      "EC and EVENTCAPTURE",
+      ctx.EC(),
+      ctx.EVENTCAPTURE(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "EJ and ENTJAVA",
+      ctx.EJ(),
+      ctx.ENTJAVA(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "EM and EVENTMGR",
+      ctx.EM(),
+      ctx.EVENTMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "EP and EVENTPROC",
+      ctx.EP(),
+      ctx.EVENTPROC(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "GC and GLOBALCATLG",
+      ctx.GC(),
+      ctx.GLOBALCATLG(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "IE and IPECI",
+      ctx.IE(),
+      ctx.IPECI(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "KE and KERNEL",
+      ctx.KE(),
+      ctx.KERNEL(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "LC and LOCALCATLG",
+      ctx.LC(),
+      ctx.LOCALCATLG(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "LD and LOADER",
+      ctx.LD(),
+      ctx.LOADER(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "LG and LOGGER",
+      ctx.LG(),
+      ctx.LOGGER(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "LM and LOCKMGR",
+      ctx.LM(),
+      ctx.LOCKMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "ME and MESSAGE",
+      ctx.ME(),
+      ctx.MESSAGE(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "MN and MONITOR",
+      ctx.MN(),
+      ctx.MONITOR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "MP and MANAGEDPLAT",
+      ctx.MP(),
+      ctx.MANAGEDPLAT(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "NQ and ENQUEUE",
+      ctx.NQ(),
+      ctx.ENQUEUE(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "OT and OBJECTTRAN",
+      ctx.OT(),
+      ctx.OBJECTTRAN(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "PA and PARAMGR",
+      ctx.PA(),
+      ctx.PARAMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "PG and PROGMGR",
+      ctx.PG(),
+      ctx.PROGMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "PI and PIPEMGR",
+      ctx.PI(),
+      ctx.PIPEMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "PT and PARTNER",
+      ctx.PT(),
+      ctx.PARTNER(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "RA and RMIADAPTERS",
+      ctx.RA(),
+      ctx.RMIADAPTERS(),
+    );
     this.checkHasMutuallyExclusiveOptions("RI and RMI", ctx.RI(), ctx.RMI());
-    this.checkHasMutuallyExclusiveOptions("RL and RESLIFEMGR", ctx.RL(), ctx.RESLIFEMGR());
-    this.checkHasMutuallyExclusiveOptions("RM and RECOVERY", ctx.RM(), ctx.RECOVERY());
-    this.checkHasMutuallyExclusiveOptions("RS and REGIONSTAT", ctx.RS(), ctx.REGIONSTAT());
+    this.checkHasMutuallyExclusiveOptions(
+      "RL and RESLIFEMGR",
+      ctx.RL(),
+      ctx.RESLIFEMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "RM and RECOVERY",
+      ctx.RM(),
+      ctx.RECOVERY(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "RS and REGIONSTAT",
+      ctx.RS(),
+      ctx.REGIONSTAT(),
+    );
     this.checkHasMutuallyExclusiveOptions("RX and RRS", ctx.RX(), ctx.RRS());
-    this.checkHasMutuallyExclusiveOptions("RZ and REQUESTSTRM", ctx.RZ(), ctx.REQUESTSTRM());
-    this.checkHasMutuallyExclusiveOptions("SH and SCHEDULER", ctx.SH(), ctx.SCHEDULER());
+    this.checkHasMutuallyExclusiveOptions(
+      "RZ and REQUESTSTRM",
+      ctx.RZ(),
+      ctx.REQUESTSTRM(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "SH and SCHEDULER",
+      ctx.SH(),
+      ctx.SCHEDULER(),
+    );
     this.checkHasMutuallyExclusiveOptions("SJ and SJVM", ctx.SJ(), ctx.SJVM());
-    this.checkHasMutuallyExclusiveOptions("SM and STORAGE", ctx.SM(), ctx.STORAGE());
-    this.checkHasMutuallyExclusiveOptions("SO and SOCKETS", ctx.SO(), ctx.SOCKETS());
-    this.checkHasMutuallyExclusiveOptions("ST and STATISTICS", ctx.ST(), ctx.STATISTICS());
-    this.checkHasMutuallyExclusiveOptions("TI and TIMER", ctx.TI(), ctx.TIMER());
-    this.checkHasMutuallyExclusiveOptions("TR and TRACE", ctx.TR(), ctx.TRACE());
-    this.checkHasMutuallyExclusiveOptions("TS and TEMPSTORAGE", ctx.TS(), ctx.TEMPSTORAGE());
+    this.checkHasMutuallyExclusiveOptions(
+      "SM and STORAGE",
+      ctx.SM(),
+      ctx.STORAGE(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "SO and SOCKETS",
+      ctx.SO(),
+      ctx.SOCKETS(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "ST and STATISTICS",
+      ctx.ST(),
+      ctx.STATISTICS(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "TI and TIMER",
+      ctx.TI(),
+      ctx.TIMER(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "TR and TRACE",
+      ctx.TR(),
+      ctx.TRACE(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "TS and TEMPSTORAGE",
+      ctx.TS(),
+      ctx.TEMPSTORAGE(),
+    );
     this.checkHasMutuallyExclusiveOptions("US and USER", ctx.US(), ctx.USER());
     this.checkHasMutuallyExclusiveOptions("WB and WEB", ctx.WB(), ctx.WEB());
-    this.checkHasMutuallyExclusiveOptions("WU and WEBRESTMGR", ctx.WU(), ctx.WEBRESTMGR());
+    this.checkHasMutuallyExclusiveOptions(
+      "WU and WEBRESTMGR",
+      ctx.WU(),
+      ctx.WEBRESTMGR(),
+    );
     this.checkHasMutuallyExclusiveOptions("W2 and WEB2", ctx.W2(), ctx.WEB2());
-    this.checkHasMutuallyExclusiveOptions("XM and TRANMGR", ctx.XM(), ctx.TRANMGR());
-    this.checkHasMutuallyExclusiveOptions("XS and SECURITY", ctx.XS(), ctx.SECURITY());
+    this.checkHasMutuallyExclusiveOptions(
+      "XM and TRANMGR",
+      ctx.XM(),
+      ctx.TRANMGR(),
+    );
+    this.checkHasMutuallyExclusiveOptions(
+      "XS and SECURITY",
+      ctx.XS(),
+      ctx.SECURITY(),
+    );
   }
 }

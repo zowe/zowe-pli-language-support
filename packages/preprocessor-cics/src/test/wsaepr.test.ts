@@ -39,7 +39,9 @@ describe("CICS WSAEPR", async () => {
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: EPRLENGTH/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: EPRLENGTH/,
+    );
   });
 
   // checkWSAEPR -> checkHasExactlyOneOption (EPRINTO or EPRSET none)

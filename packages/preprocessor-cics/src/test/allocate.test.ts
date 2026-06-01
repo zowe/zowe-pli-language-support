@@ -16,7 +16,9 @@ describe("CICS ALLOCATE", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive (PARTNER)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ALLOCATE PARTNER(1)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ALLOCATE PARTNER(1)",
+    );
     expect(diagnostics).toHaveLength(0);
   });
 

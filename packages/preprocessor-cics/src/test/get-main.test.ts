@@ -34,7 +34,8 @@ describe("CICS GETMAIN", async () => {
 
   // checkGetMain -> checkHasMandatoryOptions(SET)
   test("Missing SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("GETMAIN FLENGTH(1)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("GETMAIN FLENGTH(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: SET/);

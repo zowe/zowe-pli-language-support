@@ -1210,9 +1210,21 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkDeletshipped(ctx: Cics_set_deletshippedContext) {
     this.checkHasMandatoryOptions(ctx.DELETSHIPPED(), ctx, "DELETSHIPPED");
-    this.checkMutuallyExclusiveOptions("IDLE or IDLEHRS", ctx.IDLE(), ctx.IDLEHRS());
-    this.checkMutuallyExclusiveOptions("IDLE or IDLEMINS", ctx.IDLE(), ctx.IDLEMINS());
-    this.checkMutuallyExclusiveOptions("IDLE or IDLESECS", ctx.IDLE(), ctx.IDLESECS());
+    this.checkMutuallyExclusiveOptions(
+      "IDLE or IDLEHRS",
+      ctx.IDLE(),
+      ctx.IDLEHRS(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "IDLE or IDLEMINS",
+      ctx.IDLE(),
+      ctx.IDLEMINS(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "IDLE or IDLESECS",
+      ctx.IDLE(),
+      ctx.IDLESECS(),
+    );
     this.checkMutuallyExclusiveOptions(
       "INTERVAL or INTERVALHRS",
       ctx.INTERVAL(),
@@ -1236,7 +1248,12 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkDoctemplate(ctx: Cics_set_doctemplateContext) {
     this.checkHasMandatoryOptions(ctx.DOCTEMPLATE(), ctx, "DOCTEMPLATE");
-    this.checkHasExactlyOneOption("COPY or NEWCOPY", ctx, ctx.COPY(), ctx.NEWCOPY());
+    this.checkHasExactlyOneOption(
+      "COPY or NEWCOPY",
+      ctx,
+      ctx.COPY(),
+      ctx.NEWCOPY(),
+    );
   }
 
   private checkDsname(ctx: Cics_set_dsnameContext) {
@@ -1348,7 +1365,12 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
   }
 
   private checkFile(ctx: Cics_set_fileContext) {
-    this.checkHasExactlyOneOption("FILE or DATASET", ctx, ctx.FILE(), ctx.DATASET());
+    this.checkHasExactlyOneOption(
+      "FILE or DATASET",
+      ctx,
+      ctx.FILE(),
+      ctx.DATASET(),
+    );
     this.checkMutuallyExclusiveOptions(
       "ADD, ADDABLE or NOTADDABLE",
       ctx.ADD(),
@@ -1443,7 +1465,11 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
       ctx.CONTENTION(),
       ctx.LOCKING(),
     );
-    this.checkMutuallyExclusiveOptions("OPEN or CLOSED", ctx.OPEN(), ctx.CLOSED());
+    this.checkMutuallyExclusiveOptions(
+      "OPEN or CLOSED",
+      ctx.OPEN(),
+      ctx.CLOSED(),
+    );
     this.checkMutuallyExclusiveOptions(
       "ENABLED or DISABLED",
       ctx.ENABLED(),
@@ -1831,18 +1857,66 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
       ctx.OFF(),
       ctx.STATUS(),
     );
-    this.checkMutuallyExclusiveOptions("CMD or DISCOVERALL", ctx.CMD(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("DB2 or DISCOVERALL", ctx.DB2(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("DCT or DISCOVERALL", ctx.DCT(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("FCT or DISCOVERALL", ctx.FCT(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("HFS or DISCOVERALL", ctx.HFS(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("JCT or DISCOVERALL", ctx.JCT(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("PCT or DISCOVERALL", ctx.PCT(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("PPT or DISCOVERALL", ctx.PPT(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("PSB or DISCOVERALL", ctx.PSB(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("RES or DISCOVERALL", ctx.RES(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("TST or DISCOVERALL", ctx.TST(), ctx.DISCOVERALL());
-    this.checkMutuallyExclusiveOptions("USER or DISCOVERALL", ctx.USER(), ctx.DISCOVERALL());
+    this.checkMutuallyExclusiveOptions(
+      "CMD or DISCOVERALL",
+      ctx.CMD(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "DB2 or DISCOVERALL",
+      ctx.DB2(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "DCT or DISCOVERALL",
+      ctx.DCT(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "FCT or DISCOVERALL",
+      ctx.FCT(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "HFS or DISCOVERALL",
+      ctx.HFS(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "JCT or DISCOVERALL",
+      ctx.JCT(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PCT or DISCOVERALL",
+      ctx.PCT(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PPT or DISCOVERALL",
+      ctx.PPT(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PSB or DISCOVERALL",
+      ctx.PSB(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "RES or DISCOVERALL",
+      ctx.RES(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "TST or DISCOVERALL",
+      ctx.TST(),
+      ctx.DISCOVERALL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "USER or DISCOVERALL",
+      ctx.USER(),
+      ctx.DISCOVERALL(),
+    );
   }
 
   private checkSecrecording(ctx: Cics_set_secrecordingContext) {
@@ -2135,7 +2209,12 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
       ctx.PURGE(),
       ctx.CANCEL(),
     );
-    this.checkPrerequisiteIsMet(ctx.PURGE(), ctx.FORCE(), ctx, "FORCE without PURGE");
+    this.checkPrerequisiteIsMet(
+      ctx.PURGE(),
+      ctx.FORCE(),
+      ctx,
+      "FORCE without PURGE",
+    );
     this.checkMutuallyExclusiveOptions(
       "RELREQST, RELREQ or NORELREQ",
       ctx.RELREQST(),
@@ -2249,58 +2328,202 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
       ctx.SPECIAL(),
       ctx.STANDARD(),
     );
-    this.checkMutuallyExclusiveOptions("AP or APPLICATION", ctx.AP(), ctx.APPLICATION());
-    this.checkMutuallyExclusiveOptions("AS or ASYNCSERVICE", ctx.AS(), ctx.ASYNCSERVICE());
-    this.checkMutuallyExclusiveOptions("BA or BUSAPPMGR", ctx.BA(), ctx.BUSAPPMGR());
+    this.checkMutuallyExclusiveOptions(
+      "AP or APPLICATION",
+      ctx.AP(),
+      ctx.APPLICATION(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "AS or ASYNCSERVICE",
+      ctx.AS(),
+      ctx.ASYNCSERVICE(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "BA or BUSAPPMGR",
+      ctx.BA(),
+      ctx.BUSAPPMGR(),
+    );
     this.checkMutuallyExclusiveOptions("BR or BRIDGE", ctx.BR(), ctx.BRIDGE());
     this.checkMutuallyExclusiveOptions("CP or CPI", ctx.CP(), ctx.CPI());
     this.checkMutuallyExclusiveOptions("DD or DIRMGR", ctx.DD(), ctx.DIRMGR());
-    this.checkMutuallyExclusiveOptions("DH or DOCUMENT", ctx.DH(), ctx.DOCUMENT());
-    this.checkMutuallyExclusiveOptions("DM or DOMAINMGR", ctx.DM(), ctx.DOMAINMGR());
-    this.checkMutuallyExclusiveOptions("DP or DEBUGTOOL", ctx.DP(), ctx.DEBUGTOOL());
-    this.checkMutuallyExclusiveOptions("DS or DISPATCHER", ctx.DS(), ctx.DISPATCHER());
+    this.checkMutuallyExclusiveOptions(
+      "DH or DOCUMENT",
+      ctx.DH(),
+      ctx.DOCUMENT(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "DM or DOMAINMGR",
+      ctx.DM(),
+      ctx.DOMAINMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "DP or DEBUGTOOL",
+      ctx.DP(),
+      ctx.DEBUGTOOL(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "DS or DISPATCHER",
+      ctx.DS(),
+      ctx.DISPATCHER(),
+    );
     this.checkMutuallyExclusiveOptions("DU or DUMP", ctx.DU(), ctx.DUMP());
-    this.checkMutuallyExclusiveOptions("EC or EVENTCAPTURE", ctx.EC(), ctx.EVENTCAPTURE());
-    this.checkMutuallyExclusiveOptions("EJ or ENTJAVA", ctx.EJ(), ctx.ENTJAVA());
-    this.checkMutuallyExclusiveOptions("EM or EVENTMGR", ctx.EM(), ctx.EVENTMGR());
-    this.checkMutuallyExclusiveOptions("EP or EVENTPROC", ctx.EP(), ctx.EVENTPROC());
-    this.checkMutuallyExclusiveOptions("GC or GLOBALCATLG", ctx.GC(), ctx.GLOBALCATLG());
+    this.checkMutuallyExclusiveOptions(
+      "EC or EVENTCAPTURE",
+      ctx.EC(),
+      ctx.EVENTCAPTURE(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "EJ or ENTJAVA",
+      ctx.EJ(),
+      ctx.ENTJAVA(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "EM or EVENTMGR",
+      ctx.EM(),
+      ctx.EVENTMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "EP or EVENTPROC",
+      ctx.EP(),
+      ctx.EVENTPROC(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "GC or GLOBALCATLG",
+      ctx.GC(),
+      ctx.GLOBALCATLG(),
+    );
     this.checkMutuallyExclusiveOptions("IE or IPECI", ctx.IE(), ctx.IPECI());
     this.checkMutuallyExclusiveOptions("KE or KERNEL", ctx.KE(), ctx.KERNEL());
-    this.checkMutuallyExclusiveOptions("LC or LOCALCATLG", ctx.LC(), ctx.LOCALCATLG());
+    this.checkMutuallyExclusiveOptions(
+      "LC or LOCALCATLG",
+      ctx.LC(),
+      ctx.LOCALCATLG(),
+    );
     this.checkMutuallyExclusiveOptions("LD or LOADER", ctx.LD(), ctx.LOADER());
     this.checkMutuallyExclusiveOptions("LG or LOGGER", ctx.LG(), ctx.LOGGER());
-    this.checkMutuallyExclusiveOptions("LM or LOCKMGR", ctx.LM(), ctx.LOCKMGR());
-    this.checkMutuallyExclusiveOptions("ME or MESSAGE", ctx.ME(), ctx.MESSAGE());
-    this.checkMutuallyExclusiveOptions("MN or MONITOR", ctx.MN(), ctx.MONITOR());
-    this.checkMutuallyExclusiveOptions("MP or MANAGEDPLAT", ctx.MP(), ctx.MANAGEDPLAT());
-    this.checkMutuallyExclusiveOptions("NQ or ENQUEUE", ctx.NQ(), ctx.ENQUEUE());
-    this.checkMutuallyExclusiveOptions("OT or OBJECTTRAN", ctx.OT(), ctx.OBJECTTRAN());
-    this.checkMutuallyExclusiveOptions("PA or PARAMGR", ctx.PA(), ctx.PARAMGR());
-    this.checkMutuallyExclusiveOptions("PG or PROGMGR", ctx.PG(), ctx.PROGMGR());
-    this.checkMutuallyExclusiveOptions("PI or PIPEMGR", ctx.PI(), ctx.PIPEMGR());
-    this.checkMutuallyExclusiveOptions("PT or PARTNER", ctx.PT(), ctx.PARTNER());
-    this.checkMutuallyExclusiveOptions("RA or RMIADAPTERS", ctx.RA(), ctx.RMIADAPTERS());
+    this.checkMutuallyExclusiveOptions(
+      "LM or LOCKMGR",
+      ctx.LM(),
+      ctx.LOCKMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "ME or MESSAGE",
+      ctx.ME(),
+      ctx.MESSAGE(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "MN or MONITOR",
+      ctx.MN(),
+      ctx.MONITOR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "MP or MANAGEDPLAT",
+      ctx.MP(),
+      ctx.MANAGEDPLAT(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "NQ or ENQUEUE",
+      ctx.NQ(),
+      ctx.ENQUEUE(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "OT or OBJECTTRAN",
+      ctx.OT(),
+      ctx.OBJECTTRAN(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PA or PARAMGR",
+      ctx.PA(),
+      ctx.PARAMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PG or PROGMGR",
+      ctx.PG(),
+      ctx.PROGMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PI or PIPEMGR",
+      ctx.PI(),
+      ctx.PIPEMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "PT or PARTNER",
+      ctx.PT(),
+      ctx.PARTNER(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "RA or RMIADAPTERS",
+      ctx.RA(),
+      ctx.RMIADAPTERS(),
+    );
     this.checkMutuallyExclusiveOptions("RI or RMI", ctx.RI(), ctx.RMI());
-    this.checkMutuallyExclusiveOptions("RL or RESLIFEMGR", ctx.RL(), ctx.RESLIFEMGR());
-    this.checkMutuallyExclusiveOptions("RM or RECOVERY", ctx.RM(), ctx.RECOVERY());
-    this.checkMutuallyExclusiveOptions("RS or REGIONSTAT", ctx.RS(), ctx.REGIONSTAT());
+    this.checkMutuallyExclusiveOptions(
+      "RL or RESLIFEMGR",
+      ctx.RL(),
+      ctx.RESLIFEMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "RM or RECOVERY",
+      ctx.RM(),
+      ctx.RECOVERY(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "RS or REGIONSTAT",
+      ctx.RS(),
+      ctx.REGIONSTAT(),
+    );
     this.checkMutuallyExclusiveOptions("RX or RRS", ctx.RX(), ctx.RRS());
-    this.checkMutuallyExclusiveOptions("RZ or REQUESTSTRM", ctx.RZ(), ctx.REQUESTSTRM());
-    this.checkMutuallyExclusiveOptions("SH or SCHEDULER", ctx.SH(), ctx.SCHEDULER());
+    this.checkMutuallyExclusiveOptions(
+      "RZ or REQUESTSTRM",
+      ctx.RZ(),
+      ctx.REQUESTSTRM(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "SH or SCHEDULER",
+      ctx.SH(),
+      ctx.SCHEDULER(),
+    );
     this.checkMutuallyExclusiveOptions("SJ or SJVM", ctx.SJ(), ctx.SJVM());
-    this.checkMutuallyExclusiveOptions("SM or STORAGE", ctx.SM(), ctx.STORAGE());
-    this.checkMutuallyExclusiveOptions("SO or SOCKETS", ctx.SO(), ctx.SOCKETS());
-    this.checkMutuallyExclusiveOptions("ST or STATISTICS", ctx.ST(), ctx.STATISTICS());
+    this.checkMutuallyExclusiveOptions(
+      "SM or STORAGE",
+      ctx.SM(),
+      ctx.STORAGE(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "SO or SOCKETS",
+      ctx.SO(),
+      ctx.SOCKETS(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "ST or STATISTICS",
+      ctx.ST(),
+      ctx.STATISTICS(),
+    );
     this.checkMutuallyExclusiveOptions("TI or TIMER", ctx.TI(), ctx.TIMER());
     this.checkMutuallyExclusiveOptions("TR or TRACE", ctx.TR(), ctx.TRACE());
-    this.checkMutuallyExclusiveOptions("TS or TEMPSTORAGE", ctx.TS(), ctx.TEMPSTORAGE());
+    this.checkMutuallyExclusiveOptions(
+      "TS or TEMPSTORAGE",
+      ctx.TS(),
+      ctx.TEMPSTORAGE(),
+    );
     this.checkMutuallyExclusiveOptions("US or USER", ctx.US(), ctx.USER());
     this.checkMutuallyExclusiveOptions("WB or WEB", ctx.WB(), ctx.WEB());
-    this.checkMutuallyExclusiveOptions("WU or WEBRESTMGR", ctx.WU(), ctx.WEBRESTMGR());
+    this.checkMutuallyExclusiveOptions(
+      "WU or WEBRESTMGR",
+      ctx.WU(),
+      ctx.WEBRESTMGR(),
+    );
     this.checkMutuallyExclusiveOptions("W2 or WEB2", ctx.W2(), ctx.WEB2());
-    this.checkMutuallyExclusiveOptions("XM or TRANMGR", ctx.XM(), ctx.TRANMGR());
-    this.checkMutuallyExclusiveOptions("XS or SECURITY", ctx.XS(), ctx.SECURITY());
+    this.checkMutuallyExclusiveOptions(
+      "XM or TRANMGR",
+      ctx.XM(),
+      ctx.TRANMGR(),
+    );
+    this.checkMutuallyExclusiveOptions(
+      "XS or SECURITY",
+      ctx.XS(),
+      ctx.SECURITY(),
+    );
   }
 
   private checkTranclass(ctx: Cics_set_tranclassContext) {
@@ -2436,7 +2659,11 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkUowlink(ctx: Cics_set_uowlinkContext) {
     this.checkHasMandatoryOptions(ctx.UOWLINK(), ctx, "UOWLINK");
-    this.checkMutuallyExclusiveOptions("ACTION or DELETE", ctx.ACTION(), ctx.DELETE());
+    this.checkMutuallyExclusiveOptions(
+      "ACTION or DELETE",
+      ctx.ACTION(),
+      ctx.DELETE(),
+    );
   }
 
   private checkUrimap(ctx: Cics_set_urimapContext) {
@@ -2460,7 +2687,12 @@ export class SysSetOptionsChecker extends CICSOptionsCheckerBase {
     this.checkHasMandatoryOptions(ctx.VOLUME(), ctx, "VOLUME");
     this.checkHasObsoleteOptions(ctx.VOLUME(), ctx, "VOLUME");
     if (ctx.JRNL().length !== 0) {
-      this.checkHasExactlyOneOption("ACTION or ADD", ctx, ctx.ACTION(), ctx.ADD());
+      this.checkHasExactlyOneOption(
+        "ACTION or ADD",
+        ctx,
+        ctx.ACTION(),
+        ctx.ADD(),
+      );
     }
     this.checkMutuallyExclusiveOptions(
       "ACTION, ADD or REMOVE",

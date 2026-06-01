@@ -16,7 +16,8 @@ describe("CICS RELEASE", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RELEASE PROGRAM(P)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("RELEASE PROGRAM(P)");
     expect(diagnostics).toHaveLength(0);
   });
 

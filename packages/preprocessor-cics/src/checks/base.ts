@@ -1,3 +1,13 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
 import { Diagnostic, Severity, WithRange } from "preprocessor-api";
 import { CICSLexer } from "../generated/CICSLexer";
 import {
@@ -266,7 +276,11 @@ export abstract class CICSOptionsCheckerBase {
    */
   protected checkHasAtLeastOneOption<
     E extends ParserRuleContext | TerminalNode,
-  >(options: string, ctx: ParserRuleContext, ...rules: Array<E | E[] | null>): void {
+  >(
+    options: string,
+    ctx: ParserRuleContext,
+    ...rules: Array<E | E[] | null>
+  ): void {
     let rulesSeen = 0;
 
     for (const rule of rules) {

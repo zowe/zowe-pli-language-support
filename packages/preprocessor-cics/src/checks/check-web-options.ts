@@ -204,7 +204,11 @@ export class WebOptionsChecker extends CICSOptionsCheckerBase {
   private checkConverse(ctx: Cics_web_converseContext) {
     this.checkHasMandatoryOptions(ctx.CONVERSE(), ctx, "CONVERSE");
     this.checkHasMandatoryOptions(ctx.SESSTOKEN(), ctx, "SESSTOKEN");
-    this.checkMutuallyExclusiveOptions("PATH or URIMAP", ctx.PATH(), ctx.URIMAP());
+    this.checkMutuallyExclusiveOptions(
+      "PATH or URIMAP",
+      ctx.PATH(),
+      ctx.URIMAP(),
+    );
     this.checkHasExactlyOneOption(
       "GET, HEAD, PATCH, POST, PUT, TRACE, OPTIONS, DELETE or METHOD",
       ctx,
@@ -558,7 +562,12 @@ export class WebOptionsChecker extends CICSOptionsCheckerBase {
 
     if (ctx.FORMFIELD().length !== 0) {
       this.checkHasIllegalOptions(ctx.SESSTOKEN(), "SESSTOKEN");
-      this.checkHasExactlyOneOption("VALUE or SET", ctx, ctx.VALUE(), ctx.SET());
+      this.checkHasExactlyOneOption(
+        "VALUE or SET",
+        ctx,
+        ctx.VALUE(),
+        ctx.SET(),
+      );
       this.checkHasMandatoryOptions(ctx.VALUELENGTH(), ctx, "VALUELENGTH");
     }
 
@@ -572,7 +581,12 @@ export class WebOptionsChecker extends CICSOptionsCheckerBase {
     }
 
     if (ctx.QUERYPARM().length !== 0) {
-      this.checkHasExactlyOneOption("VALUE or SET", ctx, ctx.VALUE(), ctx.SET());
+      this.checkHasExactlyOneOption(
+        "VALUE or SET",
+        ctx,
+        ctx.VALUE(),
+        ctx.SET(),
+      );
       this.checkHasMandatoryOptions(ctx.VALUELENGTH(), ctx, "VALUELENGTH");
 
       this.checkHasIllegalOptions(ctx.SESSTOKEN(), "SESSTOKEN");

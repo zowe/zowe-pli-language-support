@@ -42,7 +42,8 @@ describe("CICS DISABLE PROGRAM", async () => {
 
   // checkDisableProgram -> checkHasAtLeastOneOption (none provided)
   test("No accessory option", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DISABLE PROGRAM(1)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("DISABLE PROGRAM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

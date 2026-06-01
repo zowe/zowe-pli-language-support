@@ -42,7 +42,8 @@ describe("CICS REMOVE SUBEVENT", async () => {
 
   // checkRemoveSubevent -> checkHasMandatoryOptions(EVENT)
   test("Missing EVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("REMOVE SUBEVENT(1)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("REMOVE SUBEVENT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: EVENT/);

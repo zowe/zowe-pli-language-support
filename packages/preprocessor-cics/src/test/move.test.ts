@@ -37,7 +37,9 @@ describe("CICS MOVE", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("MOVE AS(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: CONTAINER/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: CONTAINER/,
+    );
   });
 
   // checkMoveOptions -> checkHasMutuallyExclusiveOptions

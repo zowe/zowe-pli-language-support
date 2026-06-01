@@ -16,7 +16,9 @@ describe("CICS SUSPEND", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SUSPEND ACTIVITY(A)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "SUSPEND ACTIVITY(A)",
+    );
     expect(diagnostics).toHaveLength(0);
   });
 

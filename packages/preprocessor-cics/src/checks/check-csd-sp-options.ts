@@ -219,7 +219,11 @@ export class CsdSpOptionsChecker extends CICSOptionsCheckerBase {
       default:
         break;
     }
-    this.checkDuplicates(ctx, undefined, CsdSpOptionsChecker.DUPLICATE_RULE_OPTIONS);
+    this.checkDuplicates(
+      ctx,
+      undefined,
+      CsdSpOptionsChecker.DUPLICATE_RULE_OPTIONS,
+    );
   }
 
   private checkAdd(ctx: Cics_csd_addContext) {
@@ -409,7 +413,12 @@ export class CsdSpOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkInstall(ctx: Cics_csd_installContext) {
     this.checkHasMandatoryOptions(ctx.INSTALL(), ctx, "INSTALL");
-    this.checkHasExactlyOneOption("LIST or GROUP", ctx, ctx.LIST(), ctx.GROUP());
+    this.checkHasExactlyOneOption(
+      "LIST or GROUP",
+      ctx,
+      ctx.LIST(),
+      ctx.GROUP(),
+    );
     if (ctx.LIST().length !== 0) {
       this.checkHasIllegalOptions(
         ctx.cics_csd_cvda(),
@@ -428,7 +437,12 @@ export class CsdSpOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkLock(ctx: Cics_csd_lockContext) {
     this.checkHasMandatoryOptions(ctx.LOCK(), ctx, "LOCK");
-    this.checkHasExactlyOneOption("LIST or GROUP", ctx, ctx.LIST(), ctx.GROUP());
+    this.checkHasExactlyOneOption(
+      "LIST or GROUP",
+      ctx,
+      ctx.LIST(),
+      ctx.GROUP(),
+    );
   }
 
   private checkRemove(ctx: Cics_csd_removeContext) {
@@ -456,7 +470,12 @@ export class CsdSpOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkUnlock(ctx: Cics_csd_unlockContext) {
     this.checkHasMandatoryOptions(ctx.UNLOCK(), ctx, "UNLOCK");
-    this.checkHasExactlyOneOption("LIST or GROUP", ctx, ctx.LIST(), ctx.GROUP());
+    this.checkHasExactlyOneOption(
+      "LIST or GROUP",
+      ctx,
+      ctx.LIST(),
+      ctx.GROUP(),
+    );
   }
 
   private checkUserDefine(ctx: Cics_csd_userdefineContext) {

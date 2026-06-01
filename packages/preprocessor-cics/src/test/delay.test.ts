@@ -16,7 +16,8 @@ describe("CICS DELAY", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DELAY FOR HOURS(1)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("DELAY FOR HOURS(1)");
     expect(diagnostics).toHaveLength(0);
   });
 

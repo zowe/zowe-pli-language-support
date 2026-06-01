@@ -39,7 +39,9 @@ describe("CICS RESYNC ENTRYNAME", async () => {
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: ENTRYNAME/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: ENTRYNAME/,
+    );
   });
 
   // checkOpts -> checkOptionalWithLength (optional present without required field)

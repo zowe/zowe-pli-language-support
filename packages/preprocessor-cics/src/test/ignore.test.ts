@@ -37,7 +37,9 @@ describe("CICS IGNORE CONDITION", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("IGNORE ERROR");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: CONDITION/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: CONDITION/,
+    );
   });
 
   // checkHasNormalCondition -> NORMAL is not allowed

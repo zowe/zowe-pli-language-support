@@ -403,7 +403,11 @@ export class IssueOptionsChecker extends CICSOptionsCheckerBase {
       context.SUBADDR(),
     );
 
-    this.checkHasMutuallyExclusiveOptions("SUBADDR or DESTID", destIds, subAddrs);
+    this.checkHasMutuallyExclusiveOptions(
+      "SUBADDR or DESTID",
+      destIds,
+      subAddrs,
+    );
 
     const hasVolume =
       ctx.reduce((sum, context) => sum + context.VOLUME().length, 0) !== 0;
@@ -414,7 +418,10 @@ export class IssueOptionsChecker extends CICSOptionsCheckerBase {
           context.DESTIDLENG(),
           "DESTIDLENG without DESTID",
         );
-        this.checkHasIllegalOptions(context.CONSOLE(), "CONSOLE without SUBADDR");
+        this.checkHasIllegalOptions(
+          context.CONSOLE(),
+          "CONSOLE without SUBADDR",
+        );
         this.checkHasIllegalOptions(context.PRINT(), "PRINT without SUBADDR");
         this.checkHasIllegalOptions(context.CARD(), "CARD without SUBADDR");
         this.checkHasIllegalOptions(

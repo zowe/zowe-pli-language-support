@@ -1,3 +1,13 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
 import { Diagnostic, Severity } from "preprocessor-api";
 import {
   Cics_extract_attachContext,
@@ -131,9 +141,7 @@ export class ExtractOptionsChecker extends CICSOptionsCheckerBase {
         );
         break;
       case CICSParser.RULE_cics_extract_logonmessage:
-        this.checkLogonMsg(
-          ctx as unknown as Cics_extract_logonmessageContext,
-        );
+        this.checkLogonMsg(ctx as unknown as Cics_extract_logonmessageContext);
         break;
       case CICSParser.RULE_cics_extract_process:
         this.checkProcess(ctx as unknown as Cics_extract_processContext);
@@ -210,10 +218,7 @@ export class ExtractOptionsChecker extends CICSOptionsCheckerBase {
       );
 
     if (ctx.PIPLIST().length === 0)
-      this.checkHasIllegalOptions(
-        ctx.PIPLENGTH(),
-        "PIPLENGTH without PIPLIST",
-      );
+      this.checkHasIllegalOptions(ctx.PIPLENGTH(), "PIPLENGTH without PIPLIST");
 
     if (ctx.PIPLIST().length !== 0)
       this.checkHasMandatoryOptions(ctx.PIPLENGTH(), ctx, "PIPLENGTH");

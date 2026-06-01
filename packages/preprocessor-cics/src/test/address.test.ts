@@ -31,7 +31,9 @@ describe("CICS ADDRESS (SET)", async () => {
   });
 
   test("Duplicate COMMAREA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ADDRESS COMMAREA(12) COMMAREA(34)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ADDRESS COMMAREA(12) COMMAREA(34)",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /Excessive options provided for: COMMAREA/,

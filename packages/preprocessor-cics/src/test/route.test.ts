@@ -16,7 +16,9 @@ describe("CICS ROUTE", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ROUTE AFTER HOURS(1)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ROUTE AFTER HOURS(1)",
+    );
     expect(diagnostics).toHaveLength(0);
   });
 

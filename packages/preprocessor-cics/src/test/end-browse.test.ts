@@ -46,7 +46,8 @@ describe("CICS ENDBROWSE", async () => {
 
   // checkEndBrowse -> checkHasMandatoryOptions(BROWSETOKEN)
   test("Missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ENDBROWSE ACTIVITY");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("ENDBROWSE ACTIVITY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

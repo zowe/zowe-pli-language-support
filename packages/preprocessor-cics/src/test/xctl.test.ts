@@ -21,7 +21,9 @@ describe("CICS XCTL", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("XCTL PROGRAM(P) BLA");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "XCTL PROGRAM(P) BLA",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /extraneous input 'BLA' expecting <EOF>/,

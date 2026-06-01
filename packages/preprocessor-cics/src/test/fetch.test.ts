@@ -49,7 +49,9 @@ describe("CICS FETCH", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("FETCH ANY(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: COMPSTATUS/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: COMPSTATUS/,
+    );
   });
 
   // checkFetchAnyChild -> checkHasMutuallyExclusiveOptions

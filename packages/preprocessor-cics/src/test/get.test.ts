@@ -39,7 +39,9 @@ describe("CICS GET", async () => {
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: CONTAINER/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: CONTAINER/,
+    );
   });
 
   // checkContainerBTS -> checkHasExactlyOneOption (none provided)

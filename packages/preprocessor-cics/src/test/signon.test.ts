@@ -16,7 +16,8 @@ describe("CICS SIGNON", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SIGNON USERID(123)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("SIGNON USERID(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
@@ -32,7 +33,8 @@ describe("CICS SIGNON", async () => {
 
   // checkMainBody -> checkHasMandatoryOptions(USERID)
   test("Body missing USERID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SIGNON PASSWORD(1)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("SIGNON PASSWORD(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: USERID/);

@@ -44,7 +44,9 @@ describe("CICS CONVERSE", async () => {
 
   // checkRule -> checkHasIllegalOptions(LEAVEKB) when ASIS present
   test("LEAVEKB illegal with ASIS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("CONVERSE ASIS LEAVEKB");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "CONVERSE ASIS LEAVEKB",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Invalid option provided: LEAVEKB/);

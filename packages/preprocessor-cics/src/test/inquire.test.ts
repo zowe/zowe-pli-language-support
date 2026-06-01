@@ -46,7 +46,8 @@ describe("CICS INQUIRE", async () => {
 
   // process branch -> checkHasMandatoryOptions(PROCESSTYPE)
   test("PROCESS missing PROCESSTYPE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE PROCESS(1)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("INQUIRE PROCESS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

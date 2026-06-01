@@ -35,7 +35,9 @@ describe("CICS RESET", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("RESET NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: ACQPROCESS/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: ACQPROCESS/,
+    );
   });
 
   // checkDuplicates

@@ -34,7 +34,9 @@ describe("CICS FORMATTIME", async () => {
 
   // checkOpts -> checkHasMandatoryOptions(ABSTIME)
   test("Missing ABSTIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("FORMATTIME DATE(123)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "FORMATTIME DATE(123)",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ABSTIME/);

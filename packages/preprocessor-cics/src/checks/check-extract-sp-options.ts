@@ -204,10 +204,7 @@ export class ExtractSpOptionsChecker extends CICSOptionsCheckerBase {
         ctx.SUBRESIDLEN(),
         "SUBRESIDLEN without SUBRESID",
       );
-      this.checkHasIllegalOptions(
-        subrestypes,
-        "SUBRESTYPE without SUBRESID",
-      );
+      this.checkHasIllegalOptions(subrestypes, "SUBRESTYPE without SUBRESID");
     }
     const subrestype = subrestypes
       .map((node) => node.SUBRESTYPE())
@@ -227,7 +224,10 @@ export class ExtractSpOptionsChecker extends CICSOptionsCheckerBase {
     );
 
     if (subrestypes.length === 0) {
-      this.checkHasIllegalOptions(ctx.SUBRESID(), "SUBRESID without SUBRESTYPE");
+      this.checkHasIllegalOptions(
+        ctx.SUBRESID(),
+        "SUBRESID without SUBRESTYPE",
+      );
       this.checkHasIllegalOptions(
         ctx.SUBRESIDLEN(),
         "SUBRESIDLEN without SUBRESTYPE",

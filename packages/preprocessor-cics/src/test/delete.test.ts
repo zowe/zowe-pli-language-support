@@ -47,7 +47,9 @@ describe("CICS DELETE", async () => {
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Invalid option provided: KEYLENGTH/);
+    expect(diagnostics[0].message).toMatch(
+      /Invalid option provided: KEYLENGTH/,
+    );
   });
 
   // checkDeleteGroupThree -> checkHasMandatoryOptions(CONTAINER)
@@ -55,7 +57,9 @@ describe("CICS DELETE", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("DELETE ACQPROCESS");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: CONTAINER/);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: CONTAINER/,
+    );
   });
 
   // checkDeleteGroupFour -> checkHasExactlyOneOption (none provided)

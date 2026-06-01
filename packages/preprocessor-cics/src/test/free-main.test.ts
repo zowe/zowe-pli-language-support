@@ -16,7 +16,8 @@ describe("CICS FREEMAIN", async () => {
   const cicsPreprocessor = new CICSPreprocessor();
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("FREEMAIN DATA(123)");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("FREEMAIN DATA(123)");
     expect(diagnostics).toHaveLength(0);
   });
 

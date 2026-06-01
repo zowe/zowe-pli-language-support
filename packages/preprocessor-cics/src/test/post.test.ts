@@ -44,7 +44,9 @@ describe("CICS POST", async () => {
 
   // checkPost -> mandatory HOURS/MINUTES/SECONDS when AFTER/AT present
   test("AFTER without HOURS/MINUTES/SECONDS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("POST SET(123) AFTER");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "POST SET(123) AFTER",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,7 +56,9 @@ describe("CICS POST", async () => {
 
   // checkPost -> checkHasExactlyOneOption(AFTER or AT) when HOURS/MINUTES/SECONDS present
   test("HOURS without AFTER or AT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("POST SET(123) HOURS(1)");
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "POST SET(123) HOURS(1)",
+    );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

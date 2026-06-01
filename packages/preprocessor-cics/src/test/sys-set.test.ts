@@ -63,9 +63,7 @@ describe("CICS SET (system programming)", async () => {
 
   // ASSOCIATION (missing USERCORRDATA)
   test("ASSOCIATION (missing USERCORRDATA)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET ASSOCIATION",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET ASSOCIATION");
     expect(diagnostics).toHaveLength(1);
   });
   // ATOMSERVICE
@@ -77,58 +75,44 @@ describe("CICS SET (system programming)", async () => {
   });
   // AUTOINSTALL
   test("AUTOINSTALL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET AUTOINSTALL",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET AUTOINSTALL");
     expect(diagnostics).toHaveLength(0);
   });
   // BRFACILITY
   test("BRFACILITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET BRFACILITY(VV)",
-    );
+    const { diagnostics } =
+      await cicsPreprocessor.execute("SET BRFACILITY(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // BUNDLE
   test("BUNDLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET BUNDLE(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET BUNDLE(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // CONNECTION
   test("CONNECTION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET CONNECTION(VV)",
-    );
+    const { diagnostics } =
+      await cicsPreprocessor.execute("SET CONNECTION(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // DB2CONN
   test("DB2CONN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET DB2CONN",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET DB2CONN");
     expect(diagnostics).toHaveLength(0);
   });
   // DB2ENTRY
   test("DB2ENTRY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET DB2ENTRY(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET DB2ENTRY(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // DB2TRAN
   test("DB2TRAN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET DB2TRAN(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET DB2TRAN(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // DELETSHIPPED
   test("DELETSHIPPED", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET DELETSHIPPED",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET DELETSHIPPED");
     expect(diagnostics).toHaveLength(0);
   });
   // DISPATCHER
@@ -147,30 +131,22 @@ describe("CICS SET (system programming)", async () => {
   });
   // DSNAME
   test("DSNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET DSNAME(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET DSNAME(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // DUMPDS
   test("DUMPDS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET DUMPDS",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET DUMPDS");
     expect(diagnostics).toHaveLength(0);
   });
   // ENQMODEL
   test("ENQMODEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET ENQMODEL(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET ENQMODEL(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // EPADAPTER
   test("EPADAPTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET EPADAPTER(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET EPADAPTER(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // EPADAPTERSET
@@ -189,37 +165,27 @@ describe("CICS SET (system programming)", async () => {
   });
   // EVENTPROCESS
   test("EVENTPROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET EVENTPROCESS",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET EVENTPROCESS");
     expect(diagnostics).toHaveLength(0);
   });
   // FILE
   test("FILE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET FILE(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET FILE(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // HOST
   test("HOST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET HOST(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET HOST(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // IPCONN
   test("IPCONN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET IPCONN(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET IPCONN(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // IRC
   test("IRC", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET IRC",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET IRC");
     expect(diagnostics).toHaveLength(0);
   });
   // JOURNALNAME
@@ -231,9 +197,8 @@ describe("CICS SET (system programming)", async () => {
   });
   // JOURNALNUM (obsolete)
   test("JOURNALNUM (obsolete)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET JOURNALNUM(VV)",
-    );
+    const { diagnostics } =
+      await cicsPreprocessor.execute("SET JOURNALNUM(VV)");
     expect(diagnostics).toHaveLength(1);
   });
   // JVMENDPOINT (missing JVMSERVER)
@@ -245,23 +210,17 @@ describe("CICS SET (system programming)", async () => {
   });
   // JVMSERVER
   test("JVMSERVER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET JVMSERVER(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET JVMSERVER(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // LIBRARY
   test("LIBRARY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET LIBRARY(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET LIBRARY(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // MODENAME (missing CONNECTION)
   test("MODENAME (missing CONNECTION)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET MODENAME(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET MODENAME(VV)");
     expect(diagnostics).toHaveLength(1);
   });
   // MONITOR
@@ -273,37 +232,27 @@ describe("CICS SET (system programming)", async () => {
   });
   // MQCONN
   test("MQCONN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET MQCONN",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET MQCONN");
     expect(diagnostics).toHaveLength(0);
   });
   // MQMONITOR
   test("MQMONITOR", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET MQMONITOR(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET MQMONITOR(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // NETNAME
   test("NETNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET NETNAME(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET NETNAME(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // OTEL
   test("OTEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET OTEL",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET OTEL");
     expect(diagnostics).toHaveLength(0);
   });
   // PIPELINE
   test("PIPELINE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET PIPELINE(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET PIPELINE(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // PROCESSTYPE
@@ -315,16 +264,12 @@ describe("CICS SET (system programming)", async () => {
   });
   // PROGRAM
   test("PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET PROGRAM(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET PROGRAM(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // SECDISCOVERY
   test("SECDISCOVERY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET SECDISCOVERY",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET SECDISCOVERY");
     expect(diagnostics).toHaveLength(0);
   });
   // SECRECORDING (missing ACTION/ADD/MODIFY/REMOVE)
@@ -350,37 +295,27 @@ describe("CICS SET (system programming)", async () => {
   });
   // SYSTEM
   test("SYSTEM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET SYSTEM",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET SYSTEM");
     expect(diagnostics).toHaveLength(0);
   });
   // TAGS (missing REFRESH)
   test("TAGS (missing REFRESH)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TAGS",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TAGS");
     expect(diagnostics).toHaveLength(1);
   });
   // TASK
   test("TASK", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TASK(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TASK(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // TCLASS
   test("TCLASS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TCLASS(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TCLASS(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // TCPIP
   test("TCPIP", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TCPIP",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TCPIP");
     expect(diagnostics).toHaveLength(0);
   });
   // TCPIPSERVICE
@@ -392,9 +327,7 @@ describe("CICS SET (system programming)", async () => {
   });
   // TDQUEUE
   test("TDQUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TDQUEUE(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TDQUEUE(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // TEMPSTORAGE
@@ -406,37 +339,27 @@ describe("CICS SET (system programming)", async () => {
   });
   // TERMINAL
   test("TERMINAL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TERMINAL(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TERMINAL(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // TRACEDEST
   test("TRACEDEST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TRACEDEST",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TRACEDEST");
     expect(diagnostics).toHaveLength(0);
   });
   // TRACEFLAG
   test("TRACEFLAG", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TRACEFLAG",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TRACEFLAG");
     expect(diagnostics).toHaveLength(0);
   });
   // TRACETYPE (missing FLAGSET/SPECIAL/STANDARD)
   test("TRACETYPE (missing FLAGSET/SPECIAL/STANDARD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TRACETYPE",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TRACETYPE");
     expect(diagnostics).toHaveLength(1);
   });
   // TRANCLASS
   test("TRANCLASS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TRANCLASS(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TRANCLASS(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // TRANDUMPCODE
@@ -455,44 +378,32 @@ describe("CICS SET (system programming)", async () => {
   });
   // TSQUEUE
   test("TSQUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET TSQUEUE(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET TSQUEUE(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // UOW
   test("UOW", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET UOW(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET UOW(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // UOWLINK
   test("UOWLINK", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET UOWLINK(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET UOWLINK(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // URIMAP
   test("URIMAP", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET URIMAP(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET URIMAP(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // VOLUME (obsolete)
   test("VOLUME (obsolete)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET VOLUME(VV)",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET VOLUME(VV)");
     expect(diagnostics).toHaveLength(1);
   });
   // VTAM
   test("VTAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET VTAM",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET VTAM");
     expect(diagnostics).toHaveLength(0);
   });
   // WEB
@@ -504,16 +415,13 @@ describe("CICS SET (system programming)", async () => {
   });
   // WEBSERVICE
   test("WEBSERVICE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET WEBSERVICE(VV)",
-    );
+    const { diagnostics } =
+      await cicsPreprocessor.execute("SET WEBSERVICE(VV)");
     expect(diagnostics).toHaveLength(0);
   });
   // WLMHEALTH
   test("WLMHEALTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SET WLMHEALTH",
-    );
+    const { diagnostics } = await cicsPreprocessor.execute("SET WLMHEALTH");
     expect(diagnostics).toHaveLength(0);
   });
   // XMLTRANSFORM

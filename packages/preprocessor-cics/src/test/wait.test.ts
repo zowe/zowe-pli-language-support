@@ -21,7 +21,8 @@ describe("CICS WAIT", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("WAIT CONVID(1) BLA");
+    const { diagnostics } =
+      await cicsPreprocessor.execute("WAIT CONVID(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
       /extraneous input 'BLA' expecting <EOF>/,

@@ -1,3 +1,13 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
 import { Diagnostic, Severity } from "preprocessor-api";
 import {
   Cics_resetbr_optionsContext,
@@ -57,7 +67,11 @@ export class ResetbrOptionsChecker extends CICSOptionsCheckerBase {
       ctx.XRBA(),
       ctx.KEYLENGTH(),
     );
-    this.checkHasMutuallyExclusiveOptions("GTEQ or EQUAL", ctx.GTEQ(), ctx.EQUAL());
+    this.checkHasMutuallyExclusiveOptions(
+      "GTEQ or EQUAL",
+      ctx.GTEQ(),
+      ctx.EQUAL(),
+    );
     this.checkPrerequisiteIsMet(ctx.KEYLENGTH(), ctx.GENERIC(), ctx, "GENERIC");
     if (ctx.SYSID().length !== 0)
       this.checkHasExactlyOneOption(
