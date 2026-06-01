@@ -157,4 +157,49 @@ describe("CICS PERFORM (SP)", async () => {
       /Excessive options provided for: DUMPCODE/,
     );
   });
+
+  test("PIPELINE", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM PIPELINE(PL)");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("PIPELINE ACTION and SCAN mutually exclusive", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM PIPELINE(PL) ACTION(AC) SCAN");
+    expect(diagnostics).toHaveLength(2);
+  });
+  test("JVMSERVER JVM DUMP branch", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM JVMSERVER(JS) JVM DUMP");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("JVMSERVER JVM GATHER branch", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM JVMSERVER(JS) JVM GATHER");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("JVMSERVER JVM STACKTRACE missing TASKID", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM JVMSERVER(JS) JVM STACKTRACE");
+    expect(diagnostics).toHaveLength(1);
+  });
+  test("JVMSERVER LIBERTY REFRESH branch", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM JVMSERVER(JS) LIBERTY REFRESH");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("JVMSERVER OSGI branch", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM JVMSERVER(JS) OSGI");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("JVMSERVER APPID else branch", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM JVMSERVER(JS) APPID(AP)");
+    expect(diagnostics).toHaveLength(1);
+  });
+  test("DUMP TITLE and TITLELENGTH present", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM DUMP DUMPCODE(DC) TITLE(TT) TITLELENGTH(TL)");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("SHUTDOWN TAKEOVER branch", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM SHUTDOWN TAKEOVER");
+    expect(diagnostics).toHaveLength(0);
+  });
+  test("SHUTDOWN PLT and PLTNAME mutually exclusive", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("PERFORM SHUTDOWN PLT(PT) PLTNAME(PN)");
+    expect(diagnostics).toHaveLength(2);
+  });
 });
