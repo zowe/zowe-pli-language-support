@@ -69,7 +69,7 @@ export class PliLexer {
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
     unit.compilerOptions = opts;
     updatePliTokenizer(opts);
-    unit.instructionCache.update(opts);
+    unit.instructionCache.update(compilerOptionsResult.recompileFingerprint);
     const instruction = await unit.instructionCache.get(
       uri,
       inputText,

@@ -10,6 +10,7 @@
  */
 
 import { URI, Utils } from "vscode-uri";
+import { BuiltinsUriSchema } from "../workspace/builtins-constants";
 export { URI };
 
 /** Matches Windows absolute paths: letter + colon + slash, e.g. C:\ or D:/ */
@@ -255,4 +256,10 @@ export namespace UriUtils {
 
     return parentRelativePath;
   }
+}
+
+const virtualSchemes = ["git", "untitled", BuiltinsUriSchema];
+
+export function isVirtualFile(uri: string): boolean {
+  return virtualSchemes.some((scheme) => uri.startsWith(`${scheme}:`));
 }

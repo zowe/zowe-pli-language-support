@@ -424,6 +424,9 @@ export function startLanguageServer(
 
       // reindex reachable compilation units
       await compilationUnitHandler.reindex(connection, CancellationToken.None);
+
+      // refresh semantic tokens so syntax coloring updates immediately
+      connection.languages.semanticTokens.refresh();
     },
   );
   connection.onRequest(

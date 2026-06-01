@@ -110,8 +110,6 @@ export namespace MarginIndicatorDecorator {
     string,
     { m: number; n: number; active: boolean }
   >();
-  let revalidate = false;
-
   export function register(
     client: LanguageClient,
     settings: Settings,
@@ -128,38 +126,53 @@ export namespace MarginIndicatorDecorator {
       },
     );
     const disposables: vscode.Disposable[] = [];
+
     disposables.push(
-      vscode.workspace.onDidCloseTextDocument((doc) => {
-        const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
-        if (!margins) return;
-        margins.active = false;
-        revalidate = true; // Force subsequent update
+      vscode.window.onDidChangeVisibleTextEditors((editors) => {
+        for (const margins of marginIndicatorRangesByUri.values()) {
+          margins.active = false;
+        }
+
+        // Mark visible editors as active
+        for (const editor of editors) {
+          const margins = marginIndicatorRangesByUri.get(
+            editor.document.uri.toString(),
+          );
+          if (margins) {
+            margins.active = true;
+          }
+        }
+
         updateRulers(settings);
       }),
     );
 
-    disposables.push(
-      vscode.workspace.onDidOpenTextDocument((doc) => {
-        const margins = marginIndicatorRangesByUri.get(doc.uri.toString());
-        if (!margins) return;
-        margins.active = true;
-        updateRulers(settings);
-      }),
-    );
     return collectDisposables(...disposables);
   }
 
-  export function updateRulers(settings: Settings): void {
+  export async function updateRulers(settings: Settings): Promise<void> {
     const config = vscode.workspace.getConfiguration("editor", {
       languageId: "pli",
     });
-    const existingRulers = config.get<number[]>("rulers") || [];
+    const existingRulers = config.get<number[]>("rulers")?.sort() || [];
     let rulers: number[] = [];
 
     if (!settings.marginIndicatorRulersEnabled) {
       if (existingRulers.length > 0) {
         // Ensure that we clear the rulers ONLY if they were previously set
-        config.update("rulers", [], vscode.ConfigurationTarget.Global, true);
+        await config.update(
+          "rulers",
+          [],
+          vscode.ConfigurationTarget.Workspace,
+          true,
+        );
+        // Ensure to remove old data
+        await config.update(
+          "rulers",
+          [],
+          vscode.ConfigurationTarget.Global,
+          true,
+        );
       }
       return;
     }
@@ -167,10 +180,8 @@ export namespace MarginIndicatorDecorator {
     // The left ruler should be left of the column number (-1), whereas
     // the right ruler should be right of the column number.
     if (settings.marginIndicatorRulers === "automatic") {
-      const activeMargins = Array.from(
-        marginIndicatorRangesByUri.values(),
-      ).filter((m) => m.active);
-      for (const margins of activeMargins) {
+      for (const margins of marginIndicatorRangesByUri.values()) {
+        if (!margins.active) continue;
         if (!rulers.includes(margins.m - 1)) {
           rulers.push(margins.m - 1);
         }
@@ -182,13 +193,18 @@ export namespace MarginIndicatorDecorator {
       rulers = [1, 72];
     }
 
-    if (rulers.length === existingRulers.length && !revalidate) {
-      // If the rulers are the same, no need to update
+    rulers.sort();
+    if (rulers.length === existingRulers.length) {
       if (rulers.every((r, i) => r === existingRulers[i])) {
         return;
       }
     }
-    revalidate = false;
-    config.update("rulers", rulers, vscode.ConfigurationTarget.Global, true);
+
+    await config.update(
+      "rulers",
+      rulers,
+      vscode.ConfigurationTarget.Workspace,
+      true,
+    );
   }
 }

@@ -23,6 +23,11 @@ import { CompilerOptionSource } from "./compiler-options/translator";
 export interface CompilerOptionsProcessorResult {
   result: CompilerOptionResult | undefined;
   text: string;
+  /**
+   * Fingerprint of all forceRecompile-flagged compiler option rules and their
+   * concrete argument values. Used by InstructionCache to detect when re-tokenization is needed.
+   */
+  recompileFingerprint: string;
 }
 
 export class CompilerOptionsProcessor {
@@ -123,6 +128,7 @@ export class CompilerOptionsProcessor {
     return {
       result: this.translator.getResults(),
       text: newText,
+      recompileFingerprint: this.translator.getRecompileFingerprint(),
     };
   }
 

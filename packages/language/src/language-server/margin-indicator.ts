@@ -11,6 +11,7 @@
 
 import { Connection, NotificationType } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { isVirtualFile } from "../utils/uri";
 
 export interface MarginIndicatorNotificationParams {
   uri: string;
@@ -27,9 +28,16 @@ export function marginIndicator(
   connection: Connection,
   compilationUnit: CompilationUnit,
 ) {
+  const uriString = compilationUnit.uri.toString();
+
+  // Do not send margin indicators for virtual files
+  if (isVirtualFile(uriString)) {
+    return;
+  }
+
   const margins = compilationUnit.compilerOptions.margins;
   const indicator: MarginIndicatorNotificationParams = {
-    uri: compilationUnit.uri.toString(),
+    uri: uriString,
     m: margins ? margins.m : 2,
     n: margins ? margins.n : 72,
   };

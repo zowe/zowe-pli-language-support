@@ -26,41 +26,53 @@ const translator = new Translator<CompilerOptions>(() =>
   getDefaultCompilerOptions(),
 );
 
-translator.rule(["CASE"], (option, options, _, configuration) => {
-  ensureArguments(option, 1, 1);
-  ensureToBeDefined(options.case);
-  const value = option.values[0];
-  ensureType(value, "plain");
-  options.case = {
-    case: ensureEnum(
-      value,
-      CompilerOptionsCodes.PPMacro.Case.InvalidParameter,
-      CompilerOptions.Case,
-    ),
-    explicitlySet:
-      configuration?.source !== undefined
-        ? configuration.source === CompilerOptionSource.SOURCE_FILE
-        : false,
-  };
-});
+translator.rule(
+  ["CASE"],
+  (option, options, _, configuration) => {
+    ensureArguments(option, 1, 1);
+    ensureToBeDefined(options.case);
+    const value = option.values[0];
+    ensureType(value, "plain");
+    options.case = {
+      case: ensureEnum(
+        value,
+        CompilerOptionsCodes.PPMacro.Case.InvalidParameter,
+        CompilerOptions.Case,
+      ),
+      explicitlySet:
+        configuration?.source !== undefined
+          ? configuration.source === CompilerOptionSource.SOURCE_FILE
+          : false,
+    };
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
-translator.rule(["DBCS"], (option, options, acceptor) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "plain");
-  options.dbcs = ensureEnum(
-    value,
-    CompilerOptionsCodes.PPMacro.Dbcs.InvalidParameter,
-    CompilerOptions.Dbcs,
-  );
-  acceptor(
-    diagnosticFromCode(
-      CompilerOptionsCodes.OptionNotSupported,
-      option.token,
-      "DBCS",
-    ),
-  );
-});
+translator.rule(
+  ["DBCS"],
+  (option, options, acceptor) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plain");
+    options.dbcs = ensureEnum(
+      value,
+      CompilerOptionsCodes.PPMacro.Dbcs.InvalidParameter,
+      CompilerOptions.Dbcs,
+    );
+    acceptor(
+      diagnosticFromCode(
+        CompilerOptionsCodes.OptionNotSupported,
+        option.token,
+        "DBCS",
+      ),
+    );
+  },
+  undefined,
+  undefined,
+  { recompile: true },
+);
 
 translator.rule(["DEPRECATE"], (option, options) => {
   ensureArguments(option, 1);
@@ -104,13 +116,19 @@ translator.rule(["DEPRECATENEXT"], (option, options) => {
   }
 });
 
-translator.flag("eolComm", ["EOLCOMM"], ["NOEOLCOMM"], (option) => {
-  throw diagnosticFromCode(
-    CompilerOptionsCodes.OptionNotSupported,
-    option.token,
-    "EOLCOMM",
-  );
-});
+translator.flag(
+  "eolComm",
+  ["EOLCOMM"],
+  ["NOEOLCOMM"],
+  (option) => {
+    throw diagnosticFromCode(
+      CompilerOptionsCodes.OptionNotSupported,
+      option.token,
+      "EOLCOMM",
+    );
+  },
+  { recompile: true },
+);
 
 translator.rule(["FIXED"], (option, options) => {
   ensureArguments(option, 1, 1);

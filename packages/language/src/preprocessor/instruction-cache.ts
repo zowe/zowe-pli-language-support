@@ -13,10 +13,6 @@ import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { Statement } from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
-import {
-  CompilerOptions,
-  getDefaultCompilerOptions,
-} from "./compiler-options/options";
 import { InstructionGeneratorResult } from "./instruction-generator";
 
 interface CachedInstructions {
@@ -35,18 +31,19 @@ export interface FileInstructionResult {
 export class InstructionCache {
   private cache = new Map<string, CachedInstructions>();
 
-  private previousCompilerOptions = getDefaultCompilerOptions();
+  private previousRecompileFingerprint: string | undefined;
 
-  update(compilerOptions: CompilerOptions): void {
+  /**
+   * Updates the recompile fingerprint and clears the cache if it changed.
+   */
+  update(fingerprint: string): void {
     if (
-      compilerOptions.or !== this.previousCompilerOptions.or ||
-      compilerOptions.not !== this.previousCompilerOptions.not ||
-      compilerOptions.pp?.ppInclude?.value !==
-        this.previousCompilerOptions.pp?.ppInclude?.value
+      this.previousRecompileFingerprint !== undefined &&
+      this.previousRecompileFingerprint !== fingerprint
     ) {
       this.cache.clear();
     }
-    this.previousCompilerOptions = compilerOptions;
+    this.previousRecompileFingerprint = fingerprint;
   }
 
   async get(
