@@ -423,7 +423,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
         )
         .map(([uri, diagnostic]) => ({
           uri: uri!,
-          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace(), uri),
+          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace(), uri!),
         }));
       codeActions = [];
       for (const { uri, actions } of asyncActionsByUri) {

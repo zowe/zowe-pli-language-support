@@ -18,6 +18,11 @@ import { registerProgressReporter } from "./progress";
 import { watchPluginFolder } from "./plugin-watcher";
 import { registerCustomDecorators } from "./decorators";
 import { Settings } from "./settings";
+import {
+  deriveUserSettingsUri,
+  registerConfigLoader,
+  watchPluginSettings,
+} from "./config-loader";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -60,7 +65,12 @@ async function startLanguageClient(
 
   // Create the language client and start the client.
   const client = new LanguageClient("pli", "PL/I", clientOptions, worker);
+  context.subscriptions.push(
+    registerProgressReporter(client),
+    watchPluginSettings(client),
+  );
   registerFileSystemProvider(client);
+  registerConfigLoader(client, deriveUserSettingsUri(context.globalStorageUri));
   context.subscriptions.push(
     registerProgressReporter(client),
     registerCustomDecorators(client, settings),

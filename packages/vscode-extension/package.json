@@ -69,8 +69,12 @@
       {
         "language": "pli",
         "scopes": {
-          "keyword": ["keyword.control.pli"],
-          "modifier": ["keyword.storage.pli"]
+          "keyword": [
+            "keyword.control.pli"
+          ],
+          "modifier": [
+            "keyword.storage.pli"
+          ]
         }
       }
     ],
@@ -122,6 +126,115 @@
           ],
           "default": "automatic",
           "description": "Controls the rulers for the margin compiler option. 'off' disables rulers, 'default' shows the PL/I default rulers [2, 72], 'automatic' adds rulers based on margin compiler options."
+        },
+        "pli.pgm_conf": {
+          "description": "PL/I Plugin Program Configuration",
+          "type": "object",
+          "properties": {
+            "pgms": {
+              "type": "array",
+              "description": "List of programs and their associated program groups.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "program": {
+                    "type": "string",
+                    "description": "Filename of the PL/I source program (e.g., 'a.pli')."
+                  },
+                  "pgroup": {
+                    "type": "string",
+                    "description": "Program group label (e.g., 'default')."
+                  },
+                  "compiler-options": {
+                    "type": "array",
+                    "description": "Compiler options for these programs.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "program",
+                  "pgroup"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "pgms"
+          ],
+          "additionalProperties": false
+        },
+        "pli.proc_grps": {
+          "description": "PL/I Plugin Procedure Groups Configuration",
+          "type": "object",
+          "properties": {
+            "pgroups": {
+              "type": "array",
+              "description": "List of procedure groups with build configuration.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the procedure group (e.g., 'default')."
+                  },
+                  "compiler-options": {
+                    "type": "array",
+                    "description": "Compiler options for this group.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "libs": {
+                    "type": "array",
+                    "description": "List of libraries to include during compilation.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "include-extensions": {
+                    "type": "array",
+                    "description": "List of file extensions to treat as include files.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "member-name-validation": {
+                    "type": "boolean",
+                    "description": "Whether to enable member name validation for this procedure group."
+                  },
+                  "lsp-options": {
+                    "type": "object",
+                    "description": "Options for the Language Server Protocol.",
+                    "properties": {
+                      "check-margins": {
+                        "type": "boolean",
+                        "description": "Whether to check for margins in the PL/I code."
+                      },
+                      "instruction-counter-limit": {
+                        "type": "number",
+                        "description": "Maximum number of times to run an instructions during preprocessing. The default is 5000."
+                      },
+                      "case-upper-validation": {
+                        "type": "boolean",
+                        "description": "Whether to validate the CASE(UPPER) macro option and provide diagnostics for quickfixes."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "pgroups"
+          ],
+          "additionalProperties": false
         }
       }
     }

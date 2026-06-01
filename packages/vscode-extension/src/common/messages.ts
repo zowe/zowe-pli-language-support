@@ -9,11 +9,23 @@
  *
  */
 
+import { FileType, Stats, createRequestType } from "pli-language";
+
 export namespace Messages {
-  export const ReadDir = "fs/readDir";
-  export const ReadFile = "fs/readFile";
-  export const WriteFile = "fs/writeFile";
-  export const FileExists = "fs/fileExists";
-  export const FindFile = "fs/findFile";
-  export const Stat = "fs/stat";
+  export const ReadDir = createRequestType<string, [string, FileType][]>(
+    "fs/readDir",
+  );
+  export const ReadFile = createRequestType<string, string>("fs/readFile");
+  export const WriteFile = createRequestType<[string, string], void>(
+    "fs/writeFile",
+  );
+  export const FileExists = createRequestType<string, boolean>("fs/fileExists");
+  export const FindFile = createRequestType<
+    {
+      path: string;
+      extensions: string[];
+    },
+    string
+  >("fs/findFile");
+  export const Stat = createRequestType<string, Stats>("fs/stat");
 }

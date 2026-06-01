@@ -26,6 +26,12 @@ import { registerPliDocumentIdentifier } from "./document-identification";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import { watchPluginFolder } from "./plugin-watcher";
+import { sendNotification } from "./messages";
+import {
+  deriveUserSettingsUri,
+  registerConfigLoader,
+  watchPluginSettings,
+} from "./config-loader";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -46,6 +52,7 @@ export async function activate(
     registerOnDidChangeActiveTextEditor(),
     registerOnDidOpenTextDocListener(telemetryReporter),
     registerPliDocumentIdentifier(client),
+    watchPluginSettings(client),
   );
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -161,6 +168,7 @@ async function startLanguageClient(
 
   // Register custom connection message handlers.
   registerFileSystemProvider(client);
+  registerConfigLoader(client, deriveUserSettingsUri(context.globalStorageUri));
   context.subscriptions.push(
     client,
     registerProgressReporter(client),

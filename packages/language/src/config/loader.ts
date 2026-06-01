@@ -43,12 +43,26 @@ import {
  *
  * The loader performs a single tree walk via `jsoncParseTree` and pulls
  * each leaf's source location (`offset`/`length`) out of the same node it
- * extracts the value from — there is no second pass that re-discovers
+ * extracts the value from - there is no second pass that re-discovers
  * ranges via `jsoncFindNodeAtLocation`.
  */
 export interface LoadResult<T> {
   config: T[] | undefined;
   diagnostics: LspDiagnostic[];
+}
+
+/**
+ * Optional entry-point navigation for {@link parseProgramConfigs} and
+ * {@link parseProcessGroupConfigs}. When the config doesn't live at the
+ * document root (e.g. inside a VS Code `settings.json` under
+ * `pli.pgm_conf`, or inside a `.code-workspace` file under
+ * `settings.pli.pgm_conf`), `containerPath` walks to the wrapping
+ * object and `configKey` names the property that holds the config
+ * object. `configKey` is matched as a single flat property name.
+ */
+export interface ParseEntry {
+  containerPath?: JSONPath;
+  configKey?: string;
 }
 
 const PGM_FILE = "pgm_conf.json";
@@ -62,6 +76,7 @@ const PROC_GRPS_FILE = "proc_grps.json";
 export function parseProgramConfigs(
   text: string,
   configUri: URI,
+  entry: ParseEntry = {},
 ): LoadResult<ProgramConfig> {
   const document = TextDocument.create(configUri.toString(), "jsonc", 0, text);
   const diagnostics: LspDiagnostic[] = [];
@@ -71,23 +86,29 @@ export function parseProgramConfigs(
     ...createParseErrorDiagnostics(document, parseErrors, PGM_FILE),
   );
 
-  const pgmsNode = findProperty(root, "pgms");
+  const configRoot = navigateToEntry(root, entry);
+  const pgmsNode = findProperty(configRoot, "pgms");
   if (
-    !root ||
-    root.type !== "object" ||
+    !configRoot ||
+    configRoot.type !== "object" ||
     !pgmsNode ||
     pgmsNode.type !== "array"
   ) {
     diagnostics.push(
-      createStructureDiagnostic(document, PGM_FILE, "pgms array"),
+      createStructureDiagnostic(
+        document,
+        PGM_FILE,
+        formatExpectation(entry, "pgms array"),
+      ),
     );
     return { config: undefined, diagnostics };
   }
 
+  const pgmsPath: JSONPath = [...entryFullPath(entry), "pgms"];
   const configs: ProgramConfig[] = [];
   const children = pgmsNode.children ?? [];
   for (let i = 0; i < children.length; i++) {
-    const entry = readProgramConfig(children[i], i, configUri);
+    const entry = readProgramConfig(children[i], i, configUri, pgmsPath);
     if (entry) {
       configs.push(entry);
     }
@@ -103,6 +124,7 @@ export function parseProgramConfigs(
 export function parseProcessGroupConfigs(
   text: string,
   configUri: URI,
+  entry: ParseEntry = {},
 ): LoadResult<ProcessGroup> {
   const document = TextDocument.create(configUri.toString(), "jsonc", 0, text);
   const diagnostics: LspDiagnostic[] = [];
@@ -112,23 +134,29 @@ export function parseProcessGroupConfigs(
     ...createParseErrorDiagnostics(document, parseErrors, PROC_GRPS_FILE),
   );
 
-  const pgroupsNode = findProperty(root, "pgroups");
+  const configRoot = navigateToEntry(root, entry);
+  const pgroupsNode = findProperty(configRoot, "pgroups");
   if (
-    !root ||
-    root.type !== "object" ||
+    !configRoot ||
+    configRoot.type !== "object" ||
     !pgroupsNode ||
     pgroupsNode.type !== "array"
   ) {
     diagnostics.push(
-      createStructureDiagnostic(document, PROC_GRPS_FILE, "pgroups array"),
+      createStructureDiagnostic(
+        document,
+        PROC_GRPS_FILE,
+        formatExpectation(entry, "pgroups array"),
+      ),
     );
     return { config: undefined, diagnostics };
   }
 
+  const pgroupsPath: JSONPath = [...entryFullPath(entry), "pgroups"];
   const groups: ProcessGroup[] = [];
   const children = pgroupsNode.children ?? [];
   for (let i = 0; i < children.length; i++) {
-    const entry = readProcessGroup(children[i], i, configUri);
+    const entry = readProcessGroup(children[i], i, configUri, pgroupsPath);
     if (entry) {
       groups.push(entry);
     }
@@ -136,15 +164,59 @@ export function parseProcessGroupConfigs(
   return { config: groups, diagnostics };
 }
 
+/**
+ * Walk from `root` along `entry.containerPath`, then descend into
+ * `entry.configKey` as a single flat property. Returns the node that
+ * should be treated as the config root, or `undefined` if any step is
+ * missing or not an object.
+ */
+function navigateToEntry(
+  root: JsonNode | undefined,
+  entry: ParseEntry,
+): JsonNode | undefined {
+  let current: JsonNode | undefined = root;
+  for (const segment of entry.containerPath ?? []) {
+    if (!current) return undefined;
+    if (typeof segment === "string") {
+      current = findProperty(current, segment);
+    } else if (current.type === "array") {
+      current = current.children?.[segment];
+    } else {
+      return undefined;
+    }
+  }
+  if (entry.configKey === undefined) {
+    return current;
+  }
+  if (!current || current.type !== "object") {
+    return undefined;
+  }
+  return findProperty(current, entry.configKey);
+}
+
+function entryFullPath(entry: ParseEntry): JSONPath {
+  const base: JSONPath = [...(entry.containerPath ?? [])];
+  if (entry.configKey !== undefined) {
+    base.push(entry.configKey);
+  }
+  return base;
+}
+
+function formatExpectation(entry: ParseEntry, suffix: string): string {
+  const prefix = entryFullPath(entry).join(".");
+  return prefix ? `${prefix}.${suffix}` : suffix;
+}
+
 function readProgramConfig(
   node: JsonNode | undefined,
   index: number,
   uri: URI,
+  basePath: JSONPath,
 ): ProgramConfig | undefined {
   if (!node || node.type !== "object") {
     return undefined;
   }
-  const path: JSONPath = ["pgms", index];
+  const path: JSONPath = [...basePath, index];
   const program = readStringField(node, "program", [...path, "program"], uri);
   const pgroup = readStringField(node, "pgroup", [...path, "pgroup"], uri);
   if (!program || !pgroup) {
@@ -163,11 +235,12 @@ function readProcessGroup(
   node: JsonNode | undefined,
   index: number,
   uri: URI,
+  basePath: JSONPath,
 ): ProcessGroup | undefined {
   if (!node || node.type !== "object") {
     return undefined;
   }
-  const path: JSONPath = ["pgroups", index];
+  const path: JSONPath = [...basePath, index];
   const name = readStringField(node, "name", [...path, "name"], uri);
   if (!name) {
     return undefined;

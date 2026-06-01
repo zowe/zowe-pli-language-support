@@ -29,22 +29,6 @@ const JSONC_FORMAT = {
   formattingOptions: { tabSize: 2, insertSpaces: true },
 } as const;
 
-function isProcGrpsDocumentUri(
-  documentUri: string,
-  workspace: WorkspaceContext,
-): boolean {
-  const workspacePath = workspace.config.getWorkspacePath();
-  if (!workspacePath) {
-    return false;
-  }
-  const expected = UriUtils.joinPath(
-    workspacePath,
-    ".pliplugin",
-    "proc_grps.json",
-  );
-  return UriUtils.equals(documentUri, expected);
-}
-
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
   workspace: WorkspaceContext,
@@ -282,6 +266,7 @@ export function quickFixResolveAmbiguousReference(
 export async function quickFixRemoveUnresolvedLib(
   diagnostic: Diagnostic,
   workspace: WorkspaceContext,
+  documentUri?: string,
 ): Promise<CodeAction | undefined> {
   const data = diagnostic.data as PluginConfigUnresolvedLibData | undefined;
   if (!data?.lib || !data?.pgroup) {
@@ -290,7 +275,8 @@ export async function quickFixRemoveUnresolvedLib(
   if (!data.path) {
     return undefined;
   }
-  const procGrpsSnapshot = workspace.config.getLastProcGrpsSnapshot();
+  const procGrpsSnapshot =
+    workspace.config.getLastProcGrpsSnapshot(documentUri);
   if (!procGrpsSnapshot) {
     return;
   }
@@ -385,19 +371,20 @@ async function handleMultipleUnresolvedLibs(
   diagnostics: Diagnostic[],
   unresolvedLibCode: string,
   workspace: WorkspaceContext,
-  documentUri?: string,
+  documentUri: string,
 ): Promise<CodeAction | undefined> {
   const unresolvedInContext = diagnostics.filter(
     (d) => d.code === unresolvedLibCode,
   );
   if (
     !documentUri ||
-    !isProcGrpsDocumentUri(documentUri, workspace) ||
+    !workspace.config.isProcGrpsConfigSource(documentUri) ||
     !unresolvedInContext.length
   ) {
     return;
   }
-  const procGrpsSnapshot = workspace.config.getLastProcGrpsSnapshot();
+  const procGrpsSnapshot =
+    workspace.config.getLastProcGrpsSnapshot(documentUri);
   if (!procGrpsSnapshot || !procGrpsSnapshot.entries) {
     return;
   }
@@ -452,7 +439,7 @@ export function quickFixReplaceUnknownProcGroup(
 export async function applyQuickFixes(
   diagnostics: Diagnostic[],
   workspace: WorkspaceContext,
-  documentUri?: string,
+  documentUri: string,
 ): Promise<CodeAction[] | undefined> {
   const actions: CodeAction[] = [];
   // PLI CODES LIST
@@ -507,7 +494,11 @@ export async function applyQuickFixes(
         );
         break;
       case CODE_UNRESOLVED_LIB:
-        action = await quickFixRemoveUnresolvedLib(diagnostic, workspace);
+        action = await quickFixRemoveUnresolvedLib(
+          diagnostic,
+          workspace,
+          documentUri,
+        );
         if (action) actions.push(action);
         break;
     }

@@ -12,20 +12,18 @@
 import * as vscode from "vscode";
 import { Messages } from "pli-language";
 import { BaseLanguageClient } from "vscode-languageclient";
+import { onNotification } from "./messages";
 
 export function registerProgressReporter(
   client: BaseLanguageClient,
 ): vscode.Disposable {
   let statusBarItem = new vscode.Disposable(() => {});
-  client.onNotification(Messages.UpdateOperation, (operation) => {
-    if (operation && typeof operation.title === "string") {
-      const title = operation.title;
-      statusBarItem.dispose();
-      if (title) {
-        statusBarItem = vscode.window.setStatusBarMessage(
-          "$(loading~spin) " + title,
-        );
-      }
+  onNotification(client, Messages.UpdateOperation, (title) => {
+    statusBarItem.dispose();
+    if (title) {
+      statusBarItem = vscode.window.setStatusBarMessage(
+        "$(loading~spin) " + title,
+      );
     }
   });
   return statusBarItem;

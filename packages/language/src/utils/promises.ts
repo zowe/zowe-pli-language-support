@@ -15,6 +15,7 @@ import {
   Connection,
 } from "vscode-languageserver";
 import { Messages } from "./messages";
+import { sendNotification } from "../language-server/connection-handler";
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -135,7 +136,7 @@ export function startLongRunningOperation(
   }
   let running = false;
   const startTimeout = setTimeout(() => {
-    connection?.sendNotification(Messages.UpdateOperation, { title });
+    sendNotification(connection, Messages.UpdateOperation, title);
     running = true;
   }, timeout);
   return () => {
@@ -143,7 +144,7 @@ export function startLongRunningOperation(
     clearTimeout(startTimeout);
     if (running) {
       // Clear the progress info again
-      connection?.sendNotification(Messages.UpdateOperation, { title: "" });
+      sendNotification(connection, Messages.UpdateOperation, "");
     }
   };
 }

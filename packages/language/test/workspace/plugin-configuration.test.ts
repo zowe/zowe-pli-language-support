@@ -10,11 +10,30 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import type { Connection } from "vscode-languageserver";
 import { UriUtils } from "../../src/utils/uri";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { ProcessGroup } from "../../src/workspace/plugin-configuration-provider";
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
+import { Messages } from "../../src/utils/messages";
 import { makeProcessGroup } from "../config-fixtures";
+
+/**
+ * Minimal connection stub that responds to `config/getGlobal` with the
+ * given `GlobalConfig`. Other request/notification methods are no-ops so
+ * the provider can run end-to-end without a real LSP transport.
+ */
+function makeConnection(global: Messages.GlobalConfig): Connection {
+  return {
+    sendRequest: async (method: string) => {
+      if (method === Messages.GetGlobalConfig.method) return global;
+      return undefined;
+    },
+    sendNotification: async () => {},
+    onRequest: () => ({ dispose() {} }),
+    onNotification: () => ({ dispose() {} }),
+  } as unknown as Connection;
+}
 
 describe("Plugin Configuration Tests", () => {
   let vfs: VirtualFileSystemProvider;
@@ -157,5 +176,141 @@ describe("Plugin Configuration Tests", () => {
     // should be the one dir entry, not the ddname
     expect(processGroup?.computedLibsSet.size).toBe(1);
     expect(processGroup?.computedLibsSet.has("lib1/dir1")).toBe(true);
+  });
+
+  describe("Merge of .pliplugin/ and VS Code settings", () => {
+    const WORKSPACE = "file:///ws/";
+    const SETTINGS_URI = "file:///ws/.vscode/settings.json";
+
+    async function writePluginFiles(
+      pgmConfText?: string,
+      procGrpsText?: string,
+    ): Promise<void> {
+      if (pgmConfText !== undefined) {
+        await vfs.writeFile(
+          UriUtils.toUri("file:///ws/.pliplugin/pgm_conf.json"),
+          pgmConfText,
+        );
+      }
+      if (procGrpsText !== undefined) {
+        await vfs.writeFile(
+          UriUtils.toUri("file:///ws/.pliplugin/proc_grps.json"),
+          procGrpsText,
+        );
+      }
+    }
+
+    async function writeSettingsFile(text: string): Promise<void> {
+      await vfs.writeFile(UriUtils.toUri(SETTINGS_URI), text);
+    }
+
+    function settingsConfig(args: {
+      pgmConf?: boolean;
+      procGrps?: boolean;
+    }): Messages.GlobalConfig {
+      const result: Messages.GlobalConfig = {};
+      if (args.pgmConf) {
+        result.pgmConf = {
+          uri: SETTINGS_URI,
+          containerPath: [],
+          configKey: "pli.pgm_conf",
+        };
+      }
+      if (args.procGrps) {
+        result.procGrps = {
+          uri: SETTINGS_URI,
+          containerPath: [],
+          configKey: "pli.proc_grps",
+        };
+      }
+      return result;
+    }
+
+    test("Non-overlapping entries from both sources are unioned", async () => {
+      await writePluginFiles(
+        `{ "pgms": [{ "program": "a.pli", "pgroup": "plugin-grp" }] }`,
+        `{ "pgroups": [{ "name": "plugin-grp", "libs": [] }] }`,
+      );
+      await writeSettingsFile(
+        `{
+          "pli.pgm_conf": { "pgms": [{ "program": "b.pli", "pgroup": "settings-grp" }] },
+          "pli.proc_grps": { "pgroups": [{ "name": "settings-grp", "libs": [] }] }
+        }`,
+      );
+      workspace = new WorkspaceContext(
+        vfs,
+        makeConnection(settingsConfig({ pgmConf: true, procGrps: true })),
+      );
+
+      await workspace.config.init(UriUtils.toUri(WORKSPACE));
+
+      expect(
+        workspace.config.getProcessGroupConfig("plugin-grp"),
+      ).toBeDefined();
+      expect(
+        workspace.config.getProcessGroupConfig("settings-grp"),
+      ).toBeDefined();
+      expect(
+        workspace.config.hasProgramConfig(UriUtils.toUri("file:///ws/a.pli")),
+      ).toBe(true);
+      expect(
+        workspace.config.hasProgramConfig(UriUtils.toUri("file:///ws/b.pli")),
+      ).toBe(true);
+    });
+
+    test(".pliplugin/ wins on duplicate pgroup name", async () => {
+      await vfs.writeFile(UriUtils.toUri("file:///ws/plugin-libs/x.inc"), "");
+      await vfs.writeFile(UriUtils.toUri("file:///ws/settings-libs/x.inc"), "");
+      await writePluginFiles(
+        `{ "pgms": [] }`,
+        `{ "pgroups": [{ "name": "default", "libs": ["plugin-libs"] }] }`,
+      );
+      await writeSettingsFile(
+        `{
+          "pli.proc_grps": { "pgroups": [{ "name": "default", "libs": ["settings-libs"] }] }
+        }`,
+      );
+      workspace = new WorkspaceContext(
+        vfs,
+        makeConnection(settingsConfig({ procGrps: true })),
+      );
+
+      await workspace.config.init(UriUtils.toUri(WORKSPACE));
+
+      const def = workspace.config.getProcessGroupConfig("default");
+      expect(def?.computedLibsSet.has("plugin-libs")).toBe(true);
+      expect(def?.computedLibsSet.has("settings-libs")).toBe(false);
+    });
+
+    test("Unresolved lib in settings show as diagnostics in settings.json", async () => {
+      await writePluginFiles(`{ "pgms": [] }`, `{ "pgroups": [] }`);
+      await writeSettingsFile(
+        `{
+          "pli.proc_grps": { "pgroups": [{ "name": "from-settings", "libs": ["nope"] }] }
+        }`,
+      );
+      workspace = new WorkspaceContext(
+        vfs,
+        makeConnection(settingsConfig({ procGrps: true })),
+      );
+
+      const result = await workspace.config.init(UriUtils.toUri(WORKSPACE));
+
+      const settingsDiags = result.get(SETTINGS_URI) ?? [];
+      const pluginDiags =
+        result.get("file:///ws/.pliplugin/proc_grps.json") ?? [];
+      expect(settingsDiags.some((d) => d.code === "COPC01E")).toBe(true);
+      expect(pluginDiags).toEqual([]);
+    });
+
+    test(".pliplugin/-only mode (no connection) still works", async () => {
+      await writePluginFiles(
+        `{ "pgms": [] }`,
+        `{ "pgroups": [{ "name": "default", "libs": [] }] }`,
+      );
+      // workspace is created with no connection in beforeEach
+      await workspace.config.init(UriUtils.toUri(WORKSPACE));
+      expect(workspace.config.getProcessGroupConfig("default")).toBeDefined();
+    });
   });
 });

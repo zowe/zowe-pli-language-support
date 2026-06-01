@@ -20,10 +20,13 @@ import {
 import { mergeAbstractOptions } from "../config/compiler-options-merge";
 import { expandGroup } from "../config/lib-expander";
 import {
+  ParseEntry,
   parseProcessGroupConfigs,
   parseProgramConfigs,
   toLspDiagnostic,
 } from "../config/loader";
+import { Messages } from "../utils/messages";
+import { sendRequest } from "../language-server/connection-handler";
 import {
   GroupRecord,
   isLibsDir,
@@ -170,6 +173,20 @@ type ProcGrpsSnapshot = {
 };
 
 /**
+ * One concrete source of plugin configuration (a `.pliplugin/` file or
+ * a settings-side document). Holds everything the parser and
+ * post-processor need: the URI to attribute diagnostics to, the raw
+ * text, the entry navigation hints, and a pre-built TextDocument used
+ * for offset→LSP range conversion.
+ */
+interface ConfigSource {
+  uri: URI;
+  text: string;
+  entry?: ParseEntry;
+  document: TextDocument;
+}
+
+/**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
  * processing their contents, and making those settings available to the language server.
  */
@@ -201,11 +218,29 @@ export class PluginConfigurationProvider {
   private workspacePath: URI;
 
   /**
-   * Last unresolved lib entries from the most recent postProcessProcessGroups run.
-   * Used for code actions: the editor often passes only one diagnostic in the code action request,
-   * so fixes for proc_grps.json are driven from this list.
+   * Per-source snapshots from the most recent postProcessProcessGroups run.
+   * Keyed by source URI string. With merge enabled, this can hold up to two
+   * entries — `.pliplugin/proc_grps.json` and the `settings.json` /
+   * `.code-workspace` file the `pli.proc_grps` value came from. Quick-fix
+   * code actions look up the snapshot by the URI of the document the user
+   * is acting on.
    */
-  private lastProcGrpsSnapshot?: ProcGrpsSnapshot;
+  private procGrpsSnapshots: Map<string, ProcGrpsSnapshot> = new Map();
+
+  /**
+   * URIs of files we loaded program config from on the most recent
+   * {@link loadConfigurations} run. Used so quick-fixes / file-type checks
+   * can recognize either `.pliplugin/pgm_conf.json` or a settings file
+   * as a plugin-config source. {@link isPgmConfigDocumentUri} stays
+   * `.pliplugin/`-only so config-completion doesn't fire in `settings.json`.
+   */
+  private knownPgmConfUris: Set<string> = new Set();
+
+  /**
+   * URIs of files we loaded process group config from on the most recent
+   * {@link loadConfigurations} run. Same purpose as {@link knownPgmConfUris}.
+   */
+  private knownProcGrpsUris: Set<string> = new Set();
 
   /**
    * Most recent config diagnostics from the last loadConfigurations() run
@@ -238,10 +273,41 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Entries matching the last published unresolved-library diagnostics for proc_grps.json.
+   * Snapshot of the file the user is acting on, used by quick-fixes that
+   * rewrite `proc_grps` to remove unresolved libs.
+   *
+   * Pass the diagnostic's source URI (i.e. `params.textDocument.uri` from
+   * the code-action request) to disambiguate when both `.pliplugin/` and
+   * settings contribute a `proc_grps`. Without a URI, returns the only
+   * snapshot if there's exactly one — preserves the legacy single-source
+   * call sites without changing them.
    */
-  public getLastProcGrpsSnapshot(): Readonly<ProcGrpsSnapshot> | undefined {
-    return this.lastProcGrpsSnapshot;
+  public getLastProcGrpsSnapshot(
+    uri?: string,
+  ): Readonly<ProcGrpsSnapshot> | undefined {
+    if (uri !== undefined) {
+      return this.procGrpsSnapshots.get(uri);
+    }
+    if (this.procGrpsSnapshots.size === 1) {
+      return this.procGrpsSnapshots.values().next().value;
+    }
+    return undefined;
+  }
+
+  /**
+   * True if `uri` is one of the source files we loaded plugin
+   * configuration from on the most recent {@link loadConfigurations} run.
+   * Used by code actions to recognize either a `.pliplugin/` file or a
+   * settings-style file as a valid target.
+   */
+  public isPluginConfigSource(uri: URI | string): boolean {
+    const key = typeof uri === "string" ? uri : uri.toString();
+    return this.knownPgmConfUris.has(key) || this.knownProcGrpsUris.has(key);
+  }
+
+  public isProcGrpsConfigSource(uri: URI | string): boolean {
+    const key = typeof uri === "string" ? uri : uri.toString();
+    return this.knownProcGrpsUris.has(key);
   }
 
   /**
@@ -351,88 +417,208 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Loads the plugin configurations from the workspace path, overwriting any existing configs.
+   * Loads the plugin configurations, overwriting any existing configs.
    *
-   * @returns Diagnostics keyed by config URI
+   * Both sources contribute unconditionally and are merged: the
+   * `.pliplugin/` files (when present in the workspace) and the
+   * `pli.pgm_conf` / `pli.proc_grps` VS Code settings (when set; the
+   * extension resolves them to whichever `settings.json` /
+   * `.code-workspace` file VS Code attributes the effective value to).
+   *
+   * On key collisions (same program path or same `pgroup` name in both
+   * sources), `.pliplugin/` wins — project files override personal /
+   * workspace settings.
+   *
+   * @returns Diagnostics keyed by source URI. Every file we loaded *or*
+   *   previously loaded gets an entry — including empty lists, so the
+   *   LSP clears prior diagnostics on files that are no longer a source.
    */
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
-
     const cancel = startLongRunningOperation(
       this.connection,
       "Processing plugin configuration...",
     );
-    const { diagnostics: programConfigDiagnostics, document } =
-      await this.loadProgramConfig(
-        UriUtils.joinPath(workspaceUri, ".pliplugin", "pgm_conf.json"),
-      );
-    const processGroupDiagnostics = await this.loadProcessGroupConfig(
-      UriUtils.joinPath(workspaceUri, ".pliplugin", "proc_grps.json"),
-    );
-    let unknownProcessGroupsDiagnostic: Diagnostic[] = [];
-    if (document && this.processGroupConfigs.size) {
-      const validation = validatePluginConfig(
-        document,
-        this.programConfigs,
-        this.getProcessGroupNames(),
-      );
-      programConfigDiagnostics.push(...validation.programConfigDiagnostics);
-      unknownProcessGroupsDiagnostic.push(
-        ...validation.unknownProcessGroupsDiagnostic,
-      );
-    }
-    cancel();
 
-    this.configInternalDiagnostics = new Map<string, Diagnostic[]>([
-      [this.getConfigUri("pgm_conf.json"), unknownProcessGroupsDiagnostic],
-    ]);
-    this.configLspDiagnostics = new Map<string, LspDiagnostic[]>([
-      [this.getConfigUri("pgm_conf.json"), programConfigDiagnostics],
-      [this.getConfigUri("proc_grps.json"), processGroupDiagnostics],
-    ]);
-    return this.configLspDiagnostics;
+    this.programConfigs.clear();
+    this.processGroupConfigs.clear();
+    this.procGrpsSnapshots.clear();
+    this.knownPgmConfUris.clear();
+    this.knownProcGrpsUris.clear();
+
+    const diagnostics: PluginConfigDiagnostics = new Map();
+    const ensureList = (uri: string): LspDiagnostic[] => {
+      let list = diagnostics.get(uri);
+      if (!list) {
+        list = [];
+        diagnostics.set(uri, list);
+      }
+      return list;
+    };
+
+    const plipluginDir = UriUtils.joinPath(workspaceUri, ".pliplugin");
+    const plipluginPgmConfUri = UriUtils.joinPath(
+      plipluginDir,
+      "pgm_conf.json",
+    );
+    const plipluginProcGrpsUri = UriUtils.joinPath(
+      plipluginDir,
+      "proc_grps.json",
+    );
+
+    // Always include the .pliplugin/ URIs in the result so any prior
+    // diagnostics on those files get cleared when the user deletes them.
+    ensureList(plipluginPgmConfUri.toString());
+    ensureList(plipluginProcGrpsUri.toString());
+
+    // Collect sources in PRECEDENCE-LOWEST-FIRST order. Map-based merge
+    // means later writes overwrite earlier writes, so listing
+    // .pliplugin/ second makes it the winning source on key collisions.
+    const global = await this.fetchGlobalSettings();
+    const pgmSources: ConfigSource[] = [];
+    const procGrpsSources: ConfigSource[] = [];
+
+    if (global?.pgmConf) {
+      const source = await this.readSource(global.pgmConf);
+      if (source) pgmSources.push(source);
+    }
+    if (global?.procGrps) {
+      const source = await this.readSource(global.procGrps);
+      if (source) procGrpsSources.push(source);
+    }
+    const plipluginPgmSource =
+      await this.readPlipluginSource(plipluginPgmConfUri);
+    if (plipluginPgmSource) pgmSources.push(plipluginPgmSource);
+    const plipluginProcSource =
+      await this.readPlipluginSource(plipluginProcGrpsUri);
+    if (plipluginProcSource) procGrpsSources.push(plipluginProcSource);
+
+    // Parse pgm_conf sources and merge by resolved program URI.
+    const mergedPrograms = new Map<string, ProgramConfig>();
+    for (const source of pgmSources) {
+      this.knownPgmConfUris.add(source.uri.toString());
+      const result = parseProgramConfigs(source.text, source.uri, source.entry);
+      ensureList(source.uri.toString()).push(...result.diagnostics);
+      if (result.config) {
+        for (const config of result.config) {
+          const resolvedUri = this.resolveProgramPath(
+            config.program.value,
+            this.workspacePath,
+          );
+          mergedPrograms.set(resolvedUri.toString(), config);
+        }
+      }
+    }
+    this.setProgramConfigs(
+      this.workspacePath,
+      Array.from(mergedPrograms.values()),
+    );
+
+    // Parse proc_grps sources and merge by pgroup name.
+    const mergedGroups = new Map<string, ProcessGroup>();
+    const procGrpsDocuments = new Map<string, TextDocument>();
+    for (const source of procGrpsSources) {
+      this.knownProcGrpsUris.add(source.uri.toString());
+      procGrpsDocuments.set(source.uri.toString(), source.document);
+      const result = parseProcessGroupConfigs(
+        source.text,
+        source.uri,
+        source.entry,
+      );
+      ensureList(source.uri.toString()).push(...result.diagnostics);
+      if (result.config) {
+        for (const config of result.config) {
+          mergedGroups.set(config.name.value, config);
+        }
+      }
+    }
+    this.processGroupConfigs.clear();
+    for (const config of mergedGroups.values()) {
+      this.processGroupConfigs.set(config.name.value, {
+        ...config,
+        computedLibs: [],
+        computedLibsSet: new Set<string>(),
+      });
+    }
+    this.postProcessProgramConfigs();
+    const procGrpsDiagnostics =
+      await this.postProcessProcessGroups(procGrpsDocuments);
+    for (const [uri, list] of procGrpsDiagnostics) {
+      ensureList(uri).push(...list);
+    }
+    this.libFileMatchers = undefined;
+
+    // Make sure URIs we published last time but are no longer sources
+    // come back with an empty list, so the editor clears those diagnostics.
+    for (const uri of this.previouslyPublishedUris) {
+      ensureList(uri);
+    }
+    this.previouslyPublishedUris = new Set(diagnostics.keys());
+
+    cancel();
+    return diagnostics;
   }
 
   /**
-   * Loads the program config from the given path, and sets it in this provider.
-   * @param programConfigUri URI to the program config file
+   * URIs whose diagnostics we published on the previous load. Re-included
+   * with an empty list on the next load if they're no longer a source,
+   * so the LSP clears stale diagnostics.
    */
-  private async loadProgramConfig(
-    programConfigUri: URI,
-  ): Promise<{ diagnostics: LspDiagnostic[]; document?: TextDocument }> {
-    const diagnostics: LspDiagnostic[] = [];
-    // attempt to read configs
-    if (await this.fs.fileExists(programConfigUri)) {
-      const progConfig = await this.fs.readFile(programConfigUri);
+  private previouslyPublishedUris: Set<string> = new Set();
 
-      // add configs to our provider if they exist
-      if (progConfig !== undefined) {
-        if (
-          !this.parseProgramConfigs(
-            this.workspacePath,
-            progConfig.toString(),
-            diagnostics,
-          )
-        ) {
-          console.error("Failed to load program config, skipping.");
-        } else {
-          const document = TextDocument.create(
-            programConfigUri.toString(),
-            "jsonc",
-            0,
-            progConfig.toString(),
-          );
-          return { diagnostics, document };
-        }
-      } else {
-        console.warn("No program config found.");
-      }
+  /**
+   * Asks the client for the VS Code settings backing for `pli.pgm_conf`
+   * and `pli.proc_grps`. Returns `undefined` when no connection is
+   * available (e.g. tests) or the request fails.
+   */
+  private async fetchGlobalSettings(): Promise<
+    Messages.GlobalConfig | undefined
+  > {
+    if (!this.connection) return undefined;
+    try {
+      return await sendRequest(
+        this.connection,
+        Messages.GetGlobalConfig,
+        undefined,
+      );
+    } catch (err) {
+      console.error("Failed to fetch global plugin configuration:", err);
+      return undefined;
     }
+  }
 
-    // clear otherwise, no valid program config to use
-    this.programConfigs.clear();
-    console.warn("No program config found, clearing existing configurations.");
-    return { diagnostics, document: undefined };
+  /** Reads & wraps a settings-side {@link Messages.GlobalConfigEntry}. */
+  private async readSource(
+    entry: Messages.GlobalConfigEntry,
+  ): Promise<ConfigSource | undefined> {
+    const uri = UriUtils.toUri(entry.uri);
+    const text = await this.fs.readFile(uri);
+    if (text === undefined) return undefined;
+    const stringText = text.toString();
+    return {
+      uri,
+      text: stringText,
+      entry: {
+        containerPath: entry.containerPath,
+        configKey: entry.configKey,
+      },
+      document: TextDocument.create(uri.toString(), "jsonc", 0, stringText),
+    };
+  }
+
+  /** Reads & wraps a `.pliplugin/`-side file if it exists. */
+  private async readPlipluginSource(
+    uri: URI,
+  ): Promise<ConfigSource | undefined> {
+    if (!(await this.fs.fileExists(uri))) return undefined;
+    const text = await this.fs.readFile(uri);
+    if (text === undefined) return undefined;
+    const stringText = text.toString();
+    return {
+      uri,
+      text: stringText,
+      document: TextDocument.create(uri.toString(), "jsonc", 0, stringText),
+    };
   }
 
   /**
@@ -533,52 +719,50 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Loads the process group config from the given path, and sets it in this provider.
-   * @param processGroupConfigUri URI to the process group config file
-   * @returns List of diagnostics encountered during loading & processing
-   */
-  private async loadProcessGroupConfig(
-    processGroupConfigUri: URI,
-  ): Promise<LspDiagnostic[]> {
-    if (await this.fs.fileExists(processGroupConfigUri)) {
-      const processGrpConfig = await this.fs.readFile(processGroupConfigUri);
-
-      if (processGrpConfig !== undefined) {
-        try {
-          // process & set configs, also triggers post-processing of process groups
-          const diagnostics =
-            await this.parseProcessGroupConfigs(processGrpConfig);
-          this.postProcessProgramConfigs();
-          return diagnostics;
-        } catch (e) {
-          console.error("Failed to load process group config, skipping:", e);
-        }
-      } else {
-        console.warn("No process group config found.");
-      }
-    }
-
-    // clear otherwise, no valid PG to use
-    this.processGroupConfigs.clear();
-    console.warn(
-      "No process group config found, clearing existing configurations.",
-    );
-    return [];
-  }
-
-  /**
    * Expands every process group's libs via the lib-expander, populates each
-   * record's `computedLibs`/`computedLibsSet` fields, and converts
-   * unresolved libs into LSP diagnostics. The classification (directory vs
-   * dataset vs unresolved) lives in `lib-expander.ts` and is driven by
-   * `stat` — not by exception handling.
+   * record's `computedLibs`/`computedLibsSet` fields, and converts unresolved
+   * libs into LSP diagnostics — one per lib, attributed to whichever source
+   * file the lib came from (via `libItem.meta?.uri`).
+   *
+   * Returns diagnostics grouped by source URI string so the caller can
+   * publish to each file separately; the merged config can contribute
+   * diagnostics to multiple sources at once. Also rebuilds
+   * `procGrpsSnapshots`, one entry per source document — quick-fix code
+   * actions need the right document text + entries to rewrite.
+   *
+   * `documents` maps source URI string → TextDocument; it must include
+   * every URI referenced by `libItem.meta?.uri` for ranges to convert
+   * correctly. Items without meta (test fixtures from
+   * {@link deserializeProcessGroup}) get the fallback range and pick any
+   * available document.
    */
   private async postProcessProcessGroups(
-    configDocument?: TextDocument,
-  ): Promise<LspDiagnostic[]> {
-    this.lastProcGrpsSnapshot = undefined;
-    const unresolvedLibEntries: PluginConfigUnresolvedLibData[] = [];
-    const diagnostics: LspDiagnostic[] = [];
+    documents: Map<string, TextDocument>,
+  ): Promise<Map<string, LspDiagnostic[]>> {
+    this.procGrpsSnapshots.clear();
+    const diagnosticsBySource = new Map<string, LspDiagnostic[]>();
+    const entriesBySource = new Map<string, PluginConfigUnresolvedLibData[]>();
+
+    const pushDiag = (uri: string, diag: LspDiagnostic) => {
+      let list = diagnosticsBySource.get(uri);
+      if (!list) {
+        list = [];
+        diagnosticsBySource.set(uri, list);
+      }
+      list.push(diag);
+    };
+    const pushEntry = (uri: string, entry: PluginConfigUnresolvedLibData) => {
+      let list = entriesBySource.get(uri);
+      if (!list) {
+        list = [];
+        entriesBySource.set(uri, list);
+      }
+      list.push(entry);
+    };
+    const fallbackDocument = documents.values().next().value as
+      | TextDocument
+      | undefined;
+    const fallbackUri = fallbackDocument?.uri;
 
     for (const record of this.processGroupConfigs.values()) {
       const expanded = await expandGroup(
@@ -595,6 +779,8 @@ export class PluginConfigurationProvider {
         const range = libItem.meta?.range ?? fallbackRange;
         const path = libItem.meta?.path;
         const lib = libItem.value;
+        const sourceUri = libItem.meta?.uri?.toString() ?? fallbackUri ?? "";
+        const document = documents.get(sourceUri) ?? fallbackDocument;
         const unresolvedLibDiagnostic: Diagnostic = {
           ...diagnosticFromCodeAtRange(
             LspCodes.PluginConfiguration.UnresolvedEntry,
@@ -603,23 +789,24 @@ export class PluginConfigurationProvider {
           ),
           data: { lib, pgroup: pgroupName, path },
         };
-        unresolvedLibEntries.push({ lib, pgroup: pgroupName, path });
-        diagnostics.push(
-          toLspDiagnostic(unresolvedLibDiagnostic, configDocument),
-        );
+        // Empty sourceUri ("orphan") still produces a diagnostic so
+        // legacy fixtures without source meta keep their existing
+        // behavior; only real source URIs participate in snapshots.
+        pushDiag(sourceUri, toLspDiagnostic(unresolvedLibDiagnostic, document));
+        if (sourceUri) {
+          pushEntry(sourceUri, { lib, pgroup: pgroupName, path });
+        }
       }
     }
 
-    if (configDocument) {
-      this.lastProcGrpsSnapshot = {
-        entries: unresolvedLibEntries,
-        text: configDocument.getText(),
-        uri: UriUtils.toUri(configDocument.uri),
-      };
-    } else {
-      this.lastProcGrpsSnapshot = undefined;
+    for (const [uri, document] of documents) {
+      this.procGrpsSnapshots.set(uri, {
+        entries: entriesBySource.get(uri) ?? [],
+        text: document.getText(),
+        uri: UriUtils.toUri(document.uri),
+      });
     }
-    return diagnostics;
+    return diagnosticsBySource;
   }
 
   /**
@@ -772,9 +959,13 @@ export class PluginConfigurationProvider {
       });
     }
     this.postProcessProgramConfigs();
-    const diagnostics = await this.postProcessProcessGroups(configDocument);
+    const documents = new Map<string, TextDocument>();
+    if (configDocument) {
+      documents.set(configDocument.uri, configDocument);
+    }
+    const diagnosticsBySource = await this.postProcessProcessGroups(documents);
     this.libFileMatchers = undefined;
-    return diagnostics;
+    return Array.from(diagnosticsBySource.values()).flat();
   }
 
   /**
