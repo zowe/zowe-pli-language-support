@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.44% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>144/161</span>
+                <span class='fraction'>144/162</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.66% </span>
+                <span class="strong">90.06% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>136/150</span>
+                <span class='fraction'>136/151</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.44% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>144/161</span>
+                <span class='fraction'>144/162</span>
             </div>
         
             
@@ -1277,7 +1277,13 @@
 <a name='L1212'></a><a href='#L1212'>1212</a>
 <a name='L1213'></a><a href='#L1213'>1213</a>
 <a name='L1214'></a><a href='#L1214'>1214</a>
-<a name='L1215'></a><a href='#L1215'>1215</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1215'></a><a href='#L1215'>1215</a>
+<a name='L1216'></a><a href='#L1216'>1216</a>
+<a name='L1217'></a><a href='#L1217'>1217</a>
+<a name='L1218'></a><a href='#L1218'>1218</a>
+<a name='L1219'></a><a href='#L1219'>1219</a>
+<a name='L1220'></a><a href='#L1220'>1220</a>
+<a name='L1221'></a><a href='#L1221'>1221</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1304,8 +1310,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">238x</span>
-<span class="cline-any cline-yes">184x</span>
+<span class="cline-any cline-yes">240x</span>
+<span class="cline-any cline-yes">186x</span>
 <span class="cline-any cline-yes">54x</span>
 <span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1317,14 +1323,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">840x</span>
+<span class="cline-any cline-yes">847x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-yes">396x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1610,7 +1616,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2149,6 +2155,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2631,7 +2643,7 @@ export const CompilerOptionsCodes = {
       code: "COAG01",
       severity: Severity.E,
       message: (value: string) =&gt;
-        `Expected "DECIMAL" or "BINARY", but received '${value}'.`,
+        `Expected "DECIMAL" or "HEXADEC", but received '${value}'.`,
     },
   },
 &nbsp;
@@ -3359,50 +3371,56 @@ export const CompilerOptionsCodes = {
       message: (value: string) =&gt;
         `Received unknown RULES parameter: '${value}'.`,
     },
-    ExpectAllSourceParameter: {
+    InvalidSubParameter: {
       code: "CORU02",
+      severity: Severity.E,
+      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="cstat-no" title="statement not covered" >        `The sub-option does not expect multiple values and will ignore '${value}'.`,</span>
+    },
+    ExpectAllSourceParameter: {
+      code: "CORU03",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "ALL" or "SOURCE", but received '${value}'.`,
     },
     InvalidGotoParameter: {
-      code: "CORU03",
+      code: "CORU04",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "STRICT", "LOOSE" or "LOOSEFORWARD", but received '${value}'.`,
     },
     InvalidLaxEntryParameter: {
-      code: "CORU04",
+      code: "CORU05",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "STRICT" or "LOOSE", but received '${value}'.`,
     },
     InvalidLaxInOutParameter: {
-      code: "CORU05",
+      code: "CORU06",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
     },
     InvalidLaxMarginsParameter: {
-      code: "CORU06",
+      code: "CORU07",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "STRICT" or "XNUMERIC", but received '${value}'.`,
     },
     InvalidLaxQualParameter: {
-      code: "CORU07",
+      code: "CORU08",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "ALL", "FORCE", "STRICT", "LOOSE" or "FULL", but received '${value}'.`,
     },
     InvalidLaxScaleParameter: {
-      code: "CORU08",
+      code: "CORU09",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
     },
     InvalidPaddingParameter: {
-      code: "CORU08",
+      code: "CORU10",
       severity: Severity.E,
       message: (value: string) =&gt;
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
@@ -3712,7 +3730,7 @@ export const CompilerOptionsCodes = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-02T07:42:32.124Z
+                at 2026-06-02T10:49:52.620Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
