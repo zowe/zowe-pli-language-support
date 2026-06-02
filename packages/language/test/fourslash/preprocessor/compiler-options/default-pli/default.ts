@@ -39,18 +39,19 @@
 ////*PROCESS <|d24:DEFAULT|>(PADDING);
 ////*PROCESS <|d25:DEFAULT|>(NOPSEUDODUMMY);
 ////*PROCESS <|d26:DEFAULT|>(RECURSIVE);
-////*PROCESS <|d27:DFT|>(RETCODE);
+////*PROCESS <|d27:DEFAULT|>(NONRECURSIVE);
+////*PROCESS <|d28:DFT|>(RETCODE);
 
 verify.expectDiagnosticsAt(0, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1),
 });
 verify.expectDiagnosticsAt(
-  Array.from({ length: 25 }, (_, i) => `d${i + 1}`),
+  Array.from({ length: 26 }, (_, i) => `d${i + 1}`),
   {
     message: code.CompilerOptions.DupeOptionIssue.message("DEFAULT"),
   },
 );
-verify.expectDiagnosticsAt("d27", {
+verify.expectDiagnosticsAt("d28", {
   message: code.CompilerOptions.DupeOptionIssue.message("DFT"),
 });
 verify.noDiagnostics(1);
@@ -82,7 +83,7 @@ verify.expectCompilerOptions({
     overlap: true,
     padding: true,
     pseudodummy: false,
-    recursive: true,
+    recursive: false,
     retcode: true,
   },
 });

@@ -18,8 +18,9 @@
 ////*PROCESS <|4:AGGREGATE|>(<|5:)|>;
 ////*PROCESS <|6:AGGREGATE|>(<|7:INVALID|>);
 ////*PROCESS <|8:AG|>(HEXADEC);
+////*PROCESS <|10:NAG|>(DECIMAL);
 
-verify.expectDiagnosticsAt(1, {
+verify.expectDiagnosticsAt([1, 10], {
   message: code.CompilerOptions.DupeOptionIssue.message("NAG"),
 });
 verify.expectDiagnosticsAt([2, 4, 6], {
@@ -33,6 +34,9 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.Aggregate.InvalidParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt(10, {
+  message: code.CompilerOptions.InvalidParameterCount.message(1, 0, 0),
 });
 verify.expectCompilerOptions({
   aggregate: constants.CompilerOptions.Aggregate.HEXADEC,
