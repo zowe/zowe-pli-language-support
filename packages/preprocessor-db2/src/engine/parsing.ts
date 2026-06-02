@@ -38,12 +38,10 @@ import {
   Dbs_include_sqlcaContext,
   Dbs_include_sqldaContext,
   Dbs_includeContext,
-  Dbs_sql_identifierContext,
 } from "../generated/Db2SqlExecParser";
 import {
   Diagnostic,
   PreprocessorReplacement,
-  PreprocessorResult,
   SemanticsKind,
   Severity,
   Token,

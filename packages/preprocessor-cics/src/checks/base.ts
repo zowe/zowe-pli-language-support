@@ -108,7 +108,7 @@ export abstract class CICSOptionsCheckerBase {
    * @return true if mandatory option found
    */
   protected checkHasMandatoryOptions(
-    rules: any[],
+    rules: ParseTree[],
     ctx: ParserRuleContext,
     options: string,
   ): boolean {
@@ -131,8 +131,8 @@ export abstract class CICSOptionsCheckerBase {
    * @param options - String of the element that is required.
    */
   protected checkPrerequisiteIsMet(
-    requiredContext: any[],
-    optionalContext: any[],
+    requiredContext: ParseTree[],
+    optionalContext: ParseTree[],
     ctx: ParserRuleContext,
     options: string,
   ) {
@@ -160,7 +160,7 @@ export abstract class CICSOptionsCheckerBase {
     }
   }
 
-  private isNodePresent(node: any | Array<any>): boolean {
+  private isNodePresent(node: ParseTree | Array<ParseTree>): boolean {
     if (node == null) {
       return false;
     }
