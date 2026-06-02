@@ -39,6 +39,9 @@ import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export class CICSPreprocessor implements Preprocessor {
+  get name() {
+    return "CICS Preprocessor";
+  }
   public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new CICSLexer(charStream);

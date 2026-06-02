@@ -57,5 +57,6 @@ export interface PreprocessorResult {
 }
 
 export interface Preprocessor {
+  get name(): string;
   execute(input: string): Promise<PreprocessorResult>;
 }

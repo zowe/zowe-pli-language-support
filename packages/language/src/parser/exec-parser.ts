@@ -18,12 +18,17 @@ import {
   Preprocessor,
   Diagnostic,
   Token,
+  Severity,
 } from "preprocessor-api";
 import { CICSPreprocessor } from "preprocessor-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 import { Db2SqlPreprocessor } from "preprocessor-db2";
+import {
+  Severity as LSSeverity,
+  Diagnostic as LSDiagnostic,
+} from "../language-server/types";
 
 export async function execStatement(
   state: ParserState,
@@ -45,7 +50,7 @@ export async function execStatement(
     if (preprocessor) {
       const { diagnostics, tokens, replacement } =
         await preprocessor.execute(statementText);
-      handleDiagnostics(diagnostics, state);
+      handleDiagnostics(diagnostics, state, textDocument.uri, startOffset, preprocessor);
       execStatement.preprocessorTokens = handleTokens(
         tokens,
         startOffset,
@@ -132,10 +137,34 @@ function toPliToken(
   return pliToken;
 }
 
-function handleDiagnostics(diagnostics: Diagnostic[], state: ParserState) {
-  for (const diagnostic of diagnostics) {
-    state.error(diagnostic.message, state.token);
-  }
+function handleDiagnostics(diagnostics: Diagnostic[], state: ParserState, uri: string, startOffset: number, preprocessor: Preprocessor) {
+  state.diagnostics.push(...diagnostics.map(d => {
+    let severity: LSSeverity;
+    switch(d.severity) {
+      case Severity.Error:
+        severity = LSSeverity.E;
+        break;
+      case Severity.Warning:
+        severity = LSSeverity.W;
+        break;
+      case Severity.Info:
+        severity = LSSeverity.I;
+        break;
+      default:
+        severity = LSSeverity.E;
+    }
+    return {
+      message: d.message,
+      severity: severity,
+      code: d.code,
+      source: preprocessor.name,
+      range: {
+        start: startOffset + d.startOffset,
+        end: startOffset + d.endOffset,
+      },
+      uri
+    } as LSDiagnostic;
+  }));
 }
 
 function handleExecFragment(
