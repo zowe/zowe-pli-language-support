@@ -139,15 +139,15 @@
     "dependencies": false
   },
   "dependencies": {
-    "@vscode/extension-telemetry": "^1.4.0",
-    "glob": "^13.0.0",
+    "@vscode/extension-telemetry": "^1.5.2",
+    "glob": "^13.0.6",
     "pli-language": "workspace:*",
     "vscode-languageclient": "~9.0.1",
     "vscode-languageserver": "~9.0.1"
   },
   "devDependencies": {
     "@types/vscode": "1.67.0",
-    "@vscode/vsce": "^3.7.1",
-    "esbuild": "^0.27.2"
+    "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0"
   }
 }
