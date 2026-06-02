@@ -20,6 +20,7 @@ coverage/
 MISSING-TOKENS.md
 packages/preprocessor-cics/src/generated/
 packages/preprocessor-cics/src/antlr/.antlr
+packages/preprocessor-cics/src/java
 packages/preprocessor-db2/src/generated/
 packages/preprocessor-db2/src/antlr/.antlr
-packages/preprocessor-cics/src/java
+packages/preprocessor-db2/src/java
