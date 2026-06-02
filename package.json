@@ -27,20 +27,20 @@
     "extract-compiler-tests": "tsx ./scripts/extract-compiler-tests.mts"
   },
   "devDependencies": {
-    "@types/node": "^22.19.8",
-    "@vitest/coverage-v8": "^4.0.18",
-    "glob": "^13.0.0",
-    "prettier": "^3.8.1",
+    "@types/node": "^22.19.19",
+    "@vitest/coverage-v8": "^4.1.8",
+    "glob": "^13.0.6",
+    "prettier": "^3.8.3",
     "shx": "~0.4.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   },
   "pnpm": {
     "overrides": {
       "isexe": "3.1.1",
       "minimatch": "10.2.4",
-      "lodash-es": "4.18.1"
+      "dompurify": "3.4.2"
     }
   }
 }
