@@ -138,7 +138,7 @@ export const CompilerOptionsCodes = {
       code: "COAG01",
       severity: Severity.E,
       message: (value: string) =>
-        `Expected "DECIMAL" or "BINARY", but received '${value}'.`,
+        `Expected "DECIMAL" or "HEXADEC", but received '${value}'.`,
     },
   },
 
@@ -866,50 +866,56 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Received unknown RULES parameter: '${value}'.`,
     },
-    ExpectAllSourceParameter: {
+    InvalidSubParameter: {
       code: "CORU02",
+      severity: Severity.E,
+      message: (value: string) =>
+        `The sub-option does not expect multiple values and will ignore '${value}'.`,
+    },
+    ExpectAllSourceParameter: {
+      code: "CORU03",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL" or "SOURCE", but received '${value}'.`,
     },
     InvalidGotoParameter: {
-      code: "CORU03",
+      code: "CORU04",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT", "LOOSE" or "LOOSEFORWARD", but received '${value}'.`,
     },
     InvalidLaxEntryParameter: {
-      code: "CORU04",
+      code: "CORU05",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT" or "LOOSE", but received '${value}'.`,
     },
     InvalidLaxInOutParameter: {
-      code: "CORU05",
+      code: "CORU06",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
     },
     InvalidLaxMarginsParameter: {
-      code: "CORU06",
+      code: "CORU07",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "STRICT" or "XNUMERIC", but received '${value}'.`,
     },
     InvalidLaxQualParameter: {
-      code: "CORU07",
+      code: "CORU08",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "FORCE", "STRICT", "LOOSE" or "FULL", but received '${value}'.`,
     },
     InvalidLaxScaleParameter: {
-      code: "CORU08",
+      code: "CORU09",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,
     },
     InvalidPaddingParameter: {
-      code: "CORU08",
+      code: "CORU10",
       severity: Severity.E,
       message: (value: string) =>
         `Expected "ALL", "SOURCE", "STRICT" or "LOOSE", but received '${value}'.`,

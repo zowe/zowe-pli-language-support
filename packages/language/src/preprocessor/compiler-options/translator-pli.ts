@@ -67,6 +67,7 @@ translator.rule(
   },
   ["NOAGGREGATE", "NAG"],
   (_, options) => {
+    ensureArguments(_, 0, 0);
     options.aggregate = false;
   },
 );
@@ -293,7 +294,10 @@ translator.rule(["CHECK"], (option, options, acceptor) => {
         );
     }
   }
-  reportDuplicateSubOptions(option, acceptor);
+  reportDuplicateSubOptions(option, acceptor, {
+    STG: "STORAGE",
+    NSTG: "NOSTORAGE",
+  });
   reportMutexSubOptions(option, acceptor, [
     ["STORAGE", "NOSTORAGE"],
     ["STG", "NSTG"],
@@ -327,14 +331,19 @@ translator.rule(
     ensureArguments(option, 1, 1);
     ensureType(option.values[0], "plainNotEmpty");
 
-    if (!Options.PLI_CODEPAGE_SET.has(option.values[0].value)) {
+    // The leading zero is not mandatory, but if the codepage is present without it, it should be stored with the leading zero.
+    const value = option.values[0].value.startsWith("0")
+      ? option.values[0].value
+      : `0${option.values[0].value}`;
+
+    if (!Options.PLI_CODEPAGE_SET.has(value)) {
       throw diagnosticFromCode(
         CompilerOptionsCodes.CodePage.InvalidParameter,
         option.values[0].token,
         option.values[0].value,
       );
     }
-    options.codepage = option.values[0].value;
+    options.codepage = value;
   },
   undefined,
   undefined,
@@ -610,9 +619,11 @@ translator.rule(
               CompilerOptions.DefaultEncoding,
             );
             break;
+          case "ASGN":
           case "ASSIGNABLE":
+          case "NONASGN":
           case "NONASSIGNABLE":
-            def.assignable = val === "ASSIGNABLE";
+            def.assignable = val === "ASSIGNABLE" || val === "ASGN";
             break;
           case "BIN1ARG":
           case "NOBIN1ARG":
@@ -626,9 +637,11 @@ translator.rule(
               CompilerOptions.DefaultAllocator,
             );
             break;
+          case "CONN":
           case "CONNECTED":
+          case "NONCONN":
           case "NONCONNECTED":
-            def.connected = val === "CONNECTED";
+            def.connected = val === "CONNECTED" || val === "CONN";
             break;
           case "DESCLIST":
           case "DESCLOCATOR":
@@ -663,9 +676,11 @@ translator.rule(
             // Initfill is actually valid without a parameter and falls back to 00 in that case.
             def.initfill = val === "INITFILL" ? "00" : false;
             break;
+          case "INL":
           case "INLINE":
+          case "NOINL":
           case "NOINLINE":
-            def.inline = val === "INLINE";
+            def.inline = val === "INLINE" || val === "INL";
             break;
           case "LAXQUAL":
           case "NOLAXQUAL":
@@ -720,7 +735,7 @@ translator.rule(
             def.pseudodummy = val === "PSEUDODUMMY";
             break;
           case "RECURSIVE":
-          case "NORECURSIVE":
+          case "NONRECURSIVE":
             def.recursive = val === "RECURSIVE";
             break;
           case "RETCODE":
@@ -881,20 +896,36 @@ translator.rule(
         );
       }
     }
-    reportDuplicateSubOptions(option, acceptor);
+    reportDuplicateSubOptions(option, acceptor, {
+      ASGN: "ASSIGNABLE",
+      NONASGN: "NONASSIGNABLE",
+      CONN: "CONNECTED",
+      NONCONN: "NONCONNECTED",
+      INL: "INLINE",
+      NOINL: "NOINLINE",
+    });
     reportMutexSubOptions(option, acceptor, [
       ["ALIGNED", "UNALIGNED"],
       ["IBM", "ANS"],
       ["EBCDIC", "ASCII"],
       ["ASSIGNABLE", "NONASSIGNABLE"],
+      ["ASSIGNABLE", "NONASGN"],
+      ["ASGN", "NONASSIGNABLE"],
+      ["ASGN", "NONASGN"],
       ["BIN1ARG", "NOBIN1ARG"],
       ["BYADDR", "BYVALUE"],
       ["CONNECTED", "NONCONNECTED"],
+      ["CONNECTED", "NONCONN"],
+      ["CONN", "NONCONNECTED"],
+      ["CONN", "NONCONN"],
       ["DESCLIST", "DESCLOCATOR"],
       ["DESCRIPTOR", "NODESCRIPTOR"],
       ["EVENDEC", "NOEVENDEC"],
       ["HEXADEC", "IEEE"],
       ["INLINE", "NOINLINE"],
+      ["INLINE", "NOINL"],
+      ["INL", "NOINLINE"],
+      ["INL", "NOINL"],
       ["LAXQUAL", "NOLAXQUAL"],
       ["LOWERINC", "UPPERINC"],
       ["NATIVE", "NONNATIVE"],
@@ -2893,11 +2924,11 @@ translator.rule(
           case "NOUNREFENTRY":
             options.rules.unrefEntry = CompilerOptions.RulesSource.ALL;
             break;
-          case "UNREFFILE":
-            options.rules.unrefFile = true;
+          case "UNREFDEFFILE":
+            options.rules.unrefDefFile = true;
             break;
-          case "NOUNREFFILE":
-            options.rules.unrefFile = CompilerOptions.RulesSource.ALL;
+          case "NOUNREFDEFFILE":
+            options.rules.unrefDefFile = CompilerOptions.RulesSource.ALL;
             break;
           case "UNREFSTATIC":
             options.rules.unrefStatic = true;
@@ -2915,7 +2946,7 @@ translator.rule(
             options.rules.unset = true;
             break;
           case "NOUNSET":
-            options.rules.unset = false;
+            options.rules.unset = CompilerOptions.RulesSource.ALL;
             break;
           case "YY":
             options.rules.yy = true;
@@ -2932,10 +2963,23 @@ translator.rule(
         }
       } else if (value.kind === SyntaxKind.CompilerOption) {
         const subOption = value.values[0];
+
+        const ensureOnlyOneSubOption = () => {
+          for (let i = 1; i < value.values.length; i++) {
+            const invalidOption = value.values[i];
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Rules.InvalidSubParameter,
+              invalidOption.token,
+              invalidOption.token.image,
+            );
+          }
+        };
+
         ensureType(subOption, "plainNotEmpty");
         const name = value.name.toUpperCase();
         switch (name) {
           case "NOCOMPLEX":
+            ensureOnlyOneSubOption();
             options.rules.complex = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -2943,6 +2987,7 @@ translator.rule(
             );
             break;
           case "NOGLOBAL":
+            ensureOnlyOneSubOption();
             options.rules.global = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -2950,6 +2995,7 @@ translator.rule(
             );
             break;
           case "NOGOTO":
+            ensureOnlyOneSubOption();
             options.rules.goto = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.InvalidGotoParameter,
@@ -2957,6 +3003,7 @@ translator.rule(
             );
             break;
           case "NOLAXCONV":
+            ensureOnlyOneSubOption();
             options.rules.laxConv = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -2964,6 +3011,7 @@ translator.rule(
             );
             break;
           case "NOLAXENTRY":
+            ensureOnlyOneSubOption();
             options.rules.laxEntry = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.InvalidLaxEntryParameter,
@@ -2994,6 +3042,7 @@ translator.rule(
             }
             break;
           case "NOLAXMARGINS":
+            ensureOnlyOneSubOption();
             options.rules.laxMargins = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.InvalidLaxMarginsParameter,
@@ -3001,6 +3050,7 @@ translator.rule(
             );
             break;
           case "NOLAXNESTED":
+            ensureOnlyOneSubOption();
             options.rules.laxNested = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3008,6 +3058,7 @@ translator.rule(
             );
             break;
           case "NOLAXOPTIONAL":
+            ensureOnlyOneSubOption();
             options.rules.laxOptional = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3015,6 +3066,7 @@ translator.rule(
             );
             break;
           case "NOLAXPARMS":
+            ensureOnlyOneSubOption();
             options.rules.laxParms = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3068,6 +3120,7 @@ translator.rule(
             }
             break;
           case "NOLAXSTMT":
+            ensureOnlyOneSubOption();
             options.rules.laxStmt = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3075,6 +3128,7 @@ translator.rule(
             );
             break;
           case "NOMULTIENTRY":
+            ensureOnlyOneSubOption();
             options.rules.multiEntry = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3082,6 +3136,7 @@ translator.rule(
             );
             break;
           case "NOMULTIEXIT":
+            ensureOnlyOneSubOption();
             options.rules.multiExit = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3089,6 +3144,7 @@ translator.rule(
             );
             break;
           case "NOMULTISEMI":
+            ensureOnlyOneSubOption();
             options.rules.multiSemi = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3119,6 +3175,7 @@ translator.rule(
             }
             break;
           case "NOPROCENDONLY":
+            ensureOnlyOneSubOption();
             options.rules.procEndOnly = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3126,6 +3183,7 @@ translator.rule(
             );
             break;
           case "NOUNREF":
+            ensureOnlyOneSubOption();
             options.rules.unref = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3133,6 +3191,7 @@ translator.rule(
             );
             break;
           case "NOUNREFBASED":
+            ensureOnlyOneSubOption();
             options.rules.unrefBased = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3140,6 +3199,7 @@ translator.rule(
             );
             break;
           case "NOUNREFCTL":
+            ensureOnlyOneSubOption();
             options.rules.unrefCtl = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3147,6 +3207,7 @@ translator.rule(
             );
             break;
           case "NOUNREFDEFINED":
+            ensureOnlyOneSubOption();
             options.rules.unrefDefined = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3154,20 +3215,23 @@ translator.rule(
             );
             break;
           case "NOUNREFENTRY":
+            ensureOnlyOneSubOption();
             options.rules.unrefEntry = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
               CompilerOptions.RulesSource,
             );
             break;
-          case "NOUNREFFILE":
-            options.rules.unrefFile = ensureEnum(
+          case "NOUNREFDEFFILE":
+            ensureOnlyOneSubOption();
+            options.rules.unrefDefFile = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
               CompilerOptions.RulesSource,
             );
             break;
           case "NOUNREFSTATIC":
+            ensureOnlyOneSubOption();
             options.rules.unrefStatic = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
@@ -3175,7 +3239,16 @@ translator.rule(
             );
             break;
           case "NOUNREFVALUE":
+            ensureOnlyOneSubOption();
             options.rules.unrefValue = ensureEnum(
+              subOption,
+              CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
+              CompilerOptions.RulesSource,
+            );
+            break;
+          case "NOUNSET":
+            ensureOnlyOneSubOption();
+            options.rules.unset = ensureEnum(
               subOption,
               CompilerOptionsCodes.Rules.ExpectAllSourceParameter,
               CompilerOptions.RulesSource,
@@ -3194,6 +3267,7 @@ translator.rule(
     reportMutexSubOptions(option, acceptor, [
       ["IBM", "ANS"],
       ["BYNAME", "NOBYNAME"],
+      ["COMPLEX", "NOCOMPLEX"],
       ["CONTROLLED", "NOCONTROLLED"],
       ["DECSIZE", "NODECSIZE"],
       ["ELSEIF", "NOELSEIF"],

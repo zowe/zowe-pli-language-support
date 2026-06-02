@@ -16,7 +16,7 @@
 ////*PROCESS <|2:CHECK|>(<|3:)|>;
 ////*PROCESS <|4:CHECK|>(<|5:INVALID|>);
 ////*PROCESS <|6:CHECK|>(STORAGE);
-////*PROCESS <|8:CHECK|>(STORAGE, STG);
+////*PROCESS <|8:CHECK|>(STORAGE, <|9:STG|>);
 ////*PROCESS <|10:CHECK|>(STORAGE NSTG);
 
 verify.expectDiagnosticsAt(1, {
@@ -28,6 +28,9 @@ verify.expectDiagnosticsAt([2, 4, 6, 8, 10], {
 verify.noDiagnostics(3);
 verify.expectDiagnosticsAt(5, {
   message: code.CompilerOptions.Check.InvalidParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt(9, {
+  message: code.CompilerOptions.DupeOptionIssue.message("CHECK(STG)"),
 });
 verify.expectCompilerOptions({
   check: { storage: constants.CompilerOptions.CheckStorage.NOSTORAGE },

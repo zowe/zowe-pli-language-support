@@ -13,11 +13,11 @@
 
 // @wrap: process
 ////*PROCESS RULES(UNREFFILE(<|1:)|>);
-////*PROCESS RULES(<|2:UNREFFILE|>);
-////*PROCESS RULES(<|3:NOUNREFFILE|>);
-////*PROCESS RULES(NOUNREFFILE(<|4:)|>);
-////*PROCESS RULES(NOUNREFFILE(<|5:INVALID|>));
-////*PROCESS RULES(NOUNREFFILE(<|6:SOURCE|>));
+////*PROCESS RULES(<|2:UNREFDEFFILE|>);
+////*PROCESS RULES(<|3:NOUNREFDEFFILE|>);
+////*PROCESS RULES(NOUNREFDEFFILE(<|4:)|>);
+////*PROCESS RULES(NOUNREFDEFFILE(<|5:INVALID|>));
+////*PROCESS RULES(NOUNREFDEFFILE(<|6:SOURCE|>));
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
@@ -32,6 +32,6 @@ verify.expectDiagnosticsAt(5, {
 });
 verify.expectCompilerOptions({
   rules: {
-    unrefFile: constants.CompilerOptions.RulesSource.SOURCE,
+    unrefDefFile: constants.CompilerOptions.RulesSource.SOURCE,
   },
 });

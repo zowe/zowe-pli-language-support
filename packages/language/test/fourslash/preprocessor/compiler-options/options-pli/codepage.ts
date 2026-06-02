@@ -16,6 +16,7 @@
 ////*PROCESS <|4:CODEPAGE|>(<|5:)|>;
 ////*PROCESS <|6:CODEPAGE|>(<|7:INVALID|>);
 ////*PROCESS <|8:CP|>(00037);
+////*PROCESS <|10:CP|>(<|11:1140|>);
 
 verify.expectDiagnosticsAt(2, {
   message: code.CompilerOptions.InvalidParameterCount.message(0, 1, 1),
@@ -23,7 +24,7 @@ verify.expectDiagnosticsAt(2, {
 verify.expectDiagnosticsAt([4, 6], {
   message: code.CompilerOptions.DupeOptionIssue.message("CODEPAGE"),
 });
-verify.expectDiagnosticsAt(8, {
+verify.expectDiagnosticsAt([8, 10], {
   message: code.CompilerOptions.DupeOptionIssue.message("CP"),
 });
 verify.expectDiagnosticsAt(5, {
@@ -32,6 +33,7 @@ verify.expectDiagnosticsAt(5, {
 verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.CodePage.InvalidParameter.message("INVALID"),
 });
+verify.noDiagnostics(11);
 verify.expectCompilerOptions({
-  codepage: "00037",
+  codepage: "01140",
 });
