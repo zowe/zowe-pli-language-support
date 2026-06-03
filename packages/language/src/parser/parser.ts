@@ -1297,7 +1297,7 @@ const callStatement = rule(
   (state: ParserState): ast.CallStatement => {
     const element = ast.createCallStatement();
     state.consume(element, CstNodeKind.CallStatement_CALL, tokens.CALL);
-    element.call = referenceItem.rule(state);
+    element.call = locatorCall.rule(state);
     state.consume(
       element,
       CstNodeKind.CallStatement_Semicolon,

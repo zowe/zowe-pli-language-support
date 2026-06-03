@@ -19,7 +19,8 @@ export function IBM3970IS_IBM3971IS_check_pp_call_procedure(
   acceptor: ValidationAcceptor,
 ): void {
   const procedure = resolveProcedureFromCall(node);
-  const callToken = node.call?.ref?.token;
+  const refItem = node.call?.element?.element;
+  const callToken = refItem?.ref?.token;
   if (!procedure || !callToken) {
     if (callToken) {
       acceptor(diagnosticFromCode(PLICodes.Severe.IBM3968I, callToken));

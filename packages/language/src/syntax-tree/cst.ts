@@ -678,7 +678,6 @@ export enum CstNodeKind {
   MemberCall_Dot,
   LocatorCall_Pointer,
   LocatorCall_Handle,
-  ProcedureCall_ProcedureRef,
   ProcedureCallArgs_OpenParen,
   ProcedureCallArgs_Star0,
   ProcedureCallArgs_Comma,
