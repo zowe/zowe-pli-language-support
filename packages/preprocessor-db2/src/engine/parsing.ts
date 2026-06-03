@@ -38,18 +38,17 @@ import {
   Dbs_include_sqlcaContext,
   Dbs_include_sqldaContext,
   Dbs_includeContext,
-  Dbs_sql_identifierContext,
 } from "../generated/Db2SqlExecParser";
 import {
-  ParseError,
+  Diagnostic,
   PreprocessorReplacement,
-  PreprocessorResult,
   SemanticsKind,
+  Severity,
   Token,
 } from "preprocessor-api";
 
 export class CollectingErrorListener extends BaseErrorListener {
-  public readonly errors: ParseError[] = [];
+  public readonly errors: Diagnostic[] = [];
 
   override syntaxError<S extends AntlrToken, T extends ATNSimulator>(
     _recognizer: Recognizer<T>,
@@ -63,6 +62,8 @@ export class CollectingErrorListener extends BaseErrorListener {
       message: msg,
       startOffset: offendingSymbol?.start ?? 0,
       endOffset: offendingSymbol?.stop ?? 0,
+      code: "syntax",
+      severity: Severity.Error,
     });
   }
 }

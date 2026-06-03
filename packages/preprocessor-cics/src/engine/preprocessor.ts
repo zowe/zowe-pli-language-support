@@ -25,21 +25,23 @@
 import * as antlr from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { CICSParser } from "../generated/CICSParser";
+import { CollectingSyntaxErrorListener } from "./collect-syntax-errors";
+import { CollectingIdentifierVisitor } from "./collect-identifiers";
 import {
-  CollectingErrorListener,
-  CollectingIdentifierVisitor,
-} from "./parsing";
-import {
-  ParseError,
+  Diagnostic,
   Preprocessor,
   PreprocessorResult,
   SemanticsKind,
   Token,
 } from "preprocessor-api";
+import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export class CICSPreprocessor implements Preprocessor {
+  get name() {
+    return "CICS Preprocessor";
+  }
   public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new CICSLexer(charStream);
@@ -50,8 +52,8 @@ export class CICSPreprocessor implements Preprocessor {
     lexer.removeErrorListeners();
     parser.removeErrorListeners();
 
-    const lexerErrors = new CollectingErrorListener();
-    const parserErrors = new CollectingErrorListener();
+    const lexerErrors = new CollectingSyntaxErrorListener();
+    const parserErrors = new CollectingSyntaxErrorListener();
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
@@ -92,9 +94,13 @@ export class CICSPreprocessor implements Preprocessor {
       // Add any remaining identifier tokens that were not matched in the token stream
       .concat(identifierTokens.slice(idIndex));
 
-    const diagnostics: ParseError[] = [];
+    const semanticErrorCollector = new CollectingSemanticErrorVisitor();
+    semanticErrorCollector.visit(tree);
+
+    const diagnostics: Diagnostic[] = [];
     diagnostics.push(...lexerErrors.errors);
     diagnostics.push(...parserErrors.errors);
+    diagnostics.push(...semanticErrorCollector.errors);
     return {
       diagnostics,
       tokens,
