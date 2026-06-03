@@ -55,7 +55,7 @@ export class CICSPreprocessor implements Preprocessor {
 
     const lexerErrors = new CollectingSyntaxErrorListener();
     const parserErrors = new CollectingSyntaxErrorListener();
-    
+
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
     parser.errorHandler = new CICSErrorStrategy();
