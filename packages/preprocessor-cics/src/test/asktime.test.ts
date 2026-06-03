@@ -26,7 +26,7 @@ describe("CICS ASKTIME", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ASKTIME BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
+      /Syntax error on 'BLA', expected <EOF>/,
     );
   });
 

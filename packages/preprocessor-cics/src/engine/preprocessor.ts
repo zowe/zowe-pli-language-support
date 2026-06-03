@@ -35,6 +35,7 @@ import {
   Token,
 } from "preprocessor-api";
 import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
+import { CICSErrorStrategy } from "./error-strategy";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
@@ -54,9 +55,10 @@ export class CICSPreprocessor implements Preprocessor {
 
     const lexerErrors = new CollectingSyntaxErrorListener();
     const parserErrors = new CollectingSyntaxErrorListener();
-
+    
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
+    parser.errorHandler = new CICSErrorStrategy();
 
     const tree = parser.startRule();
     const identifierTokens = CollectingIdentifierVisitor.collect(tree);

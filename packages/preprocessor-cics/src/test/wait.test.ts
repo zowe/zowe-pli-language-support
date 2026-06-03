@@ -25,7 +25,7 @@ describe("CICS WAIT", async () => {
       await cicsPreprocessor.execute("WAIT CONVID(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
+      /Syntax error on 'BLA', expected <EOF>/,
     );
   });
 
