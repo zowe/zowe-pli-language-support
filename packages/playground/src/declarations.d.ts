@@ -16,7 +16,6 @@ declare module "*?raw" {
   export default content;
 }
 
-declare module "*?worker&url" {
-  const content: string;
-  export default content;
+declare module "*.vsix" {
+  export default {};
 }

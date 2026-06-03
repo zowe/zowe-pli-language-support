@@ -14,9 +14,25 @@ import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from "lz-string";
-import { FileSystemProvider } from "./file-system-provider";
+import {
+  IFileWriteOptions,
+  InMemoryFileSystemProvider,
+} from "@codingame/monaco-vscode-files-service-override";
 
 let shareTimeout: number | undefined;
+const encoder = new TextEncoder();
+
+export const fileOptions: IFileWriteOptions = {
+  atomic: false,
+  unlock: false,
+  create: true,
+  overwrite: true,
+};
+
+export interface SharedWorkspace {
+  focused?: string;
+  files: WorkspaceFile[];
+}
 
 export interface WorkspaceFile {
   uri: string;
@@ -47,7 +63,12 @@ export function registerButtons() {
   );
   shareWorkspaceButton?.addEventListener("click", async () => {
     const workspaceFiles = await createWorkspaceFilesFromFileSystem();
-    share(workspaceFiles);
+    const activeEditor = vscode.window.activeTextEditor;
+    const focusedFile = activeEditor?.document.uri.path;
+    share({
+      focused: focusedFile,
+      files: workspaceFiles,
+    });
   });
 }
 
@@ -57,7 +78,7 @@ export function registerButtons() {
  * @param content - The content to share is either a plain string or an array of workspace files.
  * @param options - The options to share. clearWorkspace is used to clear the workspace before sharing.
  */
-async function share(content: string | WorkspaceFile[]): Promise<void> {
+async function share(content: string | SharedWorkspace): Promise<void> {
   const url = new URL(window.location.toString(), window.origin);
   url.searchParams.delete("content");
   url.searchParams.delete("workspace");
@@ -82,10 +103,14 @@ async function share(content: string | WorkspaceFile[]): Promise<void> {
  * Handle a shared workspace provided by a link.
  */
 export async function handleSharedWorkspace(
-  fileSystemProvider: FileSystemProvider,
+  fileSystemProvider: InMemoryFileSystemProvider,
 ): Promise<vscode.Uri | undefined> {
-  let defaultUri: vscode.Uri | undefined = undefined;
   const url = new URL(window.location.toString());
+  await writeWorkspaceFile(
+    fileSystemProvider,
+    createDefaultWorkspaceContent("/workspace"),
+  );
+  await fileSystemProvider.mkdir(vscode.Uri.file("/workspace"));
 
   // Create a new file for specific content.
   // The file will be named "new-file.pli" by default,
@@ -98,33 +123,45 @@ export async function handleSharedWorkspace(
         ?.replace(/[\\\/]/g, "")
         .replace(/^\.+/g, "") ?? "example.pli";
     const content = decompressFromEncodedURIComponent(encodedContent);
-    return await fileSystemProvider.addFileToWorkspace(
-      `/workspace/${filename}`,
-      content,
+    const uri = vscode.Uri.file(`/workspace/${filename}`);
+    await fileSystemProvider.writeFile(
+      vscode.Uri.file(`/workspace/${filename}`),
+      encoder.encode(content),
+      fileOptions,
     );
+    return uri;
   }
 
   // Load the workspace files.
   const encodedWorkspace = url.searchParams.get("workspace");
   if (encodedWorkspace) {
-    const workspaceFiles: WorkspaceFile[] = JSON.parse(
+    const workspaceFiles: SharedWorkspace = JSON.parse(
       decompressFromEncodedURIComponent(encodedWorkspace),
     );
-    for (const file of workspaceFiles) {
+    for (const file of workspaceFiles.files) {
       console.debug("Loading document", file.uri);
-      const uri = await fileSystemProvider.addFileToWorkspace(
-        file.uri,
-        file.content,
-      );
-
-      // Open the first .pli file.
-      if (defaultUri === undefined && uri.path.endsWith(".pli")) {
-        defaultUri = uri;
+      const uri = vscode.Uri.file(file.uri);
+      const parentUri = uri.with({
+        path: uri.path.substring(0, uri.path.lastIndexOf("/")),
+      });
+      try {
+        await fileSystemProvider.mkdir(parentUri);
+      } catch {
+        // Ignore if the directory already exists.
       }
+      await fileSystemProvider.writeFile(
+        uri,
+        new TextEncoder().encode(file.content),
+        fileOptions,
+      );
+    }
+
+    if (workspaceFiles.focused) {
+      return vscode.Uri.file(workspaceFiles.focused);
     }
   }
 
-  return defaultUri;
+  return undefined;
 }
 
 /**
@@ -145,8 +182,16 @@ async function createWorkspaceFilesFromFileSystem(): Promise<WorkspaceFile[]> {
         console.debug("Saving document", fileUri.path);
 
         try {
-          const content = await vscode.workspace.fs.readFile(fileUri);
-          const text = new TextDecoder().decode(content);
+          let text: string;
+          const textDocument = vscode.workspace.textDocuments.find(
+            (doc) => doc.uri.toString() === fileUri.toString(),
+          );
+          if (textDocument) {
+            text = textDocument.getText();
+          } else {
+            const content = await vscode.workspace.fs.readFile(fileUri);
+            text = new TextDecoder().decode(content);
+          }
           workspaceFiles.push({ uri: fileUri.path, content: text });
         } catch (error) {
           console.warn("Failed to read file", fileUri.path, error);
@@ -183,3 +228,73 @@ export function redirectOutlineCancelReporting() {
     }
   });
 }
+
+import helloWorld from "../workspace/hello-world.pli?raw";
+import includeExample from "../workspace/include.pli?raw";
+import includedExample from "../workspace/lib/included.pli?raw";
+import pgmconf from "../workspace/.pliplugin/pgm_conf.json?raw";
+import procgrps from "../workspace/.pliplugin/proc_grps.json?raw";
+
+export async function loadDefaultWorkspace(
+  fileSystemProvider: InMemoryFileSystemProvider,
+): Promise<vscode.Uri> {
+  await writeWorkspaceFile(
+    fileSystemProvider,
+    createDefaultWorkspaceContent("/workspace"),
+  );
+  await fileSystemProvider.mkdir(vscode.Uri.file("/workspace/lib"));
+  await fileSystemProvider.mkdir(vscode.Uri.file("/workspace/.pliplugin"));
+  const defaultUri = vscode.Uri.file("/workspace/hello-world.pli");
+  await fileSystemProvider.writeFile(
+    defaultUri,
+    encoder.encode(helloWorld),
+    fileOptions,
+  );
+  await fileSystemProvider.writeFile(
+    vscode.Uri.file("/workspace/.pliplugin/pgm_conf.json"),
+    encoder.encode(pgmconf),
+    fileOptions,
+  );
+  await fileSystemProvider.writeFile(
+    vscode.Uri.file("/workspace/.pliplugin/proc_grps.json"),
+    encoder.encode(procgrps),
+    fileOptions,
+  );
+  await fileSystemProvider.writeFile(
+    vscode.Uri.file("/workspace/include.pli"),
+    encoder.encode(includeExample),
+    fileOptions,
+  );
+  await fileSystemProvider.writeFile(
+    vscode.Uri.file("/workspace/lib/included.pli"),
+    encoder.encode(includedExample),
+    fileOptions,
+  );
+
+  return defaultUri;
+}
+
+export async function writeWorkspaceFile(
+  fileSystemProvider: InMemoryFileSystemProvider,
+  content: string,
+): Promise<void> {
+  await fileSystemProvider.writeFile(
+    vscode.Uri.file("/workspace.code-workspace"),
+    encoder.encode(content),
+    fileOptions,
+  );
+}
+
+export const createDefaultWorkspaceContent = (workspacePath: string) => {
+  return JSON.stringify(
+    {
+      folders: [
+        {
+          path: workspacePath,
+        },
+      ],
+    },
+    null,
+    2,
+  );
+};
