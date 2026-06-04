@@ -60,7 +60,6 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
     case CstNodeKind.TypeAttribute_TypeId1:
     case CstNodeKind.HandleAttribute_TypeId0:
     case CstNodeKind.HandleAttribute_TypeId1:
-    case CstNodeKind.ProcedureCall_ProcedureRef:
     case CstNodeKind.LabelReference_LabelRef:
     case CstNodeKind.ReferenceItem_Ref:
     case CstNodeKind.Exports_Procedure:

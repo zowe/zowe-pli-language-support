@@ -244,13 +244,14 @@ function generateCallInstruction(
   node: ast.CallStatement,
   context: GenerateInstructionContext,
 ): inst.CallInstruction | undefined {
-  if (!node.call?.ref?.text) {
+  const referenceItem = node.call?.element?.element;
+  if (!referenceItem?.ref?.text) {
     return undefined; // No procedure to call
   }
-  if (node.call.dimensions.length !== 1) {
+  if (referenceItem.dimensions.length !== 1) {
     return undefined; // Only support one dimension for CALL statements
   }
-  const args = (node.call.dimensions[0].dimensions ?? []).map((arg) => {
+  const args = (referenceItem.dimensions[0].dimensions ?? []).map((arg) => {
     assertType<ast.Expression>(arg.upper?.expression);
     return (
       generateExpressionInstruction(arg.upper.expression) ??
@@ -259,7 +260,7 @@ function generateCallInstruction(
   });
   return {
     kind: inst.InstructionKind.Call,
-    procedureName: node.call.ref.text,
+    procedureName: referenceItem.ref.text,
     args,
     node,
   };

@@ -1469,7 +1469,7 @@ export function createBound(): Bound {
 }
 export interface CallStatement extends AstNode {
   kind: SyntaxKind.CallStatement;
-  call: ReferenceItem | null;
+  call: LocatorCall | null;
 }
 
 export function createCallStatement(): CallStatement {

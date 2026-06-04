@@ -349,22 +349,7 @@ function performRecovery(
 function callStatement(state: ParserState): ast.CallStatement {
   const statement = ast.createCallStatement();
   state.consume(statement, CstNodeKind.CallStatement_CALL, t.CALL);
-  const nameToken = state.consume(
-    statement,
-    CstNodeKind.ProcedureCall_ProcedureRef,
-    t.ID,
-  );
-  statement.call = ast.createReferenceItem();
-  if (nameToken) {
-    statement.call.ref = ast.createReference(
-      statement,
-      nameToken,
-      ast.ReferenceType.Variable,
-    );
-  }
-  while (state.canConsume(t.OpenParen)) {
-    statement.call.dimensions.push(dimensions(state));
-  }
+  statement.call = locatorCall(state, true);
   state.consume(statement, CstNodeKind.CallStatement_Semicolon, t.Semicolon);
   return statement;
 }
