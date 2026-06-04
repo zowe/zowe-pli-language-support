@@ -31,14 +31,14 @@ export function compareIdentifiers<T extends string>(lhs: T, rhs: T) {
 export function resolveProcedureFromCall(
   node: CallStatement,
 ): ProcedureStatement | null {
-  if (!node.call?.ref?.node) {
+  const target = node.call?.element?.element?.ref?.node;
+  if (!target) {
     return null;
   }
-  const labelPrefix = node.call.ref.node;
-  if (!labelPrefix || labelPrefix.kind !== SyntaxKind.LabelPrefix) {
+  if (!target || target.kind !== SyntaxKind.LabelPrefix) {
     return null;
   }
-  return retrieveProcedureFromLabelPrefix(labelPrefix);
+  return retrieveProcedureFromLabelPrefix(target);
 }
 
 /**

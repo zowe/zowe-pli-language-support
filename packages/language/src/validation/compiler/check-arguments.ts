@@ -34,12 +34,14 @@ export function CallStatement_checkArguments(
   if (!procedure) {
     return;
   }
-  const callToken = node.call!.ref!.token;
-  if (node.call?.dimensions.length !== 1) {
+  // We can assume that all of these are set if the procedure was resolved
+  const refItem = node.call!.element!.element!;
+  const callToken = refItem.ref!.token;
+  if (refItem.dimensions.length !== 1) {
     return;
   }
   const providedTypes =
-    node.call?.dimensions[0].dimensions.map((d) => {
+    refItem.dimensions[0].dimensions.map((d) => {
       return unit.services.inferer.inferType(d, unit);
     }) ?? [];
   checkArguments(

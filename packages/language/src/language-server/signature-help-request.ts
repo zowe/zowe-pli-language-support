@@ -14,7 +14,6 @@ import type { SignatureHelp } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { binaryTokenIndexRightMost } from "../utils/search";
 import {
-  CallStatement,
   getContainer,
   LabelPrefix,
   MemberCall,
@@ -26,7 +25,6 @@ import { extractDeclaration } from "../typesystem/stringify";
 import { getJSDocCommentBeforeLabelPrefix } from "./hover-request";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { Token } from "../parser/tokens";
-import { assertType } from "../preprocessor/util";
 import { takeWhile } from "lodash-es";
 import { isJSDocParagraph } from "../documentation/jsdoc";
 import { TypeDescriptions } from "../typesystem/descriptions";
@@ -137,33 +135,10 @@ function tryGetCallInfo(
     return null;
   }
   const memberCall = getContainer(token.element, SyntaxKind.MemberCall);
-  const callStatement = getContainer(token.element, SyntaxKind.CallStatement);
-  if (!memberCall && !callStatement) {
+  if (!memberCall) {
     return null;
   }
-  if (memberCall && memberCall.element && !callStatement) {
-    return getCallInfoFromMemberCall(memberCall, offset, unit);
-  }
-  if (callStatement && callStatement.call && !memberCall) {
-    return getCallInfoFromReferenceItem(callStatement.call, offset, unit);
-  }
-  assertType<MemberCall>(memberCall);
-  assertType<CallStatement>(callStatement);
-  if (memberCall.element === null || callStatement.call === null) {
-    return null;
-  }
-  const callStatementOffset = callStatement.call?.ref?.token.startOffset;
-  const memberCallOffset = memberCall.element?.ref?.token.startOffset;
-  if (callStatementOffset === undefined || memberCallOffset === undefined) {
-    return null;
-  }
-  if (callStatementOffset < memberCallOffset) {
-    const help = getCallInfoFromMemberCall(memberCall, offset, unit);
-    return help && help.argumentIndex !== null
-      ? help
-      : getCallInfoFromReferenceItem(callStatement.call, offset, unit);
-  }
-  return null;
+  return getCallInfoFromMemberCall(memberCall, offset, unit);
 }
 
 function getCallInfoFromMemberCall(

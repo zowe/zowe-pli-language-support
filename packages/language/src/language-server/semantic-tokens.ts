@@ -282,7 +282,6 @@ function isProcedureKind(container: SyntaxNode | null | undefined): boolean {
 
 function isProcedureType(token: Token): boolean {
   switch (token.kind) {
-    case CstNodeKind.ProcedureCall_ProcedureRef:
     case CstNodeKind.Exports_Procedure:
       return true;
     case CstNodeKind.LabelPrefix_Name:
