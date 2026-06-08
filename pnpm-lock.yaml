@@ -95,12 +95,6 @@ importers:
       '@codingame/monaco-vscode-api':
         specifier: ^25.1.2
         version: 25.1.2
-      '@codingame/monaco-vscode-configuration-service-override':
-        specifier: ^25.1.2
-        version: 25.1.2
-      '@codingame/monaco-vscode-editor-api':
-        specifier: ^25.1.2
-        version: 25.1.2
       '@codingame/monaco-vscode-explorer-service-override':
         specifier: ^25.1.2
         version: 25.1.2
@@ -116,9 +110,6 @@ importers:
       '@codingame/monaco-vscode-outline-service-override':
         specifier: ^25.1.2
         version: 25.1.2
-      '@codingame/monaco-vscode-textmate-service-override':
-        specifier: ^25.1.2
-        version: 25.1.2
       '@codingame/monaco-vscode-views-service-override':
         specifier: ^25.1.2
         version: 25.1.2
@@ -128,30 +119,12 @@ importers:
       monaco-languageclient:
         specifier: ~10.7.0
         version: 10.7.0
-      pli-language:
-        specifier: workspace:*
-        version: link:../language
       vscode:
         specifier: npm:@codingame/monaco-vscode-extension-api@^25.1.2
         version: '@codingame/monaco-vscode-extension-api@25.1.2'
       vscode-json-languageservice:
         specifier: ~5.4.4
         version: 5.4.4
-      vscode-languageclient:
-        specifier: ~9.0.1
-        version: 9.0.1
-      vscode-languageserver:
-        specifier: ~9.0.1
-        version: 9.0.1
-      vscode-languageserver-protocol:
-        specifier: ~3.17.5
-        version: 3.17.5
-      vscode-uri:
-        specifier: ^3.1.0
-        version: 3.1.0
-      vscode-ws-jsonrpc:
-        specifier: ~3.5.0
-        version: 3.5.0
     devDependencies:
       '@codingame/monaco-vscode-rollup-vsix-plugin':
         specifier: ^25.1.2

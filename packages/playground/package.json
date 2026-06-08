@@ -18,25 +18,16 @@
   },
   "dependencies": {
     "@codingame/monaco-vscode-api": "^25.1.2",
-    "@codingame/monaco-vscode-configuration-service-override": "^25.1.2",
-    "@codingame/monaco-vscode-editor-api": "^25.1.2",
     "@codingame/monaco-vscode-explorer-service-override": "^25.1.2",
     "@codingame/monaco-vscode-files-service-override": "^25.1.2",
     "@codingame/monaco-vscode-keybindings-service-override": "^25.1.2",
     "@codingame/monaco-vscode-markers-service-override": "^25.1.2",
     "@codingame/monaco-vscode-outline-service-override": "^25.1.2",
-    "@codingame/monaco-vscode-textmate-service-override": "^25.1.2",
     "@codingame/monaco-vscode-views-service-override": "^25.1.2",
     "lz-string": "^1.5.0",
     "monaco-languageclient": "~10.7.0",
-    "pli-language": "workspace:*",
     "vscode": "npm:@codingame/monaco-vscode-extension-api@^25.1.2",
-    "vscode-json-languageservice": "~5.4.4",
-    "vscode-languageclient": "~9.0.1",
-    "vscode-languageserver": "~9.0.1",
-    "vscode-languageserver-protocol": "~3.17.5",
-    "vscode-uri": "^3.1.0",
-    "vscode-ws-jsonrpc": "~3.5.0"
+    "vscode-json-languageservice": "~5.4.4"
   },
   "devDependencies": {
     "@codingame/monaco-vscode-rollup-vsix-plugin": "^25.1.2",
