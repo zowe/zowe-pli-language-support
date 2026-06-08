@@ -37,10 +37,6 @@ export async function handleMissingConfig(
     return;
   }
 
-  // const currentFileRelativePath = path.relative(
-  //   workspaceFolder,
-  //   textEditor.document.fileName,
-  // );
   const workspaceParts = UriUtils.parts(
     UriUtils.toNormalizedKey(workspaceFolder),
   );
