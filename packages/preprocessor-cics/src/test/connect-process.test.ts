@@ -27,9 +27,7 @@ describe("CICS CONNECT PROCESS", async () => {
       "CONNECT PROCESS CONVID(1) PROCNAME(2) SYNCLEVEL(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkConnectProcessOptions -> checkHasExactlyOneOption (none provided)

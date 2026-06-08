@@ -18,9 +18,7 @@ describe("CICS ISSUE", async () => {
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ISSUE ABEND BLA");
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkDuplicates

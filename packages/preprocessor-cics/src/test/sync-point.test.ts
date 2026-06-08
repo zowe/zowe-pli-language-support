@@ -29,9 +29,7 @@ describe("CICS SYNCPOINT", async () => {
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("SYNCPOINT BLA");
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicated ROLLBACK", async () => {

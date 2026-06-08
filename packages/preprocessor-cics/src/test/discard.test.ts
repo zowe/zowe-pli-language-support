@@ -31,9 +31,7 @@ describe("CICS DISCARD", async () => {
       "DISCARD PROGRAM(A) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // EXPECTED TO FAIL: see note above — cics_discard_body matches exactly one

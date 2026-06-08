@@ -27,9 +27,7 @@ describe("CICS CHANGE", async () => {
       "CHANGE PASSWORD(1) NEWPASSWORD(2) USERID(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkChangePassword -> checkHasMandatoryOptions(NEWPASSWORD)

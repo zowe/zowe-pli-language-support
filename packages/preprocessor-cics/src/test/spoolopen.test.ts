@@ -27,9 +27,7 @@ describe("CICS SPOOLOPEN", async () => {
       "SPOOLOPEN INPUT TOKEN(1) USERID(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkSpoolopenInput -> checkHasMandatoryOptions(TOKEN)

@@ -27,9 +27,7 @@ describe("CICS WRITEQ", async () => {
       "WRITEQ TD QUEUE(1) FROM(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkWriteqTd -> checkHasMandatoryOptions(QUEUE)

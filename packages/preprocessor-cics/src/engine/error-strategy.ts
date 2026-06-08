@@ -26,8 +26,9 @@ import { MessageService } from "./message-service";
 
 export class CICSErrorStrategy extends DefaultErrorStrategy {
   private static readonly REPORT_NO_VIABLE_ALTERNATIVE =
-      "ErrorStrategy.reportNoViableAlternative";
-  private static readonly REPORT_MISSING_TOKEN = "ErrorStrategy.reportMissingToken";
+    "ErrorStrategy.reportNoViableAlternative";
+  private static readonly REPORT_MISSING_TOKEN =
+    "ErrorStrategy.reportMissingToken";
 
   private readonly errorMessageHelper: ErrorMessageHelper;
   private static readonly RESTART_OPTIONS = new IntervalSet([
@@ -193,9 +194,16 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
     super.recover(recognizer, e);
   }
 
-  override reportNoViableAlternative(recognizer: Parser, e: NoViableAltException) {
-    const messageParams = this.errorMessageHelper.retrieveInputForNoViableException(recognizer, e);
-    const msg = this.messageService.getMessage(CICSErrorStrategy.REPORT_NO_VIABLE_ALTERNATIVE, messageParams);
+  override reportNoViableAlternative(
+    recognizer: Parser,
+    e: NoViableAltException,
+  ) {
+    const messageParams =
+      this.errorMessageHelper.retrieveInputForNoViableException(recognizer, e);
+    const msg = this.messageService.getMessage(
+      CICSErrorStrategy.REPORT_NO_VIABLE_ALTERNATIVE,
+      messageParams,
+    );
     recognizer.notifyErrorListeners(msg, e.offendingToken, e);
   }
 
@@ -205,7 +213,10 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
     }
     this.beginErrorCondition(recognizer);
     const currentToken = recognizer.getCurrentToken();
-    const msg = this.errorMessageHelper.getUnwantedTokenMessage(recognizer, currentToken);
+    const msg = this.errorMessageHelper.getUnwantedTokenMessage(
+      recognizer,
+      currentToken,
+    );
     recognizer.notifyErrorListeners(msg, currentToken, null);
   }
 
@@ -214,11 +225,11 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
       return;
     }
     this.beginErrorCondition(recognizer);
-    const msg =
-        this.messageService.getMessage(
-            CICSErrorStrategy.REPORT_MISSING_TOKEN,
-            this.errorMessageHelper.getExpectedText(recognizer),
-            ErrorMessageHelper.getRule(recognizer));
+    const msg = this.messageService.getMessage(
+      CICSErrorStrategy.REPORT_MISSING_TOKEN,
+      this.errorMessageHelper.getExpectedText(recognizer),
+      ErrorMessageHelper.getRule(recognizer),
+    );
     recognizer.notifyErrorListeners(msg, recognizer.getCurrentToken(), null);
   }
 

@@ -27,9 +27,7 @@ describe("CICS READ", async () => {
       "READ FILE(1) RIDFLD(2) INTO(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkHasExactlyOneOption (FILE or DATASET none)

@@ -27,9 +27,7 @@ describe("CICS CHECK", async () => {
       "CHECK ACTIVITY(1) COMPSTATUS(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkActivity -> checkHasExactlyOneOption (none provided)

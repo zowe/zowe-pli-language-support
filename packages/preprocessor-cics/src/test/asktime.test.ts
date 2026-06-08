@@ -25,9 +25,7 @@ describe("CICS ASKTIME", async () => {
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ASKTIME BLA");
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicated ABSTIME", async () => {

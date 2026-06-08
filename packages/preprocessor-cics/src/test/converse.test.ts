@@ -27,9 +27,7 @@ describe("CICS CONVERSE", async () => {
       "CONVERSE FROM(1) FROMLENGTH(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkHasMandatoryOptions(FROM) when FROMLENGTH present

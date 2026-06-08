@@ -27,9 +27,7 @@ describe("CICS WSAEPR", async () => {
       "WSAEPR CREATE EPRINTO(1) EPRLENGTH(2) ADDRESS(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkWSAEPR -> checkHasMandatoryOptions(EPRLENGTH)

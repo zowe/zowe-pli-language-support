@@ -27,9 +27,7 @@ describe("CICS EXTRACT (SP)", async () => {
       "EXTRACT EXIT PROGRAM(1) GALENGTH(LEN) GASET(PTR) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkExtractExit -> checkHasMandatoryOptions(PROGRAM)

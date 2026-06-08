@@ -27,9 +27,7 @@ describe("CICS ACQUIRE", async () => {
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      "Extraneous input BLA",
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicated PROCESS", async () => {
