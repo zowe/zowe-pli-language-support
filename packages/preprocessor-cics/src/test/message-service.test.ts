@@ -16,24 +16,23 @@ describe("Message service", async () => {
 
   test("Syntax error message", async () => {
     const actual = messageService.getMessage(
-      "Communications.noSyntaxError",
+      "ErrorStrategy.reportMissingToken",
+      "token",
       "main.pli",
     );
-    expect(actual).toBe("No syntax errors detected in main.pli");
+    expect(actual).toBe("Missing token token at main.pli");
   });
 
   test("End of file error message", async () => {
     const actual = messageService.getMessage("ErrorStrategy.endOfFile");
-    expect(actual).toBe("End of file reached");
+    expect(actual).toBe("Unexpected end of file");
   });
 
   test("Identical program message", async () => {
     const actual = messageService.getMessage(
-      "CobolVisitor.identicalProgMsg",
-      "token",
+      "ErrorStrategy.reportInputMismatch",
+      "input",
     );
-    expect(actual).toBe(
-      "Program-name must be identical to the program-name of the corresponding PROGRAM-ID paragraph: token",
-    );
+    expect(actual).toBe("Syntax error on input");
   });
 });
