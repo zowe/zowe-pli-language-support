@@ -124,7 +124,7 @@ describe("DB2 SQL Positive Tests", async () => {
       `);
       expect(diagnostics).toHaveLength(0);
     });
-    test.fails("ALTER_INDEX2", async () => {
+    test("ALTER_INDEX2", async () => {
       const { diagnostics } = await preprocessor.execute(`
         ALTER INDEX DSN8C10.XPROJ1
         BUFFERPOOL BP1
@@ -703,7 +703,7 @@ describe("DB2 SQL Positive Tests", async () => {
       `);
       expect(diagnostics).toHaveLength(0);
     });
-    test.fails("CREATE_INDEX", async () => {
+    test("CREATE_INDEX", async () => {
       const { diagnostics } = await preprocessor.execute(`
         CREATE UNIQUE INDEX DSN8C10.XDEPT1
             ON DSN8C10.DEPT
@@ -739,7 +739,7 @@ describe("DB2 SQL Positive Tests", async () => {
       `);
       expect(diagnostics).toHaveLength(0);
     });
-    test.fails("CREATE_INDEX3", async () => {
+    test("CREATE_INDEX3", async () => {
       const { diagnostics } = await preprocessor.execute(`
         CREATE UNIQUE INDEX DSN8C10.XDEPT1
         ON DSN8C10.DEPT
@@ -1186,12 +1186,13 @@ describe("DB2 SQL Positive Tests", async () => {
     });
     test.fails("CREATE_TABLE4", async () => {
       const { diagnostics } = await preprocessor.execute(`
-        CREATE TABLE DSN8C10.EMP_PHOTO_RESUME
-             (EMPNO      CHAR(6)     NOT NULL,
-              EMP_ROWID  ROWID NOT NULL GENERATED ALWAYS,
-              EMP_PHOTO  BLOB(110K),
-              RESUME     CLOB(5K),
-              PRIMARY KEY (EMPNO))
+        CREATE TABLE DSN8C10.EMP_PHOTO_RESUME (
+          EMPNO      CHAR(6)     NOT NULL,
+          EMP_ROWID  ROWID NOT NULL GENERATED ALWAYS,
+          EMP_PHOTO  BLOB(110K),
+          RESUME     CLOB(5K),
+          PRIMARY KEY (EMPNO)
+        )
              IN DSN8D12A.DSN8S12E
              CCSID EBCDIC
       `);
@@ -2628,8 +2629,8 @@ describe("DB2 SQL Positive Tests", async () => {
     test.fails("TestSqlComment", async () => {
       const { diagnostics } = await preprocessor.execute(`
         open a
- *      select a from table a = b
-        select a from table -- random where stuffss ss sdjsd
+                *      select a from table a = b 
+                       select a from table -- random where stuffss ss sdjsd
       `);
       expect(diagnostics).toHaveLength(0);
     });

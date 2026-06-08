@@ -1655,7 +1655,7 @@ dbs_function_language: dbs_sql_identifier ;
 dbs_function_parameter_style: dbs_sql_identifier;
 oneof_lang: dbs_sql_identifier;
 dbs_k_m_g_identifier: dbs_sql_identifier;
-dbs_pieceSize : dbs_sql_identifier;
+dbs_pieceSize : INTEGERLITERAL dbs_k_m_g_identifier? | dbs_sql_identifier;
 kmg_blob_parameter: INTEGERLITERAL dbs_k_m_g_identifier? | dbs_sql_identifier;
 dbs_dsize_parameter: INTEGERLITERAL dbs_sql_identifier | dbs_sql_identifier;
 dbs_maxPartition: INTEGERLITERAL;
