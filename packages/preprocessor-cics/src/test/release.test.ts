@@ -27,7 +27,7 @@ describe("CICS RELEASE", async () => {
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch(
-      /Syntax error on 'BLA', expected <EOF>/,
+      "Extraneous input BLA",
     );
   });
 

@@ -36,10 +36,12 @@ import {
 } from "preprocessor-api";
 import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
 import { CICSErrorStrategy } from "./error-strategy";
+import { EnglishMessageService, MessageService } from "./message-service";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export class CICSPreprocessor implements Preprocessor {
+  private readonly messageService: MessageService = new EnglishMessageService();
   get name() {
     return "CICS Preprocessor";
   }
@@ -58,7 +60,7 @@ export class CICSPreprocessor implements Preprocessor {
 
     lexer.addErrorListener(lexerErrors);
     parser.addErrorListener(parserErrors);
-    parser.errorHandler = new CICSErrorStrategy();
+    parser.errorHandler = new CICSErrorStrategy(this.messageService);
 
     const tree = parser.startRule();
     const identifierTokens = CollectingIdentifierVisitor.collect(tree);

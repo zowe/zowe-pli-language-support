@@ -21,8 +21,15 @@ import {
 } from "antlr4ng";
 import { CICSLexer } from "../generated/CICSLexer";
 import { AllCicsRuleContext } from "../generated/CICSParser";
+import { ErrorMessageHelper } from "./error-message-helper";
+import { MessageService } from "./message-service";
 
 export class CICSErrorStrategy extends DefaultErrorStrategy {
+  private static readonly REPORT_NO_VIABLE_ALTERNATIVE =
+      "ErrorStrategy.reportNoViableAlternative";
+  private static readonly REPORT_MISSING_TOKEN = "ErrorStrategy.reportMissingToken";
+
+  private readonly errorMessageHelper: ErrorMessageHelper;
   private static readonly RESTART_OPTIONS = new IntervalSet([
     CICSLexer.ABEND,
     CICSLexer.ADD,
@@ -126,6 +133,11 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
   ]);
   private static readonly END_EXEC_ONLY = new IntervalSet([CICSLexer.END_EXEC]);
 
+  constructor(private readonly messageService: MessageService) {
+    super();
+    this.errorMessageHelper = new ErrorMessageHelper(messageService);
+  }
+
   override reportError(recognizer: Parser, e: RecognitionException): void {
     // if we've already reported an error and have not matched a token
     // yet successfully, don't report any errors.
@@ -154,7 +166,7 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
   }
 
   override reportInputMismatch(recognizer: Parser, e: InputMismatchException) {
-    const msg = this.getInputMismatchMessage(
+    const msg = this.errorMessageHelper.getInputMismatchMessage(
       recognizer,
       e,
       e.offendingToken!,
@@ -181,15 +193,9 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
     super.recover(recognizer, e);
   }
 
-  override reportNoViableAlternative(
-    recognizer: Parser,
-    e: NoViableAltException,
-  ) {
-    const input = recognizer.inputStream.getTextFromRange(
-      e.startToken,
-      e.offendingToken,
-    );
-    const msg = `No viable alternative at input ${input}`;
+  override reportNoViableAlternative(recognizer: Parser, e: NoViableAltException) {
+    const messageParams = this.errorMessageHelper.retrieveInputForNoViableException(recognizer, e);
+    const msg = this.messageService.getMessage(CICSErrorStrategy.REPORT_NO_VIABLE_ALTERNATIVE, messageParams);
     recognizer.notifyErrorListeners(msg, e.offendingToken, e);
   }
 
@@ -199,7 +205,7 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
     }
     this.beginErrorCondition(recognizer);
     const currentToken = recognizer.getCurrentToken();
-    const msg = this.getUnwantedTokenMessage(recognizer, currentToken);
+    const msg = this.errorMessageHelper.getUnwantedTokenMessage(recognizer, currentToken);
     recognizer.notifyErrorListeners(msg, currentToken, null);
   }
 
@@ -208,81 +214,15 @@ export class CICSErrorStrategy extends DefaultErrorStrategy {
       return;
     }
     this.beginErrorCondition(recognizer);
-    const rule = recognizer.getRuleInvocationStack()[0];
-    const expectedTokens = recognizer.getExpectedTokens();
-    const newMessage = this.buildErrorMessage(
-      this.removeIdentifierTokens(
-        this.collectErrorTokens(recognizer, expectedTokens),
-      ),
-    );
-    const token = expectedTokens.length > 1 ? `{${newMessage}}` : newMessage;
-    const msg = `Missing token ${token} at ${rule}`;
+    const msg =
+        this.messageService.getMessage(
+            CICSErrorStrategy.REPORT_MISSING_TOKEN,
+            this.errorMessageHelper.getExpectedText(recognizer),
+            ErrorMessageHelper.getRule(recognizer));
     recognizer.notifyErrorListeners(msg, recognizer.getCurrentToken(), null);
   }
 
-  private removeIdentifierTokens(tokens: string[]): string[] {
-    const identifierTokens = new Set<string>();
-    if (tokens.every((token) => identifierTokens.has(token))) {
-      tokens = tokens.filter((token) => !identifierTokens.has(token));
-    }
-    return tokens;
-  }
-
-  private collectErrorTokens(
-    recognizer: Parser,
-    interval: IntervalSet,
-  ): string[] {
-    const MSG_DELIMITER = ", ";
-    const MSG_PREFIX = "{";
-    const MSG_SUFFIX = "}";
-    return interval
-      .toStringWithVocabulary(recognizer.vocabulary)
-      .replace(MSG_PREFIX, "")
-      .replace(MSG_SUFFIX, "")
-      .split(MSG_DELIMITER);
-  }
-
-  private buildErrorMessage(tokens: string[]): string {
-    return tokens
-      .filter((it) => it.length > 0)
-      .map((it) => it.replace("_", "-"))
-      .filter((value, index, self) => self.indexOf(value) === index)
-      .join(", ");
-  }
-
-  private getInputMismatchMessage(
-    recognizer: Parser,
-    e: InputMismatchException,
-    token: Token,
-    offendingTokens: string,
-  ) {
-    return token.type === CICSLexer.EOF
-      ? "Unexpected end of file"
-      : `Syntax error on ${offendingTokens}, expected ${this.getExpectedText(recognizer, e)}`;
-  }
-
-  private getUnwantedTokenMessage(recognizer: Parser, currentToken: Token) {
-    return currentToken.type === CICSLexer.EOF
-      ? "Unexpected end of file"
-      : `Syntax error on ${this.getOffendingToken({ offendingToken: currentToken } as InputMismatchException)}, expected ${this.getExpectedText(recognizer, { offendingToken: currentToken } as InputMismatchException)}`;
-  }
-
-  private getOffendingToken(
-    e: InputMismatchException | NoViableAltException,
-  ): string {
+  private getOffendingToken(e: InputMismatchException) {
     return this.getTokenErrorDisplay(e.offendingToken);
-  }
-
-  private getExpectedText(
-    recognizer: Parser,
-    e: InputMismatchException,
-  ): string {
-    const expectedTokens = recognizer.getExpectedTokens();
-    const newMessage = this.buildErrorMessage(
-      this.removeIdentifierTokens(
-        this.collectErrorTokens(recognizer, expectedTokens),
-      ),
-    );
-    return newMessage.length > 0 ? newMessage : "valid token";
   }
 }
