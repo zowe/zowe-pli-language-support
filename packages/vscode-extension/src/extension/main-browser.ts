@@ -15,13 +15,25 @@ import { LanguageClient } from "vscode-languageclient/browser.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
+import { watchPluginFolder } from "./plugin-watcher";
+import { registerCustomDecorators } from "./decorators";
+import { Settings } from "./settings";
 
 let client: LanguageClient;
+let settings: Settings;
 
 // This function is called when the extension is activated.
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(
+  context: vscode.ExtensionContext,
+): Promise<void> {
   BuiltinFileSystemProvider.register(context);
-  client = startLanguageClient(context);
+  settings = Settings.getInstance();
+  client = await startLanguageClient(context);
+
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (workspaceFolder) {
+    watchPluginFolder(client, workspaceFolder, context);
+  }
 }
 
 // This function is called when the extension is deactivated.
@@ -32,7 +44,9 @@ export function deactivate(): Thenable<void> | undefined {
   return undefined;
 }
 
-function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
+async function startLanguageClient(
+  context: vscode.ExtensionContext,
+): Promise<LanguageClient> {
   const serverModule = vscode.Uri.joinPath(
     context.extensionUri,
     "out/language/main-browser.js",
@@ -48,7 +62,8 @@ function startLanguageClient(context: vscode.ExtensionContext): LanguageClient {
   const client = new LanguageClient("pli", "PL/I", clientOptions, worker);
   registerFileSystemProvider(client);
   registerProgressReporter(client);
+  registerCustomDecorators(client, settings);
   // Start the client. This will also launch the server
-  client.start();
+  await client.start();
   return client;
 }

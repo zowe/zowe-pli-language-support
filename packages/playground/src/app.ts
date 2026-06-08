@@ -45,6 +45,11 @@ export async function startClient() {
       preserveFocus: true,
       preview: false,
     });
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      // For some reason, the auto save feature does not work in the playground
+      // So we trigger a save after every change, which seems to make it work
+      event.document.save();
+    });
   } catch (e) {
     console.log(e);
   }
