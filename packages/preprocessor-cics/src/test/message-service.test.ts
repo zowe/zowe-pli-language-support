@@ -15,7 +15,10 @@ describe("Message service", async () => {
   const messageService = new EnglishMessageService();
 
   test("Syntax error message", async () => {
-    const actual = messageService.getMessage("Communications.noSyntaxError", "main.pli");
+    const actual = messageService.getMessage(
+      "Communications.noSyntaxError",
+      "main.pli",
+    );
     expect(actual).toBe("No syntax errors detected in main.pli");
   });
 
@@ -25,7 +28,12 @@ describe("Message service", async () => {
   });
 
   test("Identical program message", async () => {
-    const actual = messageService.getMessage("CobolVisitor.identicalProgMsg", "token");
-    expect(actual).toBe("Program-name must be identical to the program-name of the corresponding PROGRAM-ID paragraph: token");
+    const actual = messageService.getMessage(
+      "CobolVisitor.identicalProgMsg",
+      "token",
+    );
+    expect(actual).toBe(
+      "Program-name must be identical to the program-name of the corresponding PROGRAM-ID paragraph: token",
+    );
   });
 });

@@ -134,7 +134,7 @@ export class ErrorMessageHelper {
     const tokenName = t.text ?? "<unknown token>";
     return this.messageService.getMessage(
       ErrorMessageHelper.REPORT_UNWANTED_TOKEN,
-      tokenName
+      tokenName,
     );
   }
 
