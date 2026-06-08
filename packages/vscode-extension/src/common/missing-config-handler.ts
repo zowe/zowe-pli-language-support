@@ -12,7 +12,7 @@
 import * as vscode from "vscode";
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { PluginConfiguration } from "pli-language";
+import { PluginConfiguration, UriUtils } from "pli-language";
 
 let shouldShowInfoMessage = true;
 
@@ -37,10 +37,18 @@ export async function handleMissingConfig(
     return;
   }
 
-  const currentFileRelativePath = path.relative(
-    workspaceFolder,
-    textEditor.document.fileName,
+  const workspaceParts = UriUtils.parts(
+    UriUtils.toNormalizedKey(workspaceFolder),
   );
+  const entryParts = UriUtils.parts(
+    UriUtils.toNormalizedKey(textEditor.document.fileName),
+  );
+  const isInsideWorkspace = workspaceParts.every(
+    (part, index) => part === entryParts[index],
+  );
+  const currentFileRelativePath = isInsideWorkspace
+    ? entryParts.slice(workspaceParts.length).join("/")
+    : textEditor.document.fileName.replace(/\\/g, "/");
 
   const options = {
     DONT_SHOW_AGAIN: "Don't show again",
