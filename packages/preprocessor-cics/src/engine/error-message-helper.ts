@@ -52,7 +52,6 @@ export class ErrorMessageHelper {
       ? this.messageService.getMessage(ErrorMessageHelper.END_OF_FILE_MESSAGE)
       : this.messageService.getMessage(
           ErrorMessageHelper.REPORT_INPUT_MISMATCH,
-          offendingTokens,
           this.getExpectedTextByException(recognizer, e),
         );
   }
@@ -132,11 +131,10 @@ export class ErrorMessageHelper {
   }
 
   private createMessage(recognizer: Parser, t: Token): string {
-    const tokenName = t.text;
+    const tokenName = t.text ?? "<unknown token>";
     return this.messageService.getMessage(
       ErrorMessageHelper.REPORT_UNWANTED_TOKEN,
-      tokenName,
-      this.getExpectedText(recognizer),
+      tokenName
     );
   }
 
