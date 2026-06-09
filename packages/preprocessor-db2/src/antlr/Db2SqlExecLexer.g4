@@ -846,7 +846,7 @@ WS : [ \t\f]+ -> channel(HIDDEN);
 
 //SQL comments
 SQLLINECOMMENT
-	:	SQLLINECOMMENTCHAR ~[\r\n]* {this.inputStream.LA(1) == Db2SqlExecLexer.NEWLINE}?
+	:	SQLLINECOMMENTCHAR ~[\r\n]* ('\r'? '\n'|EOF)  -> channel(COMMENTS)
 	;
 
 // treat all the non-processed tokens as errors
