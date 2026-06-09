@@ -27,9 +27,7 @@ describe("CICS IGNORE CONDITION", async () => {
       "IGNORE CONDITION ERROR BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkIgnoreCondition -> checkHasMandatoryOptions(CONDITION)

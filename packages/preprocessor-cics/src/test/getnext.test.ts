@@ -27,9 +27,7 @@ describe("CICS GETNEXT", async () => {
       "GETNEXT ACTIVITY(1) BROWSETOKEN(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkActivity -> checkHasMandatoryOptions(BROWSETOKEN)

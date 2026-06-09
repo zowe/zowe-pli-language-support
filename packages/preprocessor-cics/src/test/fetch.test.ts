@@ -27,9 +27,7 @@ describe("CICS FETCH", async () => {
       "FETCH ANY(1) COMPSTATUS(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkFetchAnyChild -> checkHasExactlyOneOption (none provided)

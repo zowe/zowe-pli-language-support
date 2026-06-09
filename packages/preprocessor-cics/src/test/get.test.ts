@@ -27,9 +27,7 @@ describe("CICS GET", async () => {
       "GET CONTAINER(1) ACTIVITY(2) INTO(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkContainerBTS -> checkHasMandatoryOptions(CONTAINER)

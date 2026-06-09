@@ -27,9 +27,7 @@ describe("CICS ROUTE", async () => {
       "ROUTE AFTER HOURS(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkMutuallyExclusiveOptions
