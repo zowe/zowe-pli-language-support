@@ -20,7 +20,7 @@ import { LspCodes } from "../validation/lsp-codes";
 /**
  * Check for unknown process groups references under "pgm_conf.json"
  * by comparing with existing process group names at "proc_grps.json"
- * If process group names existis and an unknown process is found,
+ * If there are values to compare and a mismatch between them is found,
  * throw UnknownProcessGroup(COPC04).
  */
 export function validatePgroupReferences(
