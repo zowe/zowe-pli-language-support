@@ -10,13 +10,12 @@
  */
 import { describe, expect, test } from "vitest";
 import { Db2SqlPreprocessor } from "../src/engine/preprocessor";
-import { SemanticsKind } from "preprocessor-api";
 
 describe("DB2 SQL invalid code", async () => {
     const preprocessor = new Db2SqlPreprocessor();
 
     test("INVALID", async () => {
-        const { diagnostics, tokens } = await preprocessor.execute(`
+        const { diagnostics } = await preprocessor.execute(`
            THIS IS INVALID CODE
        `);
         expect(diagnostics).toHaveLength(1);

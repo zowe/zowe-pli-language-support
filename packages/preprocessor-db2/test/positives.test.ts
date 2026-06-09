@@ -588,7 +588,7 @@ describe("DB2 SQL Positive Tests", async () => {
       `);
       expect(diagnostics).toHaveLength(0);
     });
-    test.fails("CREATE_FUNCTION_EXT4", async () => {
+    test("CREATE_FUNCTION_EXT4", async () => {
       const { diagnostics } = await preprocessor.execute(`
         CREATE FUNCTION FINDV (CLOB(100K))
             RETURNS INTEGER
@@ -1184,7 +1184,7 @@ describe("DB2 SQL Positive Tests", async () => {
       `);
       expect(diagnostics).toHaveLength(0);
     });
-    test.fails("CREATE_TABLE4", async () => {
+    test("CREATE_TABLE4", async () => {
       const { diagnostics } = await preprocessor.execute(`
         CREATE TABLE DSN8C10.EMP_PHOTO_RESUME (
           EMPNO      CHAR(6)     NOT NULL,
@@ -2829,7 +2829,7 @@ describe("DB2 SQL Positive Tests", async () => {
       expect(diagnostics).toHaveLength(0);
     });
 
-    test.fails("TestSqlExecInDataSection #3", async () => {
+    test("TestSqlExecInDataSection #3", async () => {
       const { diagnostics } = await preprocessor.execute(`
         WHENEVER SQLERROR GO TO 1000-ABEND-RTN
       `);
@@ -3225,7 +3225,7 @@ describe("DB2 SQL Positive Tests", async () => {
     });
   });
   describe("TestSqlObjectsName", () => {
-    test.fails("TestSqlObjectsName", async () => {
+    test("TestSqlObjectsName", async () => {
       const { diagnostics } = await preprocessor.execute(`
         SELECT FÖ1R
         INTO :ARB-HELLO
