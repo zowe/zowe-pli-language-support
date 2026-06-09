@@ -135,6 +135,31 @@ export function deserializeProcessGroup(
   };
 }
 
+function validatePluginConfig(
+  document: TextDocument,
+  config: Map<string, ProgramRecord>,
+  pGroupsNames: string[],
+): {
+  unknownProcessGroupsDiagnostic: Diagnostic[];
+  programConfigDiagnostics: LspDiagnostic[];
+} {
+  let unknownProcessGroupsDiagnostic: Diagnostic[] = [];
+  let programConfigDiagnostics: LspDiagnostic[] = [];
+  // Check for unknown process groups references under "pgm_conf.json"
+  const pgroupNames = new Set(pGroupsNames);
+  const pgroupReferences: Iterable<ProgramConfig> = config.values();
+  unknownProcessGroupsDiagnostic = validatePgroupReferences(
+    pgroupReferences,
+    pgroupNames,
+    document.uri,
+  );
+  for (const diagnostic of unknownProcessGroupsDiagnostic) {
+    const lspDiag = toLspDiagnostic(diagnostic, document);
+    programConfigDiagnostics.push(lspDiag);
+  }
+  return { unknownProcessGroupsDiagnostic, programConfigDiagnostics };
+}
+
 export type PluginConfigLspDiagnostics = Map<string, LspDiagnostic[]>;
 export type PluginConfigInternalDiagnostics = Map<string, Diagnostic[]>;
 
@@ -346,19 +371,15 @@ export class PluginConfigurationProvider {
     );
     let unknownProcessGroupsDiagnostic: Diagnostic[] = [];
     if (document && this.processGroupConfigs.size) {
-      // Check for unknown process groups references under "pgm_conf.json"
-      const pgroupNames = new Set(this.getProcessGroupNames());
-      const pgroupReferences: Iterable<ProgramConfig> =
-        this.programConfigs.values();
-      unknownProcessGroupsDiagnostic = validatePgroupReferences(
-        pgroupReferences,
-        pgroupNames,
-        document.uri,
+      const validation = validatePluginConfig(
+        document,
+        this.programConfigs,
+        this.getProcessGroupNames(),
       );
-      for (const diagnostic of unknownProcessGroupsDiagnostic) {
-        const lspDiag = toLspDiagnostic(diagnostic, document);
-        programConfigDiagnostics.push(lspDiag);
-      }
+      programConfigDiagnostics.push(...validation.programConfigDiagnostics);
+      unknownProcessGroupsDiagnostic.push(
+        ...validation.unknownProcessGroupsDiagnostic,
+      );
     }
     cancel();
 
