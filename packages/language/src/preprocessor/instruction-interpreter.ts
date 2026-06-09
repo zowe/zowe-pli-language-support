@@ -366,6 +366,7 @@ export interface InterpreterOptions {
 }
 
 export const MAX_INSTRUCTION_COUNTER = 5000;
+export const MAX_INSTRUCTION_LIMIT = 50000;
 
 export async function runInstructions(
   unit: CompilationUnit,
@@ -373,6 +374,16 @@ export async function runInstructions(
   instruction: InstructionGeneratorResult,
   options: InterpreterOptions,
 ): Promise<InstructionInterpreterResult> {
+  // Safeguard against unlimited instruction execution (like unlimited loops, infinite recursion, etc.)
+  // Can be configured via LSP options, but has a hard limit as well to prevent excessive processing times
+  const instructionLimit = Math.min(
+    Math.max(
+      unit.processGroup?.lspOptions.instructionCounterLimit.value ??
+        MAX_INSTRUCTION_COUNTER,
+      1,
+    ),
+    MAX_INSTRUCTION_LIMIT,
+  );
   const global = {
     variables: new Map(),
     doType3: new Map(),
@@ -404,9 +415,7 @@ export async function runInstructions(
       entries: new Map(),
     },
     macname: "",
-    instructionCounterLimit:
-      unit.processGroup?.lspOptions.instructionCounterLimit.value ??
-      MAX_INSTRUCTION_COUNTER,
+    instructionCounterLimit: instructionLimit,
   };
   for (const [key, value] of instruction.procedures.entries()) {
     context.procedures.set(key, value);
@@ -2536,11 +2545,17 @@ function copy(
   repetitions: Value | undefined,
   plus: number,
 ): Value {
-  if (!value || !isScalarValue(value) || !repetitions) {
+  if (!value || !isScalarValue(value) || !value.value || !repetitions) {
     return defaultEmptyValue;
   }
   const repeatCount = valueToNumber(repetitions, 0) + plus;
-  if (repeatCount === 0) {
+  if (
+    // Invalid repeat count, emit empty
+    repeatCount <= 0 ||
+    // Safeguard against large outputs
+    // Could cause long processing times
+    value.value.length * repeatCount > 100_000
+  ) {
     return defaultEmptyValue;
   }
   const repeatedText = value.value.repeat(repeatCount);
