@@ -294,6 +294,9 @@ export const Info = {
   /**
    * The ERROR condition will be raised if no WHEN clause is satisfied.
    * (see page 2)
+   *
+   * Note: The compiler does not seem to emit this message at all. See also:
+   * https://github.com/zowe/zowe-pli-language-support/issues/700
    */
   IBM1059I: {
     code: "IBM1059I",
