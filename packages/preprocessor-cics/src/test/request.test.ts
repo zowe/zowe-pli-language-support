@@ -27,9 +27,7 @@ describe("CICS REQUEST", async () => {
       "REQUEST ENCRYPTPTKT(1) FLENGTH(2) ENCRYPTKEY(3) ESMAPPNAME(4) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRequestBody -> checkHasExactlyOneOption (none provided)

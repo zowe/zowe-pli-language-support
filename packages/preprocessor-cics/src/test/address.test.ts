@@ -25,9 +25,7 @@ describe("CICS ADDRESS (SET)", async () => {
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ADDRESS BLA");
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicate COMMAREA", async () => {

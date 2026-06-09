@@ -27,9 +27,7 @@ describe("CICS SOAPFAULT", async () => {
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkCreate -> checkHasExactlyOneOption (none provided)

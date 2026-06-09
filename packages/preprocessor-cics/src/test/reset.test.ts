@@ -25,9 +25,7 @@ describe("CICS RESET", async () => {
       "RESET ACQPROCESS BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkResetAcqprocess -> checkHasMandatoryOptions(ACQPROCESS)

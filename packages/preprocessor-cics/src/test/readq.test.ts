@@ -27,9 +27,7 @@ describe("CICS READQ", async () => {
       "READQ TD QUEUE(1) INTO(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkTd -> checkHasMandatoryOptions(QUEUE)

@@ -20,9 +20,7 @@ describe("CICS CSD (SP)", async () => {
       "CSD ADD LIST(L) GROUP(G) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkDuplicates

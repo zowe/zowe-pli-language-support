@@ -26,9 +26,7 @@ describe("CICS SIGNON", async () => {
       "SIGNON USERID(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkMainBody -> checkHasMandatoryOptions(USERID)

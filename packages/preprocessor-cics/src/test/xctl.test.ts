@@ -25,9 +25,7 @@ describe("CICS XCTL", async () => {
       "XCTL PROGRAM(P) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkXctl -> checkHasMandatoryOptions

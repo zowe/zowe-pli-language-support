@@ -27,9 +27,7 @@ describe("CICS TRANSFORM", async () => {
       "TRANSFORM DATATOJSON CHANNEL(1) INCONTAINER(2) TRANSFORMER(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkJSON -> checkHasExactlyOneOption (both -> mutually exclusive)

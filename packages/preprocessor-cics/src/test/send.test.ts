@@ -24,9 +24,7 @@ describe("CICS SEND", async () => {
     const { diagnostics } =
       await cicsPreprocessor.execute("SEND FROM(VAR) BLA");
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toMatch(
-      /extraneous input 'BLA' expecting <EOF>/,
-    );
+    expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkGroup1 -> checkHasMutuallyExclusiveOptions(LENGTH or FLENGTH)
