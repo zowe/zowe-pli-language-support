@@ -12,14 +12,17 @@ import { describe, expect, test } from "vitest";
 import { Db2SqlPreprocessor } from "../src/engine/preprocessor";
 
 describe("DB2 SQL invalid code", async () => {
-    const preprocessor = new Db2SqlPreprocessor();
+  const preprocessor = new Db2SqlPreprocessor();
 
-    test("INVALID", async () => {
-        const { diagnostics } = await preprocessor.execute(`
+  test("INVALID", async () => {
+    const { diagnostics } = await preprocessor.execute(`
            THIS IS INVALID CODE
        `);
-        expect(diagnostics).toHaveLength(1);
-        expect(diagnostics[0].message.startsWith("mismatched input 'THIS' expecting {ALLOCATE")).toBeTruthy();
-    });
-
+    expect(diagnostics).toHaveLength(1);
+    expect(
+      diagnostics[0].message.startsWith(
+        "mismatched input 'THIS' expecting {ALLOCATE",
+      ),
+    ).toBeTruthy();
+  });
 });

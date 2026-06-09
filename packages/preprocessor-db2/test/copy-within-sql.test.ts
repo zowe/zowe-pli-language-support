@@ -12,27 +12,27 @@ import { describe, expect, test } from "vitest";
 import { Db2SqlPreprocessor } from "../src/engine/preprocessor";
 
 describe("DB2 SQL Copy within SQL Tests", async () => {
-    const preprocessor = new Db2SqlPreprocessor();
+  const preprocessor = new Db2SqlPreprocessor();
 
-    test("TEXT1", async () => {
-        const { diagnostics, replacement } = await preprocessor.execute(`
+  test("TEXT1", async () => {
+    const { diagnostics, replacement } = await preprocessor.execute(`
        INCLUDE COPY1
-    `)
-        expect(diagnostics).toHaveLength(0);
-        expect(replacement).toBeDefined();
-        if (replacement!.type === "include") {
-            expect(replacement!.filePath).toBe("COPY1");
-        }
-    });
+    `);
+    expect(diagnostics).toHaveLength(0);
+    expect(replacement).toBeDefined();
+    if (replacement!.type === "include") {
+      expect(replacement!.filePath).toBe("COPY1");
+    }
+  });
 
-    test("TEXT2", async () => {
-        const { diagnostics, replacement } = await preprocessor.execute(`
+  test("TEXT2", async () => {
+    const { diagnostics, replacement } = await preprocessor.execute(`
        INCLUDE SQLCA
-    `)
-        expect(diagnostics).toHaveLength(0);
-        expect(replacement).toBeDefined();
-        if (replacement!.type === "include") {
-            expect(replacement!.filePath).toBe("SQLCA");
-        }
-    });
+    `);
+    expect(diagnostics).toHaveLength(0);
+    expect(replacement).toBeDefined();
+    if (replacement!.type === "include") {
+      expect(replacement!.filePath).toBe("SQLCA");
+    }
+  });
 });

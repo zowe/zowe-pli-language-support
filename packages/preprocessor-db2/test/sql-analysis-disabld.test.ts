@@ -13,18 +13,29 @@ import { Db2SqlPreprocessor } from "../src/engine/preprocessor";
 import { SemanticsKind } from "preprocessor-api";
 
 describe("DB2 SQL analysis disabled", async () => {
-    const preprocessor = new Db2SqlPreprocessor();
+  const preprocessor = new Db2SqlPreprocessor();
 
-    test("UPDATE_SQL_EN|DISABLED", async () => {
-        const { diagnostics, tokens } = await preprocessor.execute(`
+  test("UPDATE_SQL_EN|DISABLED", async () => {
+    const { diagnostics, tokens } = await preprocessor.execute(`
           UPDATE EMP1
           SET SALARY = SALARY + 1000,
           RESUME = UPDATE_RESUME(:HV_RESUME)
           WHERE EMP_ROWID = :HV_EMP_ROWID
        `);
-        expect(diagnostics).toHaveLength(0);
-        expect(tokens.find(t => t.semanticsKind === SemanticsKind.Identifier && t.image === "HV_RESUME")).toBeTruthy();
-        expect(tokens.find(t => t.semanticsKind === SemanticsKind.Identifier && t.image === "HV_EMP_ROWID")).toBeTruthy();
-    });
-
+    expect(diagnostics).toHaveLength(0);
+    expect(
+      tokens.find(
+        (t) =>
+          t.semanticsKind === SemanticsKind.Identifier &&
+          t.image === "HV_RESUME",
+      ),
+    ).toBeTruthy();
+    expect(
+      tokens.find(
+        (t) =>
+          t.semanticsKind === SemanticsKind.Identifier &&
+          t.image === "HV_EMP_ROWID",
+      ),
+    ).toBeTruthy();
+  });
 });

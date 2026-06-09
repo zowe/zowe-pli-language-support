@@ -18,7 +18,7 @@ describe("DB2 SQL Positive Tests", async () => {
     const { diagnostics } = await preprocessor.execute(`
       DECLARE TEST123
       TABLE(JSON_DATA BLOB(256K) NOT NULL);
-    `)
+    `);
     expect(diagnostics).toHaveLength(0);
   });
 
@@ -31,7 +31,9 @@ describe("DB2 SQL Positive Tests", async () => {
     expect(diagnostics).toHaveLength(0);
   });
   test("TestDb2DeclareVariable", async () => {
-    const { diagnostics } = await preprocessor.execute(`DECLARE :A VARIABLE FOR BIT DATA`);
+    const { diagnostics } = await preprocessor.execute(
+      `DECLARE :A VARIABLE FOR BIT DATA`,
+    );
     expect(diagnostics).toHaveLength(0);
   });
   test("TestDb2JoinedTablesQuery", async () => {
@@ -77,7 +79,9 @@ describe("DB2 SQL Positive Tests", async () => {
       expect(diagnostics).toHaveLength(0);
     });
     test("ALTER_EXTERNAL_FUNCTION", async () => {
-      const { diagnostics } = await preprocessor.execute(`ALTER FUNCTION MY_UDF1 DETERMINISTIC`);
+      const { diagnostics } = await preprocessor.execute(
+        `ALTER FUNCTION MY_UDF1 DETERMINISTIC`,
+      );
       expect(diagnostics).toHaveLength(0);
     });
     test("ALTER_FUNCTION_COMPILED2", async () => {
@@ -1638,7 +1642,9 @@ describe("DB2 SQL Positive Tests", async () => {
       expect(diagnostics).toHaveLength(0);
     });
     test("DECLARE_STATEMENT", async () => {
-      const { diagnostics } = await preprocessor.execute(`DECLARE OBJECT_STATEMENT STATEMENT`);
+      const { diagnostics } = await preprocessor.execute(
+        `DECLARE OBJECT_STATEMENT STATEMENT`,
+      );
       expect(diagnostics).toHaveLength(0);
     });
     test("DECLARE_VARIABLE", async () => {
