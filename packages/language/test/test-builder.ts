@@ -212,8 +212,8 @@ export class TestBuilder extends AbstractTestBuilder {
     this.diagnostics = this.unit.diagnostics.getAll();
     const configDiagnostics =
       defaultTestWorkspace().config.getConfigInternalDiagnostics();
-    for (const diagnostic of configDiagnostics) {
-      this.diagnostics.push(...diagnostic[1]);
+    for (const diagnostics of configDiagnostics.values()) {
+      this.diagnostics.push(...diagnostics);
     }
     this.checkDiagnosticsURIs();
 
@@ -285,11 +285,10 @@ export class TestBuilder extends AbstractTestBuilder {
       }
     }
     if (pgmConfUri && procGrpsUri) {
-      await defaultTestWorkspace().config.init(
-        UriUtils.toUri(
-          pgmConfUri.replace(PluginConfiguration.PROGRAM_FILE_PATH, ""),
-        ),
+      const configUri = UriUtils.dirname(
+        UriUtils.dirname(UriUtils.toUri(pgmConfUri)),
       );
+      await defaultTestWorkspace().config.init(configUri);
       return;
     }
 
