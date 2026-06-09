@@ -9,7 +9,6 @@
  *
  */
 
-import { IBM1059I_select_without_otherwise } from "./compiler/IBM1059I-select-without-otherwise";
 import { IBM1219I_leave_exits_noniterative_do } from "./compiler/IBM1219I-leave-exits-noniterative-do";
 import { IBM1324IE_name_occurs_more_than_once_within_exports_clause } from "./compiler/IBM1324IE-name-occurs-more-than-once-within-exports-clause.js";
 import { IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute } from "./compiler/IBM1388IE-NODESCRIPTOR-attribute-is-invalid-when-any-parameter-has-NONCONNECTED-attribute.js";
@@ -58,7 +57,6 @@ export function registerPliValidationChecks(): ValidationChecks {
       IBM1213I_unreferenced_procedure,
     ],
     ReferenceItem: [checkImplicitBuiltins, checkProcedureCallsDimensions],
-    SelectStatement: [IBM1059I_select_without_otherwise],
     Statement: [DeprecateStatements],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
   };
