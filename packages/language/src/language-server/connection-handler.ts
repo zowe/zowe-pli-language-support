@@ -57,6 +57,7 @@ import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
+import { MultiMap } from "../utils/collections";
 export { PluginConfiguration } from "./constants";
 
 export function startLanguageServer(
@@ -72,9 +73,9 @@ export function startLanguageServer(
   let folders: WorkspaceFolder[] = [];
 
   function publishPluginConfigDiagnostics(
-    diagnosticsByUri: Map<string, Diagnostic[]>,
+    diagnosticsByUri: MultiMap<string, Diagnostic>,
   ): void {
-    for (const [uri, diagnostics] of diagnosticsByUri.entries()) {
+    for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
       connection.sendDiagnostics({
         uri,
         diagnostics,

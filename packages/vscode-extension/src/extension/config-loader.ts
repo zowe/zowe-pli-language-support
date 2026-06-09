@@ -71,48 +71,38 @@ function locate(
   const inspect = vscode.workspace.getConfiguration("pli", folder).inspect(key);
   if (!inspect) return undefined;
 
+  const entry = (
+    uri: vscode.Uri,
+    containerPath: string[] = [],
+  ): Messages.GlobalConfigEntry => ({
+    uri: uri.toString(),
+    containerPath,
+    configKey: `pli.${key}`,
+  });
+  const vscodeSettingsUri = vscode.Uri.joinPath(
+    folder.uri,
+    ".vscode",
+    "settings.json",
+  );
+
   // Most-specific scope wins. The `*LanguageValue` variants are
   // ignored - `pli.pgm_conf` isn't language-scoped.
   if (inspect.workspaceFolderValue !== undefined) {
-    return {
-      uri: vscode.Uri.joinPath(
-        folder.uri,
-        ".vscode",
-        "settings.json",
-      ).toString(),
-      containerPath: [],
-      configKey: `pli.${key}`,
-    };
+    return entry(vscodeSettingsUri);
   }
   if (inspect.workspaceValue !== undefined) {
     const workspaceFile = vscode.workspace.workspaceFile;
     if (workspaceFile && workspaceFile.scheme !== "untitled") {
       // Multi-root or saved workspace: value lives inside the
       // `.code-workspace` file under the `settings` object.
-      return {
-        uri: workspaceFile.toString(),
-        containerPath: ["settings"],
-        configKey: `pli.${key}`,
-      };
+      return entry(workspaceFile, ["settings"]);
     }
     // Single-folder workspace: VS Code treats `.vscode/settings.json`
     // as the workspace scope.
-    return {
-      uri: vscode.Uri.joinPath(
-        folder.uri,
-        ".vscode",
-        "settings.json",
-      ).toString(),
-      containerPath: [],
-      configKey: `pli.${key}`,
-    };
+    return entry(vscodeSettingsUri);
   }
   if (inspect.globalValue !== undefined) {
-    return {
-      uri: userSettingsUri.toString(),
-      containerPath: [],
-      configKey: `pli.${key}`,
-    };
+    return entry(userSettingsUri);
   }
   return undefined;
 }
