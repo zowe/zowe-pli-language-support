@@ -19,7 +19,7 @@
 // @filename: .pliplugin/pgm_conf.json
 //// {
 ////   "pgms": [
-////     { "program": "*.pli", "pgroup": "" }
+////     { "program": "*.pli", "pgroup": <|1:""|> }
 ////   ]
 //// }
 
@@ -38,4 +38,7 @@
 // @wrap: main
 //// DCL A CHAR(8);
 
-verify.noDiagnosticsExcept([code.LSP.PluginConfiguration.UnknownProcessGroup]);
+verify.expectDiagnosticsAt(
+  "1",
+  code.LSP.PluginConfiguration.UnknownProcessGroup,
+);
