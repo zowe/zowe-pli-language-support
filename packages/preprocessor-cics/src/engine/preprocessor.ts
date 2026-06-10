@@ -131,3 +131,17 @@ export class CICSForPLIPreprocessor extends CICSPreprocessorBase {
     }
   }
 }
+
+export class CICSForCOBOLPreprocessor extends CICSPreprocessorBase {
+  protected override visitToken(token: antlr.Token, diagnostics: Diagnostic[]): void {
+    if(token.type === CICSLexer.PLI_COMMENTLINE || token.type === CICSLexer.PLI_COMMENTBLOCK) {
+      diagnostics.push({
+        code: "invalid.pli.comment",
+        message: "PL/I comment in COBOL context detected.",
+        startOffset: token.start,
+        endOffset: token.stop+1,
+        severity: Severity.Error,
+      });
+    }
+  }
+}

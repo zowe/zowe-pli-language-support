@@ -9,15 +9,15 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
+import { CICSForCOBOLPreprocessor, CICSForPLIPreprocessor } from "../src/engine/preprocessor";
 
 describe("CICS Comments", async () => {
-    test("Multiline comment in PL/I setup", async () => {
+    test("PL/I multiline comment in PL/I setup", async () => {
         const preprocessor = new CICSForPLIPreprocessor();
         const { diagnostics } = await preprocessor.execute("/* This is a PL/I comment */ ABEND ABCODE(12)")
         expect(diagnostics).toHaveLength(0);
     });
-    test("Single line comment in PL/I setup", async () => {
+    test("PL/I line comment in PL/I setup", async () => {
         const preprocessor = new CICSForPLIPreprocessor();
         const { diagnostics } = await preprocessor.execute("ABEND ABCODE(12) // This is a PL/I comment")
         expect(diagnostics).toHaveLength(0);
@@ -26,5 +26,21 @@ describe("CICS Comments", async () => {
         const preprocessor = new CICSForPLIPreprocessor();
         const { diagnostics } = await preprocessor.execute("ABEND ABCODE(12) *> This is a COBOL comment")
         expect(diagnostics).toHaveLength(1);
+    });
+
+    test("PL/I multiline comment in COBOL setup", async () => {
+        const preprocessor = new CICSForCOBOLPreprocessor();
+        const { diagnostics } = await preprocessor.execute("/* This is a PL/I comment */ ABEND ABCODE(12)")
+        expect(diagnostics).toHaveLength(1);
+    });
+    test("PL/I line comment in COBOL setup", async () => {
+        const preprocessor = new CICSForCOBOLPreprocessor();
+        const { diagnostics } = await preprocessor.execute("ABEND ABCODE(12) // This is a PL/I comment")
+        expect(diagnostics).toHaveLength(1);
+    });
+     test("COBOL comment in COBOL setup", async () => {
+        const preprocessor = new CICSForCOBOLPreprocessor();
+        const { diagnostics } = await preprocessor.execute("ABEND ABCODE(12) *> This is a COBOL comment")
+        expect(diagnostics).toHaveLength(0);
     });
 });
