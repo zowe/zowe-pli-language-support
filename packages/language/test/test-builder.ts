@@ -26,7 +26,10 @@ import {
   TestRange,
 } from "./utils";
 import { expect } from "vitest";
-import { FileSystemProvider } from "../src/workspace/file-system-provider";
+import {
+  FileSystemProvider,
+  VirtualFileSystemProvider,
+} from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 import { AssertionError, fail } from "assert";
 import { MarkupContent, Position } from "vscode-languageserver";
@@ -36,7 +39,11 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenDecoder } from "../src/language-server/semantic-token-decoder";
 import { CodeAction, TextEdit } from "vscode-languageserver-types";
 import { skippedCodeRanges } from "../src/language-server/skipped-code";
-import { defaultTestWorkspace } from "./test-workspace";
+import {
+  createTestWorkspace,
+  defaultTestWorkspace,
+  setDefaultTestWorkspace,
+} from "./test-workspace";
 import { InternalCodes } from "../src/validation/internal-codes";
 import { CompilerOptions } from "../src/preprocessor/compiler-options/options";
 import { tokenize } from "../src/parser/tokenizer";
@@ -45,7 +52,6 @@ import { isPLICode, PLICode } from "../src/validation/pli-codes";
 import { isSyntaxNode, SyntaxKind } from "../src/syntax-tree/ast";
 import { isObject } from "../src/utils/types";
 import { format } from "util";
-import { makeProgramConfig } from "./config-fixtures";
 import { DataType, TypeDescriptions } from "../src/typesystem/descriptions";
 import {
   SemanticTokenModifiersValues,
@@ -181,12 +187,14 @@ export class TestBuilder extends AbstractTestBuilder {
   }
 
   private async init() {
-    if (this.options.fs) {
-      for (const [uri, file] of this.files) {
-        await this.options.fs.writeFile(UriUtils.toUri(uri), file.output);
-      }
+    if (!this.options.fs) {
+      const fs = new VirtualFileSystemProvider();
+      this.options.fs = fs;
+      setDefaultTestWorkspace(createTestWorkspace(fs));
     }
-
+    for (const [uri, file] of this.files) {
+      await this.options.fs.writeFile(UriUtils.toUri(uri), file.output);
+    }
     await this.configurePluginConfigurationProvider();
 
     const [[firstFileUri, firstFile]] = this.files.entries();
@@ -270,18 +278,14 @@ export class TestBuilder extends AbstractTestBuilder {
    */
   private async configurePluginConfigurationProvider() {
     let pgmConfUri: string | undefined;
-    let procGrpsUri: string | undefined;
-    let pgmConfOutput: string | undefined;
-    let procGrpsOutput: string | undefined;
+    let procGrpsUri: boolean = false;
 
-    for (const [uri, file] of this.files) {
+    for (const [uri] of this.files) {
       if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
         pgmConfUri = uri;
-        pgmConfOutput = file.output;
       }
       if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
-        procGrpsUri = uri;
-        procGrpsOutput = file.output;
+        procGrpsUri = true;
       }
     }
     if (pgmConfUri && procGrpsUri) {
@@ -291,40 +295,19 @@ export class TestBuilder extends AbstractTestBuilder {
       await defaultTestWorkspace().config.init(configUri);
       return;
     }
-
-    // check if the files contain a program config or process group.
-    const hasProgramConfig = !!(
-      pgmConfOutput &&
-      defaultTestWorkspace().config.parseProgramConfigs(
-        UriUtils.toUri(""),
-        pgmConfOutput,
-      )
+    if (!pgmConfUri) {
+      await defaultTestWorkspace().config.writeProgramConfigFile(
+        PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
+      );
+    }
+    if (!procGrpsUri) {
+      await defaultTestWorkspace().config.writeProcessGroupsFile(
+        PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+      );
+    }
+    await defaultTestWorkspace().config.init(
+      defaultTestWorkspace().config.getWorkspacePath(),
     );
-    let hasProcessGroupConfig = false;
-    if (procGrpsOutput) {
-      await defaultTestWorkspace().config.parseProcessGroupConfigs(
-        procGrpsOutput,
-      );
-      hasProcessGroupConfig = true;
-    }
-
-    // add program config if not present on disc
-    if (!hasProgramConfig) {
-      defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), [
-        makeProgramConfig({
-          program: "*.pli",
-          pgroup:
-            PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0].pgroup,
-        }),
-      ]);
-    }
-
-    // add process group config if not present on disc
-    if (!hasProcessGroupConfig) {
-      await defaultTestWorkspace().config.parseProcessGroupConfigs(
-        JSON.stringify(PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT),
-      );
-    }
   }
 
   public checkDiagnosticsURIs() {
