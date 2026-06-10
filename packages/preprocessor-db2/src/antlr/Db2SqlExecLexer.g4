@@ -815,7 +815,8 @@ DATELITERAL: '\'' (DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT | //y
                    DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT DIGIT DIGIT) TIMESTAMPLITERAL? '\'';//yyyy-mm-dd
 
 INTEGERLITERAL : DIGIT+;
-IDENTIFIER : [a-zA-Z] [-_a-zA-Z0-9]*;
+IDENTIFIER : [0-9\p{Alphabetic}\p{General_Category=Other_Letter}] [0-9\-_\p{Alphabetic}\p{General_Category=Other_Letter}]*;
+
 NUMERICLITERAL : (PLUSCHAR | MINUSCHAR)?
     (
         (DOT_FS | COMMACHAR { this.commaCharAllowed }?) DIGIT+ (('e' | 'E') (PLUSCHAR | MINUSCHAR)? DIGIT+)?
@@ -845,7 +846,7 @@ WS : [ \t\f]+ -> channel(HIDDEN);
 
 //SQL comments
 SQLLINECOMMENT
-	:	SQLLINECOMMENTCHAR ~[\r\n]* {this.inputStream.LA(1) == Db2SqlExecLexer.NEWLINE}?
+	:	SQLLINECOMMENTCHAR ~[\r\n]* ('\r'? '\n'|EOF)  -> channel(COMMENTS)
 	;
 
 // treat all the non-processed tokens as errors
