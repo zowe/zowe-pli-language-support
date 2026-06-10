@@ -2908,6 +2908,9 @@ COMMENTLINE : COMMENTTAG ~('\n' | '\r')* -> channel(COMMENTS);
 WS : [ \t\f]+ -> channel(HIDDEN);
 COMPILERLINE : DOUBLEMORETHANCHAR ~('\n' | '\r')* -> channel(HIDDEN);
 
+PLI_COMMENTLINE : '//' ~('\n' | '\r')* -> channel(COMMENTS);
+PLI_COMMENTBLOCK : '/*' .*? '*/' -> channel(COMMENTS);
+
 // treat all the non-processed tokens as errors
 ERRORCHAR : . ;
 
