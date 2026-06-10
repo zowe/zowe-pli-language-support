@@ -9,7 +9,7 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { EnglishMessageService } from "../engine/message-service";
+import { EnglishMessageService } from "../src/engine/message-service";
 
 describe("Message service", async () => {
   const messageService = new EnglishMessageService();

@@ -9,11 +9,11 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSPreprocessor } from "../engine/preprocessor";
+import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
 describe("CICS RECEIVE", async () => {
-  const cicsPreprocessor = new CICSPreprocessor();
+  const cicsPreprocessor = new CICSForPLIPreprocessor();
 
   test("Positive (group one)", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("RECEIVE INTO(1)");

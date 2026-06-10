@@ -9,7 +9,7 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSPreprocessor } from "../engine/preprocessor";
+import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
 // NOTE: CICSDiscardOptionsUtility only calls checkDuplicates. In the grammar
@@ -18,7 +18,7 @@ import { Severity } from "preprocessor-api";
 // checker therefore has no reachable duplicate-failure branch; only
 // positive/parse cases are testable.
 describe("CICS DISCARD", async () => {
-  const cicsPreprocessor = new CICSPreprocessor();
+  const cicsPreprocessor = new CICSForPLIPreprocessor();
 
   test("Positive", async () => {
     const { diagnostics } =

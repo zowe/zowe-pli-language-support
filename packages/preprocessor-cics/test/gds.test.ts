@@ -9,14 +9,14 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSPreprocessor } from "../engine/preprocessor";
+import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
 import { Severity } from "preprocessor-api";
 
 // NOTE: GDS is only valid in Assembly, so the checker always reports the GDS
 // keyword as illegal. The cics_gds_opts rule consumes any trailing tokens, so
 // there is no EOF/positive case to assert.
 describe("CICS GDS", async () => {
-  const cicsPreprocessor = new CICSPreprocessor();
+  const cicsPreprocessor = new CICSForPLIPreprocessor();
 
   // checkGds -> checkHasIllegalOptions(GDS)
   test("GDS is only available in Assembly", async () => {
