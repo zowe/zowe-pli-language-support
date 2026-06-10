@@ -23,25 +23,25 @@ describe("DB2 SQL Positive Tests", async () => {
   const statements = content
     .split(/\r?\n/)
     .map((statement, index) => ({ line: index + 1, statement }));
-  const blocks = statements.reduce((acc, { line, statement }) => {
-    if (statement.trim() === "---") {
-      acc.push({ line, statement: "" });
-    } else {
-      acc[acc.length - 1].statement += `\n${statement}`;
-    }
-    return acc;
-  }, [{ line: 0, statement: "" }] as { line: number; statement: string }[]);
-
-  test.each(blocks)(
-    "should parse statements",
-    async ({ line, statement }) => {
-      const { diagnostics } = await preprocessor.execute(statement);
-      expect(
-        diagnostics,
-        diagnostics.length > 0
-          ? `Error at ${fileName}:${line}: ${diagnostics[0].message}`
-          : undefined,
-      ).toHaveLength(0);
+  const blocks = statements.reduce(
+    (acc, { line, statement }) => {
+      if (statement.trim() === "---") {
+        acc.push({ line, statement: "" });
+      } else {
+        acc[acc.length - 1].statement += `\n${statement}`;
+      }
+      return acc;
     },
+    [{ line: 0, statement: "" }] as { line: number; statement: string }[],
   );
+
+  test.each(blocks)("should parse statements", async ({ line, statement }) => {
+    const { diagnostics } = await preprocessor.execute(statement);
+    expect(
+      diagnostics,
+      diagnostics.length > 0
+        ? `Error at ${fileName}:${line}: ${diagnostics[0].message}`
+        : undefined,
+    ).toHaveLength(0);
+  });
 });
