@@ -40,9 +40,8 @@
 //// DCL A CHAR(8);
 
 verify.expectDiagnosticsAt("bad", {
-  message: code.LSP.PluginConfiguration.UnknownProcessGroup.message(
-    "doesnotexist",
-  ),
+  message:
+    code.LSP.PluginConfiguration.UnknownProcessGroup.message("doesnotexist"),
 });
 await verify.expectCodeActionCountAt("bad", 1);
 await verify.expectCodeActionAt(
