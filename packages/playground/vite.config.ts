@@ -1,11 +1,11 @@
 import path from "path";
-import importMetaUrlPlugin from "@codingame/esbuild-import-meta-url-plugin";
+import vsixPlugin from "@codingame/monaco-vscode-rollup-vsix-plugin";
 import type { UserConfig } from "vite";
 
 const config: UserConfig = {
   base: "",
   build: {
-    target: "ES2022",
+    target: "es2024",
     rollupOptions: {
       input: {
         index: path.resolve(__dirname, "index.html"),
@@ -21,11 +21,6 @@ const config: UserConfig = {
   esbuild: {
     minifySyntax: false,
   },
-  optimizeDeps: {
-    esbuildOptions: {
-      plugins: [importMetaUrlPlugin as any],
-    },
-    include: ["vscode-textmate", "vscode-oniguruma"],
-  },
+  plugins: [vsixPlugin()],
 };
 export default config;
