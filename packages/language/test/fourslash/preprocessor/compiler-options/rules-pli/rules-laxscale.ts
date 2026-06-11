@@ -17,18 +17,24 @@
 ////*PROCESS RULES(<|3:NOLAXSCALE|>);
 ////*PROCESS RULES(NOLAXSCALE(<|4:)|>);
 ////*PROCESS RULES(NOLAXSCALE(<|5:INVALID|>));
-////*PROCESS RULES(NOLAXSCALE(ALL LOOSE STRICT <|6:SOURCE|>));
+////*PROCESS RULES(NOLAXSCALE(ALL LOOSE <|6:STRICT|> <|7:SOURCE|>));
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
-verify.noDiagnostics([2, 3, 6]);
+verify.noDiagnostics([2, 3]);
 verify.expectDiagnosticsAt(4, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
   message:
     code.CompilerOptions.Rules.InvalidLaxScaleParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt(6, {
+  message: code.CompilerOptions.MutexOptionIssue.message("NOLAXSCALE(STRICT)"),
+});
+verify.expectDiagnosticsAt(7, {
+  message: code.CompilerOptions.MutexOptionIssue.message("NOLAXSCALE(SOURCE)"),
 });
 verify.expectCompilerOptions({
   rules: {
