@@ -85,6 +85,24 @@ export function semanticTokens(
       token.kind === CstNodeKind.ExecStatement_ExecFragment &&
       token.element?.kind === SyntaxKind.ExecStatement
     ) {
+      const modifier = 1 << SemanticTokenModifiers.preprocessor;
+      const push = (token: Token, length: number, type: number) => {
+        semanticTokens.push(
+          token.startLine,
+          token.startColumn,
+          length,
+          type,
+          modifier,
+        );
+      };
+
+      // Handle the CICS/SQL keyword at the start of the fragment
+      const prefixMatch = /^(\w+)\s*/i.exec(token.image);
+      if (prefixMatch) {
+        push(token, prefixMatch[1].length, SemanticTokenTypes.keyword);
+      }
+
+      // Handle the remaining preprocessor tokens
       for (
         let index = 0;
         index < token.element.preprocessorTokens.length;
@@ -92,13 +110,7 @@ export function semanticTokens(
       ) {
         const subToken = token.element.preprocessorTokens[index].token;
         const type = token.element.preprocessorTokens[index].semanticType;
-        semanticTokens.push(
-          subToken.startLine,
-          subToken.startColumn,
-          subToken.image.length,
-          type,
-          0,
-        );
+        push(subToken, subToken.image.length, type);
       }
       continue;
     }
