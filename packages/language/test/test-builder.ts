@@ -288,13 +288,11 @@ export class TestBuilder extends AbstractTestBuilder {
         procGrpsUri = true;
       }
     }
-    if (pgmConfUri && procGrpsUri) {
-      const configUri = UriUtils.dirname(
-        UriUtils.dirname(UriUtils.toUri(pgmConfUri)),
-      );
-      await defaultTestWorkspace().config.init(configUri);
-      return;
-    }
+    const config = defaultTestWorkspace().config;
+    const workspaceUri = pgmConfUri
+      ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))
+      : config.getWorkspacePath();
+
     if (!pgmConfUri) {
       await defaultTestWorkspace().config.writeProgramConfigFile(
         PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
@@ -305,9 +303,7 @@ export class TestBuilder extends AbstractTestBuilder {
         PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
       );
     }
-    await defaultTestWorkspace().config.init(
-      defaultTestWorkspace().config.getWorkspacePath(),
-    );
+    await defaultTestWorkspace().config.init(workspaceUri);
   }
 
   public checkDiagnosticsURIs() {
