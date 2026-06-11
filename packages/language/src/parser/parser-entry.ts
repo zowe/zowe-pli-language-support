@@ -14,12 +14,13 @@ import * as ast from "../syntax-tree/ast";
 import * as t from "./tokens";
 import { recursivelySetContainer } from "../linking/symbol-table";
 import { Diagnostic } from "../language-server/types";
+import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   consumeTokenStatement,
   includeAltStatement,
+  parseExecStatement,
   statement,
 } from "./preprocessor-parser";
-import { execStatement } from "./exec-parser";
 import {
   isSqlAttributeStatement,
   sqlAttributeStatement,
@@ -29,7 +30,6 @@ import {
   isCicsResponseStatement,
 } from "./cics-response-parser";
 import { CompilerOptions } from "../preprocessor/compiler-options/options";
-import { TextDocument } from "vscode-languageserver-textdocument";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -45,19 +45,22 @@ export type PreprocessorParserResult = {
  */
 type StatementParser = (
   state: ParserState,
-  textDocument: TextDocument,
 ) => Promise<ast.Statement | null | undefined>;
 
-function createPreprocessorHandler(): StatementParser {
+function createPreprocessorHandler(
+  textDocument: TextDocument,
+): StatementParser {
   return async (state) => {
     if (state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx) {
       return undefined; // Not a preprocessor statement
     }
-    return statement(state);
+    return await statement(state, textDocument);
   };
 }
 
-function createIncOnlyPreprocessorHandler(): StatementParser {
+function createIncOnlyPreprocessorHandler(
+  textDocument: TextDocument,
+): StatementParser {
   return async (state) => {
     // If it is not a preprocessor statement and also not an include alternate,
     // return undefined to let other handlers process it.
@@ -75,7 +78,7 @@ function createIncOnlyPreprocessorHandler(): StatementParser {
         nextToken.tokenTypeIdx === t.INSCAN.tokenTypeIdx);
     if (isInclude) {
       // Only process include statements.
-      return statement(state);
+      return await statement(state, textDocument);
     }
 
     return undefined;
@@ -124,8 +127,8 @@ function createCicsResponseHandler(): StatementParser {
   };
 }
 
-function createExecHandler(): StatementParser {
-  return async (state, textDocument) => {
+function createExecHandler(textDocument: TextDocument): StatementParser {
+  return async (state) => {
     if (state.token?.tokenTypeIdx !== t.EXEC.tokenTypeIdx) {
       return undefined;
     }
@@ -133,47 +136,28 @@ function createExecHandler(): StatementParser {
   };
 }
 
-async function parseExecStatement(
-  state: ParserState,
-  textDocument: TextDocument,
-): Promise<ast.Statement | undefined> {
-  const statement = ast.createStatement();
-  if (state.canConsume(t.EXEC, t.ExecFragment)) {
-    const nextToken = state.peek(2);
-    if (/^(\w+)\b/i.test(nextToken?.image || "")) {
-      statement.value = await execStatement(state, textDocument);
-    } else {
-      // Unrecognized EXEC statement, treat as token statement
-      return undefined;
-    }
-  } else {
-    // Failure; fall back to token statement
-    return undefined;
-  }
-  return statement;
-}
-
 function generateStatementParser(
   compilerOptions: CompilerOptions | undefined,
+  textDocument: TextDocument,
 ): StatementParser {
   const handlers: StatementParser[] = [];
 
   const incOnly = compilerOptions?.macroOptions?.incOnly;
 
   if (incOnly) {
-    handlers.push(createIncOnlyPreprocessorHandler());
+    handlers.push(createIncOnlyPreprocessorHandler(textDocument));
   } else {
-    handlers.push(createPreprocessorHandler());
+    handlers.push(createPreprocessorHandler(textDocument));
   }
 
   handlers.push(createIncludeAltHandler());
   handlers.push(createSqlAttributeHandler());
   handlers.push(createCicsResponseHandler());
-  handlers.push(createExecHandler());
+  handlers.push(createExecHandler(textDocument));
 
-  return async (state, textDocument) => {
+  return async (state) => {
     for (const handler of handlers) {
-      const result = await handler(state, textDocument);
+      const result = await handler(state);
       if (result !== undefined) {
         return result;
       }
@@ -185,18 +169,20 @@ function generateStatementParser(
 export async function preprocessorParse(
   state: ParserState,
   textDocument: TextDocument,
-  compilerOptions?: CompilerOptions,
 ): Promise<PreprocessorParserResult> {
   const statements: ast.Statement[] = [];
 
-  const statementParser = generateStatementParser(compilerOptions);
+  const statementParser = generateStatementParser(
+    state.compilerOptions,
+    textDocument,
+  );
 
   let index = state.index;
   let token = state.token;
   while (token) {
     let stmt: ast.Statement | null = null;
 
-    const result = await statementParser(state, textDocument);
+    const result = await statementParser(state);
     if (result !== undefined) {
       stmt = result;
     } else {

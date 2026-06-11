@@ -32,6 +32,8 @@ import {
 import { PLICodes } from "../validation/pli-codes";
 import { performAssignmentLookahead } from "./parser-lookahead";
 import { ExpressionParameter } from "./parser-types";
+import { execStatement } from "./exec-parser";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
 
@@ -56,33 +58,45 @@ export function consumeTokenStatement(state: ParserState): ast.Statement {
   return statement;
 }
 
-export function statement(state: ParserState): ast.Statement | null;
 export function statement(
   state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.Statement | null>;
+export function statement(
+  state: ParserState,
+  textDocument: TextDocument,
   withEnd: true,
   endPercent: boolean,
-): ast.Statement | ast.EndStatement | null;
-export function statement(
+): Promise<ast.Statement | ast.EndStatement | null>;
+export async function statement(
   state: ParserState,
+  textDocument: TextDocument,
   withEnd?: true,
   endPercent?: boolean,
-): ast.Statement | ast.EndStatement | null {
+): Promise<ast.Statement | ast.EndStatement | null> {
   let end = withEnd ?? false;
   let endP = endPercent ?? false;
   if (!state.isInProcedure()) {
     if (state.tryConsume(undefined, CstNodeKind.Percentage, t.Percent)) {
-      return commonStatement(state, {
+      return await commonStatement(state, textDocument, {
         withEnd: end,
         endPercent: endP,
         startPercent: false, // Percent token already consumed
         labels: true,
       });
     } else {
+      // Try to parse EXEC CICS/SQL statement
+      if (state.token?.tokenTypeIdx === t.EXEC.tokenTypeIdx) {
+        const execStmt = await parseExecStatement(state, textDocument);
+        if (execStmt) {
+          return execStmt;
+        }
+      }
       return consumeTokenStatement(state);
     }
   } else {
     //state.isInProcedure()
-    return commonStatement(state, {
+    return await commonStatement(state, textDocument, {
       withEnd: end,
       endPercent: endP,
       startPercent: false, // Inside of a procedure, percent not required
@@ -125,16 +139,19 @@ interface StatementParseOptions {
 
 export function commonStatement(
   state: ParserState,
+  textDocument: TextDocument,
   options: StatementParseOptions & { withEnd: false },
-): ast.Statement | null;
+): Promise<ast.Statement | null>;
 export function commonStatement(
   state: ParserState,
+  textDocument: TextDocument,
   options: StatementParseOptions,
-): ast.Statement | ast.EndStatement | null;
-export function commonStatement(
+): Promise<ast.Statement | ast.EndStatement | null>;
+export async function commonStatement(
   state: ParserState,
+  textDocument: TextDocument,
   options: StatementParseOptions,
-): ast.Statement | ast.EndStatement | null {
+): Promise<ast.Statement | ast.EndStatement | null> {
   const statement = ast.createStatement();
   statement.startToken = state.token ?? null;
 
@@ -175,11 +192,19 @@ export function commonStatement(
         unit = declareStatement(state);
         break;
       case t.DO.tokenTypeIdx:
-        unit = doStatement(state);
+        unit = await doStatement(state, textDocument);
         break;
       case t.END.tokenTypeIdx:
         if (options.withEnd) {
           endStmt = endStatement(state, stmtLabels);
+        }
+        break;
+      case t.EXEC.tokenTypeIdx:
+        if (
+          state.canConsume(t.EXEC, t.ExecFragment) &&
+          hasNextWordToken(state)
+        ) {
+          unit = await execStatement(state, textDocument);
         }
         break;
       case t.GO.tokenTypeIdx:
@@ -187,7 +212,7 @@ export function commonStatement(
         unit = goToStatement(state);
         break;
       case t.IF.tokenTypeIdx:
-        unit = ifStatement(state);
+        unit = await ifStatement(state, textDocument);
         break;
       case t.ITERATE.tokenTypeIdx:
         unit = iterateStatement(state);
@@ -202,7 +227,7 @@ export function commonStatement(
         unit = returnStatement(state);
         break;
       case t.SELECT.tokenTypeIdx:
-        unit = selectStatement(state);
+        unit = await selectStatement(state, textDocument);
         break;
       case t.Semicolon.tokenTypeIdx:
         unit = nullStatement(state);
@@ -240,7 +265,7 @@ export function commonStatement(
         unit = noprintDirective(state);
         break;
       case t.DO.tokenTypeIdx:
-        unit = doStatement(state);
+        unit = await doStatement(state, textDocument);
         break;
       case t.GOTO.tokenTypeIdx:
       case t.GO.tokenTypeIdx:
@@ -250,7 +275,7 @@ export function commonStatement(
         unit = leaveStatement(state);
         break;
       case t.IF.tokenTypeIdx:
-        unit = ifStatement(state);
+        unit = await ifStatement(state, textDocument);
         break;
       case t.INCLUDE.tokenTypeIdx:
         unit = includeStatement(state);
@@ -267,7 +292,7 @@ export function commonStatement(
       case t.PROCEDURE.tokenTypeIdx:
         try {
           state.enterProcedure();
-          unit = procedureStatement(state);
+          unit = await procedureStatement(state, textDocument);
         } finally {
           state.leaveProcedure();
         }
@@ -279,7 +304,7 @@ export function commonStatement(
         unit = replaceStatement(state);
         break;
       case t.SELECT.tokenTypeIdx:
-        unit = selectStatement(state);
+        unit = await selectStatement(state, textDocument);
         break;
       case t.Semicolon.tokenTypeIdx:
         unit = nullStatement(state);
@@ -346,6 +371,29 @@ function performRecovery(
   return RecoveryResult.Continue;
 }
 
+export async function parseExecStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.Statement | undefined> {
+  const statement = ast.createStatement();
+  if (!state.canConsume(t.EXEC, t.ExecFragment)) {
+    return undefined;
+  }
+
+  if (!hasNextWordToken(state)) {
+    // Not a valid EXEC statement
+    return undefined;
+  }
+
+  statement.value = await execStatement(state, textDocument);
+  return statement;
+}
+
+function hasNextWordToken(state: ParserState): boolean {
+  const nextToken = state.peek(2);
+  return !!nextToken && /^(\w+)\b/i.test(nextToken.image);
+}
+
 function callStatement(state: ParserState): ast.CallStatement {
   const statement = ast.createCallStatement();
   state.consume(statement, CstNodeKind.CallStatement_CALL, t.CALL);
@@ -354,7 +402,10 @@ function callStatement(state: ParserState): ast.CallStatement {
   return statement;
 }
 
-function procedureStatement(state: ParserState): ast.ProcedureStatement {
+async function procedureStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.ProcedureStatement> {
   const statement = ast.createProcedureStatement();
   state.consume(
     statement,
@@ -454,7 +505,7 @@ function procedureStatement(state: ParserState): ast.ProcedureStatement {
     CstNodeKind.ProcedureStatement_Semicolon,
     t.Semicolon,
   );
-  const body = statements(state, true);
+  const body = await statements(state, textDocument, true);
   statement.statements = body.statements;
   statement.end = body.end;
   return statement;
@@ -849,7 +900,10 @@ function endStatement(
   return statement;
 }
 
-function doStatement(state: ParserState): ast.DoStatement {
+async function doStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.DoStatement> {
   const statement = ast.createDoStatement();
   state.consume(statement, CstNodeKind.DoStatement_DO, t.DO);
 
@@ -858,14 +912,14 @@ function doStatement(state: ParserState): ast.DoStatement {
     state.consume(statement, CstNodeKind.DoStatement_SKIP, t.SKIP);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
     statement.skip = true;
-    const body = statements(state);
+    const body = await statements(state, textDocument);
     statement.end = body.end;
     return statement;
   } else if (state.canConsume(t.WHILE)) {
     //type-2-do-while-first
     const type2 = doWhile(state);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
-    const body = statements(state);
+    const body = await statements(state, textDocument);
     statement.doType2 = type2;
     statement.statements = body.statements;
     statement.end = body.end;
@@ -873,7 +927,7 @@ function doStatement(state: ParserState): ast.DoStatement {
     //type-2-do-until-first
     const type2 = doUntil(state);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
-    const body = statements(state);
+    const body = await statements(state, textDocument);
     statement.doType2 = type2;
     statement.statements = body.statements;
     statement.end = body.end;
@@ -883,14 +937,14 @@ function doStatement(state: ParserState): ast.DoStatement {
     //type-4 loops
     statement.doType4 = true;
     state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
-    const body = statements(state);
+    const body = await statements(state, textDocument);
     statement.statements = body.statements;
     statement.end = body.end;
   } else if (state.canConsume(t.ID)) {
     // type-3-do
     const type3 = doType3(state);
     state.consume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon);
-    const body = statements(state);
+    const body = await statements(state, textDocument);
     statement.doType3 = type3;
     statement.statements = body.statements;
     statement.end = body.end;
@@ -898,7 +952,7 @@ function doStatement(state: ParserState): ast.DoStatement {
     state.tryConsume(statement, CstNodeKind.DoStatement_Semicolon, t.Semicolon)
   ) {
     //type-1-do
-    const body = statements(state);
+    const body = await statements(state, textDocument);
     statement.statements = body.statements;
     statement.end = body.end;
   } else {
@@ -1016,12 +1070,16 @@ interface StatementList {
   end: ast.EndStatement | null;
 }
 
-function statements(state: ParserState, endWithPercent = false): StatementList {
+async function statements(
+  state: ParserState,
+  textDocument: TextDocument,
+  endWithPercent = false,
+): Promise<StatementList> {
   const statements: ast.Statement[] = [];
   let end: ast.EndStatement | null = null;
   while (!state.eof) {
     const startIndex = state.index;
-    const stmt = statement(state, true, endWithPercent);
+    const stmt = await statement(state, textDocument, true, endWithPercent);
     if (stmt) {
       if (stmt.kind === ast.SyntaxKind.EndStatement) {
         end = stmt;
@@ -1041,7 +1099,10 @@ function statements(state: ParserState, endWithPercent = false): StatementList {
   };
 }
 
-function selectStatement(state: ParserState): ast.SelectStatement {
+async function selectStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.SelectStatement> {
   const statement = ast.createSelectStatement();
   statement.selectToken = state.consume(
     statement,
@@ -1064,10 +1125,10 @@ function selectStatement(state: ParserState): ast.SelectStatement {
   }
   state.consume(statement, CstNodeKind.SelectStatement_Semicolon, t.Semicolon);
   while (state.canPercentConsume(t.WHEN)) {
-    statement.cases.push(whenStatement(state));
+    statement.cases.push(await whenStatement(state, textDocument));
   }
   if (state.canPercentConsume(t.OTHERWISE)) {
-    statement.cases.push(otherwiseStatement(state));
+    statement.cases.push(await otherwiseStatement(state, textDocument));
   }
   if (!state.isInProcedure()) {
     // END statement is preceded by a percent
@@ -1077,7 +1138,10 @@ function selectStatement(state: ParserState): ast.SelectStatement {
   return statement;
 }
 
-function whenStatement(state: ParserState): ast.WhenStatement {
+async function whenStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.WhenStatement> {
   const when = ast.createWhenStatement();
   state.percentConsume(when, CstNodeKind.WhenStatement_WHEN, t.WHEN);
   state.consume(when, CstNodeKind.WhenStatement_OpenParen, t.OpenParen);
@@ -1093,7 +1157,7 @@ function whenStatement(state: ParserState): ast.WhenStatement {
   }
   state.consume(when, CstNodeKind.WhenStatement_CloseParen, t.CloseParen);
   const rangeStart = state.token?.startOffset;
-  when.unit = statementAfterCase(state);
+  when.unit = await statementAfterCase(state, textDocument);
   if (rangeStart != undefined && state.last) {
     when.range = {
       start: rangeStart,
@@ -1103,7 +1167,10 @@ function whenStatement(state: ParserState): ast.WhenStatement {
   return when;
 }
 
-function otherwiseStatement(state: ParserState): ast.OtherwiseStatement {
+async function otherwiseStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.OtherwiseStatement> {
   const otherwise = ast.createOtherwiseStatement();
   state.percentConsume(
     otherwise,
@@ -1111,7 +1178,7 @@ function otherwiseStatement(state: ParserState): ast.OtherwiseStatement {
     t.OTHERWISE,
   );
   const rangeStart = state.token?.startOffset;
-  otherwise.unit = statementAfterCase(state);
+  otherwise.unit = await statementAfterCase(state, textDocument);
   if (rangeStart != undefined && state.last) {
     otherwise.range = {
       start: rangeStart,
@@ -1127,7 +1194,10 @@ function nullStatement(state: ParserState): ast.NullStatement {
   return statement;
 }
 
-function ifStatement(state: ParserState): ast.IfStatement {
+async function ifStatement(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.IfStatement> {
   const ifStatement = ast.createIfStatement();
   state.consume(ifStatement, CstNodeKind.IfStatement_IF, t.IF);
   ifStatement.expression = expression(state);
@@ -1141,7 +1211,7 @@ function ifStatement(state: ParserState): ast.IfStatement {
     state.consume(ifStatement, CstNodeKind.IfStatement_THEN, t.THEN);
   }
   const unitRangeStart = state.token?.startOffset;
-  ifStatement.unit = statementAfterCase(state);
+  ifStatement.unit = await statementAfterCase(state, textDocument);
   if (unitRangeStart != undefined && state.last) {
     ifStatement.unitRange = {
       start: unitRangeStart,
@@ -1151,7 +1221,7 @@ function ifStatement(state: ParserState): ast.IfStatement {
   if (state.canPercentConsume(t.ELSE)) {
     state.percentConsume(ifStatement, CstNodeKind.IfStatement_ELSE, t.ELSE);
     const elseRangeStart = state.token?.startOffset;
-    ifStatement.else = statementAfterCase(state);
+    ifStatement.else = await statementAfterCase(state, textDocument);
     if (elseRangeStart != undefined && state.last) {
       ifStatement.elseRange = {
         start: elseRangeStart,
@@ -1164,8 +1234,11 @@ function ifStatement(state: ParserState): ast.IfStatement {
 
 // Statement used after IF, WHEN and OTHERWISE clauses
 // Has special semantics that uses an optional starting percent and prohibits labels
-function statementAfterCase(state: ParserState): ast.Statement | null {
-  return commonStatement(state, {
+async function statementAfterCase(
+  state: ParserState,
+  textDocument: TextDocument,
+): Promise<ast.Statement | null> {
+  return await commonStatement(state, textDocument, {
     withEnd: false,
     endPercent: false,
     startPercent: true, // Can optionally start with a percent

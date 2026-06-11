@@ -35,7 +35,7 @@ import {
   performEndStatementLookahead,
 } from "./parser-lookahead";
 import { Token } from "./tokens";
-import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
+import { CompilerOptions } from "../preprocessor/compiler-options/options";
 
 export function parsePli(
   input: tokens.Token[],
