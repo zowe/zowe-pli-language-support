@@ -28,6 +28,7 @@ export async function activate(
 ): Promise<void> {
   BuiltinFileSystemProvider.register(context);
   settings = Settings.getInstance();
+  context.subscriptions.push(settings);
   client = await startLanguageClient(context);
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -37,11 +38,10 @@ export async function activate(
 }
 
 // This function is called when the extension is deactivated.
-export function deactivate(): Thenable<void> | undefined {
+export async function deactivate(): Promise<void> {
   if (client) {
-    return client.stop();
+    await client.stop();
   }
-  return undefined;
 }
 
 async function startLanguageClient(
@@ -61,8 +61,10 @@ async function startLanguageClient(
   // Create the language client and start the client.
   const client = new LanguageClient("pli", "PL/I", clientOptions, worker);
   registerFileSystemProvider(client);
-  registerProgressReporter(client);
-  registerCustomDecorators(client, settings);
+  context.subscriptions.push(
+    registerProgressReporter(client),
+    registerCustomDecorators(client, settings),
+  );
   // Start the client. This will also launch the server
   await client.start();
   return client;

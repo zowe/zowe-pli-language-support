@@ -21,14 +21,9 @@ import type { MonacoVscodeApiConfig } from "monaco-languageclient/vscodeApiWrapp
 // Load the PL/I extension directly - no need to load the worker
 import "../pli-language-support.vsix";
 
-export type ConfigResult = {
-  vscodeApiConfig: MonacoVscodeApiConfig;
-  workspaceFileUri: vscode.Uri;
-};
-
 export const configure = async (
   htmlContainer?: HTMLElement,
-): Promise<ConfigResult> => {
+): Promise<MonacoVscodeApiConfig> => {
   const workspaceFileUri = vscode.Uri.file("/workspace.code-workspace");
 
   const vscodeApiConfig: MonacoVscodeApiConfig = {
@@ -98,10 +93,7 @@ export const configure = async (
     monacoWorkerFactory: configureDefaultWorkerFactory,
   };
 
-  return {
-    vscodeApiConfig: vscodeApiConfig,
-    workspaceFileUri,
-  };
+  return vscodeApiConfig;
 };
 
 const viewsHtml = `<div id="workbench-container">

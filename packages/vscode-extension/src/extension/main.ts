@@ -36,6 +36,7 @@ export async function activate(
 ): Promise<void> {
   BuiltinFileSystemProvider.register(context);
   settings = Settings.getInstance();
+  context.subscriptions.push(settings);
   client = await startLanguageClient(context);
 
   const telemetryReporter: TelemetryReporter | undefined =
@@ -112,9 +113,6 @@ function getTelemetryReporter(
 export async function deactivate(): Promise<void> {
   if (client) {
     await client.stop();
-  }
-  if (settings) {
-    settings.dispose();
   }
 }
 

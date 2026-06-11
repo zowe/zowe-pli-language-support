@@ -39,7 +39,7 @@ export async function startClient() {
     }
     registerFileSystemOverlay(1, fileSystemProvider);
 
-    const apiWrapper = new MonacoVscodeApiWrapper(config.vscodeApiConfig);
+    const apiWrapper = new MonacoVscodeApiWrapper(config);
     await apiWrapper.start();
     await vscode.window.showTextDocument(defaultUri, {
       preserveFocus: true,

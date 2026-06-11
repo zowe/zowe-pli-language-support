@@ -19,6 +19,13 @@ import {
   InMemoryFileSystemProvider,
 } from "@codingame/monaco-vscode-files-service-override";
 
+// Raw default workspace file contents
+import helloWorld from "../workspace/hello-world.pli?raw";
+import includeExample from "../workspace/include.pli?raw";
+import includedExample from "../workspace/lib/included.pli?raw";
+import pgmconf from "../workspace/.pliplugin/pgm_conf.json?raw";
+import procgrps from "../workspace/.pliplugin/proc_grps.json?raw";
+
 let shareTimeout: number | undefined;
 const encoder = new TextEncoder();
 
@@ -32,6 +39,27 @@ export const fileOptions: IFileWriteOptions = {
 export interface SharedWorkspace {
   focused?: string;
   files: WorkspaceFile[];
+}
+
+function parseSharedWorkspace(
+  encodedWorkspace: string,
+): SharedWorkspace | undefined {
+  try {
+    const workspace = JSON.parse(
+      decompressFromEncodedURIComponent(encodedWorkspace),
+    );
+    if (
+      workspace &&
+      typeof workspace === "object" &&
+      "files" in workspace &&
+      Array.isArray(workspace.files)
+    ) {
+      return workspace as SharedWorkspace;
+    }
+  } catch {
+    // fall through, return undefined
+  }
+  return undefined;
 }
 
 export interface WorkspaceFile {
@@ -74,9 +102,6 @@ export function registerButtons() {
 
 /**
  * Share the current content or workspace as link to the clipboard.
- *
- * @param content - The content to share is either a plain string or an array of workspace files.
- * @param options - The options to share. clearWorkspace is used to clear the workspace before sharing.
  */
 async function share(content: string | SharedWorkspace): Promise<void> {
   const url = new URL(window.location.toString(), window.origin);
@@ -125,7 +150,7 @@ export async function handleSharedWorkspace(
     const content = decompressFromEncodedURIComponent(encodedContent);
     const uri = vscode.Uri.file(`/workspace/${filename}`);
     await fileSystemProvider.writeFile(
-      vscode.Uri.file(`/workspace/${filename}`),
+      uri,
       encoder.encode(content),
       fileOptions,
     );
@@ -135,9 +160,11 @@ export async function handleSharedWorkspace(
   // Load the workspace files.
   const encodedWorkspace = url.searchParams.get("workspace");
   if (encodedWorkspace) {
-    const workspaceFiles: SharedWorkspace = JSON.parse(
-      decompressFromEncodedURIComponent(encodedWorkspace),
-    );
+    const workspaceFiles = parseSharedWorkspace(encodedWorkspace);
+    // Failed to parse, load default workspace
+    if (!workspaceFiles) {
+      return undefined;
+    }
     for (const file of workspaceFiles.files) {
       console.debug("Loading document", file.uri);
       const uri = vscode.Uri.file(file.uri);
@@ -151,7 +178,7 @@ export async function handleSharedWorkspace(
       }
       await fileSystemProvider.writeFile(
         uri,
-        new TextEncoder().encode(file.content),
+        encoder.encode(file.content),
         fileOptions,
       );
     }
@@ -228,12 +255,6 @@ export function redirectOutlineCancelReporting() {
     }
   });
 }
-
-import helloWorld from "../workspace/hello-world.pli?raw";
-import includeExample from "../workspace/include.pli?raw";
-import includedExample from "../workspace/lib/included.pli?raw";
-import pgmconf from "../workspace/.pliplugin/pgm_conf.json?raw";
-import procgrps from "../workspace/.pliplugin/proc_grps.json?raw";
 
 export async function loadDefaultWorkspace(
   fileSystemProvider: InMemoryFileSystemProvider,
