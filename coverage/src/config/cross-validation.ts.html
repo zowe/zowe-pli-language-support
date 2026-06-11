@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/workspace/workspace-context.ts</title>
+    <title>Code coverage report for src/config/cross-validation.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/workspace</a> workspace-context.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/config</a> cross-validation.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>7/8</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
@@ -109,7 +109,11 @@
 <a name='L44'></a><a href='#L44'>44</a>
 <a name='L45'></a><a href='#L45'>45</a>
 <a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -139,21 +143,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1040x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1040x</span>
+<span class="cline-any cline-yes">1040x</span>
+<span class="cline-any cline-yes">1043x</span>
+<span class="cline-any cline-yes">1043x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1128x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1128x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1040x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
@@ -166,40 +174,44 @@
  *
  */
 &nbsp;
-import { Connection } from "vscode-languageserver";
-import { FileSystemProvider } from "./file-system-provider";
-import { PluginConfigurationProvider } from "./plugin-configuration-provider";
+import { ProgramConfig } from "./schema";
+import {
+  Diagnostic,
+  diagnosticFromCodeAtRange,
+  offsetLengthToRange,
+} from "../language-server/types";
+import { LspCodes } from "../validation/lsp-codes";
 &nbsp;
 /**
- * WorkspaceContext bundles the per-language-server-instance state that
- * other parts of the language need to function: a file-system provider
- * and the plugin-configuration provider that loads `.pliplugin/*.json`
- * through it.
- *
- * This replaces two implicit globals (`PluginConfigurationProviderInstance`
- * and `FileSystemProviderInstance`) that previously coupled the language
- * package to a single, mutable, module-scope singleton. The context is
- * threaded through explicitly: the language server creates one at
- * startup, attaches it to every {@link CompilationUnit} via
- * `services.workspace`, and passes it to handlers that don't have a unit
- * (code actions, commands, file watchers).
- *
- * Tests construct their own `WorkspaceContext` per test and pass it to
- * the helpers that build compilation units.
+ * Check for unknown process groups references under "pgm_conf.json"
+ * by comparing with existing process group names at "proc_grps.json"
+ * If there are values to compare and a mismatch between them is found,
+ * throw UnknownProcessGroup(COPC04).
  */
-export class WorkspaceContext {
-  /**
-   * Plugin configuration provider that owns the parsed `pgm_conf.json`
-   * and `proc_grps.json` state and the lookups derived from them.
-   */
-  public readonly config: PluginConfigurationProvider;
-&nbsp;
-  constructor(
-    public readonly fs: FileSystemProvider,
-    connection?: Connection,
-  ) {
-    this.config = new PluginConfigurationProvider(fs, connection);
+export function validatePgroupReferences(
+  programs: Iterable&lt;ProgramConfig&gt;,
+  pgroupNames: Set&lt;string&gt;,
+  uri: string,
+): Diagnostic[] {
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!pgroupNames.size || !uri) {
+<span class="cstat-no" title="statement not covered" >    return [];</span>
   }
+  const result: Diagnostic[] = [];
+  for (const program of programs) {
+    const pgroupReference = program.pgroup.value;
+    if (!pgroupNames.has(pgroupReference)) {
+      const range = program.pgroup.meta?.range ?? offsetLengthToRange(0, 1);
+      const diagnostic = diagnosticFromCodeAtRange(
+        LspCodes.PluginConfiguration.UnknownProcessGroup,
+        range,
+        pgroupReference,
+      );
+      diagnostic.uri = uri;
+      result.push(diagnostic);
+    }
+  }
+&nbsp;
+  return result;
 }
 &nbsp;</pre></td></tr></table></pre>
 
