@@ -23,10 +23,7 @@ import { URI, UriUtils } from "../../src/utils/uri";
 import * as applyQuickFixes from "../../src/language-server/code-actions/apply-quick-fixes";
 import { PLICodes } from "../../src/validation/pli-codes";
 import { LspCodes } from "../../src/validation/lsp-codes";
-import {
-  Commands,
-  PluginConfiguration,
-} from "../../src/language-server/constants";
+import { Commands } from "../../src/language-server/constants";
 import { fullCode } from "../../src/language-server/types";
 import { makeProgramConfig } from "../config-fixtures";
 
@@ -1020,32 +1017,6 @@ function unknownPgroupDiagnostic(
 }
 
 describe("quickFixReplaceUnknownProcGroup", () => {
-  test("each action has the full expected shape (locks the public contract)", () => {
-    const diag = unknownPgroupDiagnostic();
-    const actions = applyQuickFixes.quickFixReplaceUnknownProcGroup(
-      diag,
-      workspace,
-      PGM_CONF_DOCUMENT_URI,
-    );
-
-    expect(actions).toHaveLength(1);
-    // `toEqual` over the whole literal — drift in any field
-    // (title, kind, diagnostics, edit range, replacement text)
-    // surfaces as a single clear diff.
-    expect(actions[0]).toEqual({
-      title: `Change to "default"`,
-      kind: "quickfix",
-      diagnostics: [diag],
-      edit: {
-        changes: {
-          [PGM_CONF_DOCUMENT_URI]: [
-            { range: REAL_RANGE, newText: `"default"` },
-          ],
-        },
-      },
-    });
-  });
-
   test("pgroup names with special characters are JSON-escaped", async () => {
     // A pgroup name containing a double-quote has to be escaped in
     // the replacement text, otherwise we'd write invalid JSON.
@@ -1089,89 +1060,5 @@ describe("quickFixReplaceUnknownProcGroup", () => {
     );
 
     expect(actions).toEqual([]);
-  });
-
-  test("uses the provided documentUri verbatim when given", () => {
-    const customUri = "file:///custom/path/to/pgm_conf.json";
-    const actions = applyQuickFixes.quickFixReplaceUnknownProcGroup(
-      unknownPgroupDiagnostic(),
-      workspace,
-      customUri,
-    );
-
-    expect(actions).toHaveLength(1);
-    // Asserting on the WorkspaceEdit's key (rather than reading
-    // through it) makes an accidental rename of the field surface
-    // immediately.
-    expect(Object.keys(actions[0].edit!.changes!)).toEqual([customUri]);
-  });
-
-  test("falls back to constructing the URI from the workspace path when documentUri is undefined", () => {
-    const actions = applyQuickFixes.quickFixReplaceUnknownProcGroup(
-      unknownPgroupDiagnostic(),
-      workspace,
-      undefined,
-    );
-
-    const expectedUri = UriUtils.joinPath(
-      pluginConfig.getWorkspacePath(),
-      PluginConfiguration.PROGRAM_FILE_PATH,
-    ).toString();
-    expect(actions).toHaveLength(1);
-    expect(Object.keys(actions[0].edit!.changes!)).toEqual([expectedUri]);
-  });
-});
-
-//
-// ----------------------------------------------------------
-// applyQuickFixes — UnknownProcessGroup dispatch
-//
-// These prove the dispatcher routes COPC04E to the new handler
-// and spreads its CodeAction[] into the result, rather than
-// (e.g.) collapsing it into a single element.
-// ----------------------------------------------------------
-//
-describe("applyQuickFixes — UnknownProcessGroup dispatch", () => {
-  test("mixes cleanly with other quick-fixable diagnostics", async () => {
-    const diags: Diagnostic[] = [
-      unknownPgroupDiagnostic(),
-      {
-        code: fullCode(LspCodes.IncludeResolution.MissingConfiguration),
-        data: { entryUri: "/workspace/foo.pli" },
-      } as Diagnostic,
-    ];
-
-    const result = await applyQuickFixes.applyQuickFixes(
-      diags,
-      workspace,
-      PGM_CONF_DOCUMENT_URI,
-    );
-
-    // 1 (only "default" is known) + 1 (Create config) = 2.
-    expect(result).toHaveLength(2);
-    expect(result!.some((a) => a.title === `Change to "default"`)).toBe(true);
-    expect(
-      result!.some((a) => a.title.startsWith("Create a startup configuration")),
-    ).toBe(true);
-  });
-
-  test("an unrelated diagnostic code yields no actions from this handler", async () => {
-    const diags = [
-      {
-        code: "SOMEONE_ELSES_CODE",
-        message: "x",
-        range: REAL_RANGE,
-      } as Diagnostic,
-    ];
-
-    const result = await applyQuickFixes.applyQuickFixes(
-      diags,
-      workspace,
-      PGM_CONF_DOCUMENT_URI,
-    );
-
-    // No matching switch arm anywhere — dispatcher's "no actions"
-    // branch returns `undefined`.
-    expect(result).toBeUndefined();
   });
 });

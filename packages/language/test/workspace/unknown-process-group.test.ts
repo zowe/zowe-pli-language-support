@@ -10,10 +10,7 @@
  */
 
 import { beforeEach, describe, expect, test } from "vitest";
-import {
-  Diagnostic as LspDiagnostic,
-  DiagnosticSeverity,
-} from "vscode-languageserver-types";
+import { Diagnostic as LspDiagnostic } from "vscode-languageserver-types";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { PluginConfigurationProvider } from "../../src/workspace/plugin-configuration-provider";
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
@@ -76,60 +73,13 @@ function unknownPgroupDiagsFor(
  * `test/fourslash/quick-fixes/unknown-process-group/*.ts` (quick fixes).
  *
  * What remains here is what the fourslash harness can't express:
- *  - assertions on the LSP-shaped diagnostic (e.g. `source`, exact
- *    character offsets) returned by the provider, and
- *  - the reload / missing-file lifecycle, which has no harness equivalent.
+ *  - the suppression rule when proc_grps.json is missing entirely: the
+ *    test harness always synthesizes a default proc_grps.json when a test
+ *    doesn't supply one, so a physically absent file can't be simulated, and
+ *  - the reload lifecycle (reloadConfigurations), which has no harness
+ *    equivalent.
  */
 describe("UnknownProcessGroup diagnostic (COPC04) — provider integration", () => {
-  test("a single unknown pgroup produces exactly one diagnostic under pgm_conf.json", async () => {
-    await writePgmConf({
-      pgms: [{ program: "a.pli", pgroup: "doesnotexist" }],
-    });
-    await writeProcGrps({
-      pgroups: [{ name: "default", "compiler-options": [], libs: [] }],
-    });
-
-    const diagnostics = await pluginConfig.init(WORKSPACE_PATH);
-    const found = unknownPgroupDiagsFor(diagnostics);
-
-    expect(found).toHaveLength(1);
-    expect(found[0].message).toBe(`Unknown process group 'doesnotexist'.`);
-    expect(found[0].code).toBe(UNKNOWN_PGROUP_CODE);
-    expect(found[0].severity).toBe(DiagnosticSeverity.Error);
-    expect(found[0].source).toBe("PL/I");
-  });
-
-  test("diagnostic range points at the literal substring of the offending pgroup value in pgm_conf.json", async () => {
-    // We hand-craft the pgm_conf text so we can compute the exact offsets
-    // of `"doesnotexist"` in the source — and assert the diagnostic range
-    // matches it to the character. This is the contract that gives the
-    // user a precise red squiggle in the editor.
-    const pgmConfText = `{
-  "pgms": [
-    { "program": "a.pli", "pgroup": "doesnotexist" }
-  ]
-}`;
-    await vfs.writeFile(PGM_CONF_URI, pgmConfText);
-    await writeProcGrps({
-      pgroups: [{ name: "default", "compiler-options": [], libs: [] }],
-    });
-
-    const diagnostics = await pluginConfig.init(WORKSPACE_PATH);
-    const found = unknownPgroupDiagsFor(diagnostics);
-
-    expect(found).toHaveLength(1);
-    // The offending substring sits on line index 2 (0-based) and starts
-    // at the first quote of `"doesnotexist"`.
-    const lineIndex = 2;
-    const line = pgmConfText.split("\n")[lineIndex];
-    const startCol = line.indexOf(`"doesnotexist"`);
-    const endCol = startCol + `"doesnotexist"`.length;
-    expect(found[0].range).toEqual({
-      start: { line: lineIndex, character: startCol },
-      end: { line: lineIndex, character: endCol },
-    });
-  });
-
   test("suppression rule: when proc_grps.json is missing entirely, no UnknownProcessGroup diagnostics are emitted", async () => {
     // Even though every program reference is technically unresolved, we
     // suppress to avoid piling per-program noise on top of the more
