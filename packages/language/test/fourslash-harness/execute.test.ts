@@ -185,6 +185,11 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
           fs,
           validate: true,
           locationOverrides,
+          // Keep the plugin configuration loaded after the build so that
+          // config-dependent features (e.g. UnknownProcessGroup quick fixes)
+          // can be exercised by harness tests. The afterEach hook above resets
+          // the workspace config between tests, so this can't leak across tests.
+          preservePluginConfiguration: true,
         });
         implementation = createTestBuilderHarnessImplementation(testBuilder);
       }

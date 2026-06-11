@@ -15,7 +15,7 @@ export namespace PluginConfiguration {
   export const DEFAULT_PROGRAM_FILE_CONTENT = {
     pgms: [
       {
-        program: "",
+        program: "*.pli",
         pgroup: "default",
       },
     ],

@@ -972,3 +972,88 @@ describe("metadata-driven quick fixes via parseProcessGroupConfigs", () => {
     expect(snapshot!.entries[0].path).toEqual(["pgroups", 1, "libs", 0]);
   });
 });
+
+//
+// ----------------------------------------------------------
+// quickFixReplaceUnknownProcGroup tests
+//
+// These cover the new code action that reacts to COPC04E
+// ("Unknown process group 'X'."): one CodeAction per known
+// pgroup name, each performing a precise in-place text
+// replacement on the offending substring in pgm_conf.json.
+// ----------------------------------------------------------
+//
+const PGM_CONF_DOCUMENT_URI = "/workspace/.pliplugin/pgm_conf.json";
+
+/**
+ * A range that covers a real source substring (e.g. `"doesnotexist"`
+ * with quotes — 14 chars). Anything with `end - start > 1` is "real
+ * enough" for the handler to act on.
+ */
+const REAL_RANGE = {
+  start: { line: 2, character: 33 },
+  end: { line: 2, character: 47 },
+};
+
+/**
+ * Builds a synthetic Diagnostic for COPC04E. We don't need the real
+ * `validatePgroupReferences` output here — the handler only reads
+ * `code` and `range`, so a plain object with those two fields is
+ * sufficient and keeps each test small.
+ */
+function unknownPgroupDiagnostic(
+  range: typeof REAL_RANGE = REAL_RANGE,
+): Diagnostic {
+  return {
+    code: fullCode(LspCodes.PluginConfiguration.UnknownProcessGroup),
+    message: `Unknown process group 'foo'.`,
+    range,
+  } as Diagnostic;
+}
+
+describe("quickFixReplaceUnknownProcGroup", () => {
+  test("pgroup names with special characters are JSON-escaped", async () => {
+    // A pgroup name containing a double-quote has to be escaped in
+    // the replacement text, otherwise we'd write invalid JSON.
+    // Reaching for `JSON.stringify` rather than building the quoted
+    // string with a template literal gives us this for free; this
+    // test pins down that choice so a future "simplification" to
+    // `\`"${name}"\`` immediately fails.
+    await pluginConfig.setProcessGroupConfigs([
+      deserializeProcessGroup({ name: 'weird"name', libs: [] }),
+    ]);
+
+    const actions = applyQuickFixes.quickFixReplaceUnknownProcGroup(
+      unknownPgroupDiagnostic(),
+      workspace,
+      PGM_CONF_DOCUMENT_URI,
+    );
+
+    expect(actions[0].edit!.changes![PGM_CONF_DOCUMENT_URI][0].newText).toBe(
+      `"weird\\"name"`,
+    );
+  });
+
+  test("returns [] when the diagnostic range is the cross-validation fallback (delta == 1)", () => {
+    // Defensive guard. `validatePgroupReferences` falls back to
+    // `offsetLengthToRange(0, 1)` — the range [0,0)–[0,1), the
+    // document's opening `{` — when a ProgramConfig has no
+    // `pgroup.meta` (e.g. a programmatically-built config). Acting on
+    // that 1-char range would overwrite the brace and corrupt
+    // pgm_conf.json, so the handler's `> 1` guard must refuse.
+    //
+    // This branch is unreachable from a fourslash fixture (config
+    // parsed from text always carries `meta`), so it can only be
+    // exercised here with a synthetic range.
+    const actions = applyQuickFixes.quickFixReplaceUnknownProcGroup(
+      unknownPgroupDiagnostic({
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 1 },
+      }),
+      workspace,
+      PGM_CONF_DOCUMENT_URI,
+    );
+
+    expect(actions).toEqual([]);
+  });
+});
