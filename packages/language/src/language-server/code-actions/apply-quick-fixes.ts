@@ -411,6 +411,44 @@ async function handleMultipleUnresolvedLibs(
   return action;
 }
 
+export function quickFixReplaceUnknownProcGroup(
+  diagnostic: Diagnostic,
+  workspace: WorkspaceContext,
+  documentUri?: string,
+): CodeAction[] {
+  const uri =
+    documentUri ??
+    UriUtils.joinPath(
+      workspace.config.getWorkspacePath(),
+      PluginConfiguration.PROGRAM_FILE_PATH,
+    ).toString();
+  const unknownEntryRange = diagnostic.range;
+  if (!unknownEntryRange || !uri) {
+    return [];
+  }
+  const canRangeFitQuotedString =
+    unknownEntryRange.end.character - unknownEntryRange.start.character > 1;
+  const pgroupNames = workspace.config.getProcessGroupNames();
+  if (!pgroupNames.length || !canRangeFitQuotedString) {
+    return [];
+  }
+  const actions: CodeAction[] = [];
+  for (const pgroup of pgroupNames) {
+    const action: CodeAction = {
+      title: `Change to "${pgroup}"`,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      edit: {
+        changes: {
+          [uri]: [TextEdit.replace(unknownEntryRange, JSON.stringify(pgroup))],
+        },
+      },
+    };
+    actions.push(action);
+  }
+  return actions;
+}
+
 export async function applyQuickFixes(
   diagnostics: Diagnostic[],
   workspace: WorkspaceContext,
@@ -424,6 +462,9 @@ export async function applyQuickFixes(
     LspCodes.IncludeResolution.MissingConfiguration,
   ); // "Could not resolve include directive. Plugin configuration is missing"
   const CODE_MACRO_CASE = fullCode(LspCodes.UpperCase);
+  const CODE_UNKNOWN_PROC_GROUP = fullCode(
+    LspCodes.PluginConfiguration.UnknownProcessGroup,
+  );
   const CODE_UNRESOLVED_LIB = fullCode(
     LspCodes.PluginConfiguration.UnresolvedEntry,
   );
@@ -455,6 +496,15 @@ export async function applyQuickFixes(
       case CODE_MACRO_CASE:
         action = quickFixUppercaseText(diagnostic);
         if (action) actions.push(action);
+        break;
+      case CODE_UNKNOWN_PROC_GROUP:
+        actions.push(
+          ...quickFixReplaceUnknownProcGroup(
+            diagnostic,
+            workspace,
+            documentUri,
+          ),
+        );
         break;
       case CODE_UNRESOLVED_LIB:
         action = await quickFixRemoveUnresolvedLib(diagnostic, workspace);

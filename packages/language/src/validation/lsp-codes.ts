@@ -93,7 +93,14 @@ export const LspCodes = {
       message: (fileName: string, expected: string) =>
         `Plugin Configuration expected '${expected}' in ${fileName}.`,
     },
+
+    UnknownProcessGroup: {
+      code: "COPC04",
+      severity: Severity.E,
+      message: (pgroup: string) => `Unknown process group '${pgroup}'.`,
+    },
   },
+
   Cics: {
     DuplicatedSpecification: {
       code: "CICS001",
