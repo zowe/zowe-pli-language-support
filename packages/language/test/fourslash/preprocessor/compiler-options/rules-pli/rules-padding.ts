@@ -17,18 +17,24 @@
 ////*PROCESS RULES(<|3:NOPADDING|>);
 ////*PROCESS RULES(NOPADDING(<|4:)|>);
 ////*PROCESS RULES(NOPADDING(<|5:INVALID|>));
-////*PROCESS RULES(NOPADDING(ALL LOOSE STRICT <|6:SOURCE|>));
+////*PROCESS RULES(NOPADDING(ALL LOOSE <|6:STRICT|> <|7:SOURCE|>));
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
-verify.noDiagnostics([2, 3, 6]);
+verify.noDiagnostics([2, 3]);
 verify.expectDiagnosticsAt(4, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
   message:
     code.CompilerOptions.Rules.InvalidPaddingParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt(6, {
+  message: code.CompilerOptions.MutexOptionIssue.message("NOPADDING(STRICT)"),
+});
+verify.expectDiagnosticsAt(7, {
+  message: code.CompilerOptions.MutexOptionIssue.message("NOPADDING(SOURCE)"),
 });
 verify.expectCompilerOptions({
   rules: {

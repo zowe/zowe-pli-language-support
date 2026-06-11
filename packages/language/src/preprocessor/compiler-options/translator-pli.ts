@@ -3040,6 +3040,11 @@ translator.rule(
                 );
               }
             }
+            reportDuplicateSubOptions(value, acceptor);
+            reportMutexSubOptions(value, acceptor, [
+              ["ALL", "SOURCE"],
+              ["STRICT", "LOOSE"],
+            ]);
             break;
           case "NOLAXMARGINS":
             ensureOnlyOneSubOption();
@@ -3095,6 +3100,11 @@ translator.rule(
                 );
               }
             }
+            reportDuplicateSubOptions(value, acceptor);
+            reportMutexSubOptions(value, acceptor, [
+              ["ALL", "FORCE"],
+              ["STRICT", "LOOSE", "FULL"],
+            ]);
             break;
           case "NOLAXSCALE":
             options.rules.laxScale = {
@@ -3118,6 +3128,11 @@ translator.rule(
                 );
               }
             }
+            reportDuplicateSubOptions(value, acceptor);
+            reportMutexSubOptions(value, acceptor, [
+              ["ALL", "SOURCE"],
+              ["STRICT", "LOOSE"],
+            ]);
             break;
           case "NOLAXSTMT":
             ensureOnlyOneSubOption();
@@ -3173,6 +3188,11 @@ translator.rule(
                 );
               }
             }
+            reportDuplicateSubOptions(value, acceptor);
+            reportMutexSubOptions(value, acceptor, [
+              ["ALL", "SOURCE"],
+              ["STRICT", "LOOSE"],
+            ]);
             break;
           case "NOPROCENDONLY":
             ensureOnlyOneSubOption();

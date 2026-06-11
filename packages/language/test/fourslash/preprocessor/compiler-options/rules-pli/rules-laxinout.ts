@@ -17,18 +17,30 @@
 ////*PROCESS RULES(<|3:NOLAXINOUT|>);
 ////*PROCESS RULES(NOLAXINOUT(<|4:)|>);
 ////*PROCESS RULES(NOLAXINOUT(<|5:INVALID|>));
-////*PROCESS RULES(NOLAXINOUT(ALL LOOSE STRICT <|6:SOURCE|>));
+////*PROCESS RULES(NOLAXINOUT(ALL LOOSE <|6:STRICT|> <|7:SOURCE|> <|8:STRICT|> <|9:LOOSE|> <|10:STRICT|> <|11:ALL|> <|12:SOURCE|>));
 
 verify.expectDiagnosticsAt(1, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
-verify.noDiagnostics([2, 3, 6]);
+verify.noDiagnostics([2, 3]);
 verify.expectDiagnosticsAt(4, {
   message: code.CompilerOptions.ExpectedPlainNotEmpty.message(),
 });
 verify.expectDiagnosticsAt(5, {
   message:
     code.CompilerOptions.Rules.InvalidLaxInOutParameter.message("INVALID"),
+});
+verify.expectDiagnosticsAt([6, 8, 10], {
+  message: code.CompilerOptions.MutexOptionIssue.message("NOLAXINOUT(STRICT)"),
+});
+verify.expectDiagnosticsAt([7, 12], {
+  message: code.CompilerOptions.MutexOptionIssue.message("NOLAXINOUT(SOURCE)"),
+});
+verify.expectDiagnosticsAt(9, {
+  message: code.CompilerOptions.DupeOptionIssue.message("NOLAXINOUT(LOOSE)"),
+});
+verify.expectDiagnosticsAt(11, {
+  message: code.CompilerOptions.DupeOptionIssue.message("NOLAXINOUT(ALL)"),
 });
 verify.expectCompilerOptions({
   rules: {
