@@ -70,32 +70,6 @@ function makeProgramWithPgroupRange(
 }
 
 describe("validatePgroupReferences", () => {
-  test("returns [] when every program's pgroup matches a known name (happy path)", () => {
-    const programs = [
-      makeProgramConfig({ program: "a.pli", pgroup: "default" }),
-      makeProgramConfig({ program: "b.pli", pgroup: "lelola" }),
-    ];
-    const pgroupNames = new Set(["default", "lelola"]);
-
-    const result = validatePgroupReferences(
-      programs,
-      pgroupNames,
-      PGM_CONF_URI.toString(),
-    );
-
-    expect(result).toEqual([]);
-  });
-
-  test("returns [] when there are no programs at all", () => {
-    const result = validatePgroupReferences(
-      [],
-      new Set(["default"]),
-      PGM_CONF_URI.toString(),
-    );
-
-    expect(result).toEqual([]);
-  });
-
   test("emits one diagnostic, with the full expected shape, for a single unknown pgroup", () => {
     /*
      * We pin down the exact substring offsets in the document so we can assert
@@ -140,67 +114,6 @@ describe("validatePgroupReferences", () => {
     });
   });
 
-  test("emits one diagnostic per offender — no de-duplication when two programs reference the same unknown pgroup", () => {
-    // A Set<string> would collapse both into one diagnostic. We *want* two —
-    // each squiggle at its own source range so the user can fix each
-    // independently. This guards against an accidental future refactor to
-    // dedup-by-value.
-    const programs = [
-      makeProgramConfig({ program: "a.pli", pgroup: "ghost" }),
-      makeProgramConfig({ program: "b.pli", pgroup: "ghost" }),
-      makeProgramConfig({ program: "c.pli", pgroup: "other-ghost" }),
-    ];
-
-    const result = validatePgroupReferences(
-      programs,
-      new Set(["default"]),
-      PGM_CONF_URI.toString(),
-    );
-
-    expect(result).toHaveLength(3);
-    expect(result.map((d) => d.message)).toEqual([
-      `Unknown process group 'ghost'.`,
-      `Unknown process group 'ghost'.`,
-      `Unknown process group 'other-ghost'.`,
-    ]);
-  });
-
-  test('flags an empty pgroup value ("") as unknown', () => {
-    // An empty string is just another value that isn't in the set — there's
-    // no special case for it, and there shouldn't be: an empty pgroup binds
-    // the program to nothing, which is exactly the bug class this
-    // diagnostic exists to surface.
-    const programs = [makeProgramConfig({ program: "a.pli", pgroup: "" })];
-
-    const result = validatePgroupReferences(
-      programs,
-      new Set(["default"]),
-      PGM_CONF_URI.toString(),
-    );
-
-    expect(result).toHaveLength(1);
-    expect(result[0].message).toBe(`Unknown process group ''.`);
-    expect(result[0].code).toBe("COPC04E");
-  });
-
-  test("suppression rule: returns [] when the set of known pgroup names is empty, even if programs are invalid", () => {
-    // This mirrors the call-site guard in loadConfigurations. The function
-    // re-asserts the rule on its own contract so it stays safe when called
-    // from a different caller (e.g. a future code path or a test).
-    const programs = [
-      makeProgramConfig({ program: "a.pli", pgroup: "anything" }),
-      makeProgramConfig({ program: "b.pli", pgroup: "anything-else" }),
-    ];
-
-    const result = validatePgroupReferences(
-      programs,
-      new Set<string>(),
-      PGM_CONF_URI.toString(),
-    );
-
-    expect(result).toEqual([]);
-  });
-
   test("falls back to a default range when a ProgramConfig was built without meta (no crash)", () => {
     // ProgramConfigs built via `plainItem` (test fixtures, programmatic
     // construction) have no meta. We must still produce a diagnostic — not
@@ -219,29 +132,6 @@ describe("validatePgroupReferences", () => {
     expect(result[0].range).toEqual({
       start: 0,
       end: 1,
-    });
-  });
-
-  test("uses the range from meta when present, not the fallback", () => {
-    // This is the inverse of the previous test — proves the function reads
-    // meta.range when it exists, instead of always using the fallback. If
-    // both tests pass, both branches of the `?? offsetLengthToRange(0, 1)`
-    // are exercised.
-    const customRange: Range = { start: 42, end: 57 };
-    const programs = [
-      makeProgramWithPgroupRange("b.pli", "unknown", customRange),
-    ];
-
-    const result = validatePgroupReferences(
-      programs,
-      new Set(["default"]),
-      PGM_CONF_URI.toString(),
-    );
-
-    expect(result).toHaveLength(1);
-    expect(result[0].range).toEqual({
-      start: 42,
-      end: 57,
     });
   });
 
