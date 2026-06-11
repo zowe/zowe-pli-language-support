@@ -20,6 +20,12 @@ export default defineConfig({
     deps: {
       interopDefault: true,
     },
+    watchTriggerPatterns: [{ 
+      pattern: /packages\/preprocessor-cics\/src\/test\/positives\.txt$/,
+      testsToRun: () => {
+        return ["packages/preprocessor-cics/src/test/positives.test.ts"]; 
+      }
+    }],
     include: ["packages/**/test/**/*.test.ts"],
     coverage: {
       provider: "v8",
