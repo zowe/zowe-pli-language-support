@@ -29,8 +29,7 @@ import {
 } from "../validation/pli-codes";
 import { tokenIdxToClass } from "./token-type-factory";
 import * as environment from "../workspace/environment";
-
-import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
+import { CompilerOptions } from "../preprocessor/compiler-options/options";
 
 export enum RecoveryResult {
   /**
