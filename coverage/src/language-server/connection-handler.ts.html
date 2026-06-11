@@ -1114,7 +1114,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     cb: (uri: URI, unit?: CompilationUnit) =&gt; Promise&lt;T&gt;,
   ) {
 <span class="cstat-no" title="statement not covered" >    await compilationUnitHandler.ready;</span>
-<span class="cstat-no" title="statement not covered" >    return compilationUnitHandler.globalMutex.read(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    return compilationUnitHandler.globalMutex.<span class="fstat-no" title="function not covered" >read(() =&gt; {</span></span>
       const parsedUri = <span class="cstat-no" title="statement not covered" >UriUtils.toUri(uri);</span>
       const compilationUnit =
 <span class="cstat-no" title="statement not covered" >        compilationUnitHandler.getCompilationUnit(parsedUri);</span>
@@ -1187,7 +1187,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >      promises.push(</span>
         workspace.config
           .init(UriUtils.toUri(folder.uri))
-          .then(<span class="fstat-no" title="function not covered" >(d</span>iagnosticsByUri) =&gt; {
+          .<span class="fstat-no" title="function not covered" >then((d</span>iagnosticsByUri) =&gt; {
 <span class="cstat-no" title="statement not covered" >            publishPluginConfigDiagnostics(diagnosticsByUri);</span>
           }),
       );
@@ -1267,7 +1267,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     );
 <span class="cstat-no" title="statement not covered" >    if (!completionMode) {</span>
 <span class="cstat-no" title="statement not covered" >      return [];</span>
-<span class="cstat-no" title="statement not covered" >    } else if (completionMode === "pli") {</span>
+    } else <span class="cstat-no" title="statement not covered" >if (completionMode === "pli") {</span>
 <span class="cstat-no" title="statement not covered" >      return withReadMutex(</span>
         params.textDocument.uri,
 <span class="fstat-no" title="function not covered" >        async (u</span>ri, compilationUnit) =&gt; {
@@ -1276,8 +1276,8 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >            return [];</span>
           }
           const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-          const <span class="cstat-no" title="statement not covered" >result = completionRequest(compilationUnit, uri, offset).map(</span>
-<span class="fstat-no" title="function not covered" >            (<span class="cstat-no" title="statement not covered" >c</span>ompletionItem) =&gt;</span>
+          const <span class="cstat-no" title="statement not covered" >result = completionRequest(compilationUnit, uri, offset).<span class="fstat-no" title="function not covered" >map(</span></span>
+            (<span class="cstat-no" title="statement not covered" >completionItem) =&gt;</span>
               completionItemToLSP(textDocument, completionItem),
           );
 <span class="cstat-no" title="statement not covered" >          return result;</span>
@@ -1294,7 +1294,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
         textDocument.getText(),
         offset,
         docUri,
-      ).map(<span class="fstat-no" title="function not covered" >(<span class="cstat-no" title="statement not covered" >c</span>ompletionItem) =&gt;</span>
+      ).<span class="fstat-no" title="function not covered" >map((<span class="cstat-no" title="statement not covered" >c</span>ompletionItem) =&gt;</span>
         completionItemToLSP(textDocument, completionItem),
       );
     }
@@ -1384,8 +1384,8 @@ export function <span class="fstat-no" title="function not covered" >startLangua
         const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
         const <span class="cstat-no" title="statement not covered" >definitions = getReferenceLocations(compilationUnit, uri, offset);</span>
 <span class="cstat-no" title="statement not covered" >        return definitions</span>
-          .filter(<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >e.uri === uri.toString())</span>
-          .map(<span class="fstat-no" title="function not covered" >(d</span>ef) =&gt;
+          .<span class="fstat-no" title="function not covered" >filter((e</span>) =&gt; <span class="cstat-no" title="statement not covered" >e.uri === uri.toString())</span>
+          .<span class="fstat-no" title="function not covered" >map((d</span>ef) =&gt;
 <span class="cstat-no" title="statement not covered" >            DocumentHighlight.create(rangeToLSP(textDocument, def.range)),</span>
           );
       },
@@ -1406,8 +1406,8 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >        for (const [key, locations] of Object.entries(renameLocations)) {</span>
           const textDocument = <span class="cstat-no" title="statement not covered" >compilationUnit.services.files.getDocument(key);</span>
 <span class="cstat-no" title="statement not covered" >          if (textDocument) {</span>
-<span class="cstat-no" title="statement not covered" >            changes[key] = locations.map(</span>
-<span class="fstat-no" title="function not covered" >              (l</span>ocation) =&gt;
+<span class="cstat-no" title="statement not covered" >            changes[key] = locations.<span class="fstat-no" title="function not covered" >map(</span></span>
+              (location) =&gt;
                 (<span class="cstat-no" title="statement not covered" >{</span>
                   range: rangeToLSP(textDocument, location.range),
                   newText: params.newName,
@@ -1428,7 +1428,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >          return [];</span>
         }
         const <span class="cstat-no" title="statement not covered" >requestResult = documentSymbolRequest(uri, compilationUnit);</span>
-<span class="cstat-no" title="statement not covered" >        return requestResult.map(<span class="fstat-no" title="function not covered" >(<span class="cstat-no" title="statement not covered" >s</span>ymbol) =&gt;</span></span>
+<span class="cstat-no" title="statement not covered" >        return requestResult.<span class="fstat-no" title="function not covered" >map((<span class="cstat-no" title="statement not covered" >s</span>ymbol) =&gt;</span></span>
           documentSymbolToLSP(textDocument, symbol),
         );
       },
@@ -1457,8 +1457,8 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     },
   );
 <span class="cstat-no" title="statement not covered" >  connection.onRequest(</span>
-    Messages.ExistingFileRequest,
-<span class="fstat-no" title="function not covered" >    (u</span>riString: string): boolean =&gt; {
+    Messages.<span class="fstat-no" title="function not covered" >ExistingFileRequest,</span>
+    (uriString: string): boolean =&gt; {
       const uri = <span class="cstat-no" title="statement not covered" >UriUtils.toUri(uriString);</span>
       const compilationUnit = <span class="cstat-no" title="statement not covered" >compilationUnitHandler.getCompilationUnit(uri);</span>
 <span class="cstat-no" title="statement not covered" >      return compilationUnit !== undefined;</span>
@@ -1513,7 +1513,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.133Z
+                at 2026-06-11T12:12:33.382Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

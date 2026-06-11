@@ -2533,7 +2533,7 @@ export const CompilerOptionsCodes = {
       if (min === max) {
         return `Expected ${min} argument${min === 1 ? "" : "s"}, but received ${received}.`;
       } else if (max === undefined) {
-        return `Expected at least ${min} argument${min === 1 ? "" : <span class="branch-1 cbranch-no" title="branch not covered" >"s"}</span>, but received ${received}.`;
+        return `Expected at least ${min} argument${min === 1 ? "" : <span class="branch-1 cbranch-no" title="branch not covered" >"s"},</span> but received ${received}.`;
       } else {
         return `Expected between ${min} and ${max} argument${max === 1 ? "" : "s"}, but received ${received}.`;
       }
@@ -2574,7 +2574,7 @@ export const CompilerOptionsCodes = {
   ExpectedPlainOrString: {
     code: "COOP07",
     severity: Severity.E,
-    message: <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >`</span>Expected a plain text or string value.`,</span>
+<span class="fstat-no" title="function not covered" >    message: () =&gt; <span class="cstat-no" title="statement not covered" >`</span>Expected a plain text or string value.`,</span>
   },
 &nbsp;
   ExpectedNumber: {
@@ -2595,7 +2595,7 @@ export const CompilerOptionsCodes = {
         return `Expected a number between ${min} and ${max}, but received ${number}.`;
       } else if (min !== undefined) {
         return `Expected a number greater than or equal to ${min}, but received ${number}.`;
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (max !== undefined) {</span>
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (max !== undefined) {</span>
 <span class="cstat-no" title="statement not covered" >        return `Expected a number less than or equal to ${max}, but received ${number}.`;</span>
       } else {
 <span class="cstat-no" title="statement not covered" >        throw new Error("At least one of min or max must be defined");</span>
@@ -2612,13 +2612,13 @@ export const CompilerOptionsCodes = {
   ExpectedInitializedValue: {
     code: "COOP11",
     severity: Severity.E,
-    message: <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >`</span>Expected compiler option to be initialized before use.`,</span>
+<span class="fstat-no" title="function not covered" >    message: () =&gt; <span class="cstat-no" title="statement not covered" >`</span>Expected compiler option to be initialized before use.`,</span>
   },
 &nbsp;
   ExpectedPlainTranslate: {
     code: "COOP12",
     severity: Severity.E,
-    message: <span class="fstat-no" title="function not covered" >(...v</span>alues: string[]) =&gt;
+<span class="fstat-no" title="function not covered" >    message: (.</span>..values: string[]) =&gt;
 <span class="cstat-no" title="statement not covered" >      `Expected one of '${values.splice(1).join("', '")}', but received '${values[0]}'.`,</span>
   },
 &nbsp;
@@ -2871,18 +2871,18 @@ export const CompilerOptionsCodes = {
     InvalidWTOParameter: {
       code: "CODI02",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt; <span class="cstat-no" title="statement not covered" >`Expected WTO, but received '${value}'.`,</span>
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt; <span class="cstat-no" title="statement not covered" >`Expected WTO, but received '${value}'.`,</span>
     },
     InvalidRoutCDEParameter: {
       code: "CODI03",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected ROUTCDE, DESC or REPLY, but received '${value}'.`,</span>
     },
     InvalidParameter: {
       code: "CODI04",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >`</span>Expected a text or an option.`,</span>
+<span class="fstat-no" title="function not covered" >      message: () =&gt; <span class="cstat-no" title="statement not covered" >`</span>Expected a text or an option.`,</span>
     },
   },
 &nbsp;
@@ -2913,7 +2913,7 @@ export const CompilerOptionsCodes = {
     InvalidParameter: {
       code: "COFL01",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected S, E, I or W, but received '${value}'.`,</span>
     },
   },
@@ -3024,7 +3024,7 @@ export const CompilerOptionsCodes = {
     InvalidEncodingParameter: {
       code: "COJS03",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected "UTF8", "EBCDIC", "37" or "1047", but received '${value}'.`,</span>
     },
     InvalidGetParameter: {
@@ -3089,7 +3089,7 @@ export const CompilerOptionsCodes = {
     InvalidStringParameter: {
       code: "COLI07",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected "32K", "64K", "512K", "8M" or "128M", but received '${value}'.`,</span>
     },
   },
@@ -3148,7 +3148,7 @@ export const CompilerOptionsCodes = {
     InvalidParameter: {
       code: "COMT01",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected a number followed by "K", "M" or "G", but received '${value}'.`,</span>
     },
   },
@@ -3157,7 +3157,7 @@ export const CompilerOptionsCodes = {
     InvalidParameter: {
       code: "COMN01",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected "BLOCK", "DO" or "IF", but received '${value}'.`,</span>
     },
   },
@@ -3350,7 +3350,7 @@ export const CompilerOptionsCodes = {
     InvalidParameter: {
       code: "CORE01",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected "DATE" or an empty value, but received '${value}'.`,</span>
     },
   },
@@ -3374,7 +3374,7 @@ export const CompilerOptionsCodes = {
     InvalidSubParameter: {
       code: "CORU02",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `The sub-option does not expect multiple values and will ignore '${value}'.`,</span>
     },
     ExpectAllSourceParameter: {
@@ -3629,13 +3629,13 @@ export const CompilerOptionsCodes = {
     InvalidLengthParameter: {
       code: "COXR02",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected "FULL" or "SHORT", but received '${value}'.`,</span>
     },
     InvalidStructureParameter: {
       code: "COXR03",
       severity: Severity.E,
-      message: <span class="fstat-no" title="function not covered" >(v</span>alue: string) =&gt;
+<span class="fstat-no" title="function not covered" >      message: (v</span>alue: string) =&gt;
 <span class="cstat-no" title="statement not covered" >        `Expected "FULL", "SHORT", "IMPLICIT", or "EXPLICIT", but received '${value}'.`,</span>
     },
   },
@@ -3730,7 +3730,7 @@ export const CompilerOptionsCodes = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.133Z
+                at 2026-06-11T12:12:33.382Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

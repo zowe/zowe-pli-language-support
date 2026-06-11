@@ -4312,8 +4312,8 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -5918,7 +5918,7 @@ function boolToValue(value: boolean): ScalarValue {
 function valueToBool(value: ScalarValue): boolean {
   if (value.type === inst.DeclaredType.Fixed) {
     return parseInt(value.value) !== 0;
-<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="else path not taken" >E</span>} else if (value.type === inst.DeclaredType.Character) {</span>
+  } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (value.type === inst.DeclaredType.Character) {</span>
 <span class="cstat-no" title="statement not covered" >    return value.value.trim() !== "";</span>
   }
 <span class="cstat-no" title="statement not covered" >  return false;</span>
@@ -6068,7 +6068,7 @@ function generateVariableValue(
           break;
         }
       }
-    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (instruction.initial.length &gt; 0) {
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (instruction.initial.length &gt; 0) {
       // For scalars, simply evaluate the first expression and ignore the rest
       const expr = instruction.initial[0];
       const evaluated = evaluateExpression(expr, context);
@@ -6474,7 +6474,7 @@ function runSqlAttributeInstruction(
         insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
       }
       context.tokens.push(...lex(LOB_FILE_TYPE));
-    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
       const computedLength = computeLobLength(body);
       if (!entry.sqlLobSizes.has(computedLength)) {
         entry.sqlLobSizes.add(computedLength);
@@ -7176,8 +7176,8 @@ function evaluateExpression(
       return evaluateMultipleExpression(expression, context, wildcardValue);
     case inst.InstructionKind.Wildcard:
       return evaluateWildcardExpression(expression, context, wildcardValue);
-<span class="branch-8 cbranch-no" title="branch not covered" >    default:</span>
-<span class="cstat-no" title="statement not covered" >      assertUnreachable(expression);</span>
+<span class="cstat-no" title="statement not covered" ><span class="branch-8 cbranch-no" title="branch not covered" >    default:</span></span>
+      assertUnreachable(expression);
   }
 }
 &nbsp;
@@ -7321,9 +7321,9 @@ const equals = stringBoolOperation((left, right) =&gt; left === right);
 const lessThanEquals = intBoolOperation((left, right) =&gt; left &lt;= right);
 const greaterThanEquals = intBoolOperation((left, right) =&gt; left &gt;= right);
 const notEquals = stringBoolOperation((left, right) =&gt; left !== right);
-const and = intOperation(<span class="fstat-no" title="function not covered" >(l</span>eft, right) =&gt; <span class="cstat-no" title="statement not covered" >left &amp; right)</span>;
-const or = intOperation(<span class="fstat-no" title="function not covered" >(l</span>eft, right) =&gt; <span class="cstat-no" title="statement not covered" >left | right)</span>;
-const xor = intOperation(<span class="fstat-no" title="function not covered" >(l</span>eft, right) =&gt; <span class="cstat-no" title="statement not covered" >left ^ right)</span>;
+const and = <span class="fstat-no" title="function not covered" >intOperation((l</span>eft, right) =&gt; <span class="cstat-no" title="statement not covered" >left &amp; right)</span>;
+const or = <span class="fstat-no" title="function not covered" >intOperation((l</span>eft, right) =&gt; <span class="cstat-no" title="statement not covered" >left | right)</span>;
+const xor = <span class="fstat-no" title="function not covered" >intOperation((l</span>eft, right) =&gt; <span class="cstat-no" title="statement not covered" >left ^ right)</span>;
 const notGreaterThan = lessThanEquals;
 const notLessThan = greaterThanEquals;
 &nbsp;
@@ -7455,8 +7455,8 @@ function evaluateValueAccess(
   context: InterpreterContext,
 ): ValueAccess {
   const empty: ValueAccess = {
-    getter: <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >d</span>efaultEmptyValue,</span>
-    setter: <span class="fstat-no" title="function not covered" >() =&gt; {</span>}, // Do nothing
+<span class="fstat-no" title="function not covered" >    getter: () =&gt; <span class="cstat-no" title="statement not covered" >d</span>efaultEmptyValue,</span>
+<span class="fstat-no" title="function not covered" >    setter: () =&gt; {</span>}, // Do nothing
   };
   if (args.length === 0) {
     // If there are no args, we simply return the variable value
@@ -7486,7 +7486,7 @@ function evaluateValueAccess(
       <span class="missing-if-branch" title="if path not taken" >I</span>if (numValue &lt; variableValue.lower) {
         // TODO: Report IBM3789I
 <span class="cstat-no" title="statement not covered" >        return empty;</span>
-      <span class="missing-if-branch" title="if path not taken" >I</span>} else if (numValue &gt; variableValue.upper) {
+      } else <span class="missing-if-branch" title="if path not taken" >I</span>if (numValue &gt; variableValue.upper) {
         // TODO: Report IBM3790I
 <span class="cstat-no" title="statement not covered" >        return empty;</span>
       }
@@ -7504,7 +7504,7 @@ function evaluateValueAccess(
             },
           };
         }
-      <span class="missing-if-branch" title="if path not taken" >I</span>} else if (isScalarValue(indexedValue)) {
+      } else <span class="missing-if-branch" title="if path not taken" >I</span>if (isScalarValue(indexedValue)) {
         // TODO: Report IBM3794I (in the type system?)
 <span class="cstat-no" title="statement not covered" >        return empty;</span>
       } else {
@@ -7615,7 +7615,7 @@ function runActivateInstruction(
     }
     // TODO: Report IBM3530I if the variable is an array
     variable.active = true;
-  <span class="missing-if-branch" title="else path not taken" >E</span>} else if (context.procedures.has(name)) {
+  } else <span class="missing-if-branch" title="else path not taken" >E</span>if (context.procedures.has(name)) {
     // Only activate the specified procedure name, even if the procedure has multiple names
     // The compiler will not activate the other names of the procedure
     context.activeProcedures.add(name);
@@ -7864,7 +7864,7 @@ function evaluateNamedArguments(
       const replacedTokens = replaceTokensInText(argTokens.tokens, context);
       const text = stringifyTokens(replacedTokens);
       args[i] = stringToValue(text);
-    <span class="missing-if-branch" title="if path not taken" >I</span>} else if (i &gt;= args.length) {
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (i &gt;= args.length) {
       // No argument specified for this parameter, use the unset variable
 <span class="cstat-no" title="statement not covered" >      args[i] = unsetVariable;</span>
     }
@@ -8195,7 +8195,7 @@ async function runInclude(
         unresolvedFile: item.fileName,
         entryUri: context.entryUri.toString(),
       };
-    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (isMemberIncludeItem(item)) {
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (isMemberIncludeItem(item)) {
       // item w/ memberName &amp; optional ddname
       diagnostic.data = {
         unresolvedFile: getFileNameOrPartialName(item)!,
@@ -8297,17 +8297,17 @@ for (let i = 0; i &lt; 256; i++) {
   collate += String.fromCharCode(i);
 }
 const collateValue = stringToValue(collate);
-builtinImplementations.set("COLLATE", <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >c</span>ollateValue)</span>;
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"COLLATE", () =&gt; <span class="cstat-no" title="statement not covered" >c</span>ollateValue)</span>;
 &nbsp;
 const commentRegex = /\/\*|\*\//g;
-builtinImplementations.set("COMMENT", <span class="fstat-no" title="function not covered" >(_</span>, args) =&gt; {
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"COMMENT", (_</span>, args) =&gt; {
   const text = <span class="cstat-no" title="statement not covered" >args[0];</span>
 <span class="cstat-no" title="statement not covered" >  if (!text || !isScalarValue(text)) {</span>
 <span class="cstat-no" title="statement not covered" >    return defaultEmptyValue;</span>
   }
   // /* inside of comments should be replaced with /&gt;
   // */ inside of comments should be replaced with &lt;/
-  const replacedText = <span class="cstat-no" title="statement not covered" >text.value.replace(commentRegex, <span class="fstat-no" title="function not covered" >(m</span>atch) =&gt;</span>
+  const replacedText = <span class="cstat-no" title="statement not covered" >text.value.replace(<span class="fstat-no" title="function not covered" >commentRegex, (m</span>atch) =&gt;</span>
 <span class="cstat-no" title="statement not covered" >    match.charAt(0) === "/" ? "/&gt;" : "&lt;/",</span>
   );
   // The final comment should be surrounded by comment markers
@@ -8317,11 +8317,11 @@ builtinImplementations.set("COMMENT", <span class="fstat-no" title="function not
 // Simply use UNIX epoch time
 // PLI expects no delimiters between the values
 const compiledDate = ["1970", "01", "01", "00", "00", "00", "000"].join("");
-builtinImplementations.set("COMPILEDDATE", <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>tringToValue(compiledDate))</span>;
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"COMPILEDDATE", () =&gt; <span class="cstat-no" title="statement not covered" >s</span>tringToValue(compiledDate))</span>;
 &nbsp;
 // From the reference: A leading zero in the day of the month field is replaced by a blank; no other leading zeros are suppressed.
 const compileTime = " 1.JAN.70 00.00.00";
-builtinImplementations.set("COMPILETIME", <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>tringToValue(compileTime))</span>;
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"COMPILETIME", () =&gt; <span class="cstat-no" title="statement not covered" >s</span>tringToValue(compileTime))</span>;
 &nbsp;
 function copy(
   value: Value | undefined,
@@ -8456,12 +8456,12 @@ builtinImplementations.set("LOWERCASE", (_, args) =&gt; {
   return stringToValue(stringValue.toLowerCase());
 });
 &nbsp;
-builtinImplementations.set("MACCOL", <span class="fstat-no" title="function not covered" >() =&gt; {</span>
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"MACCOL", () =&gt; {</span>
   // TODO: MACCOL returns a FIXED value that represents the column where the outermost macro invocation starts in the source text that contains the macro invocation.
 <span class="cstat-no" title="statement not covered" >  return zero;</span>
 });
 &nbsp;
-builtinImplementations.set("MACLMAR", <span class="fstat-no" title="function not covered" >(c</span>ontext) =&gt; {
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"MACLMAR", (c</span>ontext) =&gt; {
   const margins = <span class="cstat-no" title="statement not covered" >context.unit.compilerOptions.margins;</span>
 <span class="cstat-no" title="statement not covered" >  if (margins) {</span>
 <span class="cstat-no" title="statement not covered" >    return numberToValue(margins.m);</span>
@@ -8473,7 +8473,7 @@ builtinImplementations.set("MACNAME", (context) =&gt; {
   return stringToValue(context.macname);
 });
 &nbsp;
-builtinImplementations.set("MACRMAR", <span class="fstat-no" title="function not covered" >(c</span>ontext) =&gt; {
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"MACRMAR", (c</span>ontext) =&gt; {
   const margins = <span class="cstat-no" title="statement not covered" >context.unit.compilerOptions.margins;</span>
 <span class="cstat-no" title="statement not covered" >  if (margins) {</span>
 <span class="cstat-no" title="statement not covered" >    return numberToValue(margins.n);</span>
@@ -8581,7 +8581,7 @@ builtinImplementations.set("SYSTEM", (context) =&gt; {
   return stringToValue(PliCompilerOptions.System[systemInfo]);
 });
 &nbsp;
-builtinImplementations.set("SYSVERSION", <span class="fstat-no" title="function not covered" >() =&gt; {</span>
+builtinImplementations.set(<span class="fstat-no" title="function not covered" >"SYSVERSION", () =&gt; {</span>
   // SYSVERSION returns a CHARACTER string containing the product name as well as the version, release, and modification level.
 <span class="cstat-no" title="statement not covered" >  return stringToValue("PL/I for z/OS V6.R1.M0");</span>
 });
@@ -8662,7 +8662,7 @@ builtinImplementations.set("VERIFY", (_, args) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.316Z
+                at 2026-06-11T12:12:33.558Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.47% </span>
+                <span class="strong">89.21% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>187/209</span>
+                <span class='fraction'>182/204</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.09% </span>
+                <span class="strong">86.75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>135/155</span>
+                <span class='fraction'>131/151</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.43% </span>
+                <span class="strong">97.36% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>38/39</span>
+                <span class='fraction'>37/38</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.75% </span>
+                <span class="strong">89.6% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>184/205</span>
+                <span class='fraction'>181/202</span>
             </div>
         
             
@@ -869,9 +869,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1799,7 +1799,7 @@ export class Translator&lt;T extends CompilerOptionsPP = CompilerOptionsPP&gt; {
     for (const value of option.values) {
       if (value.kind === SyntaxKind.CompilerOption) {
         parts.push(`${value.name}(${this.serializeOptionValues(value)})`);
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (
         value.kind === SyntaxKind.CompilerOptionText ||
         value.kind === SyntaxKind.CompilerOptionString
       ) {
@@ -1819,7 +1819,7 @@ export class Translator&lt;T extends CompilerOptionsPP = CompilerOptionsPP&gt; {
     for (const [rule, rec] of this.appliedRules) {
       if (!rule.settings?.recompile) continue;
       const id = (rule.positive?.[0] ?? <span class="branch-1 cbranch-no" title="branch not covered" >rule.negative?.[0]) || <span class="branch-2 cbranch-no" title="branch not covered" >"</span>?";</span>
-      const entry = `${id}|${rec.alignment}|${rec.args ?? <span class="branch-1 cbranch-no" title="branch not covered" >""}</span>`;
+      const entry = `${id}|${rec.alignment}|${rec.args ?? <span class="branch-1 cbranch-no" title="branch not covered" >""}`;</span>
       parts.push(prefix ? `${prefix}:${entry}` : entry);
     }
     parts.sort();
@@ -1907,7 +1907,7 @@ export function ensureType(
         value.token,
       );
     }
-  <span class="missing-if-branch" title="else path not taken" >E</span>} else if (type === "plainOrString") {
+  } else <span class="missing-if-branch" title="else path not taken" >E</span>if (type === "plainOrString") {
     <span class="missing-if-branch" title="if path not taken" >I</span>if (
       value.kind !== SyntaxKind.CompilerOptionText &amp;&amp;
       value.kind !== SyntaxKind.CompilerOptionString
@@ -1973,9 +1973,9 @@ export function ensureArgument&lt;T&gt;(
   let value;
   if (optionValue.kind === SyntaxKind.CompilerOptionText) {
     value = optionValue.value;
-<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="else path not taken" >E</span>} else if (optionValue.kind === SyntaxKind.CompilerOptionString) {</span>
+  } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (optionValue.kind === SyntaxKind.CompilerOptionString) {</span>
 <span class="cstat-no" title="statement not covered" >    value = optionValue.value;</span>
-<span class="cstat-no" title="statement not covered" >  } else if (optionValue.kind === SyntaxKind.CompilerOption) {</span>
+  } else <span class="cstat-no" title="statement not covered" >if (optionValue.kind === SyntaxKind.CompilerOption) {</span>
 <span class="cstat-no" title="statement not covered" >    value = optionValue.name;</span>
   } else {
 <span class="cstat-no" title="statement not covered" >    throw new Error("Compiler option value is not supported.");</span>
@@ -1990,7 +1990,7 @@ export function ensureArgument&lt;T&gt;(
         }
       }
     }
-<span class="cstat-no" title="statement not covered" >    simpleArgs = aliasGroups.flatMap(<span class="fstat-no" title="function not covered" >(g</span>roup) =&gt; <span class="cstat-no" title="statement not covered" >group)</span>; // flatten for error reporting</span>
+<span class="cstat-no" title="statement not covered" >    simpleArgs = aliasGroups.<span class="fstat-no" title="function not covered" >flatMap((g</span>roup) =&gt; <span class="cstat-no" title="statement not covered" >group)</span>; // flatten for error reporting</span>
   } else {
     simpleArgs = args as readonly T[];
     for (const arg of simpleArgs) {
@@ -2036,7 +2036,7 @@ export function ensureEnum&lt;T extends Record&lt;string, string | number&gt;&gt
   let value: string;
   if (optionValue.kind === SyntaxKind.CompilerOptionText) {
     value = optionValue.value.toUpperCase();
-  <span class="missing-if-branch" title="if path not taken" >I</span>} else if (optionValue.kind === SyntaxKind.CompilerOptionString) {
+  } else <span class="missing-if-branch" title="if path not taken" >I</span>if (optionValue.kind === SyntaxKind.CompilerOptionString) {
 <span class="cstat-no" title="statement not covered" >    value = optionValue.value.toUpperCase();</span>
   } else if (optionValue.kind === SyntaxKind.CompilerOption) {
     value = optionValue.name.toUpperCase();
@@ -2214,7 +2214,7 @@ export function getCompilerOptionValueName(value: CompilerOptionValue): string {
     value.kind === SyntaxKind.CompilerOptionString
   ) {
     return value.value;
-  <span class="missing-if-branch" title="else path not taken" >E</span>} else if (value.kind === SyntaxKind.CompilerOption) {
+  } else <span class="missing-if-branch" title="else path not taken" >E</span>if (value.kind === SyntaxKind.CompilerOption) {
     return value.name;
   }
 <span class="cstat-no" title="statement not covered" >  throw new Error("Compiler option value is not supported.");</span>
@@ -2278,7 +2278,7 @@ export function reportMutexSubOptions(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.133Z
+                at 2026-06-11T12:12:33.382Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

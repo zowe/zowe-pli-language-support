@@ -8922,7 +8922,7 @@ translator.rule(["DISPLAY"], (option, options) =&gt; {
     const text = value.value.toUpperCase();
     if (text === "STD") {
       display.std = true;
-    <span class="missing-if-branch" title="if path not taken" >I</span>} else if (text === "WTO") {
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (text === "WTO") {
 <span class="cstat-no" title="statement not covered" >      display.wto = true;</span>
     } else {
       throw diagnosticFromCode(
@@ -9362,7 +9362,7 @@ translator.rule(["JSON"], (option, options, acceptor) =&gt; {
           name,
         );
       }
-    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (opt.kind === SyntaxKind.CompilerOption) {
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (opt.kind === SyntaxKind.CompilerOption) {
       const name = opt.name.toUpperCase();
       if (["CASE", "ENCODING", "GET", "PARSE"].includes(name)) {
         ensureType(opt, "option");
@@ -10225,15 +10225,15 @@ translator.rule(
 &nbsp;
 /** {@link CompilerOptions.ppCics} */
 translator.rule(
-  ["PPCICS"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["PPCICS"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 1, 1);</span>
     const value = <span class="cstat-no" title="statement not covered" >option.values[0];</span>
 <span class="cstat-no" title="statement not covered" >    ensureType(value, "string");</span>
 <span class="cstat-no" title="statement not covered" >    options.ppCics = value.value;</span>
   },
-  ["NOPPCICS"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["NOPPCICS"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    options.ppCics = false;</span>
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 0, 0);</span>
   },
@@ -10242,15 +10242,15 @@ translator.rule(
 &nbsp;
 /** {@link CompilerOptions.ppInclude} */
 translator.rule(
-  ["PPINCLUDE"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["PPINCLUDE"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 1, 1);</span>
     const value = <span class="cstat-no" title="statement not covered" >option.values[0];</span>
 <span class="cstat-no" title="statement not covered" >    ensureType(value, "string");</span>
 <span class="cstat-no" title="statement not covered" >    options.ppInclude = value.value;</span>
   },
-  ["NOPPINCLUDE"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["NOPPINCLUDE"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    options.ppInclude = false;</span>
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 0, 0);</span>
   },
@@ -10260,8 +10260,8 @@ translator.rule(
 /** {@link CompilerOptions.ppList} */
 translator.rule(
   ["PPLIST"],
-  plainTranslate&lt;CompilerOptions&gt;(
-<span class="fstat-no" title="function not covered" >    (o</span>ptions, value) =&gt; {
+<span class="fstat-no" title="function not covered" >  plainTranslate&lt;CompilerOptions&gt;(</span>
+    (options, value) =&gt; {
 <span class="cstat-no" title="statement not covered" >      options.ppList = value.value as unknown as CompilerOptions.PPList;</span>
     },
     CompilerOptionsCodes.ExpectedPlainTranslate,
@@ -10281,8 +10281,8 @@ translator.rule(
       token: value.token,
     };
   },
-  ["NOPPMACRO"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["NOPPMACRO"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    options.ppMacro = false;</span>
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 0, 0);</span>
   },
@@ -10291,8 +10291,8 @@ translator.rule(
 &nbsp;
 /** {@link CompilerOptions.ppSql} */
 translator.rule(
-  ["PPSQL"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["PPSQL"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 1, 1);</span>
     const value = <span class="cstat-no" title="statement not covered" >option.values[0];</span>
 <span class="cstat-no" title="statement not covered" >    ensureType(value, "string");</span>
@@ -10301,8 +10301,8 @@ translator.rule(
       token: value.token,
     };
   },
-  ["NOPPSQL"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["NOPPSQL"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    options.ppSql = false;</span>
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 0, 0);</span>
   },
@@ -10311,13 +10311,13 @@ translator.rule(
 &nbsp;
 /** {@link CompilerOptions.ppTrace} */
 translator.rule(
-  ["PPTRACE"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["PPTRACE"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 0, 0);</span>
 <span class="cstat-no" title="statement not covered" >    options.ppTrace = true;</span>
   },
-  ["NOPPTRACE"],
-<span class="fstat-no" title="function not covered" >  (o</span>ption, options) =&gt; {
+  ["NOPPTRACE"<span class="fstat-no" title="function not covered" >],</span>
+  (option, options) =&gt; {
 <span class="cstat-no" title="statement not covered" >    options.ppTrace = false;</span>
 <span class="cstat-no" title="statement not covered" >    ensureArguments(option, 0, 0);</span>
   },
@@ -10862,7 +10862,7 @@ translator.rule(
               name,
             );
         }
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (value.kind === SyntaxKind.CompilerOption) {
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (value.kind === SyntaxKind.CompilerOption) {
         const subOption = value.values[0];
 &nbsp;
         const ensureOnlyOneSubOption = () =&gt; {
@@ -11824,7 +11824,7 @@ export function getTranslator(): Translator&lt;CompilerOptions&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.316Z
+                at 2026-06-11T12:12:33.558Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

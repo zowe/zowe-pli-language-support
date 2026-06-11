@@ -1207,7 +1207,7 @@ export class NormalizedTextDocuments&lt;
 <span class="cstat-no" title="statement not covered" >    return this._onWillSave.event;</span>
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >onWillSaveWaitUntil(</span>
+<span class="fstat-no" title="function not covered" >  public o</span>nWillSaveWaitUntil(
     handler: RequestHandler&lt;TextDocumentWillSaveEvent&lt;T&gt;, TextEdit[], void&gt;,
   ) {
 <span class="cstat-no" title="statement not covered" >    this._willSaveWaitUntil = handler;</span>
@@ -1221,7 +1221,7 @@ export class NormalizedTextDocuments&lt;
 <span class="cstat-no" title="statement not covered" >    return this._onDidClose.event;</span>
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >has(u</span>ri: string | URI): boolean {
+<span class="fstat-no" title="function not covered" >  public h</span>as(uri: string | URI): boolean {
 <span class="cstat-no" title="statement not covered" >    return this._syncedDocuments.has(UriUtils.normalize(uri));</span>
   }
 &nbsp;
@@ -1257,7 +1257,7 @@ export class NormalizedTextDocuments&lt;
     return result;
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >delete(u</span>ri: string | T | URI): void {
+<span class="fstat-no" title="function not covered" >  public d</span>elete(uri: string | T | URI): void {
     const uriString = <span class="cstat-no" title="statement not covered" >UriUtils.normalize(</span>
       typeof uri === "object" &amp;&amp; "uri" in uri ? uri.uri : uri,
     );
@@ -1268,20 +1268,20 @@ export class NormalizedTextDocuments&lt;
     }
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >all(): T[] {</span>
+<span class="fstat-no" title="function not covered" >  public a</span>ll(): T[] {
 <span class="cstat-no" title="statement not covered" >    return Array.from(this._syncedDocuments.values());</span>
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >keys(): string[] {</span>
+<span class="fstat-no" title="function not covered" >  public k</span>eys(): string[] {
 <span class="cstat-no" title="statement not covered" >    return Array.from(this._syncedDocuments.keys());</span>
   }
 &nbsp;
-  public <span class="fstat-no" title="function not covered" >listen(c</span>onnection: Connection): Disposable {
+<span class="fstat-no" title="function not covered" >  public l</span>isten(connection: Connection): Disposable {
     // Required for interoperability with the the vscode-languageserver package
-    (<span class="cstat-no" title="statement not covered" >connection as any).__textDocumentSync = TextDocumentSyncKind.Incremental;</span>
+<span class="cstat-no" title="statement not covered" >    (connection as any).__textDocumentSync = TextDocumentSyncKind.Incremental;</span>
     const disposables: Disposable[] = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >    disposables.push(</span>
-      connection.onDidOpenTextDocument(<span class="fstat-no" title="function not covered" >(e</span>vent: DidOpenTextDocumentParams) =&gt; {
+      connection.<span class="fstat-no" title="function not covered" >onDidOpenTextDocument((e</span>vent: DidOpenTextDocumentParams) =&gt; {
         const td = <span class="cstat-no" title="statement not covered" >event.textDocument;</span>
         const uri = <span class="cstat-no" title="statement not covered" >UriUtils.normalize(td.uri);</span>
         const document = <span class="cstat-no" title="statement not covered" >this._configuration.create(</span>
@@ -1299,8 +1299,8 @@ export class NormalizedTextDocuments&lt;
       }),
     );
 <span class="cstat-no" title="statement not covered" >    disposables.push(</span>
-      connection.onDidChangeTextDocument(
-<span class="fstat-no" title="function not covered" >        (e</span>vent: DidChangeTextDocumentParams) =&gt; {
+      connection.<span class="fstat-no" title="function not covered" >onDidChangeTextDocument(</span>
+        (event: DidChangeTextDocumentParams) =&gt; {
           const td = <span class="cstat-no" title="statement not covered" >event.textDocument;</span>
           const changes = <span class="cstat-no" title="statement not covered" >event.contentChanges;</span>
 <span class="cstat-no" title="statement not covered" >          if (changes.length === 0) {</span>
@@ -1331,7 +1331,7 @@ export class NormalizedTextDocuments&lt;
       ),
     );
 <span class="cstat-no" title="statement not covered" >    disposables.push(</span>
-      connection.onDidCloseTextDocument(<span class="fstat-no" title="function not covered" >(e</span>vent: DidCloseTextDocumentParams) =&gt; {
+      connection.<span class="fstat-no" title="function not covered" >onDidCloseTextDocument((e</span>vent: DidCloseTextDocumentParams) =&gt; {
         const uri = <span class="cstat-no" title="statement not covered" >UriUtils.normalize(event.textDocument.uri);</span>
         const syncedDocument = <span class="cstat-no" title="statement not covered" >this._syncedDocuments.get(uri);</span>
 <span class="cstat-no" title="statement not covered" >        if (syncedDocument !== undefined) {</span>
@@ -1341,7 +1341,7 @@ export class NormalizedTextDocuments&lt;
       }),
     );
 <span class="cstat-no" title="statement not covered" >    disposables.push(</span>
-      connection.onWillSaveTextDocument(<span class="fstat-no" title="function not covered" >(e</span>vent: WillSaveTextDocumentParams) =&gt; {
+      connection.<span class="fstat-no" title="function not covered" >onWillSaveTextDocument((e</span>vent: WillSaveTextDocumentParams) =&gt; {
         const syncedDocument = <span class="cstat-no" title="statement not covered" >this._syncedDocuments.get(</span>
           UriUtils.normalize(event.textDocument.uri),
         );
@@ -1353,8 +1353,8 @@ export class NormalizedTextDocuments&lt;
       }),
     );
 <span class="cstat-no" title="statement not covered" >    disposables.push(</span>
-      connection.onWillSaveTextDocumentWaitUntil(
-<span class="fstat-no" title="function not covered" >        (e</span>vent: WillSaveTextDocumentParams, token: CancellationToken) =&gt; {
+      connection.<span class="fstat-no" title="function not covered" >onWillSaveTextDocumentWaitUntil(</span>
+        (event: WillSaveTextDocumentParams, token: CancellationToken) =&gt; {
           const syncedDocument = <span class="cstat-no" title="statement not covered" >this._syncedDocuments.get(</span>
             UriUtils.normalize(event.textDocument.uri),
           );
@@ -1370,7 +1370,7 @@ export class NormalizedTextDocuments&lt;
       ),
     );
 <span class="cstat-no" title="statement not covered" >    disposables.push(</span>
-      connection.onDidSaveTextDocument(<span class="fstat-no" title="function not covered" >(e</span>vent: DidSaveTextDocumentParams) =&gt; {
+      connection.<span class="fstat-no" title="function not covered" >onDidSaveTextDocument((e</span>vent: DidSaveTextDocumentParams) =&gt; {
         const syncedDocument = <span class="cstat-no" title="statement not covered" >this._syncedDocuments.get(</span>
           UriUtils.normalize(event.textDocument.uri),
         );
@@ -1379,8 +1379,8 @@ export class NormalizedTextDocuments&lt;
         }
       }),
     );
-<span class="cstat-no" title="statement not covered" >    return Disposable.create(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >      disposables.forEach(<span class="fstat-no" title="function not covered" >(d</span>isposable) =&gt; <span class="cstat-no" title="statement not covered" >disposable.dispose())</span>;</span>
+<span class="cstat-no" title="statement not covered" >    return Disposable.<span class="fstat-no" title="function not covered" >create(() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >      disposables.<span class="fstat-no" title="function not covered" >forEach((d</span>isposable) =&gt; <span class="cstat-no" title="statement not covered" >disposable.dispose())</span>;</span>
     });
   }
 }
@@ -1462,7 +1462,7 @@ resetDocumentProviders();
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.316Z
+                at 2026-06-11T12:12:33.558Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

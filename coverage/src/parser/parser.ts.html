@@ -13279,8 +13279,8 @@ export function parsePli(
   return { tree, diagnostics: state.diagnostics };
 }
 &nbsp;
-const pliProgram = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >s</span>tatement.first(),</span>
+const pliProgram = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >statement.first(),</span>
   (state: ParserState): ast.Program =&gt; {
     const program = ast.createProgram();
     // Parse one or more packages (or top-level statements)
@@ -13348,8 +13348,8 @@ const conditionPrefix = rule(
   },
 );
 &nbsp;
-const conditionPrefixItem = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >c</span>ondition.first(),</span>
+const conditionPrefixItem = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >condition.first(),</span>
   (state: ParserState): ast.ConditionPrefixItem =&gt; {
     const element = ast.createConditionPrefixItem();
 &nbsp;
@@ -13420,8 +13420,8 @@ const exports = rule(
 );
 &nbsp;
 const reserves = rule(
-  sequence(tokens.RESERVES),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.Reserves =&gt; {
+  sequence(tokens.RESERVES<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.Reserves =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createReserves();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.Reserves_RESERVES, tokens.RESERVES);</span>
@@ -13540,8 +13540,8 @@ const linkageOptionsItem = rule(
 );
 &nbsp;
 const CMPATOptionsItem = rule(
-  sequence(tokens.CMPAT),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.CMPATOptionsItem =&gt; {
+  sequence(tokens.CMPAT<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.CMPATOptionsItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createCMPATOptionsItem();</span>
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.CMPATOptionsItem_CMPAT, tokens.CMPAT);</span>
 <span class="cstat-no" title="statement not covered" >    state.consume(</span>
@@ -13567,8 +13567,8 @@ const CMPATOptionsItem = rule(
 );
 &nbsp;
 const noMapOptionsItem = rule(
-  sequence(tokens.NoMapOption),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.NoMapOptionsItem =&gt; {
+  sequence(tokens.NoMapOption<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.NoMapOptionsItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createNoMapOptionsItem();</span>
     const typeToken = <span class="cstat-no" title="statement not covered" >state.consume(</span>
       element,
@@ -13711,7 +13711,7 @@ const procedureStatement = rule(
       } else if (state.canConsumeFirst(environmentOption.first())) {
         const option = environmentOption.rule(state);
         option &amp;&amp; element.options.push(option);
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsume(tokens.ScopeAttribute)) {</span>
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsume(tokens.ScopeAttribute)) {</span>
         const scopeToken = <span class="cstat-no" title="statement not covered" >state.consume(</span>
           element,
           CstNodeKind.ScopeAttribute_Scope,
@@ -13810,7 +13810,7 @@ const entryStatement = rule(
 <span class="cstat-no" title="statement not covered" >      if (state.canConsumeFirst(environmentOption.first())) {</span>
         const option = <span class="cstat-no" title="statement not covered" >environmentOption.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        option &amp;&amp; element.environmentName.push(option);</span>
-<span class="cstat-no" title="statement not covered" >      } else if (</span>
+      } else <span class="cstat-no" title="statement not covered" >if (</span>
         state.tryConsume(
           element,
           CstNodeKind.EntryStatement_Variable,
@@ -13818,7 +13818,7 @@ const entryStatement = rule(
         )
       ) {
 <span class="cstat-no" title="statement not covered" >        element.variable.push("VARIABLE");</span>
-<span class="cstat-no" title="statement not covered" >      } else if (</span>
+      } else <span class="cstat-no" title="statement not covered" >if (</span>
         state.tryConsume(
           element,
           CstNodeKind.EntryStatement_Limited,
@@ -13826,10 +13826,10 @@ const entryStatement = rule(
         )
       ) {
 <span class="cstat-no" title="statement not covered" >        element.limited.push("LIMITED");</span>
-<span class="cstat-no" title="statement not covered" >      } else if (state.canConsumeFirst(returnsOption.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(returnsOption.first())) {</span>
         const option = <span class="cstat-no" title="statement not covered" >returnsOption.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        option &amp;&amp; element.returns.push(option);</span>
-<span class="cstat-no" title="statement not covered" >      } else if (state.canConsumeFirst(options.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(options.first())) {</span>
         const opts = <span class="cstat-no" title="statement not covered" >options.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        opts &amp;&amp; element.options.push(opts);</span>
       }
@@ -14018,7 +14018,7 @@ const allocateStatement = rule(
 );
 &nbsp;
 const allocatedVariable = rule(
-  choice(sequence(tokens.NUMBER), <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >r</span>eferenceItem.first())</span>,
+  choice(sequence(tokens.NUMBER<span class="fstat-no" title="function not covered" >), () =&gt; <span class="cstat-no" title="statement not covered" >r</span>eferenceItem.first())</span>,
   (state: ParserState): ast.AllocatedVariable =&gt; {
     const element = ast.createAllocatedVariable();
 &nbsp;
@@ -14081,8 +14081,8 @@ const allocateLocationReferenceIn = rule(
 );
 &nbsp;
 const allocateLocationReferenceSet = rule(
-  sequence(tokens.SET),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.AllocateLocationReferenceSet =&gt; {
+  sequence(tokens.SET<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.AllocateLocationReferenceSet =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createAllocateLocationReferenceSet();</span>
 <span class="cstat-no" title="statement not covered" >    state.consume(</span>
       element,
@@ -14105,8 +14105,8 @@ const allocateLocationReferenceSet = rule(
 );
 &nbsp;
 const allocateDimension = rule(
-  () =&gt; dimensions.first(),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.AllocateDimension =&gt; {
+  () =&gt; dimensions.first(<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.AllocateDimension =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createAllocateDimension();</span>
 <span class="cstat-no" title="statement not covered" >    element.dimensions = dimensions.rule(state);</span>
 &nbsp;
@@ -14228,8 +14228,8 @@ const assertStatement = rule(
   },
 );
 &nbsp;
-const assignmentStatement = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >l</span>ocatorCall.first(),</span>
+const assignmentStatement = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >locatorCall.first(),</span>
   (state: ParserState): ast.AssignmentStatement =&gt; {
     const element = ast.createAssignmentStatement();
 &nbsp;
@@ -14406,7 +14406,7 @@ const beginStatement = rule(
       const orderToken = <span class="cstat-no" title="statement not covered" >state.last;</span>
 <span class="cstat-no" title="statement not covered" >      if (orderToken!.image.toUpperCase() === "ORDER") {</span>
 <span class="cstat-no" title="statement not covered" >        element.order = true;</span>
-<span class="cstat-no" title="statement not covered" >      } else if (orderToken!.image.toUpperCase() === "REORDER") {</span>
+      } else <span class="cstat-no" title="statement not covered" >if (orderToken!.image.toUpperCase() === "REORDER") {</span>
 <span class="cstat-no" title="statement not covered" >        element.reorder = true;</span>
       }
     }
@@ -14537,8 +14537,8 @@ const callStatement = rule(
 );
 &nbsp;
 const cancelThreadStatement = rule(
-  sequence(tokens.CANCEL),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.CancelThreadStatement =&gt; {
+  sequence(tokens.CANCEL<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.CancelThreadStatement =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createCancelThreadStatement();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(</span>
@@ -14589,7 +14589,7 @@ const closeStatement = rule(
     if (state.canConsumeFirst(memberCall.first())) {
       const call = memberCall.rule(state);
       call &amp;&amp; element.files.push(call);
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (</span>
+    } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (</span>
       state.tryConsume(
         element,
         CstNodeKind.CloseStatement_FilesStar0,
@@ -14626,7 +14626,7 @@ const closeStatement = rule(
       if (state.canConsumeFirst(memberCall.first())) {
         const call = memberCall.rule(state);
         call &amp;&amp; element.files.push(call);
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (</span>
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (</span>
         state.tryConsume(
           element,
           CstNodeKind.CloseStatement_FilesStar1,
@@ -14693,8 +14693,8 @@ const defaultStatement = rule(
   },
 );
 &nbsp;
-const defaultExpression = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >d</span>efaultExpressionPart.first(),</span>
+const defaultExpression = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >defaultExpressionPart.first(),</span>
   (state: ParserState): ast.DefaultExpression =&gt; {
     const element = ast.createDefaultExpression();
 &nbsp;
@@ -14746,7 +14746,7 @@ const defaultExpressionPart = rule(
         CstNodeKind.DefaultExpressionPart_CloseParenRange,
         tokens.CloseParen,
       );
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsume(tokens.OpenParen)) {</span>
+    } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsume(tokens.OpenParen)) {</span>
       // Parenthesized attribute expression variant
 <span class="cstat-no" title="statement not covered" >      state.consume(</span>
         element,
@@ -14769,7 +14769,7 @@ const defaultExpressionPart = rule(
 );
 &nbsp;
 const defaultRangeIdentifiers = rule(
-  choice(sequence(tokens.Star), <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >d</span>efaultRangeIdentifierItem.first())</span>,
+  choice(sequence(tokens.Star<span class="fstat-no" title="function not covered" >), () =&gt; <span class="cstat-no" title="statement not covered" >d</span>efaultRangeIdentifierItem.first())</span>,
   (state: ParserState): ast.DefaultRangeIdentifiers =&gt; {
     const element = ast.createDefaultRangeIdentifiers();
 &nbsp;
@@ -14852,8 +14852,8 @@ const defaultRangeIdentifierItem = rule(
   },
 );
 &nbsp;
-const defaultAttributeExpression = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >d</span>efaultAttributeExpressionNot.first(),</span>
+const defaultAttributeExpression = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >defaultAttributeExpressionNot.first(),</span>
   (state: ParserState): ast.DefaultAttributeExpression =&gt; {
     const element = ast.createDefaultAttributeExpression();
 &nbsp;
@@ -15036,7 +15036,7 @@ const defineOrdinalStatement = rule(
         )
       ) {
         element.attributes.push(ast.DefineOrdinalAttribute.UNSIGNED);
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (
         state.tryConsume(
           element,
           CstNodeKind.DefineOrdinalStatement_PRECISION,
@@ -15075,8 +15075,8 @@ const defineOrdinalStatement = rule(
   },
 );
 &nbsp;
-const ordinalValueList = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >o</span>rdinalValue.first(),</span>
+const ordinalValueList = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >ordinalValue.first(),</span>
   (state: ParserState): ast.OrdinalValueList =&gt; {
     const element = ast.createOrdinalValueList();
 &nbsp;
@@ -15456,7 +15456,7 @@ const doStatement = rule(
         state.tryConsume(element, CstNodeKind.DoStatement_LOOP, tokens.LOOP)
       ) {
         element.doType4 = true;
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsumeFirst(doType3.first())) {
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsumeFirst(doType3.first())) {
         element.doType3 = doType3.rule(state);
       }
     }
@@ -15578,8 +15578,8 @@ const doType3 = rule(
   },
 );
 &nbsp;
-const doSpecification = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >e</span>xpression.first(),</span>
+const doSpecification = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >expression.first(),</span>
   (state: ParserState): ast.DoSpecification =&gt; {
     const element = ast.createDoSpecification();
 &nbsp;
@@ -15602,7 +15602,7 @@ const doSpecification = rule(
         ) {
           element.by = expression.rule(state);
         }
-      <span class="missing-if-branch" title="if path not taken" >I</span>} else if (state.canConsume(tokens.BY)) {
+      } else <span class="missing-if-branch" title="if path not taken" >I</span>if (state.canConsume(tokens.BY)) {
 <span class="cstat-no" title="statement not covered" >        state.consume(element, CstNodeKind.DoSpecification_BY1, tokens.BY);</span>
 <span class="cstat-no" title="statement not covered" >        element.by = expression.rule(state);</span>
 &nbsp;
@@ -15627,7 +15627,7 @@ const doSpecification = rule(
         )
       ) {
         element.downthru = expression.rule(state);
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (
         state.tryConsume(
           element,
           CstNodeKind.DoSpecification_REPEAT,
@@ -15697,8 +15697,8 @@ const fetchStatement = rule(
   },
 );
 &nbsp;
-const fetchEntry = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >r</span>eferenceItem.first(),</span>
+const fetchEntry = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >referenceItem.first(),</span>
   (state: ParserState): ast.FetchEntry =&gt; {
     const element = ast.createFetchEntry();
 &nbsp;
@@ -15753,7 +15753,7 @@ const flushStatement = rule(
 &nbsp;
     if (state.canConsumeFirst(locatorCall.first())) {
       element.file = locatorCall.rule(state);
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (</span>
+    } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (</span>
       state.tryConsume(element, CstNodeKind.FlushStatement_Star, tokens.Star)
     ) {
       const starToken = <span class="cstat-no" title="statement not covered" >state.last;</span>
@@ -15805,8 +15805,8 @@ const formatStatement = rule(
   },
 );
 &nbsp;
-const formatList = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >f</span>ormatListItem.first(),</span>
+const formatList = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >formatListItem.first(),</span>
   (state: ParserState): ast.FormatList =&gt; {
     const element = ast.createFormatList();
 &nbsp;
@@ -15827,9 +15827,9 @@ const formatList = rule(
 );
 &nbsp;
 const formatListItem = rule(
-  choice(
-<span class="fstat-no" title="function not covered" >    () =&gt; <span class="cstat-no" title="statement not covered" >f</span>ormatListItemLevel.first(),</span>
-<span class="fstat-no" title="function not covered" >    () =&gt; <span class="cstat-no" title="statement not covered" >f</span>ormatItem.first(),</span>
+<span class="fstat-no" title="function not covered" >  choice(</span>
+    () =&gt; <span class="cstat-no" title="statement not covered" >formatListItemLevel.first(<span class="fstat-no" title="function not covered" >),</span></span>
+    () =&gt; <span class="cstat-no" title="statement not covered" >formatItem.first(),</span>
     sequence(tokens.OpenParen),
   ),
   (state: ParserState): ast.FormatListItem =&gt; {
@@ -15843,7 +15843,7 @@ const formatListItem = rule(
     // Either format item or nested list
     if (state.canConsumeFirst(formatItem.first())) {
       element.item = formatItem.rule(state);
-    <span class="missing-if-branch" title="if path not taken" >I</span>} else if (state.canConsume(tokens.OpenParen)) {
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (state.canConsume(tokens.OpenParen)) {
 <span class="cstat-no" title="statement not covered" >      state.consume(</span>
         element,
         CstNodeKind.FormatListItem_OpenParen,
@@ -15944,8 +15944,8 @@ const AFormatItem = rule(
 );
 &nbsp;
 const BFormatItem = rule(
-  sequence(tokens.B),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.BFormatItem =&gt; {
+  sequence(tokens.B<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.BFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createBFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.BFormatItem_B, tokens.B);</span>
@@ -15970,8 +15970,8 @@ const BFormatItem = rule(
 );
 &nbsp;
 const CFormatItem = rule(
-  sequence(tokens.C),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.CFormatItem =&gt; {
+  sequence(tokens.C<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.CFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createCFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.CFormatItem_C, tokens.C);</span>
@@ -15979,9 +15979,9 @@ const CFormatItem = rule(
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (state.canConsumeFirst(FFormatItem.first())) {</span>
 <span class="cstat-no" title="statement not covered" >      element.item = FFormatItem.rule(state);</span>
-<span class="cstat-no" title="statement not covered" >    } else if (state.canConsumeFirst(EFormatItem.first())) {</span>
+    } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(EFormatItem.first())) {</span>
 <span class="cstat-no" title="statement not covered" >      element.item = EFormatItem.rule(state);</span>
-<span class="cstat-no" title="statement not covered" >    } else if (state.canConsumeFirst(PFormatItem.first())) {</span>
+    } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(PFormatItem.first())) {</span>
 <span class="cstat-no" title="statement not covered" >      element.item = PFormatItem.rule(state);</span>
     } else {
 <span class="cstat-no" title="statement not covered" >      state.error(Severe.IBM3988I.message, state.token, Severity.S);</span>
@@ -16039,8 +16039,8 @@ const FFormatItem = rule(
 );
 &nbsp;
 const EFormatItem = rule(
-  sequence(tokens.E),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.EFormatItem =&gt; {
+  sequence(tokens.E<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.EFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createEFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.EFormatItem_E, tokens.E);</span>
@@ -16107,8 +16107,8 @@ const columnFormatItem = rule(
 );
 &nbsp;
 const GFormatItem = rule(
-  sequence(tokens.G),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.GFormatItem =&gt; {
+  sequence(tokens.G<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.GFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createGFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.GFormatItem_G, tokens.G);</span>
@@ -16133,8 +16133,8 @@ const GFormatItem = rule(
 );
 &nbsp;
 const LFormatItem = rule(
-  sequence(tokens.L),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.LFormatItem =&gt; {
+  sequence(tokens.L<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.LFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createLFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.LFormatItem_L, tokens.L);</span>
@@ -16144,8 +16144,8 @@ const LFormatItem = rule(
 );
 &nbsp;
 const lineFormatItem = rule(
-  sequence(tokens.LINE),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.LineFormatItem =&gt; {
+  sequence(tokens.LINE<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.LineFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createLineFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.LineFormatItem_LINE, tokens.LINE);</span>
@@ -16166,8 +16166,8 @@ const lineFormatItem = rule(
 );
 &nbsp;
 const pageFormatItem = rule(
-  sequence(tokens.PAGE),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.PageFormatItem =&gt; {
+  sequence(tokens.PAGE<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.PageFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createPageFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.PageFormatItem_PAGE, tokens.PAGE);</span>
@@ -16177,8 +16177,8 @@ const pageFormatItem = rule(
 );
 &nbsp;
 const RFormatItem = rule(
-  sequence(tokens.R),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.RFormatItem =&gt; {
+  sequence(tokens.R<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.RFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createRFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.RFormatItem_R, tokens.R);</span>
@@ -16228,8 +16228,8 @@ const skipFormatItem = rule(
 );
 &nbsp;
 const VFormatItem = rule(
-  sequence(tokens.V),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.VFormatItem =&gt; {
+  sequence(tokens.V<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.VFormatItem =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createVFormatItem();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.VFormatItem_V, tokens.V);</span>
@@ -16320,10 +16320,10 @@ const getStatement = rule(
         if (state.canConsumeFirst(getFile.first())) {
           const file = getFile.rule(state);
           file &amp;&amp; fileStatement.specifications.push(file);
-        <span class="missing-if-branch" title="if path not taken" >I</span>} else if (state.canConsumeFirst(getCopy.first())) {
+        } else <span class="missing-if-branch" title="if path not taken" >I</span>if (state.canConsumeFirst(getCopy.first())) {
           const copy = <span class="cstat-no" title="statement not covered" >getCopy.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >          copy &amp;&amp; fileStatement.specifications.push(copy);</span>
-        <span class="missing-if-branch" title="if path not taken" >I</span>} else if (state.canConsumeFirst(getSkip.first())) {
+        } else <span class="missing-if-branch" title="if path not taken" >I</span>if (state.canConsumeFirst(getSkip.first())) {
           const skip = <span class="cstat-no" title="statement not covered" >getSkip.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >          skip &amp;&amp; fileStatement.specifications.push(skip);</span>
         } else if (state.canConsumeFirst(dataSpecificationOptions.first())) {
@@ -16365,8 +16365,8 @@ const getFile = rule(
 );
 &nbsp;
 const getCopy = rule(
-  sequence(tokens.COPY),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.GetCopy =&gt; {
+  sequence(tokens.COPY<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.GetCopy =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createGetCopy();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.GetCopy_COPY, tokens.COPY);</span>
@@ -16390,8 +16390,8 @@ const getCopy = rule(
 );
 &nbsp;
 const getSkip = rule(
-  sequence(tokens.SKIP),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.GetSkip =&gt; {
+  sequence(tokens.SKIP<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.GetSkip =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createGetSkip();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.GetSkip_SKIP, tokens.SKIP);</span>
@@ -16506,7 +16506,7 @@ const genericReference = rule(
         CstNodeKind.GenericReference_CloseParen,
         tokens.CloseParen,
       );
-    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (
       state.tryConsume(
         element,
         CstNodeKind.GenericReference_OTHERWISE,
@@ -16563,8 +16563,8 @@ const ifStatement = rule(
 );
 &nbsp;
 const indForAttribute = rule(
-  sequence(tokens.INDFOR),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.IndForAttribute =&gt; {
+  sequence(tokens.INDFOR<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.IndForAttribute =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createIndForAttribute();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.IndForAttribute_INDFOR, tokens.INDFOR);</span>
@@ -16762,8 +16762,8 @@ const keywordCondition = rule(
 );
 &nbsp;
 const namedCondition = rule(
-  sequence(tokens.CONDITION),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.NamedCondition =&gt; {
+  sequence(tokens.CONDITION<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.NamedCondition =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createNamedCondition();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(</span>
@@ -16861,8 +16861,8 @@ const openStatement = rule(
   },
 );
 &nbsp;
-const openOptionsGroup = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >o</span>penOption.first(),</span>
+const openOptionsGroup = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >openOption.first(),</span>
   (state: ParserState): ast.OpenOptionsGroup =&gt; {
     const element = ast.createOpenOptionsGroup();
 &nbsp;
@@ -16968,7 +16968,7 @@ const putStatement = rule(
         if (state.canConsumeFirst(putItem.first())) {
           const item = putItem.rule(state);
           item &amp;&amp; fileStatement.items.push(item);
-        <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsumeFirst(dataSpecificationOptions.first())) {
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsumeFirst(dataSpecificationOptions.first())) {
           const option = dataSpecificationOptions.rule(state);
           option &amp;&amp; fileStatement.items.push(option);
         }
@@ -17129,8 +17129,8 @@ const dataSpecificationOptions = rule(
   },
 );
 &nbsp;
-const dataSpecificationDataList = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >d</span>ataSpecificationDataListItem.first(),</span>
+const dataSpecificationDataList = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >dataSpecificationDataListItem.first(),</span>
   (state: ParserState): ast.DataSpecificationDataList =&gt; {
     const element = ast.createDataSpecificationDataList();
     const lhs = dataSpecificationDataListItem.rule(state);
@@ -17151,8 +17151,8 @@ const dataSpecificationDataList = rule(
   },
 );
 &nbsp;
-const dataSpecificationDataListItem = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >e</span>xpression.first(),</span>
+const dataSpecificationDataListItem = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >expression.first(),</span>
   (state: ParserState): ast.DataSpecificationDataListItem =&gt; {
     const element = ast.createDataSpecificationDataListItem();
 &nbsp;
@@ -17281,8 +17281,8 @@ const readStatementOption = rule(
 );
 &nbsp;
 const reinitStatement = rule(
-  sequence(tokens.REINIT),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.ReinitStatement =&gt; {
+  sequence(tokens.REINIT<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.ReinitStatement =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createReinitStatement();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(element, CstNodeKind.ReinitStatement_REINIT, tokens.REINIT);</span>
@@ -17546,7 +17546,7 @@ const selectStatement = rule(
       if (state.canConsumeFirst(whenStatement.first())) {
         const when = whenStatement.rule(state);
         when &amp;&amp; element.cases.push(when);
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsumeFirst(otherwiseStatement.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsumeFirst(otherwiseStatement.first())) {</span>
         const otherwise = <span class="cstat-no" title="statement not covered" >otherwiseStatement.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        otherwise &amp;&amp; element.cases.push(otherwise);</span>
       }
@@ -17596,8 +17596,8 @@ const whenStatement = rule(
 );
 &nbsp;
 const otherwiseStatement = rule(
-  sequence(tokens.OTHERWISE),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.OtherwiseStatement =&gt; {
+  sequence(tokens.OTHERWISE<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.OtherwiseStatement =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createOtherwiseStatement();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(</span>
@@ -17769,8 +17769,8 @@ const initAcrossAttribute = rule(
   },
 );
 &nbsp;
-const initAcrossList = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >i</span>nitAcrossExpression.first(),</span>
+const initAcrossList = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >initAcrossExpression.first(),</span>
   (state: ParserState): ast.InitAcrossList =&gt; {
     const element = ast.createInitAcrossList();
     state.consume(
@@ -17870,8 +17870,8 @@ const initialAttribute = rule(
 );
 &nbsp;
 const initialCallAttribute = rule(
-  throwHasManualLookahead,
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.InitialCallAttribute =&gt; {
+<span class="fstat-no" title="function not covered" >  throwHasManualLookahead,</span>
+  (state: ParserState): ast.InitialCallAttribute =&gt; {
     const attribute = <span class="cstat-no" title="statement not covered" >ast.createInitialCallAttribute();</span>
 <span class="cstat-no" title="statement not covered" >    attribute.initial = state.consume(</span>
       attribute,
@@ -17927,7 +17927,7 @@ const initialToAttribute = rule(
           );
         }
       }
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsume(tokens.CharType)) {</span>
+    } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsume(tokens.CharType)) {</span>
       const typeToken = <span class="cstat-no" title="statement not covered" >state.consume(</span>
         attribute,
         CstNodeKind.InitialToAttribute_CHAR,
@@ -17992,8 +17992,8 @@ const initialToAttribute = rule(
 );
 &nbsp;
 const initAcrossExpression = rule(
-  sequence(tokens.OpenParen),
-<span class="fstat-no" title="function not covered" >  (s</span>tate: ParserState): ast.InitAcrossList =&gt; {
+  sequence(tokens.OpenParen<span class="fstat-no" title="function not covered" >),</span>
+  (state: ParserState): ast.InitAcrossList =&gt; {
     const element = <span class="cstat-no" title="statement not covered" >ast.createInitAcrossList();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    state.consume(</span>
@@ -18064,8 +18064,8 @@ const declareStatement = rule(
 &nbsp;
 const declaredItem = rule(
   choice(
-    sequence(tokens.NUMBER),
-<span class="fstat-no" title="function not covered" >    () =&gt; <span class="cstat-no" title="statement not covered" >d</span>eclaredVariable.first(),</span>
+    sequence(tokens.NUMBER<span class="fstat-no" title="function not covered" >),</span>
+    () =&gt; <span class="cstat-no" title="statement not covered" >declaredVariable.first(),</span>
     sequence(tokens.Star),
     sequence(tokens.OpenParen),
   ),
@@ -18306,7 +18306,7 @@ const pictureAttribute = rule(
         CstNodeKind.PictureAttribute_PICTURE,
         tokens.PICTURE,
       );
-<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsume(tokens.WIDEPIC)) {</span>
+    } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsume(tokens.WIDEPIC)) {</span>
 <span class="cstat-no" title="statement not covered" >      element.pictureToken = state.consume(</span>
         element,
         CstNodeKind.PictureAttribute_WIDEPIC,
@@ -18443,16 +18443,16 @@ const returnsAttribute = rule(
       if (state.canConsumeFirst(computationDataAttribute.first())) {
         const attr = computationDataAttribute.rule(state);
         attr &amp;&amp; element.attrs.push(attr);
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (state.canConsumeFirst(dateAttribute.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (state.canConsumeFirst(dateAttribute.first())) {</span>
         const attr = <span class="cstat-no" title="statement not covered" >dateAttribute.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        attr &amp;&amp; element.attrs.push(attr);</span>
-<span class="cstat-no" title="statement not covered" >      } else if (state.canConsumeFirst(valueListAttribute.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(valueListAttribute.first())) {</span>
         const attr = <span class="cstat-no" title="statement not covered" >valueListAttribute.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        attr &amp;&amp; element.attrs.push(attr);</span>
-<span class="cstat-no" title="statement not covered" >      } else if (state.canConsumeFirst(valueRangeAttribute.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(valueRangeAttribute.first())) {</span>
         const attr = <span class="cstat-no" title="statement not covered" >valueRangeAttribute.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        attr &amp;&amp; element.attrs.push(attr);</span>
-<span class="cstat-no" title="statement not covered" >      } else if (state.canConsumeFirst(anyAttribute.first())) {</span>
+      } else <span class="cstat-no" title="statement not covered" >if (state.canConsumeFirst(anyAttribute.first())) {</span>
         const attr = <span class="cstat-no" title="statement not covered" >anyAttribute.rule(state);</span>
 <span class="cstat-no" title="statement not covered" >        attr &amp;&amp; element.attrs.push(attr);</span>
       }
@@ -18594,8 +18594,8 @@ const valueAttribute = rule(
   },
 );
 &nbsp;
-const defaultValueAttributeItem = rule(
-<span class="fstat-no" title="function not covered" >  () =&gt; <span class="cstat-no" title="statement not covered" >d</span>eclarationAttribute.first(),</span>
+const defaultValueAttributeItem = <span class="fstat-no" title="function not covered" >rule(</span>
+  () =&gt; <span class="cstat-no" title="statement not covered" >declarationAttribute.first(),</span>
   (state: ParserState): ast.DefaultValueAttributeItem =&gt; {
     const element = ast.createDefaultValueAttributeItem();
 &nbsp;
@@ -19227,7 +19227,7 @@ const entryAttribute = rule(
       } else if (state.canConsumeFirst(returnsOption.first())) {
         const option = returnsOption.rule(state);
         option &amp;&amp; element.returns.push(option);
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (
         state.tryConsume(
           element,
           CstNodeKind.EntryAttribute_EXTERNAL,
@@ -19454,7 +19454,7 @@ const referenceItem = rule(
         // "Normal" dimensions, that simply target variables in their references
         const dim = dimensions.rule(state);
         dim &amp;&amp; element.dimensions.push(dim);
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (withType) {
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (withType) {
         // Dimensions that can also target types in their references
         const dim = dimensionsWithTypes.rule(state);
         dim &amp;&amp; element.dimensions.push(dim);
@@ -19688,7 +19688,7 @@ const locatorCall = rule(
         )
       ) {
         element.pointer = true;
-      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (
         state.tryConsume(
           element,
           CstNodeKind.LocatorCall_Handle,
@@ -19816,7 +19816,7 @@ const execVariableReference = rule(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T12:01:41.133Z
+                at 2026-06-11T12:12:33.382Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
