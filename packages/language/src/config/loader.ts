@@ -27,7 +27,7 @@ import {
 } from "../utils/jsonc";
 import { URI } from "../utils/uri";
 import { LspCodes } from "../validation/lsp-codes";
-import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
+import { DEFAULT_INSTRUCTION_LIMIT } from "../preprocessor/instruction-interpreter";
 import {
   JsonItem,
   JsonItemMeta,
@@ -207,7 +207,7 @@ function readProcessGroup(
       "instruction-counter-limit",
       [...lspOptionsPath, "instruction-counter-limit"],
       uri,
-    ) ?? plainItem(MAX_INSTRUCTION_COUNTER);
+    ) ?? plainItem(DEFAULT_INSTRUCTION_LIMIT);
   const caseUpperValidation =
     readBooleanField(
       lspOptionsNode,
