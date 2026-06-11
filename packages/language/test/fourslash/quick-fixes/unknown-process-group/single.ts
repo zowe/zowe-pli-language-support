@@ -39,10 +39,11 @@
 // @wrap: main
 //// DCL A CHAR(8);
 
-verify.expectDiagnosticsAt(
-  "bad",
-  code.LSP.PluginConfiguration.UnknownProcessGroup,
-);
+verify.expectDiagnosticsAt("bad", {
+  message: code.LSP.PluginConfiguration.UnknownProcessGroup.message(
+    "doesnotexist",
+  ),
+});
 await verify.expectCodeActionCountAt("bad", 1);
 await verify.expectCodeActionAt(
   "bad",

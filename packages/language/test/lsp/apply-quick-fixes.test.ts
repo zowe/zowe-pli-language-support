@@ -983,11 +983,6 @@ describe("metadata-driven quick fixes via parseProcessGroupConfigs", () => {
 // replacement on the offending substring in pgm_conf.json.
 // ----------------------------------------------------------
 //
-
-const CODE_UNKNOWN_PROC_GROUP = fullCode(
-  LspCodes.PluginConfiguration.UnknownProcessGroup,
-);
-
 const PGM_CONF_DOCUMENT_URI = "/workspace/.pliplugin/pgm_conf.json";
 
 /**
@@ -1010,7 +1005,7 @@ function unknownPgroupDiagnostic(
   range: typeof REAL_RANGE = REAL_RANGE,
 ): Diagnostic {
   return {
-    code: CODE_UNKNOWN_PROC_GROUP,
+    code: fullCode(LspCodes.PluginConfiguration.UnknownProcessGroup),
     message: `Unknown process group 'foo'.`,
     range,
   } as Diagnostic;
