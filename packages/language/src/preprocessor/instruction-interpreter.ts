@@ -365,7 +365,7 @@ export interface InterpreterOptions {
   marginsProcessor: MarginsProcessor;
 }
 
-export const MAX_INSTRUCTION_COUNTER = 5000;
+export const DEFAULT_INSTRUCTION_LIMIT = 5000;
 export const MAX_INSTRUCTION_LIMIT = 50000;
 
 export async function runInstructions(
@@ -379,7 +379,7 @@ export async function runInstructions(
   const instructionLimit = Math.min(
     Math.max(
       unit.processGroup?.lspOptions.instructionCounterLimit.value ??
-        MAX_INSTRUCTION_COUNTER,
+        DEFAULT_INSTRUCTION_LIMIT,
       1,
     ),
     MAX_INSTRUCTION_LIMIT,
@@ -476,7 +476,7 @@ function doRunInstructionsSync(
   while (currentNode) {
     const value = context.counter.get(currentNode) || 0;
     // Prevent infinite loops by limiting the number of iterations
-    if (value > MAX_INSTRUCTION_COUNTER) {
+    if (value > context.instructionCounterLimit) {
       console.log("Long running preprocessor code detected. Stopping.");
       return;
     }
@@ -2540,6 +2540,8 @@ builtinImplementations.set("COMPILEDDATE", () => stringToValue(compiledDate));
 const compileTime = " 1.JAN.70 00.00.00";
 builtinImplementations.set("COMPILETIME", () => stringToValue(compileTime));
 
+const MAX_COPY_SIZE = 100_000;
+
 function copy(
   value: Value | undefined,
   repetitions: Value | undefined,
@@ -2554,7 +2556,7 @@ function copy(
     repeatCount <= 0 ||
     // Safeguard against large outputs
     // Could cause long processing times
-    value.value.length * repeatCount > 100_000
+    value.value.length * repeatCount > MAX_COPY_SIZE
   ) {
     return defaultEmptyValue;
   }

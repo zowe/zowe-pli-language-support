@@ -36,7 +36,7 @@ import {
 import { isBoolean, isNumber, isStringArray } from "../utils/types";
 import { URI, UriUtils } from "../utils/uri";
 import { FileSystemProvider } from "./file-system-provider";
-import { MAX_INSTRUCTION_COUNTER } from "../preprocessor/instruction-interpreter";
+import { DEFAULT_INSTRUCTION_LIMIT } from "../preprocessor/instruction-interpreter";
 import { PluginConfiguration } from "../language-server/constants";
 import { type JSONPath } from "../utils/jsonc";
 import { LspCodes } from "../validation/lsp-codes";
@@ -120,7 +120,7 @@ export function deserializeProcessGroup(
       instructionCounterLimit: plainItem(
         isNumber(instructionCounterLimit)
           ? instructionCounterLimit
-          : MAX_INSTRUCTION_COUNTER,
+          : DEFAULT_INSTRUCTION_LIMIT,
       ),
       caseUpperValidation: plainItem(
         isBoolean(lspOptions["case-upper-validation"])

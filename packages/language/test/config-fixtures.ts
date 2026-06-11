@@ -9,7 +9,7 @@
  *
  */
 
-import { MAX_INSTRUCTION_COUNTER } from "../src/preprocessor/instruction-interpreter";
+import { DEFAULT_INSTRUCTION_LIMIT } from "../src/preprocessor/instruction-interpreter";
 import {
   plainItem,
   ProcessGroup,
@@ -57,7 +57,7 @@ export function makeProcessGroup(input: {
     lspOptions: {
       checkMargins: plainItem(input.checkMargins ?? false),
       instructionCounterLimit: plainItem(
-        input.instructionCounterLimit ?? MAX_INSTRUCTION_COUNTER,
+        input.instructionCounterLimit ?? DEFAULT_INSTRUCTION_LIMIT,
       ),
       caseUpperValidation: plainItem(input.caseUpperValidation ?? true),
     },
