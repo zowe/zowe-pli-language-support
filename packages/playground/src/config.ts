@@ -15,162 +15,85 @@ import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-
 import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
 import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
 import getOutlineServiceOverride from "@codingame/monaco-vscode-outline-service-override";
-import { configureDefaultWorkerFactory } from "monaco-editor-wrapper/workers/workerLoaders";
-import type { WrapperConfig } from "monaco-editor-wrapper";
-import workerUrl from "./language-server?worker&url";
-import { BrowserMessageReader } from "vscode-languageserver/browser";
-import { BrowserMessageWriter } from "vscode-languageserver/browser";
-import languageConfig from "../../vscode-extension/language-configuration.json?raw";
-import textmateGrammar from "../../vscode-extension/syntaxes/pli.merged.json?raw";
+import { configureDefaultWorkerFactory } from "monaco-languageclient/workerFactory";
+import type { MonacoVscodeApiConfig } from "monaco-languageclient/vscodeApiWrapper";
 
-export type ConfigResult = {
-  wrapperConfig: WrapperConfig;
-  workspaceFileUri: vscode.Uri;
-  pliWorker: Worker;
-};
+// Load the PL/I extension directly - no need to load the worker
+import "../pli-language-support.vsix";
 
 export const configure = async (
   htmlContainer?: HTMLElement,
-): Promise<ConfigResult> => {
-  // Should lie outside of the /workspace folder.
+): Promise<MonacoVscodeApiConfig> => {
   const workspaceFileUri = vscode.Uri.file("/workspace.code-workspace");
 
-  const extensionFilesOrContents = new Map<string, string | URL>();
-  extensionFilesOrContents.set("/configuration.json", languageConfig);
-  extensionFilesOrContents.set("/grammar.json", textmateGrammar);
-
-  const pliWorker = loadPliWorker();
-  const reader = new BrowserMessageReader(pliWorker);
-  const writer = new BrowserMessageWriter(pliWorker);
-
-  const wrapperConfig: WrapperConfig = {
+  const vscodeApiConfig: MonacoVscodeApiConfig = {
     $type: "extended",
-    id: "AAP",
     logLevel: LogLevel.Debug,
-    htmlContainer,
-    vscodeApiConfig: {
-      serviceOverrides: {
-        ...getKeybindingsServiceOverride(),
-        ...getExplorerServiceOverride(),
-        ...getMarkersServiceOverride(),
-        ...getOutlineServiceOverride(),
+    serviceOverrides: {
+      ...getKeybindingsServiceOverride(),
+      ...getExplorerServiceOverride(),
+      ...getMarkersServiceOverride(),
+      ...getOutlineServiceOverride(),
+    },
+    viewsConfig: {
+      $type: "ViewsService",
+      htmlContainer,
+      htmlAugmentationInstructions: htmlAugmentationInstructions,
+      viewsInitFunc: viewsInit,
+    },
+    workspaceConfig: {
+      enableWorkspaceTrust: true,
+      windowIndicator: {
+        label: "PLI Playground",
+        tooltip: "",
+        command: "",
       },
-      enableExtHostWorker: true,
-      viewsConfig: {
-        viewServiceType: "ViewsService",
-        htmlAugmentationInstructions: htmlAugmentationInstructions,
-        viewsInitFunc: viewsInit,
-      },
-      workspaceConfig: {
-        enableWorkspaceTrust: true,
-        windowIndicator: {
-          label: "pli-example",
-          tooltip: "",
-          command: "",
+      workspaceProvider: {
+        trusted: true,
+        async open() {
+          window.open(window.location.href);
+          return true;
         },
-        workspaceProvider: {
-          trusted: true,
-          async open() {
-            window.open(window.location.href);
-            return true;
-          },
-          workspace: {
-            workspaceUri: workspaceFileUri,
-          },
-        },
-        configurationDefaults: {
-          "window.title": "pli-example${separator}${dirty}${activeEditorShort}",
-        },
-        productConfiguration: {
-          nameShort: "pli-example",
-          nameLong: "pli-example",
+        workspace: {
+          workspaceUri: workspaceFileUri,
         },
       },
-      userConfiguration: {
-        json: JSON.stringify({
-          "workbench.colorTheme": "Default Dark Modern",
-          "editor.wordBasedSuggestions": "off",
-          "typescript.tsserver.web.projectWideIntellisense.enabled": true,
-          "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
-          "editor.guides.bracketPairsHorizontal": true,
-          "editor.experimental.asyncTokenization": false,
-        }),
+      configurationDefaults: {
+        "window.title":
+          "PLI Playground${separator}${dirty}${activeEditorShort}",
       },
+      productConfiguration: {
+        nameShort: "pli-playground",
+        nameLong: "pli-playground",
+      },
+    },
+    userConfiguration: {
+      json: JSON.stringify({
+        "workbench.colorTheme": "Default Dark Modern",
+        "editor.wordBasedSuggestions": "off",
+        "editor.guides.bracketPairsHorizontal": true,
+        "editor.experimental.asyncTokenization": false,
+      }),
     },
     extensions: [
       {
         config: {
-          name: "pli-example",
-          publisher: "Zowe",
+          name: "pli-playground",
+          publisher: "Broadcom",
           version: "1.0.0",
           engines: {
             vscode: "*",
           },
-          contributes: {
-            configurationDefaults: {
-              "editor.semanticTokenColorCustomizations": {
-                rules: {
-                  "*.preprocessor:pli": {
-                    fontStyle: "italic",
-                  },
-                },
-              },
-            },
-            languages: [
-              {
-                id: "pli",
-                extensions: [".pli", ".pl1", ".inc"],
-                aliases: ["PL/I", "pli"],
-                configuration: "./configuration.json",
-              },
-            ],
-            grammars: [
-              {
-                language: "pli",
-                scopeName: "source.pli",
-                path: "./grammar.json",
-              },
-            ],
-            semanticTokenScopes: [
-              {
-                language: "pli",
-                scopes: {
-                  keyword: ["keyword.control.pli"],
-                  modifier: ["keyword.storage.pli"],
-                },
-              },
-            ],
-          },
         },
-        filesOrContents: extensionFilesOrContents,
       },
     ],
-    editorAppConfig: {
-      monacoWorkerFactory: configureDefaultWorkerFactory,
+    advanced: {
+      enableExtHostWorker: true,
     },
-    languageClientConfigs: {
-      configs: {
-        pli: {
-          clientOptions: {
-            documentSelector: ["pli"],
-          },
-          connection: {
-            options: {
-              $type: "WorkerDirect",
-              worker: pliWorker,
-            },
-            messageTransports: { reader, writer },
-          },
-        },
-      },
-    },
+    monacoWorkerFactory: configureDefaultWorkerFactory,
   };
 
-  return {
-    wrapperConfig,
-    workspaceFileUri,
-    pliWorker,
-  };
+  return vscodeApiConfig;
 };
 
 const viewsHtml = `<div id="workbench-container">
@@ -239,12 +162,4 @@ const viewsInit = async () => {
         visible ? "block" : "none";
     });
   }
-};
-
-const loadPliWorker = () => {
-  console.log(`PL/I worker URL: ${workerUrl}`);
-  return new Worker(workerUrl, {
-    type: "module",
-    name: "PLI LS",
-  });
 };

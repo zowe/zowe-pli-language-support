@@ -10,87 +10,47 @@
  */
 
 import * as vscode from "vscode";
-import { MonacoEditorLanguageClientWrapper } from "monaco-editor-wrapper";
-import { registerSkipDecoratorType } from "./decorators.js";
+import { MonacoVscodeApiWrapper } from "monaco-languageclient/vscodeApiWrapper";
 import { configure } from "./config.js";
-import helloWorld from "../workspace/hello-world.pli?raw";
-import includeExample from "../workspace/include.pli?raw";
-import includedExample from "../workspace/lib/included.pli?raw";
-import pgmconf from "../workspace/.pliplugin/pgm_conf.json?raw";
-import procgrps from "../workspace/.pliplugin/proc_grps.json?raw";
 import {
-  redirectOutlineCancelReporting,
+  InMemoryFileSystemProvider,
+  registerFileSystemOverlay,
+} from "@codingame/monaco-vscode-files-service-override";
+import {
   handleSharedWorkspace,
+  loadDefaultWorkspace,
+  redirectOutlineCancelReporting,
   registerButtons,
 } from "./workspace.js";
-import {
-  BuiltinFileSystemProvider,
-  createFileSystemProvider,
-  FileSystemProvider,
-  watchWorkspaceChanges,
-} from "./file-system-provider.js";
-import { Builtins, BuiltinsUri } from "pli-language";
-
-let wrapper: MonacoEditorLanguageClientWrapper | undefined;
 
 export async function startClient() {
   try {
     redirectOutlineCancelReporting();
+    registerButtons();
     const config = await configure(
       document.getElementById("vscode-views-root")!,
     );
-    wrapper = new MonacoEditorLanguageClientWrapper();
-    const fileSystemProvider = await createFileSystemProvider(config);
-    await wrapper.init(config.wrapperConfig);
-    registerSkipDecoratorType(wrapper);
-    registerButtons();
 
+    const fileSystemProvider = new InMemoryFileSystemProvider();
     let defaultUri: vscode.Uri | undefined = undefined;
     defaultUri = await handleSharedWorkspace(fileSystemProvider);
     if (!defaultUri) {
       defaultUri = await loadDefaultWorkspace(fileSystemProvider);
     }
-    await wrapper.startLanguageClients();
-    BuiltinFileSystemProvider.register();
-    watchWorkspaceChanges(wrapper, fileSystemProvider);
+    registerFileSystemOverlay(1, fileSystemProvider);
 
-    await vscode.window.showTextDocument(defaultUri, { preserveFocus: true });
+    const apiWrapper = new MonacoVscodeApiWrapper(config);
+    await apiWrapper.start();
+    await vscode.window.showTextDocument(defaultUri, {
+      preserveFocus: true,
+      preview: false,
+    });
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      // For some reason, the auto save feature does not work in the playground
+      // So we trigger a save after every change, which seems to make it work
+      event.document.save();
+    });
   } catch (e) {
     console.log(e);
   }
-}
-
-async function loadDefaultWorkspace(
-  fileSystemProvider: FileSystemProvider,
-): Promise<vscode.Uri> {
-  const defaultUri = await fileSystemProvider.addFileToWorkspace(
-    "/workspace/hello-world.pli",
-    helloWorld,
-  );
-  await fileSystemProvider.mkdir(vscode.Uri.parse("/workspace/.pliplugin"));
-  await fileSystemProvider.mkdir(vscode.Uri.parse("/workspace/lib"));
-  await fileSystemProvider.addFileToWorkspace(
-    "/workspace/.pliplugin/pgm_conf.json",
-    pgmconf,
-  );
-  await fileSystemProvider.addFileToWorkspace(
-    "/workspace/.pliplugin/proc_grps.json",
-    procgrps,
-  );
-  await fileSystemProvider.addFileToWorkspace(
-    "/workspace/include.pli",
-    includeExample,
-  );
-  await fileSystemProvider.addFileToWorkspace(
-    "/workspace/lib/included.pli",
-    includedExample,
-  );
-
-  await fileSystemProvider.writeFile(
-    vscode.Uri.parse(BuiltinsUri),
-    new TextEncoder().encode(Builtins),
-    FileSystemProvider.fileOptions,
-  );
-
-  return defaultUri;
 }

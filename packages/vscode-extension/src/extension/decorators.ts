@@ -10,12 +10,12 @@
  */
 
 import * as vscode from "vscode";
-import { LanguageClient, Range } from "vscode-languageclient/node.js";
+import { BaseLanguageClient, Range } from "vscode-languageclient";
 import { Settings } from "./settings";
 import { collectDisposables } from "./disposable";
 
 export function registerCustomDecorators(
-  client: LanguageClient,
+  client: BaseLanguageClient,
   settings: Settings,
 ) {
   const skippedCode = SkippedCodeDecorator.register(client, settings);
@@ -28,7 +28,7 @@ export namespace SkippedCodeDecorator {
   const skippedRangesByUri = new Map<string, vscode.Range[]>();
 
   export function register(
-    client: LanguageClient,
+    client: BaseLanguageClient,
     settings: Settings,
   ): vscode.Disposable {
     updateDecoratorType(settings, false);
@@ -111,7 +111,7 @@ export namespace MarginIndicatorDecorator {
     { m: number; n: number; active: boolean }
   >();
   export function register(
-    client: LanguageClient,
+    client: BaseLanguageClient,
     settings: Settings,
   ): vscode.Disposable {
     client.onNotification(
