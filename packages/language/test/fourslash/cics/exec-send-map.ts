@@ -1,0 +1,58 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../framework.ts" />
+
+//// DCL PTR POINTER;
+//// DCL VALUE FIXED INITIAL(0);
+//// DCL AREA AREA;
+//// DCL NAMEO CHAR(8);
+//// EXEC CICS SEND MAP('NAME');
+//// EXEC CICS SEND MAP('NAME') MAPSET('MAPSET');
+//// EXEC CICS SEND MAP('NAME') FROM(AREA);
+//// EXEC CICS SEND MAP('NAME') DATAONLY;
+//// EXEC CICS SEND MAP('NAME') FROM(AREA) LENGTH(100);
+//// EXEC CICS SEND MAP('NAME') MAPONLY;
+//// EXEC CICS SEND MAP('NAME') CURSOR;
+//// EXEC CICS SEND MAP('NAME') CURSOR(VALUE);
+//// EXEC CICS SEND MAP('NAME') FORMFEED;
+//// EXEC CICS SEND MAP('NAME') ERASE;
+//// EXEC CICS SEND MAP('NAME') ERASE ALTERNATE;
+//// EXEC CICS SEND MAP('NAME') ERASE DEFAULT;
+//// EXEC CICS SEND MAP('NAME') ERASEAUP;
+//// EXEC CICS SEND MAP('NAME') PRINT;
+//// EXEC CICS SEND MAP('NAME') FREEKB;
+//// EXEC CICS SEND MAP('NAME') ALARM;
+//// EXEC CICS SEND MAP('NAME') FRSET;
+//// EXEC CICS SEND MAP('NAME') NLEOM;
+//// EXEC CICS SEND MAP('NAME') MSR(100);
+//// EXEC CICS SEND MAP('NAME') FMHPARM('NAME');
+//// EXEC CICS SEND MAP('NAME') OUTPARTN('NAME');
+//// EXEC CICS SEND MAP('NAME') ACTPARTN('NAME');
+//// EXEC CICS SEND MAP('NAME') LDC('NAME');
+//// EXEC CICS SEND MAP('NAME') ACCUM;
+//// EXEC CICS SEND MAP('NAME') TERMINAL;
+//// EXEC CICS SEND MAP('NAME') SET(PTR);
+//// EXEC CICS SEND MAP('NAME') PAGING;
+//// EXEC CICS SEND MAP('NAME') TERMINAL WAIT;
+//// EXEC CICS SEND MAP('NAME') TERMINAL WAIT LAST;
+//// EXEC CICS SEND MAP('NAME') TERMINAL LAST;
+//// EXEC CICS SEND MAP('NAME') REQID('NAME');
+//// EXEC CICS SEND MAP('NAME') HONEOM;
+//// EXEC CICS SEND MAP('NAME') L40;
+//// EXEC CICS SEND MAP('NAME') L64;
+//// EXEC CICS SEND MAP('NAME') L80;
+
+//should only get warnings
+verify.noDiagnostics();
+    
+    
+    
