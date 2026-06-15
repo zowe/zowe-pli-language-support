@@ -31,12 +31,10 @@ describe("CICS Preprocessor: Positives", async () => {
       expect(
         diagnostics,
         diagnostics.length > 0
-          ? diagnostics
-              .map(
-                (diagnostic) =>
-                  `Error at ${fileName}:${line}: ${diagnostic.message}`,
-              )
-              .join("\n")
+          ? `Error at ${fileName}:${line}:\n` +
+              diagnostics
+                .map((diagnostic) => `- ${diagnostic.message}`)
+                .join("\n")
           : undefined,
       ).toHaveLength(0);
     },
