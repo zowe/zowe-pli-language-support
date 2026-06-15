@@ -1,0 +1,43 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../framework.ts" />
+
+//// DCL VALUE FIXED;
+//// DCL AREA FIXED;
+//// DCL LEN FIXED;
+//// DCL ID FIXED;
+//// DCL PTR POINTER;
+//// DCL NAME CHAR(8);
+//// DCL X CHAR(8) INITIAL('X');
+//// EXEC CICS GET CONTAINER(VALUE) INTO(AREA);
+//// EXEC CICS GET CONTAINER(VALUE) SET(PTR) FLENGTH(LEN);
+//// EXEC CICS GET CONTAINER(VALUE) NODATA FLENGTH(LEN);
+//// EXEC CICS GET CONTAINER(VALUE) ACTIVITY(VALUE) INTO(AREA);
+//// EXEC CICS GET CONTAINER(VALUE) ACQACTIVITY INTO(AREA);
+//// EXEC CICS GET CONTAINER(VALUE) PROCESS INTO(AREA);
+//// EXEC CICS GET CONTAINER(VALUE) ACQPROCESS INTO(AREA);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') INTO(AREA);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') SET(PTR) FLENGTH(LEN);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') SET(PTR) FLENGTH(LEN)
+////      BYTEOFFSET(12);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') NODATA FLENGTH(LEN);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') INTO(AREA)
+////      INTOCCSID(ID);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') INTO(AREA)
+////      INTOCODEPAGE(VALUE);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') INTO(AREA)
+////      CONVERTST(X);
+//// EXEC CICS GET CONTAINER(VALUE) CHANNEL('CHAN') INTO(AREA)
+////      CONVERTST(X) CCSID(ID);
+
+//should only get warnings
+verify.noDiagnostics();
