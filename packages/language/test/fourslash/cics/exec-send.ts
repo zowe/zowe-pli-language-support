@@ -43,6 +43,3 @@
 
 //should only get warnings
 verify.noDiagnostics();
-    
-    
-    

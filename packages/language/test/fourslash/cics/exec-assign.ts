@@ -126,10 +126,7 @@
 //// EXEC CICS ASSIGN USERID(STR);
 //// EXEC CICS ASSIGN USERNAME(STR);
 //// EXEC CICS ASSIGN USERPRIORITY(STR);
-//// EXEC CICS ASSIGN VALIDATION(STR);  
+//// EXEC CICS ASSIGN VALIDATION(STR);
 
 //should only get warnings
 verify.noDiagnostics();
-    
-    
-    
