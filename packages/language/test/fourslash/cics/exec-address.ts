@@ -22,5 +22,4 @@
 //// EXEC CICS ADDRESS TWA(PTR) TCTUA(PTR);
 //// EXEC CICS ADDRESS SET(DATA) USING(PTR);
 
-//should only get warnings
 verify.noDiagnostics();

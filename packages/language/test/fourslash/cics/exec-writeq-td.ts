@@ -11,11 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL NAME CHAR(8) INITIAL('NAME');
-//// DCL QAREA FIXED INITIAL(0);
-//// DCL LEN FIXED INITIAL(0);
+//// DCL NAME CHAR(4) INITIAL('NAME');
+//// DCL QAREA FIXED BIN(15) INITIAL(0);
+//// DCL LEN FIXED BIN(15) INITIAL(0);
 //// EXEC CICS WRITEQ TD QUEUE(NAME) FROM(QAREA);
 //// EXEC CICS WRITEQ TD QUEUE(NAME) FROM(QAREA) LENGTH(LEN);
 
-//should only get warnings
 verify.noDiagnostics();

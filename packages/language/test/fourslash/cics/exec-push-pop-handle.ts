@@ -14,5 +14,4 @@
 //// EXEC CICS PUSH HANDLE;
 //// EXEC CICS POP HANDLE;
 
-//should only get warnings
 verify.noDiagnostics();

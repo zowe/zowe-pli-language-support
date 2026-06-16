@@ -14,9 +14,8 @@
 //// EXEC CICS HANDLE ABEND;
 //// EXEC CICS HANDLE ABEND CANCEL;
 //// EXEC CICS HANDLE ABEND PROGRAM('AAAAAAAA');
-//// //LABEL cannot be used in PL/I:
+//// //LABEL not supported in PL/I:
 //// //EXEC CICS HANDLE ABEND LABEL(L);
 //// EXEC CICS HANDLE ABEND RESET;
 
-//should only get warnings
 verify.noDiagnostics();

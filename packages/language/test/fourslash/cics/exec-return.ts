@@ -25,5 +25,4 @@
 //// EXEC CICS RETURN TRANSID('SSP3') COMMAREA(COMMAREA);
 //// EXEC CICS RETURN TRANSID('SSP4') COMMAREA(COMMAREA);
 
-//should only get warnings
 verify.noDiagnostics();

@@ -11,9 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-////  DCL DATA POINTER;
+//// DCL DATA POINTER;
 //// DCL PTR POINTER;
 //// EXEC CICS ADDRESS SET(DATA) USING(PTR);
 
-//should only get warnings
 verify.noDiagnostics();

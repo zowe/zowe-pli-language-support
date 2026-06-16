@@ -13,5 +13,4 @@
 
 //// EXEC CICS SYNCPOINT ROLLBACK;
 
-//should only get warnings
 verify.noDiagnostics();

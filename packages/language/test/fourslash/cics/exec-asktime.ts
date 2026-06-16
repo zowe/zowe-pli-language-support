@@ -11,8 +11,7 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL TIME FIXED;
+//// DCL TIME FIXED DEC(15);
 //// EXEC CICS ASKTIME ABSTIME(TIME);
 
-//should only get warnings
 verify.noDiagnostics();

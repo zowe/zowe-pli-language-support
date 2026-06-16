@@ -14,5 +14,4 @@
 //// DCL FAIL FIXED;
 //// EXEC CICS HANDLE CONDITION MAPFAIL(FAIL);
 
-//should only get warnings
 verify.noDiagnostics();

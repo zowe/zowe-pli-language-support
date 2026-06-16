@@ -11,12 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL TIME FIXED;
 //// EXEC CICS ABEND;
 //// EXEC CICS ABEND ABCODE('LGCA');
 //// EXEC CICS ABEND NODUMP;
 //// EXEC CICS ABEND CANCEL;
 //// EXEC CICS ABEND ABCODE('LGCA') NODUMP;
 
-//should only get warnings
 verify.noDiagnostics();

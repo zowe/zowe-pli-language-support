@@ -16,5 +16,4 @@
 //// EXEC CICS FREEMAIN DATA(AREA);
 //// EXEC CICS FREEMAIN DATAPOINTER(PTR);
 
-//should only get warnings
 verify.noDiagnostics();

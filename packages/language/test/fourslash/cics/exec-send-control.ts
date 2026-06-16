@@ -11,10 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL POS FIXED INITIAL(0);
-//// DCL NAME CHAR(8) INITIAL('NAME');
-//// DCL ID FIXED INITIAL(0);
-//// DCL VALUE FIXED INITIAL(0);
+//// DCL POS FIXED BIN(15) INITIAL(0);
+//// DCL NAME CHAR(2) INITIAL('NA');
+//// DCL ID CHAR(2) INITIAL('0');
+//// DCL VALUE BIT(32) INITIAL(0);
 //// DCL PTR POINTER;
 //// EXEC CICS SEND CONTROL;
 //// EXEC CICS SEND CONTROL CURSOR;
@@ -39,5 +39,4 @@
 //// EXEC CICS SEND CONTROL L64;
 //// EXEC CICS SEND CONTROL L80;
 
-//should only get warnings
 verify.noDiagnostics();

@@ -11,10 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL LEN FIXED INITIAL(0);
+//// DCL LEN FIXED BIN(15) INITIAL(0);
 //// DCL AREA FIXED INITIAL(0);
 //// EXEC CICS BIF DEEDIT FIELD(AREA);
 //// EXEC CICS BIF DEEDIT FIELD(AREA) LENGTH(LEN);
 
-//should only get warnings
 verify.noDiagnostics();

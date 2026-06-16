@@ -13,5 +13,4 @@
 
 //// EXEC CICS SYNCPOINT;
 
-//should only get warnings
 verify.noDiagnostics();

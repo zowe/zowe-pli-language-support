@@ -13,5 +13,4 @@
 
 //// EXEC CICS IGNORE CONDITION MAPFAIL;
 
-//should only get warnings
 verify.noDiagnostics();

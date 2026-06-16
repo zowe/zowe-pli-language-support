@@ -11,8 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL ID FIXED INITIAL(0);
-//// DCL AREA FIXED INITIAL(0);
+//// DCL ID CHAR(4) INITIAL('0000');
+//// DCL AREA CHAR(4) INITIAL('    ');
 //// DCL PTR POINTER;
 //// DCL NAME CHAR(8) INITIAL('NAME');
 //// EXEC CICS SEND PAGE;
@@ -28,5 +28,4 @@
 //// EXEC CICS SEND PAGE FMHPARM(NAME);
 //// EXEC CICS SEND PAGE LAST;
 
-//should only get warnings
 verify.noDiagnostics();

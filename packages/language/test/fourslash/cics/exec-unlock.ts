@@ -12,11 +12,10 @@
 /// <reference path="../framework.ts" />
 
 //// DCL NAME CHAR(8) INITIAL('NAME');
-//// DCL ID FIXED INITIAL(0);
-//// DCL TOK FIXED INITIAL(0);
+//// DCL ID CHAR(4) INITIAL('    ');
+//// DCL TOK FIXED BIN(31) INITIAL(0);
 //// EXEC CICS UNLOCK FILE(NAME);
 //// EXEC CICS UNLOCK FILE(NAME) TOKEN(TOK);
 //// EXEC CICS UNLOCK FILE(NAME) SYSID(ID);
 
-//should only get warnings
 verify.noDiagnostics();

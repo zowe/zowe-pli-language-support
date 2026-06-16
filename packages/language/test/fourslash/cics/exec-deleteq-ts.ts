@@ -11,12 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
+//// DCL QN CHAR(16) INITIAL('QN');
 //// DCL Q CHAR(8) INITIAL('Q');
-//// DCL NAME FIXED INITIAL(0);
-//// EXEC CICS DELETEQ TD QUEUE(Q) SYSID(NAME);
-//// EXEC CICS DELETEQ TS QNAME(Q);
+//// DCL NAME CHAR(4) INITIAL('N');
+//// EXEC CICS DELETEQ TS QNAME(QN);
 //// EXEC CICS DELETEQ TS QUEUE(Q);
 //// EXEC CICS DELETEQ TS QUEUE(Q) SYSID(NAME);
 
-//should only get warnings
 verify.noDiagnostics();

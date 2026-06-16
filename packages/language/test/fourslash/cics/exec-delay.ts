@@ -11,12 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
-//// DCL ID FIXED INITIAL(0);
+//// DCL ID CHAR(8) INITIAL('0');
 //// EXEC CICS DELAY INTERVAL(100);
 //// EXEC CICS DELAY TIME(100);
 //// EXEC CICS DELAY FOR HOURS(1) MINUTES(2) SECONDS(3) MILLISECS(4);
 //// EXEC CICS DELAY UNTIL HOURS(1) MINUTES(2) SECONDS(3);
 //// EXEC CICS DELAY REQID(ID);
 
-//should only get warnings
 verify.noDiagnostics();
