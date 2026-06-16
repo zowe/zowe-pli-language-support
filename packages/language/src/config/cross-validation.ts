@@ -25,10 +25,9 @@ import { LspCodes } from "../validation/lsp-codes";
  */
 export function validatePgroupReferences(
   programs: Iterable<ProgramConfig>,
-  pgroupNames: Set<string>,
-  uri: string,
+  pgroupNames: Set<string>
 ): Diagnostic[] {
-  if (!pgroupNames.size || !uri) {
+  if (!pgroupNames.size) {
     return [];
   }
   const result: Diagnostic[] = [];
@@ -36,12 +35,13 @@ export function validatePgroupReferences(
     const pgroupReference = program.pgroup.value;
     if (!pgroupNames.has(pgroupReference)) {
       const range = program.pgroup.meta?.range ?? offsetLengthToRange(0, 1);
+      const uri = program.pgroup.meta?.uri?.toString();
       const diagnostic = diagnosticFromCodeAtRange(
         LspCodes.PluginConfiguration.UnknownProcessGroup,
+        uri,
         range,
         pgroupReference,
       );
-      diagnostic.uri = uri;
       result.push(diagnostic);
     }
   }

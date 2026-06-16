@@ -221,7 +221,7 @@ export class TestBuilder extends AbstractTestBuilder {
     const configDiagnostics =
       defaultTestWorkspace().config.getConfigInternalDiagnostics();
     for (const diagnostics of configDiagnostics.values()) {
-      this.diagnostics.push(...diagnostics);
+      this.diagnostics.push(diagnostics);
     }
     this.checkDiagnosticsURIs();
 

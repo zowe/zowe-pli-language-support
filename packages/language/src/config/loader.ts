@@ -401,6 +401,7 @@ function createParseErrorDiagnostics(
     return toLspDiagnostic(
       diagnosticFromCodeAtRange(
         LspCodes.PluginConfiguration.ParseError,
+        document.uri,
         range,
         fileName,
         jsoncPrintParseErrorCode(error.error),
@@ -418,6 +419,7 @@ function createStructureDiagnostic(
   return toLspDiagnostic(
     diagnosticFromCodeAtRange(
       LspCodes.PluginConfiguration.InvalidStructure,
+      document.uri,
       offsetLengthToRange(0, 1),
       fileName,
       expected,

@@ -26,7 +26,6 @@ import { registerPliDocumentIdentifier } from "./document-identification";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import { watchPluginFolder } from "./plugin-watcher";
-import { sendNotification } from "./messages";
 import {
   deriveUserSettingsUri,
   registerConfigLoader,

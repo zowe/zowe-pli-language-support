@@ -47,6 +47,7 @@ import { Connection } from "vscode-languageserver";
 import { startLongRunningOperation } from "../utils/promises";
 import { validatePgroupReferences } from "../config/cross-validation";
 import { MultiMap } from "../utils/collections";
+import { TextDocuments } from "../language-server/text-documents";
 
 // Re-export the schema types so existing imports of the provider module
 // keep working without churn at every call site.
@@ -139,33 +140,35 @@ export function deserializeProcessGroup(
   };
 }
 
-function validatePluginConfig(
-  document: TextDocument,
-  config: Map<string, ProgramRecord>,
-  pGroupsNames: string[],
-): {
+async function validatePluginConfig(
+  configs: Map<string, ProgramRecord>,
+  pGroupsNames: Set<string>,
+): Promise<{
   unknownProcessGroupsDiagnostic: Diagnostic[];
-  programConfigDiagnostics: LspDiagnostic[];
-} {
+  programConfigDiagnostics: MultiMap<string, LspDiagnostic>;
+}> {
   let unknownProcessGroupsDiagnostic: Diagnostic[] = [];
-  let programConfigDiagnostics: LspDiagnostic[] = [];
+  let programConfigDiagnostics: MultiMap<string, LspDiagnostic> = new MultiMap();
   // Check for unknown process groups references under "pgm_conf.json"
-  const pgroupNames = new Set(pGroupsNames);
-  const pgroupReferences: Iterable<ProgramConfig> = config.values();
+  const pgroupReferences: Iterable<ProgramConfig> = configs.values();
   unknownProcessGroupsDiagnostic = validatePgroupReferences(
     pgroupReferences,
-    pgroupNames,
-    document.uri,
+    pGroupsNames,
   );
   for (const diagnostic of unknownProcessGroupsDiagnostic) {
-    const lspDiag = toLspDiagnostic(diagnostic, document);
-    programConfigDiagnostics.push(lspDiag);
+    if (diagnostic.uri) {
+      const document = await TextDocuments.get(diagnostic.uri);
+      if (document) {
+        const lspDiag = toLspDiagnostic(diagnostic, document);
+        programConfigDiagnostics.add(diagnostic.uri, lspDiag);
+      }
+    }
   }
   return { unknownProcessGroupsDiagnostic, programConfigDiagnostics };
 }
 
-export type PluginConfigLspDiagnostics = Map<string, LspDiagnostic[]>;
-export type PluginConfigInternalDiagnostics = Map<string, Diagnostic[]>;
+export type PluginConfigLspDiagnostics = MultiMap<string, LspDiagnostic>;
+export type PluginConfigInternalDiagnostics = MultiMap<string, Diagnostic>;
 
 type ProcGrpsSnapshot = {
   entries: PluginConfigUnresolvedLibData[];
@@ -246,9 +249,9 @@ export class PluginConfigurationProvider {
   /**
    * Most recent config diagnostics from the last loadConfigurations() run
    */
-  private configLspDiagnostics: PluginConfigLspDiagnostics;
+  private configLspDiagnostics: PluginConfigLspDiagnostics = new MultiMap();
 
-  private configInternalDiagnostics: PluginConfigInternalDiagnostics;
+  private configInternalDiagnostics: PluginConfigInternalDiagnostics = new MultiMap();
 
   /**
    * File system provider this configuration loads through. Injected at
@@ -269,8 +272,6 @@ export class PluginConfigurationProvider {
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
-    this.configLspDiagnostics = new Map<string, LspDiagnostic[]>();
-    this.configInternalDiagnostics = new Map<string, Diagnostic[]>();
   }
 
   /**
@@ -314,11 +315,11 @@ export class PluginConfigurationProvider {
   /**
    * Returns the stored config diagnostics for both 'proc_grps.json' and 'pgm_conf.json' files.
    */
-  public getConfigLspDiagnostics(): ReadonlyMap<string, LspDiagnostic[]> {
+  public getConfigLspDiagnostics(): MultiMap<string, LspDiagnostic> {
     return this.configLspDiagnostics;
   }
 
-  public getConfigInternalDiagnostics(): ReadonlyMap<string, Diagnostic[]> {
+  public getConfigInternalDiagnostics(): MultiMap<string, Diagnostic> {
     return this.configInternalDiagnostics;
   }
 
@@ -446,8 +447,11 @@ export class PluginConfigurationProvider {
     this.procGrpsSnapshots.clear();
     this.knownPgmConfUris.clear();
     this.knownProcGrpsUris.clear();
+    
+    this.configInternalDiagnostics.clear();
+    this.configLspDiagnostics.clear();
 
-    const diagnostics: PluginConfigDiagnostics = new MultiMap();
+    const diagnostics: PluginConfigLspDiagnostics = new MultiMap();
 
     const plipluginDir = UriUtils.joinPath(workspaceUri, ".pliplugin");
     const plipluginPgmConfUri = UriUtils.joinPath(
@@ -528,12 +532,23 @@ export class PluginConfigurationProvider {
     }
     // `processGroupConfigs` was already cleared at the top of this method
     // and nothing has repopulated it since, so we can write straight in.
+    
     for (const config of mergedGroups.values()) {
       this.processGroupConfigs.set(config.name.value, {
         ...config,
         computedLibs: [],
         computedLibsSet: new Set<string>(),
       });
+    }
+    const pgroupNames = new Set(mergedGroups.keys());
+    const validationResult = await validatePluginConfig(this.programConfigs, pgroupNames);
+    for (const diagnostic of validationResult.unknownProcessGroupsDiagnostic) {
+      if (diagnostic.uri) {
+        this.configInternalDiagnostics.add(diagnostic.uri, diagnostic);
+      }
+    }
+    for (const [uri, lspDiagnostics] of validationResult.programConfigDiagnostics.entriesGroupedByKey()) {
+      diagnostics.addAll(uri, lspDiagnostics);
     }
     this.postProcessProgramConfigs();
     const procGrpsDiagnostics =
@@ -542,13 +557,15 @@ export class PluginConfigurationProvider {
       diagnostics.addAll(uri, list);
     }
     this.libFileMatchers = undefined;
+    const previousUris = this.previouslyPublishedUris;
     // Keep track of which URIs we published diagnostics for this time
     this.previouslyPublishedUris = new Set(diagnostics.keys());
     // Make sure URIs we published last time but are no longer sources
     // come back with an empty list, so the editor clears those diagnostics.
-    for (const uri of this.previouslyPublishedUris) {
+    for (const uri of previousUris) {
       diagnostics.addAll(uri, []);
     }
+    this.configLspDiagnostics = diagnostics;
 
     cancel();
     return diagnostics;
@@ -769,6 +786,7 @@ export class PluginConfigurationProvider {
         const unresolvedLibDiagnostic: Diagnostic = {
           ...diagnosticFromCodeAtRange(
             LspCodes.PluginConfiguration.UnresolvedEntry,
+            sourceUri,
             range,
             lib,
           ),
