@@ -25,19 +25,19 @@ describe("PL/I Parsing tests", () => {
     // later for validation
     const doc = await parse("");
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("empty program w/ null statement", async () => {
     const doc = await parseStmts(` ;`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("empty program w/ null %statement", async () => {
     const doc = await parseStmts(` %;`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Hello World Program", async () => {
@@ -48,7 +48,7 @@ describe("PL/I Parsing tests", () => {
    PUT LIST ('PROGRAM TO COMPUTE AVERAGE');
  END AVERAGE;`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   describe("Procedures", async () => {
@@ -57,7 +57,7 @@ describe("PL/I Parsing tests", () => {
     P1: procedure;
     end P1;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Procedure w/ alternate entry point", async () => {
@@ -66,7 +66,7 @@ describe("PL/I Parsing tests", () => {
     B: entry; // secondary entry point into this procedure
     end P1;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Procedure with call", async () => {
@@ -79,7 +79,7 @@ describe("PL/I Parsing tests", () => {
  put skip list(VAR1);
  end A;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Simple recursive procedure w/ recursive stated before returns", async () => {
@@ -92,7 +92,7 @@ describe("PL/I Parsing tests", () => {
   return( Input*Fact(Input-1) );
  end Fact;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Simple recursive procedure w/ recursive stated after returns", async () => {
@@ -105,7 +105,7 @@ describe("PL/I Parsing tests", () => {
   return( Input*Fact(Input-1) );
  end Fact;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Procedures w/ Order & Reorder options", async () => {
@@ -117,7 +117,7 @@ describe("PL/I Parsing tests", () => {
  call P1;
  call P2;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Procedure w/ Reorder option & Returns", async () => {
@@ -129,7 +129,7 @@ describe("PL/I Parsing tests", () => {
  declare X fixed bin(31);
  X = Double(5);`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Recursive - Returns - Options for a Procedure in various permutations", async () => {
@@ -180,7 +180,7 @@ describe("PL/I Parsing tests", () => {
  end F5;
  `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Unassigned closing end is OK", async () => {
@@ -195,7 +195,7 @@ describe("PL/I Parsing tests", () => {
   END;
   `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Options Separate by Commas & Spaces", async () => {
@@ -209,7 +209,7 @@ describe("PL/I Parsing tests", () => {
     P4: proc Options(Order, Reorder Recursive);
     end P4;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Complex recursive procedure", async () => {
@@ -231,7 +231,7 @@ describe("PL/I Parsing tests", () => {
  end Start;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -240,13 +240,13 @@ describe("PL/I Parsing tests", () => {
     test("empty label, null statement", async () => {
       const doc = await parseStmts(` main:;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Declared label", async () => {
       const doc = await parseStmts(` declare Label_x label;`);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Label assignment", async () => {
@@ -257,7 +257,7 @@ describe("PL/I Parsing tests", () => {
  go to Label_x; // jump to label
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -273,7 +273,7 @@ describe("PL/I Parsing tests", () => {
  dcl Z char(3) nonvarying init('abc');
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("char declaration w/ overflow assignment", async () => {
@@ -282,7 +282,7 @@ describe("PL/I Parsing tests", () => {
  Subject = 'Transformations'; // will truncate the last 5 chars, emitting a warning (but valid nonetheless)
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("arbitrary length char decl", async () => {
@@ -290,7 +290,7 @@ describe("PL/I Parsing tests", () => {
  dcl VAL char(*) value('Some text that runs on and on');
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("nested quotes char decl", async () => {
@@ -300,7 +300,7 @@ describe("PL/I Parsing tests", () => {
  declare User3 character (30) init('/* blah */');
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Bit declarations", async () => {
@@ -311,7 +311,7 @@ describe("PL/I Parsing tests", () => {
  Code = '1100110000'B;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Format constants", async () => {
@@ -322,7 +322,7 @@ describe("PL/I Parsing tests", () => {
     ( column(20),A(10), column(35),A(10), column(50),A(10) );
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Attribute declarations", async () => {
@@ -333,7 +333,7 @@ describe("PL/I Parsing tests", () => {
  File2 file; // file constant
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Value List declaration", async () => {
@@ -343,7 +343,7 @@ describe("PL/I Parsing tests", () => {
                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' );
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("value list from declaration", async () => {
@@ -355,7 +355,7 @@ describe("PL/I Parsing tests", () => {
  dcl x fixed bin valuelistfrom a;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     // Handle as validation error
@@ -367,7 +367,7 @@ describe("PL/I Parsing tests", () => {
      dcl x fixed bin valuelistfrom a;
     `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test.fails(
@@ -378,7 +378,7 @@ describe("PL/I Parsing tests", () => {
  dcl x fixed bin valuelistfrom a;
 `);
         assertNoParseErrors(doc);
-        generateAndAssertValidSymbolTable(doc);
+        await generateAndAssertValidSymbolTable(doc);
       },
     );
 
@@ -391,7 +391,7 @@ describe("PL/I Parsing tests", () => {
                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' );
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("multi-declaration", async () => {
@@ -402,7 +402,7 @@ describe("PL/I Parsing tests", () => {
         C character(2), D bit(4);
     `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -414,7 +414,7 @@ describe("PL/I Parsing tests", () => {
  substr(A,6,5) = substr(B,20,5);
 `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("assignment from multi-declaration", async () => {
@@ -430,7 +430,7 @@ describe("PL/I Parsing tests", () => {
  Result = A + B < C & D;
 `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   describe("Expressions", async () => {
@@ -456,7 +456,7 @@ describe("PL/I Parsing tests", () => {
  dcl Identical_to_Ar( lbound(Ar):hbound(Ar) ) pointer;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Simple arithmetic expressions", async () => {
@@ -471,7 +471,7 @@ describe("PL/I Parsing tests", () => {
  C = A ** B;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Function invocation", async () => {
@@ -488,7 +488,7 @@ describe("PL/I Parsing tests", () => {
  end ADD;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -504,7 +504,7 @@ describe("PL/I Parsing tests", () => {
  Y:;
 `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   describe("Packages", async () => {
@@ -516,7 +516,7 @@ describe("PL/I Parsing tests", () => {
  end Package_Demo;
 `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -524,7 +524,7 @@ describe("PL/I Parsing tests", () => {
     // output a string to the stdout
     const doc = await parseStmts(` put skip list('Hello ' || 'World');`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("simple GET", async () => {
@@ -534,7 +534,7 @@ describe("PL/I Parsing tests", () => {
  get list(var);
 `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("fetch", async () => {
@@ -550,7 +550,7 @@ describe("PL/I Parsing tests", () => {
  call ProgA;
  release ProgA;`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("BEGIN block", async () => {
@@ -559,7 +559,7 @@ describe("PL/I Parsing tests", () => {
  declare A fixed bin(15);
  end B;`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Subscripted entry invocation", async () => {
@@ -574,7 +574,7 @@ describe("PL/I Parsing tests", () => {
   call F(I) (X,Y,Z); // each entry call gets args x,y,z
  end;`);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Optional args", async () => {
@@ -594,7 +594,7 @@ describe("PL/I Parsing tests", () => {
  call Vrtn(10, addr(x), 15.5);
 `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Block 27", async () => {
@@ -603,7 +603,7 @@ describe("PL/I Parsing tests", () => {
     A = '/* This is a constant, not a comment */' ;
     `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   describe("Ordinal Tests", async () => {
@@ -628,7 +628,7 @@ describe("PL/I Parsing tests", () => {
       end get_day;
         `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("parses ordinals w/ multiple unsigned/signed attributes", async () => {
@@ -639,7 +639,7 @@ describe("PL/I Parsing tests", () => {
       ) prec(15) signed signed unsigned signed unsigned signed prec(15);
        `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     /**
@@ -662,7 +662,7 @@ describe("PL/I Parsing tests", () => {
       );
        `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Can specify negative value on ordinal definition", async () => {
@@ -672,7 +672,7 @@ describe("PL/I Parsing tests", () => {
       );
        `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("Can use non-UNION attributes in DEFINE STRUCTURE statement", async () => {
@@ -693,7 +693,7 @@ describe("PL/I Parsing tests", () => {
        ;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     /**
@@ -710,7 +710,7 @@ describe("PL/I Parsing tests", () => {
       ) prec(15);
        `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -723,7 +723,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("xu binary fixed point constants", async () => {
@@ -734,7 +734,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("x character constants", async () => {
@@ -744,7 +744,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("a character constants", async () => {
@@ -754,7 +754,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("e character constants", async () => {
@@ -764,7 +764,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("b3 octal constants", async () => {
@@ -774,7 +774,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("b4 hex bit constants", async () => {
@@ -784,7 +784,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("bx hex bit constants", async () => {
@@ -794,7 +794,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("b bit constants", async () => {
@@ -804,7 +804,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("gx hex graphic constants", async () => {
@@ -814,7 +814,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("g graphic constants", async () => {
@@ -825,7 +825,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("ux hex uchar constants", async () => {
@@ -835,7 +835,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("wx hex widechar constants", async () => {
@@ -845,7 +845,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
 
     test("m mixed character constants", async () => {
@@ -855,7 +855,7 @@ describe("PL/I Parsing tests", () => {
    end MAINPR;
       `);
       assertNoParseErrors(doc);
-      generateAndAssertValidSymbolTable(doc);
+      await generateAndAssertValidSymbolTable(doc);
     });
   });
 
@@ -869,7 +869,7 @@ describe("PL/I Parsing tests", () => {
         options ( nodescriptor );
         `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("parses GET LIST w/ file", async () => {
@@ -880,7 +880,7 @@ describe("PL/I Parsing tests", () => {
     END H;
     `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Procedures w/ aligned & unaligned attributes", async () => {
@@ -906,7 +906,7 @@ describe("PL/I Parsing tests", () => {
  end P6;
     `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("align in returns attributes is valid as well", async () => {
@@ -917,7 +917,7 @@ describe("PL/I Parsing tests", () => {
         );
         `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Supports GENERIC attribute", async () => {
@@ -931,7 +931,7 @@ describe("PL/I Parsing tests", () => {
       );
     `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Supports Member Call syntax on DoType3", async () => {
@@ -942,7 +942,7 @@ describe("PL/I Parsing tests", () => {
       END;
     `);
     assertNoParseErrors(doc);
-    generateAndAssertValidSymbolTable(doc);
+    await generateAndAssertValidSymbolTable(doc);
   });
 
   test("Expect error on EOF", async () => {

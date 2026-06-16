@@ -178,7 +178,7 @@ function isIntermediateBinaryExpression(
   return node && "infix" in node && "items" in node && "operators" in node;
 }
 
-export function generateAndAssertValidSymbolTable(
+export async function generateAndAssertValidSymbolTable(
   compilationUnit: CompilationUnit,
 ) {
   // Retrieve a list of valid tokens with validated payloads.
@@ -232,7 +232,7 @@ export function generateAndAssertValidSymbolTable(
   forEachNode(compilationUnit.ast, (node) => verifyNodeReachability(node));
 
   // Generate the symbol table and verify the container structure.
-  lifecycle.generateSymbolTable(compilationUnit);
+  await lifecycle.generateSymbolTable(compilationUnit);
 
   forEachNode(compilationUnit.ast, (node) =>
     addProperty(node, "_afterSymbolTable"),
@@ -281,7 +281,7 @@ export async function parseAndLink(
 
   await lifecycle.tokenize(unit, document);
   lifecycle.parse(unit);
-  lifecycle.generateSymbolTable(unit);
+  await lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
   if (options?.validate) {
     lifecycle.preprocessorValidate(unit);
