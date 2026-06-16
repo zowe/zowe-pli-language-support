@@ -48,7 +48,7 @@ import {
  */
 export interface LoadResult<T> {
   config: T[] | undefined;
-  diagnostics: LspDiagnostic[];
+  diagnostics: Diagnostic[];
 }
 
 /**
@@ -79,7 +79,7 @@ export function parseProgramConfigs(
   entry: ParseEntry = {},
 ): LoadResult<ProgramConfig> {
   const document = TextDocument.create(configUri.toString(), "jsonc", 0, text);
-  const diagnostics: LspDiagnostic[] = [];
+  const diagnostics: Diagnostic[] = [];
   const parseErrors: ParseError[] = [];
   const root = jsoncParseTree(text, parseErrors);
   diagnostics.push(
@@ -127,7 +127,7 @@ export function parseProcessGroupConfigs(
   entry: ParseEntry = {},
 ): LoadResult<ProcessGroup> {
   const document = TextDocument.create(configUri.toString(), "jsonc", 0, text);
-  const diagnostics: LspDiagnostic[] = [];
+  const diagnostics: Diagnostic[] = [];
   const parseErrors: ParseError[] = [];
   const root = jsoncParseTree(text, parseErrors);
   diagnostics.push(
@@ -395,18 +395,15 @@ function createParseErrorDiagnostics(
   document: TextDocument,
   parseErrors: ParseError[],
   fileName: string,
-): LspDiagnostic[] {
+): Diagnostic[] {
   return parseErrors.map((error) => {
     const range = offsetLengthToRange(error.offset, error.length);
-    return toLspDiagnostic(
-      diagnosticFromCodeAtRange(
-        LspCodes.PluginConfiguration.ParseError,
-        document.uri,
-        range,
-        fileName,
-        jsoncPrintParseErrorCode(error.error),
-      ),
-      document,
+    return diagnosticFromCodeAtRange(
+      LspCodes.PluginConfiguration.ParseError,
+      document.uri,
+      range,
+      fileName,
+      jsoncPrintParseErrorCode(error.error),
     );
   });
 }
@@ -415,16 +412,13 @@ function createStructureDiagnostic(
   document: TextDocument,
   fileName: string,
   expected: string,
-): LspDiagnostic {
-  return toLspDiagnostic(
-    diagnosticFromCodeAtRange(
-      LspCodes.PluginConfiguration.InvalidStructure,
-      document.uri,
-      offsetLengthToRange(0, 1),
-      fileName,
-      expected,
-    ),
-    document,
+): Diagnostic {
+  return diagnosticFromCodeAtRange(
+    LspCodes.PluginConfiguration.InvalidStructure,
+    document.uri,
+    offsetLengthToRange(0, 1),
+    fileName,
+    expected,
   );
 }
 

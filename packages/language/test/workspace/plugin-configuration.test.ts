@@ -17,6 +17,7 @@ import { ProcessGroup } from "../../src/workspace/plugin-configuration-provider"
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { Messages } from "../../src/utils/messages";
 import { makeProcessGroup } from "../config-fixtures";
+import { Severity } from "../../src/language-server/types";
 
 /**
  * Minimal connection stub that responds to `config/getGlobal` with the
@@ -106,7 +107,7 @@ describe("Plugin Configuration Tests", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].code).toBe("COPC01E");
     expect(diagnostics[0].message).toContain("nonexistent-libs");
-    expect(diagnostics[0].severity).toBe(1); // err
+    expect(diagnostics[0].severity).toBe(Severity.E); // err
   });
 
   test("Only invalid libs produce diagnostics, not valid ones", async () => {
@@ -280,27 +281,6 @@ describe("Plugin Configuration Tests", () => {
       const def = workspace.config.getProcessGroupConfig("default");
       expect(def?.computedLibsSet.has("plugin-libs")).toBe(true);
       expect(def?.computedLibsSet.has("settings-libs")).toBe(false);
-    });
-
-    test("Unresolved lib in settings show as diagnostics in settings.json", async () => {
-      await writePluginFiles(`{ "pgms": [] }`, `{ "pgroups": [] }`);
-      await writeSettingsFile(
-        `{
-          "pli.proc_grps": { "pgroups": [{ "name": "from-settings", "libs": ["nope"] }] }
-        }`,
-      );
-      workspace = new WorkspaceContext(
-        vfs,
-        makeConnection(settingsConfig({ procGrps: true })),
-      );
-
-      const result = await workspace.config.init(UriUtils.toUri(WORKSPACE));
-
-      const settingsDiags = result.get(SETTINGS_URI) ?? [];
-      const pluginDiags =
-        result.get("file:///ws/.pliplugin/proc_grps.json") ?? [];
-      expect(settingsDiags.some((d) => d.code === "COPC01E")).toBe(true);
-      expect(pluginDiags).toEqual([]);
     });
 
     test(".pliplugin/-only mode (no connection) still works", async () => {

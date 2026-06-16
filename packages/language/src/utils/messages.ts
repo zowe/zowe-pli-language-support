@@ -61,7 +61,7 @@ export namespace Messages {
    *
    * The LS reads the file, navigates to the entry, and parses the
    * subtree with the same loader used for `.pliplugin/` files - so
-   * diagnostics squiggle the real source.
+   * diagnostics underline the real source.
    */
   export interface GlobalConfigEntry {
     uri: string;

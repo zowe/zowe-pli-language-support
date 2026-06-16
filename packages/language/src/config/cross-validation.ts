@@ -25,7 +25,7 @@ import { LspCodes } from "../validation/lsp-codes";
  */
 export function validatePgroupReferences(
   programs: Iterable<ProgramConfig>,
-  pgroupNames: Set<string>
+  pgroupNames: Set<string>,
 ): Diagnostic[] {
   if (!pgroupNames.size) {
     return [];
