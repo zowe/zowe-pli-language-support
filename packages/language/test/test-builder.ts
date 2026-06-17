@@ -121,6 +121,13 @@ export class TestBuilder extends AbstractTestBuilder {
   private output!: string;
   private diagnostics!: Diagnostic[];
   private options: TestBuilderOptions;
+  /**
+   * Whether the test supplied its own `.pliplugin/proc_grps.json`. The default
+   * config lists `cpy`/`inc` libs that are unresolved in most test workspaces,
+   * so proc_grps unresolved-lib diagnostics (COPC01E) are only surfaced to
+   * assertions when the test opted in by providing its own config.
+   */
+  private suppliedProcGrps = false;
 
   getDiagnostics(): Diagnostic[] {
     return this.diagnostics;
@@ -223,6 +230,18 @@ export class TestBuilder extends AbstractTestBuilder {
     this.diagnostics = this.unit.diagnostics.getAll();
     const configDiagnostics =
       defaultTestWorkspace().config.getConfigInternalDiagnostics();
+    for (const [uri, diagnostics] of configDiagnostics.entries()) {
+      // Skip proc_grps.json diagnostics when the default config was used: its
+      // placeholder `cpy`/`inc` libs are unresolved in most test workspaces
+      // and would otherwise leak COPC01E noise into unrelated tests.
+      if (
+        !this.suppliedProcGrps &&
+        uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)
+      ) {
+        continue;
+      }
+      this.diagnostics.push(...diagnostics);
+    }
     this.diagnostics.push(...configDiagnostics);
     this.checkDiagnosticsURIs();
 
@@ -289,6 +308,7 @@ export class TestBuilder extends AbstractTestBuilder {
         procGrpsUri = true;
       }
     }
+    this.suppliedProcGrps = procGrpsUri;
     const config = defaultTestWorkspace().config;
     const workspaceUri = pgmConfUri
       ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))

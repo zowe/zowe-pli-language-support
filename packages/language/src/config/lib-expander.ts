@@ -9,6 +9,7 @@
  *
  */
 
+import { minimatch } from "minimatch";
 import { escapeRegExp } from "../parser/tokens/pli-tokens";
 import { URI, UriUtils } from "../utils/uri";
 import {
@@ -109,6 +110,29 @@ export interface ExpandedGroup {
   unresolved: JsonItem<string>[];
 }
 
+async function handleWildcard(
+  libItems: readonly JsonItem<string>[],
+  fs: FileSystemProvider,
+  workspace: URI,
+): Promise<JsonItem<string>[]> {
+  const allLibItems: JsonItem<string>[] = [];
+  for (const item of libItems) {
+    if (!item.value.includes("*")) {
+      allLibItems.push(item);
+      continue;
+    }
+    const matched = await expandWildcardLib(item.value, fs, workspace);
+    if (!matched.length) {
+      allLibItems.push(item);
+      continue;
+    }
+    for (const rel of matched) {
+      allLibItems.push({ value: rel, meta: item.meta });
+    }
+  }
+  return allLibItems;
+}
+
 /**
  * Expands every lib in `libItems` in parallel, dedupes overlapping entries,
  * and sorts the result. See {@link expandLib} for per-lib semantics.
@@ -118,8 +142,13 @@ export async function expandGroup(
   fs: FileSystemProvider,
   workspace: URI,
 ): Promise<ExpandedGroup> {
+  const libsAfterWildcardExpansion = await handleWildcard(
+    libItems,
+    fs,
+    workspace,
+  );
   const expansions = await Promise.all(
-    libItems.map((item) => expandLib(item, fs, workspace)),
+    libsAfterWildcardExpansion.map((item) => expandLib(item, fs, workspace)),
   );
 
   const libsByKey = new Map<string, LibsEntry>();
@@ -198,6 +227,41 @@ export async function expandLib(
     return { kind: ExpandedLibKind.Directory, libItem, entries: dirEntries };
   }
   return { kind: ExpandedLibKind.Unresolved, libItem, entries: [] };
+}
+
+async function expandWildcardLib(
+  pattern: string,
+  fs: FileSystemProvider,
+  workspace: URI,
+): Promise<string[]> {
+  const normalizedPattern = pattern.replace(/\\/g, "/");
+  const hasGlobstars = normalizedPattern.includes("**");
+  const searchBoundary = hasGlobstars
+    ? Infinity
+    : UriUtils.parts(normalizedPattern).length;
+  const matches: string[] = [];
+  const queue = [{ relPath: "", uri: workspace }];
+
+  while (queue.length > 0) {
+    const { relPath, uri } = queue.shift()!;
+    const depth = UriUtils.parts(relPath).length;
+    if (depth >= searchBoundary) {
+      continue;
+    }
+    const dirEntries = (await safeReadDir(fs, uri)) ?? [];
+    for (const [name, fileType] of dirEntries) {
+      if (!(fileType & FileType.Directory)) {
+        continue;
+      }
+      const childRel = relPath ? `${relPath}/${name}` : name;
+      if (minimatch(childRel, normalizedPattern, { nocase: true })) {
+        matches.push(childRel);
+      }
+      queue.push({ relPath: childRel, uri: UriUtils.joinPath(uri, name) });
+    }
+  }
+
+  return matches;
 }
 
 /**
