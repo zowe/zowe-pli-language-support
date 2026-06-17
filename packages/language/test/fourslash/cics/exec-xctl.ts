@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL DFHCOMMAREA FIXED INITIAL(0);
 //// DCL AREA FIXED INITIAL(0);
 //// DCL LEN FIXED BIN(15) INITIAL(0);
@@ -21,4 +23,4 @@
 //// EXEC CICS XCTL PROGRAM('AAAAAAAA') INPUTMSG(AREA);
 //// EXEC CICS XCTL PROGRAM('AAAAAAAA') INPUTMSG(AREA) INPUTMSGLEN(LEN);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

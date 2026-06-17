@@ -9,6 +9,9 @@
  *
  */
 
+import { CICSPreprocessor } from "preprocessor-cics";
+import { PliLanguageName } from "../src/language-server/types";
+
 export interface ListFilePosition {
   line: number;
   file: number;
@@ -34,6 +37,7 @@ export interface CompilerMessage {
   severity: MessageSeverity;
   position: ListFilePosition;
   description: string;
+  source: string;
 }
 
 export interface FileTableEntry {
@@ -73,7 +77,8 @@ type Section =
   | "compilerMessages"
   | "macroMessages"
   | "fileTable"
-  | "unreferencedIdentifiers";
+  | "unreferencedIdentifiers"
+  | "cicsMessages";
 
 /**
  * Parses an IBM Enterprise PL/I compiler .list file.
@@ -137,6 +142,11 @@ export function parseListFile(content: string): ParsedListFile {
       skipNextLine = true;
       continue;
     }
+    if (/CICS \(Built:\d+\) Messages/.test(trimmed)) {
+      section = "cicsMessages";
+      skipNextLine = true;
+      continue;
+    }
     // Component summary / end-of-compilation – stop collecting.
     if (
       trimmed.startsWith("Component ") ||
@@ -192,8 +202,11 @@ export function parseListFile(content: string): ParsedListFile {
         break;
       }
 
+      case "cicsMessages":
       case "compilerMessages":
       case "macroMessages": {
+        const source =
+          section === "cicsMessages" ? CICSPreprocessor.Name : PliLanguageName;
         // Format: {IBM<code>} {severity}  {line.file}  {description}
         const m = line.match(/^\s*(IBM\w+)\s+([IWESUL])\s+(\d+\.\d+)\s+(.*)/);
         if (m) {
@@ -205,6 +218,7 @@ export function parseListFile(content: string): ParsedListFile {
               severity: severity as MessageSeverity,
               position,
               description: description.trim(),
+              source,
             };
             if (section === "macroMessages") {
               result.macroMessages.push(msg);

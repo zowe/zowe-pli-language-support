@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL AREA FIXED INITIAL(0);
 //// DCL AREA2 CHAR(16) INITIAL('0');
 //// DCL VALUE CHAR(16) INITIAL('0');
@@ -34,4 +36,4 @@
 //// // only for 6.2
 //// // EXEC CICS PUT CONTAINER('VALUE') CHANNEL('CHAN') FROM(AREA) PREPEND;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

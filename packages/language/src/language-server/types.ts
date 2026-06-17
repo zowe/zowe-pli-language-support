@@ -270,6 +270,8 @@ export function diagnosticsToLSP(
   return map;
 }
 
+export const PliLanguageName = "PL/I";
+
 export function diagnosticToLSP(
   unit: CompilationUnit,
   diagnostic: Diagnostic,
@@ -295,7 +297,7 @@ export function diagnosticToLSP(
     message: diagnostic.message,
     code: diagnostic.code,
     data: diagnostic.data,
-    source: diagnostic.source ?? "PL/I",
+    source: diagnostic.source ?? PliLanguageName,
   };
 }
 

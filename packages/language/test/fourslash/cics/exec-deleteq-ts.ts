@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL QN CHAR(16) INITIAL('QN');
 //// DCL Q CHAR(8) INITIAL('Q');
 //// DCL NAME CHAR(4) INITIAL('N');
@@ -18,4 +20,4 @@
 //// EXEC CICS DELETEQ TS QUEUE(Q);
 //// EXEC CICS DELETEQ TS QUEUE(Q) SYSID(NAME);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

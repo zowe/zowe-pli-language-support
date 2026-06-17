@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL NAME CHAR(16) INITIAL('NAME');
 //// EXEC CICS DELETE CONTAINER(NAME);
 //// EXEC CICS DELETE CONTAINER(NAME) ACTIVITY(1);
@@ -19,4 +21,4 @@
 //// EXEC CICS DELETE CONTAINER(NAME) ACQPROCESS;
 //// EXEC CICS DELETE CONTAINER(NAME) CHANNEL('CHAN');
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

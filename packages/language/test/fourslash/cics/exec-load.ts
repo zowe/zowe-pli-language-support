@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL LEN FIXED BIN(15) INITIAL(0);
 //// DCL LEN2 FIXED BIN(31) INITIAL(0);
 //// DCL NAME CHAR(8) INITIAL('NAME');
@@ -20,4 +22,4 @@
 //// EXEC CICS LOAD PROGRAM(NAME) SET(PTR) LENGTH(LEN);
 //// EXEC CICS LOAD PROGRAM(NAME) SET(PTR) FLENGTH(LEN2);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

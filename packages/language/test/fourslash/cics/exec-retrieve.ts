@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL FILE FIXED INITIAL(0);
 //// DCL PTR POINTER;
 //// DCL ID CHAR(4) INITIAL('    ');
@@ -29,4 +31,4 @@
 //// EXEC CICS RETRIEVE REATTACH EVENT(DATA) EVENTTYPE(CLICK);
 //// EXEC CICS RETRIEVE SUBEVENT(AREA) EVENT(DATA) EVENTTYPE(CLICK);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

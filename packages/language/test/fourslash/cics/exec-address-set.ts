@@ -11,8 +11,10 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL DATA POINTER;
 //// DCL PTR POINTER;
 //// EXEC CICS ADDRESS SET(DATA) USING(PTR);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

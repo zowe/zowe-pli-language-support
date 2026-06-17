@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL PTR POINTER;
 //// DCL VALUE FIXED BIN(15) INITIAL(0);
 //// DCL AREA AREA;
@@ -51,4 +53,4 @@
 //// EXEC CICS SEND MAP('NAME') L64;
 //// EXEC CICS SEND MAP('NAME') L80;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

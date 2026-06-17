@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL CHAR4 CHAR(4) INITIAL('ID');
 //// DCL CHAR16 CHAR(16) INITIAL('0');
 //// DCL BIN31 FIXED BIN(31) INITIAL(0);
@@ -20,4 +22,4 @@
 //// EXEC CICS FREE STATE(BIN31);
 //// EXEC CICS FREE SESSION(CHAR4);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

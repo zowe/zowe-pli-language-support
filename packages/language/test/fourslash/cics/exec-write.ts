@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL TIME FIXED;
 //// DCL FILENAME CHAR(8) INITIAL('FILE');
 //// DCL AREA FIXED INITIAL(0);
@@ -25,4 +27,4 @@
 //// EXEC CICS WRITE FILE(FILENAME) FROM(AREA) RIDFLD(ID) LENGTH(LEN);
 //// EXEC CICS WRITE FILE(FILENAME) FROM(AREA) RIDFLD(ID) NOSUSPEND;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

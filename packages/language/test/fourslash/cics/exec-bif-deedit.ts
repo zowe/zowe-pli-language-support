@@ -11,9 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL LEN FIXED BIN(15) INITIAL(0);
 //// DCL AREA FIXED INITIAL(0);
 //// EXEC CICS BIF DEEDIT FIELD(AREA);
 //// EXEC CICS BIF DEEDIT FIELD(AREA) LENGTH(LEN);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

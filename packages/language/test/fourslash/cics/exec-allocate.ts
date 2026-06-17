@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 ////  DCL NAME CHAR(8) INITIAL('NAME');
 //// DCL CVDA FIXED BIN(31) INITIAL(0);
 //// DCL SESSAME CHAR(4) INITIAL('SES');
@@ -23,4 +25,4 @@
 //// EXEC CICS ALLOCATE PARTNER(PARTAME) STATE(CVDA);
 //// EXEC CICS ALLOCATE SESSION(SESSAME);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

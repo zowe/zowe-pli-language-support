@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL CODE CHAR(4) INITIAL('0');
 //// DCL FILE FIXED INITIAL(0);
 //// DCL ID CHAR(9) INITIAL('0');
@@ -28,4 +30,4 @@
 ////      TERMINAL PCT PPT SIT TCT TABLES FCT;
 //// EXEC CICS DUMP TRANSACTION DUMPCODE(CODE) DUMPID(ID);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

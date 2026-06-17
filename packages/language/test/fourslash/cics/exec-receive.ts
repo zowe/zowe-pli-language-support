@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DECLARE BIN31 FIXED BIN(31) INITIAL(0);
 //// DECLARE PTR POINTER;
 //// DECLARE AREA AREA;
@@ -34,4 +36,4 @@
 //// EXEC CICS RECEIVE ASIS BUFFER LEAVEKB;
 //// EXEC CICS RECEIVE SESSION(NAME) PASSBK;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

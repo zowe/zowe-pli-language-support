@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL ID CHAR(8) INITIAL('0');
 //// DCL NAME CHAR(4) INITIAL('NAME');
 //// DCL NAME16 CHAR(16) INITIAL('NAME16');
@@ -22,4 +24,4 @@
 //// EXEC CICS CANCEL ACQACTIVITY;
 //// EXEC CICS CANCEL ACQPROCESS;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

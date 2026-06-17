@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DECLARE PTR POINTER;
 //// DECLARE AREA AREA;
 //// DECLARE DATA AREA;
@@ -43,4 +45,4 @@
 //// EXEC CICS SEND LINEADDR(ID2);
 //// EXEC CICS SEND LEAVEKB;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

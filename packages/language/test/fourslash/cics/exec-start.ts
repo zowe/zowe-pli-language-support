@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL ID CHAR(4) INITIAL('0');
 //// DCL ID2 CHAR(16) INITIAL('0');
 //// DCL ID3 FIXED DEC(7) INITIAL(0);
@@ -40,4 +42,4 @@
 //// EXEC CICS START TRANSID('TID') NOCHECK;
 //// EXEC CICS START TRANSID('TID') PROTECT;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL AREA FIXED INITIAL(0);
 //// DCL WRONG FIXED INITIAL(0);
 //// DCL ID CHAR(2) INITIAL('  ');
@@ -48,4 +50,4 @@
 //// EXEC CICS SEND TEXT FROM(WRONG) L64;
 //// EXEC CICS SEND TEXT FROM(WRONG) L80;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

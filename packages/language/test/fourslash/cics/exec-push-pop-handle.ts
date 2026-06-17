@@ -11,7 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// EXEC CICS PUSH HANDLE;
 //// EXEC CICS POP HANDLE;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

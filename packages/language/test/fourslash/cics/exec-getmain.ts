@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL PTR POINTER;
 //// DCL DATA FIXED INITIAL(0);
 //// DCL LEN FIXED BIN(15) INITIAL(0);
@@ -25,4 +27,4 @@
 //// EXEC CICS GETMAIN SET(PTR) LENGTH(LEN) USERDATAKEY;
 //// EXEC CICS GETMAIN SET(PTR) LENGTH(LEN) CICSDATAKEY;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

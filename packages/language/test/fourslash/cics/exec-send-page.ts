@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL ID CHAR(4) INITIAL('0000');
 //// DCL AREA CHAR(4) INITIAL('    ');
 //// DCL PTR POINTER;
@@ -28,4 +30,4 @@
 //// EXEC CICS SEND PAGE FMHPARM(NAME);
 //// EXEC CICS SEND PAGE LAST;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

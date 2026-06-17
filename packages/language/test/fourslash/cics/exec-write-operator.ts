@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL VALUE FIXED INITIAL(0);
 //// DCL LEN FIXED BIN(31) INITIAL(0);
 //// DCL DATA FIXED BIN(31) INITIAL(0);
@@ -29,4 +31,4 @@
 //// EXEC CICS WRITE OPERATOR TEXT(VALUE) REPLY(DATA) MAXLENGTH(LEN)
 ////      REPLYLENGTH(LEN);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

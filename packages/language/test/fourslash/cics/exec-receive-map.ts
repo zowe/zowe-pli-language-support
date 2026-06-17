@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL AREA FIXED INITIAL(0);
 //// DCL LEN FIXED BIN(15) INITIAL(0);
 //// DCL PTR POINTER;
@@ -25,4 +27,4 @@
 //// EXEC CICS RECEIVE MAP('NAME') TERMINAL ASIS;
 //// EXEC CICS RECEIVE MAP('NAME') TERMINAL INPARTN(NAME);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

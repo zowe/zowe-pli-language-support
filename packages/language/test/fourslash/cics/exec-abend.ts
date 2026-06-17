@@ -11,10 +11,12 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// EXEC CICS ABEND;
 //// EXEC CICS ABEND ABCODE('LGCA');
 //// EXEC CICS ABEND NODUMP;
 //// EXEC CICS ABEND CANCEL;
 //// EXEC CICS ABEND ABCODE('LGCA') NODUMP;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

@@ -11,7 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL TIME FIXED DEC(15);
 //// EXEC CICS ASKTIME ABSTIME(TIME);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

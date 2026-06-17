@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL NAME CHAR(8) INITIAL('NAME');
 //// DCL SYSTEMNAME CHAR(4) INITIAL('NAME');
 //// DCL AREA FIXED INITIAL(0);
@@ -29,4 +31,4 @@
 //// EXEC CICS STARTBR FILE(NAME) RIDFLD(AREA) GTEQ;
 //// EXEC CICS STARTBR FILE(NAME) RIDFLD(AREA) XRBA EQUAL;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

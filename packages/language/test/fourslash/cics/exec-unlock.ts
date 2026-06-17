@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL NAME CHAR(8) INITIAL('NAME');
 //// DCL ID CHAR(4) INITIAL('    ');
 //// DCL TOK FIXED BIN(31) INITIAL(0);
@@ -18,4 +20,4 @@
 //// EXEC CICS UNLOCK FILE(NAME) TOKEN(TOK);
 //// EXEC CICS UNLOCK FILE(NAME) SYSID(ID);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

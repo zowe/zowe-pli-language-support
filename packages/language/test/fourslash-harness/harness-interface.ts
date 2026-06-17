@@ -145,6 +145,12 @@ export interface HarnessTesterInterface {
     volatilities: typeof Volatility;
   };
 
+  languages: {
+    Pli: string;
+    Db2Sql: string;
+    Cics: string;
+  };
+
   verify: {
     /**
      * Expect that the given label has _only_ the given error codes.
@@ -215,6 +221,12 @@ export interface HarnessTesterInterface {
      * Expect that the compilation unit has no linking diagnostics.
      */
     noLinkingDiagnostics(): void;
+
+    /**
+     * Expect that the compilation unit has no diagnostics from the given language.
+     * @param languages The languages to expect no diagnostics from.
+     */
+    noDiagnosticsFrom(...languages: string[]): void;
 
     /**
      * Expect that the compilation unit has no diagnostics apart from the given regexes.

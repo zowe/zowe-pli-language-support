@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL CODE FIXED BIN(31) INITIAL(0);
 //// DCL LEN FIXED BIN(31) INITIAL(0);
 //// DCL ID FIXED BIN(31) INITIAL(0);
@@ -46,4 +48,4 @@
 //// EXEC CICS SOAPFAULT CREATE FAULTCODE(CODE) FAULTSTRING(STRING)
 ////      FROMCCSID(ID);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

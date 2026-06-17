@@ -11,7 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL FAIL FIXED;
 //// EXEC CICS HANDLE CONDITION MAPFAIL(FAIL);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

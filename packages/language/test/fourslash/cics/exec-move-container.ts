@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL NAME CHAR(16) INITIAL('NAME');
 //// DCL NEWNAME CHAR(16) INITIAL('NEWNAME');
 //// DCL ACT CHAR(16) INITIAL('0');
@@ -24,4 +26,4 @@
 //// EXEC CICS MOVE CONTAINER(NAME) AS(NEWNAME) CHANNEL('CHAN')
 ////      TOCHANNEL('CHAN2');
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

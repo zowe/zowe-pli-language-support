@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL STR20 CHAR(20);
 //// DCL AREA CHAR(8);
 //// DCL CHAR1 CHAR(1) INITIAL('1');
@@ -47,4 +49,4 @@
 //// EXEC CICS FORMATTIME ABSTIME(DEC15) YYYYDDMM(STR20);
 //// EXEC CICS FORMATTIME ABSTIME(DEC15) YYYYMMDD(DEC15);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

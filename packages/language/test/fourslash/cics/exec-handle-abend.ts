@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// EXEC CICS HANDLE ABEND;
 //// EXEC CICS HANDLE ABEND CANCEL;
 //// EXEC CICS HANDLE ABEND PROGRAM('AAAAAAAA');
@@ -18,4 +20,4 @@
 //// //EXEC CICS HANDLE ABEND LABEL(L);
 //// EXEC CICS HANDLE ABEND RESET;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

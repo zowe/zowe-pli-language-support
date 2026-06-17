@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL ID CHAR(8) INITIAL('0');
 //// EXEC CICS DELAY INTERVAL(100);
 //// EXEC CICS DELAY TIME(100);
@@ -18,4 +20,4 @@
 //// EXEC CICS DELAY UNTIL HOURS(1) MINUTES(2) SECONDS(3);
 //// EXEC CICS DELAY REQID(ID);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

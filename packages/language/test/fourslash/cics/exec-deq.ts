@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL NAME CHAR(8) INITIAL('NAME');
 //// DCL LEN FIXED BIN(15) INITIAL(0);
 //// DCL LEN2 FIXED BIN(31) INITIAL(0);
@@ -20,4 +22,4 @@
 //// EXEC CICS DEQ RESOURCE(NAME) MAXLIFETIME(LEN2);
 //// EXEC CICS DEQ RESOURCE(NAME) TASK;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

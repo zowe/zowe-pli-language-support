@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// EXEC CICS SYNCPOINT ROLLBACK;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

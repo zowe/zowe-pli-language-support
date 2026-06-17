@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL QAREA FIXED BIN(15) INIT(0);
 //// DCL NAREA FIXED BIN(15) INIT(0);
 //// DCL NAME CHAR(8) INIT('MYQUEUE');
@@ -26,4 +28,4 @@
 //// EXEC CICS READQ TS QNAME(LONGNAME) INTO(QAREA) ITEM(VALUE);
 //// EXEC CICS READQ TS QNAME(LONGNAME) INTO(QAREA) SYSID(ID);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

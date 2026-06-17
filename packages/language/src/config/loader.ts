@@ -15,6 +15,7 @@ import {
   Diagnostic,
   diagnosticFromCodeAtRange,
   offsetLengthToRange,
+  PliLanguageName,
   rangeToLSP,
   severityToLsp,
 } from "../language-server/types";
@@ -444,7 +445,7 @@ export function toLspDiagnostic(
     severity: severityToLsp(diagnostic.severity),
     message: diagnostic.message,
     code: diagnostic.code,
-    source: diagnostic.source ?? "PL/I",
+    source: diagnostic.source ?? PliLanguageName,
     range,
     data: diagnostic.data,
   };

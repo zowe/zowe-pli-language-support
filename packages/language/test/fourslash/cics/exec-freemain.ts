@@ -11,9 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL AREA FIXED INITIAL(0);
 //// DCL PTR POINTER;
 //// EXEC CICS FREEMAIN DATA(AREA);
 //// EXEC CICS FREEMAIN DATAPOINTER(PTR);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

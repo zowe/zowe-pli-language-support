@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL FILENAME CHAR(8) INITIAL('FILE');
 //// DCL SYSTEMNAME CHAR(4) INITIAL('SYS');
 //// DCL FILE FIXED BIN(15) INITIAL(0);
@@ -41,4 +43,4 @@
 //// EXEC CICS READ FILE(FILENAME) SET(PTR) RIDFLD(AREA) GTEQ;
 //// EXEC CICS READ FILE(FILENAME) SET(PTR) RIDFLD(AREA) NOSUSPEND;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL DFHCOMMAREA AREA;
 //// DCL AREA AREA;
 //// DCL SYSID CHAR(4) INIT('SYS1');
@@ -29,4 +31,4 @@
 //// EXEC CICS LINK PROGRAM('AAAAAAAA') SYNCONRETURN;
 //// EXEC CICS LINK PROGRAM('AAAAAAAA') TRANSID(TRANSID);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

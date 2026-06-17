@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL FILENAME CHAR(8) INITIAL('FILE');
 //// DCL AREA FIXED INITIAL(0);
 //// DCL TOK FIXED BIN(31) INITIAL(0);
@@ -22,4 +24,4 @@
 //// EXEC CICS REWRITE FILE(FILENAME) FROM(AREA) LENGTH(LEN);
 //// EXEC CICS REWRITE FILE(FILENAME) FROM(AREA) NOSUSPEND;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

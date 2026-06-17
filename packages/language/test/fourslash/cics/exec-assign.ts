@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL CHAR CHAR INITIAL('8');
 //// DCL STR CHAR(8) INITIAL('8');
 //// DCL STR1 CHAR(1) INITIAL('1');
@@ -140,4 +142,4 @@
 //// EXEC CICS ASSIGN USERPRIORITY(BIN15);
 //// EXEC CICS ASSIGN VALIDATION(STR);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

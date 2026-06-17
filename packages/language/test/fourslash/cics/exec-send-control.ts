@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL POS FIXED BIN(15) INITIAL(0);
 //// DCL NAME CHAR(2) INITIAL('NA');
 //// DCL ID CHAR(2) INITIAL('0');
@@ -39,4 +41,4 @@
 //// EXEC CICS SEND CONTROL L64;
 //// EXEC CICS SEND CONTROL L80;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

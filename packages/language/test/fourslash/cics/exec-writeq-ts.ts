@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DECLARE QAREA FIXED BIN(15) INIT(0);
 //// DECLARE NAME CHAR(4) INIT('Q1');
 //// DECLARE NAME2 CHAR(8) INIT('Q1');
@@ -31,4 +33,4 @@
 //// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) MAIN;
 //// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) NOSUSPEND;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

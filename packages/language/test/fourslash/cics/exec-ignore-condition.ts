@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// EXEC CICS IGNORE CONDITION MAPFAIL;
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

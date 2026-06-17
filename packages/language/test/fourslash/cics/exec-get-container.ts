@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL BIN31 FIXED BIN(31) INITIAL(123);
 //// DCL AREA FIXED BIN(31) INITIAL(0);
 //// DCL BIN15 FIXED BIN(15) INITIAL(0);
@@ -42,4 +44,4 @@
 //// EXEC CICS GET CONTAINER(CHAR16) CHANNEL('CHAN') INTO(AREA)
 ////      CONVERTST(BIN31) CCSID(BIN31);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);

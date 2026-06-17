@@ -11,6 +11,8 @@
 
 /// <reference path="../framework.ts" />
 
+// @compiler: true
+// @wrap: main
 //// DCL COMMAREA AREA;
 //// DCL AREA AREA;
 //// EXEC CICS RETURN;
@@ -25,4 +27,4 @@
 //// EXEC CICS RETURN TRANSID('SSP3') COMMAREA(COMMAREA);
 //// EXEC CICS RETURN TRANSID('SSP4') COMMAREA(COMMAREA);
 
-verify.noDiagnostics();
+verify.noDiagnosticsFrom(languages.Cics);
