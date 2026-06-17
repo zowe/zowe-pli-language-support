@@ -303,6 +303,16 @@ export class TestBuilder extends AbstractTestBuilder {
       await defaultTestWorkspace().config.writeProcessGroupsFile(
         PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
       );
+      // The default process group configuration references cpy and inc as default includes
+      // If we don't create the directories, the config validation will generate diagnostics
+      await defaultTestWorkspace().fs.writeFile(
+        UriUtils.joinPath(workspaceUri, "cpy", "__placeholder"),
+        "",
+      );
+      await defaultTestWorkspace().fs.writeFile(
+        UriUtils.joinPath(workspaceUri, "inc", "__placeholder"),
+        "",
+      );
     }
     await defaultTestWorkspace().config.init(workspaceUri);
   }
