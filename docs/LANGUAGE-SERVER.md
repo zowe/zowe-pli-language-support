@@ -210,6 +210,21 @@ since most clients cannot render multi-line semantic tokens.
 The legend (`semanticTokenLegend`) is derived from the `SemanticTokenTypes` and
 `SemanticTokenModifiers` enums and shared with the client.
 
+#### Preprocessor italics (non-standard styling)
+
+The server only *emits* the `preprocessor` modifier; turning it into italics is a
+client-side concession.
+The extension's `package.json` ships a `configurationDefaults` block that maps the
+token rule `*.preprocessor:pli` to `{ "fontStyle": "italic" }`, so any token the
+server marks as preprocessor (macro statements, `%`-directives, and the
+EXEC-fragment sub-tokens) renders in italics regardless of the active theme.
+This is the visible signal that a span is macro/preprocessor code rather than
+ordinary PL/I.
+The same `contributes` block also defines `semanticTokenScopes`, mapping our
+`keyword` and `modifier` token types onto the TextMate scopes
+`keyword.control.pli` / `keyword.storage.pli` so that themes without explicit
+semantic-token colors still color them via the grammar.
+
 ### Code actions
 
 [`code-actions/`](../packages/language/src/language-server/code-actions)
@@ -245,21 +260,125 @@ Three commands, all triggered by the quick fixes above and dispatched in
 The default config file contents also live in `constants.ts`
 (`PluginConfiguration`).
 
+## File handling and custom URI schemes
+
+The language server never touches a real disk directly.
+Everything it needs from the outside world goes through the
+[`FileSystemProvider`](../packages/language/src/workspace/file-system-provider.ts)
+interface (`readFile`, `readDir`, `fileExists`, `findFile`, `stat`, `writeFile`,
+`deleteFile`), and a provider instance is handed to `startLanguageServer` at
+startup.
+This keeps the core package agnostic of where files live, and is what lets the
+same server run in the browser, in tests (`VirtualFileSystemProvider`,
+`EmptyFileSystemProvider`), and on the desktop.
+
+### Provider implementations
+
+There are two real implementations, both in the extension's `language` entry
+points:
+
+* **`VSCodeFileSystemProvider`** ([file-system.ts](../packages/vscode-extension/src/language/file-system.ts))
+  turns every file operation into a custom LSP request to the *client* (see the
+  `fs/*` protocol below).
+  This is the web/browser path, where the server has no Node `fs` at all and the
+  only way to read a file is to ask VS Code.
+* **`NodeFileSystemProvider`** ([main.ts](../packages/vscode-extension/src/language/main.ts))
+  extends it for the desktop: for `file:` URIs it goes straight to Node's `fs`
+  (and `glob` for `findFile`), and falls back to the proxy super-implementation
+  for any non-`file:` scheme.
+  This avoids a client round-trip per include on desktop.
+
+### The `fs/*` request protocol
+
+When a provider proxies to the client, it uses a small set of custom requests
+defined in [messages.ts](../packages/vscode-extension/src/common/messages.ts):
+`fs/readFile`, `fs/readDir`, `fs/fileExists`, `fs/findFile`, `fs/stat`,
+`fs/writeFile`.
+The client side ([file-system-provider.ts](../packages/vscode-extension/src/extension/file-system-provider.ts))
+answers each by delegating to `vscode.workspace.fs`, so reads honor whatever
+VS Code itself can see - virtual workspaces, remote/SSH, the builtin scheme, etc.
+`fs/findFile` is a workspace-wide `findFiles` glob used only by the
+"add this file's parent dir to libs" quick fix; ordinary `%INCLUDE` resolution
+uses the per-lib indexes built at config-load time, not this.
+
+### The `pli-builtin:` scheme
+
+PL/I's builtin functions, and the `SQLCA`/`SQLDA` structures, are not real files -
+they are bundled text served under a dedicated read-only scheme,
+`pli-builtin:` (`BuiltinsUriSchema`, e.g. `pli-builtin:/builtins.pli`).
+There are two halves to making this work:
+
+* On the **server**, the builtin documents are pre-registered in the
+  `BuiltinDocuments` store (see [Document management](#document-management)) and
+  carry the `pli-builtin` scheme; the linker resolves builtin references and
+  `%INCLUDE SQLCA`/`SQLDA` to these virtual URIs.
+  Features treat them specially - e.g. workspace symbols and the skipped-code /
+  margin notifications skip builtin/virtual URIs, and JSDoc-on-hover is only
+  surfaced for builtins.
+* On the **client**, [builtin-files.ts](../packages/vscode-extension/src/extension/builtin-files.ts)
+  registers a `BuiltinFileSystemProvider` for the scheme (read-only,
+  case-insensitive) so that "go to definition" into a builtin actually opens a
+  viewable document.
+  It serves the four bundled texts (`builtins.pli`, the macro builtins, `SQLCA`,
+  `SQLDA`) and rejects all writes.
+
+### Virtual files and URI handling
+
+`isVirtualFile` ([uri.ts](../packages/language/src/utils/uri.ts)) treats the
+`git`, `untitled`, and `pli-builtin` schemes as virtual; the skipped-code and
+margin-indicator notifications bail out for these so the editor doesn't try to
+decorate a diff view or a builtin.
+`uri.ts` also carries the PL/I-specific URI quirks: for "fragmentless" schemes
+(`file`, `memory`, `git`, `untitled`, `pli-builtin`) a `#` is escaped to `%23`
+before parsing, because `#` is a legal character in PL/I file/member names
+(e.g. `A1@#_$`) and must never be misread as a URI fragment.
+All map keys and equality comparisons go through `toNormalizedKey`, which lower-cases
+and decodes the path so the same file under different encodings resolves to one unit.
+
+The client registers the language for *any* scheme (`{ scheme: "*", language: "pli" }`,
+plus `.pliplugin/*.json` on the `file` scheme), so PL/I features work in diffs,
+untitled buffers, and builtin documents alike.
+
+## Language auto-detection (non-standard)
+
+PL/I source files frequently have no recognizable extension (mainframe data-set
+members, `.txt`, no extension at all), so the extension proposes the language
+rather than relying on the file association alone.
+[document-identification.ts](../packages/vscode-extension/src/extension/document-identification.ts)
+watches documents that VS Code opened as `plaintext` and, unless the user disabled
+`pli.autoDetect`, decides whether to offer switching them to PL/I:
+
+* It first rejects obvious non-PL/I files (`.git`, listing `.lst`/`.list`, compiler
+  `.xml` output, anything whose first line looks like an IBM listing header).
+* It then accepts on a likely PL/I extension (`pli`/`pl1`/`pl`/`p1`), or asks the
+  server via the `pli/existingFileRequest` request whether the file is already part
+  of a known compilation unit (e.g. pulled in as an include), or finally falls back
+  to scanning the first 200 lines for `DCL`/`PROCEDURE`/`THEN DO` constellations.
+* On a match it shows a one-time *"set language to PL/I?"* prompt with a *Never*
+  option that flips `pli.autoDetect` off.
+
 ## Custom notifications and requests
 
 Beyond the standard LSP protocol, the server uses a few custom messages:
 
-* **`pli/skippedCode`** ([`skipped-code.ts`](../packages/language/src/language-server/skipped-code.ts)):
+* `pli/skippedCode` ([`skipped-code.ts`](../packages/language/src/language-server/skipped-code.ts)):
   ranges of code skipped by the preprocessor (untaken `%IF`/`%SELECT` branches,
-  `%DO SKIP; ... %END;`). The client greys these out. Emitted on cache revalidation, only
+  `%DO SKIP; ... %END;`). Emitted on cache revalidation, only
   when the ranges actually change.
-* **`pli/marginIndicator`** ([`margin-indicator.ts`](../packages/language/src/language-server/margin-indicator.ts)):
-  the source margin columns `m`/`n` (default 2/72) so the client can draw margin
-  rulers. Also emitted on revalidation when changed.
-* **`WorkspaceDidChangePluginConfig`** notification (client -> server): reloads
+  The client ([decorators.ts](../packages/vscode-extension/src/extension/decorators.ts))
+  renders them as a dimmed `TextEditorDecorationType` whose opacity comes from the
+  `pli.skippedCode.opacity` setting, and the whole feature can be toggled with
+  `pli.skippedCode.enabled`.
+* `pli/marginIndicator` ([`margin-indicator.ts`](../packages/language/src/language-server/margin-indicator.ts)):
+  the source margin columns `m`/`n` (default 2/72). Also emitted on revalidation when changed.
+  The client turns them into editor rulers (`editor.rulers` for the `pli` language),
+  driven by the `pli.marginIndicator.rulers` setting
+  (`off` / `default` `[1, 72]` / `automatic` from the reported margins).
+* `WorkspaceDidChangePluginConfig` notification (client -> server): reloads
   plugin configurations, reindexes affected units, and refreshes semantic tokens.
 * **`ExistingFileRequest`** (client -> server): answers whether a URI is part of a
   known compilation unit.
+* Various `fs/*` requests. See the above for more details.
 
 The two revalidation-driven notifications are not sent from `connection-handler.ts`
 directly - they are registered as `onRevalidate` callbacks on the unit's
