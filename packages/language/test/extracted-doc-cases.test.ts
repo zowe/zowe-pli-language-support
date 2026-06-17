@@ -50,7 +50,7 @@ test("Block block-492.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-508.pli", async () => {
@@ -85,7 +85,7 @@ test("Block block-508.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-400.pli", async () => {
@@ -116,7 +116,7 @@ test("Block block-400.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-204.pli", async () => {
@@ -143,7 +143,7 @@ test("Block block-204.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-658.pli", async () => {
@@ -177,7 +177,7 @@ test("Block block-658.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-297.pli", async () => {
@@ -205,7 +205,7 @@ test("Block block-297.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-477.pli", async () => {
@@ -233,7 +233,7 @@ test("Block block-477.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-610.pli", async () => {
@@ -268,7 +268,7 @@ test("Block block-610.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-278.pli", async () => {
@@ -301,7 +301,7 @@ test("Block block-278.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-184.pli", async () => {
@@ -328,7 +328,7 @@ test("Block block-184.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-129.pli", async () => {
@@ -356,7 +356,7 @@ test("Block block-129.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-689.pli", async () => {
@@ -484,7 +484,7 @@ test("Block block-689.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-688.pli", async () => {
@@ -610,7 +610,7 @@ test("Block block-688.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-68.pli", async () => {
@@ -639,7 +639,7 @@ test("Block block-68.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-142.pli", async () => {
@@ -675,7 +675,7 @@ test("Block block-142.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-21.pli", async () => {
@@ -702,7 +702,7 @@ test("Block block-21.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-20.pli", async () => {
@@ -729,7 +729,7 @@ test("Block block-20.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-389.pli", async () => {
@@ -764,7 +764,7 @@ test("Block block-389.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-212.pli", async () => {
@@ -791,7 +791,7 @@ test("Block block-212.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-149.pli", async () => {
@@ -825,7 +825,7 @@ test("Block block-149.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-192.pli", async () => {
@@ -852,7 +852,7 @@ test("Block block-192.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-633.pli", async () => {
@@ -886,7 +886,7 @@ test("Block block-633.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-383.pli", async () => {
@@ -914,7 +914,7 @@ test("Block block-383.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-382.pli", async () => {
@@ -944,7 +944,7 @@ test("Block block-382.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-177.pli", async () => {
@@ -972,7 +972,7 @@ test("Block block-177.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-87.pli", async () => {
@@ -1001,7 +1001,7 @@ test("Block block-87.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-562.pli", async () => {
@@ -1034,7 +1034,7 @@ test("Block block-562.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-563.pli", async () => {
@@ -1071,7 +1071,7 @@ test("Block block-563.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-27.pli", async () => {
@@ -1099,7 +1099,7 @@ test("Block block-27.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-692.pli", async () => {
@@ -1165,7 +1165,7 @@ test("Block block-692.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-214.pli", async () => {
@@ -1203,7 +1203,7 @@ test("Block block-214.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-215.pli", async () => {
@@ -1235,7 +1235,7 @@ test("Block block-215.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-286.pli", async () => {
@@ -1263,7 +1263,7 @@ test("Block block-286.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-329.pli", async () => {
@@ -1294,7 +1294,7 @@ test("Block block-329.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-194.pli", async () => {
@@ -1330,7 +1330,7 @@ test("Block block-194.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-317.pli", async () => {
@@ -1357,7 +1357,7 @@ test("Block block-317.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-12.pli", async () => {
@@ -1384,7 +1384,7 @@ test("Block block-12.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-385.pli", async () => {
@@ -1418,7 +1418,7 @@ test("Block block-385.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-153.pli", async () => {
@@ -1449,7 +1449,7 @@ test("Block block-153.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-152.pli", async () => {
@@ -1478,7 +1478,7 @@ test("Block block-152.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-31.pli", async () => {
@@ -1512,7 +1512,7 @@ test("Block block-31.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-629.pli", async () => {
@@ -1559,7 +1559,7 @@ test("Block block-629.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-291.pli", async () => {
@@ -1591,7 +1591,7 @@ test("Block block-291.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-530.pli", async () => {
@@ -1629,7 +1629,7 @@ test("Block block-530.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-399.pli", async () => {
@@ -1658,7 +1658,7 @@ test("Block block-399.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-471.pli", async () => {
@@ -1687,7 +1687,7 @@ test("Block block-471.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-183.pli", async () => {
@@ -1714,7 +1714,7 @@ test("Block block-183.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-236.pli", async () => {
@@ -1752,7 +1752,7 @@ test("Block block-236.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-209.pli", async () => {
@@ -1790,7 +1790,7 @@ test("Block block-209.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-208.pli", async () => {
@@ -1822,7 +1822,7 @@ test("Block block-208.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-393.pli", async () => {
@@ -1849,7 +1849,7 @@ test("Block block-393.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-392.pli", async () => {
@@ -1876,7 +1876,7 @@ test("Block block-392.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-300.pli", async () => {
@@ -1904,7 +1904,7 @@ test("Block block-300.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-166.pli", async () => {
@@ -1931,7 +1931,7 @@ test("Block block-166.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-28.pli", async () => {
@@ -1958,7 +1958,7 @@ test("Block block-28.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-29.pli", async () => {
@@ -1989,7 +1989,7 @@ test("Block block-29.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-516.pli", async () => {
@@ -2018,7 +2018,7 @@ test("Block block-516.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-679.pli", async () => {
@@ -2046,7 +2046,7 @@ test("Block block-679.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-191.pli", async () => {
@@ -2073,7 +2073,7 @@ test("Block block-191.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-380.pli", async () => {
@@ -2101,7 +2101,7 @@ test("Block block-380.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-528.pli", async () => {
@@ -2130,7 +2130,7 @@ test("Block block-528.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-486.pli", async () => {
@@ -2161,7 +2161,7 @@ test("Block block-486.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-22.pli", async () => {
@@ -2188,7 +2188,7 @@ test("Block block-22.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-23.pli", async () => {
@@ -2215,7 +2215,7 @@ test("Block block-23.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-115.pli", async () => {
@@ -2242,7 +2242,7 @@ test("Block block-115.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-548.pli", async () => {
@@ -2272,7 +2272,7 @@ test("Block block-548.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-549.pli", async () => {
@@ -2320,7 +2320,7 @@ test("Block block-549.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-436.pli", async () => {
@@ -2352,7 +2352,7 @@ test("Block block-436.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-305.pli", async () => {
@@ -2380,7 +2380,7 @@ test("Block block-305.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-239.pli", async () => {
@@ -2418,7 +2418,7 @@ test("Block block-239.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-403.pli", async () => {
@@ -2451,7 +2451,7 @@ test("Block block-403.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-402.pli", async () => {
@@ -2479,7 +2479,7 @@ test("Block block-402.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-379.pli", async () => {
@@ -2507,7 +2507,7 @@ test("Block block-379.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-475.pli", async () => {
@@ -2535,7 +2535,7 @@ test("Block block-475.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-613.pli", async () => {
@@ -2566,7 +2566,7 @@ test("Block block-613.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-181.pli", async () => {
@@ -2595,7 +2595,7 @@ test("Block block-181.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-180.pli", async () => {
@@ -2628,7 +2628,7 @@ test("Block block-180.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-375.pli", async () => {
@@ -2656,7 +2656,7 @@ test("Block block-375.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-374.pli", async () => {
@@ -2684,7 +2684,7 @@ test("Block block-374.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-506.pli", async () => {
@@ -2711,7 +2711,7 @@ test("Block block-506.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-594.pli", async () => {
@@ -2745,7 +2745,7 @@ test("Block block-594.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-479.pli", async () => {
@@ -2772,7 +2772,7 @@ test("Block block-479.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-478.pli", async () => {
@@ -2799,7 +2799,7 @@ test("Block block-478.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-94.pli", async () => {
@@ -2830,7 +2830,7 @@ test("Block block-94.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-299.pli", async () => {
@@ -2857,7 +2857,7 @@ test("Block block-299.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-302.pli", async () => {
@@ -2885,7 +2885,7 @@ test("Block block-302.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-165.pli", async () => {
@@ -2920,7 +2920,7 @@ test("Block block-165.pli", async () => {
    end X;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-150.pli", async () => {
@@ -2948,7 +2948,7 @@ test("Block block-150.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-309.pli", async () => {
@@ -2980,7 +2980,7 @@ test("Block block-309.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-532.pli", async () => {
@@ -3018,7 +3018,7 @@ test("Block block-532.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-473.pli", async () => {
@@ -3048,7 +3048,7 @@ test("Block block-473.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-687.pli", async () => {
@@ -3154,7 +3154,7 @@ test("Block block-687.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-222.pli", async () => {
@@ -3236,7 +3236,7 @@ test("Block block-222.pli", async () => {
    end;          
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-450.pli", async () => {
@@ -3269,7 +3269,7 @@ test("Block block-450.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-637.pli", async () => {
@@ -3296,7 +3296,7 @@ test("Block block-637.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-196.pli", async () => {
@@ -3334,7 +3334,7 @@ test("Block block-196.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-67.pli", async () => {
@@ -3377,7 +3377,7 @@ test("Block block-67.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-315.pli", async () => {
@@ -3405,7 +3405,7 @@ test("Block block-315.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-172.pli", async () => {
@@ -3433,7 +3433,7 @@ test("Block block-172.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-387.pli", async () => {
@@ -3466,7 +3466,7 @@ test("Block block-387.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-25.pli", async () => {
@@ -3494,7 +3494,7 @@ test("Block block-25.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-480.pli", async () => {
@@ -3522,7 +3522,7 @@ test("Block block-480.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-24.pli", async () => {
@@ -3549,7 +3549,7 @@ test("Block block-24.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-589.pli", async () => {
@@ -3594,7 +3594,7 @@ test("Block block-589.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-147.pli", async () => {
@@ -3640,7 +3640,7 @@ test("Block block-147.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-321.pli", async () => {
@@ -3670,7 +3670,7 @@ test("Block block-321.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-146.pli", async () => {
@@ -3698,7 +3698,7 @@ test("Block block-146.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-52.pli", async () => {
@@ -3727,7 +3727,7 @@ test("Block block-52.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-690.pli", async () => {
@@ -3873,7 +3873,7 @@ test("Block block-690.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-691.pli", async () => {
@@ -4019,7 +4019,7 @@ test("Block block-691.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-216.pli", async () => {
@@ -4054,7 +4054,7 @@ test("Block block-216.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-179.pli", async () => {
@@ -4081,7 +4081,7 @@ test("Block block-179.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-178.pli", async () => {
@@ -4109,7 +4109,7 @@ test("Block block-178.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-271.pli", async () => {
@@ -4156,7 +4156,7 @@ test("Block block-271.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-169.pli", async () => {
@@ -4184,7 +4184,7 @@ test("Block block-169.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-48.pli", async () => {
@@ -4224,7 +4224,7 @@ test("Block block-48.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-187.pli", async () => {
@@ -4257,7 +4257,7 @@ test("Block block-187.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-2.pli", async () => {
@@ -4287,7 +4287,7 @@ test("Block block-2.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-267.pli", async () => {
@@ -4314,7 +4314,7 @@ test("Block block-267.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-283.pli", async () => {
@@ -4347,7 +4347,7 @@ test("Block block-283.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-137.pli", async () => {
@@ -4377,7 +4377,7 @@ test("Block block-137.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-102.pli", async () => {
@@ -4404,7 +4404,7 @@ test("Block block-102.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-8.pli", async () => {
@@ -4434,7 +4434,7 @@ test("Block block-8.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-289.pli", async () => {
@@ -4475,7 +4475,7 @@ test("Block block-289.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-55.pli", async () => {
@@ -4507,7 +4507,7 @@ test("Block block-55.pli", async () => {
     End FMAIN;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-285.pli", async () => {
@@ -4539,7 +4539,7 @@ test("Block block-285.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-284.pli", async () => {
@@ -4571,7 +4571,7 @@ test("Block block-284.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-131.pli", async () => {
@@ -4601,7 +4601,7 @@ test("Block block-131.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-11.pli", async () => {
@@ -4635,7 +4635,7 @@ test("Block block-11.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-276.pli", async () => {
@@ -4663,7 +4663,7 @@ test("Block block-276.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-249.pli", async () => {
@@ -4691,7 +4691,7 @@ test("Block block-249.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-94.pli", async () => {
@@ -4739,7 +4739,7 @@ test("Block block-94.pli", async () => {
   //GO.IN DD */
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-309.pli", async () => {
@@ -4783,7 +4783,7 @@ test("Block block-309.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-303.pli", async () => {
@@ -4819,7 +4819,7 @@ test("Block block-303.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-298.pli", async () => {
@@ -4853,7 +4853,7 @@ test("Block block-298.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-299.pli", async () => {
@@ -4909,7 +4909,7 @@ test("Block block-299.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-101.pli", async () => {
@@ -4947,7 +4947,7 @@ test("Block block-101.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-21.pli", async () => {
@@ -4977,7 +4977,7 @@ test("Block block-21.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-311.pli", async () => {
@@ -5043,7 +5043,7 @@ test("Block block-311.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-310.pli", async () => {
@@ -5082,7 +5082,7 @@ test("Block block-310.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-56.pli", async () => {
@@ -5118,7 +5118,7 @@ test("Block block-56.pli", async () => {
     End;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-143.pli", async () => {
@@ -5150,7 +5150,7 @@ test("Block block-143.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-281.pli", async () => {
@@ -5183,7 +5183,7 @@ test("Block block-281.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-280.pli", async () => {
@@ -5238,7 +5238,7 @@ test("Block block-280.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-135.pli", async () => {
@@ -5266,7 +5266,7 @@ test("Block block-135.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-307.pli", async () => {
@@ -5328,7 +5328,7 @@ test("Block block-307.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-128.pli", async () => {
@@ -5364,7 +5364,7 @@ test("Block block-128.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-273.pli", async () => {
@@ -5392,7 +5392,7 @@ test("Block block-273.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-272.pli", async () => {
@@ -5422,7 +5422,7 @@ test("Block block-272.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-74.pli", async () => {
@@ -5452,7 +5452,7 @@ test("Block block-74.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-91.pli", async () => {
@@ -5479,7 +5479,7 @@ test("Block block-91.pli", async () => {
  end;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-300.pli", async () => {
@@ -5513,7 +5513,7 @@ test("Block block-300.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-274.pli", async () => {
@@ -5541,7 +5541,7 @@ test("Block block-274.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-188.pli", async () => {
@@ -5575,7 +5575,7 @@ test("Block block-188.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-220.pli", async () => {
@@ -5605,7 +5605,7 @@ test("Block block-220.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-171.pli", async () => {
@@ -5639,7 +5639,7 @@ test("Block block-171.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-287.pli", async () => {
@@ -5686,7 +5686,7 @@ test("Block block-287.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-215.pli", async () => {
@@ -5713,7 +5713,7 @@ test("Block block-215.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });
 
 test("Block block-12.pli", async () => {
@@ -5747,5 +5747,5 @@ test("Block block-12.pli", async () => {
  END MAINTP;
 `);
   assertNoParseErrors(doc);
-  generateAndAssertValidSymbolTable(doc);
+  await generateAndAssertValidSymbolTable(doc);
 });

@@ -12,6 +12,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { UriUtils } from "../utils/uri";
 import { BuiltinsUriSchema } from "./builtins-constants";
+import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 
 export const KNOWN_BUILTINS = "/* Known Builtins */";
 export { BuiltinsUriSchema };
@@ -13946,9 +13947,6 @@ export const Builtins =
  END;
 
  ${KNOWN_BUILTINS}
-
- define alias __SIGNED_INT signed fixed bin(31,0);
- define alias __UNSIGNED_INT unsigned fixed bin(32,0);
  ` +
   BuiltinsBoolean +
   BuiltinsFiles +
@@ -14586,4 +14584,34 @@ export const BuiltinsMacroTextDocument = TextDocument.create(
   "pli",
   0,
   BuiltinsMacro,
+);
+
+function getIntTypeAliasesForLP(lp: CompilerOptions.LP): string {
+  const p1 = lp === CompilerOptions.LP.LP64 ? 63 : 31;
+  const p2 = lp === CompilerOptions.LP.LP64 ? 64 : 32;
+
+  return `
+ define alias __SIGNED_INT signed fixed bin(${p1},0);
+ define alias __UNSIGNED_INT unsigned fixed bin(${p2},0);
+`;
+}
+
+export const BuiltinsIntTypeAliasesLP32File =
+  "builtins-int-type-aliases-lp32.pli";
+export const BuiltinsIntTypeAliasesLP32Uri = `${BuiltinsUriSchema}:/${BuiltinsIntTypeAliasesLP32File}`;
+export const BuiltinsIntTypeAliasesLP64File =
+  "builtins-int-type-aliases-lp64.pli";
+export const BuiltinsIntTypeAliasesLP64Uri = `${BuiltinsUriSchema}:/${BuiltinsIntTypeAliasesLP64File}`;
+
+export const BuiltinsIntTypeAliasesLP32TextDocument = TextDocument.create(
+  BuiltinsIntTypeAliasesLP32Uri,
+  "pli",
+  0,
+  getIntTypeAliasesForLP(CompilerOptions.LP.LP32),
+);
+export const BuiltinsIntTypeAliasesLP64TextDocument = TextDocument.create(
+  BuiltinsIntTypeAliasesLP64Uri,
+  "pli",
+  0,
+  getIntTypeAliasesForLP(CompilerOptions.LP.LP64),
 );

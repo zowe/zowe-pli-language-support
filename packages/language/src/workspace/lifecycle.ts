@@ -11,7 +11,7 @@
 
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
-import { CompilationUnit } from "./compilation-unit";
+import { CompilationUnit, addBuiltinUnits } from "./compilation-unit";
 import { Program } from "../syntax-tree/ast";
 import {
   generatePliValidationDiagnostics,
@@ -38,7 +38,7 @@ export async function lifecycle(
   await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
-  generateSymbolTable(compilationUnit);
+  await generateSymbolTable(compilationUnit);
   await interruptAndCheck(cancellation);
   link(compilationUnit);
   await interruptAndCheck(cancellation);
@@ -84,7 +84,8 @@ export function parse(compilationUnit: CompilationUnit): Program {
   return tree;
 }
 
-export function generateSymbolTable(compilationUnit: CompilationUnit) {
+export async function generateSymbolTable(compilationUnit: CompilationUnit) {
+  await addBuiltinUnits(compilationUnit, compilationUnit.services.workspace);
   iterateSymbols(compilationUnit);
 }
 
