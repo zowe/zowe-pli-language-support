@@ -75,6 +75,15 @@ export class FileStore {
     }
   }
 
+  addBaseFiles(files: CompilationUnit[]): void {
+    for (const file of files) {
+      const uriString = file.uri.toString();
+      this.baseFiles.push(file);
+      this.baseFileUris.add(uriString);
+      this.map.set(uriString, file.services.files.get(file.uri)!);
+    }
+  }
+
   has(uri: URI | string): boolean {
     return this.map.has(uri.toString());
   }

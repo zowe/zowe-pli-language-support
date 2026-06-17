@@ -128,19 +128,35 @@ describe("Validating", () => {
     assertNoDiagnostics(doc);
   });
 
-  // TODO @montymxb Mar. 28th, 2025: Pending re-integration of the built-in library for testing
-  test.fails.skip(
-    "Reference to alias types __SIGNED_INT & __UNSIGNED_INT",
-    async () => {
-      const doc = await parseWithValidations(`
+  test("Reference to alias types __SIGNED_INT & __UNSIGNED_INT", async () => {
+    const doc = await parseWithValidations(`
+      mypackage: package;
+      DCL x type __SIGNED_INT;
+      DCL y type __UNSIGNED_INT;
+      end mypackage;
+      `);
+    assertNoDiagnostics(doc);
+  });
+
+  test("__SIGNED_INT and __UNSIGNED_INT with LP(32)", async () => {
+    const doc = await parseWithValidations(`*PROCESS LP(32);
         mypackage: package;
         DCL x type __SIGNED_INT;
         DCL y type __UNSIGNED_INT;
         end mypackage;
         `);
-      assertNoDiagnostics(doc);
-    },
-  );
+    assertNoDiagnostics(doc);
+  });
+
+  test("__SIGNED_INT and __UNSIGNED_INT with LP(64)", async () => {
+    const doc = await parseWithValidations(`*PROCESS LP(64);
+        mypackage: package;
+        DCL x type __SIGNED_INT;
+        DCL y type __UNSIGNED_INT;
+        end mypackage;
+        `);
+    assertNoDiagnostics(doc);
+  });
 
   describe("Call validations", () => {
     test("can call function declared by procedure", async () => {

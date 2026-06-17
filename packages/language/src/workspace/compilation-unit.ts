@@ -33,6 +33,8 @@ import {
 import {
   BuiltinsMacroTextDocument,
   BuiltinsTextDocument,
+  BuiltinsIntTypeAliasesLP32TextDocument,
+  BuiltinsIntTypeAliasesLP64TextDocument,
   BuiltinsUriSchema,
 } from "./builtins.js";
 import { GroupRecord, ProgramRecord } from "./plugin-configuration-provider.js";
@@ -49,6 +51,7 @@ import {
   CompilerOptions,
   getDefaultCompilerOptions,
 } from "../preprocessor/compiler-options/options.js";
+import { CompilerOptions as PliCompilerOptions } from "../preprocessor/compiler-options/options-pli.js";
 import { DiagnosticsStore } from "../validation/diagnostics-store.js";
 import { LRUCache } from "lru-cache";
 
@@ -104,8 +107,6 @@ export interface CompilationServices {
   workspace: WorkspaceContext;
 }
 
-const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
-const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
 const FIVE_MINUTES = 1000 * 60 * 5;
 
 /**
@@ -117,59 +118,13 @@ function isPluginConfigurationUri(uri: URI): boolean {
   return path.includes("/.pliplugin/") && /\.json$/i.test(path);
 }
 
-function createBuiltinUnitGetter(
-  builtinDocument: TextDocument,
-): (workspace: WorkspaceContext) => Promise<CompilationUnit> {
-  let builtinUnit: CompilationUnit | undefined = undefined;
-  return async (workspace) => {
-    if (!builtinUnit) {
-      const fileUri = URI.parse(builtinDocument.uri);
-      builtinUnit = await createCompilationUnit(fileUri, workspace);
-      await tokenize(builtinUnit, builtinDocument);
-      parse(builtinUnit);
-      generateSymbolTable(builtinUnit);
-      link(builtinUnit);
-    }
-    return builtinUnit;
-  };
-}
-
-function createBuiltinScopeGetter(
-  unitGetter: (workspace: WorkspaceContext) => Promise<CompilationUnit>,
-) {
-  let builtinFileScope: Scope | undefined;
-  return async (uri: URI, workspace: WorkspaceContext): Promise<Scope> => {
-    if (isBuiltinFile(uri)) {
-      return Scope.createRoot();
-    }
-    if (!builtinFileScope) {
-      const unit = await unitGetter(workspace);
-      builtinFileScope =
-        unit.scopeCaches.regular.get(unit.ast) ?? Scope.createRoot();
-    }
-    return builtinFileScope;
-  };
-}
-
-const getBuiltinUnit = createBuiltinUnitGetter(BuiltinsTextDocument);
-const getBuiltinMacroUnit = createBuiltinUnitGetter(BuiltinsMacroTextDocument);
-
-const getBuiltinScope = createBuiltinScopeGetter(getBuiltinUnit);
-const getRootPreprocessorScope = createBuiltinScopeGetter(getBuiltinMacroUnit);
-
 export async function createCompilationUnit(
   uri: URI,
   workspace: WorkspaceContext,
 ): Promise<CompilationUnit> {
   const compilerOptions = getDefaultCompilerOptions();
-  const baseFiles: CompilationUnit[] = [];
-  if (uri.scheme !== BuiltinsUriSchema) {
-    const unit = await getBuiltinUnit(workspace);
-    const macroUnit = await getBuiltinMacroUnit(workspace);
-    baseFiles.push(unit, macroUnit);
-  }
   const services: CompilationServices = {
-    files: new FileStore(baseFiles),
+    files: new FileStore([]),
     typeCache: new DefaultTypeCache(),
     includeCache: new LRUCache({
       max: 500,
@@ -212,8 +167,8 @@ export async function createCompilationUnit(
       .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
         skippedCode(connection, unit);
       }),
-    rootScope: await getBuiltinScope(uri, workspace),
-    rootPreprocessorScope: await getRootPreprocessorScope(uri, workspace),
+    rootScope: Scope.createRoot(),
+    rootPreprocessorScope: Scope.createRoot(),
     get programConfig() {
       if (cachedProgramConfig !== null) {
         return cachedProgramConfig;
@@ -247,6 +202,78 @@ export async function createCompilationUnit(
     },
   };
   return unit;
+}
+
+const BuiltinFileStart = `${BuiltinsUriSchema}:/`;
+const isBuiltinFile = (uri: URI) => uri.toString().startsWith(BuiltinFileStart);
+
+function createBuiltinUnitGetter(
+  builtinDocument: TextDocument,
+  parentUnitGetter?: (workspace: WorkspaceContext) => Promise<CompilationUnit>,
+): (workspace: WorkspaceContext) => Promise<CompilationUnit> {
+  let builtinUnit: CompilationUnit | undefined = undefined;
+  return async (workspace) => {
+    if (!builtinUnit) {
+      const fileUri = URI.parse(builtinDocument.uri);
+      builtinUnit = await createCompilationUnit(fileUri, workspace);
+      await tokenize(builtinUnit, builtinDocument);
+      parse(builtinUnit);
+
+      if (parentUnitGetter) {
+        const parentUnit = await parentUnitGetter(workspace);
+        const parentScope = parentUnit.scopeCaches.regular.get(parentUnit.ast);
+        if (parentScope) {
+          builtinUnit.rootScope = parentScope;
+        }
+      }
+
+      await generateSymbolTable(builtinUnit);
+      link(builtinUnit);
+    }
+    return builtinUnit;
+  };
+}
+
+const getBuiltinUnit = createBuiltinUnitGetter(BuiltinsTextDocument);
+const getBuiltinMacroUnit = createBuiltinUnitGetter(BuiltinsMacroTextDocument);
+const getBuiltinIntTypeAliasesLP32Unit = createBuiltinUnitGetter(
+  BuiltinsIntTypeAliasesLP32TextDocument,
+  getBuiltinUnit,
+);
+const getBuiltinIntTypeAliasesLP64Unit = createBuiltinUnitGetter(
+  BuiltinsIntTypeAliasesLP64TextDocument,
+  getBuiltinUnit,
+);
+
+/**
+ * Add all builtin units and set up the root scope chain.
+ * Must be called after compiler options are extracted (during tokenization).
+ */
+export async function addBuiltinUnits(
+  unit: CompilationUnit,
+  workspace: WorkspaceContext,
+): Promise<void> {
+  if (isBuiltinFile(unit.uri)) {
+    return;
+  }
+
+  const builtinUnit = await getBuiltinUnit(workspace);
+  const macroUnit = await getBuiltinMacroUnit(workspace);
+  const intTypeAliasUnit =
+    unit.compilerOptions.LP === PliCompilerOptions.LP.LP64
+      ? await getBuiltinIntTypeAliasesLP64Unit(workspace)
+      : await getBuiltinIntTypeAliasesLP32Unit(workspace);
+
+  unit.services.files.addBaseFiles([builtinUnit, macroUnit, intTypeAliasUnit]);
+
+  const intTypeAliasScope =
+    intTypeAliasUnit.scopeCaches.regular.get(intTypeAliasUnit.ast) ??
+    Scope.createRoot();
+  const macroScope =
+    macroUnit.scopeCaches.regular.get(macroUnit.ast) ?? Scope.createRoot();
+
+  unit.rootScope = Scope.createChild(intTypeAliasScope);
+  unit.rootPreprocessorScope = Scope.createChild(macroScope);
 }
 
 export class CompilationUnitHandler {
