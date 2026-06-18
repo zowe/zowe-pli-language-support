@@ -286,6 +286,9 @@ export async function parseAndLink(
   if (options?.validate) {
     lifecycle.preprocessorValidate(unit);
     lifecycle.validate(unit);
+
+    const includes = lifecycle.extractIncludeDirectives(unit);
+    lifecycle.markErroneousIncludes(unit, includes);
   }
 
   return unit;

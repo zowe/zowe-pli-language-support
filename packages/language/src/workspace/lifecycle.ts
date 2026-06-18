@@ -12,7 +12,12 @@
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
 import { CompilationUnit, addBuiltinUnits } from "./compilation-unit";
-import { Program } from "../syntax-tree/ast";
+import {
+  IncludeDirective,
+  IncludeItem,
+  Program,
+  SyntaxKind,
+} from "../syntax-tree/ast";
 import {
   generatePliValidationDiagnostics,
   generatePreprocessorValidationDiagnostics,
@@ -26,6 +31,8 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { parsePli } from "../parser/parser";
 import * as environment from "../workspace/environment";
+import { traverseAllNodes } from "../syntax-tree/ast-iterator";
+import { diagnostic, Severity } from "../language-server/types";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -45,6 +52,9 @@ export async function lifecycle(
   preprocessorValidate(compilationUnit);
   await interruptAndCheck(cancellation);
   validate(compilationUnit);
+  await interruptAndCheck(cancellation);
+  const includes = extractIncludeDirectives(compilationUnit);
+  markErroneousIncludes(compilationUnit, includes);
   await interruptAndCheck(cancellation);
 }
 
@@ -108,4 +118,77 @@ export function validate(compilationUnit: CompilationUnit): void {
 
 export function preprocessorValidate(compilationUnit: CompilationUnit): void {
   generatePreprocessorValidationDiagnostics(compilationUnit);
+}
+
+export function extractIncludeDirectives(compilationUnit: CompilationUnit) {
+  const directives: IncludeDirective[] = [];
+  traverseAllNodes(compilationUnit.preprocessorAst, (node) => {
+    if (node.kind === SyntaxKind.IncludeDirective) {
+      directives.push(node as IncludeDirective);
+    }
+  });
+  return directives;
+}
+
+const SeverityToString: Record<Severity, string> = {
+  [Severity.S]: "severe errors",
+  [Severity.E]: "errors",
+  [Severity.W]: "warnings",
+  [Severity.I]: "informational messages",
+  [Severity.U]: "user-defined severity messages",
+};
+
+export function markErroneousIncludes(
+  compilationUnit: CompilationUnit,
+  includes: IncludeDirective[],
+) {
+  const includeFilePaths = new Map<string, IncludeItem[]>();
+  for (const include of includes) {
+    for (const item of include.items) {
+      if (item.filePath) {
+        if (!includeFilePaths.has(item.filePath)) {
+          includeFilePaths.set(item.filePath, []);
+        }
+        includeFilePaths.get(item.filePath)!.push(item);
+      }
+    }
+  }
+  const severitiesByUri = new Map<string, Set<Severity>>();
+  function addSeverity(uri: string, severity: Severity) {
+    if (!severitiesByUri.has(uri)) {
+      severitiesByUri.set(uri, new Set());
+    }
+    severitiesByUri.get(uri)!.add(severity);
+  }
+  for (const diagnostic of compilationUnit.diagnostics.getAll()) {
+    if (!diagnostic.uri) continue;
+    addSeverity(diagnostic.uri, diagnostic.severity);
+  }
+  const queue = [...severitiesByUri.keys()];
+  while (queue.length > 0) {
+    const uri = queue.pop()!;
+    const severities = severitiesByUri.get(uri)!;
+    if (!includeFilePaths.has(uri)) {
+      continue;
+    }
+    const items = includeFilePaths.get(uri)!;
+    for (const item of items) {
+      const parentUri = item.token?.uri?.toString();
+      if (parentUri) {
+        for (const severity of severities) {
+          compilationUnit.diagnostics.add(
+            DiagnosticCategory.Validation,
+            diagnostic(
+              severity,
+              `Included file '${item.relativeFilePath}' contains ${SeverityToString[severity]}.`,
+              item.range ?? undefined,
+              parentUri,
+            ),
+          );
+          addSeverity(parentUri, severity);
+        }
+        queue.push(parentUri);
+      }
+    }
+  }
 }
