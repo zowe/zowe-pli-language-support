@@ -12,7 +12,8 @@
 import * as vscode from "vscode";
 import { Settings } from "./settings";
 import { BaseLanguageClient } from "vscode-languageclient";
-import { UriUtils } from "pli-language";
+import { Messages, UriUtils } from "pli-language";
+import { sendRequest } from "./messages";
 
 export function registerPliDocumentIdentifier(lc: BaseLanguageClient) {
   const proposedFiles = new Set<string>();
@@ -98,8 +99,9 @@ async function isPossiblePliDocument(
   }
   // If the file extension doesn't give it away, ask the language server if it recognizes the file.
   try {
-    const exists = await lc.sendRequest(
-      "pli/existingFileRequest",
+    const exists = await sendRequest(
+      lc,
+      Messages.ExistingFile,
       document.uri.toString(),
     );
     if (exists) {

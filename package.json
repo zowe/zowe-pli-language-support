@@ -24,8 +24,7 @@
     "watch": "tsc -b tsconfig.build.json --watch",
     "license:check": "tsx ./scripts/check-license-headers.mts",
     "license:fix": "tsx ./scripts/check-license-headers.mts --fix",
-    "extract-compiler-tests": "tsx ./scripts/extract-compiler-tests.mts",
-    "generate-config-schema": "tsx ./scripts/generate-config-schema.mts"
+    "extract-compiler-tests": "tsx ./scripts/extract-compiler-tests.mts"
   },
   "devDependencies": {
     "@types/node": "^22.19.19",

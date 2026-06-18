@@ -31,6 +31,7 @@ import {
   registerConfigLoader,
   watchPluginSettings,
 } from "./config-loader";
+import { registerConfigFileSystem } from "./config-file-system";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -40,6 +41,7 @@ export async function activate(
   context: vscode.ExtensionContext,
 ): Promise<void> {
   BuiltinFileSystemProvider.register(context);
+  registerConfigFileSystem(context);
   settings = Settings.getInstance();
   context.subscriptions.push(settings);
   client = await startLanguageClient(context);
