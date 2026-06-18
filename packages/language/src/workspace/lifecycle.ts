@@ -165,30 +165,38 @@ export function markErroneousIncludes(
     addSeverity(diagnostic.uri, diagnostic.severity);
   }
   const queue = [...severitiesByUri.keys()];
+  const handledIncludingFiles = new Map<string, Severity>();
   while (queue.length > 0) {
     const uri = queue.pop()!;
     const severities = severitiesByUri.get(uri)!;
+    const severity = Math.max(...severities) as Severity;
     if (!includeFilePaths.has(uri)) {
+      continue;
+    }
+    if(handledIncludingFiles.has(uri) && handledIncludingFiles.get(uri)! >= severity) {
       continue;
     }
     const items = includeFilePaths.get(uri)!;
     for (const item of items) {
       const parentUri = item.token?.uri?.toString();
       if (parentUri) {
-        for (const severity of severities) {
-          compilationUnit.diagnostics.add(
-            DiagnosticCategory.Validation,
-            diagnostic(
-              severity,
-              `Included file '${item.relativeFilePath}' contains ${SeverityToString[severity]}.`,
-              item.range ?? undefined,
-              parentUri,
-            ),
-          );
-          addSeverity(parentUri, severity);
-        }
+        handledIncludingFiles.set(parentUri, severity);
+        addSeverity(parentUri, severity);
         queue.push(parentUri);
       }
+    }
+  }
+  for (const [uri, severity] of handledIncludingFiles.entries()) {
+    const items = includeFilePaths.get(uri)!;
+    for (const item of items) {
+      const message = `Included file '${uri}' contains ${SeverityToString[severity]}.`;
+      compilationUnit.diagnostics.add(DiagnosticCategory.Validation,
+        diagnostic(
+          severity,
+          message,
+          item.token,
+        ),
+      );
     }
   }
 }
