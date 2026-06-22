@@ -15,6 +15,7 @@ import {
   createCompilationUnit,
 } from "../src/workspace/compilation-unit";
 import * as lifecycle from "../src/workspace/lifecycle";
+import * as extractIncludeDirectives from "../src/workspace/include-validations";
 import { URI } from "vscode-uri";
 import { Diagnostic, Severity } from "../src/language-server/types";
 import { defaultTestWorkspace } from "./test-workspace";
@@ -287,8 +288,8 @@ export async function parseAndLink(
     lifecycle.preprocessorValidate(unit);
     lifecycle.validate(unit);
 
-    const includes = lifecycle.extractIncludeDirectives(unit);
-    lifecycle.markErroneousIncludes(unit, includes);
+    const includes = extractIncludeDirectives.extractIncludeDirectives(unit);
+    extractIncludeDirectives.markErroneousIncludes(unit, includes);
   }
 
   return unit;

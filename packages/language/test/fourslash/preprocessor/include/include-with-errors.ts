@@ -12,12 +12,12 @@
 /// <reference path="../../framework.ts" />
 
 // @filename: cpy/lib.pli
-//// this makes no sense!!! I am not even a valid PLI file :-()
+//// this makes no sense!!! I am not even a valid PLI file :-(
 
 // @filename: cpy/including.pli
-//// %INCLUDE <|1:lib|>;
+//// %INCLUDE <|1:"lib.pli"|>;
 
 verify.expectDiagnosticsAt("1", {
   severity: 2,
-  message: "Included file './cpy/lib.pli' contains errors.",
+  message: "Included file './cpy/lib.pli' contains severe errors.",
 });
