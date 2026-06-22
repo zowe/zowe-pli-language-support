@@ -12,9 +12,7 @@
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
 import { CompilationUnit, addBuiltinUnits } from "./compilation-unit";
-import {
-  Program,
-} from "../syntax-tree/ast";
+import { Program } from "../syntax-tree/ast";
 import {
   generatePliValidationDiagnostics,
   generatePreprocessorValidationDiagnostics,
@@ -28,7 +26,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { parsePli } from "../parser/parser";
 import * as environment from "../workspace/environment";
-import { extractIncludeDirectives, markErroneousIncludes } from "./include-validations";
+import {
+  extractIncludeDirectives,
+  markErroneousIncludes,
+} from "./include-validations";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,

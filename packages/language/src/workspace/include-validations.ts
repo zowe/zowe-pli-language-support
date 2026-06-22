@@ -28,28 +28,37 @@ type Include = {
 
 export function markErroneousIncludes(
   compilationUnit: CompilationUnit,
-  includes: IncludeDirective[]
+  includes: IncludeDirective[],
 ) {
   const { includedMap } = organizeIncludes(includes);
-  const { severitiesByUri, addSeverity } = organizeSeveritiesByUri(compilationUnit);
-  const handledIncludingFiles = assignSeveritiesToUri(severitiesByUri, includedMap, addSeverity);
+  const { severitiesByUri, addSeverity } =
+    organizeSeveritiesByUri(compilationUnit);
+  const handledIncludingFiles = assignSeveritiesToUri(
+    severitiesByUri,
+    includedMap,
+    addSeverity,
+  );
   renderErrorsOnIncludeItems(handledIncludingFiles, compilationUnit);
 }
 
-function renderErrorsOnIncludeItems(handledIncludingFiles: Map<IncludeItem, Severity>, compilationUnit: CompilationUnit) {
+function renderErrorsOnIncludeItems(
+  handledIncludingFiles: Map<IncludeItem, Severity>,
+  compilationUnit: CompilationUnit,
+) {
   for (const [item, severity] of handledIncludingFiles.entries()) {
     const message = `Included file '${item.relativeFilePath}' contains ${SeverityToString[severity]}.`;
-    compilationUnit.diagnostics.add(DiagnosticCategory.Validation,
-      diagnostic(
-        severity,
-        message,
-        item.token
-      )
+    compilationUnit.diagnostics.add(
+      DiagnosticCategory.Validation,
+      diagnostic(severity, message, item.token),
     );
   }
 }
 
-function assignSeveritiesToUri(severitiesByUri: Map<string, Severity>, includedMap: Map<string, Include[]>, addSeverity: (uri: string, severity: Severity) => void) {
+function assignSeveritiesToUri(
+  severitiesByUri: Map<string, Severity>,
+  includedMap: Map<string, Include[]>,
+  addSeverity: (uri: string, severity: Severity) => void,
+) {
   const queue = [...severitiesByUri.keys()];
   const handledIncludingFiles: Map<IncludeItem, Severity> = new Map();
   while (queue.length > 0) {
@@ -76,7 +85,10 @@ function organizeSeveritiesByUri(compilationUnit: CompilationUnit) {
     if (!severitiesByUri.has(uri)) {
       severitiesByUri.set(uri, severity);
     } else {
-      severitiesByUri.set(uri, Math.max(severitiesByUri.get(uri)!, severity) as Severity);
+      severitiesByUri.set(
+        uri,
+        Math.max(severitiesByUri.get(uri)!, severity) as Severity,
+      );
     }
   }
   for (const diagnostic of compilationUnit.diagnostics.getAll()) {
