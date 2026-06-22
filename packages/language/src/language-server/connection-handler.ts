@@ -55,8 +55,9 @@ import {
 } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
-import { Messages } from "../utils/messages";
+import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
+import { MultiMap } from "../utils/collections";
 export { PluginConfiguration } from "./constants";
 
 export function startLanguageServer(
@@ -72,9 +73,9 @@ export function startLanguageServer(
   let folders: WorkspaceFolder[] = [];
 
   function publishPluginConfigDiagnostics(
-    diagnosticsByUri: Map<string, Diagnostic[]>,
+    diagnosticsByUri: MultiMap<string, Diagnostic>,
   ): void {
-    for (const [uri, diagnostics] of diagnosticsByUri.entries()) {
+    for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
       connection.sendDiagnostics({
         uri,
         diagnostics,
@@ -415,7 +416,8 @@ export function startLanguageServer(
       );
     });
   });
-  connection.onNotification(
+  onNotification(
+    connection,
     Messages.WorkspaceDidChangePluginConfigNotification,
     async () => {
       // handle changes to the .pliplugin config folder's contents
@@ -429,14 +431,11 @@ export function startLanguageServer(
       connection.languages.semanticTokens.refresh();
     },
   );
-  connection.onRequest(
-    Messages.ExistingFileRequest,
-    (uriString: string): boolean => {
-      const uri = UriUtils.toUri(uriString);
-      const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
-      return compilationUnit !== undefined;
-    },
-  );
+  onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
+    const uri = UriUtils.toUri(uriString);
+    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+    return compilationUnit !== undefined;
+  });
 
   connection.onCodeAction(async (params) => {
     const requestedKinds = params.context.only;
@@ -478,4 +477,36 @@ export function startLanguageServer(
   });
 
   connection.listen();
+}
+
+export function onRequest<P, R>(
+  connection: Connection,
+  type: RequestType<P, R>,
+  handler: (params: P) => R | Promise<R>,
+): void {
+  connection.onRequest(type.method, handler);
+}
+
+export function sendRequest<P, R>(
+  connection: Connection,
+  type: RequestType<P, R>,
+  params: P,
+): Promise<R> {
+  return connection.sendRequest(type.method, params);
+}
+
+export function onNotification<P>(
+  connection: Connection,
+  type: NotificationType<P>,
+  handler: (params: P) => void | Promise<void>,
+): void {
+  connection.onNotification(type.method, handler);
+}
+
+export function sendNotification<P>(
+  connection: Connection,
+  type: NotificationType<P>,
+  params: P,
+): void {
+  connection.sendNotification(type.method, params);
 }

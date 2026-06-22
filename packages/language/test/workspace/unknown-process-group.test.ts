@@ -16,6 +16,7 @@ import { PluginConfigurationProvider } from "../../src/workspace/plugin-configur
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { UriUtils } from "../../src/utils/uri";
 import { PluginConfiguration } from "../../src/language-server/constants";
+import { MultiMap } from "../../src/utils/collections";
 
 const WORKSPACE_PATH = UriUtils.toUri("/workspace");
 const PGM_CONF_URI = UriUtils.joinPath(
@@ -56,7 +57,7 @@ function writeProcGrps(content: object): Promise<void> {
  * accumulate in scenarios we don't care about.
  */
 function unknownPgroupDiagsFor(
-  diagnostics: Map<string, LspDiagnostic[]>,
+  diagnostics: MultiMap<string, LspDiagnostic>,
 ): LspDiagnostic[] {
   const entries = diagnostics.get(PGM_CONF_URI.toString()) ?? [];
   return entries.filter((d) => d.code === UNKNOWN_PGROUP_CODE);

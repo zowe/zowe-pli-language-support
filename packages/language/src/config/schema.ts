@@ -173,12 +173,12 @@ export function isLibsDir(entry: LibsEntry): entry is LibsDirEntry {
 }
 
 /** ProgramEntry: a single program entry in `pgm_conf.json`. */
-export type ProgramEntry = {
+export interface ProgramEntry {
   program: string;
   pgroup: string;
-};
+}
 
 /** PgmsConfig: top-level structure of `pgm_conf.json`. */
-export type PgmsConfig = {
+export interface PgmsConfig {
   pgms: ProgramEntry[];
-};
+}

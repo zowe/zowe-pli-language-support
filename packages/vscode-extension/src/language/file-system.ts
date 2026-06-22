@@ -9,7 +9,13 @@
  *
  */
 
-import { FileSystemProvider, FileType, Stats, URI } from "pli-language";
+import {
+  FileSystemProvider,
+  FileType,
+  Stats,
+  URI,
+  sendRequest,
+} from "pli-language";
 import { Connection } from "vscode-languageserver";
 import { Messages } from "../common/messages";
 
@@ -21,44 +27,48 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
   }
 
   async readFile(uri: URI): Promise<string | undefined> {
-    const result = await this._connection.sendRequest(
-      Messages.ReadFile,
-      uri.toString(),
-    );
-    if (typeof result === "string") {
+    try {
+      const result = await sendRequest(
+        this._connection,
+        Messages.ReadFile,
+        uri.toString(),
+      );
+      // The connection object returns null, even if the handler returns undefined
+      // Handle all non-string results as undefined
+      if (typeof result !== "string") {
+        return undefined;
+      }
       return result;
-    } else {
+    } catch {
       return undefined;
     }
   }
 
   async readDir(uri: URI): Promise<[string, FileType][]> {
-    const result = await this._connection.sendRequest(
+    const result = await sendRequest(
+      this._connection,
       Messages.ReadDir,
       uri.toString(),
     );
-    if (Array.isArray(result)) {
-      return result as [string, FileType][];
-    } else {
-      return [];
-    }
+    return result;
   }
 
   async fileExists(uri: URI): Promise<boolean> {
-    const result = await this._connection.sendRequest(
+    const result = await sendRequest(
+      this._connection,
       Messages.FileExists,
       uri.toString(),
     );
-    return Boolean(result);
+    return result;
   }
   async findFile(
     path: URI,
     extensions: readonly string[],
   ): Promise<URI | undefined> {
-    const result = (await this._connection.sendRequest(Messages.FindFile, {
+    const result = await sendRequest(this._connection, Messages.FindFile, {
       path: path.toString(),
       extensions: [...extensions],
-    })) as string | undefined;
+    });
     if (result) {
       return path.with({ path: result });
     }
@@ -66,19 +76,17 @@ export class VSCodeFileSystemProvider implements FileSystemProvider {
   }
 
   async stat(uri: URI): Promise<Stats> {
-    const result = await this._connection.sendRequest(
+    const result = await sendRequest(
+      this._connection,
       Messages.Stat,
       uri.toString(),
     );
-    return result as Stats;
+    return result;
   }
 
   async writeFile(uri: URI, value: string): Promise<void> {
     const uriString = uri.toString();
-    await this._connection.sendRequest(Messages.WriteFile, {
-      uriString,
-      value,
-    });
+    await sendRequest(this._connection, Messages.WriteFile, [uriString, value]);
   }
 
   deleteFile(_uri: URI): Promise<void> {

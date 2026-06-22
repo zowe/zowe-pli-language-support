@@ -32,7 +32,7 @@ import {
 } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 import { AssertionError, fail } from "assert";
-import { MarkupContent, Position } from "vscode-languageserver";
+import { Connection, MarkupContent, Position } from "vscode-languageserver";
 import { hoverRequest } from "../src/language-server/hover-request";
 import { semanticTokens } from "../src/language-server/semantic-tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -71,6 +71,7 @@ import {
   Label,
   TestDiagnostic,
 } from "./abstract-test-builder";
+import { Messages } from "../src/utils/messages";
 
 export type { DiagnosticExpectation, Label, TestDiagnostic };
 
@@ -190,8 +191,10 @@ export class TestBuilder extends AbstractTestBuilder {
     if (!this.options.fs) {
       const fs = new VirtualFileSystemProvider();
       this.options.fs = fs;
-      setDefaultTestWorkspace(createTestWorkspace(fs));
     }
+    const globalConfig = this.extractGlobalConfig();
+    const connection = this.makeConnection(globalConfig);
+    setDefaultTestWorkspace(createTestWorkspace(this.options.fs, connection));
     for (const [uri, file] of this.files) {
       await this.options.fs.writeFile(UriUtils.toUri(uri), file.output);
     }
@@ -220,9 +223,7 @@ export class TestBuilder extends AbstractTestBuilder {
     this.diagnostics = this.unit.diagnostics.getAll();
     const configDiagnostics =
       defaultTestWorkspace().config.getConfigInternalDiagnostics();
-    for (const diagnostics of configDiagnostics.values()) {
-      this.diagnostics.push(...diagnostics);
-    }
+    this.diagnostics.push(...configDiagnostics);
     this.checkDiagnosticsURIs();
 
     // After the test-builder is done, clear the workspace's plugin configuration
@@ -301,6 +302,16 @@ export class TestBuilder extends AbstractTestBuilder {
     if (!procGrpsUri) {
       await defaultTestWorkspace().config.writeProcessGroupsFile(
         PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
+      );
+      // The default process group configuration references cpy and inc as default includes
+      // If we don't create the directories, the config validation will generate diagnostics
+      await defaultTestWorkspace().fs.writeFile(
+        UriUtils.joinPath(workspaceUri, "cpy", "__placeholder"),
+        "",
+      );
+      await defaultTestWorkspace().fs.writeFile(
+        UriUtils.joinPath(workspaceUri, "inc", "__placeholder"),
+        "",
       );
     }
     await defaultTestWorkspace().config.init(workspaceUri);
@@ -423,7 +434,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
         )
         .map(([uri, diagnostic]) => ({
           uri: uri!,
-          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace(), uri),
+          actions: applyQuickFixes([diagnostic!], defaultTestWorkspace(), uri!),
         }));
       codeActions = [];
       for (const { uri, actions } of asyncActionsByUri) {
@@ -1472,6 +1483,60 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     const characterOffset = locationOverride?.characterOffset ?? 0;
 
     return `${uriOverride}:${line + lineOffset}:${character + characterOffset}`;
+  }
+
+  /**
+   * Minimal connection stub that responds to `config/getGlobal` with the
+   * given `GlobalConfig`. Other request/notification methods are no-ops so
+   * the provider can run end-to-end without a real LSP transport.
+   */
+  private makeConnection(global: Messages.GlobalConfig): Connection {
+    return {
+      sendRequest: async (method: string) => {
+        if (method === Messages.GetGlobalConfig.method) return global;
+        return undefined;
+      },
+      sendNotification: async () => {},
+      onRequest: () => ({ dispose() {} }),
+      onNotification: () => ({ dispose() {} }),
+    } as unknown as Connection;
+  }
+
+  private extractGlobalConfig(): Messages.GlobalConfig {
+    const pliPgmConf = "pli.pgm_conf";
+    const pliProcGrps = "pli.proc_grps";
+    let pgmConf: Messages.GlobalConfigEntry | undefined;
+    let procGrps: Messages.GlobalConfigEntry | undefined;
+    const settingsFile = "/.vscode/settings.json";
+    for (const [uri, file] of this.files) {
+      if (uri.endsWith(settingsFile)) {
+        try {
+          const config = JSON.parse(file.textDocument.getText());
+          if (config && typeof config === "object") {
+            if (pliPgmConf in config) {
+              pgmConf = {
+                uri,
+                configKey: pliPgmConf,
+                containerPath: [],
+              };
+            }
+            if (pliProcGrps in config) {
+              procGrps = {
+                uri,
+                configKey: pliProcGrps,
+                containerPath: [],
+              };
+            }
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+    }
+    return {
+      pgmConf,
+      procGrps,
+    };
   }
 }
 

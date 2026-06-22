@@ -191,15 +191,18 @@ export function diagnosticFromCode(
 
 export function diagnosticFromCodeAtRange(
   code: SimplePLICode,
+  uri: string | null | undefined,
   range: Range,
 ): Diagnostic;
 export function diagnosticFromCodeAtRange<Code extends ParametricPLICode>(
   code: Code,
+  uri: string | null | undefined,
   range: Range,
   ...args: Parameters<Code["message"]>
 ): Diagnostic;
 export function diagnosticFromCodeAtRange(
   code: SimplePLICode | ParametricPLICode,
+  uri: string | null | undefined,
   range: Range,
   ...args: unknown[]
 ): Diagnostic {
@@ -209,6 +212,7 @@ export function diagnosticFromCodeAtRange(
     severity: code.severity,
     range,
     message,
+    uri: uri ?? undefined,
     code: fullCode(code),
   };
 }

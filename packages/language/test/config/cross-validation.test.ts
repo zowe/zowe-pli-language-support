@@ -9,7 +9,7 @@
  *
  */
 
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { validatePgroupReferences } from "../../src/config/cross-validation";
 import {
   plainItem,
@@ -18,6 +18,7 @@ import {
 import { Range, Severity } from "../../src/language-server/types";
 import { UriUtils } from "../../src/utils/uri";
 import { makeProgramConfig } from "../config-fixtures";
+import { defaultTestWorkspace } from "../test-workspace";
 
 /**
  * The pgm_conf.json text we use as the source document in these tests.
@@ -70,6 +71,14 @@ function makeProgramWithPgroupRange(
 }
 
 describe("validatePgroupReferences", () => {
+  beforeEach(async () => {
+    await defaultTestWorkspace().fs.writeFile(PGM_CONF_URI, PGM_CONF_TEXT);
+  });
+
+  afterEach(async () => {
+    await defaultTestWorkspace().fs.deleteFile(PGM_CONF_URI);
+  });
+
   test("emits one diagnostic, with the full expected shape, for a single unknown pgroup", () => {
     /*
      * We pin down the exact substring offsets in the document so we can assert
@@ -82,6 +91,7 @@ describe("validatePgroupReferences", () => {
      *   }
      * — and we point the meta at the `"doesnotexist"` token (quotes included).
      */
+
     const literalWithQuotes = `"doesnotexist"`;
     const offset = PGM_CONF_TEXT.indexOf(literalWithQuotes);
     const programs = [
@@ -93,11 +103,7 @@ describe("validatePgroupReferences", () => {
     ];
     const pgroupNames = new Set(["default", "lelola"]);
 
-    const result = validatePgroupReferences(
-      programs,
-      pgroupNames,
-      PGM_CONF_URI.toString(),
-    );
+    const result = validatePgroupReferences(programs, pgroupNames);
 
     expect(result).toHaveLength(1);
     // Lock the full diagnostic contract — drift in any field (severity,
@@ -122,11 +128,7 @@ describe("validatePgroupReferences", () => {
       makeProgramConfig({ program: "a.pli", pgroup: "unknown" }),
     ];
 
-    const result = validatePgroupReferences(
-      programs,
-      new Set(["default"]),
-      PGM_CONF_URI.toString(),
-    );
+    const result = validatePgroupReferences(programs, new Set(["default"]));
 
     expect(result).toHaveLength(1);
     expect(result[0].range).toEqual({
@@ -144,11 +146,7 @@ describe("validatePgroupReferences", () => {
       ["b", makeProgramConfig({ program: "b.pli", pgroup: "doesnotexist" })],
     ]);
 
-    const result = validatePgroupReferences(
-      map.values(),
-      new Set(["default"]),
-      PGM_CONF_URI.toString(),
-    );
+    const result = validatePgroupReferences(map.values(), new Set(["default"]));
 
     expect(result).toHaveLength(1);
     expect(result[0].message).toBe(`Unknown process group 'doesnotexist'.`);
