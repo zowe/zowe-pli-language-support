@@ -31,8 +31,6 @@ jobs:
       - name: Install pnpm
         if: github.event.action != 'closed'
         uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - name: Use Node.js
         if: github.event.action != 'closed'
