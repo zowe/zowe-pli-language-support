@@ -27,10 +27,6 @@ import { CancellationToken } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 import { UriUtils } from "../src/utils/uri";
-import {
-  extractIncludeDirectives,
-  markErroneousIncludes,
-} from "../src/workspace/include-validations";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -290,9 +286,6 @@ export async function parseAndLink(
   if (options?.validate) {
     lifecycle.preprocessorValidate(unit);
     lifecycle.validate(unit);
-
-    const includes = extractIncludeDirectives(unit);
-    markErroneousIncludes(unit, includes);
   }
 
   return unit;

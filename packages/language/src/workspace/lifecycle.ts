@@ -26,10 +26,6 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { parsePli } from "../parser/parser";
 import * as environment from "../workspace/environment";
-import {
-  extractIncludeDirectives,
-  markErroneousIncludes,
-} from "./include-validations";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -49,9 +45,6 @@ export async function lifecycle(
   preprocessorValidate(compilationUnit);
   await interruptAndCheck(cancellation);
   validate(compilationUnit);
-  await interruptAndCheck(cancellation);
-  const includes = extractIncludeDirectives(compilationUnit);
-  markErroneousIncludes(compilationUnit, includes);
   await interruptAndCheck(cancellation);
 }
 
