@@ -14,6 +14,15 @@ The lifecycle ([lifecycle.ts](../packages/language/src/workspace/lifecycle.ts)) 
 The preprocessor *is* the tokenize step.
 It is orchestrated by [`PliLexer.tokenize`](../packages/language/src/preprocessor/pli-lexer.ts), which performs the following pipeline for the entry document:
 
+```mermaid
+flowchart LR
+    A["Extract\ncompiler options"] --> B["Margins\nprocessing"]
+    B --> C["Tokenize +\npreprocessor-parse"]
+    C --> D["Generate\ninstructions"]
+    D --> E["Run\ninstructions"]
+    C -. "memoized\n(InstructionCache)" .-> D
+```
+
 1. **Extract compiler options** (`*PROCESS`/`%PROCESS` directives) via [`CompilerOptionsProcessor`](../packages/language/src/preprocessor/compiler-options-processor.ts). The resulting options are stored on the `CompilationUnit` and pushed into the PL/I tokenizer.
 2. **Margins processing** ([`PliMarginsProcessor`](../packages/language/src/preprocessor/pli-margins-processor.ts)) blanks out the source margins so only program text remains.
 3. **Tokenize + preprocessor-parse** the margin-stripped text. A *full* parse of the local file extracts the preprocessor `Statement`s.

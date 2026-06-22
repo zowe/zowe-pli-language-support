@@ -27,6 +27,16 @@ Meaning that no other `CompilationUnit` objects are involved in this process.
 
 The following steps are performed in the order they are written.
 
+```mermaid
+flowchart LR
+    Lexing --> Preprocessor["Macro\nPreprocessor"]
+    Preprocessor --> Parsing
+    Parsing --> SymbolTable["Symbol\nTable"]
+    SymbolTable --> Resolution["Reference\nResolution"]
+    Resolution --> Validation["Semantic\nValidation"]
+    Validation --> LSP["LSP\nIntegration"]
+```
+
 ### Lexing
 
 The first phase of the lifecycle is responsible for producing the token outputs used by the parser. This phase is also performing the macro expansion.
