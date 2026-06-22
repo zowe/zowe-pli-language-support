@@ -110,7 +110,7 @@ function procGrpsUri(): URI {
   return UriUtils.toUri(procGrpsDocumentUri());
 }
 
-async function setupParsedProcGrps(libs: string[]): Promise<void> {
+async function setupParsedProcGrps(libs: string[]): Promise<string> {
   const procGrpsJson = JSON.stringify(
     {
       pgroups: [
@@ -124,11 +124,10 @@ async function setupParsedProcGrps(libs: string[]): Promise<void> {
     undefined,
     2,
   );
-  await vfs.writeFile(
-    UriUtils.toUri("/workspace/.pliplugin/proc_grps.json"),
-    procGrpsJson,
-  );
+  const uri = UriUtils.toUri("/workspace/.pliplugin/proc_grps.json");
+  await vfs.writeFile(uri, procGrpsJson);
   await pluginConfig.parseProcessGroupConfigs(procGrpsJson);
+  return uri.toString();
 }
 
 //
@@ -459,6 +458,7 @@ describe("applyQuickFixes", () => {
     const result = await applyQuickFixes.applyQuickFixes(
       diagnostics,
       workspace,
+      "",
     );
     expect(result).toHaveLength(2);
     expect(result![0].kind).toBe("quickfix");
@@ -476,6 +476,7 @@ describe("applyQuickFixes", () => {
     const result = await applyQuickFixes.applyQuickFixes(
       diagnostics,
       workspace,
+      "",
     );
     expect(result).toHaveLength(1);
     expect(result![0].title).toContain(
@@ -492,6 +493,7 @@ describe("applyQuickFixes", () => {
     const result = await applyQuickFixes.applyQuickFixes(
       diagnostics,
       workspace,
+      "",
     );
     expect(result).toBeUndefined();
   });
@@ -520,6 +522,7 @@ describe("applyQuickFixes", () => {
     const result = await applyQuickFixes.applyQuickFixes(
       diagnostics,
       workspace,
+      "",
     );
     expect(result).toHaveLength(2);
   });
@@ -746,7 +749,7 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
   });
 
   test("without proc_grps documentUri: uses per-diagnostic path only", async () => {
-    await setupParsedProcGrps(["solo-bad"]);
+    const uri = await setupParsedProcGrps(["solo-bad"]);
     const snapshot = pluginConfig.getLastProcGrpsSnapshot();
 
     const result = await applyQuickFixes.applyQuickFixes(
@@ -758,6 +761,7 @@ describe("applyQuickFixes unresolved lib / proc_grps snapshot", () => {
         ),
       ],
       workspace,
+      uri,
     );
     expect(result).toBeDefined();
     expect(result!.length).toBe(1);

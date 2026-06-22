@@ -9,6 +9,7 @@
  *
  */
 
+import { Connection } from "vscode-languageserver";
 import { resetDocumentProviders } from "../src/language-server/text-documents";
 import {
   EmptyFileSystemProvider,
@@ -54,7 +55,8 @@ export function setDefaultTestWorkspace(
  */
 export function createTestWorkspace(
   fs: FileSystemProvider = new VirtualFileSystemProvider(),
+  connection?: Connection,
 ): WorkspaceContext {
   resetDocumentProviders(fs);
-  return new WorkspaceContext(fs);
+  return new WorkspaceContext(fs, connection);
 }

@@ -12,9 +12,11 @@
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
 import { Messages } from "../common/messages";
+import { onRequest } from "./messages";
+import { FileType } from "pli-language";
 
 export function registerFileSystemProvider(client: BaseLanguageClient): void {
-  client.onRequest(Messages.ReadFile, async (uriString: string) => {
+  onRequest(client, Messages.ReadFile, async (uriString: string) => {
     const uri = vscode.Uri.parse(uriString);
     try {
       const data = await vscode.workspace.fs.readFile(uri);
@@ -24,7 +26,8 @@ export function registerFileSystemProvider(client: BaseLanguageClient): void {
       return undefined;
     }
   });
-  client.onRequest(Messages.FileExists, async (uriString: string) => {
+
+  onRequest(client, Messages.FileExists, async (uriString: string) => {
     const uri = vscode.Uri.parse(uriString);
     try {
       await vscode.workspace.fs.stat(uri);
@@ -33,7 +36,8 @@ export function registerFileSystemProvider(client: BaseLanguageClient): void {
       return false;
     }
   });
-  client.onRequest(
+  onRequest(
+    client,
     Messages.FindFile,
     async (params: { path: string; extensions: string[] }) => {
       // Workspace-wide lookup: match a file whose path ends with the given
@@ -54,7 +58,7 @@ export function registerFileSystemProvider(client: BaseLanguageClient): void {
       return matches.length > 0 ? matches[0].path : undefined;
     },
   );
-  client.onRequest(Messages.Stat, async (uriString: string) => {
+  onRequest(client, Messages.Stat, async (uriString: string) => {
     const uri = vscode.Uri.parse(uriString);
     const stat = await vscode.workspace.fs.stat(uri);
     return {
@@ -62,19 +66,19 @@ export function registerFileSystemProvider(client: BaseLanguageClient): void {
       isDirectory: stat.type === vscode.FileType.Directory,
     };
   });
-  client.onRequest(
+  onRequest(
+    client,
     Messages.WriteFile,
-    async (params: { uriString: string; value: string }) => {
-      const uri = vscode.Uri.parse(params.uriString);
-      await vscode.workspace.fs.writeFile(
-        uri,
-        new TextEncoder().encode(params.value),
-      );
+    async ([uriString, value]: [string, string]) => {
+      const uri = vscode.Uri.parse(uriString);
+      await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(value));
     },
   );
-  client.onRequest(Messages.ReadDir, async (uriString: string) => {
+  onRequest(client, Messages.ReadDir, async (uriString: string) => {
     const uri = vscode.Uri.parse(uriString);
     const result = await vscode.workspace.fs.readDirectory(uri);
-    return result;
+    // For some reason, the FileType from vscode is not compatible with the one from pli-language
+    // Even though they are structurally the same
+    return result as unknown as [string, FileType][];
   });
 }

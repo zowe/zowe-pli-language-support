@@ -13,6 +13,7 @@ import { TelemetryReporter } from "@vscode/extension-telemetry";
 import { Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
+import { sendNotification } from "./messages";
 
 /**
  * Watches the .pliplugin folder for changes to pgm_conf.json and proc_grps.json files.
@@ -38,7 +39,8 @@ export function watchPluginFolder(
 
   // watch for folder create/delete events
   folderWatcher.onDidCreate(() => {
-    client.sendNotification(
+    sendNotification(
+      client,
       Messages.WorkspaceDidChangePluginConfigNotification,
     );
     telemetryReporter?.sendTelemetryEvent(
@@ -47,7 +49,8 @@ export function watchPluginFolder(
   });
 
   folderWatcher.onDidDelete(() => {
-    client.sendNotification(
+    sendNotification(
+      client,
       Messages.WorkspaceDidChangePluginConfigNotification,
     );
     telemetryReporter?.sendTelemetryEvent(
@@ -57,7 +60,8 @@ export function watchPluginFolder(
 
   // watch for file create/update/delete events
   fileWatcher.onDidChange(() => {
-    client.sendNotification(
+    sendNotification(
+      client,
       Messages.WorkspaceDidChangePluginConfigNotification,
     );
     telemetryReporter?.sendTelemetryEvent(
@@ -66,7 +70,8 @@ export function watchPluginFolder(
   });
 
   fileWatcher.onDidCreate(() => {
-    client.sendNotification(
+    sendNotification(
+      client,
       Messages.WorkspaceDidChangePluginConfigNotification,
     );
     telemetryReporter?.sendTelemetryEvent(
@@ -75,7 +80,8 @@ export function watchPluginFolder(
   });
 
   fileWatcher.onDidDelete(() => {
-    client.sendNotification(
+    sendNotification(
+      client,
       Messages.WorkspaceDidChangePluginConfigNotification,
     );
     telemetryReporter?.sendTelemetryEvent(

@@ -140,10 +140,10 @@ export class LinkerErrorReporter {
   ) {
     const diagnostic = diagnosticFromCodeAtRange(
       PLICodes.Severe.IBM1623I,
+      uri,
       { start, end },
       fqn,
     );
-    diagnostic.uri = uri;
     this.accept(diagnostic);
   }
 
