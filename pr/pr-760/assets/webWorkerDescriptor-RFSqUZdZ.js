@@ -1,0 +1,1 @@
+var e=class{constructor(e){this.esmModuleLocation=e.esmModuleLocation,this.esmModuleLocationBundler=e.esmModuleLocationBundler,this.label=e.label}};export{e as t};
