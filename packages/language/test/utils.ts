@@ -15,7 +15,6 @@ import {
   createCompilationUnit,
 } from "../src/workspace/compilation-unit";
 import * as lifecycle from "../src/workspace/lifecycle";
-import * as extractIncludeDirectives from "../src/workspace/include-validations";
 import { URI } from "vscode-uri";
 import { Diagnostic, Severity } from "../src/language-server/types";
 import { defaultTestWorkspace } from "./test-workspace";
@@ -28,6 +27,10 @@ import { CancellationToken } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../src/validation/diagnostics-store";
 import { UriUtils } from "../src/utils/uri";
+import {
+  extractIncludeDirectives,
+  markErroneousIncludes,
+} from "../src/workspace/include-validations";
 
 interface AssertNoDiagnosticsOptions {
   ignoreSeverity?: Severity[];
@@ -288,8 +291,8 @@ export async function parseAndLink(
     lifecycle.preprocessorValidate(unit);
     lifecycle.validate(unit);
 
-    const includes = extractIncludeDirectives.extractIncludeDirectives(unit);
-    extractIncludeDirectives.markErroneousIncludes(unit, includes);
+    const includes = extractIncludeDirectives(unit);
+    markErroneousIncludes(unit, includes);
   }
 
   return unit;
