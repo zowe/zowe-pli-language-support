@@ -41,10 +41,5 @@
     "minimatch": "10.2.4",
     "dompurify": "3.4.2"
   },
-  "allowBuilds": {
-    "@vscode/vsce-sign": true,
-    "esbuild": true,
-    "keytar": true
-  },
   "packageManager": "pnpm@11.8.0"
 }
