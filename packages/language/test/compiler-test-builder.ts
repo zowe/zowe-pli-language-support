@@ -158,6 +158,18 @@ export class CompilerTestBuilder extends AbstractTestBuilder {
     }
   }
 
+  expectNoDiagnosticsFrom(...languages: string[]): void {
+    const diagnosticsFromLanguages = this.listing.diagnostics;
+    if (diagnosticsFromLanguages.length > 0) {
+      const messages = this.formatDiagnostics(diagnosticsFromLanguages);
+      throw new Error(
+        `Expected no diagnostics from languages ${languages.join(
+          ", ",
+        )}, but got:\n${messages}`,
+      );
+    }
+  }
+
   expectDiagnosticsAt(label: Label, diagnostics: DiagnosticExpectation): void {
     const expectedArray = Array.isArray(diagnostics)
       ? diagnostics

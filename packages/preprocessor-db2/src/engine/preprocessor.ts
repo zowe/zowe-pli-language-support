@@ -41,8 +41,9 @@ import {
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
 
 export class Db2SqlPreprocessor implements Preprocessor {
+  static Name = "DB2 SQL Preprocessor";
   get name() {
-    return "DB2 SQL Preprocessor";
+    return Db2SqlPreprocessor.Name;
   }
   public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
