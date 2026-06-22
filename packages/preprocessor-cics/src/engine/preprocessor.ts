@@ -41,9 +41,10 @@ import { EnglishMessageService, MessageService } from "./message-service";
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export class CICSPreprocessor implements Preprocessor {
+  static Name = "CICS Preprocessor";
   private readonly messageService: MessageService = new EnglishMessageService();
   get name() {
-    return "CICS Preprocessor";
+    return CICSPreprocessor.Name;
   }
   public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);

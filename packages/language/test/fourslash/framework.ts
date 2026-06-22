@@ -24,4 +24,5 @@ declare global {
   var preprocessor: HarnessTesterInterface["preprocessor"];
   var code: HarnessTesterInterface["code"];
   var constants: HarnessTesterInterface["constants"];
+  var languages: HarnessTesterInterface["languages"];
 }
