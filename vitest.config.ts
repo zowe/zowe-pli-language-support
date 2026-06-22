@@ -13,6 +13,7 @@
  * For a detailed explanation regarding each configuration property and type check, visit:
  * https://vitest.dev/config/
  */
+import { env } from "process";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -25,6 +26,19 @@ export default defineConfig({
         pattern: /packages\/preprocessor-cics\/src\/test\/positives\.txt$/,
         testsToRun: () => {
           return ["packages/preprocessor-cics/src/test/positives.test.ts"];
+        },
+      },
+      {
+        pattern: /packages\/preprocessor-db2\/test\/positives\.sql$/,
+        testsToRun: () => {
+          return ["packages/preprocessor-db2/test/positives.test.ts"];
+        },
+      },
+      {
+        pattern: /packages\/language\/test\/fourslash\/.*\.ts$/,
+        testsToRun: (file) => {
+          env.HARNESS_TEST_FILE = file;
+          return ["packages/language/test/fourslash-harness/execute.test.ts"];
         },
       },
     ],
