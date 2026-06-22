@@ -22,7 +22,6 @@ export enum DiagnosticCategory {
   Validation,
 }
 
-
 export const DiagnosticCategoryToString: Record<DiagnosticCategory, string> = {
   [DiagnosticCategory.CompilerOptions]: "compiler options errors",
   [DiagnosticCategory.Lexer]: "lexing errors",
@@ -41,7 +40,10 @@ const MaxCategory = Math.max(
 
 export class DiagnosticsStore {
   private keys = new Set<string>();
-  private diagnosticsByCategoryAndUri: Map<DiagnosticCategory, Map<string, Diagnostic[]>> = new Map();
+  private diagnosticsByCategoryAndUri: Map<
+    DiagnosticCategory,
+    Map<string, Diagnostic[]>
+  > = new Map();
 
   constructor() {
     for (let i = 0; i <= MaxCategory; i++) {

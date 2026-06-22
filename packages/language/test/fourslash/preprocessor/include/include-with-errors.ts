@@ -17,7 +17,13 @@
 // @filename: cpy/including.pli
 //// %INCLUDE <|1:"lib.pli"|>;
 
-verify.expectDiagnosticsAt("1", {
-  severity: 3,
-  message: "Included file './cpy/lib.pli' contains severe errors.",
-});
+verify.expectDiagnosticsAt("1", [
+  {
+    severity: 2,
+    message: "Included file './cpy/lib.pli' contains 3 lexing errors.",
+  },
+  {
+    severity: 2,
+    message: "Included file './cpy/lib.pli' contains 1 parsing errors.",
+  },
+]);

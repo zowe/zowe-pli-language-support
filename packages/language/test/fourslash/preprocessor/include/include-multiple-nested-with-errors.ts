@@ -27,23 +27,25 @@
 //// %INCLUDE <|3:"lib_one.pli"|>;
 //// %INCLUDE <|4:"lib_two.pli"|>;
 
-//TODO for some reason the "TWO" includes are not severe. Maybe an order thing.
-verify.expectDiagnosticsAt(1, {
-  severity: 3,
-  message: "Included file './cpy/nested_one.pli' contains severe errors.",
-});
+verify.expectDiagnosticsAt(1, [
+  {
+    severity: 2,
+    message: "Included file './cpy/nested_one.pli' contains 3 lexing errors.",
+  },
+  {
+    severity: 2,
+    message: "Included file './cpy/nested_one.pli' contains 1 parsing errors.",
+  },
+]);
 
-verify.expectDiagnosticsAt(2, {
-  severity: 2,
-  message: "Included file './cpy/nested_two.pli' contains errors.",
-});
+//no parsing error: will be shadowed by label 1 parsing error
+verify.expectDiagnosticsAt(2, [
+  {
+    severity: 2,
+    message: "Included file './cpy/nested_two.pli' contains 3 lexing errors.",
+  },
+]);
 
-verify.expectDiagnosticsAt(3, {
-  severity: 3,
-  message: "Included file './cpy/lib_one.pli' contains severe errors.",
-});
-
-verify.expectDiagnosticsAt(4, {
-  severity: 2,
-  message: "Included file './cpy/lib_two.pli' contains errors.",
-});
+//no errors, since we do not propagate errors from nested includes, yet
+verify.expectDiagnosticsAt(3, []);
+verify.expectDiagnosticsAt(4, []);
