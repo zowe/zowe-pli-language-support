@@ -30,31 +30,28 @@ export function markErroneousIncludes(
   compilationUnit: CompilationUnit,
   includes: IncludeDirective[]
 ) {
-  const { includingMap, includedMap } = organizeIncludes(includes);
+  const { includedMap } = organizeIncludes(includes);
   const { severitiesByUri, addSeverity } = organizeSeveritiesByUri(compilationUnit);
   const handledIncludingFiles = assignSeveritiesToUri(severitiesByUri, includedMap, addSeverity);
-  renderErrorsOnIncludeItems(handledIncludingFiles, includingMap, compilationUnit);
+  renderErrorsOnIncludeItems(handledIncludingFiles, compilationUnit);
 }
 
-function renderErrorsOnIncludeItems(handledIncludingFiles: Map<string, [string, Severity]>, includingMap: Map<string, Include[]>, compilationUnit: CompilationUnit) {
-  for (const [parentUri, [uri, severity]] of handledIncludingFiles.entries()) {
-    const items = includingMap.get(parentUri) ?? [];
-    for (const { item } of items.filter(i => i.includeUri === uri)) {
-      const message = `Included file '${item.relativeFilePath}' contains ${SeverityToString[severity]}.`;
-      compilationUnit.diagnostics.add(DiagnosticCategory.Validation,
-        diagnostic(
-          severity,
-          message,
-          item.token
-        )
-      );
-    }
+function renderErrorsOnIncludeItems(handledIncludingFiles: Map<IncludeItem, Severity>, compilationUnit: CompilationUnit) {
+  for (const [item, severity] of handledIncludingFiles.entries()) {
+    const message = `Included file '${item.relativeFilePath}' contains ${SeverityToString[severity]}.`;
+    compilationUnit.diagnostics.add(DiagnosticCategory.Validation,
+      diagnostic(
+        severity,
+        message,
+        item.token
+      )
+    );
   }
 }
 
 function assignSeveritiesToUri(severitiesByUri: Map<string, Severity>, includedMap: Map<string, Include[]>, addSeverity: (uri: string, severity: Severity) => void) {
   const queue = [...severitiesByUri.keys()];
-  const handledIncludingFiles = new Map<string, [string, Severity]>();
+  const handledIncludingFiles: Map<IncludeItem, Severity> = new Map();
   while (queue.length > 0) {
     const uri = queue.pop()!;
     const severity = severitiesByUri.get(uri)!;
@@ -65,7 +62,7 @@ function assignSeveritiesToUri(severitiesByUri: Map<string, Severity>, includedM
     for (const { item } of includeds) {
       const parentUri = item.token?.uri?.toString();
       if (parentUri) {
-        handledIncludingFiles.set(parentUri, [uri, severity]);
+        handledIncludingFiles.set(item, severity);
         addSeverity(parentUri, severity);
         queue.push(parentUri);
       }
@@ -89,7 +86,6 @@ function organizeSeveritiesByUri(compilationUnit: CompilationUnit) {
   return { severitiesByUri, addSeverity };
 }
 function organizeIncludes(includes: IncludeDirective[]) {
-  const includingMap = new Map<string, Include[]>();
   const includedMap = new Map<string, Include[]>();
   for (const include of includes) {
     const parentUri = include.token?.uri?.toString();
@@ -97,10 +93,6 @@ function organizeIncludes(includes: IncludeDirective[]) {
       const includeUri = item.filePath;
       if (parentUri && includeUri) {
         const includeRecord = { includingUri: parentUri, includeUri, item };
-        if (!includingMap.has(parentUri)) {
-          includingMap.set(parentUri, []);
-        }
-        includingMap.get(parentUri)!.push(includeRecord);
         if (!includedMap.has(includeUri)) {
           includedMap.set(includeUri, []);
         }
@@ -108,5 +100,5 @@ function organizeIncludes(includes: IncludeDirective[]) {
       }
     }
   }
-  return { includingMap, includedMap };
+  return { includedMap };
 }

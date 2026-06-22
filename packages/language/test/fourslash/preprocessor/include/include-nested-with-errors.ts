@@ -21,11 +21,11 @@
 //// %INCLUDE <|2:"lib.pli"|>;
 
 verify.expectDiagnosticsAt(1, {
-  severity: 2,
-  message: "Included file './cpy/nested.pli' contains errors.",
+  severity: 3,
+  message: "Included file './cpy/nested.pli' contains severe errors.",
 });
 
 verify.expectDiagnosticsAt(2, {
-  severity: 2,
-  message: "Included file './cpy/lib.pli' contains errors.",
+  severity: 3,
+  message: "Included file './cpy/lib.pli' contains severe errors.",
 });

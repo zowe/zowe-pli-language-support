@@ -18,6 +18,6 @@
 //// %INCLUDE <|1:"lib.pli"|>;
 
 verify.expectDiagnosticsAt("1", {
-  severity: 2,
+  severity: 3,
   message: "Included file './cpy/lib.pli' contains severe errors.",
 });

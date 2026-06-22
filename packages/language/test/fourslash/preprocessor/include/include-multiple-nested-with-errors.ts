@@ -1,0 +1,49 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../../framework.ts" />
+
+// @filename: cpy/nested_one.pli
+//// this makes no sense!!! I am not even a valid PLI file :-(
+
+// @filename: cpy/lib_one.pli
+//// %INCLUDE <|1:"nested_one.pli"|>;
+
+// @filename: cpy/nested_two.pli
+//// this makes no sense!!! I am not even a valid PLI file :-(
+
+// @filename: cpy/lib_two.pli
+//// %INCLUDE <|2:"nested_two.pli"|>;
+
+// @filename: cpy/including.pli
+//// %INCLUDE <|3:"lib_one.pli"|>;
+//// %INCLUDE <|4:"lib_two.pli"|>;
+
+//TODO for some reason the "TWO" includes are not severe. Maybe an order thing.
+verify.expectDiagnosticsAt(1, {
+  severity: 3,
+  message: "Included file './cpy/nested_one.pli' contains severe errors.",
+});
+
+verify.expectDiagnosticsAt(2, {
+  severity: 2,
+  message: "Included file './cpy/nested_two.pli' contains errors.",
+});
+
+verify.expectDiagnosticsAt(3, {
+  severity: 3,
+  message: "Included file './cpy/lib_one.pli' contains severe errors.",
+});
+
+verify.expectDiagnosticsAt(4, {
+  severity: 2,
+  message: "Included file './cpy/lib_two.pli' contains errors.",
+});
