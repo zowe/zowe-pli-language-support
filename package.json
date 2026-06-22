@@ -45,6 +45,6 @@
     "@vscode/vsce-sign": true,
     "esbuild": true,
     "keytar": true
-  }
-    
+  },
+  "packageManager": "pnpm@11.8.0"
 }
