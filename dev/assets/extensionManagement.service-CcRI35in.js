@@ -1,1 +1,0 @@
-import{eb as e}from"./standaloneServices-Cho6pfA1.js";var t=e(`extensionGalleryService`),n=e(`extensionManagementService`),r=e(`IGlobalExtensionEnablementService`),i=e(`IExtensionTipsService`),a=e(`IAllowedExtensionsService`);export{r as a,i,t as n,n as r,a as t};
