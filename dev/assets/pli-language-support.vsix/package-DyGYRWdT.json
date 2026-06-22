@@ -69,8 +69,12 @@
       {
         "language": "pli",
         "scopes": {
-          "keyword": ["keyword.control.pli"],
-          "modifier": ["keyword.storage.pli"]
+          "keyword": [
+            "keyword.control.pli"
+          ],
+          "modifier": [
+            "keyword.storage.pli"
+          ]
         }
       }
     ],
@@ -122,11 +126,28 @@
           ],
           "default": "automatic",
           "description": "Controls the rulers for the margin compiler option. 'off' disables rulers, 'default' shows the PL/I default rulers [2, 72], 'automatic' adds rulers based on margin compiler options."
+        },
+        "pli.pgm_conf": {
+          "description": "PL/I Plugin Program Configuration",
+          "$ref": "pli-language-support-config:///schemas/pgm_conf.schema.json",
+          "default": {
+            "pgms": []
+          }
+        },
+        "pli.proc_grps": {
+          "description": "PL/I Plugin Procedure Groups Configuration",
+          "$ref": "pli-language-support-config:///schemas/proc_grps.schema.json",
+          "default": {
+            "pgroups": []
+          }
         }
       }
     }
   },
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onFileSystem:pli-language-support-config"
+  ],
   "main": "./out/extension/main.cjs",
   "browser": "./out/extension/main-browser.js",
   "scripts": {
