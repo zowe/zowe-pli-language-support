@@ -230,19 +230,18 @@ export class TestBuilder extends AbstractTestBuilder {
     this.diagnostics = this.unit.diagnostics.getAll();
     const configDiagnostics =
       defaultTestWorkspace().config.getConfigInternalDiagnostics();
-    for (const [uri, diagnostics] of configDiagnostics.entries()) {
+    for (const diagnostic of configDiagnostics) {
       // Skip proc_grps.json diagnostics when the default config was used: its
       // placeholder `cpy`/`inc` libs are unresolved in most test workspaces
       // and would otherwise leak COPC01E noise into unrelated tests.
       if (
         !this.suppliedProcGrps &&
-        uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)
+        diagnostic.uri?.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)
       ) {
         continue;
       }
-      this.diagnostics.push(...diagnostics);
+      this.diagnostics.push(diagnostic);
     }
-    this.diagnostics.push(...configDiagnostics);
     this.checkDiagnosticsURIs();
 
     // After the test-builder is done, clear the workspace's plugin configuration

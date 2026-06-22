@@ -303,13 +303,6 @@ export class PluginConfigurationProvider {
     return this.configDiagnostics;
   }
 
-  private clearConfigDiagnostics(): void {
-    this.configInternalDiagnostics.clear();
-    this.configLspDiagnostics.clear();
-    this.programConfigInternalDiagnostics = [];
-    this.procGrpsInternalDiagnostics = [];
-  }
-
   /**
    * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
    *
@@ -423,7 +416,6 @@ export class PluginConfigurationProvider {
    *   LSP clears prior diagnostics on files that are no longer a source.
    */
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
-    this.clearConfigDiagnostics();
     const workspaceUri = UriUtils.toUri(this.workspacePath);
     const cancel = startLongRunningOperation(
       this.connection,
@@ -785,7 +777,6 @@ export class PluginConfigurationProvider {
             range,
             lib,
           ),
-          uri: configDocument?.uri,
           data: { lib, pgroup: pgroupName, path },
         };
         diagnostics.push(unresolvedLibDiagnostic);
