@@ -20,7 +20,7 @@ import {
   Token,
   Severity,
 } from "preprocessor-api";
-import { CICSPreprocessor } from "preprocessor-cics";
+import { CICSForPLIPreprocessor } from "preprocessor-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
@@ -197,7 +197,7 @@ function handleExecFragment(
   switch (prefixMatch?.[1].toUpperCase()) {
     case "CICS":
       execStatement.preprocessorType = ast.PreprocessorType.CICS;
-      preprocessor = new CICSPreprocessor();
+      preprocessor = new CICSForPLIPreprocessor();
       break;
     case "SQL":
       execStatement.preprocessorType = ast.PreprocessorType.SQL;
