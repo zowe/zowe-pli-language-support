@@ -43,10 +43,10 @@ const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export abstract class CICSPreprocessorBase implements Preprocessor {
   private readonly messageService: MessageService = new EnglishMessageService();
+  static Name = "CICS Preprocessor";
   get name() {
-    return "CICS Preprocessor";
+    return CICSPreprocessorBase.Name;
   }
-
   protected abstract visitToken(
     token: antlr.Token,
     diagnostics: Diagnostic[],

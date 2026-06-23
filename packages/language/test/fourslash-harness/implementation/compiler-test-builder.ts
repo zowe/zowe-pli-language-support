@@ -10,7 +10,7 @@
  */
 
 import { CICSPreprocessorBase } from "preprocessor-cics";
-import { Db2SqlPreprocessor } from "../../../../preprocessor-db2/out/engine/preprocessor";
+import { Db2SqlPreprocessor } from "preprocessor-db2";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 import { PliLanguageName } from "../../../src/language-server/types";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";

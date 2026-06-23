@@ -25,7 +25,7 @@ import { HarnessTypeAttributes } from "./type-attributes";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 import { DiagnosticCategory } from "../../../src/validation/diagnostics-store";
 import { PliLanguageName, Severity } from "../../../src/language-server/types";
-import { Db2SqlPreprocessor } from "../../../../preprocessor-db2/out/engine/preprocessor";
+import { Db2SqlPreprocessor } from "preprocessor-db2";
 import { CICSPreprocessorBase } from "preprocessor-cics";
 
 /**
