@@ -206,7 +206,9 @@ export function parseListFile(content: string): ParsedListFile {
       case "compilerMessages":
       case "macroMessages": {
         const source =
-          section === "cicsMessages" ? CICSPreprocessorBase.Name : PliLanguageName;
+          section === "cicsMessages"
+            ? CICSPreprocessorBase.Name
+            : PliLanguageName;
         // Format: {IBM<code>} {severity}  {line.file}  {description}
         const m = line.match(/^\s*(IBM\w+)\s+([IWESUL])\s+(\d+\.\d+)\s+(.*)/);
         if (m) {

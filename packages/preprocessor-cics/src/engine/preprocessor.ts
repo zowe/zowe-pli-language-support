@@ -46,8 +46,11 @@ export abstract class CICSPreprocessorBase implements Preprocessor {
   get name() {
     return "CICS Preprocessor";
   }
-  
-  protected abstract visitToken(token: antlr.Token, diagnostics: Diagnostic[]): void;
+
+  protected abstract visitToken(
+    token: antlr.Token,
+    diagnostics: Diagnostic[],
+  ): void;
 
   public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
@@ -119,13 +122,16 @@ export abstract class CICSPreprocessorBase implements Preprocessor {
 }
 
 export class CICSForPLIPreprocessor extends CICSPreprocessorBase {
-  protected override visitToken(token: antlr.Token, diagnostics: Diagnostic[]): void {
-    if(token.type === CICSLexer.COBOL_COMMENTLINE) {
+  protected override visitToken(
+    token: antlr.Token,
+    diagnostics: Diagnostic[],
+  ): void {
+    if (token.type === CICSLexer.COBOL_COMMENTLINE) {
       diagnostics.push({
         code: "invalid.cobol.comment",
         message: "COBOL comment in PL/I context detected.",
         startOffset: token.start,
-        endOffset: token.stop+1,
+        endOffset: token.stop + 1,
         severity: Severity.Error,
       });
     }
@@ -133,13 +139,19 @@ export class CICSForPLIPreprocessor extends CICSPreprocessorBase {
 }
 
 export class CICSForCOBOLPreprocessor extends CICSPreprocessorBase {
-  protected override visitToken(token: antlr.Token, diagnostics: Diagnostic[]): void {
-    if(token.type === CICSLexer.PLI_COMMENTLINE || token.type === CICSLexer.PLI_COMMENTBLOCK) {
+  protected override visitToken(
+    token: antlr.Token,
+    diagnostics: Diagnostic[],
+  ): void {
+    if (
+      token.type === CICSLexer.PLI_COMMENTLINE ||
+      token.type === CICSLexer.PLI_COMMENTBLOCK
+    ) {
       diagnostics.push({
         code: "invalid.pli.comment",
         message: "PL/I comment in COBOL context detected.",
         startOffset: token.start,
-        endOffset: token.stop+1,
+        endOffset: token.stop + 1,
         severity: Severity.Error,
       });
     }
