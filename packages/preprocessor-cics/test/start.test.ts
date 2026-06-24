@@ -9,11 +9,12 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
+import { CICSPreprocessor } from "../src/engine/preprocessor";
+import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
 describe("CICS START", async () => {
-  const cicsPreprocessor = new CICSForPLIPreprocessor();
+  const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (TRANSID)", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("START TRANSID(1)");

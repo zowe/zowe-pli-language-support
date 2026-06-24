@@ -9,7 +9,8 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
+import { CICSPreprocessor } from "../src/engine/preprocessor";
+import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
 // NOTE: CICSAssignOptionsCheckUtility only calls checkDuplicates. In the grammar
@@ -19,7 +20,7 @@ import { Severity } from "preprocessor-api";
 // same option within one context and cannot raise a diagnostic. There is no
 // reachable failure branch to assert on; only positive/parse cases are testable.
 describe("CICS ASSIGN", async () => {
-  const cicsPreprocessor = new CICSForPLIPreprocessor();
+  const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ASSIGN APPLID(A)");

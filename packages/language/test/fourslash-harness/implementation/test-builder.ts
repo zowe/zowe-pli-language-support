@@ -26,7 +26,7 @@ import { SyntaxKind } from "../../../src/syntax-tree/ast";
 import { DiagnosticCategory } from "../../../src/validation/diagnostics-store";
 import { PliLanguageName, Severity } from "../../../src/language-server/types";
 import { Db2SqlPreprocessor } from "preprocessor-db2";
-import { CICSPreprocessorBase } from "preprocessor-cics";
+import { CICSPreprocessor } from "preprocessor-cics";
 
 /**
  * Create a harness implementation that can be used to run the harness test.
@@ -45,7 +45,7 @@ export function createTestBuilderHarnessImplementation(
     languages: {
       Pli: PliLanguageName,
       Db2Sql: Db2SqlPreprocessor.Name,
-      Cics: CICSPreprocessorBase.Name,
+      Cics: CICSPreprocessor.Name,
     },
     linker: {
       expectLinks: () => testBuilder.expectLinks(),

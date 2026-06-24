@@ -21,7 +21,7 @@ import { TestBuilder } from "../test-builder";
 import { generateIncludeItemMarkup } from "../../src/language-server/hover-request";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
 import { HarnessTypeAttributes } from "./implementation/type-attributes";
-import { CICSPreprocessorBase } from "preprocessor-cics";
+import { CICSPreprocessor } from "preprocessor-cics";
 import { Db2SqlPreprocessor } from "preprocessor-db2";
 import { PliLanguageName } from "../../src/language-server/types";
 
@@ -53,7 +53,7 @@ async function createTestingHarnessImplementation(
     languages: {
       Pli: PliLanguageName,
       Db2Sql: Db2SqlPreprocessor.Name,
-      Cics: CICSPreprocessorBase.Name,
+      Cics: CICSPreprocessor.Name,
     },
     linker: {
       expectLinks: listen("linker.expectLinks"),

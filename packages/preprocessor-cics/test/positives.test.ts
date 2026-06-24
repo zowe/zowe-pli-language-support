@@ -12,12 +12,13 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { fileURLToPath } from "url";
 import { describe, expect, test } from "vitest";
-import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
+import { CICSPreprocessor } from "../src/engine/preprocessor";
+import { HostLanguageType } from "../src/engine/host-languages";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 describe("CICS Preprocessor: Positives", async () => {
-  const cicsPreprocessor = new CICSForPLIPreprocessor();
+  const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
   const fileName = join(__dirname, "positives.txt");
   const content = await readFile(fileName, "utf-8");
   const statements = content

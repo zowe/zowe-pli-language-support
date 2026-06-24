@@ -9,14 +9,15 @@
  *
  */
 import { describe, expect, test } from "vitest";
-import { CICSForPLIPreprocessor } from "../src/engine/preprocessor";
+import { CICSPreprocessor } from "../src/engine/preprocessor";
+import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
 // NOTE: GETMAIN64 is only valid in Assembly, so the checker always reports the
 // GETMAIN64 keyword as illegal. Every command therefore carries that baseline
 // diagnostic; the tests assert it and any additional branch-specific errors.
 describe("CICS GETMAIN64", async () => {
-  const cicsPreprocessor = new CICSForPLIPreprocessor();
+  const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   // checkGetMain -> checkHasIllegalOptions(GETMAIN64)
   test("GETMAIN64 is only available in Assembly", async () => {

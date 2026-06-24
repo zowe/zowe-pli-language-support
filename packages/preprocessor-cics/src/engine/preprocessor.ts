@@ -38,20 +38,24 @@ import {
 import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
 import { CICSErrorStrategy } from "./error-strategy";
 import { EnglishMessageService, MessageService } from "./message-service";
+import {
+  HostLanguage,
+  HostLanguageFactories,
+  HostLanguageType,
+} from "./host-languages";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
-export abstract class CICSPreprocessorBase implements Preprocessor {
-  private readonly messageService: MessageService = new EnglishMessageService();
+export class CICSPreprocessor implements Preprocessor {
   static Name = "CICS Preprocessor";
-  get name() {
-    return CICSPreprocessorBase.Name;
+  private readonly hostLanguage: HostLanguage;
+  private readonly messageService: MessageService = new EnglishMessageService();
+  constructor(hostLanguage: HostLanguageType) {
+    this.hostLanguage = HostLanguageFactories[hostLanguage]();
   }
-  protected abstract visitToken(
-    token: antlr.Token,
-    diagnostics: Diagnostic[],
-  ): void;
-
+  get name() {
+    return CICSPreprocessor.Name;
+  }
   public async execute(textSnippet: string): Promise<PreprocessorResult> {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new CICSLexer(charStream);
@@ -78,7 +82,7 @@ export abstract class CICSPreprocessorBase implements Preprocessor {
       .filter((token) => token.text !== undefined)
       .map((token) => {
         let semanticsKind: SemanticsKind;
-        this.visitToken(token, lexerErrors.errors);
+        this.hostLanguage.visitToken(token, lexerErrors.errors);
         if (
           idIndex < identifierTokens.length &&
           token.start === identifierTokens[idIndex].startOffset
@@ -118,42 +122,5 @@ export abstract class CICSPreprocessorBase implements Preprocessor {
       tokens,
       replacement: null,
     };
-  }
-}
-
-export class CICSForPLIPreprocessor extends CICSPreprocessorBase {
-  protected override visitToken(
-    token: antlr.Token,
-    diagnostics: Diagnostic[],
-  ): void {
-    if (token.type === CICSLexer.COBOL_COMMENTLINE) {
-      diagnostics.push({
-        code: "invalid.cobol.comment",
-        message: "COBOL comment in PL/I context detected.",
-        startOffset: token.start,
-        endOffset: token.stop + 1,
-        severity: Severity.Error,
-      });
-    }
-  }
-}
-
-export class CICSForCOBOLPreprocessor extends CICSPreprocessorBase {
-  protected override visitToken(
-    token: antlr.Token,
-    diagnostics: Diagnostic[],
-  ): void {
-    if (
-      token.type === CICSLexer.PLI_COMMENTLINE ||
-      token.type === CICSLexer.PLI_COMMENTBLOCK
-    ) {
-      diagnostics.push({
-        code: "invalid.pli.comment",
-        message: "PL/I comment in COBOL context detected.",
-        startOffset: token.start,
-        endOffset: token.stop + 1,
-        severity: Severity.Error,
-      });
-    }
   }
 }

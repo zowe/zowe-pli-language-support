@@ -20,7 +20,7 @@ import {
   Token,
   Severity,
 } from "preprocessor-api";
-import { CICSForPLIPreprocessor } from "preprocessor-cics";
+import { CICSPreprocessor } from "preprocessor-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
@@ -29,6 +29,7 @@ import {
   Severity as LSSeverity,
   Diagnostic as LSDiagnostic,
 } from "../language-server/types";
+import { HostLanguageType } from "../../../preprocessor-cics/out/engine/host-languages";
 
 export async function execStatement(
   state: ParserState,
@@ -197,7 +198,7 @@ function handleExecFragment(
   switch (prefixMatch?.[1].toUpperCase()) {
     case "CICS":
       execStatement.preprocessorType = ast.PreprocessorType.CICS;
-      preprocessor = new CICSForPLIPreprocessor();
+      preprocessor = new CICSPreprocessor(HostLanguageType.PLI);
       break;
     case "SQL":
       execStatement.preprocessorType = ast.PreprocessorType.SQL;
