@@ -32,17 +32,27 @@ import {
   Preprocessor,
   PreprocessorResult,
   SemanticsKind,
+  Severity,
   Token,
 } from "preprocessor-api";
 import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
 import { CICSErrorStrategy } from "./error-strategy";
 import { EnglishMessageService, MessageService } from "./message-service";
+import {
+  HostLanguage,
+  HostLanguageFactories,
+  HostLanguageType,
+} from "./host-languages";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
 export class CICSPreprocessor implements Preprocessor {
   static Name = "CICS Preprocessor";
+  private readonly hostLanguage: HostLanguage;
   private readonly messageService: MessageService = new EnglishMessageService();
+  constructor(hostLanguage: HostLanguageType) {
+    this.hostLanguage = HostLanguageFactories[hostLanguage]();
+  }
   get name() {
     return CICSPreprocessor.Name;
   }
@@ -72,6 +82,7 @@ export class CICSPreprocessor implements Preprocessor {
       .filter((token) => token.text !== undefined)
       .map((token) => {
         let semanticsKind: SemanticsKind;
+        this.hostLanguage.visitToken(token, lexerErrors.errors);
         if (
           idIndex < identifierTokens.length &&
           token.start === identifierTokens[idIndex].startOffset

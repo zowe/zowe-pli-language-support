@@ -2904,9 +2904,12 @@ HEX_NUMBERS : HEXNUMBER;
 // whitespace, line breaks, comments, ...
 NEWLINE : '\r'? '\n' -> channel(HIDDEN);
 COMMASEPARATOR : ', ' -> channel(HIDDEN);
-COMMENTLINE : COMMENTTAG ~('\n' | '\r')* -> channel(COMMENTS);
+COBOL_COMMENTLINE : COMMENTTAG ~('\n' | '\r')* -> channel(COMMENTS);
 WS : [ \t\f]+ -> channel(HIDDEN);
 COMPILERLINE : DOUBLEMORETHANCHAR ~('\n' | '\r')* -> channel(HIDDEN);
+
+PLI_COMMENTLINE : '//' ~('\n' | '\r')* -> channel(COMMENTS);
+PLI_COMMENTBLOCK : '/*' .*? '*/' -> channel(COMMENTS);
 
 // treat all the non-processed tokens as errors
 ERRORCHAR : . ;
