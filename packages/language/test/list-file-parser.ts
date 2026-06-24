@@ -9,7 +9,7 @@
  *
  */
 
-import { CICSPreprocessorBase } from "preprocessor-cics";
+import { CICSPreprocessor } from "preprocessor-cics";
 import { PliLanguageName } from "../src/language-server/types";
 
 export interface ListFilePosition {
@@ -207,7 +207,7 @@ export function parseListFile(content: string): ParsedListFile {
       case "macroMessages": {
         const source =
           section === "cicsMessages"
-            ? CICSPreprocessorBase.Name
+            ? CICSPreprocessor.Name
             : PliLanguageName;
         // Format: {IBM<code>} {severity}  {line.file}  {description}
         const m = line.match(/^\s*(IBM\w+)\s+([IWESUL])\s+(\d+\.\d+)\s+(.*)/);
