@@ -9,7 +9,7 @@
  *
  */
 
-import { CICSPreprocessorBase } from "preprocessor-cics";
+import { CICSPreprocessor } from "preprocessor-cics";
 import { Db2SqlPreprocessor } from "preprocessor-db2";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
 import { PliLanguageName } from "../../../src/language-server/types";
@@ -34,7 +34,7 @@ export async function createCompilerTestHarnessImplementation(
     languages: {
       Pli: PliLanguageName,
       Db2Sql: Db2SqlPreprocessor.Name,
-      Cics: CICSPreprocessorBase.Name,
+      Cics: CICSPreprocessor.Name,
     },
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
