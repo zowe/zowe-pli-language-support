@@ -17,6 +17,7 @@ import {
   deserializeProcessGroup,
   type PluginConfigUnresolvedLibData,
 } from "../../src/workspace/plugin-configuration-provider";
+import { PluginConfiguration } from "../../src/language-server/constants";
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import type { JSONPath } from "../../src/utils/jsonc";
 import { URI, UriUtils } from "../../src/utils/uri";
@@ -26,6 +27,7 @@ import { LspCodes } from "../../src/validation/lsp-codes";
 import { Commands } from "../../src/language-server/constants";
 import { fullCode } from "../../src/language-server/types";
 import { makeProgramConfig } from "../config-fixtures";
+import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 let vfs: VirtualFileSystemProvider;
 let pluginConfig: PluginConfigurationProvider;
@@ -35,31 +37,9 @@ beforeEach(async () => {
   // Reset in-memory providers
   vfs = new VirtualFileSystemProvider();
   workspace = new WorkspaceContext(vfs);
+  resetDocumentProviders(vfs);
   pluginConfig = workspace.config;
-
-  // Base config setup
-  const processGroup = deserializeProcessGroup({
-    name: "default",
-    "include-extensions": [".inc"],
-    libs: [],
-  });
-  await vfs.writeFile(
-    UriUtils.toUri("/workspace/.pliplugin/proc_grps.json"),
-    JSON.stringify({
-      pgroups: [
-        {
-          name: "default",
-          "include-extensions": [".inc"],
-          libs: [],
-        },
-      ],
-    }),
-  );
-  await pluginConfig.init(UriUtils.toUri("/workspace"));
-  await pluginConfig.setProcessGroupConfigs([processGroup]);
-  pluginConfig.setProgramConfigs(UriUtils.toUri("/workspace"), [
-    makeProgramConfig({ program: "main.pli", pgroup: "default" }),
-  ]);
+  await setupParsedProcGrps([]);
 });
 
 const CODE_UNRESOLVED_LIB = fullCode(
@@ -126,7 +106,11 @@ async function setupParsedProcGrps(libs: string[]): Promise<string> {
   );
   const uri = UriUtils.toUri("/workspace/.pliplugin/proc_grps.json");
   await vfs.writeFile(uri, procGrpsJson);
-  await pluginConfig.parseProcessGroupConfigs(procGrpsJson);
+  await vfs.writeFile(
+    UriUtils.toUri("/workspace/.pliplugin/pgm_conf.json"),
+    JSON.stringify(PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT)
+  );
+  await pluginConfig.init(UriUtils.toUri("/workspace"));
   return uri.toString();
 }
 
@@ -216,7 +200,7 @@ describe("quickFixResolveInclude", () => {
     expect(result).toBeDefined();
     expect(result!.kind).toBe("quickfix");
     expect(result!.title).toContain("Add");
-    expect(result!.command!.command).toBe(Commands.RESOLVE_INCLUDE);
+    expect(result!.edit).toBeDefined();
   });
 
   test("returns valid CodeAction when all conditions are met and there are more than one pgroup entry", async () => {
@@ -252,27 +236,7 @@ describe("quickFixResolveInclude", () => {
     expect(result).toBeDefined();
     expect(result!.kind).toBe("quickfix");
     expect(result!.title).toContain("Add");
-    expect(result!.command!.command).toBe(Commands.RESOLVE_INCLUDE);
-    expect(result!.command!.arguments![1]).toEqual(
-      JSON.stringify(
-        {
-          pgroups: [
-            {
-              name: "default",
-              "include-extensions": [".inc"],
-              libs: ["nested"],
-            },
-            {
-              name: "custom",
-              "include-extensions": [".inc"],
-              libs: [],
-            },
-          ],
-        },
-        undefined,
-        2,
-      ),
-    );
+    expect(result!.edit).toBeDefined();
   });
 });
 

@@ -37,7 +37,6 @@ export namespace PluginConfiguration {
 }
 
 export namespace Commands {
-  export const RESOLVE_INCLUDE = "pli.applyQuickFixResolveInclude";
   export const CREATE_CONFIG = "pli.applyQuickFixCreateConfig";
   export const REMOVE_DEAD_LIB = "pli.applyQuickFixRemoveUnresolvedLib";
 }

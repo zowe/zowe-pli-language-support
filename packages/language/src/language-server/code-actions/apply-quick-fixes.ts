@@ -23,7 +23,8 @@ import { Commands, PluginConfiguration } from "../constants";
 import { LspCodes } from "../../validation/lsp-codes";
 import { fullCode } from "../types";
 import { PLICodes } from "../../validation/pli-codes";
-import { jsoncApplyEdits, jsoncModify, type JSONPath } from "../../utils/jsonc";
+import { jsoncApplyEdits, jsoncModify, jsoncToLspEdit, type JSONPath, type JsonEdit } from "../../utils/jsonc";
+import { TextDocuments } from "../text-documents";
 
 const JSONC_FORMAT = {
   formattingOptions: { tabSize: 2, insertSpaces: true },
@@ -61,59 +62,52 @@ export async function quickFixResolveInclude(
   if (!parentFolder || procGrpsConfig.computedLibsSet.has(parentFolder)) {
     return undefined;
   }
-  const procGrpsFileUri = UriUtils.joinPath(
-    workspaceFolderUri,
-    PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-  );
-  let newFileContent;
-  try {
-    const originalFileContent = await workspace.fs.readFile(procGrpsFileUri);
-    if (!originalFileContent) {
-      console.error("Missing 'proc_grps.json' file content.");
-      return;
-    }
-    newFileContent = JSON.parse(originalFileContent);
-    if (!Array.isArray(newFileContent.pgroups)) {
-      console.error(
-        "Missing 'pgroups' array property under 'proc_grps.json' file",
-      );
-      return;
-    }
-  } catch (err) {
-    console.error(
-      "Error reading or parsing configuration 'proc_grps.json' file: ",
-      err,
+
+  const procGrpMeta = procGrpsConfig.meta;
+  
+  if (!procGrpMeta) {
+    return undefined;
+  }
+  const procGrpPath = procGrpMeta.path;
+  const originalFile = await TextDocuments.get(procGrpMeta.uri);
+  const content = originalFile?.getText();
+  if (!content) {
+    return undefined;
+  }
+
+  let mode: "add-lib" | "create-libs" = "add-lib";
+  if (procGrpsConfig.libs.length === 0) {
+    mode = "create-libs";
+  }
+  const libPath = [...procGrpPath, "libs"];
+  let edits: JsonEdit[];
+  if (mode === "add-lib") {
+    edits = jsoncModify(
+      content,
+      libPath,
+      [...procGrpsConfig.libs.map((item) => item.value), parentFolder],
+      JSONC_FORMAT
     );
-    return;
+  } else {
+    edits = jsoncModify(
+      content,
+      libPath,
+      [parentFolder],
+      JSONC_FORMAT
+    );
   }
-  // newFileContent comes from raw JSON.parse so groups carry plain string
-  // names, not the JsonItem-wrapped form of the loaded ProcessGroup schema.
-  const groupToUpdate = newFileContent.pgroups.find(
-    (g: { name: string }) => g.name === progConfig.pgroup.value,
-  );
-  if (
-    !groupToUpdate ||
-    !Array.isArray(groupToUpdate.libs) ||
-    groupToUpdate.libs.includes(parentFolder)
-  ) {
-    return;
-  }
-  groupToUpdate.libs.push(parentFolder);
-  const newContent = JSON.stringify(
-    newFileContent,
-    undefined,
-    JSONC_FORMAT.formattingOptions.tabSize,
-  );
+
+  const textEdits = jsoncToLspEdit(content, edits);
 
   const action: CodeAction = {
     title: `Add '${parentFolder}' to INCLUDE libs.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
-    command: {
-      title: "Apply INCLUDE fix",
-      command: Commands.RESOLVE_INCLUDE,
-      arguments: [procGrpsFileUri.toString(), newContent],
-    },
+    edit: {
+      changes: {
+        [procGrpMeta.uri.toString()]: textEdits
+      }
+    }
   };
 
   return action;

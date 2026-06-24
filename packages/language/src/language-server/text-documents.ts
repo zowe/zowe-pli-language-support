@@ -241,8 +241,10 @@ export class NormalizedTextDocuments<
         if (content === undefined) {
           return undefined;
         }
+        // Create text document based on the fs data
+        // Do not store it in the synced documents map - otherwise changes
+        // to the underlying file will never be registered
         syncedDocument = this._configuration.create(uriName, "pli", 0, content);
-        this.set(syncedDocument);
       } catch (error) {
         return undefined;
       }

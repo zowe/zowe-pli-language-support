@@ -14,7 +14,6 @@ import {
   CompilationUnitHandler,
 } from "../workspace/compilation-unit";
 import {
-  CancellationToken,
   Connection,
   DocumentHighlight,
   TextDocumentSyncKind,
@@ -51,7 +50,6 @@ import { applySourceActions } from "./code-actions/apply-source-actions";
 import {
   commandCreateConfig,
   commandRemoveUnresolvedLib,
-  commandResolveInclude,
 } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
@@ -132,7 +130,6 @@ export function startLanguageServer(
         },
         executeCommandProvider: {
           commands: [
-            Commands.RESOLVE_INCLUDE,
             Commands.CREATE_CONFIG,
             Commands.REMOVE_DEAD_LIB,
           ],
@@ -419,16 +416,8 @@ export function startLanguageServer(
   onNotification(
     connection,
     Messages.WorkspaceDidChangePluginConfigNotification,
-    async () => {
-      // handle changes to the .pliplugin config folder's contents
-      const diagnosticsByUri = await workspace.config.reloadConfigurations();
-      publishPluginConfigDiagnostics(diagnosticsByUri);
-
-      // reindex reachable compilation units
-      await compilationUnitHandler.reindex(connection, CancellationToken.None);
-
-      // refresh semantic tokens so syntax coloring updates immediately
-      connection.languages.semanticTokens.refresh();
+    () => {
+      compilationUnitHandler.updateConfigs();
     },
   );
   onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
@@ -464,9 +453,6 @@ export function startLanguageServer(
 
   connection.onExecuteCommand(async (params) => {
     switch (params.command) {
-      case Commands.RESOLVE_INCLUDE:
-        await commandResolveInclude(params, workspace);
-        break;
       case Commands.CREATE_CONFIG:
         await commandCreateConfig(params, workspace);
         break;

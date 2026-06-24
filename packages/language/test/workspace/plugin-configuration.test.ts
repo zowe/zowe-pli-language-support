@@ -18,6 +18,7 @@ import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { Messages } from "../../src/utils/messages";
 import { makeProcessGroup } from "../config-fixtures";
 import { Severity } from "../../src/language-server/types";
+import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 /**
  * Minimal connection stub that responds to `config/getGlobal` with the
@@ -43,6 +44,7 @@ describe("Plugin Configuration Tests", () => {
   beforeEach(() => {
     vfs = new VirtualFileSystemProvider();
     workspace = new WorkspaceContext(vfs);
+    resetDocumentProviders(vfs);
   });
 
   afterEach(async () => {

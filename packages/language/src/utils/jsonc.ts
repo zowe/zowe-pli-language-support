@@ -18,12 +18,15 @@ import {
   modify,
   parseTree,
   type JSONPath,
+  type Edit,
   type Node,
   parse,
   printParseErrorCode,
   type ParseError,
   ParseOptions,
 } from "jsonc-parser";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { TextEdit } from "vscode-languageserver-types";
 
 // Provide default parse options
 // Since we now also use this for parsing vscode settings, we need to be lenient
@@ -55,4 +58,16 @@ export {
   printParseErrorCode as jsoncPrintParseErrorCode,
   type Node as JsonNode,
   type ParseError,
+  type Edit as JsonEdit,
 };
+
+export function jsoncToLspEdit(text: string, jsonEdits: Edit[]): TextEdit[] {
+  const edits: TextEdit[] = [];
+  const document = TextDocument.create("", "", 0, text);
+  for (const edit of jsonEdits) {
+    const start = document.positionAt(edit.offset);
+    const end = document.positionAt(edit.offset + edit.length);
+    edits.push(TextEdit.replace({ start, end }, edit.content));
+  }
+  return edits;
+}

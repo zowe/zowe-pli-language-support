@@ -613,19 +613,18 @@ export class PluginConfigurationProvider {
         containerPath: item.containerPath,
       };
     }
-    const text = await this.fs.readFile(resolvedUri);
-    if (text === undefined) return undefined;
-    const stringText = text.toString();
+    let text: string;
+    const textDocument = await TextDocuments.get(resolvedUri);
+    if (textDocument) {
+      text = textDocument.getText();
+    } else {
+      return undefined;
+    }
     return {
       uri: resolvedUri,
-      text: stringText,
+      text,
       entry,
-      document: TextDocument.create(
-        resolvedUri.toString(),
-        "jsonc",
-        0,
-        stringText,
-      ),
+      document: textDocument,
     };
   }
 

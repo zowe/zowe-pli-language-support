@@ -316,9 +316,7 @@ export class CompilationUnitHandler {
       // existing compilation unit
       return this.compilationUnits.get(uri.toString());
     }
-    if (isPluginConfigurationUri(uri)) {
-      return undefined;
-    } else if (!this.workspace.config.isLibFileCandidate(uri)) {
+    if (!this.workspace.config.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
       const unit = await this.createAndStoreCompilationUnit(uri);
       return unit;
@@ -404,6 +402,11 @@ export class CompilationUnitHandler {
   async updateUri(uri: URI): Promise<void> {
     await this.globalMutex.run(async () => {
       await this.ready;
+      if (isPluginConfigurationUri(uri)) {
+        // Plugin configuration changes should trigger a reindex
+        this.updateConfigs();
+        return;
+      }
       const unit = await this.getOrCreateCompilationUnit(uri);
       if (!unit) {
         // standalone library files do not synthesize new compilation units
@@ -464,6 +467,34 @@ export class CompilationUnitHandler {
       }
       throw err;
     }
+  }
+
+  debounceTimer: NodeJS.Timeout | undefined = undefined;
+
+  updateConfigs(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+    this.debounceTimer = setTimeout(() => {
+      this.doUpdateConfigs();
+    }, 200);
+  }
+
+  private async doUpdateConfigs(): Promise<void> {
+    // handle changes to the .pliplugin config folder's contents
+    const diagnosticsByUri = await this.workspace.config.reloadConfigurations();
+    for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
+      this.connection.sendDiagnostics({
+        uri,
+        diagnostics,
+      });
+    }
+
+    // reindex reachable compilation units
+    await this.reindex(this.connection, CancellationToken.None);
+
+    // refresh semantic tokens so syntax coloring updates immediately
+    this.connection.languages.semanticTokens.refresh();
   }
 
   /**
