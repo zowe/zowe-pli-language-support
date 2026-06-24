@@ -30,11 +30,7 @@
 verify.expectDiagnosticsAt(1, [
   {
     severity: 2,
-    message: "Included file './cpy/nested_one.pli' contains 3 lexing errors.",
-  },
-  {
-    severity: 2,
-    message: "Included file './cpy/nested_one.pli' contains 1 parsing errors.",
+    message: "Included file './cpy/nested_one.pli' contains 4 errors.",
   },
 ]);
 
@@ -42,7 +38,7 @@ verify.expectDiagnosticsAt(1, [
 verify.expectDiagnosticsAt(2, [
   {
     severity: 2,
-    message: "Included file './cpy/nested_two.pli' contains 3 lexing errors.",
+    message: "Included file './cpy/nested_two.pli' contains 3 errors.",
   },
 ]);
 

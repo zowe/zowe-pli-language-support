@@ -22,16 +22,6 @@ export enum DiagnosticCategory {
   Validation,
 }
 
-export const DiagnosticCategoryToString: Record<DiagnosticCategory, string> = {
-  [DiagnosticCategory.CompilerOptions]: "compiler options errors",
-  [DiagnosticCategory.Lexer]: "lexing errors",
-  [DiagnosticCategory.Parser]: "parsing errors",
-  [DiagnosticCategory.SymbolTable]: "symbol table errors",
-  [DiagnosticCategory.Linking]: "linking errors",
-  [DiagnosticCategory.TypeSystem]: "type system errors",
-  [DiagnosticCategory.Validation]: "validation errors",
-};
-
 const MaxCategory = Math.max(
   ...(Object.values(DiagnosticCategory).filter(
     (v) => typeof v === "number",

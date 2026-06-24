@@ -23,10 +23,7 @@ import { DeprecateIncludes } from "./compiler/IBM2444Iff-deprecate";
 import { typeCheck } from "./type-check-validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { IncludeDirective } from "../syntax-tree/ast";
-import {
-  DiagnosticCategory,
-  DiagnosticCategoryToString,
-} from "./diagnostics-store";
+import { DiagnosticCategory } from "./diagnostics-store";
 import { Severity } from "../language-server/types";
 
 export function registerPreprocessorValidationChecks(): ValidationChecks {
@@ -51,23 +48,20 @@ function PropagateIncludeErrors(
   compilationUnit: CompilationUnit,
 ): void {
   for (const item of includeDirective.items.filter((i) => i.filePath)) {
-    for (const category of [
+    const errors = [
       DiagnosticCategory.Lexer,
       DiagnosticCategory.Parser,
       DiagnosticCategory.CompilerOptions,
-    ]) {
-      const errors = compilationUnit.diagnostics.getByUri(
-        category,
-        item.filePath!,
-      );
-      if (errors.length > 0) {
-        acceptor({
-          uri: item.token?.uri?.toString(),
-          range: item.range ?? undefined,
-          message: `Included file '${item.relativeFilePath}' contains ${errors.length} ${DiagnosticCategoryToString[category]}.`,
-          severity: Severity.E,
-        });
-      }
+    ].flatMap((category) =>
+      compilationUnit.diagnostics.getByUri(category, item.filePath!),
+    );
+    if (errors.length > 0) {
+      acceptor({
+        uri: item.token?.uri?.toString(),
+        range: item.range ?? undefined,
+        message: `Included file '${item.relativeFilePath}' contains ${errors.length} errors.`,
+        severity: Severity.E,
+      });
     }
   }
 }
