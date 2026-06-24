@@ -21,8 +21,8 @@ import { TestBuilder } from "../test-builder";
 import { generateIncludeItemMarkup } from "../../src/language-server/hover-request";
 import { SyntaxKind } from "../../src/syntax-tree/ast";
 import { HarnessTypeAttributes } from "./implementation/type-attributes";
-import { CICSPreprocessor } from "../../../preprocessor-cics/out/engine/preprocessor";
-import { Db2SqlPreprocessor } from "../../../preprocessor-db2/out/engine/preprocessor";
+import { CICSPreprocessor } from "preprocessor-cics";
+import { Db2SqlPreprocessor } from "preprocessor-db2";
 import { PliLanguageName } from "../../src/language-server/types";
 
 type HarnessImplementationListener = (

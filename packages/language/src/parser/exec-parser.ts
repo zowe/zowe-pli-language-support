@@ -29,6 +29,7 @@ import {
   Severity as LSSeverity,
   Diagnostic as LSDiagnostic,
 } from "../language-server/types";
+import { HostLanguageType } from "preprocessor-cics";
 
 export async function execStatement(
   state: ParserState,
@@ -197,7 +198,7 @@ function handleExecFragment(
   switch (prefixMatch?.[1].toUpperCase()) {
     case "CICS":
       execStatement.preprocessorType = ast.PreprocessorType.CICS;
-      preprocessor = new CICSPreprocessor();
+      preprocessor = new CICSPreprocessor(HostLanguageType.PLI);
       break;
     case "SQL":
       execStatement.preprocessorType = ast.PreprocessorType.SQL;

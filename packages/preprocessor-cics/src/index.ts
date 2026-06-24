@@ -10,6 +10,7 @@
  */
 
 export * from "./engine/preprocessor";
+export * from "./engine/host-languages";
 export * from "./engine/collect-identifiers";
 export * from "./engine/collect-syntax-errors";
 export * from "./engine/collect-semantic-errors";
