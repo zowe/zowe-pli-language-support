@@ -29,7 +29,7 @@ import {
   Severity as LSSeverity,
   Diagnostic as LSDiagnostic,
 } from "../language-server/types";
-import { HostLanguageType } from "../../../preprocessor-cics/out/engine/host-languages";
+import { HostLanguageType } from "preprocessor-cics";
 
 export async function execStatement(
   state: ParserState,
