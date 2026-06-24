@@ -48,7 +48,16 @@ export function resolveLibFileUri(
   fileName: string | undefined,
   workspace: URI,
   scheme?: string,
-): URI {
+): URI | undefined {
   const base = resolveLibUri(lib, workspace, scheme);
-  return fileName ? UriUtils.joinPath(base, fileName) : base;
+  if (fileName) {
+    const joined = UriUtils.joinPath(base, fileName);
+    if (!UriUtils.contains(base, joined)) {
+      // The resolved path is outside of the lib.
+      // Don't return it, because it allows to read outside of the defined library
+      return undefined;
+    }
+    return joined;
+  }
+  return base;
 }

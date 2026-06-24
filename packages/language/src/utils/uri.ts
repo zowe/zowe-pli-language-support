@@ -169,6 +169,16 @@ export namespace UriUtils {
     return path.split("/").filter((e) => e.length > 0);
   }
 
+  export function contains(parent: URI | string, child: URI | string): boolean {
+    const parentKey = toNormalizedKey(parent);
+    const childKey = toNormalizedKey(child);
+    return (
+      childKey === parentKey ||
+      (childKey.startsWith(parentKey) &&
+        (childKey[parentKey.length] === "/" || parentKey.endsWith("/")))
+    );
+  }
+
   export function relative(from: URI | string, to: URI | string): string {
     const fromFull = toFilePath(from);
     const toFull = toFilePath(to);
