@@ -14,6 +14,7 @@ import {
   CompilationUnitHandler,
 } from "../workspace/compilation-unit";
 import {
+  CancellationToken,
   Connection,
   DocumentHighlight,
   TextDocumentSyncKind,
@@ -47,16 +48,13 @@ import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
-import {
-  commandCreateConfig,
-  commandRemoveUnresolvedLib,
-} from "./commands";
+import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { MultiMap } from "../utils/collections";
-export { PluginConfiguration } from "./constants";
+export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
   connection: Connection,
@@ -129,10 +127,7 @@ export function startLanguageServer(
           ],
         },
         executeCommandProvider: {
-          commands: [
-            Commands.CREATE_CONFIG,
-            Commands.REMOVE_DEAD_LIB,
-          ],
+          commands: [Commands.CREATE_CONFIG],
         },
         documentHighlightProvider: true,
         semanticTokensProvider: {
@@ -416,8 +411,16 @@ export function startLanguageServer(
   onNotification(
     connection,
     Messages.WorkspaceDidChangePluginConfigNotification,
-    () => {
-      compilationUnitHandler.updateConfigs();
+    async () => {
+      // handle changes to the .pliplugin config folder's contents
+      const diagnosticsByUri = await workspace.config.reloadConfigurations();
+      publishPluginConfigDiagnostics(diagnosticsByUri);
+
+      // reindex reachable compilation units
+      await compilationUnitHandler.reindex(connection, CancellationToken.None);
+
+      // refresh semantic tokens so syntax coloring updates immediately
+      connection.languages.semanticTokens.refresh();
     },
   );
   onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
@@ -455,9 +458,6 @@ export function startLanguageServer(
     switch (params.command) {
       case Commands.CREATE_CONFIG:
         await commandCreateConfig(params, workspace);
-        break;
-      case Commands.REMOVE_DEAD_LIB:
-        await commandRemoveUnresolvedLib(params, workspace);
         break;
     }
   });

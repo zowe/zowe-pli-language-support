@@ -23,12 +23,33 @@ import { Commands, PluginConfiguration } from "../constants";
 import { LspCodes } from "../../validation/lsp-codes";
 import { fullCode } from "../types";
 import { PLICodes } from "../../validation/pli-codes";
-import { jsoncApplyEdits, jsoncModify, jsoncToLspEdit, type JSONPath, type JsonEdit } from "../../utils/jsonc";
+import {
+  jsoncApplyEdits,
+  jsoncModify,
+  jsoncParse,
+  jsoncToLspEdit,
+  type JSONPath,
+  type JsonEdit,
+} from "../../utils/jsonc";
+import { TextDocument } from "vscode-languageserver-textdocument";
 import { TextDocuments } from "../text-documents";
 
 const JSONC_FORMAT = {
   formattingOptions: { tabSize: 2, insertSpaces: true },
 } as const;
+
+/**
+ * Client-side command that saves the given files after the action's `edit` has
+ * been applied. The plugin-config reload only triggers on save, so quick fixes
+ * that edit a config file must save it to take effect.
+ */
+function saveFilesCommand(uris: string[]) {
+  return {
+    title: "Save",
+    command: Commands.SAVE_FILES,
+    arguments: [uris],
+  };
+}
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
@@ -64,7 +85,7 @@ export async function quickFixResolveInclude(
   }
 
   const procGrpMeta = procGrpsConfig.meta;
-  
+
   if (!procGrpMeta) {
     return undefined;
   }
@@ -86,15 +107,10 @@ export async function quickFixResolveInclude(
       content,
       libPath,
       [...procGrpsConfig.libs.map((item) => item.value), parentFolder],
-      JSONC_FORMAT
+      JSONC_FORMAT,
     );
   } else {
-    edits = jsoncModify(
-      content,
-      libPath,
-      [parentFolder],
-      JSONC_FORMAT
-    );
+    edits = jsoncModify(content, libPath, [parentFolder], JSONC_FORMAT);
   }
 
   const textEdits = jsoncToLspEdit(content, edits);
@@ -105,9 +121,10 @@ export async function quickFixResolveInclude(
     diagnostics: [diagnostic],
     edit: {
       changes: {
-        [procGrpMeta.uri.toString()]: textEdits
-      }
-    }
+        [procGrpMeta.uri.toString()]: textEdits,
+      },
+    },
+    command: saveFilesCommand([procGrpMeta.uri.toString()]),
   };
 
   return action;
@@ -279,32 +296,34 @@ export async function quickFixRemoveUnresolvedLib(
     return;
   }
 
-  let newContent: string;
+  let edits: JsonEdit[];
   try {
-    newContent = jsoncApplyEdits(
-      procGrpsText,
-      jsoncModify(procGrpsText, data.path, undefined, JSONC_FORMAT),
-    );
+    edits = jsoncModify(procGrpsText, data.path, undefined, JSONC_FORMAT);
   } catch (err) {
     console.error("Failed to build proc_grps edit for remove lib:", err);
     return undefined;
   }
 
+  const lspEdits = jsoncToLspEdit(procGrpsText, edits);
+
   return {
     title: `Remove unresolved library '${data.lib}'.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
-    command: {
-      title: "Remove unresolved lib",
-      command: Commands.REMOVE_DEAD_LIB,
-      arguments: [procGrpsUri.toString(), newContent],
+    edit: {
+      changes: {
+        [procGrpsUri.toString()]: lspEdits,
+      },
     },
+    command: saveFilesCommand([procGrpsUri.toString()]),
   };
 }
 
 /**
- * Removes every distinct (pgroup, lib) in one write.
- * Applies removals right-to-left so array indices stay valid.
+ * Removes every distinct (pgroup, lib) in one write by rewriting each affected
+ * `libs` array as a whole with its surviving entries. Works regardless of
+ * whether the config lives in `.pliplugin/proc_grps.json` or a settings.json,
+ * since paths are taken from the snapshot entries.
  */
 export async function quickFixRemoveAllUnresolvedLibs(
   pairs: readonly PluginConfigUnresolvedLibData[],
@@ -328,37 +347,94 @@ export async function quickFixRemoveAllUnresolvedLibs(
   if (unique.length < 2) {
     return undefined;
   }
-  let text = procGrpsSnapshotText;
 
-  unique.sort((a, b) => {
-    // Sort from highest index first so earlier indices remain valid when removing right-to-left.
-    return Number(b.path.at(-1)) - Number(a.path.at(-1));
-  });
-
+  // Group the unresolved libs by their `libs` array (the path without the
+  // trailing index). The prefix is source-agnostic: `["pgroups", i, "libs"]`
+  // for proc_grps.json, `["pli", "proc_grps", "pgroups", i, "libs"]` when the
+  // config lives in a settings.json. We then replace each `libs` array as a
+  // whole with its surviving entries — merging individual index removals from
+  // separate jsoncModify calls does not work, since every call computes its
+  // offsets against the original text.
+  const byLibsArray = new Map<
+    string,
+    { libsPath: JSONPath; removeIndices: Set<number> }
+  >();
   for (const { path } of unique) {
-    try {
-      const edits = jsoncModify(text, path, undefined, JSONC_FORMAT);
-      text = jsoncApplyEdits(text, edits);
-    } catch (err) {
-      console.error("Failed at path:", JSON.stringify(path));
-      console.error(
-        "Failed to build proc_grps edit from unresolved lib path:",
-        err,
-      );
-      return undefined;
+    const libsPath = path.slice(0, -1);
+    const index = Number(path.at(-1));
+    const key = JSON.stringify(libsPath);
+    let group = byLibsArray.get(key);
+    if (!group) {
+      group = { libsPath, removeIndices: new Set() };
+      byLibsArray.set(key, group);
     }
+    group.removeIndices.add(index);
   }
+
+  const root = jsoncParse(procGrpsSnapshotText);
+  let text = procGrpsSnapshotText;
+  try {
+    for (const { libsPath, removeIndices } of byLibsArray.values()) {
+      const libs = getByPath(root, libsPath);
+      if (!Array.isArray(libs)) {
+        continue;
+      }
+      const survivingLibs = libs.filter((_, i) => !removeIndices.has(i));
+      text = jsoncApplyEdits(
+        text,
+        jsoncModify(text, libsPath, survivingLibs, JSONC_FORMAT),
+      );
+    }
+  } catch (err) {
+    console.error(
+      "Failed to build proc_grps edit from unresolved lib paths:",
+      err,
+    );
+    return undefined;
+  }
+
+  if (text === procGrpsSnapshotText) {
+    return undefined;
+  }
+
+  // A single full-document replace sidesteps any multi-edit offset hazards.
+  const fullDocEdit = fullDocumentEdit(procGrpsSnapshotText, text);
 
   return {
     title: `Remove all ${unique.length} unresolved libraries`,
     kind: CodeActionKind.QuickFix,
     diagnostics: relatedDiagnostics,
-    command: {
-      title: "Remove all unresolved libs",
-      command: Commands.REMOVE_DEAD_LIB,
-      arguments: [procGrpsSnapshotUri.toString(), text],
+    edit: {
+      changes: {
+        [procGrpsSnapshotUri.toString()]: [fullDocEdit],
+      },
     },
+    command: saveFilesCommand([procGrpsSnapshotUri.toString()]),
   };
+}
+
+/** Navigates a parsed JSON value by a JSONPath, returning `undefined` if absent. */
+function getByPath(root: unknown, path: JSONPath): unknown {
+  let current: unknown = root;
+  for (const segment of path) {
+    if (current == null || typeof current !== "object") {
+      return undefined;
+    }
+    current = (current as Record<string | number, unknown>)[segment];
+  }
+  return current;
+}
+
+/** A single TextEdit replacing the entire document with `newText`. */
+function fullDocumentEdit(originalText: string, newText: string): TextEdit {
+  const document = TextDocument.create("", "", 0, originalText);
+  return TextEdit.replace(
+    {
+      start: { line: 0, character: 0 },
+      end: document.positionAt(originalText.length),
+    },
+    newText,
+  );
 }
 
 async function handleMultipleUnresolvedLibs(

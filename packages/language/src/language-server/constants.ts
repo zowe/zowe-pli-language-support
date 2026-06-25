@@ -38,5 +38,11 @@ export namespace PluginConfiguration {
 
 export namespace Commands {
   export const CREATE_CONFIG = "pli.applyQuickFixCreateConfig";
-  export const REMOVE_DEAD_LIB = "pli.applyQuickFixRemoveUnresolvedLib";
+  /**
+   * Client-side command (registered in the VS Code extension, NOT in the
+   * server's `executeCommandProvider`). Attached to quick fixes that edit a
+   * plugin config file so the file is saved after the edit is applied — the
+   * config reload only fires on save.
+   */
+  export const SAVE_FILES = "pli.saveFiles";
 }
