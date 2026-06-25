@@ -23,15 +23,7 @@ import { Commands, PluginConfiguration } from "../constants";
 import { LspCodes } from "../../validation/lsp-codes";
 import { fullCode } from "../types";
 import { PLICodes } from "../../validation/pli-codes";
-import {
-  jsoncApplyEdits,
-  jsoncModify,
-  jsoncParse,
-  jsoncToLspEdit,
-  type JSONPath,
-  type JsonEdit,
-} from "../../utils/jsonc";
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { jsoncModify, jsoncToLspEdit, type JsonEdit } from "../../utils/jsonc";
 import { TextDocuments } from "../text-documents";
 
 const JSONC_FORMAT = {
@@ -331,58 +323,25 @@ export async function quickFixRemoveAllUnresolvedLibs(
   procGrpsSnapshotUri: URI,
   relatedDiagnostics: Diagnostic[],
 ): Promise<CodeAction | undefined> {
-  const unique: (PluginConfigUnresolvedLibData & { path: JSONPath })[] = [];
-  const seen = new Set<string>();
-  for (const pair of pairs) {
-    if (!pair.path) {
-      continue;
-    }
-    const key = pair.path.join("/");
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    unique.push(pair as PluginConfigUnresolvedLibData & { path: JSONPath });
-  }
-  if (unique.length < 2) {
+  if (pairs.length < 2) {
     return undefined;
   }
 
-  // Group the unresolved libs by their `libs` array (the path without the
-  // trailing index). The prefix is source-agnostic: `["pgroups", i, "libs"]`
-  // for proc_grps.json, `["pli", "proc_grps", "pgroups", i, "libs"]` when the
-  // config lives in a settings.json. We then replace each `libs` array as a
-  // whole with its surviving entries — merging individual index removals from
-  // separate jsoncModify calls does not work, since every call computes its
-  // offsets against the original text.
-  const byLibsArray = new Map<
-    string,
-    { libsPath: JSONPath; removeIndices: Set<number> }
-  >();
-  for (const { path } of unique) {
-    const libsPath = path.slice(0, -1);
-    const index = Number(path.at(-1));
-    const key = JSON.stringify(libsPath);
-    let group = byLibsArray.get(key);
-    if (!group) {
-      group = { libsPath, removeIndices: new Set() };
-      byLibsArray.set(key, group);
+  const byLibsArray = new Map<string, string[]>();
+  for (const { path, survivingLibs } of pairs) {
+    if (!path || !survivingLibs) {
+      continue;
     }
-    group.removeIndices.add(index);
+    const libsPath = JSON.stringify(path.slice(0, -1));
+    byLibsArray.set(libsPath, survivingLibs);
   }
 
-  const root = jsoncParse(procGrpsSnapshotText);
   let text = procGrpsSnapshotText;
+  const edits: JsonEdit[] = [];
   try {
-    for (const { libsPath, removeIndices } of byLibsArray.values()) {
-      const libs = getByPath(root, libsPath);
-      if (!Array.isArray(libs)) {
-        continue;
-      }
-      const survivingLibs = libs.filter((_, i) => !removeIndices.has(i));
-      text = jsoncApplyEdits(
-        text,
-        jsoncModify(text, libsPath, survivingLibs, JSONC_FORMAT),
+    for (const [libsPath, survivingLibs] of byLibsArray.entries()) {
+      edits.push(
+        ...jsoncModify(text, JSON.parse(libsPath), survivingLibs, JSONC_FORMAT),
       );
     }
   } catch (err) {
@@ -393,48 +352,20 @@ export async function quickFixRemoveAllUnresolvedLibs(
     return undefined;
   }
 
-  if (text === procGrpsSnapshotText) {
-    return undefined;
-  }
+  const fullDocEdit = jsoncToLspEdit(procGrpsSnapshotText, edits);
 
-  // A single full-document replace sidesteps any multi-edit offset hazards.
-  const fullDocEdit = fullDocumentEdit(procGrpsSnapshotText, text);
-
+  const uri = procGrpsSnapshotUri.toString();
   return {
-    title: `Remove all ${unique.length} unresolved libraries`,
+    title: `Remove all ${pairs.length} unresolved libraries`,
     kind: CodeActionKind.QuickFix,
     diagnostics: relatedDiagnostics,
     edit: {
       changes: {
-        [procGrpsSnapshotUri.toString()]: [fullDocEdit],
+        [uri]: fullDocEdit,
       },
     },
-    command: saveFilesCommand([procGrpsSnapshotUri.toString()]),
+    command: saveFilesCommand([uri]),
   };
-}
-
-/** Navigates a parsed JSON value by a JSONPath, returning `undefined` if absent. */
-function getByPath(root: unknown, path: JSONPath): unknown {
-  let current: unknown = root;
-  for (const segment of path) {
-    if (current == null || typeof current !== "object") {
-      return undefined;
-    }
-    current = (current as Record<string | number, unknown>)[segment];
-  }
-  return current;
-}
-
-/** A single TextEdit replacing the entire document with `newText`. */
-function fullDocumentEdit(originalText: string, newText: string): TextEdit {
-  const document = TextDocument.create("", "", 0, originalText);
-  return TextEdit.replace(
-    {
-      start: { line: 0, character: 0 },
-      end: document.positionAt(originalText.length),
-    },
-    newText,
-  );
 }
 
 async function handleMultipleUnresolvedLibs(

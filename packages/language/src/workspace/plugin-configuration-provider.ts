@@ -71,7 +71,14 @@ export {
 export type PluginConfigUnresolvedLibData = {
   lib: string;
   pgroup: string;
+  /** Root-relative path to this lib entry, e.g. `["pgroups", 0, "libs", 2]`. */
   path?: JSONPath;
+  /**
+   * The lib values that should remain in this pgroup's `libs` array once every
+   * unresolved entry is removed. Lets the "remove all" quick fix rewrite the
+   * array as a whole without re-parsing the source.
+   */
+  survivingLibs?: string[];
 };
 
 /**
@@ -158,11 +165,11 @@ function validatePluginConfig(
 export type PluginConfigLspDiagnostics = MultiMap<string, LspDiagnostic>;
 export type PluginConfigDiagnostics = Diagnostic[];
 
-type ProcGrpsSnapshot = {
+export interface ProcGrpsSnapshot {
   entries: PluginConfigUnresolvedLibData[];
   text: string;
   uri: URI;
-};
+}
 
 /**
  * One concrete source of plugin configuration (a `.pliplugin/` file or
@@ -763,12 +770,27 @@ export class PluginConfigurationProvider {
       record.computedLibsSet = expanded.libsSet;
 
       const pgroupName = record.name.value;
+      // The libs that stay once every unresolved entry is dropped. `unresolved`
+      // holds the original `record.libs` items (by reference), so set membership
+      // is exact and duplicate-safe. Computed once per pgroup and shared by all
+      // of its unresolved diagnostics so the "remove all" quick fix can rewrite
+      // the array without re-parsing.
+      const unresolvedItems = new Set(expanded.unresolved);
+      const survivingLibs = record.libs
+        .filter((item) => !unresolvedItems.has(item))
+        .map((item) => item.value);
       for (const libItem of expanded.unresolved) {
         const fallbackRange = offsetLengthToRange(0, 1);
         const range = libItem.meta?.range ?? fallbackRange;
         const path = libItem.meta?.path;
         const lib = libItem.value;
         const sourceUri = libItem.meta?.uri?.toString();
+        const data: PluginConfigUnresolvedLibData = {
+          lib,
+          pgroup: pgroupName,
+          path,
+          survivingLibs,
+        };
         const unresolvedLibDiagnostic: Diagnostic = {
           ...diagnosticFromCodeAtRange(
             LspCodes.PluginConfiguration.UnresolvedEntry,
@@ -776,11 +798,11 @@ export class PluginConfigurationProvider {
             range,
             lib,
           ),
-          data: { lib, pgroup: pgroupName, path },
+          data,
         };
         diagnostics.push(unresolvedLibDiagnostic);
         if (sourceUri) {
-          entriesBySource.add(sourceUri, { lib, pgroup: pgroupName, path });
+          entriesBySource.add(sourceUri, data);
         }
       }
     }

@@ -15,13 +15,14 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import {
   PluginConfigurationProvider,
+  ProcGrpsSnapshot,
   deserializeProcessGroup,
   type PluginConfigUnresolvedLibData,
 } from "../../src/workspace/plugin-configuration-provider";
 import { PluginConfiguration } from "../../src/language-server/constants";
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import type { JSONPath } from "../../src/utils/jsonc";
-import { URI, UriUtils } from "../../src/utils/uri";
+import { UriUtils } from "../../src/utils/uri";
 import * as applyQuickFixes from "../../src/language-server/code-actions/apply-quick-fixes";
 import { PLICodes } from "../../src/validation/pli-codes";
 import { LspCodes } from "../../src/validation/lsp-codes";
@@ -71,26 +72,6 @@ function unresolvedLibDiagnostic(
   } as Diagnostic;
 }
 
-function procGrpsJsonText(libs: string[]): string {
-  return JSON.stringify(
-    {
-      pgroups: [
-        {
-          name: "default",
-          "include-extensions": [".inc"],
-          libs,
-        },
-      ],
-    },
-    undefined,
-    2,
-  );
-}
-
-function procGrpsUri(): URI {
-  return UriUtils.toUri(procGrpsDocumentUri());
-}
-
 async function setupParsedProcGrps(libs: string[]): Promise<string> {
   const procGrpsJson = JSON.stringify(
     {
@@ -127,6 +108,50 @@ function applyActionEdit(text: string, action: CodeAction, uri: string): any {
     action.edit!.changes![uri],
   );
   return JSON.parse(newContent);
+}
+
+/**
+ * Parses a proc_grps.json with the given pgroups and returns the resulting
+ * snapshot. Any lib in `resolvable` is backed by a real directory so it
+ * resolves; every other lib becomes an unresolved-lib entry carrying the
+ * provider-computed `libsPath`/`survivingLibs`. Lets remove-all tests drive
+ * through the real parse instead of hand-building those fields.
+ */
+async function parsedSnapshot(
+  pgroups: { name: string; libs: string[] }[],
+  resolvable: string[] = [],
+): Promise<ProcGrpsSnapshot> {
+  for (const lib of resolvable) {
+    await vfs.writeFile(UriUtils.toUri(`/workspace/${lib}/.placeholder`), "");
+  }
+  await vfs.writeFile(
+    UriUtils.toUri("/workspace/.pliplugin/proc_grps.json"),
+    JSON.stringify(
+      {
+        pgroups: pgroups.map((g) => ({ ...g, "include-extensions": [".inc"] })),
+      },
+      undefined,
+      2,
+    ),
+  );
+  await vfs.writeFile(
+    UriUtils.toUri("/workspace/.pliplugin/pgm_conf.json"),
+    JSON.stringify(PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT),
+  );
+  await pluginConfig.init(UriUtils.toUri("/workspace"));
+  return pluginConfig.getLastProcGrpsSnapshot()!;
+}
+
+/** Runs the bulk remove-all quick fix against a parsed snapshot. */
+function removeAllFromSnapshot(
+  snapshot: Readonly<ProcGrpsSnapshot>,
+): Promise<CodeAction | undefined> {
+  return applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+    snapshot.entries,
+    snapshot.text,
+    snapshot.uri,
+    [],
+  );
 }
 
 //
@@ -577,170 +602,83 @@ describe("quickFixRemoveUnresolvedLib", () => {
 // quickFixRemoveAllUnresolvedLibs tests
 // ----------------------------------------------------------
 describe("quickFixRemoveAllUnresolvedLibs", () => {
-  test("returns undefined when fewer than two unique entries", async () => {
-    const text = procGrpsJsonText(["a"]);
-    const uri = procGrpsUri();
-    expect(
-      await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
-        [{ lib: "a", pgroup: "default", path: ["pgroups", 0, "libs", 0] }],
-        text,
-        uri,
-        [],
-      ),
-    ).toBeUndefined();
-
-    expect(
-      await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
-        [
-          {
-            lib: "same",
-            pgroup: "default",
-            path: ["pgroups", 0, "libs", 0],
-          },
-          {
-            lib: "same",
-            pgroup: "default",
-            path: ["pgroups", 0, "libs", 0],
-          },
-        ],
-        text,
-        uri,
-        [],
-      ),
-    ).toBeUndefined();
-  });
-
-  test("returns undefined when entries have no paths", async () => {
-    const text = procGrpsJsonText(["a", "b"]);
-    const uri = procGrpsUri();
-    expect(
-      await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
-        [
-          { lib: "a", pgroup: "default" },
-          { lib: "b", pgroup: "default" },
-        ],
-        text,
-        uri,
-        [],
-      ),
-    ).toBeUndefined();
-  });
-
-  test("removes every unique entry in one command and deduplicates input", async () => {
-    const text = procGrpsJsonText(["w", "x", "y", "z"]);
-    const uri = procGrpsUri();
-
-    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
-      [
-        { lib: "x", pgroup: "default", path: ["pgroups", 0, "libs", 1] },
-        { lib: "y", pgroup: "default", path: ["pgroups", 0, "libs", 2] },
-        { lib: "x", pgroup: "default", path: ["pgroups", 0, "libs", 1] },
-      ],
-      text,
-      uri,
-      [],
+  test("removes every unresolved lib while keeping the resolved ones", async () => {
+    const snapshot = await parsedSnapshot(
+      [{ name: "default", libs: ["w", "x", "y", "z"] }],
+      ["w", "z"],
     );
+    const uri = snapshot.uri.toString();
+
+    const action = await removeAllFromSnapshot(snapshot);
+
     expect(action).toBeDefined();
     expect(action!.title).toContain("Remove all 2 unresolved libraries");
     expect(action!.edit).toBeDefined();
     expect(action!.command!.command).toBe(Commands.SAVE_FILES);
-    expect(action!.command!.arguments![0]).toEqual([uri.toString()]);
-    const parsed = applyActionEdit(text, action!, uri.toString());
-    expect(parsed.pgroups[0].libs).toEqual(["w", "z"]);
+    expect(action!.command!.arguments![0]).toEqual([uri]);
+    expect(
+      applyActionEdit(snapshot.text, action!, uri).pgroups[0].libs,
+    ).toEqual(["w", "z"]);
   });
 
-  test("path-aware remove-all removes duplicate libs from right to left", async () => {
-    const text = procGrpsJsonText(["dup", "keep", "dup"]);
-    const uri = procGrpsUri();
-
-    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
-      [
-        { lib: "dup", pgroup: "default", path: ["pgroups", 0, "libs", 0] },
-        { lib: "dup", pgroup: "default", path: ["pgroups", 0, "libs", 2] },
-      ],
-      text,
-      uri,
-      [],
+  test("removes duplicate unresolved libs but keeps a resolved namesake", async () => {
+    const snapshot = await parsedSnapshot(
+      [{ name: "default", libs: ["dup", "keep", "dup"] }],
+      ["keep"],
     );
+    const uri = snapshot.uri.toString();
+
+    const action = await removeAllFromSnapshot(snapshot);
 
     expect(action).toBeDefined();
-    const parsed = applyActionEdit(text, action!, uri.toString());
-    expect(parsed.pgroups[0].libs).toEqual(["keep"]);
+    expect(
+      applyActionEdit(snapshot.text, action!, uri).pgroups[0].libs,
+    ).toEqual(["keep"]);
   });
 
   test("removes unresolved libs from every process group (multi-pgroup)", async () => {
-    const text = JSON.stringify(
-      {
-        pgroups: [
-          {
-            name: "a",
-            "include-extensions": [".inc"],
-            libs: ["good-a", "bad-a"],
-          },
-          {
-            name: "b",
-            "include-extensions": [".inc"],
-            libs: ["bad-b", "good-b"],
-          },
-        ],
-      },
-      undefined,
-      2,
-    );
-    const uri = procGrpsUri();
-
-    const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
+    const snapshot = await parsedSnapshot(
       [
-        { lib: "bad-a", pgroup: "a", path: ["pgroups", 0, "libs", 1] },
-        { lib: "bad-b", pgroup: "b", path: ["pgroups", 1, "libs", 0] },
+        { name: "a", libs: ["good-a", "bad-a"] },
+        { name: "b", libs: ["bad-b", "good-b"] },
       ],
-      text,
-      uri,
-      [],
+      ["good-a", "good-b"],
     );
+    const uri = snapshot.uri.toString();
+
+    const action = await removeAllFromSnapshot(snapshot);
 
     expect(action).toBeDefined();
-    expect(action!.command!.arguments![0]).toEqual([uri.toString()]);
-    const parsed = applyActionEdit(text, action!, uri.toString());
+    expect(action!.command!.arguments![0]).toEqual([uri]);
+    const parsed = applyActionEdit(snapshot.text, action!, uri);
     expect(parsed.pgroups[0].libs).toEqual(["good-a"]);
     expect(parsed.pgroups[1].libs).toEqual(["good-b"]);
   });
 
   test("rewrites libs nested inside a settings.json source", async () => {
-    // Config supplied via VS Code settings: paths are prefixed with the
-    // settings container, and the source URI is settings.json — not proc_grps.
+    // Config supplied via VS Code settings: paths are prefixed with the settings
+    // container, and the source is settings.json - not proc_grps.json. The
+    // settings-loading pipeline needs a live connection, so this case builds the
+    // prefixed paths directly rather than driving through the parse.
+    const libs = ["good", "bad-1", "bad-2"];
     const text = JSON.stringify(
-      {
-        pli: {
-          proc_grps: {
-            pgroups: [
-              {
-                name: "default",
-                "include-extensions": [".inc"],
-                libs: ["good", "bad-1", "bad-2"],
-              },
-            ],
-          },
-        },
-      },
+      { pli: { proc_grps: { pgroups: [{ name: "default", libs }] } } },
       undefined,
       2,
     );
     const uri = UriUtils.toUri("/workspace/.vscode/settings.json");
+    const libsPath = ["pli", "proc_grps", "pgroups", 0, "libs"];
+    const survivingLibs = ["good"];
+    const pairs = [1, 2].map((i) => ({
+      lib: libs[i],
+      pgroup: "default",
+      path: [...libsPath, i],
+      libsPath,
+      survivingLibs,
+    }));
 
     const action = await applyQuickFixes.quickFixRemoveAllUnresolvedLibs(
-      [
-        {
-          lib: "bad-1",
-          pgroup: "default",
-          path: ["pli", "proc_grps", "pgroups", 0, "libs", 1],
-        },
-        {
-          lib: "bad-2",
-          pgroup: "default",
-          path: ["pli", "proc_grps", "pgroups", 0, "libs", 2],
-        },
-      ],
+      pairs,
       text,
       uri,
       [],
@@ -749,8 +687,10 @@ describe("quickFixRemoveAllUnresolvedLibs", () => {
     expect(action).toBeDefined();
     expect(action!.command!.command).toBe(Commands.SAVE_FILES);
     expect(action!.command!.arguments![0]).toEqual([uri.toString()]);
-    const parsed = applyActionEdit(text, action!, uri.toString());
-    expect(parsed.pli.proc_grps.pgroups[0].libs).toEqual(["good"]);
+    expect(
+      applyActionEdit(text, action!, uri.toString()).pli.proc_grps.pgroups[0]
+        .libs,
+    ).toEqual(["good"]);
   });
 });
 
