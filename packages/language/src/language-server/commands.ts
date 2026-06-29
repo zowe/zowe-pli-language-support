@@ -14,18 +14,6 @@ import { updateOrCreateConfig } from "../utils/config";
 import { UriUtils } from "../utils/uri";
 import { WorkspaceContext } from "../workspace/workspace-context";
 
-export async function commandResolveInclude(
-  params: ExecuteCommandParams,
-  workspace: WorkspaceContext,
-) {
-  const [uri, content] = params.arguments as string[];
-  try {
-    await workspace.fs.writeFile(UriUtils.toUri(uri), content);
-  } catch (err) {
-    console.error(`Failed to write file at URI: ${uri}`, err);
-  }
-}
-
 export async function commandCreateConfig(
   params: ExecuteCommandParams,
   workspace: WorkspaceContext,

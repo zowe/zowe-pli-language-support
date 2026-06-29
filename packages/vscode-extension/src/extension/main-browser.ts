@@ -24,6 +24,7 @@ import {
   watchPluginSettings,
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
+import { registerCommands } from "./commands";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -36,6 +37,7 @@ export async function activate(
   registerConfigFileSystem(context);
   settings = Settings.getInstance();
   context.subscriptions.push(settings);
+  registerCommands(context);
   client = await startLanguageClient(context);
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;

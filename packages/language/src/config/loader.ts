@@ -291,6 +291,11 @@ function readProcessGroup(
     ) ?? plainItem(true);
 
   return {
+    meta: {
+      path,
+      range: offsetLengthToRange(node.offset, node.length),
+      uri,
+    },
     name,
     compilerOptions,
     libs,

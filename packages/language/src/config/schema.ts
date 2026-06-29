@@ -69,6 +69,7 @@ export interface ProgramConfig {
  * counts) lives on {@link GroupRecord}.
  */
 export interface ProcessGroup {
+  meta?: JsonItemMeta;
   name: JsonItem<string>;
   compilerOptions: JsonItem<string>[];
   libs: JsonItem<string>[];
