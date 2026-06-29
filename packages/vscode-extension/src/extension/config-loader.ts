@@ -123,8 +123,7 @@ export function deriveUserSettingsUri(
 /**
  * Watches the `pli.pgm_conf` / `pli.proc_grps` settings for changes and
  * pings the LS so it reloads the settings-fallback configuration. Edits
- * to `.pliplugin/` files go through {@link watchPluginFolder} instead;
- * the LS treats both inputs as triggers for the same reload path.
+ * to `.pliplugin/` files go through the LSP file watcher.
  */
 export function watchPluginSettings(
   client: BaseLanguageClient,
@@ -136,7 +135,7 @@ export function watchPluginSettings(
     ) {
       sendNotification(
         client,
-        Messages.WorkspaceDidChangePluginConfigNotification,
+        Messages.OnDidChangePluginConfigSettingsNotification,
       );
     }
   });

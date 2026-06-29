@@ -16,6 +16,7 @@ import {
 import {
   CancellationToken,
   Connection,
+  DidChangeWatchedFilesNotification,
   DocumentHighlight,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
@@ -148,6 +149,15 @@ export function startLanguageServer(
     };
   });
   connection.onInitialized(async () => {
+    connection.client.register(DidChangeWatchedFilesNotification.type, {
+      watchers: [
+        {
+          // Watch all changes
+          // Includes changes to any directory or file in the workspace
+          globPattern: "**/*",
+        },
+      ],
+    });
     const promises: Promise<void>[] = [];
     for (const folder of folders) {
       promises.push(
@@ -408,21 +418,75 @@ export function startLanguageServer(
       );
     });
   });
+
+  async function pluginConfigChanged() {
+    // handle changes to the .pliplugin config folder's contents
+    const diagnosticsByUri = await workspace.config.reloadConfigurations();
+    publishPluginConfigDiagnostics(diagnosticsByUri);
+
+    // reindex reachable compilation units
+    await compilationUnitHandler.reindex(connection, CancellationToken.None);
+
+    // refresh semantic tokens so syntax coloring updates immediately
+    connection.languages.semanticTokens.refresh();
+  }
   onNotification(
     connection,
-    Messages.WorkspaceDidChangePluginConfigNotification,
+    Messages.OnDidChangePluginConfigSettingsNotification,
     async () => {
-      // handle changes to the .pliplugin config folder's contents
-      const diagnosticsByUri = await workspace.config.reloadConfigurations();
-      publishPluginConfigDiagnostics(diagnosticsByUri);
-
-      // reindex reachable compilation units
-      await compilationUnitHandler.reindex(connection, CancellationToken.None);
-
-      // refresh semantic tokens so syntax coloring updates immediately
-      connection.languages.semanticTokens.refresh();
+      // Handle changes to the pli.pgm_conf and pli.proc_conf settings in vscode
+      await pluginConfigChanged();
     },
   );
+  connection.onDidChangeWatchedFiles(async (params) => {
+    // First thing: Figure out whether any of the changed files are plugin config files
+    // If they are, we need to reindex the workspace anyway - no need to check for other changes.
+    function isPluginConfigFile(uri: string): boolean {
+      return (
+        uri.endsWith("/.pliplugin") ||
+        uri.endsWith("/.pliplugin/pgm_conf.json") ||
+        uri.endsWith("/.pliplugin/proc_conf.json")
+      );
+    }
+    const pluginConfigHasChanged = params.changes.some((change) =>
+      isPluginConfigFile(change.uri),
+    );
+    if (pluginConfigHasChanged) {
+      await pluginConfigChanged();
+    } else {
+      const compilationUnits = new Set<CompilationUnit>();
+      // Not a plugin config change, meaning that individual folders/files have changed.
+      for (const compilationUnit of compilationUnitHandler.getAllCompilationUnits()) {
+        if (compilationUnit.includeError) {
+          // If the compilation unit has an unresolved include, we need to re-run the lifecycle
+          // to see if the include can now be resolved.
+          compilationUnits.add(compilationUnit);
+          // No need to change the change contents for this
+          continue;
+        }
+        changeLoop: for (const change of params.changes) {
+          for (const file of compilationUnit.services.files.keys()) {
+            // Either equal (i.e. file has changed) or the changed dir is a parent of the file
+            if (
+              UriUtils.equals(file, change.uri) ||
+              UriUtils.contains(change.uri, file)
+            ) {
+              compilationUnits.add(compilationUnit);
+              break changeLoop;
+            }
+          }
+        }
+      }
+      // Finally, update the compilation units themselves that might be affected by the change
+      for (const compilationUnit of compilationUnits) {
+        await compilationUnitHandler.updateUri(compilationUnit.uri);
+      }
+      if (compilationUnits.size > 0) {
+        // refresh semantic tokens so syntax coloring updates immediately
+        connection.languages.semanticTokens.refresh();
+      }
+    }
+  });
   onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
     const uri = UriUtils.toUri(uriString);
     const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
