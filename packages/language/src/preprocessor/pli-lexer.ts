@@ -109,7 +109,6 @@ export class PliLexer {
         entryNode: generateIncAfterInstruction(
           instruction.result.entryNode,
           incAfter,
-          unit,
         ),
         procedures: instruction.result.procedures,
       };
@@ -150,7 +149,6 @@ export class PliLexer {
 function generateIncAfterInstruction(
   existingNode: InstructionNode,
   incAfter: CompilerOptions.IncAfter | undefined,
-  unit: CompilationUnit,
 ): InstructionNode {
   if (!incAfter || !incAfter.process) {
     return existingNode;
