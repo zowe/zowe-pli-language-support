@@ -240,8 +240,11 @@ function buildDatasetMemberUri(
   memberFileName: string,
   workspace: URI,
   scheme: string,
-): URI {
+): URI | undefined {
   const datasetUri = resolveLibFileUri(libPath, undefined, workspace, scheme);
+  if (!datasetUri) {
+    return undefined;
+  }
   const parentUri = UriUtils.dirname(datasetUri);
   return UriUtils.joinPath(parentUri, memberFileName);
 }
@@ -287,6 +290,9 @@ async function tryResolveFileInDir(
     return resolveLibFileUri(lib.path, matchedFileName, workspace, scheme);
   }
   const libFileUri = resolveLibFileUri(lib.path, query, workspace, scheme);
+  if (!libFileUri) {
+    return undefined;
+  }
   return tryLiveFile(unit, libFileUri, extensions);
 }
 
