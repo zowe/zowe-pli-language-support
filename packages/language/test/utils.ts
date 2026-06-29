@@ -279,12 +279,12 @@ export async function parseAndLink(
   const document = TextDocument.create(uri.toString(), "pli", 0, text);
   const unit = await createCompilationUnit(uri, defaultTestWorkspace());
 
-  const { compilerOptions } = await lifecycle.tokenize(unit, document);
+  await lifecycle.tokenize(unit, document);
   lifecycle.parse(unit);
   await lifecycle.generateSymbolTable(unit);
   lifecycle.link(unit);
   if (options?.validate) {
-    lifecycle.preprocessorValidate(unit, compilerOptions);
+    lifecycle.preprocessorValidate(unit);
     lifecycle.validate(unit);
   }
 

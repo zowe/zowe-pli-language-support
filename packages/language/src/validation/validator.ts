@@ -18,7 +18,10 @@ import { forEachNode } from "../syntax-tree/ast-iterator";
 import { registerPliValidationChecks } from "./pli-validator";
 import { ScopeCache, ScopeCacheGroups } from "../linking/scope";
 import { LinkerErrorReporter } from "../linking/error";
-import { registerPreprocessorValidationChecks } from "./pp-validator";
+import {
+  PropagateIncludeItemErrors,
+  registerPreprocessorValidationChecks,
+} from "./pp-validator";
 import { DiagnosticCategory } from "./diagnostics-store";
 
 /**
@@ -46,6 +49,12 @@ export function generatePreprocessorValidationDiagnostics(
   unit: CompilationUnit,
 ): void {
   const acceptor = unit.diagnostics.getAcceptor(DiagnosticCategory.Validation);
+  if (unit.compilerOptions.incAfter?.token) {
+    const item = unit.compilerOptions.incAfter.token.element;
+    if (item && item.kind === SyntaxKind.IncludeItemFile) {
+      PropagateIncludeItemErrors(item, acceptor, unit);
+    }
+  }
   validateSyntaxNode(unit, unit.preprocessorAst, acceptor, ppValidations);
 }
 

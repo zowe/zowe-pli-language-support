@@ -12,7 +12,7 @@
 import { ReferencesCache, resolveReferences } from "../linking/resolver";
 import { iterateSymbols } from "../linking/symbol-table";
 import { CompilationUnit, addBuiltinUnits } from "./compilation-unit";
-import { Program, SyntaxKind } from "../syntax-tree/ast";
+import { Program } from "../syntax-tree/ast";
 import {
   generatePliValidationDiagnostics,
   generatePreprocessorValidationDiagnostics,
@@ -26,8 +26,6 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { parsePli } from "../parser/parser";
 import * as environment from "../workspace/environment";
-import { PropagateIncludeItemErrors } from "../validation/pp-validator";
-import { CompilerOptionsProcessorResult } from "../preprocessor/compiler-options-processor";
 
 export async function lifecycle(
   compilationUnit: CompilationUnit,
@@ -36,7 +34,7 @@ export async function lifecycle(
 ): Promise<void> {
   compilationUnit.reset();
   await interruptAndCheck(cancellation);
-  const { compilerOptions } = await tokenize(compilationUnit, document);
+  await tokenize(compilationUnit, document);
   await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
@@ -44,7 +42,7 @@ export async function lifecycle(
   await interruptAndCheck(cancellation);
   link(compilationUnit);
   await interruptAndCheck(cancellation);
-  preprocessorValidate(compilationUnit, compilerOptions);
+  preprocessorValidate(compilationUnit);
   await interruptAndCheck(cancellation);
   validate(compilationUnit);
   await interruptAndCheck(cancellation);
@@ -108,21 +106,6 @@ export function validate(compilationUnit: CompilationUnit): void {
   generatePliValidationDiagnostics(compilationUnit);
 }
 
-export function preprocessorValidate(
-  compilationUnit: CompilationUnit,
-  compilerOptionsResult?: CompilerOptionsProcessorResult,
-): void {
-  if (compilerOptionsResult?.result?.options.incAfter?.token) {
-    const item = compilerOptionsResult.result.options.incAfter.token.element;
-    if (item && item.kind === SyntaxKind.IncludeItemFile) {
-      PropagateIncludeItemErrors(
-        item,
-        (d) =>
-          compilationUnit.diagnostics.add(DiagnosticCategory.Validation, d),
-        compilationUnit,
-      );
-    }
-  }
-
+export function preprocessorValidate(compilationUnit: CompilationUnit): void {
   generatePreprocessorValidationDiagnostics(compilationUnit);
 }
