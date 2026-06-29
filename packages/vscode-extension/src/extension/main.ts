@@ -32,6 +32,7 @@ import {
   watchPluginSettings,
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
+import { registerCommands } from "./commands";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -55,6 +56,8 @@ export async function activate(
     registerPliDocumentIdentifier(client),
     watchPluginSettings(client),
   );
+
+  registerCommands(context);
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (workspaceFolder) {
@@ -154,8 +157,9 @@ async function startLanguageClient(
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
-      { scheme: "*", language: "pli" },
-      { scheme: "file", pattern: "**/.pliplugin/*.json" },
+      { language: "pli" },
+      { pattern: "**/.pliplugin/*.json" },
+      { pattern: "**/settings.json" },
     ],
   };
 

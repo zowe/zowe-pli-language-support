@@ -48,17 +48,13 @@ import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
-import {
-  commandCreateConfig,
-  commandRemoveUnresolvedLib,
-  commandResolveInclude,
-} from "./commands";
+import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { MultiMap } from "../utils/collections";
-export { PluginConfiguration } from "./constants";
+export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
   connection: Connection,
@@ -131,11 +127,7 @@ export function startLanguageServer(
           ],
         },
         executeCommandProvider: {
-          commands: [
-            Commands.RESOLVE_INCLUDE,
-            Commands.CREATE_CONFIG,
-            Commands.REMOVE_DEAD_LIB,
-          ],
+          commands: [Commands.CREATE_CONFIG],
         },
         documentHighlightProvider: true,
         semanticTokensProvider: {
@@ -464,14 +456,8 @@ export function startLanguageServer(
 
   connection.onExecuteCommand(async (params) => {
     switch (params.command) {
-      case Commands.RESOLVE_INCLUDE:
-        await commandResolveInclude(params, workspace);
-        break;
       case Commands.CREATE_CONFIG:
         await commandCreateConfig(params, workspace);
-        break;
-      case Commands.REMOVE_DEAD_LIB:
-        await commandRemoveUnresolvedLib(params, workspace);
         break;
     }
   });

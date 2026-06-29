@@ -114,7 +114,11 @@ const FIVE_MINUTES = 1000 * 60 * 5;
  * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
  */
 function isPluginConfigurationUri(uri: URI): boolean {
-  const path = uri.fsPath.replace(/\\/g, "/");
+  const baseName = UriUtils.basename(uri);
+  if (baseName === "settings.json") {
+    return true;
+  }
+  const path = uri.path;
   return path.includes("/.pliplugin/") && /\.json$/i.test(path);
 }
 
