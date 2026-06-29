@@ -114,7 +114,7 @@ export class CompilerOptionsProcessor {
         option,
         uri,
         ranges[index].start + PROCESS_TOKEN_LENGTH,
-        index,
+        ranges[index].token.startLine,
         PROCESS_TOKEN_LENGTH,
       );
 
