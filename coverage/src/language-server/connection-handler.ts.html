@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0.55% </span>
+                <span class="strong">0.56% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/180</span>
+                <span class='fraction'>1/176</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/81</span>
+                <span class='fraction'>0/79</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0.56% </span>
+                <span class="strong">0.57% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/178</span>
+                <span class='fraction'>1/174</span>
             </div>
         
             
@@ -561,21 +561,7 @@
 <a name='L496'></a><a href='#L496'>496</a>
 <a name='L497'></a><a href='#L497'>497</a>
 <a name='L498'></a><a href='#L498'>498</a>
-<a name='L499'></a><a href='#L499'>499</a>
-<a name='L500'></a><a href='#L500'>500</a>
-<a name='L501'></a><a href='#L501'>501</a>
-<a name='L502'></a><a href='#L502'>502</a>
-<a name='L503'></a><a href='#L503'>503</a>
-<a name='L504'></a><a href='#L504'>504</a>
-<a name='L505'></a><a href='#L505'>505</a>
-<a name='L506'></a><a href='#L506'>506</a>
-<a name='L507'></a><a href='#L507'>507</a>
-<a name='L508'></a><a href='#L508'>508</a>
-<a name='L509'></a><a href='#L509'>509</a>
-<a name='L510'></a><a href='#L510'>510</a>
-<a name='L511'></a><a href='#L511'>511</a>
-<a name='L512'></a><a href='#L512'>512</a>
-<a name='L513'></a><a href='#L513'>513</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L499'></a><a href='#L499'>499</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -637,10 +623,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -682,9 +664,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -731,7 +710,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1036,14 +1014,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1137,17 +1109,13 @@ import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
-import {
-  commandCreateConfig,
-  commandRemoveUnresolvedLib,
-  commandResolveInclude,
-} from "./commands";
+import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { MultiMap } from "../utils/collections";
-export { PluginConfiguration } from "./constants";
+export { PluginConfiguration, Commands } from "./constants";
 &nbsp;
 export function <span class="fstat-no" title="function not covered" >startLanguageServer(</span>
   connection: Connection,
@@ -1220,11 +1188,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
           ],
         },
         executeCommandProvider: {
-          commands: [
-            Commands.RESOLVE_INCLUDE,
-            Commands.CREATE_CONFIG,
-            Commands.REMOVE_DEAD_LIB,
-          ],
+          commands: [Commands.CREATE_CONFIG],
         },
         documentHighlightProvider: true,
         semanticTokensProvider: {
@@ -1553,14 +1517,8 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  connection.onExecuteCommand(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    switch (params.command) {</span>
-      case Commands.RESOLVE_INCLUDE:
-<span class="cstat-no" title="statement not covered" >        await commandResolveInclude(params, workspace);</span>
-<span class="cstat-no" title="statement not covered" >        break;</span>
-      case Commands.CREATE_CONFIG:
+<span class="branch-0 cbranch-no" title="branch not covered" >      case Commands.CREATE_CONFIG:</span>
 <span class="cstat-no" title="statement not covered" >        await commandCreateConfig(params, workspace);</span>
-<span class="cstat-no" title="statement not covered" >        break;</span>
-      case Commands.REMOVE_DEAD_LIB:
-<span class="cstat-no" title="statement not covered" >        await commandRemoveUnresolvedLib(params, workspace);</span>
 <span class="cstat-no" title="statement not covered" >        break;</span>
     }
   });
@@ -1606,7 +1564,7 @@ export function <span class="fstat-no" title="function not covered" >sendNotific
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-29T10:41:17.235Z
+                at 2026-06-29T12:59:27.731Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
