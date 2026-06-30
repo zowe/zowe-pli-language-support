@@ -22,7 +22,7 @@ import { LSPIS001_standalone_skip_directive_not_supported } from "./language-ser
 import { DeprecateIncludes } from "./compiler/IBM2444Iff-deprecate";
 import { typeCheck } from "./type-check-validator";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { IncludeDirective } from "../syntax-tree/ast";
+import { IncludeDirective, IncludeItem } from "../syntax-tree/ast";
 import { DiagnosticCategory } from "./diagnostics-store";
 import { Severity } from "../language-server/types";
 
@@ -48,20 +48,31 @@ function PropagateIncludeErrors(
   compilationUnit: CompilationUnit,
 ): void {
   for (const item of includeDirective.items.filter((i) => i.filePath)) {
-    const errors = [
-      DiagnosticCategory.Lexer,
-      DiagnosticCategory.Parser,
-      DiagnosticCategory.CompilerOptions,
-    ].flatMap((category) =>
-      compilationUnit.diagnostics.getByUri(category, item.filePath!),
-    );
-    if (errors.length > 0) {
-      acceptor({
-        uri: item.token?.uri?.toString(),
-        range: item.range ?? undefined,
-        message: `Included file '${item.relativeFilePath}' contains ${errors.length} errors.`,
-        severity: Severity.E,
-      });
-    }
+    PropagateIncludeItemErrors(item, acceptor, compilationUnit);
+  }
+}
+
+export function PropagateIncludeItemErrors(
+  item: IncludeItem,
+  acceptor: ValidationAcceptor,
+  compilationUnit: CompilationUnit,
+): void {
+  const errors = [
+    DiagnosticCategory.Lexer,
+    DiagnosticCategory.Parser,
+    DiagnosticCategory.CompilerOptions,
+  ].flatMap((category) =>
+    compilationUnit.diagnostics.getByUri(category, item.filePath!),
+  );
+  if (errors.length > 0 && item.token) {
+    acceptor({
+      uri: item.token.uri?.toString(),
+      range: item.range ?? {
+        start: item.token.startOffset,
+        end: item.token.endOffset + 1,
+      },
+      message: `Included file '${item.relativeFilePath}' contains ${errors.length} errors.`,
+      severity: Severity.E,
+    });
   }
 }
