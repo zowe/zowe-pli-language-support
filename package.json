@@ -38,7 +38,6 @@
   },
   "overrides": {
     "isexe": "3.1.1",
-    "minimatch": "10.2.4",
     "dompurify": "3.4.2"
   },
   "packageManager": "pnpm@11.8.0"
