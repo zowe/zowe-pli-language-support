@@ -107,7 +107,7 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
     if (path.scheme !== "file") {
       return super.findFile(path, extensions);
     }
-    const fsPath = path.fsPath.replace(/\\/g, "/");
+    const fsPath = UriUtils.normalizePath(path.fsPath);
     // Workspace-wide lookup: match the path as a suffix of any file, with
     // optional extension. `nocase: true` for case-insensitive systems.
     const pattern =

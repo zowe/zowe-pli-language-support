@@ -38,7 +38,7 @@ export namespace Messages {
   /**
    * Notification sent to the LS when the workspace's plugin configuration changes.
    */
-  export const WorkspaceDidChangePluginConfigNotification =
+  export const OnDidChangePluginConfigSettingsNotification =
     createNotificationType<void>("workspace/didChangePluginConfig");
 
   /**

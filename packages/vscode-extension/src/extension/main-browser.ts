@@ -15,7 +15,6 @@ import { LanguageClient } from "vscode-languageclient/browser.js";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
-import { watchPluginFolder } from "./plugin-watcher";
 import { registerCustomDecorators } from "./decorators";
 import { Settings } from "./settings";
 import {
@@ -39,11 +38,6 @@ export async function activate(
   context.subscriptions.push(settings);
   registerCommands(context);
   client = await startLanguageClient(context);
-
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (workspaceFolder) {
-    watchPluginFolder(client, workspaceFolder, context);
-  }
 }
 
 // This function is called when the extension is deactivated.

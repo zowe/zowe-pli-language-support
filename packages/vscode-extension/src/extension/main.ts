@@ -25,7 +25,6 @@ import { handleMissingConfig } from "../common/missing-config-handler";
 import { registerPliDocumentIdentifier } from "./document-identification";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
-import { watchPluginFolder } from "./plugin-watcher";
 import {
   deriveUserSettingsUri,
   registerConfigLoader,
@@ -58,11 +57,6 @@ export async function activate(
   );
 
   registerCommands(context);
-
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (workspaceFolder) {
-    watchPluginFolder(client, workspaceFolder, context, telemetryReporter);
-  }
 
   void handleMissingConfig(vscode.window.activeTextEditor);
 }

@@ -83,6 +83,12 @@ export interface CompilationUnit {
   instructionCache: InstructionCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
+  /**
+   * Indicates whether an include file could not be resolved during the last lifecycle.
+   * This is used to trigger a re-run of the lifecycle when the file system changes.
+   * Maybe we should have a more general mechanism for this, but for now this is sufficient.
+   */
+  includeError: boolean;
   readonly services: CompilationServices;
   readonly programConfig: ProgramRecord | undefined;
   readonly processGroup: GroupRecord | undefined;
@@ -173,6 +179,7 @@ export async function createCompilationUnit(
       }),
     rootScope: Scope.createRoot(),
     rootPreprocessorScope: Scope.createRoot(),
+    includeError: false,
     get programConfig() {
       if (cachedProgramConfig !== null) {
         return cachedProgramConfig;
@@ -200,6 +207,7 @@ export async function createCompilationUnit(
       unit.statementOrderCache.clear();
       unit.referencesCache.clear();
       unit.scopeCaches.clear();
+      unit.includeError = false;
       unit.diagnostics.clear();
       cachedProcessGroup = null;
       cachedProgramConfig = null;
