@@ -500,7 +500,11 @@ export function startLanguageServer(
     const pluginConfigHasChanged = params.changes.some((change) =>
       isPluginConfigFile(change.uri),
     );
-    if (directoryCreated || pluginConfigHasChanged || changeAffectsLibs(params.changes)) {
+    if (
+      directoryCreated ||
+      pluginConfigHasChanged ||
+      changeAffectsLibs(params.changes)
+    ) {
       await pluginConfigChanged();
     } else {
       const compilationUnits = new Set<CompilationUnit>();
