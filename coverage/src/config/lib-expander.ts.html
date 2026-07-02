@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.95% </span>
+                <span class="strong">95.91% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>95/99</span>
+                <span class='fraction'>94/98</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.95% </span>
+                <span class="strong">95.91% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>95/99</span>
+                <span class='fraction'>94/98</span>
             </div>
         
             
@@ -379,13 +379,7 @@
 <a name='L314'></a><a href='#L314'>314</a>
 <a name='L315'></a><a href='#L315'>315</a>
 <a name='L316'></a><a href='#L316'>316</a>
-<a name='L317'></a><a href='#L317'>317</a>
-<a name='L318'></a><a href='#L318'>318</a>
-<a name='L319'></a><a href='#L319'>319</a>
-<a name='L320'></a><a href='#L320'>320</a>
-<a name='L321'></a><a href='#L321'>321</a>
-<a name='L322'></a><a href='#L322'>322</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L317'></a><a href='#L317'>317</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -502,8 +496,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1194x</span>
 <span class="cline-any cline-yes">2177x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -526,9 +518,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1194x</span>
-<span class="cline-any cline-yes">1194x</span>
-<span class="cline-any cline-yes">2141x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1194x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -597,6 +586,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2136x</span>
 <span class="cline-any cline-yes">2136x</span>
 <span class="cline-any cline-yes">2136x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -701,9 +691,9 @@
 <span class="cline-any cline-yes">1072x</span>
 <span class="cline-any cline-yes">1072x</span>
 <span class="cline-any cline-yes">1072x</span>
-<span class="cline-any cline-yes">1058x</span>
+<span class="cline-any cline-yes">1057x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * This program and the accompanying materials are made available under the terms of the
@@ -724,7 +714,6 @@ import {
 } from "../workspace/file-system-provider";
 import { resolveLibUri } from "./path-resolver";
 import {
-  isLibsDir,
   JsonItem,
   LibsDDEntry,
   LibsDirEntry,
@@ -810,8 +799,6 @@ export interface ExpandedLib {
  */
 export interface ExpandedGroup {
   libs: LibsEntry[];
-  /** Lower-noise lookup for `getProcessGroupConfigFromLib`. */
-  libsSet: Set&lt;string&gt;;
   /** Lib items that didn't resolve to anything on disk. */
   unresolved: JsonItem&lt;string&gt;[];
 }
@@ -847,10 +834,7 @@ export async function expandGroup(
   }
 &nbsp;
   const libs = Array.from(libsByKey.values()).sort(compareByDepthThenName);
-  const libsSet = new Set&lt;string&gt;(
-    libs.filter(isLibsDir).map((e) =&gt; e.path.replace(/\\/g, "/")),
-  );
-  return { libs, libsSet, unresolved };
+  return { libs, unresolved };
 }
 &nbsp;
 /**
@@ -918,6 +902,7 @@ async function expandDirectoryTree(
   rootUri: URI,
   fs: FileSystemProvider,
 ): Promise&lt;LibsDirEntry[]&gt; {
+  rootLib = UriUtils.normalizePath(rootLib);
   const entries: LibsDirEntry[] = [];
   const queue: { lib: string; uri: URI }[] = [{ lib: rootLib, uri: rootUri }];
 &nbsp;
@@ -1033,7 +1018,7 @@ function compareByDepthThenName(a: LibsEntry, b: LibsEntry): number {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-02T12:49:11.034Z
+                at 2026-07-02T12:52:25.866Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
