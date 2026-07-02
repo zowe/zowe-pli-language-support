@@ -89,6 +89,10 @@ export namespace UriUtils {
     return URI.file(input);
   }
 
+  export function normalizePath(path: string): string {
+    return path.replace(/\\/g, "/");
+  }
+
   export function parse(uri: string): URI {
     const safeInput = FRAGMENTLESS_SCHEME_REGEX.test(uri)
       ? uri.replace(/#/g, "%23")
@@ -97,7 +101,7 @@ export namespace UriUtils {
   }
 
   export function file(path: string): URI {
-    return URI.file(path.replace(/\\/g, "/"));
+    return URI.file(normalizePath(path));
   }
 
   export function equals(a?: URI | string, b?: URI | string): boolean {
@@ -122,7 +126,7 @@ export namespace UriUtils {
     const convert = lowerCase
       ? (s: string) => s.toLowerCase()
       : (s: string) => s;
-    const path = convert(uri.path.replace(/\\/g, "/"));
+    const path = convert(normalizePath(uri.path));
     const scheme = uri.scheme ? convert(uri.scheme) + "://" : "";
     const authority = uri.authority ? convert(uri.authority) : "";
     return `${scheme}${authority}${path}`;
@@ -136,7 +140,7 @@ export namespace UriUtils {
    */
   export function toFilePath(input: URI | string): string {
     const uri = typeof input === "string" ? toUri(input) : input;
-    let path = uri.path.replace(/\\/g, "/");
+    let path = normalizePath(uri.path);
     if (/^\/[a-zA-Z]:\//.test(path)) {
       path = path[1].toUpperCase() + path.slice(2);
     } else if (/^[a-zA-Z]:\//.test(path)) {

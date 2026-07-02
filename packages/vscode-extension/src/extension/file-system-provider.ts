@@ -13,7 +13,7 @@ import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
 import { Messages } from "../common/messages";
 import { onRequest } from "./messages";
-import { FileType } from "pli-language";
+import { FileType, UriUtils } from "pli-language";
 
 export function registerFileSystemProvider(client: BaseLanguageClient): void {
   onRequest(client, Messages.ReadFile, async (uriString: string) => {
@@ -43,7 +43,7 @@ export function registerFileSystemProvider(client: BaseLanguageClient): void {
       // Workspace-wide lookup: match a file whose path ends with the given
       // suffix, optionally with one of the configured extensions.
       const uri = vscode.Uri.parse(params.path);
-      const suffix = uri.path.replace(/\\/g, "/");
+      const suffix = UriUtils.normalizePath(uri.path);
       const exts =
         params.extensions.length > 0
           ? `{,${params.extensions

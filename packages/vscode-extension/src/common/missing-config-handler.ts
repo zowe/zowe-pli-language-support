@@ -48,7 +48,7 @@ export async function handleMissingConfig(
   );
   const currentFileRelativePath = isInsideWorkspace
     ? entryParts.slice(workspaceParts.length).join("/")
-    : textEditor.document.fileName.replace(/\\/g, "/");
+    : UriUtils.normalizePath(textEditor.document.fileName);
 
   const options = {
     DONT_SHOW_AGAIN: "Don't show again",
