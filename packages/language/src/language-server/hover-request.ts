@@ -365,8 +365,17 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
  * @returns Markup or null if not applicable
  */
 const generateIncludeItemTokenMarkup: MarkupGenerator = ({ unit, token }) => {
-  if (token.element && isIncludeItemToken(token.kind)) {
-    return getNodeRepresentation(unit, token.element);
+  if (token.element) {
+    if (isIncludeItemToken(token.kind)) {
+      return getNodeRepresentation(unit, token.element);
+    } else if (
+      token.element.kind === SyntaxKind.ExecStatement &&
+      typeof token.element.replacement === "object" &&
+      token.element.replacement!.kind === SyntaxKind.IncludeDirective &&
+      token.element.replacement!.items.length > 0
+    ) {
+      return getNodeRepresentation(unit, token.element.replacement!.items[0]);
+    }
   }
   return null;
 };
