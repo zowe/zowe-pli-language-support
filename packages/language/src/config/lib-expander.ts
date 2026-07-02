@@ -17,7 +17,6 @@ import {
 } from "../workspace/file-system-provider";
 import { resolveLibUri } from "./path-resolver";
 import {
-  isLibsDir,
   JsonItem,
   LibsDDEntry,
   LibsDirEntry,
@@ -103,8 +102,6 @@ export interface ExpandedLib {
  */
 export interface ExpandedGroup {
   libs: LibsEntry[];
-  /** Lower-noise lookup for `getProcessGroupConfigFromLib`. */
-  libsSet: Set<string>;
   /** Lib items that didn't resolve to anything on disk. */
   unresolved: JsonItem<string>[];
 }
@@ -140,10 +137,7 @@ export async function expandGroup(
   }
 
   const libs = Array.from(libsByKey.values()).sort(compareByDepthThenName);
-  const libsSet = new Set<string>(
-    libs.filter(isLibsDir).map((e) => e.path.replace(/\\/g, "/")),
-  );
-  return { libs, libsSet, unresolved };
+  return { libs, unresolved };
 }
 
 /**
@@ -211,6 +205,8 @@ async function expandDirectoryTree(
   rootUri: URI,
   fs: FileSystemProvider,
 ): Promise<LibsDirEntry[]> {
+  // Normalize path first
+  rootLib = rootLib.replace(/\\/g, "/");
   const entries: LibsDirEntry[] = [];
   const queue: { lib: string; uri: URI }[] = [{ lib: rootLib, uri: rootUri }];
 

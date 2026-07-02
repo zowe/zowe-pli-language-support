@@ -18,6 +18,8 @@ import {
   Connection,
   DidChangeWatchedFilesNotification,
   DocumentHighlight,
+  FileChangeType,
+  FileEvent,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
 import { URI, UriUtils } from "../utils/uri";
@@ -430,11 +432,40 @@ export function startLanguageServer(
     // refresh semantic tokens so syntax coloring updates immediately
     connection.languages.semanticTokens.refresh();
   }
+
+  // A structural change to a lib folder (a file/dir created or deleted
+  // inside a lib, or a directory removed that is or contains a lib)
+  // invalidates the computed lib index, so the libs must be re-expanded.
+  // Note: Simple file edits are not considered structural changes,
+  // so they don't trigger a reindex.
+  function changeAffectsLibs(changes: readonly FileEvent[]): boolean {
+    const libDirs = workspace.config.getLibDirectoryUris();
+    if (libDirs.length === 0) {
+      return false;
+    }
+    for (const change of changes) {
+      if (change.type === FileChangeType.Changed) {
+        continue;
+      }
+      const changeUri = UriUtils.toUri(change.uri);
+      for (const libDir of libDirs) {
+        // Change inside a lib (create/delete of a member) OR the change
+        // is/contains the lib dir itself (whole lib folder gone).
+        if (
+          UriUtils.contains(libDir, changeUri) ||
+          UriUtils.contains(changeUri, libDir)
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   onNotification(
     connection,
     Messages.OnDidChangePluginConfigSettingsNotification,
     async () => {
-      // Handle changes to the pli.pgm_conf and pli.proc_conf settings in vscode
+      // Handle changes to the pli.pgm_conf and pli.proc_grps settings in vscode
       await pluginConfigChanged();
     },
   );
@@ -445,13 +476,31 @@ export function startLanguageServer(
       return (
         uri.endsWith("/.pliplugin") ||
         uri.endsWith("/.pliplugin/pgm_conf.json") ||
-        uri.endsWith("/.pliplugin/proc_conf.json")
+        uri.endsWith("/.pliplugin/proc_grps.json")
       );
+    }
+    // Since we cannot know whether a created directory is a lib in advance
+    // We always have to reindex if a directory is created, since it may contain a lib.
+    let directoryCreated = false;
+    for (const change of params.changes) {
+      if (change.type === FileChangeType.Created) {
+        // Try to stat the changed file to see if it's a directory.
+        const uri = UriUtils.toUri(change.uri);
+        try {
+          const stats = await workspace.fs.stat(uri);
+          if (stats.isDirectory) {
+            directoryCreated = true;
+            break;
+          }
+        } catch {
+          // Ignore errors, assume it's not a directory.
+        }
+      }
     }
     const pluginConfigHasChanged = params.changes.some((change) =>
       isPluginConfigFile(change.uri),
     );
-    if (pluginConfigHasChanged) {
+    if (directoryCreated || pluginConfigHasChanged || changeAffectsLibs(params.changes)) {
       await pluginConfigChanged();
     } else {
       const compilationUnits = new Set<CompilationUnit>();
@@ -467,10 +516,7 @@ export function startLanguageServer(
         changeLoop: for (const change of params.changes) {
           for (const file of compilationUnit.services.files.keys()) {
             // Either equal (i.e. file has changed) or the changed dir is a parent of the file
-            if (
-              UriUtils.equals(file, change.uri) ||
-              UriUtils.contains(change.uri, file)
-            ) {
+            if (UriUtils.contains(change.uri, file)) {
               compilationUnits.add(compilationUnit);
               break changeLoop;
             }

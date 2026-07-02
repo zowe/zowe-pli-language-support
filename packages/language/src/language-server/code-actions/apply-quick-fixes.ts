@@ -16,7 +16,10 @@ import {
   Diagnostic,
   TextEdit,
 } from "vscode-languageserver-types";
-import { PluginConfigUnresolvedLibData } from "../../workspace/plugin-configuration-provider";
+import {
+  isLibsDir,
+  PluginConfigUnresolvedLibData,
+} from "../../workspace/plugin-configuration-provider";
 import { WorkspaceContext } from "../../workspace/workspace-context";
 
 import { Commands, PluginConfiguration } from "../constants";
@@ -72,7 +75,10 @@ export async function quickFixResolveInclude(
     unresolvedFilePath,
     workspaceFolderUri,
   );
-  if (!parentFolder || procGrpsConfig.computedLibsSet.has(parentFolder)) {
+  const isExistingLib = procGrpsConfig.computedLibs.some(
+    (lib) => isLibsDir(lib) && lib.path === parentFolder,
+  );
+  if (!parentFolder || isExistingLib) {
     return undefined;
   }
 
