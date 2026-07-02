@@ -205,8 +205,7 @@ async function expandDirectoryTree(
   rootUri: URI,
   fs: FileSystemProvider,
 ): Promise<LibsDirEntry[]> {
-  // Normalize path first
-  rootLib = rootLib.replace(/\\/g, "/");
+  rootLib = UriUtils.normalizePath(rootLib);
   const entries: LibsDirEntry[] = [];
   const queue: { lib: string; uri: URI }[] = [{ lib: rootLib, uri: rootUri }];
 
