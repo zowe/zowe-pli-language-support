@@ -110,6 +110,35 @@ export namespace MarginIndicatorDecorator {
     string,
     { m: number; n: number; active: boolean }
   >();
+
+  let updateRulersTimeout: NodeJS.Timeout | undefined;
+
+  function updateActiveStates(): void {
+    for (const margins of marginIndicatorRangesByUri.values()) {
+      margins.active = false;
+    }
+
+    for (const editor of vscode.window.visibleTextEditors) {
+      const margins = marginIndicatorRangesByUri.get(
+        editor.document.uri.toString(),
+      );
+      if (margins) {
+        margins.active = true;
+      }
+    }
+  }
+
+  function debounceUpdateRulers(settings: Settings): void {
+    if (updateRulersTimeout) {
+      clearTimeout(updateRulersTimeout);
+    }
+    updateRulersTimeout = setTimeout(() => {
+      updateActiveStates();
+      updateRulers(settings);
+      updateRulersTimeout = undefined;
+    }, 50);
+  }
+
   export function register(
     client: BaseLanguageClient,
     settings: Settings,
@@ -120,30 +149,16 @@ export namespace MarginIndicatorDecorator {
         marginIndicatorRangesByUri.set(params.uri, {
           m: params.m,
           n: params.n,
-          active: true,
+          active: false, // Will be set by updateActiveStates()
         });
-        updateRulers(settings);
+        debounceUpdateRulers(settings);
       },
     );
     const disposables: vscode.Disposable[] = [];
 
     disposables.push(
       vscode.window.onDidChangeVisibleTextEditors((editors) => {
-        for (const margins of marginIndicatorRangesByUri.values()) {
-          margins.active = false;
-        }
-
-        // Mark visible editors as active
-        for (const editor of editors) {
-          const margins = marginIndicatorRangesByUri.get(
-            editor.document.uri.toString(),
-          );
-          if (margins) {
-            margins.active = true;
-          }
-        }
-
-        updateRulers(settings);
+        debounceUpdateRulers(settings);
       }),
     );
 
@@ -188,6 +203,12 @@ export namespace MarginIndicatorDecorator {
         if (!rulers.includes(margins.n)) {
           rulers.push(margins.n);
         }
+      }
+
+      // Don't clear rulers when no active margins (e.g., during transitions or non-PLI files visible).
+      // This preserves the ruler state from the last visible PLI file.
+      if (rulers.length === 0) {
+        return;
       }
     } else {
       rulers = [1, 72];
