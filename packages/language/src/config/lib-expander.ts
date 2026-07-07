@@ -199,7 +199,7 @@ export async function expandLib(
   }
 
   if (statIsDirectory) {
-    const entries = await expandDirectoryTree(libItem.value, libUri, fs);
+    const entries = [await expandDirectoryTree(libItem.value, libUri, fs)];
     return { kind: ExpandedLibKind.Directory, libItem, entries };
   }
   if (statIsFile) {
@@ -223,19 +223,31 @@ export async function expandLib(
   // and we genuinely have nothing.
   const entries = await safeReadDir(fs, libUri);
   if (entries !== undefined) {
-    const dirEntries = await expandDirectoryTree(libItem.value, libUri, fs);
+    const dirEntries = [await expandDirectoryTree(libItem.value, libUri, fs)];
     return { kind: ExpandedLibKind.Directory, libItem, entries: dirEntries };
   }
   return { kind: ExpandedLibKind.Unresolved, libItem, entries: [] };
 }
 
+/**
+ * Expands a glob `pattern` (containing `*` and/or `**`) into the concrete,
+ * workspace-relative directory paths it matches. `*` matches a single path
+ * segment; `**` matches any depth. A pattern ending in `/**` also matches its
+ * own base directory (e.g. `copybooks/**` yields `copybooks` itself), since
+ * `minimatch` alone would only match the descendants. Matching is
+ * case-insensitive. Each returned path is later indexed by {@link expandLib}.
+ */
 async function expandWildcardLib(
   pattern: string,
   fs: FileSystemProvider,
   workspace: URI,
 ): Promise<string[]> {
+  let basePrefix: string | undefined;
   const normalizedPattern = pattern.replace(/\\/g, "/");
   const hasGlobstars = normalizedPattern.includes("**");
+  if (normalizedPattern.endsWith("/**")) {
+    basePrefix = normalizedPattern.slice(0, -3);
+  }
   const searchBoundary = hasGlobstars
     ? Infinity
     : UriUtils.parts(normalizedPattern).length;
@@ -254,7 +266,12 @@ async function expandWildcardLib(
         continue;
       }
       const childRel = relPath ? `${relPath}/${name}` : name;
-      if (minimatch(childRel, normalizedPattern, { nocase: true })) {
+      const matchesPattern = minimatch(childRel, normalizedPattern, {
+        nocase: true,
+      });
+      const matchesBase =
+        !!basePrefix && minimatch(childRel, basePrefix, { nocase: true });
+      if (matchesPattern || matchesBase) {
         matches.push(childRel);
       }
       queue.push({ relPath: childRel, uri: UriUtils.joinPath(uri, name) });
@@ -265,36 +282,29 @@ async function expandWildcardLib(
 }
 
 /**
- * BFS over a real directory tree. Returns one {@link LibsDirEntry} per
- * discovered directory (the root and every subdirectory). File type is
- * read directly from the {@link FileSystemProvider.readDir} result, avoiding
- * per-entry stat calls (see https://github.com/zowe/zowe-pli-language-support/issues/465).
+ * Indexes a single directory (non-recursively) into one {@link LibsDirEntry}.
+ * Only the directory's *direct* files are recorded; subdirectories are
+ * ignored. Recursion is opt-in at the pattern level (`**`), where
+ * {@link expandWildcardLib} enumerates each descendant directory and each one
+ * is indexed here in turn — so depth is driven by the configured lib pattern
+ * rather than baked into this walk.
+ *
+ * Each file is indexed twice: by lower-cased basename (for plain include
+ * resolution) and, when it matches the `<name>(<member>)` shape, by member
+ * name (for data-set member resolution). File type is read directly from the
+ * {@link FileSystemProvider.readDir} result, avoiding per-entry stat calls
+ * (see https://github.com/zowe/zowe-pli-language-support/issues/465).
  */
 async function expandDirectoryTree(
   rootLib: string,
   rootUri: URI,
   fs: FileSystemProvider,
-): Promise<LibsDirEntry[]> {
-  const entries: LibsDirEntry[] = [];
-  const queue: { lib: string; uri: URI }[] = [{ lib: rootLib, uri: rootUri }];
-
-  while (queue.length > 0) {
-    const { lib, uri } = queue.shift()!;
-    const dirEntries = (await safeReadDir(fs, uri)) ?? [];
-
-    const files = new Map<string, string>();
-    const datasetMembers = new Map<string, string>();
-    for (const [name, fileType] of dirEntries) {
-      if (fileType & FileType.Directory) {
-        queue.push({
-          lib: `${lib}/${name}`,
-          uri: UriUtils.joinPath(uri, name),
-        });
-        continue;
-      }
-      if (!(fileType & FileType.File)) {
-        continue;
-      }
+): Promise<LibsDirEntry> {
+  const files = new Map<string, string>();
+  const datasetMembers = new Map<string, string>();
+  const dirEntries = (await safeReadDir(fs, rootUri)) ?? [];
+  for (const [name, fileType] of dirEntries) {
+    if (fileType & FileType.File) {
       const lowerName = name.toLowerCase();
       if (!files.has(lowerName)) {
         files.set(lowerName, name);
@@ -309,16 +319,13 @@ async function expandDirectoryTree(
         }
       }
     }
-
-    entries.push({
-      kind: LibsType.Directory,
-      path: lib,
-      files,
-      datasetMembers,
-    });
   }
-
-  return entries;
+  return {
+    kind: LibsType.Directory,
+    path: rootLib,
+    files,
+    datasetMembers,
+  };
 }
 
 /**

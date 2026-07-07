@@ -21,7 +21,7 @@
 ////         {
 ////             "name": "default",
 ////             "libs": [
-////                 "cpy",
+////                 "cpy/**",
 ////                 "cpy2"
 ////             ],
 ////             "include-extensions": [
@@ -46,7 +46,7 @@
 // @filename: cpy/a/TF(m1)
 //// DECLARE M1_IN_A FIXED;
 
-// deeply nested file that should not match
+// deeply nested file: matched by "cpy/**" but should not be selected (loses on depth)
 // @filename: cpy/a/b/l2.pli
 //// DECLARE L2_IN_A_B FIXED;
 

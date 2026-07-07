@@ -88,6 +88,23 @@ The `proc_grps.json` file is formatted as an array of JSON elements, with one JS
 - (Optional) **"libs":** (array)  
     - Specify local folders that contain include files. Folders can be relative paths to the workspace root, or absolute paths to any local folder.
     - Include members by adding ddnames, such as adding `mylibs/a.b.c`, where `a.b.c(member)` is a file in the `mylibs` folder.
+    - Entries are searched **non-recursively by default**: a plain folder such as `inc` matches only the include files directly inside it, not those in its subfolders. To search subfolders, use a wildcard (see below).
+
+#### Wildcards in "libs"
+
+Each `"libs"` entry can be a glob pattern. Use `*` to match a single folder level and `**` to match any depth (including none). This lets you control exactly how deep the search goes:
+
+| Entry | Matches |
+| --- | --- |
+| `inc` | Only the `inc` folder itself (no subfolders). |
+| `.` or `./` | Only the workspace root folder (no subfolders). |
+| `*/inc` | Every `inc` folder exactly one level below the workspace root. |
+| `**/inc` | Every `inc` folder at any depth. |
+| `copybooks/**` | The `copybooks` folder **and** every subfolder nested under it, at any depth. |
+| `copy/*/books` | The `books` folder with exactly one folder between it and `copy`. |
+| `copy/**/books` | The `books` folder with any number of folders between it and `copy`. |
+
+Matching is case-insensitive and works with both `/` and `\` path separators.
 - (Optional) **"include-extensions":** (array)  
     - Specify file extensions that you use for the include files in programs linked with this processor groups.
 - (Optional) **"compiler-options":** (array)  

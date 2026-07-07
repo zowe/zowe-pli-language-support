@@ -9,9 +9,24 @@
  *
  */
 
-// Tests including a ddname(member) by its member directly & recursively
+// Tests including a ddname(member) recursively via a "cpy/**" globstar lib.
+// "m1" lives directly in the base "cpy" folder and "m2" in a nested subfolder,
+// so this also proves that "cpy/**" includes the base folder's own members.
+// See https://github.com/zowe/zowe-pli-language-support/issues/758
 
 /// <reference path="../../framework.ts" />
+
+// @filename: .pliplugin/proc_grps.json
+//// {
+////     "pgroups": [
+////         {
+////             "name": "default",
+////             "libs": [
+////                 "cpy/**"
+////             ]
+////         }
+////     ]
+//// }
 
 // @filename: cpy/MYLIB(m1)
 //// DECLARE LIB_VAR1 FIXED;
