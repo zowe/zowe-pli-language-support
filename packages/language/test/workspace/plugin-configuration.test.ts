@@ -13,11 +13,15 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import type { Connection } from "vscode-languageserver";
 import { UriUtils } from "../../src/utils/uri";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
-import { ProcessGroup } from "../../src/workspace/plugin-configuration-provider";
+import {
+  isLibsDir,
+  ProcessGroup,
+} from "../../src/workspace/plugin-configuration-provider";
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { Messages } from "../../src/utils/messages";
 import { makeProcessGroup } from "../config-fixtures";
 import { Severity } from "../../src/language-server/types";
+import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 /**
  * Minimal connection stub that responds to `config/getGlobal` with the
@@ -43,6 +47,7 @@ describe("Plugin Configuration Tests", () => {
   beforeEach(() => {
     vfs = new VirtualFileSystemProvider();
     workspace = new WorkspaceContext(vfs);
+    resetDocumentProviders(vfs);
   });
 
   afterEach(async () => {
@@ -173,10 +178,11 @@ describe("Plugin Configuration Tests", () => {
     expect(processGroup?.computedLibs).toBeDefined();
     expect(processGroup?.computedLibs.length).toBe(uniqueLibs.length);
 
-    // check the generated libs set as well
+    // check the computed dir libs as well
     // should be the one dir entry, not the ddname
-    expect(processGroup?.computedLibsSet.size).toBe(1);
-    expect(processGroup?.computedLibsSet.has("lib1/dir1")).toBe(true);
+    const dirLibs = processGroup!.computedLibs.filter(isLibsDir);
+    expect(dirLibs.length).toBe(1);
+    expect(dirLibs[0].path).toBe("lib1/dir1");
   });
 
   describe("Merge of .pliplugin/ and VS Code settings", () => {
@@ -279,8 +285,11 @@ describe("Plugin Configuration Tests", () => {
       await workspace.config.init(UriUtils.toUri(WORKSPACE));
 
       const def = workspace.config.getProcessGroupConfig("default");
-      expect(def?.computedLibsSet.has("plugin-libs")).toBe(true);
-      expect(def?.computedLibsSet.has("settings-libs")).toBe(false);
+      const dirPaths = (def?.computedLibs ?? [])
+        .filter(isLibsDir)
+        .map((lib) => lib.path);
+      expect(dirPaths).toContain("plugin-libs");
+      expect(dirPaths).not.toContain("settings-libs");
     });
 
     test(".pliplugin/-only mode (no connection) still works", async () => {

@@ -225,22 +225,22 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
    * lib path for a file the resolver couldn't find.
    */
   async findFile(
-    path: URI,
+    uri: URI,
     extensions: readonly string[],
   ): Promise<URI | undefined> {
-    let targetPath = path.path.replace(/\\/g, "/");
+    let targetPath = UriUtils.normalizePath(uri.path);
     if (!this.caseSensitive) {
       targetPath = targetPath.toLowerCase();
     }
     const sortedFiles = this.getSortedFiles();
     for (const filePath of sortedFiles) {
       if (filePath.endsWith(targetPath)) {
-        return UriUtils.toUri(filePath).with({ scheme: path.scheme });
+        return UriUtils.toUri(filePath).with({ scheme: uri.scheme });
       }
       for (const ext of extensions) {
         const fullPath = targetPath + (ext.startsWith(".") ? ext : `.${ext}`);
         if (filePath.endsWith(fullPath)) {
-          return UriUtils.toUri(filePath).with({ scheme: path.scheme });
+          return UriUtils.toUri(filePath).with({ scheme: uri.scheme });
         }
       }
     }

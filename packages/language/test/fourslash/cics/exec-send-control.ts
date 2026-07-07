@@ -1,0 +1,44 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../framework.ts" />
+
+// @compiler: true
+// @wrap: main
+//// DCL POS FIXED BIN(15) INITIAL(0);
+//// DCL NAME CHAR(2) INITIAL('NA');
+//// DCL ID CHAR(2) INITIAL('0');
+//// DCL VALUE BIT(32) INITIAL(0);
+//// DCL PTR POINTER;
+//// EXEC CICS SEND CONTROL;
+//// EXEC CICS SEND CONTROL CURSOR;
+//// EXEC CICS SEND CONTROL CURSOR(POS);
+//// EXEC CICS SEND CONTROL FORMFEED;
+//// EXEC CICS SEND CONTROL ERASE;
+//// EXEC CICS SEND CONTROL ERASE ALTERNATE;
+//// EXEC CICS SEND CONTROL ERASE DEFAULT;
+//// EXEC CICS SEND CONTROL ERASEAUP;
+//// EXEC CICS SEND CONTROL PRINT FREEKB ALARM FRSET;
+//// EXEC CICS SEND CONTROL MSR(VALUE);
+//// EXEC CICS SEND CONTROL OUTPARTN('N') ACTPARTN('E');
+//// EXEC CICS SEND CONTROL LDC(NAME);
+//// EXEC CICS SEND CONTROL ACCUM;
+//// EXEC CICS SEND CONTROL ACCUM TERMINAL;
+//// EXEC CICS SEND CONTROL ACCUM TERMINAL WAIT LAST;
+//// EXEC CICS SEND CONTROL ACCUM SET(PTR);
+//// EXEC CICS SEND CONTROL ACCUM PAGING;
+//// EXEC CICS SEND CONTROL REQID(ID);
+//// EXEC CICS SEND CONTROL HONEOM;
+//// EXEC CICS SEND CONTROL L40;
+//// EXEC CICS SEND CONTROL L64;
+//// EXEC CICS SEND CONTROL L80;
+
+verify.noDiagnosticsFrom(languages.Cics);

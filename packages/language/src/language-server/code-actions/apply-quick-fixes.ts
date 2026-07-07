@@ -16,18 +16,35 @@ import {
   Diagnostic,
   TextEdit,
 } from "vscode-languageserver-types";
-import { PluginConfigUnresolvedLibData } from "../../workspace/plugin-configuration-provider";
+import {
+  isLibsDir,
+  PluginConfigUnresolvedLibData,
+} from "../../workspace/plugin-configuration-provider";
 import { WorkspaceContext } from "../../workspace/workspace-context";
 
 import { Commands, PluginConfiguration } from "../constants";
 import { LspCodes } from "../../validation/lsp-codes";
 import { fullCode } from "../types";
 import { PLICodes } from "../../validation/pli-codes";
-import { jsoncApplyEdits, jsoncModify, type JSONPath } from "../../utils/jsonc";
+import { jsoncModify, jsoncToLspEdit, type JsonEdit } from "../../utils/jsonc";
+import { TextDocuments } from "../text-documents";
 
 const JSONC_FORMAT = {
   formattingOptions: { tabSize: 2, insertSpaces: true },
 } as const;
+
+/**
+ * Client-side command that saves the given files after the action's `edit` has
+ * been applied. The plugin-config reload only triggers on save, so quick fixes
+ * that edit a config file must save it to take effect.
+ */
+function saveFilesCommand(uris: string[]) {
+  return {
+    title: "Save",
+    command: Commands.SAVE_FILES,
+    arguments: [uris],
+  };
+}
 
 export async function quickFixResolveInclude(
   diagnostic: Diagnostic,
@@ -58,62 +75,54 @@ export async function quickFixResolveInclude(
     unresolvedFilePath,
     workspaceFolderUri,
   );
-  if (!parentFolder || procGrpsConfig.computedLibsSet.has(parentFolder)) {
+  const isExistingLib = procGrpsConfig.computedLibs.some(
+    (lib) => isLibsDir(lib) && lib.path === parentFolder,
+  );
+  if (!parentFolder || isExistingLib) {
     return undefined;
   }
-  const procGrpsFileUri = UriUtils.joinPath(
-    workspaceFolderUri,
-    PluginConfiguration.PROCESS_GROUP_FILE_PATH,
-  );
-  let newFileContent;
-  try {
-    const originalFileContent = await workspace.fs.readFile(procGrpsFileUri);
-    if (!originalFileContent) {
-      console.error("Missing 'proc_grps.json' file content.");
-      return;
-    }
-    newFileContent = JSON.parse(originalFileContent);
-    if (!Array.isArray(newFileContent.pgroups)) {
-      console.error(
-        "Missing 'pgroups' array property under 'proc_grps.json' file",
-      );
-      return;
-    }
-  } catch (err) {
-    console.error(
-      "Error reading or parsing configuration 'proc_grps.json' file: ",
-      err,
+
+  const procGrpMeta = procGrpsConfig.meta;
+
+  if (!procGrpMeta) {
+    return undefined;
+  }
+  const procGrpPath = procGrpMeta.path;
+  const originalFile = await TextDocuments.get(procGrpMeta.uri);
+  const content = originalFile?.getText();
+  if (!content) {
+    return undefined;
+  }
+
+  let mode: "add-lib" | "create-libs" = "add-lib";
+  if (procGrpsConfig.libs.length === 0) {
+    mode = "create-libs";
+  }
+  const libPath = [...procGrpPath, "libs"];
+  let edits: JsonEdit[];
+  if (mode === "add-lib") {
+    edits = jsoncModify(
+      content,
+      libPath,
+      [...procGrpsConfig.libs.map((item) => item.value), parentFolder],
+      JSONC_FORMAT,
     );
-    return;
+  } else {
+    edits = jsoncModify(content, libPath, [parentFolder], JSONC_FORMAT);
   }
-  // newFileContent comes from raw JSON.parse so groups carry plain string
-  // names, not the JsonItem-wrapped form of the loaded ProcessGroup schema.
-  const groupToUpdate = newFileContent.pgroups.find(
-    (g: { name: string }) => g.name === progConfig.pgroup.value,
-  );
-  if (
-    !groupToUpdate ||
-    !Array.isArray(groupToUpdate.libs) ||
-    groupToUpdate.libs.includes(parentFolder)
-  ) {
-    return;
-  }
-  groupToUpdate.libs.push(parentFolder);
-  const newContent = JSON.stringify(
-    newFileContent,
-    undefined,
-    JSONC_FORMAT.formattingOptions.tabSize,
-  );
+
+  const textEdits = jsoncToLspEdit(content, edits);
 
   const action: CodeAction = {
     title: `Add '${parentFolder}' to INCLUDE libs.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
-    command: {
-      title: "Apply INCLUDE fix",
-      command: Commands.RESOLVE_INCLUDE,
-      arguments: [procGrpsFileUri.toString(), newContent],
+    edit: {
+      changes: {
+        [procGrpMeta.uri.toString()]: textEdits,
+      },
     },
+    command: saveFilesCommand([procGrpMeta.uri.toString()]),
   };
 
   return action;
@@ -285,32 +294,34 @@ export async function quickFixRemoveUnresolvedLib(
     return;
   }
 
-  let newContent: string;
+  let edits: JsonEdit[];
   try {
-    newContent = jsoncApplyEdits(
-      procGrpsText,
-      jsoncModify(procGrpsText, data.path, undefined, JSONC_FORMAT),
-    );
+    edits = jsoncModify(procGrpsText, data.path, undefined, JSONC_FORMAT);
   } catch (err) {
     console.error("Failed to build proc_grps edit for remove lib:", err);
     return undefined;
   }
 
+  const lspEdits = jsoncToLspEdit(procGrpsText, edits);
+
   return {
     title: `Remove unresolved library '${data.lib}'.`,
     kind: CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
-    command: {
-      title: "Remove unresolved lib",
-      command: Commands.REMOVE_DEAD_LIB,
-      arguments: [procGrpsUri.toString(), newContent],
+    edit: {
+      changes: {
+        [procGrpsUri.toString()]: lspEdits,
+      },
     },
+    command: saveFilesCommand([procGrpsUri.toString()]),
   };
 }
 
 /**
- * Removes every distinct (pgroup, lib) in one write.
- * Applies removals right-to-left so array indices stay valid.
+ * Removes every distinct (pgroup, lib) in one write by rewriting each affected
+ * `libs` array as a whole with its surviving entries. Works regardless of
+ * whether the config lives in `.pliplugin/proc_grps.json` or a settings.json,
+ * since paths are taken from the snapshot entries.
  */
 export async function quickFixRemoveAllUnresolvedLibs(
   pairs: readonly PluginConfigUnresolvedLibData[],
@@ -318,52 +329,48 @@ export async function quickFixRemoveAllUnresolvedLibs(
   procGrpsSnapshotUri: URI,
   relatedDiagnostics: Diagnostic[],
 ): Promise<CodeAction | undefined> {
-  const unique: (PluginConfigUnresolvedLibData & { path: JSONPath })[] = [];
-  const seen = new Set<string>();
-  for (const pair of pairs) {
-    if (!pair.path) {
-      continue;
-    }
-    const key = pair.path.join("/");
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    unique.push(pair as PluginConfigUnresolvedLibData & { path: JSONPath });
-  }
-  if (unique.length < 2) {
+  if (pairs.length < 2) {
     return undefined;
   }
-  let text = procGrpsSnapshotText;
 
-  unique.sort((a, b) => {
-    // Sort from highest index first so earlier indices remain valid when removing right-to-left.
-    return Number(b.path.at(-1)) - Number(a.path.at(-1));
-  });
-
-  for (const { path } of unique) {
-    try {
-      const edits = jsoncModify(text, path, undefined, JSONC_FORMAT);
-      text = jsoncApplyEdits(text, edits);
-    } catch (err) {
-      console.error("Failed at path:", JSON.stringify(path));
-      console.error(
-        "Failed to build proc_grps edit from unresolved lib path:",
-        err,
-      );
-      return undefined;
+  const byLibsArray = new Map<string, string[]>();
+  for (const { path, survivingLibs } of pairs) {
+    if (!path || !survivingLibs) {
+      continue;
     }
+    const libsPath = JSON.stringify(path.slice(0, -1));
+    byLibsArray.set(libsPath, survivingLibs);
   }
 
+  let text = procGrpsSnapshotText;
+  const edits: JsonEdit[] = [];
+  try {
+    for (const [libsPath, survivingLibs] of byLibsArray.entries()) {
+      edits.push(
+        ...jsoncModify(text, JSON.parse(libsPath), survivingLibs, JSONC_FORMAT),
+      );
+    }
+  } catch (err) {
+    console.error(
+      "Failed to build proc_grps edit from unresolved lib paths:",
+      err,
+    );
+    return undefined;
+  }
+
+  const fullDocEdit = jsoncToLspEdit(procGrpsSnapshotText, edits);
+
+  const uri = procGrpsSnapshotUri.toString();
   return {
-    title: `Remove all ${unique.length} unresolved libraries`,
+    title: `Remove all ${pairs.length} unresolved libraries`,
     kind: CodeActionKind.QuickFix,
     diagnostics: relatedDiagnostics,
-    command: {
-      title: "Remove all unresolved libs",
-      command: Commands.REMOVE_DEAD_LIB,
-      arguments: [procGrpsSnapshotUri.toString(), text],
+    edit: {
+      changes: {
+        [uri]: fullDocEdit,
+      },
     },
+    command: saveFilesCommand([uri]),
   };
 }
 

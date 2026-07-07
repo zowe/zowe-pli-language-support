@@ -2418,6 +2418,9 @@ async function runInclude(
         entryUri: context.entryUri.toString(),
       };
     }
+    // Failed to resolve an include file, mark the unit
+    // This way, the language server can react to file system changes and re-run the lifecycle
+    context.unit.includeError = true;
     context.diagnostics.push(diagnostic);
   }
 

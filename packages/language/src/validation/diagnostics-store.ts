@@ -30,18 +30,21 @@ const MaxCategory = Math.max(
 
 export class DiagnosticsStore {
   private keys = new Set<string>();
-  private diagnostics: Diagnostic[][] = [];
+  private diagnosticsByCategoryAndUri: Map<
+    DiagnosticCategory,
+    Map<string, Diagnostic[]>
+  > = new Map();
 
   constructor() {
     for (let i = 0; i <= MaxCategory; i++) {
-      this.diagnostics[i] = [];
+      this.diagnosticsByCategoryAndUri.set(i, new Map());
     }
   }
 
   clear(): void {
     this.keys.clear();
     for (let i = 0; i <= MaxCategory; i++) {
-      this.diagnostics[i] = [];
+      this.diagnosticsByCategoryAndUri.get(i)!.clear();
     }
   }
 
@@ -51,7 +54,12 @@ export class DiagnosticsStore {
       return;
     }
     this.keys.add(key);
-    this.diagnostics[category].push(diagnostic);
+    const uri = diagnostic.uri ?? "";
+    const diagnosticsByUri = this.diagnosticsByCategoryAndUri.get(category)!;
+    if (!diagnosticsByUri.has(uri)) {
+      diagnosticsByUri.set(uri, []);
+    }
+    diagnosticsByUri.get(uri)!.push(diagnostic);
   }
 
   addAll(
@@ -64,11 +72,19 @@ export class DiagnosticsStore {
   }
 
   get(category: DiagnosticCategory): Diagnostic[] {
-    return this.diagnostics[category];
+    const diagnosticsByUri = this.diagnosticsByCategoryAndUri.get(category)!;
+    return Array.from(diagnosticsByUri.values()).flat();
+  }
+
+  getByUri(category: DiagnosticCategory, uri: string): Diagnostic[] {
+    const diagnosticsByUri = this.diagnosticsByCategoryAndUri.get(category)!;
+    return diagnosticsByUri.get(uri) ?? [];
   }
 
   getAll(): Diagnostic[] {
-    return this.diagnostics.flat();
+    return Array.from(this.diagnosticsByCategoryAndUri.values())
+      .map((diagnosticsByUri) => Array.from(diagnosticsByUri.values()).flat())
+      .flat();
   }
 
   getAcceptor(category: DiagnosticCategory): ValidationAcceptor {

@@ -16,7 +16,10 @@ import {
 import {
   CancellationToken,
   Connection,
+  DidChangeWatchedFilesNotification,
   DocumentHighlight,
+  FileChangeType,
+  FileEvent,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
 import { URI, UriUtils } from "../utils/uri";
@@ -48,17 +51,13 @@ import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
 import { applySourceActions } from "./code-actions/apply-source-actions";
-import {
-  commandCreateConfig,
-  commandRemoveUnresolvedLib,
-  commandResolveInclude,
-} from "./commands";
+import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { MultiMap } from "../utils/collections";
-export { PluginConfiguration } from "./constants";
+export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
   connection: Connection,
@@ -131,11 +130,7 @@ export function startLanguageServer(
           ],
         },
         executeCommandProvider: {
-          commands: [
-            Commands.RESOLVE_INCLUDE,
-            Commands.CREATE_CONFIG,
-            Commands.REMOVE_DEAD_LIB,
-          ],
+          commands: [Commands.CREATE_CONFIG],
         },
         documentHighlightProvider: true,
         semanticTokensProvider: {
@@ -156,6 +151,15 @@ export function startLanguageServer(
     };
   });
   connection.onInitialized(async () => {
+    connection.client.register(DidChangeWatchedFilesNotification.type, {
+      watchers: [
+        {
+          // Watch all changes
+          // Includes changes to any directory or file in the workspace
+          globPattern: "**/*",
+        },
+      ],
+    });
     const promises: Promise<void>[] = [];
     for (const folder of folders) {
       promises.push(
@@ -416,21 +420,123 @@ export function startLanguageServer(
       );
     });
   });
+
+  async function pluginConfigChanged() {
+    // handle changes to the .pliplugin config folder's contents
+    const diagnosticsByUri = await workspace.config.reloadConfigurations();
+    publishPluginConfigDiagnostics(diagnosticsByUri);
+
+    // reindex reachable compilation units
+    await compilationUnitHandler.reindex(connection, CancellationToken.None);
+
+    // refresh semantic tokens so syntax coloring updates immediately
+    connection.languages.semanticTokens.refresh();
+  }
+
+  // A structural change to a lib folder (a file/dir created or deleted
+  // inside a lib, or a directory removed that is or contains a lib)
+  // invalidates the computed lib index, so the libs must be re-expanded.
+  // Note: Simple file edits are not considered structural changes,
+  // so they don't trigger a reindex.
+  function changeAffectsLibs(changes: readonly FileEvent[]): boolean {
+    const libDirs = workspace.config.getLibDirectoryUris();
+    if (libDirs.length === 0) {
+      return false;
+    }
+    for (const change of changes) {
+      if (change.type === FileChangeType.Changed) {
+        continue;
+      }
+      const changeUri = UriUtils.toUri(change.uri);
+      for (const libDir of libDirs) {
+        // Change inside a lib (create/delete of a member) OR the change
+        // is/contains the lib dir itself (whole lib folder gone).
+        if (
+          UriUtils.contains(libDir, changeUri) ||
+          UriUtils.contains(changeUri, libDir)
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   onNotification(
     connection,
-    Messages.WorkspaceDidChangePluginConfigNotification,
+    Messages.OnDidChangePluginConfigSettingsNotification,
     async () => {
-      // handle changes to the .pliplugin config folder's contents
-      const diagnosticsByUri = await workspace.config.reloadConfigurations();
-      publishPluginConfigDiagnostics(diagnosticsByUri);
-
-      // reindex reachable compilation units
-      await compilationUnitHandler.reindex(connection, CancellationToken.None);
-
-      // refresh semantic tokens so syntax coloring updates immediately
-      connection.languages.semanticTokens.refresh();
+      // Handle changes to the pli.pgm_conf and pli.proc_grps settings in vscode
+      await pluginConfigChanged();
     },
   );
+  connection.onDidChangeWatchedFiles(async (params) => {
+    // First thing: Figure out whether any of the changed files are plugin config files
+    // If they are, we need to reindex the workspace anyway - no need to check for other changes.
+    function isPluginConfigFile(uri: string): boolean {
+      return (
+        uri.endsWith("/.pliplugin") ||
+        uri.endsWith("/.pliplugin/pgm_conf.json") ||
+        uri.endsWith("/.pliplugin/proc_grps.json")
+      );
+    }
+    // Since we cannot know whether a created directory is a lib in advance
+    // We always have to reindex if a directory is created, since it may contain a lib.
+    let directoryCreated = false;
+    for (const change of params.changes) {
+      if (change.type === FileChangeType.Created) {
+        // Try to stat the changed file to see if it's a directory.
+        const uri = UriUtils.toUri(change.uri);
+        try {
+          const stats = await workspace.fs.stat(uri);
+          if (stats.isDirectory) {
+            directoryCreated = true;
+            break;
+          }
+        } catch {
+          // Ignore errors, assume it's not a directory.
+        }
+      }
+    }
+    const pluginConfigHasChanged = params.changes.some((change) =>
+      isPluginConfigFile(change.uri),
+    );
+    if (
+      directoryCreated ||
+      pluginConfigHasChanged ||
+      changeAffectsLibs(params.changes)
+    ) {
+      await pluginConfigChanged();
+    } else {
+      const compilationUnits = new Set<CompilationUnit>();
+      // Not a plugin config change, meaning that individual folders/files have changed.
+      for (const compilationUnit of compilationUnitHandler.getAllCompilationUnits()) {
+        if (compilationUnit.includeError) {
+          // If the compilation unit has an unresolved include, we need to re-run the lifecycle
+          // to see if the include can now be resolved.
+          compilationUnits.add(compilationUnit);
+          // No need to change the change contents for this
+          continue;
+        }
+        changeLoop: for (const change of params.changes) {
+          for (const file of compilationUnit.services.files.keys()) {
+            // Either equal (i.e. file has changed) or the changed dir is a parent of the file
+            if (UriUtils.contains(change.uri, file)) {
+              compilationUnits.add(compilationUnit);
+              break changeLoop;
+            }
+          }
+        }
+      }
+      // Finally, update the compilation units themselves that might be affected by the change
+      for (const compilationUnit of compilationUnits) {
+        await compilationUnitHandler.updateUri(compilationUnit.uri);
+      }
+      if (compilationUnits.size > 0) {
+        // refresh semantic tokens so syntax coloring updates immediately
+        connection.languages.semanticTokens.refresh();
+      }
+    }
+  });
   onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
     const uri = UriUtils.toUri(uriString);
     const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
@@ -464,14 +570,8 @@ export function startLanguageServer(
 
   connection.onExecuteCommand(async (params) => {
     switch (params.command) {
-      case Commands.RESOLVE_INCLUDE:
-        await commandResolveInclude(params, workspace);
-        break;
       case Commands.CREATE_CONFIG:
         await commandCreateConfig(params, workspace);
-        break;
-      case Commands.REMOVE_DEAD_LIB:
-        await commandRemoveUnresolvedLib(params, workspace);
         break;
     }
   });

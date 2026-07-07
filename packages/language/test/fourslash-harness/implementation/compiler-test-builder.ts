@@ -9,7 +9,10 @@
  *
  */
 
+import { CICSPreprocessor } from "preprocessor-cics";
+import { Db2SqlPreprocessor } from "preprocessor-db2";
 import { generateIncludeItemMarkup } from "../../../src/language-server/hover-request";
+import { PliLanguageName } from "../../../src/language-server/types";
 import { SyntaxKind } from "../../../src/syntax-tree/ast";
 import { CompilerTestBuilder } from "../../compiler-test-builder";
 import { TestBuilder } from "../../test-builder";
@@ -28,6 +31,11 @@ export async function createCompilerTestHarnessImplementation(
   };
   return {
     Syntax: SyntaxKind,
+    languages: {
+      Pli: PliLanguageName,
+      Db2Sql: Db2SqlPreprocessor.Name,
+      Cics: CICSPreprocessor.Name,
+    },
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
       expectNoLinksAt: notImplemented("linker.expectNoLinksAt"),
@@ -52,6 +60,8 @@ export async function createCompilerTestHarnessImplementation(
       noDiagnostics: () => testBuilder.noDiagnostics(),
       noDiagnosticsExcept: notImplemented("verify.noDiagnosticsExcept"),
       noDiagnosticsExceptAt: notImplemented("verify.noDiagnosticsExceptAt"),
+      noDiagnosticsFrom: (...languages) =>
+        testBuilder.expectNoDiagnosticsFrom(...languages),
       noParserDiagnostics: () => testBuilder.noParserDiagnostics(),
       noParserErrors: () => testBuilder.noParserDiagnostics(),
       noLinkingDiagnostics: notImplemented("verify.noLinkingDiagnostics"),

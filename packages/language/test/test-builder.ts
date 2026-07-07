@@ -832,6 +832,24 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     return this;
   }
 
+  expectNoDiagnosticsFrom(...languages: string[]): TestBuilder {
+    const diagnostics = this.diagnostics.filter((diagnostic) => {
+      return (
+        diagnostic.source !== undefined && languages.includes(diagnostic.source)
+      );
+    });
+    if (diagnostics.length > 0) {
+      const message = diagnostics
+        .map((diagnostic) => this.createDiagnosticMessage(diagnostic))
+        .join("\n- ");
+      fail(
+        `Expected no diagnostics from languages ${languages.join(", ")} but received:\n- ${message}`,
+      );
+    }
+
+    return this;
+  }
+
   private filterByErrorCodes(diagnostics: Diagnostic[], errorCodes: PLICode[]) {
     return errorCodes.length > 0
       ? diagnostics.filter((diagnostic) => {

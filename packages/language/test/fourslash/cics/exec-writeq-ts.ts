@@ -1,0 +1,36 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ */
+
+/// <reference path="../framework.ts" />
+
+// @compiler: true
+// @wrap: main
+//// DECLARE QAREA FIXED BIN(15) INIT(0);
+//// DECLARE NAME CHAR(4) INIT('Q1');
+//// DECLARE NAME2 CHAR(8) INIT('Q1');
+//// DECLARE QNAME CHAR(16) INIT('QNAME');
+//// DECLARE MSG CHAR(8);
+//// DECLARE DATAAREA FIXED BIN(15) INIT(0);
+//// DECLARE SYSNAME CHAR(4) INIT('SYS1');
+//// EXEC CICS WRITEQ TD QUEUE(NAME) FROM(QAREA);
+//// EXEC CICS WRITEQ TD QUEUE(NAME) FROM(QAREA) LENGTH(100);
+//// EXEC CICS WRITEQ TS QUEUE(NAME2) FROM(QAREA);
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA);
+//// EXEC CICS WRITEQ TS QUEUE(NAME2) FROM(QAREA) LENGTH(100);
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) NUMITEMS(QAREA);
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) ITEM(DATAAREA);
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) ITEM(DATAAREA) REWRITE;
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) SYSID(SYSNAME);
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) AUXILIARY;
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) MAIN;
+//// EXEC CICS WRITEQ TS QNAME(QNAME) FROM(QAREA) NOSUSPEND;
+
+verify.noDiagnosticsFrom(languages.Cics);

@@ -33,14 +33,14 @@ import { VSCodeFileSystemProvider } from "./file-system";
 //
 // For non-file URIs, it falls back to the VSCodeFileSystemProvider which sends requests to the client.
 class NodeFileSystemProvider extends VSCodeFileSystemProvider {
-  override readFile(uri: URI): Promise<string | undefined> {
+  override async readFile(uri: URI): Promise<string | undefined> {
     if (uri.scheme !== "file") {
       return super.readFile(uri);
     }
     try {
-      return fs.promises.readFile(uri.fsPath, "utf8");
+      return await fs.promises.readFile(uri.fsPath, "utf8");
     } catch {
-      return Promise.resolve(undefined);
+      return undefined;
     }
   }
 
@@ -107,7 +107,7 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
     if (path.scheme !== "file") {
       return super.findFile(path, extensions);
     }
-    const fsPath = path.fsPath.replace(/\\/g, "/");
+    const fsPath = UriUtils.normalizePath(path.fsPath);
     // Workspace-wide lookup: match the path as a suffix of any file, with
     // optional extension. `nocase: true` for case-insensitive systems.
     const pattern =

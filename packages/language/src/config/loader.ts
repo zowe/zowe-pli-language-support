@@ -15,6 +15,7 @@ import {
   Diagnostic,
   diagnosticFromCodeAtRange,
   offsetLengthToRange,
+  PliLanguageName,
   rangeToLSP,
   severityToLsp,
 } from "../language-server/types";
@@ -290,6 +291,11 @@ function readProcessGroup(
     ) ?? plainItem(true);
 
   return {
+    meta: {
+      path,
+      range: offsetLengthToRange(node.offset, node.length),
+      uri,
+    },
     name,
     compilerOptions,
     libs,
@@ -444,7 +450,7 @@ export function toLspDiagnostic(
     severity: severityToLsp(diagnostic.severity),
     message: diagnostic.message,
     code: diagnostic.code,
-    source: diagnostic.source ?? "PL/I",
+    source: diagnostic.source ?? PliLanguageName,
     range,
     data: diagnostic.data,
   };

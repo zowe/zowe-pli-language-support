@@ -83,6 +83,12 @@ export interface CompilationUnit {
   instructionCache: InstructionCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
+  /**
+   * Indicates whether an include file could not be resolved during the last lifecycle.
+   * This is used to trigger a re-run of the lifecycle when the file system changes.
+   * Maybe we should have a more general mechanism for this, but for now this is sufficient.
+   */
+  includeError: boolean;
   readonly services: CompilationServices;
   readonly programConfig: ProgramRecord | undefined;
   readonly processGroup: GroupRecord | undefined;
@@ -114,7 +120,11 @@ const FIVE_MINUTES = 1000 * 60 * 5;
  * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
  */
 function isPluginConfigurationUri(uri: URI): boolean {
-  const path = uri.fsPath.replace(/\\/g, "/");
+  const baseName = UriUtils.basename(uri);
+  if (baseName === "settings.json") {
+    return true;
+  }
+  const path = uri.path;
   return path.includes("/.pliplugin/") && /\.json$/i.test(path);
 }
 
@@ -169,6 +179,7 @@ export async function createCompilationUnit(
       }),
     rootScope: Scope.createRoot(),
     rootPreprocessorScope: Scope.createRoot(),
+    includeError: false,
     get programConfig() {
       if (cachedProgramConfig !== null) {
         return cachedProgramConfig;
@@ -196,6 +207,7 @@ export async function createCompilationUnit(
       unit.statementOrderCache.clear();
       unit.referencesCache.clear();
       unit.scopeCaches.clear();
+      unit.includeError = false;
       unit.diagnostics.clear();
       cachedProcessGroup = null;
       cachedProgramConfig = null;

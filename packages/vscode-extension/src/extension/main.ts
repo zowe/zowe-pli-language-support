@@ -25,13 +25,13 @@ import { handleMissingConfig } from "../common/missing-config-handler";
 import { registerPliDocumentIdentifier } from "./document-identification";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
-import { watchPluginFolder } from "./plugin-watcher";
 import {
   deriveUserSettingsUri,
   registerConfigLoader,
   watchPluginSettings,
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
+import { registerCommands } from "./commands";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -56,10 +56,7 @@ export async function activate(
     watchPluginSettings(client),
   );
 
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (workspaceFolder) {
-    watchPluginFolder(client, workspaceFolder, context, telemetryReporter);
-  }
+  registerCommands(context);
 
   void handleMissingConfig(vscode.window.activeTextEditor);
 }
@@ -154,8 +151,9 @@ async function startLanguageClient(
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
-      { scheme: "*", language: "pli" },
-      { scheme: "file", pattern: "**/.pliplugin/*.json" },
+      { language: "pli" },
+      { pattern: "**/.pliplugin/*.json" },
+      { pattern: "**/settings.json" },
     ],
   };
 

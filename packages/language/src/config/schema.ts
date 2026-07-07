@@ -69,6 +69,7 @@ export interface ProgramConfig {
  * counts) lives on {@link GroupRecord}.
  */
 export interface ProcessGroup {
+  meta?: JsonItemMeta;
   name: JsonItem<string>;
   compilerOptions: JsonItem<string>[];
   libs: JsonItem<string>[];
@@ -102,12 +103,6 @@ export interface GroupRecord extends ProcessGroup {
    * directory. Sorted shallow-first.
    */
   computedLibs: LibsEntry[];
-
-  /**
-   * Lower-noise lookup for `getProcessGroupConfigFromLib` — only
-   * directory libs, normalized to forward slashes.
-   */
-  computedLibsSet: Set<string>;
 }
 
 /**
