@@ -4,6 +4,14 @@
   "fileTypes": [".pli"],
   "patterns": [
     {
+      "name": "string.quoted.sql.pli",
+      "match": "(?i:EXEC\\s+SQL)"
+    },
+    {
+      "name": "string.quoted.cics.pli",
+      "match": "(?i:EXEC\\s+CICS)"
+    },
+    {
       "name": "string.quoted.single.pli",
       "begin": "'",
       "end": "'",

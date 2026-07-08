@@ -24,6 +24,7 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import {
   controlTokens,
+  EXEC,
   modifierTokens,
   NUMBER,
   STRING_TERM,
@@ -95,12 +96,6 @@ export function semanticTokens(
           modifier,
         );
       };
-
-      // Handle the CICS/SQL keyword at the start of the fragment
-      const prefixMatch = /^(\w+)\s*/i.exec(token.image);
-      if (prefixMatch) {
-        push(token, prefixMatch[1].length, SemanticTokenTypes.keyword);
-      }
 
       // Handle the remaining preprocessor tokens
       for (
@@ -233,6 +228,9 @@ function tokenType(token: Token): number | undefined {
     return SemanticTokenTypes.string;
   } else if (token.tokenTypeIdx === NUMBER.tokenTypeIdx) {
     return SemanticTokenTypes.number;
+  } else if (token.tokenTypeIdx === EXEC.tokenTypeIdx) {
+    //because it is handled by the TextMate configuration
+    return undefined;
   }
 
   // If the token has no semantic meaning based on the CST, check if it's a keyword
