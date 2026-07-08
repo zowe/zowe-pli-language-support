@@ -97,6 +97,12 @@ export function semanticTokens(
         );
       };
 
+      // Handle the CICS/SQL keyword at the start of the fragment
+      const prefixMatch = /^(\w+)\s*/i.exec(token.image);
+      if (prefixMatch) {
+        push(token, prefixMatch[1].length, SemanticTokenTypes.string);
+      }
+
       // Handle the remaining preprocessor tokens
       for (
         let index = 0;
@@ -229,8 +235,7 @@ function tokenType(token: Token): number | undefined {
   } else if (token.tokenTypeIdx === NUMBER.tokenTypeIdx) {
     return SemanticTokenTypes.number;
   } else if (token.tokenTypeIdx === EXEC.tokenTypeIdx) {
-    //because it is handled by the TextMate configuration
-    return undefined;
+    return SemanticTokenTypes.string;
   }
 
   // If the token has no semantic meaning based on the CST, check if it's a keyword
