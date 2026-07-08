@@ -4362,6 +4362,7 @@ export interface PreprocessorToken {
 
 export interface ExecStatement extends AstNode {
   kind: SyntaxKind.ExecStatement;
+  execToken: Token | null;
   preprocessorType: PreprocessorType;
   preprocessorTokens: PreprocessorToken[];
   replacement: string | IncludeDirective | null;
@@ -4370,6 +4371,7 @@ export interface ExecStatement extends AstNode {
 export function createExecStatement(): ExecStatement {
   return {
     kind: SyntaxKind.ExecStatement,
+    execToken: null,
     container: null,
     preprocessorType: PreprocessorType.UNKNOWN,
     preprocessorTokens: [],

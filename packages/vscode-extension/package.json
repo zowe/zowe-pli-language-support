@@ -93,6 +93,9 @@
         "rules": {
           "*.preprocessor:pli": {
             "fontStyle": "italic"
+          },
+          "*.exec:pli": {
+            "foreground": "#a41515"
           }
         }
       }

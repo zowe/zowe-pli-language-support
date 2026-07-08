@@ -36,7 +36,11 @@ export async function execStatement(
   textDocument: TextDocument,
 ): Promise<ast.ExecStatement> {
   const execStatement = ast.createExecStatement();
-  state.consume(execStatement, CstNodeKind.ExecStatement_EXEC, t.EXEC);
+  execStatement.execToken = state.consume(
+    execStatement,
+    CstNodeKind.ExecStatement_EXEC,
+    t.EXEC,
+  );
   const fragmentToken = state.consume(
     execStatement,
     CstNodeKind.ExecStatement_ExecFragment,
