@@ -79,6 +79,10 @@ interface ArrayValue {
   readonly upper: number;
 }
 
+// Safeguard against unbounded allocation from source-controlled array
+// dimensions/repetition counts (e.g. %DCL X(999999999) or (999999999)(expr)).
+const MAX_ARRAY_SIZE = 100_000;
+
 /**
  * Creates a simple array value with the given elements and default lower bound of 1.
  * (PL/I arrays are 1-based by default)
@@ -221,6 +225,10 @@ function generateVariableValue(
   let value: Value = defaultValue;
   let length = 0;
   if (instruction.dimensions && instruction.dimensions.length > 0) {
+    // Safeguard against unbounded allocation from large/malicious dimension
+    // bounds (e.g. %DCL X(999999999) CHAR;). Shared across nested dimensions
+    // so the total element count (their product) stays capped.
+    let fullLength = 0;
     // Evaluate the dimensions in reverse order to construct the nested array correctly
     for (const { lowerBound, upperBound } of instruction.dimensions.reverse()) {
       let lower = 1;
@@ -234,6 +242,19 @@ function generateVariableValue(
         upper = valueToNumber(evaluatedUpper, 1);
       }
       length = upper - lower + 1;
+      if (fullLength === 0) {
+        fullLength = length;
+      } else {
+        fullLength *= length;
+      }
+      if (fullLength >= MAX_ARRAY_SIZE) {
+        // Too many elements, return empty array
+        return {
+          array: [],
+          lower: 1,
+          upper: 0,
+        };
+      }
       const array: Value[] = [];
       for (let i = 0; i < length; i++) {
         // Initialize the array with the copied value
@@ -1457,6 +1478,10 @@ function evaluateRepetitionExpression(
     wildcardValue,
   );
   const unrolledValues = unrollArrayValue(exprValue);
+  if (count * unrolledValues.length > MAX_ARRAY_SIZE) {
+    // Invalid/unbounded repeat count, emit empty rather than allocating
+    return defaultEmptyValue;
+  }
   const array: Value[] = [];
   for (let i = 0; i < count; i++) {
     for (const value of unrolledValues) {
@@ -2542,8 +2567,6 @@ builtinImplementations.set("COMPILEDDATE", () => stringToValue(compiledDate));
 const compileTime = " 1.JAN.70 00.00.00";
 builtinImplementations.set("COMPILETIME", () => stringToValue(compileTime));
 
-const MAX_COPY_SIZE = 100_000;
-
 function copy(
   value: Value | undefined,
   repetitions: Value | undefined,
@@ -2558,7 +2581,7 @@ function copy(
     repeatCount <= 0 ||
     // Safeguard against large outputs
     // Could cause long processing times
-    value.value.length * repeatCount > MAX_COPY_SIZE
+    value.value.length * repeatCount > MAX_ARRAY_SIZE
   ) {
     return defaultEmptyValue;
   }
