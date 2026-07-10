@@ -36,6 +36,7 @@ import {
 import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
+import { getEffectiveIncludeAlt } from "../preprocessor/compiler-options/options-pli";
 import { HoverResponse, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
 import {
@@ -300,7 +301,7 @@ function getNodeRepresentation(
 
 function computeIncludeType(unit: CompilationUnit, node: SyntaxNode): string {
   let type = "%INCLUDE";
-  const ppInclude = unit.compilerOptions?.pp?.ppInclude?.value;
+  const ppInclude = getEffectiveIncludeAlt(unit.compilerOptions);
   if (node.container?.kind === SyntaxKind.IncludeAltDirective && ppInclude) {
     type = ppInclude;
   }

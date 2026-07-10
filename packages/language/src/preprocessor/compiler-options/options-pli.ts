@@ -1634,3 +1634,35 @@ export function getDefaultCompilerOptions(): CompilerOptions {
     },
   };
 }
+
+/**
+ * Computes the effective INCLUDE-preprocessor alt-keyword, merging the
+ * PPINCLUDE base value with any PP(INCLUDE(...)) override.
+ * PPINCLUDE has no effect unless PP(INCLUDE) is also present.
+ */
+export function getEffectiveIncludeAlt(
+  options: CompilerOptions,
+): string | undefined {
+  const pp = options.pp;
+  if (!pp) {
+    return undefined;
+  }
+  if (pp.ppInclude?.value) {
+    // Explicit PP(INCLUDE('ID(...)')) override wins.
+    return pp.ppInclude.value;
+  }
+  const includeActive = pp.items.some(
+    (item) => item.name === CompilerOptions.PPItemName.INCLUDE,
+  );
+  if (!includeActive) {
+    return undefined;
+  }
+  if (typeof options.ppInclude === "string") {
+    // Fall back to the PPINCLUDE base value (bare PP(INCLUDE), no args).
+    const match = options.ppInclude.match(/ID\(([^)]+)\)\s*$/);
+    if (match) {
+      return match[0].slice(3, -1).toUpperCase();
+    }
+  }
+  return undefined;
+}

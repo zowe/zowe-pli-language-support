@@ -1135,6 +1135,15 @@ export const CompilerOptionsCodes = {
     },
   },
 
+  PPInclude: {
+    InvalidParameterLength: {
+      code: "COPPInclude01",
+      severity: Severity.E,
+      message: (value: string) =>
+        `Expected a string up to 1000 characters long, but received length ${value.length}.`,
+    },
+  },
+
   PPMacro: {
     Case: {
       InvalidParameter: {
