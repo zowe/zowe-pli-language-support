@@ -107,27 +107,57 @@ export interface ExpandedGroup {
   unresolved: JsonItem<string>[];
 }
 
-async function handleWildcard(
+/**
+ * A concrete lib to expand, tagged with the provenance needed to order the
+ * results later: which `libs[]` entry it came from (`configIndex`) and the
+ * segment count of that entry's static base (`baseDepth`), so an entry's depth
+ * can be measured *relative to its own base* rather than from the filesystem
+ * root.
+ */
+interface PlannedLib {
+  item: JsonItem<string>;
+  configIndex: number;
+  baseDepth: number;
+}
+
+/** Segment count of a (normalized) path, used as a lib's base depth. */
+function baseDepthOf(base: string): number {
+  return UriUtils.parts(UriUtils.normalizePath(base)).length;
+}
+
+/**
+ * Turns configured lib entries into the flat list of concrete libs to expand,
+ * resolving wildcards along the way. Each concrete lib keeps its originating
+ * config index and base depth (see {@link PlannedLib}). An unresolvable
+ * wildcard is kept verbatim so it later surfaces as an unresolved diagnostic.
+ */
+async function planLibs(
   libItems: readonly JsonItem<string>[],
   fs: FileSystemProvider,
   workspace: URI,
-): Promise<JsonItem<string>[]> {
-  const allLibItems: JsonItem<string>[] = [];
-  for (const item of libItems) {
+): Promise<PlannedLib[]> {
+  const planned: PlannedLib[] = [];
+  for (let configIndex = 0; configIndex < libItems.length; configIndex++) {
+    const item = libItems[configIndex];
     if (!item.value.includes("*")) {
-      allLibItems.push(item);
+      planned.push({ item, configIndex, baseDepth: baseDepthOf(item.value) });
       continue;
     }
     const matched = await expandWildcardLib(item.value, fs, workspace);
     if (!matched.length) {
-      allLibItems.push(item);
+      planned.push({ item, configIndex, baseDepth: baseDepthOf(item.value) });
       continue;
     }
+    const baseDepth = baseDepthOf(splitGlobPattern(item.value).base);
     for (const rel of matched) {
-      allLibItems.push({ value: rel, meta: item.meta });
+      planned.push({
+        item: { value: rel, meta: item.meta },
+        configIndex,
+        baseDepth,
+      });
     }
   }
-  return allLibItems;
+  return planned;
 }
 
 /**
@@ -139,34 +169,36 @@ export async function expandGroup(
   fs: FileSystemProvider,
   workspace: URI,
 ): Promise<ExpandedGroup> {
-  const libsAfterWildcardExpansion = await handleWildcard(
-    libItems,
-    fs,
-    workspace,
-  );
+  const planned = await planLibs(libItems, fs, workspace);
   const expansions = await Promise.all(
-    libsAfterWildcardExpansion.map((item) => expandLib(item, fs, workspace)),
+    planned.map((p) => expandLib(p.item, fs, workspace)),
   );
 
-  const libsByKey = new Map<string, LibsEntry>();
+  const seen = new Set<string>();
+  const sortable: SortableLib[] = [];
   const unresolved: JsonItem<string>[] = [];
-  for (const expansion of expansions) {
+  for (let i = 0; i < expansions.length; i++) {
+    const expansion = expansions[i];
     if (expansion.kind === ExpandedLibKind.Unresolved) {
       unresolved.push(expansion.libItem);
       continue;
     }
+    const { configIndex, baseDepth } = planned[i];
     for (const entry of expansion.entries) {
       const key = `${entry.kind}:${entry.path}`;
       // Keep the first occurrence so duplicates from overlapping libs don't
       // shadow one another with empty/late maps.
-      if (!libsByKey.has(key)) {
-        libsByKey.set(key, entry);
+      if (seen.has(key)) {
+        continue;
       }
+      seen.add(key);
+      const depth = Math.max(0, UriUtils.parts(entry.path).length - baseDepth);
+      sortable.push({ entry, configIndex, depth });
     }
   }
 
-  const libs = Array.from(libsByKey.values()).sort(compareByDepthThenName);
-  return { libs, unresolved };
+  sortable.sort(compareLibs);
+  return { libs: sortable.map((s) => s.entry), unresolved };
 }
 
 /**
@@ -224,55 +256,116 @@ export async function expandLib(
 }
 
 /**
- * Expands a glob `pattern` (containing `*` and/or `**`) into the concrete,
- * workspace-relative directory paths it matches. `*` matches a single path
- * segment; `**` matches any depth. A pattern ending in `/**` also matches its
- * own base directory (e.g. `copybooks/**` yields `copybooks` itself), since
- * `minimatch` alone would only match the descendants. Matching is
- * case-insensitive. Each returned path is later indexed by {@link expandLib}.
+ * Splits a glob `pattern` into its static `base` (the leading, glob-free path
+ * prefix) and the `tail` that must be matched *relative to* that base.
+ *
+ * The base is everything up to the last separator before the first `*`; the
+ * tail is the remainder. This lets a directory walk start at the base —
+ * resolved the same way literal libs are, via {@link resolveLibUri} — instead
+ * of always at the workspace. That is what makes absolute patterns such as
+ * "C:/copybooks" + globstar work, while relative patterns keep an empty base
+ * (i.e. the workspace) and behave exactly as before.
+ *
+ * The input is backslash-normalized and any trailing separators are trimmed.
+ * Callers only reach this with a pattern containing `*`; a glob-free string is
+ * handled defensively by returning it whole as the base with an empty tail.
+ * A leading "/" is preserved so Unix-absolute bases stay absolute.
+ */
+export function splitGlobPattern(pattern: string): {
+  base: string;
+  tail: string;
+} {
+  // No shared helper trims trailing separators, so do that inline; the
+  // backslash normalization reuses UriUtils (matching resolveLibUri).
+  const normalized = UriUtils.normalizePath(pattern).replace(/\/+$/, "");
+  const firstGlob = normalized.indexOf("*");
+  if (firstGlob === -1) {
+    return { base: normalized, tail: "" };
+  }
+  const lastSlash = normalized.lastIndexOf("/", firstGlob);
+  if (lastSlash === -1) {
+    // The glob lives in the first segment (e.g. globstar-first or a partial
+    // segment like "copy*/…"): match relative to the workspace.
+    return { base: "", tail: normalized };
+  }
+  const base = lastSlash === 0 ? "/" : normalized.slice(0, lastSlash);
+  const tail = normalized.slice(lastSlash + 1);
+  return { base, tail };
+}
+
+/**
+ * Rejoins a static `base` with a base-relative match into a single lib string,
+ * preserving the base's shape so a later {@link resolveLibUri} classifies it the
+ * same way (absolute stays absolute, relative stays workspace-relative). An
+ * empty base yields the workspace-relative match verbatim; an empty match (the
+ * base directory itself) yields the base verbatim.
+ */
+function joinBaseRel(base: string, rel: string): string {
+  if (!base) {
+    return rel;
+  }
+  if (!rel) {
+    return base;
+  }
+  return base.endsWith("/") ? `${base}${rel}` : `${base}/${rel}`;
+}
+
+/**
+ * Expands a glob `pattern` (containing `*` and/or `**`) into the concrete
+ * directory paths it matches. The pattern is split into a static base and a
+ * glob tail (see {@link splitGlobPattern}); the walk is rooted at the resolved
+ * base — so absolute patterns like `C:/copybooks/**` search under that base and
+ * relative patterns search under the workspace — and each candidate directory is
+ * matched against the tail. `*` matches a single path segment; `**` matches any
+ * depth. A bare-globstar tail (from a `.../**` pattern) also yields the base
+ * directory itself, which the walk never visits as a child. Matching is
+ * case-insensitive. Returned paths preserve the base's shape (absolute stays
+ * absolute) and are later indexed by {@link expandLib}.
  */
 async function expandWildcardLib(
   pattern: string,
   fs: FileSystemProvider,
   workspace: URI,
 ): Promise<string[]> {
-  let basePrefix: string | undefined;
-  const normalizedPattern = pattern.replace(/\\/g, "/");
-  const hasGlobstars = normalizedPattern.includes("**");
-  if (normalizedPattern.endsWith("/**")) {
-    basePrefix = normalizedPattern.slice(0, -3);
+  const { base, tail } = splitGlobPattern(pattern);
+  if (!tail) {
+    return [];
   }
-  const searchBoundary = hasGlobstars
+  const root = resolveLibUri(base, workspace);
+  const tailHasGlobstar = tail.includes("**");
+  // A bare-globstar tail (i.e. a `.../**` pattern) also matches the base
+  // directory itself, which the walk below never reaches as a child.
+  const includeBase = tail === "**";
+  const searchBoundary = tailHasGlobstar
     ? Infinity
-    : UriUtils.parts(normalizedPattern).length;
-  const matches: string[] = [];
-  const queue = [{ relPath: "", uri: workspace }];
+    : UriUtils.parts(tail).length;
 
+  const matches: string[] = [];
+  const queue = [{ relPath: "", uri: root }];
   while (queue.length > 0) {
     const { relPath, uri } = queue.shift()!;
     const depth = UriUtils.parts(relPath).length;
     if (depth >= searchBoundary) {
       continue;
     }
-    const dirEntries = (await safeReadDir(fs, uri)) ?? [];
-    for (const [name, fileType] of dirEntries) {
+    const dirEntries = await safeReadDir(fs, uri);
+    // Only emit the base when it actually exists on disk (readDir succeeded).
+    if (relPath === "" && includeBase && dirEntries !== undefined) {
+      matches.push("");
+    }
+    for (const [name, fileType] of dirEntries ?? []) {
       if (!(fileType & FileType.Directory)) {
         continue;
       }
       const childRel = relPath ? `${relPath}/${name}` : name;
-      const matchesPattern = minimatch(childRel, normalizedPattern, {
-        nocase: true,
-      });
-      const matchesBase =
-        !!basePrefix && minimatch(childRel, basePrefix, { nocase: true });
-      if (matchesPattern || matchesBase) {
+      if (minimatch(childRel, tail, { nocase: true })) {
         matches.push(childRel);
       }
       queue.push({ relPath: childRel, uri: UriUtils.joinPath(uri, name) });
     }
   }
 
-  return matches;
+  return matches.map((rel) => joinBaseRel(base, rel));
 }
 
 /**
@@ -371,17 +464,28 @@ async function tryReadDataset(
   return { kind: LibsType.Dataset, path: lib, members };
 }
 
+/** A computed lib entry tagged with the keys used to order it. */
+interface SortableLib {
+  entry: LibsEntry;
+  /** Position of the originating `libs[]` entry in the config. */
+  configIndex: number;
+  /** Segment count below the originating lib's own base. */
+  depth: number;
+}
+
 /**
- * Sort comparator used to keep `computedLibs` in a stable, shallow-first
- * order. Include resolution iterates this list, so the order is observable.
+ * Orders computed libs so include resolution (which picks the first match) sees
+ * a stable, predictable priority:
+ *   1. shallowest first, where depth is measured *relative to each lib's own
+ *      base* — so an absolute lib and a relative lib compare fairly instead of
+ *      the absolute one always losing on its longer filesystem path;
+ *   2. then by config order, so an earlier `libs[]` entry wins a same-depth tie;
+ *   3. then alphabetically by path, to break any remaining ties deterministically.
  */
-function compareByDepthThenName(a: LibsEntry, b: LibsEntry): number {
-  const aKey = a.path;
-  const bKey = b.path;
-  const aDepth = (aKey.match(/\//g) || []).length;
-  const bDepth = (bKey.match(/\//g) || []).length;
-  if (aDepth - bDepth === 0) {
-    return aKey.localeCompare(bKey);
-  }
-  return aDepth - bDepth;
+function compareLibs(a: SortableLib, b: SortableLib): number {
+  return (
+    a.depth - b.depth ||
+    a.configIndex - b.configIndex ||
+    a.entry.path.localeCompare(b.entry.path)
+  );
 }

@@ -127,7 +127,7 @@ export class TestBuilder extends AbstractTestBuilder {
    * so proc_grps unresolved-lib diagnostics (COPC01E) are only surfaced to
    * assertions when the test opted in by providing its own config.
    */
-  private suppliedProcGrps = false;
+  private areProcGrpsSupplied = false;
 
   getDiagnostics(): Diagnostic[] {
     return this.diagnostics;
@@ -235,7 +235,7 @@ export class TestBuilder extends AbstractTestBuilder {
       // placeholder `cpy`/`inc` libs are unresolved in most test workspaces
       // and would otherwise leak COPC01E noise into unrelated tests.
       if (
-        !this.suppliedProcGrps &&
+        !this.areProcGrpsSupplied &&
         diagnostic.uri?.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)
       ) {
         continue;
@@ -307,7 +307,7 @@ export class TestBuilder extends AbstractTestBuilder {
         procGrpsUri = true;
       }
     }
-    this.suppliedProcGrps = procGrpsUri;
+    this.areProcGrpsSupplied = procGrpsUri;
     const config = defaultTestWorkspace().config;
     const workspaceUri = pgmConfUri
       ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))
