@@ -81,7 +81,7 @@ interface ArrayValue {
 
 // Safeguard against unbounded allocation from source-controlled array
 // dimensions/repetition counts (e.g. %DCL X(999999999) or (999999999)(expr)).
-const MAX_ARRAY_SIZE = 100_000;
+const MAX_ARRAY_COUNT = 100_000;
 
 /**
  * Creates a simple array value with the given elements and default lower bound of 1.
@@ -247,7 +247,7 @@ function generateVariableValue(
       } else {
         fullLength *= length;
       }
-      if (fullLength >= MAX_ARRAY_SIZE) {
+      if (fullLength > MAX_ARRAY_COUNT) {
         // Too many elements, return empty array
         return {
           array: [],
@@ -1478,7 +1478,7 @@ function evaluateRepetitionExpression(
     wildcardValue,
   );
   const unrolledValues = unrollArrayValue(exprValue);
-  if (count * unrolledValues.length > MAX_ARRAY_SIZE) {
+  if (count * unrolledValues.length > MAX_ARRAY_COUNT) {
     // Invalid/unbounded repeat count, emit empty rather than allocating
     return defaultEmptyValue;
   }
@@ -2581,7 +2581,7 @@ function copy(
     repeatCount <= 0 ||
     // Safeguard against large outputs
     // Could cause long processing times
-    value.value.length * repeatCount > MAX_ARRAY_SIZE
+    value.value.length * repeatCount > MAX_ARRAY_COUNT
   ) {
     return defaultEmptyValue;
   }
