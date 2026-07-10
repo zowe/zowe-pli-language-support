@@ -42,7 +42,10 @@ import { WorkspaceContext } from "./workspace-context.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { createMutex, Mutex } from "./mutex.js";
 import { Deferred, isOperationCancelled } from "../utils/promises.js";
-import { InstructionCache } from "../preprocessor/instruction-cache.js";
+import {
+  InstructionCache,
+  TokenizationCache,
+} from "../preprocessor/instruction-cache.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { FileStore } from "./file-store.js";
 import { DefaultTypeInferer, TypeInferer } from "../typesystem/infer.js";
@@ -81,6 +84,7 @@ export interface CompilationUnit {
   scopeCaches: ScopeCacheGroups;
   requestCaches: LSRequestCache;
   instructionCache: InstructionCache;
+  tokenizationCache: TokenizationCache;
   rootScope: Scope;
   rootPreprocessorScope: Scope;
   /**
@@ -169,6 +173,7 @@ export async function createCompilationUnit(
     statementOrderCache: new StatementOrderCache(),
     scopeCaches: new ScopeCacheGroups(),
     instructionCache: new InstructionCache(),
+    tokenizationCache: new TokenizationCache(),
     diagnostics: new DiagnosticsStore(),
     requestCaches: createLSRequestCaches()
       .onRevalidate("margins", ({ connection, unit }) => {

@@ -10,8 +10,6 @@
  */
 
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
-import { preprocessorParse } from "../parser/parser-entry";
-import * as ast from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import {
   CompilerOptionsProcessor,
@@ -20,17 +18,24 @@ import {
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
-import { generateInstructions } from "./instruction-generator";
-import { EvaluationResults, runInstructions } from "./instruction-interpreter";
-import { createIncludeInstruction, InstructionNode } from "./instructions";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { tokenize } from "../parser/tokenizer";
-import { ParserState } from "../parser/parser-state";
+import { EvaluationResults } from "./instruction-interpreter";
+import { tokenize, TokenizationResult } from "../parser/tokenizer";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { getDefaultCompilerOptions } from "./compiler-options/options";
-import { CompilerOptions } from "./compiler-options/options-pli";
+import {
+  CompilerOptionResult,
+  CompilerOptions,
+  getDefaultCompilerOptions,
+} from "./compiler-options/options";
+import { CompilerOptions as PliCompilerOptions } from "./compiler-options/options-pli";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { updatePliTokenizer } from "../parser/tokenizer/pli-tokenizer";
+import { PipelineResult, runPipeline } from "./pp-pipeline";
+import { PreprocessorPhase } from "./pp-phase";
+import { MacroPreprocessorPhase } from "./macro-phase";
+import {
+  ExecCicsPreprocessorPhase,
+  ExecSqlPreprocessorPhase,
+} from "./exec-phase";
 
 export interface LexerResult {
   all: Token[];
@@ -59,6 +64,8 @@ export class PliLexer {
     uri: URI,
   ): Promise<LexerResult> {
     const inputText = document.getText();
+
+    // Compiler options
     const compilerOptionsResult =
       this.compilerOptionsPreprocessor.extractCompilerOptions(
         inputText,
@@ -70,105 +77,180 @@ export class PliLexer {
     unit.compilerOptions = opts;
     updatePliTokenizer(opts);
     unit.instructionCache.update(compilerOptionsResult.recompileFingerprint);
-    const instruction = await unit.instructionCache.get(
-      uri,
-      inputText,
-      async () => {
-        const textWithoutMargins = this.marginsProcessor.processMargins(
-          compilerOptionsResult,
-          uri,
-          unit.services.workspace,
-        );
-        const tokenizeResult = tokenize(textWithoutMargins, uri);
-        const state = new ParserState(tokenizeResult.tokens, opts);
-        // Do a full parsing of the input text to extract all *local* statements
-        const { statements, diagnostics } = await preprocessorParse(
-          state,
-          document,
-        );
-        const result = generateInstructions(statements);
-        diagnostics.push(...tokenizeResult.diagnostics);
-        return {
-          tokens: tokenizeResult.tokens,
-          comments: tokenizeResult.comments,
-          diagnostics: diagnostics,
-          statements: statements,
-          result,
-        };
-      },
-    );
-    unit.diagnostics.addAll(DiagnosticCategory.Lexer, instruction.diagnostics);
-    unit.diagnostics.addAll(
-      DiagnosticCategory.Lexer,
-      this.marginsProcessor.issues,
+    unit.tokenizationCache.update(compilerOptionsResult.recompileFingerprint);
+
+    // Produce the first Token[] (margins + tokenize).
+    const tokenization = await unit.tokenizationCache.get(uri, inputText, () =>
+      this.tokenizeSource(unit, uri, compilerOptionsResult),
     );
 
-    const incAfter = compilerOptionsResult.result?.options.incAfter;
-    if (incAfter?.process) {
-      instruction.result = {
-        entryNode: generateIncAfterInstruction(
-          instruction.result.entryNode,
-          incAfter,
-        ),
-        procedures: instruction.result.procedures,
-      };
-    }
-    const output = await runInstructions(unit, uri, instruction.result, {
-      compilerOptions: compilerOptionsResult.result,
-      marginsProcessor: this.marginsProcessor,
-    });
-    unit.services.files.set({
-      textDocument: document,
-      tokens: instruction.tokens,
-      comments: instruction.comments,
+    // Run the preprocessor pipeline (MACRO, SQL, CICS according to PP()).
+    // Each phase parses the tokens it receives, so the stages compose as
+    // Token[] -> MACRO -> Token[] -> SQL -> ... -> final Token[].
+    const phases = buildPhases(
+      opts,
+      compilerOptionsResult.result,
+      this.marginsProcessor,
+    );
+    const pipeline = await runPipeline(phases, {
+      tokens: tokenization.tokens,
+      unit,
       uri,
+      textDocument: document,
     });
-    if (compilerOptionsResult.result) {
-      instruction.tokens.unshift(...compilerOptionsResult.result.tokens);
-      instruction.comments.unshift(...compilerOptionsResult.result.comments);
-    }
+
+    // Publish diagnostics, register the file's tokens, and assemble the result.
+    this.reportDiagnostics(
+      unit,
+      uri,
+      compilerOptionsResult,
+      tokenization,
+      pipeline,
+    );
+    this.registerFileTokens(
+      unit,
+      document,
+      uri,
+      compilerOptionsResult,
+      tokenization,
+    );
+
+    return {
+      all: pipeline.tokens,
+      compilerOptions: compilerOptionsResult,
+      statements: pipeline.statements,
+      evaluationResults: pipeline.evaluationResults,
+      tokenReferences: pipeline.references,
+    };
+  }
+
+  /**
+   * Process margins and tokenize the source
+   * into the first `Token[]`. Margin diagnostics are folded into the result so they stay
+   * correct on cache hits (the pipeline reuses the same margins processor for %INCLUDE
+   * files and would otherwise overwrite `marginsProcessor.issues`).
+   */
+  private tokenizeSource(
+    unit: CompilationUnit,
+    uri: URI,
+    compilerOptionsResult: CompilerOptionsProcessorResult,
+  ): TokenizationResult {
+    const textWithoutMargins = this.marginsProcessor.processMargins(
+      compilerOptionsResult,
+      uri,
+      unit.services.workspace,
+    );
+    const marginIssues = [...this.marginsProcessor.issues];
+    const tokenizeResult = tokenize(textWithoutMargins, uri);
+    return {
+      tokens: tokenizeResult.tokens,
+      comments: tokenizeResult.comments,
+      diagnostics: [...tokenizeResult.diagnostics, ...marginIssues],
+    };
+  }
+
+  /**
+   * Publish the diagnostics collected across all stages.
+   */
+  private reportDiagnostics(
+    unit: CompilationUnit,
+    uri: URI,
+    compilerOptionsResult: CompilerOptionsProcessorResult,
+    tokenization: TokenizationResult,
+    pipeline: PipelineResult,
+  ): void {
+    unit.diagnostics.addAll(DiagnosticCategory.Lexer, tokenization.diagnostics);
+    unit.diagnostics.addAll(DiagnosticCategory.Lexer, pipeline.diagnostics);
     const uriString = uri.toString();
-    unit.diagnostics.addAll(DiagnosticCategory.Lexer, output.errors);
     unit.diagnostics.addAll(
       DiagnosticCategory.CompilerOptions,
       (compilerOptionsResult.result?.issues ?? []).filter(
         (e) => e.uri === uriString,
       ),
     );
+  }
 
-    return {
-      all: output.all,
-      compilerOptions: compilerOptionsResult,
-      statements: [...instruction.statements, ...output.statements],
-      evaluationResults: output.evaluationResults,
-      tokenReferences: output.references,
-    };
+  /**
+   * Register the file's tokens with the file store.
+   */
+  private registerFileTokens(
+    unit: CompilationUnit,
+    document: TextDocument,
+    uri: URI,
+    compilerOptionsResult: CompilerOptionsProcessorResult,
+    tokenization: TokenizationResult,
+  ): void {
+    const optionTokens = compilerOptionsResult.result?.tokens ?? [];
+    const optionComments = compilerOptionsResult.result?.comments ?? [];
+    unit.services.files.set({
+      textDocument: document,
+      tokens: [...optionTokens, ...tokenization.tokens],
+      comments: [...optionComments, ...tokenization.comments],
+      uri,
+    });
   }
 }
 
-function generateIncAfterInstruction(
-  existingNode: InstructionNode,
-  incAfter: CompilerOptions.IncAfter | undefined,
-): InstructionNode {
-  if (!incAfter || !incAfter.process) {
-    return existingNode;
+/**
+ * Build the preprocessor phase list from the PP() compiler option.
+ * The PP option contains an ordered list of preprocessor items
+ * (MACRO, SQL, CICS, INCLUDE), and each maps to a PreprocessorPhase.
+ * The phases run sequentially: Token[] -> Phase1 -> Token[] -> Phase2 -> ...
+ */
+function buildPhases(
+  opts: CompilerOptions,
+  compilerOptionsResult: CompilerOptionResult | undefined,
+  marginsProcessor: MarginsProcessor,
+): PreprocessorPhase[] {
+  const phases: PreprocessorPhase[] = [];
+  const pp = opts.pp;
+
+  if (!pp || !pp.items) {
+    // No PP option - default to just macro phase
+    phases.push(
+      new MacroPreprocessorPhase(compilerOptionsResult, marginsProcessor),
+    );
+    return phases;
   }
-  // Generate a synthetic include item here
-  // This allows us to perform LSP operations to jump to the included file
-  const includeItem = ast.createIncludeItemFile();
-  includeItem.fileName = incAfter.process;
-  includeItem.token = incAfter.token || null;
-  if (incAfter.token) {
-    includeItem.token = incAfter.token;
-    incAfter.token.element = includeItem;
-    incAfter.token.kind = CstNodeKind.IncludeItem_FileID;
+
+  let hasMacroPhase = false;
+
+  for (const item of pp.items) {
+    switch (item.name) {
+      case PliCompilerOptions.PPItemName.MACRO:
+        // Each explicit MACRO item is its own pass, so e.g. PP(MACRO MACRO) runs the
+        // macro preprocessor twice. A second pass can expand macro code that the first
+        // pass generated.
+        hasMacroPhase = true;
+        phases.push(
+          new MacroPreprocessorPhase(compilerOptionsResult, marginsProcessor),
+        );
+        break;
+      case PliCompilerOptions.PPItemName.INCLUDE:
+        // INCLUDE is handled by the macro phase (the instruction interpreter processes
+        // %INCLUDE/++INCLUDE). Only add a macro phase for it if none exists yet.
+        if (!hasMacroPhase) {
+          hasMacroPhase = true;
+          phases.push(
+            new MacroPreprocessorPhase(compilerOptionsResult, marginsProcessor),
+          );
+        }
+        break;
+      case PliCompilerOptions.PPItemName.SQL:
+        phases.push(
+          new ExecSqlPreprocessorPhase(compilerOptionsResult, marginsProcessor),
+        );
+        break;
+      case PliCompilerOptions.PPItemName.CICS:
+        phases.push(
+          new ExecCicsPreprocessorPhase(
+            compilerOptionsResult,
+            marginsProcessor,
+          ),
+        );
+        break;
+    }
   }
-  // IncAfter runs as the very first instruction in the preprocessor.
-  // It allows to include ONE SINGLE file. Afterwards the preprocessor runs as normal.
-  const instruction: InstructionNode = {
-    labels: [],
-    instruction: createIncludeInstruction([includeItem], false),
-    next: existingNode,
-  };
-  return instruction;
+
+  return phases;
 }

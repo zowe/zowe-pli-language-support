@@ -11,25 +11,9 @@
 
 import { ParserState } from "./parser-state";
 import * as ast from "../syntax-tree/ast";
-import * as t from "./tokens";
 import { recursivelySetContainer } from "../linking/symbol-table";
 import { Diagnostic } from "../language-server/types";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import {
-  consumeTokenStatement,
-  includeAltStatement,
-  parseExecStatement,
-  statement,
-} from "./preprocessor-parser";
-import {
-  isSqlAttributeStatement,
-  sqlAttributeStatement,
-} from "./sql-attribute-parser";
-import {
-  cicsResponseStatement,
-  isCicsResponseStatement,
-} from "./cics-response-parser";
-import { CompilerOptions } from "../preprocessor/compiler-options/options";
+import { consumeTokenStatement } from "./preprocessor-parser";
 
 export type PreprocessorParserResult = {
   statements: ast.Statement[];
@@ -38,124 +22,35 @@ export type PreprocessorParserResult = {
 
 /**
  * Statement parser handler function type.
+ *
+ * Each preprocessor phase composes its own ordered list of these and hands it to
+ * {@link preprocessorParse}, so this module only owns the generic parse loop while the
+ * phases own the building blocks they recognize.
+ *
  * Returns:
  * - ast.Statement: Successfully parsed a statement
  * - null: Failed to parse (error condition)
  * - undefined: This handler doesn't recognize this token (pass to next handler)
  */
-type StatementParser = (
+export type StatementParser = (
   state: ParserState,
 ) => Promise<ast.Statement | null | undefined>;
 
-function createPreprocessorHandler(
-  textDocument: TextDocument,
-): StatementParser {
-  return async (state) => {
-    if (state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx) {
-      return undefined; // Not a preprocessor statement
-    }
-    return await statement(state, textDocument);
-  };
-}
+/**
+ * Parse a token stream into preprocessor statements using an explicit, ordered list
+ * of statement handlers.
+ *
+ * Each preprocessor phase composes its own handler list.
+ * Falls back to a plain token statement when none of them recognize the current token.
+ * Tokens that are not consumed by any handler simply pass through to the next phase.
+ */
+export async function preprocessorParse(
+  state: ParserState,
+  handlers: StatementParser[],
+): Promise<PreprocessorParserResult> {
+  const statements: ast.Statement[] = [];
 
-function createIncOnlyPreprocessorHandler(
-  textDocument: TextDocument,
-): StatementParser {
-  return async (state) => {
-    // If it is not a preprocessor statement and also not an include alternate,
-    // return undefined to let other handlers process it.
-    if (
-      state.token?.tokenTypeIdx !== t.Percent.tokenTypeIdx &&
-      state.token?.tokenTypeIdx !== t.INCLUDE_ALT.tokenTypeIdx
-    ) {
-      return undefined;
-    }
-
-    const nextToken = state.peek(2);
-    const isInclude =
-      nextToken &&
-      (nextToken.tokenTypeIdx === t.INCLUDE.tokenTypeIdx ||
-        nextToken.tokenTypeIdx === t.INSCAN.tokenTypeIdx);
-    if (isInclude) {
-      // Only process include statements.
-      return await statement(state, textDocument);
-    }
-
-    return undefined;
-  };
-}
-
-function createIncludeAltHandler(): StatementParser {
-  return async (state) => {
-    if (state.token?.tokenTypeIdx !== t.INCLUDE_ALT.tokenTypeIdx) {
-      return undefined;
-    }
-    const includeAlt = includeAltStatement(state);
-    const includeAltStmt = ast.createStatement();
-    includeAltStmt.value = includeAlt;
-    return includeAltStmt;
-  };
-}
-
-function createSqlAttributeHandler(): StatementParser {
-  return async (state) => {
-    if (state.token?.tokenTypeIdx !== t.SQL.tokenTypeIdx) {
-      return undefined;
-    }
-    if (!isSqlAttributeStatement(state)) {
-      return undefined;
-    }
-    const sqlAttrStmt = sqlAttributeStatement(state);
-    const sqlAttrStatement = ast.createStatement();
-    sqlAttrStatement.value = sqlAttrStmt;
-    return sqlAttrStatement;
-  };
-}
-
-function createCicsResponseHandler(): StatementParser {
-  return async (state) => {
-    if (state.token?.tokenTypeIdx !== t.DFHRESP.tokenTypeIdx) {
-      return undefined;
-    }
-    if (!isCicsResponseStatement(state)) {
-      return undefined;
-    }
-    const cicsRespStmt = cicsResponseStatement(state);
-    const cicsRespStatement = ast.createStatement();
-    cicsRespStatement.value = cicsRespStmt;
-    return cicsRespStatement;
-  };
-}
-
-function createExecHandler(textDocument: TextDocument): StatementParser {
-  return async (state) => {
-    if (state.token?.tokenTypeIdx !== t.EXEC.tokenTypeIdx) {
-      return undefined;
-    }
-    return await parseExecStatement(state, textDocument);
-  };
-}
-
-function generateStatementParser(
-  compilerOptions: CompilerOptions | undefined,
-  textDocument: TextDocument,
-): StatementParser {
-  const handlers: StatementParser[] = [];
-
-  const incOnly = compilerOptions?.macroOptions?.incOnly;
-
-  if (incOnly) {
-    handlers.push(createIncOnlyPreprocessorHandler(textDocument));
-  } else {
-    handlers.push(createPreprocessorHandler(textDocument));
-  }
-
-  handlers.push(createIncludeAltHandler());
-  handlers.push(createSqlAttributeHandler());
-  handlers.push(createCicsResponseHandler());
-  handlers.push(createExecHandler(textDocument));
-
-  return async (state) => {
+  const statementParser: StatementParser = async (state) => {
     for (const handler of handlers) {
       const result = await handler(state);
       if (result !== undefined) {
@@ -164,18 +59,6 @@ function generateStatementParser(
     }
     return undefined;
   };
-}
-
-export async function preprocessorParse(
-  state: ParserState,
-  textDocument: TextDocument,
-): Promise<PreprocessorParserResult> {
-  const statements: ast.Statement[] = [];
-
-  const statementParser = generateStatementParser(
-    state.compilerOptions,
-    textDocument,
-  );
 
   let index = state.index;
   let token = state.token;
@@ -200,7 +83,6 @@ export async function preprocessorParse(
       state.index++;
     }
 
-    // Always recover after each statement
     state.skipRecovery();
     token = state.token;
     index = state.index;
