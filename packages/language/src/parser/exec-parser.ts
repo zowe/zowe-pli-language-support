@@ -45,7 +45,6 @@ export async function execStatement(
   if (fragmentToken) {
     const { preprocessor, statementText, startOffset } = handleExecFragment(
       fragmentToken,
-      textDocument,
       execStatement,
     );
     if (preprocessor) {
@@ -184,16 +183,12 @@ function handleDiagnostics(
 
 function handleExecFragment(
   fragmentToken: t.Token,
-  textDocument: TextDocument,
   execStatement: ast.ExecStatement,
 ) {
   const prefixMatch = /^(\w+)\s*/i.exec(fragmentToken.image);
   const prefixLength = prefixMatch?.[0].length || 0;
   const startOffset = fragmentToken.startOffset + prefixLength;
-  const endOffset = fragmentToken.endOffset + 1;
-  const statementText = textDocument
-    .getText()
-    .substring(startOffset, endOffset);
+  const statementText = fragmentToken.image.substring(prefixLength);
   let preprocessor: Preprocessor | undefined;
   switch (prefixMatch?.[1].toUpperCase()) {
     case "CICS":

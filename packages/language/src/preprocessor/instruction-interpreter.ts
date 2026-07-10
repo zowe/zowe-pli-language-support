@@ -10,14 +10,16 @@
  */
 
 import { tokenMatcher, TokenType } from "chevrotain";
+import { TextDocument } from "vscode-languageserver-textdocument";
 import { TextDocuments } from "../language-server/text-documents";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
-import { preprocessorParse } from "../parser/parser-entry";
+import { preprocessorParse, StatementParser } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
 import {
   createTokenInstance,
   EXEC_VARIABLE_MARKER,
+  ExecFragment,
   Token,
 } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
@@ -384,6 +386,11 @@ export type InstructionInterpreterResult = {
 export interface InterpreterOptions {
   compilerOptions: CompilerOptionResult | undefined;
   marginsProcessor: MarginsProcessor;
+  /**
+   * Each phase supplies its own handlers so that included files are processed by the same preprocessor
+   * that is currently running, keeping the preprocessors independent of one another.
+   */
+  createParseHandlers: (textDocument: TextDocument) => StatementParser[];
 }
 
 export const DEFAULT_INSTRUCTION_LIMIT = 5000;
@@ -1910,11 +1917,40 @@ function runTokenInstruction(
       mergePush(context.tokens, result.tokens, i === 0);
       i += result.advance;
     } else {
-      // If the scan found no active variable, push the original token
-      mergePush(context.tokens, [tokens[i]], i === 0);
+      const token = tokens[i];
+      // For ExecFragment tokens, expand macro variables embedded in the image.
+      if (token.tokenTypeIdx === ExecFragment.tokenTypeIdx) {
+        const expandedImage = expandVariablesInText(token.image, context);
+        if (expandedImage !== token.image) {
+          const newToken: Token = { ...token, image: expandedImage };
+          mergePush(context.tokens, [newToken], i === 0);
+        } else {
+          mergePush(context.tokens, [token], i === 0);
+        }
+      } else {
+        // If the scan found no active variable, push the original token
+        mergePush(context.tokens, [token], i === 0);
+      }
       i++;
     }
   }
+}
+
+/**
+ * Expand macro variables in a text string by replacing identifiers that match
+ * active macro variable names with their current values.
+ */
+function expandVariablesInText(
+  text: string,
+  context: InterpreterContext,
+): string {
+  return text.replace(/\b([A-Z_$@#]\w*)\b/gi, (match) => {
+    const variable = getVariable(context, match.toUpperCase());
+    if (variable && variable.active && isScalarValue(variable.value)) {
+      return variable.value.value;
+    }
+    return match;
+  });
 }
 
 function mergePush(target: Token[], source: Token[], firstSource: boolean) {
@@ -2493,7 +2529,10 @@ async function runInclude(
           tokenizeResult.tokens,
           context.options.compilerOptions?.options,
         );
-        const subProgram = await preprocessorParse(subState, document);
+        const subProgram = await preprocessorParse(
+          subState,
+          context.options.createParseHandlers(document),
+        );
         subProgram.diagnostics.push(...tokenizeResult.diagnostics);
         const result = generateInstructions(subProgram.statements);
         return {

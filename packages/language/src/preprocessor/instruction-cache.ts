@@ -11,25 +11,17 @@
 
 import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
+import { TokenizationResult } from "../parser/tokenizer";
 import { Statement } from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import { InstructionGeneratorResult } from "./instruction-generator";
 
-interface CachedInstructions {
-  text: string;
-  instructions: FileInstructionResult;
-}
-
-export interface FileInstructionResult {
-  tokens: Token[];
-  comments: Token[];
-  diagnostics: Diagnostic[];
-  statements: Statement[];
-  result: InstructionGeneratorResult;
-}
-
-export class InstructionCache {
-  private cache = new Map<string, CachedInstructions>();
+/**
+ * A per-file, text-keyed cache that is invalidated whenever the recompile fingerprint
+ * changes (i.e. a compiler option flagged as `recompile` changed).
+ */
+export class TextKeyedCache<T> {
+  private cache = new Map<string, { text: string; value: T }>();
 
   private previousRecompileFingerprint: string | undefined;
 
@@ -46,20 +38,33 @@ export class InstructionCache {
     this.previousRecompileFingerprint = fingerprint;
   }
 
-  async get(
-    uri: URI,
-    text: string,
-    getter: () => Promise<FileInstructionResult>,
-  ): Promise<FileInstructionResult> {
+  async get(uri: URI, text: string, getter: () => Promise<T> | T): Promise<T> {
     const key = uri.toString();
-    if (this.cache.has(key)) {
-      const cached = this.cache.get(key)!;
-      if (cached.text === text) {
-        return cached.instructions;
-      }
+    const cached = this.cache.get(key);
+    if (cached && cached.text === text) {
+      return cached.value;
     }
-    const instructions = await getter();
-    this.cache.set(key, { text, instructions });
-    return instructions;
+    const value = await getter();
+    this.cache.set(key, { text, value });
+    return value;
   }
 }
+
+export interface FileInstructionResult {
+  tokens: Token[];
+  comments: Token[];
+  diagnostics: Diagnostic[];
+  statements: Statement[];
+  result: InstructionGeneratorResult;
+}
+
+/**
+ * Caches the parse + instruction generation of a single file. Used by the macro
+ * preprocessor when resolving `%INCLUDE`d files.
+ */
+export class InstructionCache extends TextKeyedCache<FileInstructionResult> {}
+
+/**
+ * Caches the raw tokenization (margins + tokenize) of the main compilation unit's source.
+ */
+export class TokenizationCache extends TextKeyedCache<TokenizationResult> {}

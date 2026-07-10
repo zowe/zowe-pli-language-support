@@ -1504,6 +1504,7 @@ export function getDefaultCompilerOptions(): CompilerOptions {
       items: [
         { name: CompilerOptions.PPItemName.MACRO },
         { name: CompilerOptions.PPItemName.SQL },
+        { name: CompilerOptions.PPItemName.CICS },
       ],
     },
     precType: CompilerOptions.PrecType.ANS,
