@@ -297,17 +297,17 @@ export class TestBuilder extends AbstractTestBuilder {
    */
   private async configurePluginConfigurationProvider() {
     let pgmConfUri: string | undefined;
-    let procGrpsUri: boolean = false;
+    let hasProcGrpsUri: boolean = false;
 
     for (const [uri] of this.files) {
       if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
         pgmConfUri = uri;
       }
       if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
-        procGrpsUri = true;
+        hasProcGrpsUri = true;
       }
     }
-    this.areProcGrpsSupplied = procGrpsUri;
+    this.areProcGrpsSupplied = hasProcGrpsUri;
     const config = defaultTestWorkspace().config;
     const workspaceUri = pgmConfUri
       ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))
@@ -318,7 +318,7 @@ export class TestBuilder extends AbstractTestBuilder {
         PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
       );
     }
-    if (!procGrpsUri) {
+    if (!hasProcGrpsUri) {
       await defaultTestWorkspace().config.writeProcessGroupsFile(
         PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
       );
