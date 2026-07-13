@@ -2346,12 +2346,25 @@ translator.rule(
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "string");
+    if (value.value.length > 1000) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.PPInclude.InvalidParameterLength,
+        value.token,
+        value.value,
+      );
+    }
     options.ppInclude = value.value;
   },
   ["NOPPINCLUDE"],
   (option, options) => {
-    options.ppInclude = false;
     ensureArguments(option, 0, 0);
+
+    // Clear both the base value and any override previously set via
+    // PP(INCLUDE('ID(...)')).
+    options.ppInclude = false;
+    if (options.pp) {
+      options.pp.ppInclude = undefined;
+    }
   },
   { recompile: true },
 );
