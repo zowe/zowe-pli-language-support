@@ -13,6 +13,8 @@
 import * as fs from "fs/promises";
 import * as tokens from "../packages/language/src/parser/tokens.js";
 
+const BLACKLISTED_KEYWORDS = new Set([tokens.EXEC, tokens.SQL, tokens.CICS]);
+
 const manual = JSON.parse(
   await fs.readFile(
     "./packages/vscode-extension/syntaxes/pli.manual.json",
@@ -25,6 +27,9 @@ const storageKeywords: string[] = [];
 
 for (const [text, type] of tokens.keywordMap.entries()) {
   const lowerText = text.toLowerCase();
+  if (BLACKLISTED_KEYWORDS.has(type)) {
+    continue;
+  }
   if (tokens.controlTokens.has(type)) {
     controlKeywords.push(lowerText);
   } else {

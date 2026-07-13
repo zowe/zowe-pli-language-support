@@ -12,13 +12,14 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// <|EXEC|> <|CICS|> <|ABEND|> <|ABCODE|>(<|str:'$CAN'|>);
+//// <|EXEC|> <|SQL|> <|SELECT|> <|name|> <|FROM|> <|tbl|>;
 
 semanticTokens.expectModifierAt("EXEC", "preprocessor");
-semanticTokens.expectModifierAt("CICS", "preprocessor");
-semanticTokens.expectModifierAt("ABEND", "preprocessor");
-semanticTokens.expectModifierAt("ABCODE", "preprocessor");
-semanticTokens.expectModifierAt("str", "preprocessor");
+semanticTokens.expectModifierAt("SQL", "preprocessor");
+semanticTokens.expectModifierAt("SELECT", "preprocessor");
+semanticTokens.expectModifierAt("name", "preprocessor");
+semanticTokens.expectModifierAt("FROM", "preprocessor");
+semanticTokens.expectModifierAt("tbl", "preprocessor");
 
 semanticTokens.expectAt("EXEC", "string");
-semanticTokens.expectAt("CICS", "string");
+semanticTokens.expectAt("SQL", "string");
