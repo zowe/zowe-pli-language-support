@@ -11,6 +11,7 @@
 
 import * as tokens from "../tokens";
 import { CompilerOptions } from "../../preprocessor/compiler-options/options";
+import { getEffectiveIncludeAlt } from "../../preprocessor/compiler-options/options-pli";
 import {
   generateDoubleCharFunc,
   generateKeywords,
@@ -126,7 +127,7 @@ export function updatePliTokenizer(compilerOptions: CompilerOptions): void {
   }
   orSymbols = compilerOptions.or ?? defaultOr;
   notSymbols = compilerOptions.not ?? defaultNot;
-  includeAlt = compilerOptions.pp?.ppInclude?.value;
+  includeAlt = getEffectiveIncludeAlt(compilerOptions);
   pliFuncs = new Array(256);
   pliFuncs["/".charCodeAt(0)] = tokenizeSlashWithComment;
   pliFuncs['"'.charCodeAt(0)] = tokenizeString;
