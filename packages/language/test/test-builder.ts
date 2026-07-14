@@ -103,6 +103,13 @@ export type TestBuilderOptions = {
    * preservePluginConfiguration can be used to disable this behavior for other test cases.
    */
   preservePluginConfiguration?: boolean;
+
+  /**
+   * Skip creating default plugin configuration files (pgm_conf.json, proc_grps.json).
+   * Used to test scenarios where no configuration exists.
+   * Corresponds to the fourslash directive: // @noDefaultConfig
+   */
+  noDefaultConfig?: boolean;
 };
 
 type LinkingRequest = {
@@ -273,7 +280,7 @@ export class TestBuilder extends AbstractTestBuilder {
   /**
    * Configures the plugin configuration provider based on the test files.
    * If a file for either the program or process group configuration is found, use it.
-   * If not, provide a default configuration.
+   * If not, provide a default configuration (unless noDefaultConfig is set).
    * Ensures we have a proper config after writing all files to the fs & before parsing,
    * so that we can build $computedLibs correctly
    */
@@ -293,6 +300,12 @@ export class TestBuilder extends AbstractTestBuilder {
     const workspaceUri = pgmConfUri
       ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))
       : config.getWorkspacePath();
+
+    // Skip default config creation if noDefaultConfig is set
+    if (this.options.noDefaultConfig) {
+      await defaultTestWorkspace().config.init(workspaceUri);
+      return;
+    }
 
     if (!pgmConfUri) {
       await defaultTestWorkspace().config.writeProgramConfigFile(

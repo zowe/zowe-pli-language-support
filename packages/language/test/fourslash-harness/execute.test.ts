@@ -190,6 +190,8 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
           // can be exercised by harness tests. The afterEach hook above resets
           // the workspace config between tests, so this can't leak across tests.
           preservePluginConfiguration: true,
+          // Skip default config creation if @noDefaultConfig directive is present
+          noDefaultConfig: testFile.tags["noDefaultConfig"] === "true",
         });
         implementation = createTestBuilderHarnessImplementation(testBuilder);
       }
