@@ -57,6 +57,7 @@ import {
 import { CompilerOptions as PliCompilerOptions } from "../preprocessor/compiler-options/options-pli.js";
 import { DiagnosticsStore } from "../validation/diagnostics-store.js";
 import { LRUCache } from "lru-cache";
+import { WorkspaceFolderTree } from "./workspace-folder-tree.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -307,11 +308,13 @@ export class CompilationUnitHandler {
    * Workspace context shared by every unit this handler creates. Provides
    * the file-system provider and the plugin configuration.
    */
-  readonly workspace: WorkspaceContext;
+  readonly workspaceByWorkspaceFolder: WorkspaceFolderTree<WorkspaceContext>;
 
-  constructor(workspace: WorkspaceContext) {
-    this.workspace = workspace;
+  constructor() {
+    this.workspaceByWorkspaceFolder = new WorkspaceFolderTree<WorkspaceContext>(false);
   }
+
+  
 
   get ready(): Promise<void> {
     return this.readyDeferred.promise;
@@ -335,7 +338,7 @@ export class CompilationUnitHandler {
     }
     if (isPluginConfigurationUri(uri)) {
       return undefined;
-    } else if (!this.workspace.config.isLibFileCandidate(uri)) {
+    } else if (!this.workspaceByWorkspaceFolder.getWorkspaceFolderOf(uri)?.config.isLibFileCandidate(uri)) {
       // non-library files should always generate a compilation unit
       const unit = await this.createAndStoreCompilationUnit(uri);
       return unit;
@@ -346,7 +349,7 @@ export class CompilationUnitHandler {
   }
 
   async createAndStoreCompilationUnit(uri: URI): Promise<CompilationUnit> {
-    const unit = await createCompilationUnit(uri, this.workspace);
+    const unit = await createCompilationUnit(uri, this.workspaceByWorkspaceFolder.getWorkspaceFolderOf(uri)!);
     this.compilationUnits.set(uri.toString(), unit);
     return unit;
   }

@@ -9,7 +9,7 @@
  *
  */
 
-import { UriUtils } from "../utils/uri";
+import { URI, UriUtils } from "../utils/uri";
 
 export type WorkspaceFolderNode<TData> = {
     uri: string;
@@ -27,10 +27,15 @@ export class WorkspaceFolderTree<TData> {
         children: {},
         data: undefined,
     };
+    private dataByUri: Map<string, TData> = new Map();
 
     constructor(private readonly caseInsensitive: boolean = false) {}
 
-    public addWorkspaceFolder(folderUri: string, folder: TData): void {
+    public getAllWorkspaceFolders(): TData[] {
+        return Array.from(this.dataByUri.values());
+    }
+
+    public addWorkspaceFolder(folderUri: string|URI, folder: TData): void {
         const parts = this.prepareUriParts(folderUri);
         let currentChildren = this.root.children;
         let parent: WorkspaceFolderNode<TData> = this.root;
@@ -49,14 +54,15 @@ export class WorkspaceFolderTree<TData> {
             currentChildren = parent.children;
         }
         parent.data = folder;
+        this.dataByUri.set(folderUri.toString(), folder);
     }
 
-    private prepareUriParts(folderUri: string) {
-        const normalized = UriUtils.normalizePath(folderUri);
+    private prepareUriParts(uri: string|URI) {
+        const normalized = UriUtils.normalizePath(typeof uri === "string" ? uri : uri.toString());
         return UriUtils.parts(normalized).map(part => this.caseInsensitive ? part.toLowerCase() : part);
     }
 
-    public getWorkspaceFolderOf(uri: string): TData | undefined {
+    public getWorkspaceFolderOf(uri: string|URI): TData | undefined {
         const parts = this.prepareUriParts(uri);
         let currentChildren = this.root.children;
         let parent: WorkspaceFolderNode<TData> = this.root;
