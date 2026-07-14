@@ -178,13 +178,6 @@ export namespace MarginIndicatorDecorator {
         await config.update(
           "rulers",
           [],
-          vscode.ConfigurationTarget.Workspace,
-          true,
-        );
-        // Ensure to remove old data
-        await config.update(
-          "rulers",
-          [],
           vscode.ConfigurationTarget.Global,
           true,
         );
@@ -224,7 +217,7 @@ export namespace MarginIndicatorDecorator {
     await config.update(
       "rulers",
       rulers,
-      vscode.ConfigurationTarget.Workspace,
+      vscode.ConfigurationTarget.Global,
       true,
     );
   }
