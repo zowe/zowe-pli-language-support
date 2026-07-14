@@ -14,16 +14,19 @@ import { Token } from "../../parser/tokens";
 import * as Pli from "./options-pli";
 import * as Macro from "./options-macro";
 import * as SQL from "./options-sql";
+import * as CICS from "./options-cics";
 import { NOT_CHARACTER } from "../../utils/const";
 
 export type CompilerOptionsPP =
   | Pli.CompilerOptions
   | Macro.CompilerOptions
-  | SQL.CompilerOptions;
+  | SQL.CompilerOptions
+  | CICS.CompilerOptions;
 
 export interface CompilerOptions extends Pli.CompilerOptions {
   macroOptions: Macro.CompilerOptions;
   sqlOptions: SQL.CompilerOptions;
+  cicsOptions: CICS.CompilerOptions;
 }
 
 export interface CompilerOptionResult {
@@ -111,5 +114,6 @@ export function getDefaultCompilerOptions(): CompilerOptions {
     ...Pli.getDefaultCompilerOptions(),
     macroOptions: Macro.getDefaultCompilerOptions(),
     sqlOptions: SQL.getDefaultCompilerOptions(),
+    cicsOptions: CICS.getDefaultCompilerOptions(),
   };
 }

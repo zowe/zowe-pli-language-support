@@ -15,6 +15,7 @@ import { CompilerOptionsCodes } from "../../src/preprocessor/compiler-options/co
 import { CompilerOptions as PliCompilerOptions } from "../../src/preprocessor/compiler-options/options-pli";
 import { CompilerOptions as MacroCompilerOptions } from "../../src/preprocessor/compiler-options/options-macro";
 import { CompilerOptions as SQLCompilerOptions } from "../../src/preprocessor/compiler-options/options-sql";
+import { CompilerOptions as CICSCompilerOptions } from "../../src/preprocessor/compiler-options/options-cics";
 import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { DefaultAttribute, SyntaxKind } from "../../src/syntax-tree/ast";
 import {
@@ -67,6 +68,7 @@ export type SemanticTokenModifiersValues =
 export type CompilerOptions = PliCompilerOptions & {
   macroOptions: MacroCompilerOptions;
   sqlOptions: SQLCompilerOptions;
+  cicsOptions: CICSCompilerOptions;
 };
 
 export type Not<T> = Omit<T, "not">;
@@ -442,6 +444,7 @@ export interface HarnessTesterInterface {
     CompilerOptions: typeof PliCompilerOptions & {
       Macro: typeof MacroCompilerOptions;
       SQL: typeof SQLCompilerOptions;
+      CICS: typeof CICSCompilerOptions;
     };
   };
 }

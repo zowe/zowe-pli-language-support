@@ -2329,7 +2329,10 @@ translator.rule(
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "string");
-    options.ppCics = value.value;
+    options.ppCics = {
+      value: value.value,
+      token: value.token,
+    };
   },
   ["NOPPCICS"],
   (option, options) => {

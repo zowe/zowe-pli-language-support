@@ -391,7 +391,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppcics
    */
-  ppCics?: string | false;
+  ppCics?: CompilerOptions.PPValue | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppinclude
    */
