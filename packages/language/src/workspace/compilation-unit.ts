@@ -11,7 +11,7 @@
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
 import { isVirtualFile, URI, UriUtils } from "../utils/uri.js";
-import { CancellationToken, Connection } from "vscode-languageserver";
+import { CancellationToken, Connection, Diagnostic } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
 import {
@@ -58,6 +58,8 @@ import { CompilerOptions as PliCompilerOptions } from "../preprocessor/compiler-
 import { DiagnosticsStore } from "../validation/diagnostics-store.js";
 import { LRUCache } from "lru-cache";
 import { WorkspaceFolderTree } from "./workspace-folder-tree.js";
+import { FileSystemProvider } from "./file-system-provider.js";
+import { MultiMap } from "../utils/collections.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -119,19 +121,6 @@ export interface CompilationServices {
 }
 
 const FIVE_MINUTES = 1000 * 60 * 5;
-
-/**
- * JSON under `.pliplugin/` is not PL/I source. The client attaches the LS there for code actions;
- * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
- */
-function isPluginConfigurationUri(uri: URI): boolean {
-  const baseName = UriUtils.basename(uri);
-  if (baseName === "settings.json") {
-    return true;
-  }
-  const path = uri.path;
-  return path.includes("/.pliplugin/") && /\.json$/i.test(path);
-}
 
 export async function createCompilationUnit(
   uri: URI,
@@ -294,8 +283,7 @@ export async function addBuiltinUnits(
   unit.rootPreprocessorScope = Scope.createChild(macroScope);
 }
 
-export class CompilationUnitHandler {
-  private compilationUnits: Map<string, CompilationUnit> = new Map();
+export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext> {
   private connection!: Connection;
   private readyDeferred = new Deferred();
 
@@ -304,72 +292,14 @@ export class CompilationUnitHandler {
    */
   readonly globalMutex = createMutex();
 
-  /**
-   * Workspace context shared by every unit this handler creates. Provides
-   * the file-system provider and the plugin configuration.
-   */
-  readonly workspaceByWorkspaceFolder: WorkspaceFolderTree<WorkspaceContext>;
-
   constructor() {
-    this.workspaceByWorkspaceFolder = new WorkspaceFolderTree<WorkspaceContext>(false);
+    super(false);
   }
 
-  
+
 
   get ready(): Promise<void> {
     return this.readyDeferred.promise;
-  }
-
-  getCompilationUnit(uri: URI): CompilationUnit | undefined {
-    return this.compilationUnits.get(uri.toString());
-  }
-
-  /**
-   * Gets an existing or creates a new compilation unit for the given URI, except for standalone library files
-   *
-   * @returns Pre-existing or new compilation unit, or undefined if it's a standalone library file
-   */
-  async getOrCreateCompilationUnit(
-    uri: URI,
-  ): Promise<CompilationUnit | undefined> {
-    if (this.compilationUnits.has(uri.toString())) {
-      // existing compilation unit
-      return this.compilationUnits.get(uri.toString());
-    }
-    if (isPluginConfigurationUri(uri)) {
-      return undefined;
-    } else if (!this.workspaceByWorkspaceFolder.getWorkspaceFolderOf(uri)?.config.isLibFileCandidate(uri)) {
-      // non-library files should always generate a compilation unit
-      const unit = await this.createAndStoreCompilationUnit(uri);
-      return unit;
-    } else {
-      // do not generate compilation units for standalone library files
-      return undefined;
-    }
-  }
-
-  async createAndStoreCompilationUnit(uri: URI): Promise<CompilationUnit> {
-    const unit = await createCompilationUnit(uri, this.workspaceByWorkspaceFolder.getWorkspaceFolderOf(uri)!);
-    this.compilationUnits.set(uri.toString(), unit);
-    return unit;
-  }
-
-  deleteCompilationUnit(uri: URI): boolean {
-    const unit = this.compilationUnits.get(uri.toString());
-    if (!unit) {
-      return false;
-    }
-
-    for (const file of unit.services.files.keys()) {
-      this.compilationUnits.delete(file);
-    }
-    this.compilationUnits.delete(uri.toString());
-
-    return true;
-  }
-
-  getAllCompilationUnits(): CompilationUnit[] {
-    return Array.from(new Set(this.compilationUnits.values()));
   }
 
   /**
@@ -391,7 +321,11 @@ export class CompilationUnitHandler {
     textDocuments.onDidClose((event) => {
       const uri = UriUtils.toUri(event.document.uri);
       this.globalMutex.read(async () => {
-        const unit = this.compilationUnits.get(uri.toString());
+        const context = this.getWorkspaceFolderOf(uri);
+        if (!context) {
+          return;
+        }
+        const unit = context.getCompilationUnit(uri);
         if (unit && this.tryCloseCompilationUnit(uri)) {
           for (const file of unit.services.files.keys()) {
             // Clear diagnostics for all files in the closed compilation unit
@@ -406,8 +340,48 @@ export class CompilationUnitHandler {
     });
   }
 
+  async initializeWorkspaceFolder(uri: string, fs: FileSystemProvider, connection: Connection) {
+    const workspace = new WorkspaceContext(fs, connection);
+    this.addWorkspaceFolder(UriUtils.toUri(uri), workspace);
+    return workspace.config
+      .init(UriUtils.toUri(uri))
+      .then((diagnosticsByUri) => {
+        publishPluginConfigDiagnostics(connection, diagnosticsByUri);
+      });
+  }
+
+  getCompilationUnit(uri: URI): CompilationUnit | undefined {
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return undefined;
+    }
+    return context.getCompilationUnit(uri);
+  }
+
+  async getOrCreateCompilationUnit(
+    uri: URI,
+  ): Promise<CompilationUnit | undefined> {
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return undefined;
+    }
+    return context.getOrCreateCompilationUnit(uri);
+  }
+
+  deleteCompilationUnit(uri: URI): boolean {
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return false;
+    }
+    return context.deleteCompilationUnit(uri);
+  }
+
   private tryCloseCompilationUnit(uri: URI): boolean {
-    const unit = this.compilationUnits.get(uri.toString());
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return false;
+    }
+    const unit = context.getCompilationUnit(uri);
     if (!unit) {
       // Nothing to close
       return false;
@@ -418,13 +392,17 @@ export class CompilationUnitHandler {
         return false;
       }
     }
-    return this.deleteCompilationUnit(uri);
+    return context.deleteCompilationUnit(uri);
   }
 
   async updateUri(uri: URI): Promise<void> {
     await this.globalMutex.run(async () => {
       await this.ready;
-      const unit = await this.getOrCreateCompilationUnit(uri);
+      const context = this.getWorkspaceFolderOf(uri);
+      if (!context) {
+        return;
+      }
+      const unit = await context.getOrCreateCompilationUnit(uri);
       if (!unit) {
         // standalone library files do not synthesize new compilation units
         return;
@@ -462,7 +440,10 @@ export class CompilationUnitHandler {
     try {
       await lifecycle(unit, document, cancellationToken);
       for (const file of unit.services.files.keys()) {
-        this.compilationUnits.set(file, unit);
+        const context = this.getWorkspaceFolderOf(file);
+        if (context) {
+          context.setCompilationUnit(URI.parse(file), unit);
+        }
       }
       const allDiagnostics = diagnosticsToLSP(unit, unit.diagnostics.getAll());
       for (const file of unit.services.files.keys()) {
@@ -497,28 +478,42 @@ export class CompilationUnitHandler {
   ): Promise<void> {
     const promises: Promise<void>[] = [];
     this.globalMutex.run(async () => {
-      for (const unit of this.getAllCompilationUnits()) {
-        if (cancellationToken.isCancellationRequested) {
-          return;
+      for (const context of this.getAllWorkspaceFolders()) {
+        for (const unit of context.getAllCompilationUnits()) {
+          if (cancellationToken.isCancellationRequested) {
+            return;
+          }
+          promises.push(
+            unit.mutex.run(async (cancellationToken) => {
+              const textDocument = await TextDocuments.get(unit.uri.toString());
+              if (textDocument) {
+                await this.process(
+                  unit,
+                  textDocument,
+                  connection,
+                  cancellationToken,
+                );
+                // Revalidate request caches (margins, skipped code, etc.)
+                // This is necessary so that changes to the plugin configuration are reflected immediately.
+                unit.requestCaches.revalidateAll({ connection, unit });
+              }
+            }),
+          );
         }
-        promises.push(
-          unit.mutex.run(async (cancellationToken) => {
-            const textDocument = await TextDocuments.get(unit.uri.toString());
-            if (textDocument) {
-              await this.process(
-                unit,
-                textDocument,
-                connection,
-                cancellationToken,
-              );
-              // Revalidate request caches (margins, skipped code, etc.)
-              // This is necessary so that changes to the plugin configuration are reflected immediately.
-              unit.requestCaches.revalidateAll({ connection, unit });
-            }
-          }),
-        );
       }
     });
     return Promise.all(promises).then(() => undefined);
+  }
+}
+
+export function publishPluginConfigDiagnostics(
+  connection: Connection,
+  diagnosticsByUri: MultiMap<string, Diagnostic>,
+): void {
+  for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
+    connection.sendDiagnostics({
+      uri,
+      diagnostics,
+    });
   }
 }

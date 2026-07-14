@@ -12,6 +12,7 @@
 import {
   CompilationUnit,
   CompilationUnitHandler,
+  publishPluginConfigDiagnostics,
 } from "../workspace/compilation-unit";
 import {
   CancellationToken,
@@ -76,17 +77,6 @@ export function startLanguageServer(
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
 
-  function publishPluginConfigDiagnostics(
-    diagnosticsByUri: MultiMap<string, Diagnostic>,
-  ): void {
-    for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
-      connection.sendDiagnostics({
-        uri,
-        diagnostics,
-      });
-    }
-  }
-
   async function withReadMutex<T>(
     uri: string,
     cb: (uri: URI, unit?: CompilationUnit) => Promise<T>,
@@ -94,8 +84,8 @@ export function startLanguageServer(
     await compilationUnitHandler.ready;
     return compilationUnitHandler.globalMutex.read(() => {
       const parsedUri = UriUtils.toUri(uri);
-      const compilationUnit =
-        compilationUnitHandler.getCompilationUnit(parsedUri);
+      const context = compilationUnitHandler.getWorkspaceFolderOf(parsedUri);
+      const compilationUnit = context?.getCompilationUnit(parsedUri);
       if (!compilationUnit) {
         return cb(parsedUri, undefined);
       }
@@ -165,18 +155,11 @@ export function startLanguageServer(
         },
       ],
     });
-    const promises: Promise<void>[] = [];
-    for (const folder of folders) {
-      const workspace = new WorkspaceContext(fs, connection);
-      compilationUnitHandler.workspaceByWorkspaceFolder.addWorkspaceFolder(UriUtils.toUri(folder.uri), workspace);
-      promises.push(
-        workspace.config
-          .init(UriUtils.toUri(folder.uri))
-          .then((diagnosticsByUri) => {
-            publishPluginConfigDiagnostics(diagnosticsByUri);
-          }),
-      );
-    }
+    const promises = folders.map(async (folder) => compilationUnitHandler.initializeWorkspaceFolder(
+      folder.uri,
+      fs,
+      connection,
+    ));
     await Promise.all(promises);
     compilationUnitHandler.markReady();
   });
@@ -227,7 +210,7 @@ export function startLanguageServer(
     triggerChar: string | undefined,
     docUri: string,
   ): LANG_LIST | undefined {
-    const workspace = compilationUnitHandler.workspaceByWorkspaceFolder.getWorkspaceFolderOf(docUri);
+    const workspace = compilationUnitHandler.getWorkspaceFolderOf(docUri);
     if (!workspace) {
       return undefined;
     }
@@ -278,7 +261,7 @@ export function startLanguageServer(
         return [];
       }
       const offset = textDocument.offsetAt(position);
-      const workspace = compilationUnitHandler.workspaceByWorkspaceFolder.getWorkspaceFolderOf(docUri);
+      const workspace = compilationUnitHandler.getWorkspaceFolderOf(docUri);
       if (!workspace) {
         return [];
       }
@@ -431,7 +414,7 @@ export function startLanguageServer(
     return compilationUnitHandler.globalMutex.read(async () => {
       return workspaceSymbolRequest(
         params.query,
-        compilationUnitHandler.getAllCompilationUnits(),
+        compilationUnitHandler.getAllWorkspaceFolders().flatMap((workspace) => workspace.getAllCompilationUnits()),
       );
     });
   });
@@ -439,7 +422,7 @@ export function startLanguageServer(
   async function pluginConfigChanged(workspaceContext: WorkspaceContext): Promise<void> {
     // handle changes to the .pliplugin config folder's contents
     const diagnosticsByUri = await workspaceContext.config.reloadConfigurations();
-    publishPluginConfigDiagnostics(diagnosticsByUri);
+    publishPluginConfigDiagnostics(connection, diagnosticsByUri);
 
     // reindex reachable compilation units
     await compilationUnitHandler.reindex(connection, CancellationToken.None);
@@ -481,7 +464,7 @@ export function startLanguageServer(
     Messages.OnDidChangePluginConfigSettingsNotification,
     async () => {
       // Handle changes to the pli.pgm_conf and pli.proc_grps settings in vscode
-      const promises = compilationUnitHandler.workspaceByWorkspaceFolder.getAllWorkspaceFolders().map(async (workspaceContext) => {
+      const promises = compilationUnitHandler.getAllWorkspaceFolders().map(async (workspaceContext) => {
         await pluginConfigChanged(workspaceContext);
       });
       await Promise.all(promises);
@@ -500,7 +483,7 @@ export function startLanguageServer(
 
     const fileEventsByWorkspace = new Map<WorkspaceContext, FileEvent[]>();
     for (const change of params.changes) {
-      const workspace = compilationUnitHandler.workspaceByWorkspaceFolder.getWorkspaceFolderOf(change.uri);
+      const workspace = compilationUnitHandler.getWorkspaceFolderOf(change.uri);
       if (workspace) {
         if (!fileEventsByWorkspace.has(workspace)) {
           fileEventsByWorkspace.set(workspace, []);
@@ -536,14 +519,14 @@ export function startLanguageServer(
         pluginConfigHasChanged ||
         changeAffectsLibs(workspace, changes)
       ) {
-        const promises = compilationUnitHandler.workspaceByWorkspaceFolder.getAllWorkspaceFolders().map(async (workspaceContext) => {
+        const promises = compilationUnitHandler.getAllWorkspaceFolders().map(async (workspaceContext) => {
           await pluginConfigChanged(workspaceContext);
         });
         await Promise.all(promises);
       } else {
         const compilationUnits = new Set<CompilationUnit>();
         // Not a plugin config change, meaning that individual folders/files have changed.
-        for (const compilationUnit of compilationUnitHandler.getAllCompilationUnits()) {
+        for (const compilationUnit of compilationUnitHandler.getAllWorkspaceFolders().flatMap((workspace) => workspace.getAllCompilationUnits())) {
           if (compilationUnit.includeError) {
             // If the compilation unit has an unresolved include, we need to re-run the lifecycle
             // to see if the include can now be resolved.
@@ -574,7 +557,11 @@ export function startLanguageServer(
   });
   onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
     const uri = UriUtils.toUri(uriString);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+    const context = compilationUnitHandler.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return false;
+    }
+    const compilationUnit = context.getCompilationUnit(uri);
     return compilationUnit !== undefined;
   });
 
@@ -661,7 +648,7 @@ export function startLanguageServer(
     } else {
       const diagnostics = params.context.diagnostics as Diagnostic[];
       if (!diagnostics || !diagnostics.length) return [];
-      const workspaceContext = compilationUnitHandler.workspaceByWorkspaceFolder.getWorkspaceFolderOf(params.textDocument.uri);
+      const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(params.textDocument.uri);
       if (workspaceContext === undefined) {
         return [];
       }
@@ -678,7 +665,7 @@ export function startLanguageServer(
     switch (params.command) {
       case Commands.CREATE_CONFIG:
         assertType<string[]>(params.arguments);
-        const workspaceContext = compilationUnitHandler.workspaceByWorkspaceFolder.getWorkspaceFolderOf(params.arguments[0]);
+        const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(params.arguments[0]);
         if (workspaceContext) {
           await commandCreateConfig(params, workspaceContext);
         }
