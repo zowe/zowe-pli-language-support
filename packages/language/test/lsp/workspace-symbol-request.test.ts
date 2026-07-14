@@ -19,6 +19,7 @@ import { workspaceSymbolRequest } from "../../src/language-server/workspace-symb
 import { EditorDocuments } from "../../src/language-server/text-documents";
 import { CancellationToken } from "vscode-languageserver";
 import { defaultTestWorkspace } from "../test-workspace";
+import { VirtualFileSystemProvider } from "../../src";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
@@ -50,7 +51,8 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
     ),
   );
 
-  const handler = new CompilationUnitHandler();
+  const fs = new VirtualFileSystemProvider();
+  const handler = new CompilationUnitHandler(fs);
   const workspace = defaultTestWorkspace();
   handler.addWorkspaceFolder("file:///", workspace);
   textDocuments.forEach((doc) => EditorDocuments.set(doc));

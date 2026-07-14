@@ -73,7 +73,7 @@ export function startLanguageServer(
   // Wire the on-demand file loader for include URIs to the workspace's fs
   // so the document store doesn't reach for any module-level singleton.
   resetDocumentProviders(fs);
-  const compilationUnitHandler = new CompilationUnitHandler();
+  const compilationUnitHandler = new CompilationUnitHandler(fs);
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
 
@@ -157,8 +157,6 @@ export function startLanguageServer(
     });
     const promises = folders.map(async (folder) => compilationUnitHandler.initializeWorkspaceFolder(
       folder.uri,
-      fs,
-      connection,
     ));
     await Promise.all(promises);
     compilationUnitHandler.markReady();

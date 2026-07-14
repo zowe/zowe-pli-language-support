@@ -41,6 +41,7 @@ export class WorkspaceContext {
   public readonly config: PluginConfigurationProvider;
 
   constructor(
+    public readonly uri: URI,
     public readonly fs: FileSystemProvider,
     connection?: Connection,
   ) {

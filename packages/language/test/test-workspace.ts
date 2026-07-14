@@ -17,6 +17,7 @@ import {
   VirtualFileSystemProvider,
 } from "../src/workspace/file-system-provider";
 import { WorkspaceContext } from "../src/workspace/workspace-context";
+import { UriUtils } from "../src";
 
 let _defaultTestWorkspace: WorkspaceContext | undefined;
 
@@ -31,7 +32,7 @@ let _defaultTestWorkspace: WorkspaceContext | undefined;
  */
 export function defaultTestWorkspace(): WorkspaceContext {
   if (!_defaultTestWorkspace) {
-    _defaultTestWorkspace = new WorkspaceContext(EmptyFileSystemProvider);
+    _defaultTestWorkspace = new WorkspaceContext(UriUtils.toUri("file:///"), EmptyFileSystemProvider);
   }
   return _defaultTestWorkspace;
 }
@@ -58,5 +59,5 @@ export function createTestWorkspace(
   connection?: Connection,
 ): WorkspaceContext {
   resetDocumentProviders(fs);
-  return new WorkspaceContext(fs, connection);
+  return new WorkspaceContext(UriUtils.toUri("file:///"), fs, connection);
 }

@@ -284,6 +284,7 @@ export async function addBuiltinUnits(
 }
 
 export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext> {
+  private fs: FileSystemProvider;
   private connection!: Connection;
   private readyDeferred = new Deferred();
 
@@ -292,8 +293,9 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
    */
   readonly globalMutex = createMutex();
 
-  constructor() {
+  constructor(fs: FileSystemProvider) {
     super(false);
+    this.fs = fs;
   }
 
 
@@ -340,13 +342,17 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     });
   }
 
-  async initializeWorkspaceFolder(uri: string, fs: FileSystemProvider, connection: Connection) {
-    const workspace = new WorkspaceContext(fs, connection);
-    this.addWorkspaceFolder(UriUtils.toUri(uri), workspace);
+  async initializeWorkspaceFolder(uriString: string|URI) {
+    const uri = UriUtils.toUri(uriString);
+    const workspace = new WorkspaceContext(uri, this.fs, this.connection);
+    this.addWorkspaceFolder(uri, workspace);
     return workspace.config
-      .init(UriUtils.toUri(uri))
+      .init(uri)
       .then((diagnosticsByUri) => {
-        publishPluginConfigDiagnostics(connection, diagnosticsByUri);
+        if(this.connection) {
+          publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
+        }
+        return workspace;
       });
   }
 

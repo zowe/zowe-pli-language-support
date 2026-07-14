@@ -63,11 +63,12 @@ function makeProcessGroup(name: string) {
 }
 
 beforeEach(async () => {
+  const uri = UriUtils.toUri("/workspace");
   vfs = new VirtualFileSystemProvider();
-  workspace = new WorkspaceContext(vfs);
+  workspace = new WorkspaceContext(uri, vfs);
   pluginConfig = workspace.config;
 
-  await pluginConfig.init(UriUtils.toUri("/workspace"));
+  await pluginConfig.init(uri);
   await pluginConfig.setProcessGroupConfigs([makeProcessGroup("default")]);
 });
 

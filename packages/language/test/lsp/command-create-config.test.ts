@@ -33,7 +33,7 @@ describe("commandCreateConfig", () => {
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    workspace = new WorkspaceContext(vfs);
+    workspace = new WorkspaceContext(WORKSPACE_PATH, vfs);
     pluginConfig = workspace.config;
     await pluginConfig.init(WORKSPACE_PATH);
   });
@@ -104,7 +104,7 @@ describe("updateOrCreateConfig", () => {
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    workspace = new WorkspaceContext(vfs);
+    workspace = new WorkspaceContext(WORKSPACE_PATH, vfs);
     pluginConfig = workspace.config;
     await pluginConfig.init(WORKSPACE_PATH);
   });
