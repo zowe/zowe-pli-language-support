@@ -9,19 +9,30 @@
  *
  */
 
-// A "cpy/**" globstar lib pattern searches the "cpy" folder recursively, so an
-// include living in a nested subfolder ("cpy/libs") still resolves. Recursion
-// is opt-in via "**"; see https://github.com/zowe/zowe-pli-language-support/issues/758
+// Program patterns match case-insensitively: an uppercase pattern extension
+// ("*.PLI") still binds the lowercase "main.pli" to its process group, so the
+// include resolves via the "ipa" group's libs.
+// See https://github.com/zowe/zowe-pli-language-support/issues/758
 
 /// <reference path="../../framework.ts" />
+
+// @filename: .pliplugin/pgm_conf.json
+//// {
+////   "pgms": [
+////     {
+////       "program": "*.PLI",
+////       "pgroup": "ipa"
+////     }
+////   ]
+//// }
 
 // @filename: .pliplugin/proc_grps.json
 //// {
 ////     "pgroups": [
 ////         {
-////             "name": "default",
+////             "name": "ipa",
 ////             "libs": [
-////                 "cpy/**"
+////                 "cpy"
 ////             ],
 ////             "include-extensions": [
 ////                 ".pli"
@@ -30,7 +41,7 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
+// @filename: cpy/lib.pli
 //// DECLARE LIB_VAR FIXED;
 
 // @filename: main.pli

@@ -9,9 +9,10 @@
  *
  */
 
-// A "cpy/**" globstar lib pattern searches the "cpy" folder recursively, so an
-// include living in a nested subfolder ("cpy/libs") still resolves. Recursion
-// is opt-in via "**"; see https://github.com/zowe/zowe-pli-language-support/issues/758
+// Wildcard lib matching is case-insensitive, consistent with the rest of
+// include resolution. A pattern written as "**/INC" still matches a directory
+// named "inc" on disk.
+// See https://github.com/zowe/zowe-pli-language-support/issues/628
 
 /// <reference path="../../framework.ts" />
 
@@ -21,7 +22,7 @@
 ////         {
 ////             "name": "default",
 ////             "libs": [
-////                 "cpy/**"
+////                 "**/INC"
 ////             ],
 ////             "include-extensions": [
 ////                 ".pli"
@@ -30,7 +31,9 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
+// Directory casing ("inc") differs from the pattern casing ("INC"); the match
+// must still succeed.
+// @filename: a/inc/lib.pli
 //// DECLARE LIB_VAR FIXED;
 
 // @filename: main.pli
