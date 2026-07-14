@@ -50,11 +50,13 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
     ),
   );
 
-  const handler = new CompilationUnitHandler(defaultTestWorkspace());
+  const handler = new CompilationUnitHandler();
+  const workspace = defaultTestWorkspace();
+  handler.addWorkspaceFolder("file:///", workspace);
   textDocuments.forEach((doc) => EditorDocuments.set(doc));
   await Promise.all(
     textDocuments.map(async (doc, i) => {
-      const unit = await handler.createAndStoreCompilationUnit(
+      const unit = await workspace.createAndStoreCompilationUnit(
         UriUtils.toUri(`/test${i}.pli`),
       );
 

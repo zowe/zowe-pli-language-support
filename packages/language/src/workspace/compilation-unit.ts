@@ -376,6 +376,14 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     return context.deleteCompilationUnit(uri);
   }
 
+  getAllCompilationUnits(): CompilationUnit[] {
+    const units: CompilationUnit[] = [];
+    for (const context of this.getAllWorkspaceFolders()) {
+      units.push(...context.getAllCompilationUnits());
+    }
+    return units;
+  }
+
   private tryCloseCompilationUnit(uri: URI): boolean {
     const context = this.getWorkspaceFolderOf(uri);
     if (!context) {
