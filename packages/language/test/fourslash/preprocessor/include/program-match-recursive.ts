@@ -9,19 +9,30 @@
  *
  */
 
-// A "cpy/**" globstar lib pattern searches the "cpy" folder recursively, so an
-// include living in a nested subfolder ("cpy/libs") still resolves. Recursion
-// is opt-in via "**"; see https://github.com/zowe/zowe-pli-language-support/issues/758
+// A recursive program pattern ("src\**\*.pli") binds PL/I files at ANY depth
+// under "src" to its process group. A deeply nested program therefore picks up
+// the group's libs, so its include resolves.
+// See https://github.com/zowe/zowe-pli-language-support/issues/758
 
 /// <reference path="../../framework.ts" />
+
+// @filename: .pliplugin/pgm_conf.json
+//// {
+////   "pgms": [
+////     {
+////       "program": "src\\**\\*.pli",
+////       "pgroup": "grp"
+////     }
+////   ]
+//// }
 
 // @filename: .pliplugin/proc_grps.json
 //// {
 ////     "pgroups": [
 ////         {
-////             "name": "default",
+////             "name": "grp",
 ////             "libs": [
-////                 "cpy/**"
+////                 "cpy"
 ////             ],
 ////             "include-extensions": [
 ////                 ".pli"
@@ -30,10 +41,11 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
+// @filename: cpy/lib.pli
 //// DECLARE LIB_VAR FIXED;
 
-// @filename: main.pli
+// deeply nested program, matched by "src\**\*.pli"
+// @filename: src/a/b/main.pli
 //// %INCLUDE "lib.pli";
 
 preprocessor.expectTokens(`

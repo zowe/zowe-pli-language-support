@@ -892,7 +892,13 @@ export class PluginConfigurationProvider {
    * or joins it with the workspace URI if relative.
    */
   private resolveProgramPath(programPath: string, workspaceUri: URI): URI {
-    const normalizedProgramPath = UriUtils.normalizePath(programPath);
+    let normalizedProgramPath = UriUtils.normalizePath(programPath);
+    // A bare "." or "./" means the workspace folder itself, matching its direct
+    // (non-recursive) children. Expressed as the "*" glob, since joining "."
+    // collapses back to the workspace URI and would then match nothing.
+    if (normalizedProgramPath === "." || normalizedProgramPath === "./") {
+      normalizedProgramPath = "*";
+    }
     if (this.isAbsolutePath(normalizedProgramPath)) {
       return UriUtils.toUri(normalizedProgramPath);
     }
@@ -999,6 +1005,9 @@ export class PluginConfigurationProvider {
    * @returns Associated program config, or undefined if not found
    */
   public getProgramConfig(program: URI): ProgramRecord | undefined {
+    // No PL/I-extension filtering here: callers only ever pass files already
+    // identified as PL/I (client language id / auto-detect), so glob matching
+    // the path alone is sufficient.
     // Note that we need to decode the URI
     const uri = program.toString(true);
     const direct = this.programConfigs.get(uri);
@@ -1012,7 +1021,11 @@ export class PluginConfigurationProvider {
       }
       try {
         // attempt match on decoded URI
-        if (minimatch(uri, decodeURIComponent(pattern))) {
+        if (
+          minimatch(uri, decodeURIComponent(pattern), {
+            nocase: true,
+          })
+        ) {
           return config;
         }
       } catch (e) {

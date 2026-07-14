@@ -9,9 +9,8 @@
  *
  */
 
-// A "cpy/**" globstar lib pattern searches the "cpy" folder recursively, so an
-// include living in a nested subfolder ("cpy/libs") still resolves. Recursion
-// is opt-in via "**"; see https://github.com/zowe/zowe-pli-language-support/issues/758
+// A "**" globstar lib pattern matches a directory at any depth, including the
+// workspace root. See https://github.com/zowe/zowe-pli-language-support/issues/628
 
 /// <reference path="../../framework.ts" />
 
@@ -21,7 +20,7 @@
 ////         {
 ////             "name": "default",
 ////             "libs": [
-////                 "cpy/**"
+////                 "**/inc"
 ////             ],
 ////             "include-extensions": [
 ////                 ".pli"
@@ -30,12 +29,25 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
-//// DECLARE LIB_VAR FIXED;
+// inc at the workspace root (globstar matches zero leading segments)
+// @filename: inc/root.pli
+//// DECLARE ROOT_VAR FIXED;
+
+// inc one level deep
+// @filename: a/inc/mid.pli
+//// DECLARE MID_VAR FIXED;
+
+// inc deeply nested
+// @filename: a/b/c/inc/deep.pli
+//// DECLARE DEEP_VAR FIXED;
 
 // @filename: main.pli
-//// %INCLUDE "lib.pli";
+//// %INCLUDE "root.pli";
+//// %INCLUDE "mid.pli";
+//// %INCLUDE "deep.pli";
 
 preprocessor.expectTokens(`
-  DECLARE LIB_VAR FIXED;
+  DECLARE ROOT_VAR FIXED;
+  DECLARE MID_VAR FIXED;
+  DECLARE DEEP_VAR FIXED;
 `);

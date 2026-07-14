@@ -9,9 +9,9 @@
  *
  */
 
-// A "cpy/**" globstar lib pattern searches the "cpy" folder recursively, so an
-// include living in a nested subfolder ("cpy/libs") still resolves. Recursion
-// is opt-in via "**"; see https://github.com/zowe/zowe-pli-language-support/issues/758
+// A literal lib (no wildcard) searches only that folder, NOT its subfolders.
+// Recursion is opt-in via "**". An include in a nested subfolder of a literal
+// lib does not resolve. See https://github.com/zowe/zowe-pli-language-support/issues/758
 
 /// <reference path="../../framework.ts" />
 
@@ -21,7 +21,7 @@
 ////         {
 ////             "name": "default",
 ////             "libs": [
-////                 "cpy/**"
+////                 "cpy"
 ////             ],
 ////             "include-extensions": [
 ////                 ".pli"
@@ -30,12 +30,19 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
-//// DECLARE LIB_VAR FIXED;
+// directly inside the literal lib -> resolvable
+// @filename: cpy/direct.pli
+//// DECLARE DIRECT_VAR FIXED;
+
+// in a subfolder of the literal lib -> NOT resolvable (no recursion)
+// @filename: cpy/sub/nested.pli
+//// DECLARE NESTED_VAR FIXED;
 
 // @filename: main.pli
-//// %INCLUDE "lib.pli";
+//// %INCLUDE "direct.pli";
+//// %INCLUDE "nested.pli";
 
+// Only the direct copybook resolves; the nested include contributes no tokens.
 preprocessor.expectTokens(`
-  DECLARE LIB_VAR FIXED;
+  DECLARE DIRECT_VAR FIXED;
 `);

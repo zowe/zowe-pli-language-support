@@ -121,6 +121,13 @@ export class TestBuilder extends AbstractTestBuilder {
   private output!: string;
   private diagnostics!: Diagnostic[];
   private options: TestBuilderOptions;
+  /**
+   * Whether the test supplied its own `.pliplugin/proc_grps.json`. The default
+   * config lists `cpy`/`inc` libs that are unresolved in most test workspaces,
+   * so proc_grps unresolved-lib diagnostics (COPC01E) are only surfaced to
+   * assertions when the test opted in by providing its own config.
+   */
+  private areProcGrpsSupplied = false;
 
   getDiagnostics(): Diagnostic[] {
     return this.diagnostics;
@@ -223,7 +230,18 @@ export class TestBuilder extends AbstractTestBuilder {
     this.diagnostics = this.unit.diagnostics.getAll();
     const configDiagnostics =
       defaultTestWorkspace().config.getConfigInternalDiagnostics();
-    this.diagnostics.push(...configDiagnostics);
+    for (const diagnostic of configDiagnostics) {
+      // Skip proc_grps.json diagnostics when the default config was used: its
+      // placeholder `cpy`/`inc` libs are unresolved in most test workspaces
+      // and would otherwise leak COPC01E noise into unrelated tests.
+      if (
+        !this.areProcGrpsSupplied &&
+        diagnostic.uri?.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)
+      ) {
+        continue;
+      }
+      this.diagnostics.push(diagnostic);
+    }
     this.checkDiagnosticsURIs();
 
     // After the test-builder is done, clear the workspace's plugin configuration
@@ -279,16 +297,17 @@ export class TestBuilder extends AbstractTestBuilder {
    */
   private async configurePluginConfigurationProvider() {
     let pgmConfUri: string | undefined;
-    let procGrpsUri: boolean = false;
+    let hasProcGrpsUri: boolean = false;
 
     for (const [uri] of this.files) {
       if (uri.endsWith(PluginConfiguration.PROGRAM_FILE_PATH)) {
         pgmConfUri = uri;
       }
       if (uri.endsWith(PluginConfiguration.PROCESS_GROUP_FILE_PATH)) {
-        procGrpsUri = true;
+        hasProcGrpsUri = true;
       }
     }
+    this.areProcGrpsSupplied = hasProcGrpsUri;
     const config = defaultTestWorkspace().config;
     const workspaceUri = pgmConfUri
       ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))
@@ -299,7 +318,7 @@ export class TestBuilder extends AbstractTestBuilder {
         PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
       );
     }
-    if (!procGrpsUri) {
+    if (!hasProcGrpsUri) {
       await defaultTestWorkspace().config.writeProcessGroupsFile(
         PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
       );

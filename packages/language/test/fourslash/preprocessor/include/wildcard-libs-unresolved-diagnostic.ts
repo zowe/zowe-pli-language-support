@@ -9,9 +9,10 @@
  *
  */
 
-// A "cpy/**" globstar lib pattern searches the "cpy" folder recursively, so an
-// include living in a nested subfolder ("cpy/libs") still resolves. Recursion
-// is opt-in via "**"; see https://github.com/zowe/zowe-pli-language-support/issues/758
+// A wildcard lib pattern that matches no directory on disk is reported as an
+// unresolved library entry (COPC01E) on proc_grps.json, just like a literal
+// lib that doesn't exist.
+// See https://github.com/zowe/zowe-pli-language-support/issues/628
 
 /// <reference path="../../framework.ts" />
 
@@ -21,7 +22,7 @@
 ////         {
 ////             "name": "default",
 ////             "libs": [
-////                 "cpy/**"
+////                 <|bad:"**/missing"|>
 ////             ],
 ////             "include-extensions": [
 ////                 ".pli"
@@ -30,12 +31,14 @@
 ////     ]
 //// }
 
-// @filename: cpy/libs/lib.pli
-//// DECLARE LIB_VAR FIXED;
+// A directory exists in the workspace, but none of its segments match the
+// "**/missing" pattern, so the wildcard expands to nothing.
+// @filename: src/code.pli
+//// DECLARE X FIXED;
 
 // @filename: main.pli
-//// %INCLUDE "lib.pli";
+//// DECLARE Y FIXED;
 
-preprocessor.expectTokens(`
-  DECLARE LIB_VAR FIXED;
-`);
+verify.expectDiagnosticsAt("bad", {
+  message: code.LSP.PluginConfiguration.UnresolvedEntry.message("**/missing"),
+});
