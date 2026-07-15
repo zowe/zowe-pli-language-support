@@ -15,11 +15,16 @@ import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-
 import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
 import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
 import getOutlineServiceOverride from "@codingame/monaco-vscode-outline-service-override";
-import { configureDefaultWorkerFactory } from "monaco-languageclient/workerFactory";
+import {
+  useWorkerFactory,
+  Worker,
+  WorkerLoader,
+} from "monaco-languageclient/workerFactory";
 import type { MonacoVscodeApiConfig } from "monaco-languageclient/vscodeApiWrapper";
 
 // Load the PL/I extension directly - no need to load the worker
 import "../pli-language-support.vsix";
+import { ILogger } from "@codingame/monaco-vscode-api/vscode/vs/platform/log/common/log";
 
 export const configure = async (
   htmlContainer?: HTMLElement,
@@ -162,4 +167,45 @@ const viewsInit = async () => {
         visible ? "block" : "none";
     });
   }
+};
+
+const defineDefaultWorkerLoaders: () => Partial<
+  Record<string, WorkerLoader>
+> = () => {
+  console.log(import.meta.url);
+  const defaultEditorWorkerService = () => {
+    const url = new URL(
+      "@codingame/monaco-vscode-editor-api/esm/vs/editor/editor.worker.js",
+      import.meta.url,
+    );
+    return new Worker(url, { type: "module" });
+  };
+  const defaultExtensionHostWorkerMain = () => {
+    const url = new URL(
+      "@codingame/monaco-vscode-api/workers/extensionHost.worker",
+      import.meta.url,
+    );
+    return new Worker(url, { type: "module" });
+  };
+  const defaultTextMateWorker = () => {
+    const url = new URL(
+      "@codingame/monaco-vscode-textmate-service-override/worker",
+      import.meta.url,
+    );
+    return new Worker(url, { type: "module" });
+  };
+
+  return {
+    // if you import monaco api as 'monaco-editor': monaco-editor/esm/vs/editor/editor.worker.js
+    editorWorkerService: defaultEditorWorkerService,
+    extensionHostWorkerMain: defaultExtensionHostWorkerMain,
+    TextMateWorker: defaultTextMateWorker,
+  };
+};
+
+export const configureDefaultWorkerFactory = (logger?: ILogger) => {
+  useWorkerFactory({
+    workerLoaders: defineDefaultWorkerLoaders(),
+    logger,
+  });
 };

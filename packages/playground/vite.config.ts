@@ -15,6 +15,15 @@ const config: UserConfig = {
     assetsInlineLimit: 0,
     outDir: path.resolve(__dirname, "out"),
   },
+  server: {
+    cors: {
+      origin: "*",
+    },
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
   worker: {
     format: "es",
   },

@@ -90,6 +90,9 @@ importers:
       '@codingame/monaco-vscode-api':
         specifier: ^35.0.0
         version: 35.0.0
+      '@codingame/monaco-vscode-editor-api':
+        specifier: ^35.0.0
+        version: 35.0.0
       '@codingame/monaco-vscode-explorer-service-override':
         specifier: ^35.0.0
         version: 35.0.0
@@ -103,6 +106,9 @@ importers:
         specifier: ^35.0.0
         version: 35.0.0
       '@codingame/monaco-vscode-outline-service-override':
+        specifier: ^35.0.0
+        version: 35.0.0
+      '@codingame/monaco-vscode-textmate-service-override':
         specifier: ^35.0.0
         version: 35.0.0
       '@codingame/monaco-vscode-views-service-override':
