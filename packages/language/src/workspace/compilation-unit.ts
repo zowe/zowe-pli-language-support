@@ -11,7 +11,11 @@
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
 import { isVirtualFile, URI, UriUtils } from "../utils/uri.js";
-import { CancellationToken, Connection, Diagnostic } from "vscode-languageserver";
+import {
+  CancellationToken,
+  Connection,
+  Diagnostic,
+} from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
 import {
@@ -298,8 +302,6 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     this.fs = fs;
   }
 
-
-
   get ready(): Promise<void> {
     return this.readyDeferred.promise;
   }
@@ -342,18 +344,16 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     });
   }
 
-  async initializeWorkspaceFolder(uriString: string|URI) {
+  async initializeWorkspaceFolder(uriString: string | URI) {
     const uri = UriUtils.toUri(uriString);
     const workspace = new WorkspaceContext(uri, this.fs, this.connection);
     this.addWorkspaceFolder(uri, workspace);
-    return workspace.config
-      .init(uri)
-      .then((diagnosticsByUri) => {
-        if(this.connection) {
-          publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
-        }
-        return workspace;
-      });
+    return workspace.config.init(uri).then((diagnosticsByUri) => {
+      if (this.connection) {
+        publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
+      }
+      return workspace;
+    });
   }
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {

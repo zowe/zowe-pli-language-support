@@ -32,7 +32,10 @@ let _defaultTestWorkspace: WorkspaceContext | undefined;
  */
 export function defaultTestWorkspace(): WorkspaceContext {
   if (!_defaultTestWorkspace) {
-    _defaultTestWorkspace = new WorkspaceContext(UriUtils.toUri("file:///"), EmptyFileSystemProvider);
+    _defaultTestWorkspace = new WorkspaceContext(
+      UriUtils.toUri("file:///"),
+      EmptyFileSystemProvider,
+    );
   }
   return _defaultTestWorkspace;
 }

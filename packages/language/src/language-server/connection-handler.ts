@@ -155,9 +155,9 @@ export function startLanguageServer(
         },
       ],
     });
-    const promises = folders.map(async (folder) => compilationUnitHandler.initializeWorkspaceFolder(
-      folder.uri,
-    ));
+    const promises = folders.map(async (folder) =>
+      compilationUnitHandler.initializeWorkspaceFolder(folder.uri),
+    );
     await Promise.all(promises);
     compilationUnitHandler.markReady();
   });
@@ -412,14 +412,19 @@ export function startLanguageServer(
     return compilationUnitHandler.globalMutex.read(async () => {
       return workspaceSymbolRequest(
         params.query,
-        compilationUnitHandler.getAllWorkspaceFolders().flatMap((workspace) => workspace.getAllCompilationUnits()),
+        compilationUnitHandler
+          .getAllWorkspaceFolders()
+          .flatMap((workspace) => workspace.getAllCompilationUnits()),
       );
     });
   });
 
-  async function pluginConfigChanged(workspaceContext: WorkspaceContext): Promise<void> {
+  async function pluginConfigChanged(
+    workspaceContext: WorkspaceContext,
+  ): Promise<void> {
     // handle changes to the .pliplugin config folder's contents
-    const diagnosticsByUri = await workspaceContext.config.reloadConfigurations();
+    const diagnosticsByUri =
+      await workspaceContext.config.reloadConfigurations();
     publishPluginConfigDiagnostics(connection, diagnosticsByUri);
 
     // reindex reachable compilation units
@@ -434,7 +439,10 @@ export function startLanguageServer(
   // invalidates the computed lib index, so the libs must be re-expanded.
   // Note: Simple file edits are not considered structural changes,
   // so they don't trigger a reindex.
-  function changeAffectsLibs(workspace: WorkspaceContext, changes: readonly FileEvent[]): boolean {
+  function changeAffectsLibs(
+    workspace: WorkspaceContext,
+    changes: readonly FileEvent[],
+  ): boolean {
     const libDirs = workspace.config.getLibDirectoryUris();
     if (libDirs.length === 0) {
       return false;
@@ -462,9 +470,11 @@ export function startLanguageServer(
     Messages.OnDidChangePluginConfigSettingsNotification,
     async () => {
       // Handle changes to the pli.pgm_conf and pli.proc_grps settings in vscode
-      const promises = compilationUnitHandler.getAllWorkspaceFolders().map(async (workspaceContext) => {
-        await pluginConfigChanged(workspaceContext);
-      });
+      const promises = compilationUnitHandler
+        .getAllWorkspaceFolders()
+        .map(async (workspaceContext) => {
+          await pluginConfigChanged(workspaceContext);
+        });
       await Promise.all(promises);
     },
   );
@@ -517,14 +527,18 @@ export function startLanguageServer(
         pluginConfigHasChanged ||
         changeAffectsLibs(workspace, changes)
       ) {
-        const promises = compilationUnitHandler.getAllWorkspaceFolders().map(async (workspaceContext) => {
-          await pluginConfigChanged(workspaceContext);
-        });
+        const promises = compilationUnitHandler
+          .getAllWorkspaceFolders()
+          .map(async (workspaceContext) => {
+            await pluginConfigChanged(workspaceContext);
+          });
         await Promise.all(promises);
       } else {
         const compilationUnits = new Set<CompilationUnit>();
         // Not a plugin config change, meaning that individual folders/files have changed.
-        for (const compilationUnit of compilationUnitHandler.getAllWorkspaceFolders().flatMap((workspace) => workspace.getAllCompilationUnits())) {
+        for (const compilationUnit of compilationUnitHandler
+          .getAllWorkspaceFolders()
+          .flatMap((workspace) => workspace.getAllCompilationUnits())) {
           if (compilationUnit.includeError) {
             // If the compilation unit has an unresolved include, we need to re-run the lifecycle
             // to see if the include can now be resolved.
@@ -646,7 +660,9 @@ export function startLanguageServer(
     } else {
       const diagnostics = params.context.diagnostics as Diagnostic[];
       if (!diagnostics || !diagnostics.length) return [];
-      const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(params.textDocument.uri);
+      const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(
+        params.textDocument.uri,
+      );
       if (workspaceContext === undefined) {
         return [];
       }
@@ -663,7 +679,9 @@ export function startLanguageServer(
     switch (params.command) {
       case Commands.CREATE_CONFIG:
         assertType<string[]>(params.arguments);
-        const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(params.arguments[0]);
+        const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(
+          params.arguments[0],
+        );
         if (workspaceContext) {
           await commandCreateConfig(params, workspaceContext);
         }

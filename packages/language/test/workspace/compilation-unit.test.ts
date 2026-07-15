@@ -31,7 +31,10 @@ describe("Compilation Unit Tests", () => {
   test("Create", async () => {
     const uri = UriUtils.toUri("memory:///test/test.pli");
     const ch = new CompilationUnitHandler(fs);
-    ch.addWorkspaceFolder(UriUtils.toUri("memory:///test/"), defaultTestWorkspace());
+    ch.addWorkspaceFolder(
+      UriUtils.toUri("memory:///test/"),
+      defaultTestWorkspace(),
+    );
 
     const unit0 = ch.getCompilationUnit(uri);
     expect(unit0).toBeUndefined();
@@ -46,7 +49,10 @@ describe("Compilation Unit Tests", () => {
   test("Delete", async () => {
     const uri = UriUtils.toUri("memory:///test/test.pli");
     const ch = new CompilationUnitHandler(fs);
-    ch.addWorkspaceFolder(UriUtils.toUri("memory:///test/"), defaultTestWorkspace());
+    ch.addWorkspaceFolder(
+      UriUtils.toUri("memory:///test/"),
+      defaultTestWorkspace(),
+    );
 
     const unit1 = await ch.getOrCreateCompilationUnit(uri);
     expect(unit1).toBeDefined();
@@ -65,7 +71,10 @@ describe("Compilation Unit Tests", () => {
     const uriEntry = UriUtils.toUri("file:///test/entry.pli");
     const uriLib = UriUtils.toUri("file:///test/lib.pli");
     const ch = new CompilationUnitHandler(fs);
-    ch.addWorkspaceFolder(UriUtils.toUri("file:///test/"), defaultTestWorkspace());
+    ch.addWorkspaceFolder(
+      UriUtils.toUri("file:///test/"),
+      defaultTestWorkspace(),
+    );
 
     // register configs
     expect(defaultTestWorkspace().config.hasRegisteredProgramConfigs()).toBe(

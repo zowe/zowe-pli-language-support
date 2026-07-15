@@ -20,7 +20,8 @@ describe("Multi Workspace Tests", () => {
     const fs = new VirtualFileSystemProvider();
     const ch = new CompilationUnitHandler(fs);
     const firstWorkspace = await ch.initializeWorkspaceFolder("file:///first");
-    const secondWorkspace = await ch.initializeWorkspaceFolder("file:///second");
+    const secondWorkspace =
+      await ch.initializeWorkspaceFolder("file:///second");
     await firstWorkspace.config.setProcessGroupConfigs([
       createProcessGroup("default", ["cpy"]),
     ]);
@@ -29,10 +30,14 @@ describe("Multi Workspace Tests", () => {
     ]);
 
     const firstMainUri = UriUtils.joinPath(firstWorkspace.uri, "main.pli");
-    const firstWrongUri = UriUtils.joinPath(firstWorkspace.uri, "wrong", "xxx.pli");
+    const firstWrongUri = UriUtils.joinPath(
+      firstWorkspace.uri,
+      "wrong",
+      "xxx.pli",
+    );
     await fs.writeFile(firstMainUri, "");
     await fs.writeFile(firstWrongUri, "");
-    await (new Promise((resolve) => setTimeout(resolve, 500))); // Wait for the file system to update
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for the file system to update
     expect(await ch.getOrCreateCompilationUnit(firstMainUri)).toBeDefined();
   });
 });

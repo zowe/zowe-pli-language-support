@@ -19,21 +19,41 @@ describe("Workspace Folder Tree", () => {
     tree.addWorkspaceFolder("file:///home/user/project/some/nested/folder", 2);
     expect(tree.getWorkspaceFolderOf("file:///home/user/project")).toBe(1);
     expect(tree.getWorkspaceFolderOf("file:///home/user/project/sub")).toBe(1);
-    expect(tree.getWorkspaceFolderOf("file:///home/user/project/folder")).toBe(1);
+    expect(tree.getWorkspaceFolderOf("file:///home/user/project/folder")).toBe(
+      1,
+    );
     expect(tree.getWorkspaceFolderOf("file:///home/user")).toBe(undefined);
-    expect(tree.getWorkspaceFolderOf("file:///home/user/project/some/nested/folder")).toBe(2);
-    expect(tree.getWorkspaceFolderOf("file:///home/user/project/some/nested/folder/sub")).toBe(2);
-    expect(tree.getWorkspaceFolderOf("file:///home/user/project/some/nested/folder/other")).toBe(2);
-    expect(tree.getWorkspaceFolderOf("file:///home/user/project/some/nested")).toBe(1);
+    expect(
+      tree.getWorkspaceFolderOf("file:///home/user/project/some/nested/folder"),
+    ).toBe(2);
+    expect(
+      tree.getWorkspaceFolderOf(
+        "file:///home/user/project/some/nested/folder/sub",
+      ),
+    ).toBe(2);
+    expect(
+      tree.getWorkspaceFolderOf(
+        "file:///home/user/project/some/nested/folder/other",
+      ),
+    ).toBe(2);
+    expect(
+      tree.getWorkspaceFolderOf("file:///home/user/project/some/nested"),
+    ).toBe(1);
   });
   test("windows schema", async () => {
     const tree = new WorkspaceFolderTree<number>(true);
     tree.addWorkspaceFolder("C:\\Users\\User\\Project", 1);
     expect(tree.getWorkspaceFolderOf("C:\\Users\\User\\Project")).toBe(1);
     expect(tree.getWorkspaceFolderOf("C:\\Users\\User\\Project\\Sub")).toBe(1);
-    expect(tree.getWorkspaceFolderOf("C:\\Users\\User\\Project\\Folder")).toBe(1);
-    expect(tree.getWorkspaceFolderOf("c:\\users\\user\\project\\folder")).toBe(1);
+    expect(tree.getWorkspaceFolderOf("C:\\Users\\User\\Project\\Folder")).toBe(
+      1,
+    );
+    expect(tree.getWorkspaceFolderOf("c:\\users\\user\\project\\folder")).toBe(
+      1,
+    );
     expect(tree.getWorkspaceFolderOf("C:\\Users\\User")).toBe(undefined);
-    expect(tree.getWorkspaceFolderOf("D:\\Users\\User\\Project")).toBe(undefined);
+    expect(tree.getWorkspaceFolderOf("D:\\Users\\User\\Project")).toBe(
+      undefined,
+    );
   });
 });
