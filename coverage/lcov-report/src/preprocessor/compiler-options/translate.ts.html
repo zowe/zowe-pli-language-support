@@ -298,12 +298,11 @@
 <a name='L233'></a><a href='#L233'>233</a>
 <a name='L234'></a><a href='#L234'>234</a>
 <a name='L235'></a><a href='#L235'>235</a>
-<a name='L236'></a><a href='#L236'>236</a>
-<a name='L237'></a><a href='#L237'>237</a>
-<a name='L238'></a><a href='#L238'>238</a>
-<a name='L239'></a><a href='#L239'>239</a>
-<a name='L240'></a><a href='#L240'>240</a>
-<a name='L241'></a><a href='#L241'>241</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L236'></a><a href='#L236'>236</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -347,10 +346,6 @@
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">27x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -412,10 +407,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1453x</span>
-<span class="cline-any cline-yes">1453x</span>
-<span class="cline-any cline-yes">1453x</span>
-<span class="cline-any cline-yes">1453x</span>
+<span class="cline-any cline-yes">1455x</span>
+<span class="cline-any cline-yes">1455x</span>
+<span class="cline-any cline-yes">1455x</span>
+<span class="cline-any cline-yes">1455x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -424,12 +419,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1453x</span>
+<span class="cline-any cline-yes">1455x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -437,7 +427,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1453x</span>
+<span class="cline-any cline-yes">1455x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -521,7 +511,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1453x</span>
+<span class="cline-any cline-yes">1455x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -554,7 +544,11 @@
  *
  */
 &nbsp;
-import { CompilerOptionResult, CompilerOptionsPP } from "./options";
+import {
+  CompilerOptionResult,
+  CompilerOptionsPP,
+  getDefaultCompilerOptions,
+} from "./options";
 import {
   AbstractCompilerOptions,
   parseAbstractCompilerOptions,
@@ -587,11 +581,7 @@ export class CompilerOptionTranslator {
   protected translatorSQL = getTranslatorSQL();
 &nbsp;
   protected result: CompilerOptionResult = {
-    options: {
-      ...({} as CompilerOptionsPLI),
-      macroOptions: {} as CompilerOptionsMacro,
-      sqlOptions: {} as CompilerOptionsSQL,
-    },
+    options: getDefaultCompilerOptions(),
     tokens: [],
     comments: [],
     issues: [],
@@ -656,14 +646,9 @@ export class CompilerOptionTranslator {
     this.translatorMacro.clear();
     this.translatorSQL.clear();
     this.result = {
-      options: {
-        ...({} as CompilerOptionsPLI),
-        macroOptions: {} as CompilerOptionsMacro,
-        sqlOptions: {} as CompilerOptionsSQL,
-      },
+      options: getDefaultCompilerOptions(),
       tokens: [],
       comments: [],
-&nbsp;
       issues: [],
     };
   }
@@ -790,7 +775,7 @@ export class CompilerOptionTranslator {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-14T10:26:54.507Z
+                at 2026-07-15T12:57:55.380Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
