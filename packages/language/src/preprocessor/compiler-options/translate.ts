@@ -9,7 +9,11 @@
  *
  */
 
-import { CompilerOptionResult, CompilerOptionsPP } from "./options";
+import {
+  CompilerOptionResult,
+  CompilerOptionsPP,
+  getDefaultCompilerOptions,
+} from "./options";
 import {
   AbstractCompilerOptions,
   parseAbstractCompilerOptions,
@@ -42,11 +46,7 @@ export class CompilerOptionTranslator {
   protected translatorSQL = getTranslatorSQL();
 
   protected result: CompilerOptionResult = {
-    options: {
-      ...({} as CompilerOptionsPLI),
-      macroOptions: {} as CompilerOptionsMacro,
-      sqlOptions: {} as CompilerOptionsSQL,
-    },
+    options: getDefaultCompilerOptions(),
     tokens: [],
     comments: [],
     issues: [],
@@ -111,14 +111,9 @@ export class CompilerOptionTranslator {
     this.translatorMacro.clear();
     this.translatorSQL.clear();
     this.result = {
-      options: {
-        ...({} as CompilerOptionsPLI),
-        macroOptions: {} as CompilerOptionsMacro,
-        sqlOptions: {} as CompilerOptionsSQL,
-      },
+      options: getDefaultCompilerOptions(),
       tokens: [],
       comments: [],
-
       issues: [],
     };
   }
