@@ -17,14 +17,14 @@ describe("CICS WAITCICS", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) NUMEVENTS(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) NUMEVENTS(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS WAITCICS", async () => {
 
   // checkWaitCics -> checkHasMandatoryOptions(ECBLIST)
   test("Missing ECBLIST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WAITCICS NUMEVENTS(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS WAITCICS", async () => {
 
   // checkWaitCics -> checkHasMandatoryOptions(NUMEVENTS)
   test("Missing NUMEVENTS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -55,7 +55,7 @@ describe("CICS WAITCICS", async () => {
 
   // checkWaitCics -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive PURGEABLE and NOTPURGEABLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) NUMEVENTS(2) PURGEABLE NOTPURGEABLE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -67,7 +67,7 @@ describe("CICS WAITCICS", async () => {
 
   // checkDuplicates
   test("Duplicated ECBLIST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) ECBLIST(456) NUMEVENTS(2)",
     );
     expect(diagnostics).toHaveLength(1);

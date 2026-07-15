@@ -17,14 +17,14 @@ describe("CICS FETCH", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,9 +33,7 @@ describe("CICS FETCH", async () => {
 
   // checkFetchAnyChild -> checkHasExactlyOneOption (none provided)
   test("Neither ANY nor CHILD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "FETCH COMPSTATUS(1)",
-    );
+    const { diagnostics } = await cicsPreprocessor.parse("FETCH COMPSTATUS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -45,7 +43,7 @@ describe("CICS FETCH", async () => {
 
   // checkFetchAnyChild -> checkHasMandatoryOptions(COMPSTATUS)
   test("Missing COMPSTATUS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("FETCH ANY(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("FETCH ANY(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -55,7 +53,7 @@ describe("CICS FETCH", async () => {
 
   // checkFetchAnyChild -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive NOSUSPEND and TIMEOUT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2) NOSUSPEND TIMEOUT(3)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -67,7 +65,7 @@ describe("CICS FETCH", async () => {
 
   // checkDuplicates
   test("Duplicated CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2) CHANNEL(3) CHANNEL(4)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -17,14 +17,14 @@ describe("CICS WRITEQ", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (TD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITEQ TD QUEUE(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITEQ TD QUEUE(1) FROM(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS WRITEQ", async () => {
 
   // checkWriteqTd -> checkHasMandatoryOptions(QUEUE)
   test("TD missing QUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("WRITEQ TD FROM(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("WRITEQ TD FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: QUEUE/);
@@ -41,7 +41,7 @@ describe("CICS WRITEQ", async () => {
 
   // checkWriteqTs -> checkHasExactlyOneOption (none provided)
   test("TS without QUEUE or QNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("WRITEQ TS FROM(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("WRITEQ TS FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -51,7 +51,7 @@ describe("CICS WRITEQ", async () => {
 
   // checkWriteqTs -> checkHasMutuallyExclusiveOptions
   test("TS mutually exclusive NUMITEMS and ITEM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITEQ TS QUEUE(1) FROM(2) NUMITEMS(3) ITEM(4)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -63,7 +63,7 @@ describe("CICS WRITEQ", async () => {
 
   // checkDuplicates
   test("Duplicated QUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITEQ TD QUEUE(1) QUEUE(2) FROM(3)",
     );
     expect(diagnostics).toHaveLength(1);

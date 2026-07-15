@@ -17,14 +17,14 @@ describe("CICS READ", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2) INTO(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS READ", async () => {
 
   // checkRule -> checkHasExactlyOneOption (FILE or DATASET none)
   test("Neither FILE nor DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ RIDFLD(1) INTO(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,7 +45,7 @@ describe("CICS READ", async () => {
 
   // checkRule -> checkHasMandatoryOptions(RIDFLD)
   test("Missing RIDFLD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ FILE(1) INTO(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -55,7 +55,7 @@ describe("CICS READ", async () => {
 
   // checkRule -> checkHasExactlyOneOption (INTO or SET none)
   test("Neither INTO nor SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -67,7 +67,7 @@ describe("CICS READ", async () => {
 
   // checkRule -> checkPrerequisiteIsMet (TOKEN requires UPDATE)
   test("TOKEN without UPDATE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2) INTO(3) TOKEN(4)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -79,7 +79,7 @@ describe("CICS READ", async () => {
 
   // checkDuplicates
   test("Duplicated FILE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READ FILE(1) FILE(2) RIDFLD(3) INTO(4)",
     );
     expect(diagnostics).toHaveLength(1);

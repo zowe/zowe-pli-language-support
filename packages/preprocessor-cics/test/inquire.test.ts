@@ -17,14 +17,14 @@ describe("CICS INQUIRE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (CONTAINER)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS INQUIRE", async () => {
 
   // container branch -> checkHasIllegalOptions(PROCESSTYPE) without PROCESS
   test("CONTAINER PROCESSTYPE without PROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1) PROCESSTYPE(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,8 +56,7 @@ describe("CICS INQUIRE", async () => {
 
   // process branch -> checkHasMandatoryOptions(PROCESSTYPE)
   test("PROCESS missing PROCESSTYPE", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("INQUIRE PROCESS(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("INQUIRE PROCESS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -67,7 +66,7 @@ describe("CICS INQUIRE", async () => {
 
   // checkDuplicates (CONTAINER is the single lead token; SET is repeatable)
   test("Duplicated SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1) SET(2) SET(3)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -530,6 +530,17 @@ export function startLanguageServer(
       }),
   );
 
+  onRequest(
+    connection,
+    Messages.GetPreprocessedText,
+    (uriString: string): Promise<string | null> =>
+      withReadMutex(
+        uriString,
+        async (_uri, compilationUnit) =>
+          compilationUnit?.preprocessedText ?? null,
+      ),
+  );
+
   connection.onCodeAction(async (params) => {
     const requestedKinds = params.context.only;
     const isSourceActionRequest =

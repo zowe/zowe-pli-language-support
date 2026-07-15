@@ -17,12 +17,12 @@ describe("CICS START", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (TRANSID)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("START TRANSID(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("START TRANSID(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "START TRANSID(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS START", async () => {
 
   // checkStartTransid -> checkHasMandatoryOptions(TRANSID)
   test("Transid missing TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("START FROM(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("START FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TRANSID/);
@@ -39,7 +39,7 @@ describe("CICS START", async () => {
 
   // checkStartTransid -> checkMutuallyExclusiveOptions
   test("Mutually exclusive INTERVAL and TIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "START TRANSID(1) INTERVAL(123) TIME(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -51,7 +51,7 @@ describe("CICS START", async () => {
 
   // checkStartAttach -> checkHasMandatoryOptions(TRANSID)
   test("ATTACH missing TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("START ATTACH");
+    const { diagnostics } = await cicsPreprocessor.parse("START ATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TRANSID/);
@@ -59,7 +59,7 @@ describe("CICS START", async () => {
 
   // checkDuplicates
   test("Duplicated TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "START TRANSID(1) TRANSID(2)",
     );
     expect(diagnostics).toHaveLength(1);

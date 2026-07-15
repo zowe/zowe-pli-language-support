@@ -17,7 +17,7 @@ describe("CICS DEFINE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (ACTIVITY)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) TRANSID(2)",
     );
     expect(diagnostics).toHaveLength(0);
@@ -57,7 +57,7 @@ describe("CICS DEFINE", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) TRANSID(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -66,7 +66,7 @@ describe("CICS DEFINE", async () => {
 
   // checkActivity -> checkHasMandatoryOptions(TRANSID)
   test("ACTIVITY missing TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) PROGRAM(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -76,7 +76,7 @@ describe("CICS DEFINE", async () => {
 
   // checkCompositeEvent -> checkHasExactlyOneOption (AND or OR none)
   test("COMPOSITE without AND or OR", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DEFINE COMPOSITE EVENT(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -88,7 +88,7 @@ describe("CICS DEFINE", async () => {
 
   // checkDuplicates
   test("Duplicated TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) TRANSID(2) TRANSID(3)",
     );
     expect(diagnostics).toHaveLength(1);

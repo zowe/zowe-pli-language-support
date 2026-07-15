@@ -17,13 +17,12 @@ describe("CICS FREEMAIN", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("FREEMAIN DATA(123)");
+    const { diagnostics } = await cicsPreprocessor.parse("FREEMAIN DATA(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREEMAIN DATA(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,7 +31,7 @@ describe("CICS FREEMAIN", async () => {
 
   // checkOpts -> checkHasIllegalOptions(FREEMAIN64)
   test("FREEMAIN64 is illegal", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREEMAIN64 DATA(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,7 +43,7 @@ describe("CICS FREEMAIN", async () => {
 
   // checkOpts -> checkHasExactlyOneOption (none provided)
   test("Neither DATA nor DATAPOINTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("FREEMAIN NOHANDLE");
+    const { diagnostics } = await cicsPreprocessor.parse("FREEMAIN NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,7 +53,7 @@ describe("CICS FREEMAIN", async () => {
 
   // checkOpts -> checkHasExactlyOneOption (both provided -> mutually exclusive)
   test("Both DATA and DATAPOINTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREEMAIN DATA(123) DATAPOINTER(456)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -66,7 +65,7 @@ describe("CICS FREEMAIN", async () => {
 
   // checkDuplicates
   test("Duplicated DATA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREEMAIN DATA(123) DATA(456)",
     );
     expect(diagnostics).toHaveLength(1);

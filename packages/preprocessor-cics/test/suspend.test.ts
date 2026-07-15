@@ -17,21 +17,19 @@ describe("CICS SUSPEND", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SUSPEND ACTIVITY(A)",
-    );
+    const { diagnostics } = await cicsPreprocessor.parse("SUSPEND ACTIVITY(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SUSPEND BLA");
+    const { diagnostics } = await cicsPreprocessor.parse("SUSPEND BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkSuspend -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive ACQACTIVITY and ACQPROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SUSPEND ACQACTIVITY ACQPROCESS",
     );
     expect(diagnostics).toHaveLength(2);
@@ -43,7 +41,7 @@ describe("CICS SUSPEND", async () => {
 
   // checkDuplicates
   test("Duplicated ACQACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SUSPEND ACQACTIVITY ACQACTIVITY",
     );
     expect(diagnostics).toHaveLength(1);

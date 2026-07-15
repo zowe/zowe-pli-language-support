@@ -17,14 +17,14 @@ describe("CICS IGNORE CONDITION", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "IGNORE CONDITION ERROR",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "IGNORE CONDITION ERROR BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS IGNORE CONDITION", async () => {
 
   // checkIgnoreCondition -> checkHasMandatoryOptions(CONDITION)
   test("Missing CONDITION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("IGNORE ERROR");
+    const { diagnostics } = await cicsPreprocessor.parse("IGNORE ERROR");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -43,7 +43,7 @@ describe("CICS IGNORE CONDITION", async () => {
 
   // checkHasNormalCondition -> NORMAL is not allowed
   test("NORMAL condition is illegal", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "IGNORE CONDITION NORMAL",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS IGNORE CONDITION", async () => {
 
   // checkDuplicates (warning severity)
   test("Duplicated CONDITION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "IGNORE CONDITION CONDITION ERROR",
     );
     expect(diagnostics).toHaveLength(1);

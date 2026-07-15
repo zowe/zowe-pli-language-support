@@ -17,7 +17,7 @@ describe("CICS DUMP TRANSACTION", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DUMP DUMPCODE(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("DUMP DUMPCODE(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
@@ -33,7 +33,7 @@ describe("CICS DUMP TRANSACTION", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -42,7 +42,7 @@ describe("CICS DUMP TRANSACTION", async () => {
 
   // checkDumpTransaction (on parent) -> checkHasMandatoryOptions(DUMPCODE) when FROM present
   test("Missing DUMPCODE with FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DUMP FROM(1) LENGTH(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,7 +52,7 @@ describe("CICS DUMP TRANSACTION", async () => {
 
   // checkDumpTransactionFrom -> checkHasExactlyOneOption (LENGTH or FLENGTH none)
   test("FROM without LENGTH or FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -64,7 +64,7 @@ describe("CICS DUMP TRANSACTION", async () => {
 
   // checkDumpTransactionSegmentList -> checkHasMandatoryOptions(NUMSEGMENTS)
   test("SEGMENTLIST missing NUMSEGMENTS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) SEGMENTLIST(2) LENGTHLIST(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -76,7 +76,7 @@ describe("CICS DUMP TRANSACTION", async () => {
 
   // checkDuplicates
   test("Duplicated FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) FROM(2) FROM(3) LENGTH(4)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -17,12 +17,12 @@ describe("CICS UNLOCK", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("UNLOCK FILE(123)");
+    const { diagnostics } = await cicsPreprocessor.parse("UNLOCK FILE(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "UNLOCK FILE(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS UNLOCK", async () => {
 
   // checkUnlock -> checkHasMandatoryOptions(cics_file_name)
   test("Missing FILE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("UNLOCK TOKEN(123)");
+    const { diagnostics } = await cicsPreprocessor.parse("UNLOCK TOKEN(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FILE/);
@@ -39,7 +39,7 @@ describe("CICS UNLOCK", async () => {
 
   // checkUnlock -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive FILE and DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "UNLOCK FILE(123) DATASET(456)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -51,7 +51,7 @@ describe("CICS UNLOCK", async () => {
 
   // checkDuplicates
   test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "UNLOCK FILE(123) TOKEN(456) TOKEN(789)",
     );
     expect(diagnostics).toHaveLength(1);

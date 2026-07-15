@@ -302,6 +302,12 @@ export interface HarnessTesterInterface {
      * @param label The label to expect no links at.
      */
     expectNoLinksAt(label: Label): void;
+    /**
+     * Expect that find-references from every definition label (`<|1:NAME|>`) returns the
+     * declaration itself plus every reference marker (`<|1>`) of the same index - across
+     * all test files.
+     */
+    expectReferences(): void;
   };
 
   hover: {

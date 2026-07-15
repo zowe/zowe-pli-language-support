@@ -9,19 +9,14 @@
  *
  */
 
-import { tokenMatcher, TokenType } from "chevrotain";
+import { tokenMatcher } from "chevrotain";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { TextDocuments } from "../language-server/text-documents";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse, StatementParser } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
-import {
-  createTokenInstance,
-  EXEC_VARIABLE_MARKER,
-  ExecFragment,
-  Token,
-} from "../parser/tokens";
+import { createTokenInstance, ExecFragment, ID, Token } from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI, UriUtils } from "../utils/uri";
@@ -342,30 +337,25 @@ interface InterpreterContext {
   activeProcedures: Set<string>;
   counter: Map<inst.InstructionNode, number>;
   references: ast.Reference[];
+  /**
+   * Reference tokens synthesized for macro variables substituted inside `ExecFragment`
+   * images (`EXEC SQL`/`EXEC CICS` bodies). The fragment is a single opaque token, so these
+   * occurrences have no token of their own in the phase's input stream; they are surfaced
+   * via `PhaseResult.directiveTokens` to make go-to-definition/highlighting work.
+   */
+  execTokens: Token[];
   evaluations: EvaluationResults;
   xIncludes: Set<string>;
   uris: string[];
   options: InterpreterOptions;
   returnValue: Value;
   counterValue: number;
-  generationCache: GenerationCache;
   /**
    * MACNAME returns the name of the preprocessor procedure within which it is invoked.
    * It is invalid to invoke MACNAME outside of a preprocessor procedure.
    */
   macname: string;
   instructionCounterLimit: number;
-}
-
-interface GenerationCache {
-  lastProcedureTokenIndex: number;
-  entries: Map<number, GenerationCacheEntry>;
-}
-
-interface GenerationCacheEntry {
-  hasSqlLobFile: boolean;
-  hasCicsExec: boolean;
-  sqlLobSizes: Set<number>;
 }
 
 interface DoType3Context {
@@ -379,6 +369,8 @@ export type InstructionInterpreterResult = {
   errors: Diagnostic[];
   statements: ast.Statement[];
   references: ast.Reference[];
+  /** See {@link InterpreterContext.execTokens}. */
+  execTokens: Token[];
 };
 
 // TODO: We need this just because those services aren't functions yet
@@ -430,6 +422,7 @@ export async function runInstructions(
     procedures: new Map(),
     activeProcedures: new Set(),
     references: [],
+    execTokens: [],
     evaluations: {
       branchExecutions: new Map(),
     },
@@ -438,10 +431,6 @@ export async function runInstructions(
     counter: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
-    generationCache: {
-      lastProcedureTokenIndex: 0,
-      entries: new Map(),
-    },
     macname: "",
     instructionCounterLimit: instructionLimit,
   };
@@ -456,6 +445,7 @@ export async function runInstructions(
     errors: context.diagnostics,
     references: context.references,
     statements: context.statements,
+    execTokens: context.execTokens,
   };
 }
 
@@ -606,296 +596,6 @@ function runInstructionSync(
     case inst.InstructionKind.Halt:
       runHaltInstruction(instruction, context);
       break;
-    case inst.InstructionKind.CicsResponseCode:
-      runCicsResponseInstruction(instruction, context);
-      break;
-    case inst.InstructionKind.ExecStatement:
-      runExecInstruction(instruction, context);
-      break;
-    case inst.InstructionKind.SqlAttribute:
-      runSqlAttributeInstruction(instruction, context);
-      break;
-  }
-  return undefined;
-}
-
-function runCicsResponseInstruction(
-  instruction: inst.CicsResponseInstruction,
-  context: InterpreterContext,
-): void {
-  const codeValue = instruction.code.toString();
-  context.tokens.push(...lex(codeValue));
-}
-
-function getGenerationCacheEntry(
-  context: InterpreterContext,
-  offset: number,
-): GenerationCacheEntry {
-  let entry = context.generationCache.entries.get(offset);
-  if (!entry) {
-    entry = {
-      hasSqlLobFile: false,
-      hasCicsExec: false,
-      sqlLobSizes: new Set(),
-    };
-    context.generationCache.entries.set(offset, entry);
-  }
-  return entry;
-}
-
-function emitMarker(
-  context: InterpreterContext,
-  token: Token,
-  type: TokenType,
-): void {
-  const { startOffset, startLine, startColumn } = token;
-  // Generate a marker token for the PL/I parser
-  // This token is used to identify the ID as a host variable
-  const varMarkerToken = createTokenInstance(
-    "",
-    "",
-    type,
-    startOffset,
-    startLine,
-    startColumn,
-    // Start and end position are the same
-    startOffset,
-    startLine,
-    startColumn,
-    undefined,
-  );
-  // Emit both tokens now
-  context.tokens.push(varMarkerToken, token);
-}
-
-function runExecVariableInstruction(
-  instruction: inst.ExecVariableInstruction,
-  context: InterpreterContext,
-): void {
-  emitMarker(context, instruction.token, EXEC_VARIABLE_MARKER);
-}
-
-const LOCATOR_TYPE = "FIXED BIN(31)";
-const ROWID_TYPE = "CHAR(40) VARYING";
-const LOB_FILE_TYPE = "LIKE SQL_LOB_FILE";
-const LOB_TYPE = (length: number) => `LIKE SQL_LOB${length}`;
-
-function runSqlAttributeInstruction(
-  instruction: inst.SqlAttributeInstruction,
-  context: InterpreterContext,
-): void {
-  const body = instruction.attribute.body;
-  if (!body) {
-    return;
-  }
-  if (
-    // All locator types simply generate the same static attributes
-    body.kind === ast.SyntaxKind.SqlAttributeLobLocator ||
-    body.kind === ast.SyntaxKind.SqlAttributeTableLocator ||
-    body.kind === ast.SyntaxKind.SqlAttributeResultSetLocator
-  ) {
-    context.tokens.push(...lex(LOCATOR_TYPE));
-  } else if (body.kind === ast.SyntaxKind.SqlAttributeRowId) {
-    context.tokens.push(...lex(ROWID_TYPE));
-  } else if (body.kind === ast.SyntaxKind.SqlAttributeBinary) {
-    const length = computeLobLength(body);
-    const varAttribute =
-      body.type === ast.SqlAttributeBinaryType.VARBINARY
-        ? "VARYING"
-        : "NONVARYING";
-    context.tokens.push(...lex(`CHAR(${length}) ${varAttribute}`));
-  } else {
-    // The LOB_FILE and LOB attributes require additional declarations to be inserted
-    // They are always inserted after the semicolon of the procedure statement
-    const procSemicolonIndex = findProcSemicolon(context);
-    if (procSemicolonIndex === undefined) {
-      return;
-    }
-    const entry = getGenerationCacheEntry(context, procSemicolonIndex);
-    if (body.kind === ast.SyntaxKind.SqlAttributeLobFile) {
-      if (!entry.hasSqlLobFile) {
-        entry.hasSqlLobFile = true;
-        insertSqlAttributeLobFileTokens(context, procSemicolonIndex);
-      }
-      context.tokens.push(...lex(LOB_FILE_TYPE));
-    } else if (body.kind === ast.SyntaxKind.SqlAttributeLob) {
-      const computedLength = computeLobLength(body);
-      if (!entry.sqlLobSizes.has(computedLength)) {
-        entry.sqlLobSizes.add(computedLength);
-        insertSqlAttributeLobTokens(
-          context,
-          procSemicolonIndex,
-          computedLength,
-        );
-      }
-      context.tokens.push(...lex(LOB_TYPE(computedLength)));
-    }
-  }
-}
-
-function computeLobLength(
-  lob: ast.SqlAttributeLob | ast.SqlAttributeBinary,
-): number {
-  if (lob.length !== null) {
-    let givenLength = lob.length;
-    switch (lob.size) {
-      case ast.SQLAttributeLobSize.G:
-        givenLength *= 1024;
-      // fallthrough
-      case ast.SQLAttributeLobSize.M:
-        givenLength *= 1024;
-      // fallthrough
-      case ast.SQLAttributeLobSize.K:
-        givenLength *= 1024;
-    }
-    return givenLength;
-  }
-  return 0;
-}
-
-function insertSqlAttributeLobFileTokens(
-  context: InterpreterContext,
-  offset: number,
-): void {
-  // These declarations aren't documented anywhere
-  // They are extracted from the PL/I code after running through the SQL preprocessor
-  context.tokens.splice(
-    offset,
-    0,
-    ...lex(`
-    DCL
-      1 SQL_LOB_FILE BASED,
-        2 SQL_LOB_FILE_NAME_LEN FIXED BIN(31),
-        2 SQL_LOB_FILE_DATA_LEN FIXED BIN(31),
-        2 SQL_LOB_FILE_OPTIONS FIXED BIN(31),
-        2 SQL_LOB_FILE_NAME CHAR(256);
-
-    DCL SQL_FILE_READ      FIXED BIN(31) VALUE(2);
-    DCL SQL_FILE_CREATE    FIXED BIN(31) VALUE(8);
-    DCL SQL_FILE_OVERWRITE FIXED BIN(31) VALUE(16);
-    DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
-  `),
-  );
-}
-
-function runExecInstruction(
-  instruction: inst.ExecInstruction,
-  context: InterpreterContext,
-): void {
-  for (const instr of instruction.variables) {
-    runExecVariableInstruction(instr, context);
-  }
-  // Emit replacement text or a simple DO; END; statement to ensure that the main parser always receives a valid statement
-  const replacementText = instruction.replaceWithText ?? "DO; END;";
-  context.tokens.push(...lex(replacementText));
-  if (instruction.preprocessorType === ast.PreprocessorType.CICS) {
-    const procSemicolonIndex = findProcSemicolon(context);
-    if (procSemicolonIndex === undefined) {
-      return;
-    }
-    const entry = getGenerationCacheEntry(context, procSemicolonIndex);
-    if (!entry.hasCicsExec) {
-      entry.hasCicsExec = true;
-      insertCicsExecTokens(context, procSemicolonIndex);
-    }
-  }
-}
-
-function insertCicsExecTokens(
-  context: InterpreterContext,
-  offset: number,
-): void {
-  // These declarations aren't documented anywhere
-  // They are extracted from the PL/I code after running through the CICS preprocessor
-  context.tokens.splice(
-    offset,
-    0,
-    ...lex(`
-      DCL 
-        1 DFHCNSTS STATIC,
-          2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
-          2 DFHEIB0 FIXED BIN(15) INIT(0),
-          2 DFHEID0 FIXED DEC(7) INIT(0),
-          2 DFHEICB CHAR(8) INIT('        ');
-      DCL DFHEPI ENTRY, DFHEIPTR PTR;
-      DCL 
-        1 DFHEIBLK BASED (DFHEIPTR),
-          2 EIBTIME  FIXED DEC(7),
-          2 EIBDATE  FIXED DEC(7),
-          2 EIBTRNID CHAR(4),
-          2 EIBTASKN FIXED DEC(7),
-          2 EIBTRMID CHAR(4),
-          2 EIBFIL01 FIXED BIN(15),
-          2 EIBCPOSN FIXED BIN(15),
-          2 EIBCALEN FIXED BIN(15),
-          2 EIBAID   CHAR(1),
-          2 EIBFN    CHAR(2),
-          2 EIBRCODE CHAR(6),
-          2 EIBDS    CHAR(8),
-          2 EIBREQID CHAR(8),
-          2 EIBRSRCE CHAR(8),
-          2 EIBSYNC  CHAR(1),
-          2 EIBFREE  CHAR(1),
-          2 EIBRECV  CHAR(1),
-          2 EIBFIL02 CHAR(1),
-          2 EIBATT   CHAR(1),
-          2 EIBEOC   CHAR(1),
-          2 EIBFMH   CHAR(1),
-          2 EIBCOMPL CHAR(1),
-          2 EIBSIG   CHAR(1),
-          2 EIBCONF  CHAR(1),
-          2 EIBERR   CHAR(1),
-          2 EIBERRCD CHAR(4),
-          2 EIBSYNRB CHAR(1),
-          2 EIBNODAT CHAR(1),
-          2 EIBRESP  FIXED BIN(31),
-          2 EIBRESP2 FIXED BIN(31),
-          2 EIBRLDBK CHAR(1);
-      DCL 
-        1 DFHCNTBS  STATIC,
-          2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 730.');
-      DCL DFHDUMMY STATIC FIXED BIN(15) INIT(0);
-      DCL DFHEI0 ENTRY VARIABLE INIT(DFHEI01) AUTO OPTIONS(INTER ASSEMBLER);
-      DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
-    `),
-  );
-}
-
-function insertSqlAttributeLobTokens(
-  context: InterpreterContext,
-  offset: number,
-  length: number,
-): void {
-  context.tokens.splice(
-    offset,
-    0,
-    ...lex(`
-    DCL
-      1 SQL_LOB${length} BASED,
-        2 SQL_LOB_LEN FIXED BIN(31),
-        2 SQL_LOB_BUF(10) CHAR(1);
-  `),
-  );
-}
-
-/**
- * Searches for the nearest procedure semicolon token before the current position
- */
-function findProcSemicolon(context: InterpreterContext): number | undefined {
-  const min = context.generationCache.lastProcedureTokenIndex;
-  const max = context.tokens.length - 1;
-  for (let i = max; i >= min; i--) {
-    const token = context.tokens[i];
-    if (token.tokenTypeIdx === PreprocessorTokens.Procedure.tokenTypeIdx) {
-      context.generationCache.lastProcedureTokenIndex = i;
-      for (let j = i + 1; j <= max; j++) {
-        const nextToken = context.tokens[j].tokenTypeIdx;
-        if (nextToken === PreprocessorTokens.Semicolon.tokenTypeIdx) {
-          return j + 1;
-        }
-      }
-      return undefined;
-    }
   }
   return undefined;
 }
@@ -934,6 +634,13 @@ function runAnswerInstruction(
       tokens = replaceTokensInText(tokens, context);
     }
     if (breakCount > 0) {
+      // SKIP starts a new output line, so the previous emission's trailing token no
+      // longer immediately precedes anything - without this, the serializer would join
+      // the two emissions without a separator and re-lexing would merge them.
+      const previousLast = context.tokens[context.tokens.length - 1];
+      if (previousLast) {
+        previousLast.immediateFollow = false;
+      }
       context.tokens.push(...tokens);
     } else {
       mergePush(context.tokens, tokens, true);
@@ -1920,9 +1627,16 @@ function runTokenInstruction(
       const token = tokens[i];
       // For ExecFragment tokens, expand macro variables embedded in the image.
       if (token.tokenTypeIdx === ExecFragment.tokenTypeIdx) {
-        const expandedImage = expandVariablesInText(token.image, context);
+        const expandedImage = expandVariablesInText(token, context);
         if (expandedImage !== token.image) {
-          const newToken: Token = { ...token, image: expandedImage };
+          // The image no longer matches the source span, so the token must count as
+          // *generated* (`uri: undefined`) - the serializer emits same-file tokens by
+          // slicing the phase text, which would silently discard the expansion.
+          const newToken: Token = {
+            ...token,
+            image: expandedImage,
+            uri: undefined,
+          };
           mergePush(context.tokens, [newToken], i === 0);
         } else {
           mergePush(context.tokens, [token], i === 0);
@@ -1937,16 +1651,41 @@ function runTokenInstruction(
 }
 
 /**
- * Expand macro variables in a text string by replacing identifiers that match
- * active macro variable names with their current values.
+ * Expand macro variables in an `ExecFragment` token's image by replacing identifiers that
+ * match active macro variable names with their current values. The fragment is one opaque
+ * token whose image is a verbatim slice of the phase text, so each substituted occurrence
+ * additionally gets a synthetic reference token (offsets computed from the match position)
+ * pushed to `context.execTokens` - the fragment's counterpart to what `performTokenScan`
+ * does in-place for regular tokens.
  */
 function expandVariablesInText(
-  text: string,
+  fragment: Token,
   context: InterpreterContext,
 ): string {
-  return text.replace(/\b([A-Z_$@#]\w*)\b/gi, (match) => {
+  return fragment.image.replace(/\b([A-Z_$@#]\w*)\b/gi, (match, _, offset) => {
     const variable = getVariable(context, match.toUpperCase());
     if (variable && variable.active && isScalarValue(variable.value)) {
+      if (fragment.uri) {
+        // The token exists in actual source code - register a reference for it
+        const start = fragment.startOffset + offset;
+        const subToken = createTokenInstance(
+          match,
+          match,
+          ID,
+          start,
+          start + match.length - 1,
+          fragment.uri,
+        );
+        if (variable.declarationNode) {
+          subToken.element = generateSyntheticRefItem(
+            subToken,
+            variable.declarationNode,
+            context,
+          );
+          subToken.kind = CstNodeKind.ReferenceItem_Ref;
+        }
+        context.execTokens.push(subToken);
+      }
       return variable.value.value;
     }
     return match;

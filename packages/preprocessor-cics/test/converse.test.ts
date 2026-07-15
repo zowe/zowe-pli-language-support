@@ -17,7 +17,7 @@ describe("CICS CONVERSE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CONVERSE FROM(1) FROMLENGTH(2)",
     );
     expect(diagnostics).toHaveLength(0);
@@ -57,7 +57,7 @@ describe("CICS CONVERSE", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CONVERSE FROM(1) FROMLENGTH(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -66,7 +66,7 @@ describe("CICS CONVERSE", async () => {
 
   // checkRule -> checkHasMandatoryOptions(FROM) when FROMLENGTH present
   test("FROMLENGTH without FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CONVERSE FROMLENGTH(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -76,7 +76,7 @@ describe("CICS CONVERSE", async () => {
 
   // checkRule -> checkHasIllegalOptions(LEAVEKB) when ASIS present
   test("LEAVEKB illegal with ASIS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CONVERSE ASIS LEAVEKB",
     );
     expect(diagnostics).toHaveLength(1);
@@ -86,7 +86,7 @@ describe("CICS CONVERSE", async () => {
 
   // checkDuplicates -> custom duplicate rule (FROMLENGTH or FROMFLENGTH)
   test("Duplicated FROMLENGTH rule", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CONVERSE FROM(1) FROMLENGTH(2) FROMFLENGTH(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -98,7 +98,7 @@ describe("CICS CONVERSE", async () => {
 
   // checkDuplicates
   test("Duplicated CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CONVERSE CONVID(1) CONVID(2)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -15,7 +15,7 @@ describe("DB2 SQL invalid code", async () => {
   const preprocessor = new Db2SqlPreprocessor();
 
   test("INVALID", async () => {
-    const { diagnostics } = await preprocessor.execute(`
+    const { diagnostics } = await preprocessor.parse(`
            THIS IS INVALID CODE
        `);
     expect(diagnostics).toHaveLength(1);

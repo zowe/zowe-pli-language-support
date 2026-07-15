@@ -50,6 +50,7 @@ export function createTestBuilderHarnessImplementation(
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
       expectNoLinksAt: (label) => testBuilder.expectNoLinksAt(label.toString()),
+      expectReferences: () => testBuilder.expectReferences(),
     },
     verify: {
       expectExclusiveErrorCodesAt: (label, codes) =>

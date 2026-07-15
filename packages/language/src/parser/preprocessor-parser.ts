@@ -32,7 +32,6 @@ import {
 import { PLICodes } from "../validation/pli-codes";
 import { performAssignmentLookahead } from "./parser-lookahead";
 import { ExpressionParameter } from "./parser-types";
-import { deferredExecStatement, execStatement } from "./exec-parser";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
@@ -85,20 +84,8 @@ export async function statement(
         labels: true,
       });
     } else {
-      /* Try to recognize an EXEC CICS/SQL statement. This never invokes the real
-       * preprocessor engine here - it only needs to correctly consume the statement so
-       * that surrounding %DO/%IF blocks are delimited correctly; the actual processing is
-       * deferred to whichever dedicated PP(CICS)/PP(SQL) phase (if any) runs
-       * later in the pipeline (see {@link deferredExecStatement}).
-       */
-      if (state.token?.tokenTypeIdx === t.EXEC.tokenTypeIdx) {
-        const execStmt = await parseExecStatement(state, textDocument, {
-          deferred: true,
-        });
-        if (execStmt) {
-          return execStmt;
-        }
-      }
+      // Anything that isn't a `%` statement (including `EXEC SQL`/`EXEC CICS`) passes
+      // through as plain tokens - the SQL/CICS phases process EXEC statements themselves.
       return consumeTokenStatement(state);
     }
   } else {
@@ -204,14 +191,6 @@ export async function commonStatement(
       case t.END.tokenTypeIdx:
         if (options.withEnd) {
           endStmt = endStatement(state, stmtLabels);
-        }
-        break;
-      case t.EXEC.tokenTypeIdx:
-        if (
-          state.canConsume(t.EXEC, t.ExecFragment) &&
-          hasNextWordToken(state)
-        ) {
-          unit = deferredExecStatement(state);
         }
         break;
       case t.GO.tokenTypeIdx:
@@ -322,8 +301,7 @@ export async function commonStatement(
     }
   }
   // Recover at the end of a statement, noop if not in error case
-  const lastToken = state.token || state.last;
-  state.recover(() => performRecovery(state, lastToken));
+  state.recover(() => performRecovery(state));
   if (endStmt) {
     if (!options.endPercent && startPercent) {
       // We have a starting percent, but don't require it for the %END statement
@@ -355,20 +333,22 @@ export async function commonStatement(
   return statement;
 }
 
-function performRecovery(
-  state: ParserState,
-  lastToken?: t.Token,
-): RecoveryResult {
+function performRecovery(state: ParserState): RecoveryResult {
   // If the preprocessor parser encounters an error, it should attempt to:
   // 1. Find a semicolon at the current line, and skip that token
   // 2. Find a percent sign at the current line, and stop
   // 3. If neither is found, skip to the next line
-  const currentLine = lastToken?.startLine ?? 0;
+  //
+  // `state.recover()` always advances one token at a time, so `currentToken.startsNewLine`
+  // (true iff a line break occurs right before it) is equivalent to comparing its line
+  // against the line recovery started on: recovery stops as soon as any token in the chain
+  // crosses a line break, and until then every token on the starting line has
+  // `startsNewLine === false`.
   const currentToken = state.token;
   if (!currentToken) {
     return RecoveryResult.Continue;
   }
-  if (currentToken.startLine !== currentLine) {
+  if (currentToken.startsNewLine) {
     return RecoveryResult.Recover;
   } else if (tokenMatcher(currentToken, t.Percent)) {
     return RecoveryResult.Recover;
@@ -376,36 +356,6 @@ function performRecovery(
     return RecoveryResult.RecoverNext;
   }
   return RecoveryResult.Continue;
-}
-
-export async function parseExecStatement(
-  state: ParserState,
-  textDocument: TextDocument,
-  options: {
-    deferred: boolean;
-  } = { deferred: false },
-): Promise<ast.Statement | undefined> {
-  const statement = ast.createStatement();
-  if (!state.canConsume(t.EXEC, t.ExecFragment)) {
-    return undefined;
-  }
-
-  if (!hasNextWordToken(state)) {
-    // Not a valid EXEC statement
-    return undefined;
-  }
-
-  if (options.deferred) {
-    statement.value = deferredExecStatement(state);
-  } else {
-    statement.value = await execStatement(state, textDocument);
-  }
-  return statement;
-}
-
-function hasNextWordToken(state: ParserState): boolean {
-  const nextToken = state.peek(2);
-  return !!nextToken && /^(\w+)\b/i.test(nextToken.image);
 }
 
 function callStatement(state: ParserState): ast.CallStatement {

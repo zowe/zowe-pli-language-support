@@ -32,6 +32,7 @@ import {
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
 import { registerCommands } from "./commands";
+import { registerPreprocessedText } from "./preprocessed-text";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -54,6 +55,7 @@ export async function activate(
     registerOnDidOpenTextDocListener(telemetryReporter),
     registerPliDocumentIdentifier(client),
     watchPluginSettings(client),
+    registerPreprocessedText(client),
   );
 
   registerCommands(context, client);

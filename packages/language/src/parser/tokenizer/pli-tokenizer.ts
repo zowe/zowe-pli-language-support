@@ -52,7 +52,7 @@ const TwoCharTokens: Record<string, TwoCharToken[]> = {
   ":": [{ char: ")", tokenType: tokens.CloseParenColon }],
 };
 
-export let pliKeywords: Map<bigint, KeywordToken> = new Map();
+export let pliKeywords: Map<number, KeywordToken> = new Map();
 
 function tokenizeOrSymbol(context: TokenizerContext): tokens.Token | undefined {
   let nextChar = context.input[context.index + 1];

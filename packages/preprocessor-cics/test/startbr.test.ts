@@ -17,14 +17,14 @@ describe("CICS STARTBR", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS STARTBR", async () => {
 
   // checkStartbr -> checkHasMandatoryOptions(RIDFLD)
   test("Missing RIDFLD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("STARTBR FILE(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("STARTBR FILE(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RIDFLD/);
@@ -41,7 +41,7 @@ describe("CICS STARTBR", async () => {
 
   // checkStartbr -> KEYLENGTH mandatory when GENERIC present
   test("GENERIC without KEYLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) GENERIC",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS STARTBR", async () => {
 
   // checkStartbr -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive GTEQ and EQUAL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) GTEQ EQUAL",
     );
     expect(diagnostics).toHaveLength(2);
@@ -65,7 +65,7 @@ describe("CICS STARTBR", async () => {
 
   // checkDuplicates
   test("Duplicated REQID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) REQID(3) REQID(4)",
     );
     expect(diagnostics).toHaveLength(1);

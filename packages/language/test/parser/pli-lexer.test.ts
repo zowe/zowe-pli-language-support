@@ -49,6 +49,29 @@ describe("PL/1 Lexer", () => {
     expect(result.diagnostics[0].code).toBe(fullCode(PLICodes.Severe.IBM3961I));
   });
 
+  test("Exposes the final preprocessed text", async () => {
+    const uri = UriUtils.toUri("/test/test.pli");
+    const text = `
+            %DCL A CHARACTER;
+            %A = 'B';
+            dcl A fixed bin(31);
+            dcl C fixed bin(31);
+        `;
+    const document = TextDocument.create(uri.toString(), "pli", 0, text);
+    const unit = await createCompilationUnit(uri, defaultTestWorkspace());
+    const lexer = new PliLexer();
+    const result = await lexer.tokenize(unit, document, uri);
+    // The macro replaced A with B in the final text.
+    expect(result.preprocessedText).toContain("B");
+    expect(result.preprocessedText).not.toContain("%decl");
+    // Serialization keeps rough line structure via `startsNewLine`.
+    expect(result.preprocessedText).toContain("\n");
+    // The result tokens are exactly what lexing the preprocessed text yields.
+    expect(result.all.map((t) => t.image)).toStrictEqual(
+      tokenize(result.preprocessedText, undefined).tokens.map((t) => t.image),
+    );
+  });
+
   test("Preprocessor garbage", async () => {
     expect(await tokenizeWithErrors(" %garbage")).toStrictEqual([
       `Unexpected token 'GARBAGE', expected statement.`,

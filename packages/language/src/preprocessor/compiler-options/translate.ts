@@ -214,8 +214,6 @@ export class CompilerOptionTranslator {
         item.value as string,
         item.token?.uri,
         (item.token?.startOffset ?? 0) + 1,
-        item.token?.startLine,
-        (item.token?.startColumn ?? 0) + 1,
       );
       item.processed = true;
       const options = this.optionsToUpperCase(nestedOptions.options);

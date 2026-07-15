@@ -44,8 +44,6 @@ import {
 } from "./symbol-table";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { MultiMap } from "../utils/collections";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -530,37 +528,7 @@ export function getReferenceLocations(
 }
 
 export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
-  let token = binaryTokenSearch(
-    unit.services.files.getTokens(uri) ?? [],
-    offset,
-  );
-
-  if (token && token.kind === CstNodeKind.ExecStatement_ExecFragment) {
-    const element = token.element;
-    if (element && element.kind === SyntaxKind.ExecStatement) {
-      if (
-        typeof element.replacement === "object" &&
-        element.replacement?.items
-      ) {
-        for (const item of element.replacement.items) {
-          if (!item.token) {
-            continue;
-          }
-          if (
-            offset >= item.token.startOffset &&
-            offset <= item.token.endOffset
-          ) {
-            return item.token;
-          }
-        }
-      }
-      const hostVariableReferences = element.preprocessorTokens
-        .filter((t) => t.semanticType === SemanticTokenTypes.variable)
-        .map(({ token }) => token);
-      token = binaryTokenSearch(hostVariableReferences, offset);
-    }
-  }
-  return token;
+  return binaryTokenSearch(unit.services.files.getTokens(uri) ?? [], offset);
 }
 
 function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {

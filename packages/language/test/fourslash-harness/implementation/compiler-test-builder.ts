@@ -39,6 +39,7 @@ export async function createCompilerTestHarnessImplementation(
     linker: {
       expectLinks: () => testBuilder.expectLinks(),
       expectNoLinksAt: notImplemented("linker.expectNoLinksAt"),
+      expectReferences: notImplemented("linker.expectReferences"),
     },
     testAPI: {
       get testBuilder(): TestBuilder {

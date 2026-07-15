@@ -17,12 +17,12 @@ describe("CICS RESET", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (ACQPROCESS)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RESET ACQPROCESS");
+    const { diagnostics } = await cicsPreprocessor.parse("RESET ACQPROCESS");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESET ACQPROCESS BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS RESET", async () => {
 
   // checkResetAcqprocess -> checkHasMandatoryOptions(ACQPROCESS)
   test("Missing ACQPROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RESET NOHANDLE");
+    const { diagnostics } = await cicsPreprocessor.parse("RESET NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -41,7 +41,7 @@ describe("CICS RESET", async () => {
 
   // checkDuplicates
   test("Duplicated ACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESET ACTIVITY(1) ACTIVITY(2)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -23,12 +23,12 @@ describe("CICS ASSIGN", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ASSIGN APPLID(A)");
+    const { diagnostics } = await cicsPreprocessor.parse("ASSIGN APPLID(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ASSIGN BLA");
+    const { diagnostics } = await cicsPreprocessor.parse("ASSIGN BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
@@ -37,7 +37,7 @@ describe("CICS ASSIGN", async () => {
   // cics_assign_parameter contexts, so checkDuplicates never sees both and emits
   // no diagnostic. Kept so the unreachable branch is visible.
   test.fails("Duplicated APPLID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "ASSIGN APPLID(A) APPLID(B)",
     );
     expect(diagnostics).toHaveLength(1);

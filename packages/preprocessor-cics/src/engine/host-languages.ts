@@ -36,7 +36,7 @@ class PLIHostLanguage implements HostLanguage {
         code: "invalid.cobol.comment",
         message: "COBOL comment in PL/I context detected.",
         startOffset: token.start,
-        endOffset: token.stop + 1,
+        endOffset: token.stop,
         severity: Severity.Error,
       });
     }
@@ -53,7 +53,7 @@ class COBOLHostLanguage implements HostLanguage {
         code: "invalid.pli.comment",
         message: "PL/I comment in COBOL context detected.",
         startOffset: token.start,
-        endOffset: token.stop + 1,
+        endOffset: token.stop,
         severity: Severity.Error,
       });
     }

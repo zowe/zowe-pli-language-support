@@ -17,14 +17,14 @@ describe("CICS WRITE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (FILE)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE FILE(1) FROM(2) RIDFLD(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE FILE(1) FROM(2) RIDFLD(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS WRITE", async () => {
 
   // checkWriteFile -> checkHasMandatoryOptions(FROM)
   test("FILE missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE FILE(1) RIDFLD(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS WRITE", async () => {
 
   // checkWriteFile -> checkHasExactlyOneOption (none provided)
   test("Neither FILE nor DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE FROM(1) RIDFLD(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -55,7 +55,7 @@ describe("CICS WRITE", async () => {
 
   // checkWriteJournalname -> checkHasMandatoryOptions(JTYPEID)
   test("JOURNALNAME missing JTYPEID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE JOURNALNAME(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -65,7 +65,7 @@ describe("CICS WRITE", async () => {
 
   // checkWriteOperator -> checkHasMutuallyExclusiveOptions
   test("OPERATOR mutually exclusive EVENTUAL and ACTION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE OPERATOR TEXT(1) EVENTUAL ACTION(2)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -77,7 +77,7 @@ describe("CICS WRITE", async () => {
 
   // checkDuplicates
   test("Duplicated FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "WRITE FILE(1) FROM(2) FROM(3) RIDFLD(4)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -28,7 +28,7 @@ describe("CICS Preprocessor: Positives", async () => {
   test.each(statements)(
     "should parse statements",
     async ({ line, statement }) => {
-      const { diagnostics } = await cicsPreprocessor.execute(statement);
+      const { diagnostics } = await cicsPreprocessor.parse(statement);
       expect(
         diagnostics,
         diagnostics.length > 0

@@ -119,6 +119,25 @@ export namespace Messages {
     string,
     PluginConfigEntryLocation | null
   >("pli/getProcessGroupLocation");
+
+  /**
+   * Request sent to the LS to get the fully preprocessed text of the
+   * compilation unit that contains the given file URI.
+   * Returns null if no compilation unit exists for the file.
+   */
+  export const GetPreprocessedText = createRequestType<string, string | null>(
+    "pli/getPreprocessedText",
+  );
+
+  /**
+   * Notification sent to the language client when the preprocessed text of a
+   * compilation unit has changed. Carries the URIs of all files belonging to
+   * the unit, so the client only refreshes preprocessed text views showing
+   * that unit.
+   */
+  export const PreprocessedTextChanged = createNotificationType<{
+    uris: string[];
+  }>("pli/preprocessedTextChanged");
 }
 
 export interface GlobalConfigLoader {

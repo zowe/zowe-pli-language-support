@@ -45,10 +45,6 @@ namespace TokenInstances {
       image,
       tokenType,
       1,
-      1,
-      0,
-      0,
-      0,
       0,
       undefined,
     );

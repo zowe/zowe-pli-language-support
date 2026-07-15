@@ -10,6 +10,7 @@
  */
 
 import { definitionRequest } from "../src/language-server/definition-request";
+import { getReferenceLocations } from "../src/linking/resolver";
 import { CompilationUnit } from "../src/workspace/compilation-unit";
 import {
   Diagnostic,
@@ -1104,6 +1105,64 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
       }
     }
 
+    return this;
+  }
+
+  /**
+   * Ensure find-references from every definition label returns the definition itself plus
+   * every reference marker of the same index - across all test files.
+   * @returns This test builder
+   *
+   * @example
+   * ```ts
+   * new TestBuilder(`
+   *  DCL <|1:A|>;
+   *  PUT(<|1>A);
+   *  PUT(<|1>A);
+   * `).expectReferences(); // Passes: references at A's declaration yield 3 locations
+   */
+  expectReferences(): TestBuilder {
+    for (const label of Object.keys(this.ranges)) {
+      const definitions = this.getLabelRanges(label);
+      const markers = this.indices[label] ?? [];
+      for (const definition of definitions) {
+        const locations = getReferenceLocations(
+          this.unit,
+          UriUtils.toUri(definition.uri),
+          definition.start,
+        );
+        const describe = (msg: string) =>
+          `${msg} for label "${label}" (${this.createLabelPositionMessage(label)})`;
+        for (const marker of markers) {
+          const found = locations.some(
+            (location) =>
+              UriUtils.equals(location.uri, marker.uri) &&
+              location.range.start === marker.offset,
+          );
+          expect(
+            found,
+            describe(
+              `Expected reference at ${marker.uri}@${marker.offset} not found`,
+            ),
+          ).toBeTruthy();
+        }
+        const definitionIncluded = locations.some(
+          (location) =>
+            UriUtils.equals(location.uri, definition.uri) &&
+            location.range.start === definition.start,
+        );
+        expect(
+          definitionIncluded,
+          describe("Expected the declaration itself among the references"),
+        ).toBeTruthy();
+        expect(
+          locations,
+          describe(
+            `Expected exactly ${markers.length + 1} reference locations`,
+          ),
+        ).toHaveLength(markers.length + 1);
+      }
+    }
     return this;
   }
 

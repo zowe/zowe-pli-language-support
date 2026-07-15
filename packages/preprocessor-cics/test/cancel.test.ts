@@ -17,12 +17,12 @@ describe("CICS CANCEL", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("CANCEL REQID(123)");
+    const { diagnostics } = await cicsPreprocessor.parse("CANCEL REQID(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CANCEL REQID(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS CANCEL", async () => {
 
   // checkBts -> checkHasExactlyOneOption (multiple -> mutually exclusive)
   test("BTS: ACTIVITY and ACQACTIVITY mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CANCEL ACTIVITY(123) ACQACTIVITY",
     );
     expect(diagnostics).toHaveLength(2);
@@ -43,7 +43,7 @@ describe("CICS CANCEL", async () => {
 
   // checkReq -> checkHasMandatoryOptions(REQID) when SYSID/TRANSID present
   test("REQID: SYSID without REQID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("CANCEL SYSID(123)");
+    const { diagnostics } = await cicsPreprocessor.parse("CANCEL SYSID(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: REQID/);
@@ -51,7 +51,7 @@ describe("CICS CANCEL", async () => {
 
   // checkDuplicates
   test("Duplicated ACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "CANCEL ACTIVITY(123) ACTIVITY(456)",
     );
     expect(diagnostics).toHaveLength(1);

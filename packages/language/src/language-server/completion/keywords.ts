@@ -191,7 +191,6 @@ export const CompletionKeywords = {
     [CstNodeKind.DetachStatement_DETACH, kw("DETACH")],
     [CstNodeKind.DisplayStatement_DISPLAY, kw("DISPLAY")],
     [CstNodeKind.DoStatement_DO, kw("DO")],
-    [CstNodeKind.ExecStatement_EXEC, kw("EXEC")],
     [CstNodeKind.ExitStatement_EXIT, kw("EXIT")],
     [CstNodeKind.FetchStatement_FETCH, kw("FETCH")],
     [CstNodeKind.FlushStatement_FLUSH, kw("FLUSH")],

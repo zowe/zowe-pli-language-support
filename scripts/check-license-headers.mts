@@ -15,10 +15,14 @@ import { glob } from "glob";
 
 const fixFlag = process.argv.includes("--fix");
 
-const header = await readFile("license-header.js", "utf-8");
+const header = (await readFile("license-header.js", "utf-8")).replace(
+  /\r\n/g,
+  "\n",
+);
 const files = await glob("**/{src,test}/**/*.{js,mjs,cjs,ts,mts,cts}");
 let count = 0;
-for (const file of files) {
+for (let file of files) {
+  file = file.replace(/\\/g, "/");
   if (
     file.includes("/generated/") ||
     file.startsWith("packages/language/test/fourslash-harness/wrappers")

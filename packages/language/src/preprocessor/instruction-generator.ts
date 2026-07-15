@@ -13,8 +13,6 @@ import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
 import { getLabelPrefixName } from "../syntax-tree/ast-utils";
 import { assertType, getAttributes } from "./util";
-import { createCicsResponseInstruction } from "./instructions";
-import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 import { assertUnreachable } from "../utils/common";
 
 interface GenerateInstructionContext {
@@ -187,15 +185,6 @@ function generateInstructionForStatement(
     case ast.SyntaxKind.CallStatement:
       instruction = generateCallInstruction(value, context);
       break;
-    case ast.SyntaxKind.SqlAttributeStatement:
-      instruction = generateSqlAttributeInstruction(value);
-      break;
-    case ast.SyntaxKind.CicsResponseStatement:
-      instruction = generateCicsResponseInstruction(value);
-      break;
-    case ast.SyntaxKind.ExecStatement:
-      instruction = generateExecInstruction(value);
-      break;
     default:
       return undefined;
   }
@@ -211,27 +200,6 @@ function generateInstructionForStatement(
     context.labels.set(label, node);
   }
   return node;
-}
-
-function generateExecInstruction(stmt: ast.ExecStatement): inst.Instruction {
-  if (stmt.replacement && typeof stmt.replacement === "object") {
-    return generateIncludeInstruction(stmt.replacement)!;
-  }
-  return {
-    kind: inst.InstructionKind.ExecStatement,
-    preprocessorType: stmt.preprocessorType,
-    replaceWithText:
-      typeof stmt.replacement === "string" ? stmt.replacement : undefined,
-    variables: stmt.preprocessorTokens
-      .filter((t) => t.semanticType === SemanticTokenTypes.variable)
-      .map(
-        ({ token }) =>
-          <inst.ExecVariableInstruction>{
-            kind: inst.InstructionKind.ExecVariable,
-            token,
-          },
-      ),
-  };
 }
 
 function generateReturnInstruction(
@@ -336,24 +304,6 @@ function generateNoteInstruction(
         code,
       }
     : undefined;
-}
-
-function generateCicsResponseInstruction(
-  node: ast.CicsResponseStatement,
-): inst.CicsResponseInstruction | undefined {
-  if (node.code === null) {
-    return undefined;
-  }
-  return createCicsResponseInstruction(node.code);
-}
-
-function generateSqlAttributeInstruction(
-  node: ast.SqlAttributeStatement,
-): inst.SqlAttributeInstruction {
-  return {
-    kind: inst.InstructionKind.SqlAttribute,
-    attribute: node,
-  };
 }
 
 function generateActivateInstruction(

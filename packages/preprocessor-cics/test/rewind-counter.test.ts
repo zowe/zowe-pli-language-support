@@ -17,14 +17,12 @@ describe("CICS REWIND COUNTER", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "REWIND COUNTER(123)",
-    );
+    const { diagnostics } = await cicsPreprocessor.parse("REWIND COUNTER(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "REWIND COUNTER(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +31,7 @@ describe("CICS REWIND COUNTER", async () => {
 
   // checkOpts -> checkHasExactlyOneOption (none provided)
   test("Neither COUNTER nor DCOUNTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("REWIND NOSUSPEND");
+    const { diagnostics } = await cicsPreprocessor.parse("REWIND NOSUSPEND");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -43,7 +41,7 @@ describe("CICS REWIND COUNTER", async () => {
 
   // checkOpts -> checkHasExactlyOneOption (both provided -> mutually exclusive)
   test("Both COUNTER and DCOUNTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "REWIND COUNTER(123) DCOUNTER(456)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -55,7 +53,7 @@ describe("CICS REWIND COUNTER", async () => {
 
   // checkDuplicates
   test("Duplicated POOL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "REWIND COUNTER(123) POOL(1) POOL(2)",
     );
     expect(diagnostics).toHaveLength(1);

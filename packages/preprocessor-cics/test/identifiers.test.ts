@@ -13,25 +13,25 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { SemanticsKind } from "preprocessor-api";
 
-describe("CICS Identifiers", async () => {
+describe("CICS Identifiers", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("ID is `cicsLexerDefinedVariableUsageTokens`", async () => {
-    const { tokens } = await cicsPreprocessor.execute(
+  test("ID is `cicsLexerDefinedVariableUsageTokens`", () => {
+    const { tokens } = cicsPreprocessor.parse(
       "DEQ RESOURCE(resourceName)",
     );
     expect(tokens[2].semanticsKind).toBe(SemanticsKind.Identifier);
   });
 
-  test("ID is `cicsWord`", async () => {
-    const { tokens } = await cicsPreprocessor.execute(
+  test("ID is `cicsWord`", () => {
+    const { tokens } = cicsPreprocessor.parse(
       "DEQ RESOURCE(resourceName1)",
     );
     expect(tokens[2].semanticsKind).toBe(SemanticsKind.Identifier);
   });
 
-  test("ID is `cicsWords`", async () => {
-    const { tokens } = await cicsPreprocessor.execute("DEQ RESOURCE(ACQFAIL)");
+  test("ID is `cicsWords`", () => {
+    const { tokens } = cicsPreprocessor.parse("DEQ RESOURCE(ACQFAIL)");
     expect(tokens[2].semanticsKind).toBe(SemanticsKind.Identifier);
   });
 });

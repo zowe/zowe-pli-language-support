@@ -17,20 +17,19 @@ describe("CICS SEND", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (group1)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SEND FROM(VAR)");
+    const { diagnostics } = await cicsPreprocessor.parse("SEND FROM(VAR)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("SEND FROM(VAR) BLA");
+    const { diagnostics } = await cicsPreprocessor.parse("SEND FROM(VAR) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkGroup1 -> checkHasMutuallyExclusiveOptions(LENGTH or FLENGTH)
   test("group1 LENGTH and FLENGTH mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SEND FROM(VAR) LENGTH(1) FLENGTH(2)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -42,7 +41,7 @@ describe("CICS SEND", async () => {
 
   // checkControl -> checkHasMandatoryOptions(MAP)
   test("CONTROL MAPONLY missing MAP", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SEND CONTROL MAPONLY",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,7 +51,7 @@ describe("CICS SEND", async () => {
 
   // checkPage -> checkHasMandatoryOptions(RELEASE) when TRANSID
   test("PAGE TRANSID without RELEASE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SEND PAGE TRANSID(TR)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -62,7 +61,7 @@ describe("CICS SEND", async () => {
 
   // checkText -> checkHasMandatoryOptions(FROM)
   test("TEXT missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SEND TEXT");
+    const { diagnostics } = await cicsPreprocessor.parse("SEND TEXT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
@@ -70,7 +69,7 @@ describe("CICS SEND", async () => {
 
   // checkTextMapped -> checkHasMandatoryOptions(FROM)
   test("TEXT MAPPED missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SEND TEXT MAPPED");
+    const { diagnostics } = await cicsPreprocessor.parse("SEND TEXT MAPPED");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
@@ -78,7 +77,7 @@ describe("CICS SEND", async () => {
 
   // checkTextNoedit -> checkHasMandatoryOptions(ERASE) when DEFAULT
   test("TEXT NOEDIT DEFAULT without ERASE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SEND TEXT NOEDIT FROM(VAR) DEFAULT",
     );
     expect(diagnostics).toHaveLength(1);
@@ -88,7 +87,7 @@ describe("CICS SEND", async () => {
 
   // checkMappingdev -> checkHasMandatoryOptions(SET)
   test("MAPPINGDEV missing SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SEND MAP(MP) MAPPINGDEV(MD) FROM(VAR)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -98,7 +97,7 @@ describe("CICS SEND", async () => {
 
   // checkDuplicates
   test("Duplicated FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SEND FROM(VAR) FROM(VAR2)",
     );
     expect(diagnostics).toHaveLength(1);

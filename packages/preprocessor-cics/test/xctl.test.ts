@@ -17,21 +17,19 @@ describe("CICS XCTL", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("XCTL PROGRAM(P)");
+    const { diagnostics } = await cicsPreprocessor.parse("XCTL PROGRAM(P)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "XCTL PROGRAM(P) BLA",
-    );
+    const { diagnostics } = await cicsPreprocessor.parse("XCTL PROGRAM(P) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkXctl -> checkHasMandatoryOptions
   test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("XCTL COMMAREA(A)");
+    const { diagnostics } = await cicsPreprocessor.parse("XCTL COMMAREA(A)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
@@ -39,7 +37,7 @@ describe("CICS XCTL", async () => {
 
   // checkXctl -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive COMMAREA and CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "XCTL PROGRAM(P) COMMAREA(A) CHANNEL(C)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -51,7 +49,7 @@ describe("CICS XCTL", async () => {
 
   // checkXctl -> checkOptionalWithLength (optional present without its required field)
   test("LENGTH without COMMAREA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "XCTL PROGRAM(P) LENGTH(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -63,7 +61,7 @@ describe("CICS XCTL", async () => {
 
   // checkDuplicates
   test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "XCTL PROGRAM(P) PROGRAM(Q)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -17,13 +17,12 @@ describe("CICS RELEASE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("RELEASE PROGRAM(P)");
+    const { diagnostics } = await cicsPreprocessor.parse("RELEASE PROGRAM(P)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RELEASE PROGRAM(P) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,7 +31,7 @@ describe("CICS RELEASE", async () => {
 
   // checkRelease -> checkHasMandatoryOptions
   test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RELEASE NOHANDLE");
+    const { diagnostics } = await cicsPreprocessor.parse("RELEASE NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
@@ -40,7 +39,7 @@ describe("CICS RELEASE", async () => {
 
   // checkDuplicates
   test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RELEASE PROGRAM(P) PROGRAM(Q)",
     );
     expect(diagnostics).toHaveLength(1);

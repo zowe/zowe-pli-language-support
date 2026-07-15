@@ -17,14 +17,14 @@ describe("CICS READQ", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (TD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READQ TD QUEUE(1) INTO(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READQ TD QUEUE(1) INTO(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS READQ", async () => {
 
   // checkTd -> checkHasMandatoryOptions(QUEUE)
   test("TD missing QUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("READQ TD INTO(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("READQ TD INTO(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: QUEUE/);
@@ -41,7 +41,7 @@ describe("CICS READQ", async () => {
 
   // checkTd -> checkHasIllegalOptions(NEXT)
   test("TD illegal NEXT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READQ TD QUEUE(1) INTO(2) NEXT",
     );
     expect(diagnostics).toHaveLength(1);
@@ -51,7 +51,7 @@ describe("CICS READQ", async () => {
 
   // checkTs -> checkHasExactlyOneOption (QUEUE or QNAME none)
   test("TS without QUEUE or QNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("READQ TS INTO(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("READQ TS INTO(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -61,7 +61,7 @@ describe("CICS READQ", async () => {
 
   // checkDuplicates
   test("Duplicated QUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "READQ TD QUEUE(1) QUEUE(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(1);

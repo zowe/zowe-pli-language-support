@@ -17,14 +17,14 @@ describe("CICS RESUME", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESUME ACTIVITY(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESUME ACTIVITY(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS RESUME", async () => {
 
   // checkBody -> checkHasExactlyOneOption (none provided)
   test("None of ACQACTIVITY/ACQPROCESS/ACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RESUME NOHANDLE");
+    const { diagnostics } = await cicsPreprocessor.parse("RESUME NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -43,7 +43,7 @@ describe("CICS RESUME", async () => {
 
   // checkBody -> checkHasExactlyOneOption (multiple -> mutually exclusive)
   test("Both ACQACTIVITY and ACQPROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESUME ACQACTIVITY ACQPROCESS",
     );
     expect(diagnostics).toHaveLength(2);
@@ -55,7 +55,7 @@ describe("CICS RESUME", async () => {
 
   // checkDuplicates
   test("Duplicated ACQACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESUME ACQACTIVITY ACQACTIVITY",
     );
     expect(diagnostics).toHaveLength(1);

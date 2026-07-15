@@ -56,6 +56,7 @@ type LSRequestCaches = {
   workspaceSymbols: SymbolInformation[];
   margins: MarginIndicatorNotificationParams;
   skippedCodeRanges: Range[];
+  preprocessedText: string;
 };
 
 export type LSRequestCache = Cache<

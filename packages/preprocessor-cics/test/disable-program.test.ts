@@ -17,14 +17,14 @@ describe("CICS DISABLE PROGRAM", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) PURGEABLE",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) PURGEABLE BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS DISABLE PROGRAM", async () => {
 
   // checkDisableProgram -> checkHasMandatoryOptions(PROGRAM)
   test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DISABLE EXIT(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("DISABLE EXIT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
@@ -41,8 +41,7 @@ describe("CICS DISABLE PROGRAM", async () => {
 
   // checkDisableProgram -> checkHasAtLeastOneOption (none provided)
   test("No accessory option", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("DISABLE PROGRAM(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("DISABLE PROGRAM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -52,7 +51,7 @@ describe("CICS DISABLE PROGRAM", async () => {
 
   // checkDisableProgram -> checkHasMutuallyExclusiveOptions (EXIT vs PURGEABLE)
   test("EXIT mutually exclusive with PURGEABLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) EXIT(2) PURGEABLE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -64,7 +63,7 @@ describe("CICS DISABLE PROGRAM", async () => {
 
   // checkDuplicates
   test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) PROGRAM(2) PURGEABLE",
     );
     expect(diagnostics).toHaveLength(1);

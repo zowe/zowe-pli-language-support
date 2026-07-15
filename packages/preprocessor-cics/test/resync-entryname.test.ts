@@ -17,14 +17,14 @@ describe("CICS RESYNC ENTRYNAME", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESYNC ENTRYNAME(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESYNC ENTRYNAME(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS RESYNC ENTRYNAME", async () => {
 
   // checkOpts -> checkHasMandatoryOptions(ENTRYNAME)
   test("Missing ENTRYNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESYNC QUALIFIER(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,7 +45,7 @@ describe("CICS RESYNC ENTRYNAME", async () => {
 
   // checkOpts -> checkOptionalWithLength (optional present without required field)
   test("IDLISTLENGTH without IDLIST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESYNC ENTRYNAME(123) IDLISTLENGTH(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -57,7 +57,7 @@ describe("CICS RESYNC ENTRYNAME", async () => {
 
   // checkDuplicates
   test("Duplicated ENTRYNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RESYNC ENTRYNAME(123) ENTRYNAME(456)",
     );
     expect(diagnostics).toHaveLength(1);

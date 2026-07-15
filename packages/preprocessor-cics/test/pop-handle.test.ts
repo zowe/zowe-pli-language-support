@@ -17,18 +17,18 @@ describe("CICS POP HANDLE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("POP HANDLE");
+    const { diagnostics } = await cicsPreprocessor.parse("POP HANDLE");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("POP HANDLE BLA");
+    const { diagnostics } = await cicsPreprocessor.parse("POP HANDLE BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicated HANDLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("POP HANDLE HANDLE");
+    const { diagnostics } = await cicsPreprocessor.parse("POP HANDLE HANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Warning);
     expect(diagnostics[0].message).toMatch(

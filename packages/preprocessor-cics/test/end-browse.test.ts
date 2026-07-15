@@ -17,14 +17,14 @@ describe("CICS ENDBROWSE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "ENDBROWSE ACTIVITY BROWSETOKEN(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "ENDBROWSE ACTIVITY BROWSETOKEN(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS ENDBROWSE", async () => {
 
   // checkEndBrowse -> checkHasExactlyOneOption (none provided)
   test("Missing browse type", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "ENDBROWSE BROWSETOKEN(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,8 +45,7 @@ describe("CICS ENDBROWSE", async () => {
 
   // checkEndBrowse -> checkHasMandatoryOptions(BROWSETOKEN)
   test("Missing BROWSETOKEN", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("ENDBROWSE ACTIVITY");
+    const { diagnostics } = await cicsPreprocessor.parse("ENDBROWSE ACTIVITY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -56,7 +55,7 @@ describe("CICS ENDBROWSE", async () => {
 
   // checkDuplicates
   test("Duplicated BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "ENDBROWSE ACTIVITY BROWSETOKEN(1) BROWSETOKEN(2)",
     );
     expect(diagnostics).toHaveLength(1);

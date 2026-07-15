@@ -11,7 +11,7 @@
 
 import { SemanticTokensBuilder } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
-import { Range } from "./types";
+import { offsetToPosition, Range } from "./types";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokensLegend } from "vscode-languageserver-types";
 import {
@@ -24,7 +24,6 @@ import {
 import { CstNodeKind } from "../syntax-tree/cst";
 import {
   controlTokens,
-  EXEC,
   modifierTokens,
   NUMBER,
   STRING_TERM,
@@ -82,46 +81,27 @@ export function semanticTokens(
       handleCommentTokens(textDocument, semanticTokens, comment);
     }
 
-    if (
-      token.kind === CstNodeKind.ExecStatement_ExecFragment &&
-      token.element?.kind === SyntaxKind.ExecStatement
-    ) {
-      const modifier = 1 << SemanticTokenModifiers.preprocessor;
-      const push = (token: Token, length: number, type: number) => {
-        semanticTokens.push(
-          token.startLine,
-          token.startColumn,
-          length,
-          type,
-          modifier,
-        );
-      };
-
-      // Handle the CICS/SQL keyword at the start of the fragment
-      const prefixMatch = /^(\w+)\s*/i.exec(token.image);
-      if (prefixMatch) {
-        push(token, prefixMatch[1].length, SemanticTokenTypes.string);
-      }
-
-      // Handle the remaining preprocessor tokens
-      for (
-        let index = 0;
-        index < token.element.preprocessorTokens.length;
-        index++
-      ) {
-        const subToken = token.element.preprocessorTokens[index].token;
-        const type = token.element.preprocessorTokens[index].semanticType;
-        push(subToken, subToken.image.length, type);
-      }
+    // Tokens a preprocessor phase classified itself (e.g. inside an `EXEC SQL`/`EXEC CICS`
+    // statement's body) carry their type directly - see `Token.semanticType`.
+    if (token.semanticType !== undefined) {
+      const pos = offsetToPosition(textDocument, token.startOffset);
+      semanticTokens.push(
+        pos.line,
+        pos.character,
+        token.image.length,
+        token.semanticType,
+        1 << SemanticTokenModifiers.preprocessor,
+      );
       continue;
     }
 
     const type = tokenType(token);
     if (type !== undefined) {
       const modifier = tokenModifier(compilationUnit, token);
+      const pos = offsetToPosition(textDocument, token.startOffset);
       semanticTokens.push(
-        token.startLine,
-        token.startColumn,
+        pos.line,
+        pos.character,
         token.image.length,
         type,
         modifier,
@@ -144,22 +124,28 @@ function handleCommentTokens(
   tokenBuilder: SemanticTokensBuilder,
   token: Token,
 ): void {
-  if (token.startLine === token.endLine) {
+  // A `// ...` line comment's own `endOffset` includes the line terminator it swallows
+  // (see tokenizeSlashWithComment); exclude it here so highlighted spans never include a
+  // newline character (`/* */` block comments never end in one, so this is a no-op for them).
+  const visibleEndOffset = commentEndOffsetExcludingNewline(token);
+  const start = offsetToPosition(document, token.startOffset);
+  const end = offsetToPosition(document, visibleEndOffset);
+  if (start.line === end.line) {
     // Single-line comment, push as is
     tokenBuilder.push(
-      token.startLine,
-      token.startColumn,
-      token.image.length,
+      start.line,
+      start.character,
+      end.character + 1 - start.character,
       SemanticTokenTypes.comment,
       0,
     );
     return;
   }
-  for (let line = token.startLine; line <= token.endLine; line++) {
-    const startChar = line === token.startLine ? token.startColumn : 0;
+  for (let line = start.line; line <= end.line; line++) {
+    const startChar = line === start.line ? start.character : 0;
     let length: number;
-    if (line === token.endLine) {
-      length = token.endColumn + 1 - startChar;
+    if (line === end.line) {
+      length = end.character + 1 - startChar;
     } else {
       const lineStart = document.offsetAt({ line, character: 0 });
       const lineEnd = document.offsetAt({
@@ -172,6 +158,16 @@ function handleCommentTokens(
       tokenBuilder.push(line, startChar, length, SemanticTokenTypes.comment, 0);
     }
   }
+}
+
+function commentEndOffsetExcludingNewline(token: Token): number {
+  if (token.image.endsWith("\r\n")) {
+    return token.endOffset - 2;
+  }
+  if (token.image.endsWith("\n")) {
+    return token.endOffset - 1;
+  }
+  return token.endOffset;
 }
 
 function tokenModifier(unit: CompilationUnit, token: Token): number {
@@ -234,8 +230,6 @@ function tokenType(token: Token): number | undefined {
     return SemanticTokenTypes.string;
   } else if (token.tokenTypeIdx === NUMBER.tokenTypeIdx) {
     return SemanticTokenTypes.number;
-  } else if (token.tokenTypeIdx === EXEC.tokenTypeIdx) {
-    return SemanticTokenTypes.string;
   }
 
   // If the token has no semantic meaning based on the CST, check if it's a keyword

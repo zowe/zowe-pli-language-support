@@ -22,13 +22,12 @@ describe("CICS DISCARD", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("DISCARD PROGRAM(A)");
+    const { diagnostics } = await cicsPreprocessor.parse("DISCARD PROGRAM(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DISCARD PROGRAM(A) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -39,7 +38,7 @@ describe("CICS DISCARD", async () => {
   // resource, so a second PROGRAM is a parse error rather than a duplicate-option
   // diagnostic. Kept so the unreachable branch is visible.
   test.fails("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "DISCARD PROGRAM(A) PROGRAM(B)",
     );
     expect(diagnostics).toHaveLength(1);

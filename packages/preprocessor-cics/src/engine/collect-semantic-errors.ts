@@ -23,6 +23,20 @@ import { orify } from "../checks/utils";
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   ParseTree[] | null
 > {
+  // Reused across parses: the constructor builds an OptionsRegistry with ~100
+  // checker instances (each copying option maps), which dominates the profile
+  // when done once per EXEC statement. The checkers keep a reference to
+  // `errors`, so `collect` drains the shared array instead of replacing it.
+  private static readonly instance = new CollectingSemanticErrorVisitor();
+  static collect(tree: ParseTree): Diagnostic[] {
+    const visitor = CollectingSemanticErrorVisitor.instance;
+    // Reset at entry: a checker throwing mid-visit must not leak stale errors
+    // into the next parse (the array is shared with the registry's checkers).
+    visitor.errors.length = 0;
+    visitor.visit(tree);
+    return visitor.errors.splice(0);
+  }
+
   static aggregateErrors(errors: Diagnostic[]): Diagnostic[] {
     const nonAggregatableErrors: Diagnostic[] = [];
     const aggregatableErrors: AggregatableDiagnostic[] = [];

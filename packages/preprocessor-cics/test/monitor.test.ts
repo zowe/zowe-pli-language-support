@@ -17,12 +17,12 @@ describe("CICS MONITOR", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("MONITOR POINT(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("MONITOR POINT(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "MONITOR POINT(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS MONITOR", async () => {
 
   // checkMonitor -> checkHasMandatoryOptions
   test("Missing POINT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("MONITOR DATA1(X)");
+    const { diagnostics } = await cicsPreprocessor.parse("MONITOR DATA1(X)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: POINT/);
@@ -39,7 +39,7 @@ describe("CICS MONITOR", async () => {
 
   // checkDuplicates
   test("Duplicated POINT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "MONITOR POINT(1) POINT(2)",
     );
     expect(diagnostics).toHaveLength(1);

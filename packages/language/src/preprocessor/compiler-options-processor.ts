@@ -114,8 +114,6 @@ export class CompilerOptionsProcessor {
         option,
         uri,
         ranges[index].start + PROCESS_TOKEN_LENGTH,
-        ranges[index].token.startLine,
-        PROCESS_TOKEN_LENGTH,
       );
 
       // Add parser errors and translate.
@@ -151,7 +149,6 @@ export class CompilerOptionsProcessor {
 
     let col0 = true;
     let index = 0;
-    let lineCounter = 0;
 
     let inDirective = false;
     let inMultiLineComment = false;
@@ -159,7 +156,6 @@ export class CompilerOptionsProcessor {
     let inString: number = 0; //charCode of the opening quote or 0
 
     let processStart = 0;
-    let processStartLine = 0;
 
     const la = (n: number): number =>
       index + n < text.length ? text.charCodeAt(index + n) : -1;
@@ -170,7 +166,6 @@ export class CompilerOptionsProcessor {
       }
       if (index < text.length) {
         index++;
-        lineCounter++;
         col0 = true;
         inSingleLineComment = false;
       }
@@ -183,11 +178,7 @@ export class CompilerOptionsProcessor {
         image,
         PROCESS_TOKEN,
         processStart,
-        processStartLine,
-        0,
         processStart + PROCESS.length,
-        lineCounter,
-        PROCESS.length,
         uri,
       );
       token.kind = CstNodeKind.ProcessDirective_PROCESS;
@@ -216,7 +207,6 @@ export class CompilerOptionsProcessor {
       if (processDirective) {
         inDirective = true;
         processStart = index;
-        processStartLine = lineCounter;
         index += PROCESS.length + 1;
         continue;
       }

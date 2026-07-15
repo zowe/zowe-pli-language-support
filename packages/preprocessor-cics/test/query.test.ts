@@ -17,12 +17,12 @@ describe("CICS QUERY", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (CHANNEL)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("QUERY CHANNEL(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("QUERY CHANNEL(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "QUERY CHANNEL(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS QUERY", async () => {
 
   // checkQueryChannel -> checkHasMandatoryOptions(CHANNEL)
   test("Channel missing CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "QUERY CONTAINERCNT(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -41,7 +41,7 @@ describe("CICS QUERY", async () => {
 
   // checkQueryCounter -> checkHasExactlyOneOption (none provided)
   test("Counter without COUNTER or DCOUNTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("QUERY POOL(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("QUERY POOL(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -51,7 +51,7 @@ describe("CICS QUERY", async () => {
 
   // checkQuerySecurity -> checkHasMandatoryOptions(RESID)
   test("Security missing RESID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "QUERY SECURITY RESTYPE(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -61,7 +61,7 @@ describe("CICS QUERY", async () => {
 
   // checkDuplicates
   test("Duplicated CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "QUERY CHANNEL(1) CHANNEL(2)",
     );
     expect(diagnostics).toHaveLength(1);

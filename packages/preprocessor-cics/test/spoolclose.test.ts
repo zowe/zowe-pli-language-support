@@ -17,14 +17,14 @@ describe("CICS SPOOLCLOSE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SPOOLCLOSE TOKEN(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SPOOLCLOSE TOKEN(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS SPOOLCLOSE", async () => {
 
   // checkSpoolcloseToken -> checkHasMandatoryOptions
   test("Missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SPOOLCLOSE KEEP");
+    const { diagnostics } = await cicsPreprocessor.parse("SPOOLCLOSE KEEP");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
@@ -41,7 +41,7 @@ describe("CICS SPOOLCLOSE", async () => {
 
   // checkSpoolcloseToken -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive KEEP and DELETE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SPOOLCLOSE TOKEN(123) KEEP DELETE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -53,7 +53,7 @@ describe("CICS SPOOLCLOSE", async () => {
 
   // checkDuplicates
   test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "SPOOLCLOSE TOKEN(123) TOKEN(456)",
     );
     expect(diagnostics).toHaveLength(1);

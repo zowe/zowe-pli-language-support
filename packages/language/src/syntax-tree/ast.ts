@@ -14,7 +14,6 @@ import { Token } from "../parser/tokens";
 import { assertUnreachable } from "../utils/common";
 import { isObject } from "../utils/types";
 import type { CompilationUnit } from "../workspace/compilation-unit";
-import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 export enum DataType {
   Area,
@@ -248,7 +247,6 @@ export enum SyntaxKind {
 
   CicsResponseStatement,
 
-  ExecStatement,
   ExecVariableReference,
 }
 
@@ -959,7 +957,6 @@ export type SyntaxNode =
   | ProcedureOrderOption
   | ProcedureRecursiveOption
   | ProcedureScopeOption
-  | ExecStatement
   | ExecVariableReference;
 
 export type AllocateAttribute =
@@ -1145,8 +1142,7 @@ export type Unit =
   | SkipDirective
   | SqlAttributeStatement
   | CicsResponseStatement
-  | ExecVariableReference
-  | ExecStatement;
+  | ExecVariableReference;
 
 // Preprocessor AST
 
@@ -4344,34 +4340,6 @@ export function createCicsResponseStatement(): CicsResponseStatement {
     token: null,
     code: null,
     codeToken: null,
-  };
-}
-
-export enum PreprocessorType {
-  CICS,
-  SQL,
-  UNKNOWN,
-}
-
-export interface PreprocessorToken {
-  token: Token;
-  semanticType: SemanticTokenTypes;
-}
-
-export interface ExecStatement extends AstNode {
-  kind: SyntaxKind.ExecStatement;
-  preprocessorType: PreprocessorType;
-  preprocessorTokens: PreprocessorToken[];
-  replacement: string | IncludeDirective | null;
-}
-
-export function createExecStatement(): ExecStatement {
-  return {
-    kind: SyntaxKind.ExecStatement,
-    container: null,
-    preprocessorType: PreprocessorType.UNKNOWN,
-    preprocessorTokens: [],
-    replacement: null,
   };
 }
 

@@ -17,12 +17,12 @@ describe("CICS FREE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("FREE CONVID(123)");
+    const { diagnostics } = await cicsPreprocessor.parse("FREE CONVID(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREE CONVID(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS FREE", async () => {
 
   // checkRule -> checkMutuallyExclusiveOptions
   test("Mutually exclusive CONVID and SESSION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREE CONVID(123) SESSION(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS FREE", async () => {
 
   // checkRule -> checkHasIllegalOptions when CHILD is present
   test("CONVID illegal with CHILD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREE CHILD(123) CONVID(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS FREE", async () => {
 
   // checkDuplicates
   test("Duplicated CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "FREE CONVID(123) CONVID(456)",
     );
     expect(diagnostics).toHaveLength(1);

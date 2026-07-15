@@ -19,7 +19,7 @@ import { CompilationUnit } from "../workspace/compilation-unit";
 import { Reference, Statement } from "../syntax-tree/ast";
 import { Token } from "../parser/tokens";
 import { EvaluationResults } from "./instruction-interpreter";
-import { tokenize, TokenizationResult } from "../parser/tokenizer";
+import { tokenize } from "../parser/tokenizer";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   CompilerOptionResult,
@@ -37,9 +37,15 @@ import {
   ExecSqlPreprocessorPhase,
   UnresolvedExecPhase,
 } from "./exec-phase";
+import { PreparedSource } from "./instruction-cache";
+import { commentRangesToTokens, stripComments } from "./comment-stripper";
+import { SourceMap } from "./source-map";
+import { AnnotateResult, annotateTokens } from "./token-annotator";
 
 export interface LexerResult {
   all: Token[];
+  /** The final pipeline text that `all` was lexed from. */
+  preprocessedText: string;
   compilerOptions: CompilerOptionsProcessorResult;
   statements: Statement[];
   evaluationResults: EvaluationResults;
@@ -48,7 +54,12 @@ export interface LexerResult {
 
 /**
  * Lexer for PL/I language. It orchestrates a margins processor and a preprocessor.
- * The latter creates the desired token stream without preprocessor statements
+ *
+ * Pipeline: margins + comment-strip produce the text
+ * that seeds the ordered `PP()` phases, each a `{text, sourceMap} -> {text, sourceMap}`
+ * transform whose maps compose into one map from the original document to the pipeline's
+ * final text. That text is lexed exactly once, and `annotateTokens` uses the composed map
+ * to recover original positions and cross-reference metadata for the real parser.
  */
 export class PliLexer {
   readonly compilerOptionsPreprocessor: CompilerOptionsProcessor;
@@ -80,44 +91,57 @@ export class PliLexer {
     unit.instructionCache.update(compilerOptionsResult.recompileFingerprint);
     unit.tokenizationCache.update(compilerOptionsResult.recompileFingerprint);
 
-    // Produce the first Token[] (margins + tokenize).
-    const tokenization = await unit.tokenizationCache.get(uri, inputText, () =>
-      this.tokenizeSource(unit, uri, compilerOptionsResult),
+    // Margins + comment-strip -> the text that seeds the phase pipeline.
+    const prepared = await unit.tokenizationCache.get(uri, inputText, () =>
+      this.prepareSource(unit, uri, compilerOptionsResult),
     );
 
     // Run the preprocessor pipeline (MACRO, SQL, CICS according to PP()).
-    // Each phase parses the tokens it receives, so the stages compose as
-    // Token[] -> MACRO -> Token[] -> SQL -> ... -> final Token[].
     const phases = buildPhases(
       opts,
       compilerOptionsResult.result,
       this.marginsProcessor,
     );
     const pipeline = await runPipeline(phases, {
-      tokens: tokenization.tokens,
+      text: prepared.text,
+      sourceMap: SourceMap.identity(prepared.text, uri),
       unit,
       uri,
       textDocument: document,
     });
+
+    // Lex the pipeline's final composed text exactly once, then recover original
+    // positions and cross-reference metadata via the composed source map.
+    const finalTokenization = tokenize(pipeline.text, uri);
+    const annotated = annotateTokens(
+      finalTokenization.tokens,
+      finalTokenization.diagnostics,
+      pipeline.sourceMap,
+      uri,
+    );
 
     // Publish diagnostics, register the file's tokens, and assemble the result.
     this.reportDiagnostics(
       unit,
       uri,
       compilerOptionsResult,
-      tokenization,
+      prepared,
       pipeline,
+      annotated,
     );
     this.registerFileTokens(
       unit,
       document,
       uri,
       compilerOptionsResult,
-      tokenization,
+      annotated,
+      pipeline.directiveTokens,
+      prepared,
     );
 
     return {
-      all: pipeline.tokens,
+      all: annotated.tokens,
+      preprocessedText: pipeline.text,
       compilerOptions: compilerOptionsResult,
       statements: pipeline.statements,
       evaluationResults: pipeline.evaluationResults,
@@ -126,27 +150,35 @@ export class PliLexer {
   }
 
   /**
-   * Process margins and tokenize the source
-   * into the first `Token[]`. Margin diagnostics are folded into the result so they stay
-   * correct on cache hits (the pipeline reuses the same margins processor for %INCLUDE
-   * files and would otherwise overwrite `marginsProcessor.issues`).
+   * Applies margins, then strips comments (so external SQL/CICS preprocessors - which will
+   * scan full text rather than tokens - never see comment characters embedded in `EXEC`
+   * code), producing the text that seeds the phase pipeline. Also converts the stripped
+   * comment ranges into tokens for LSP services (semantic highlighting, hover-on-comment,
+   * ...); the file's *real* tokens are registered later, from `LexerResult.all` (see
+   * `registerFileTokens`), not re-tokenized here.
+   *
+   * Margin diagnostics are folded into the result so they stay correct on cache hits (the
+   * pipeline reuses the same margins processor for %INCLUDE files and would otherwise
+   * overwrite `marginsProcessor.issues`).
    */
-  private tokenizeSource(
+  private prepareSource(
     unit: CompilationUnit,
     uri: URI,
     compilerOptionsResult: CompilerOptionsProcessorResult,
-  ): TokenizationResult {
+  ): PreparedSource {
     const textWithoutMargins = this.marginsProcessor.processMargins(
       compilerOptionsResult,
       uri,
       unit.services.workspace,
     );
     const marginIssues = [...this.marginsProcessor.issues];
-    const tokenizeResult = tokenize(textWithoutMargins, uri);
+    const { text, comments } = stripComments(textWithoutMargins);
     return {
-      tokens: tokenizeResult.tokens,
-      comments: tokenizeResult.comments,
-      diagnostics: [...tokenizeResult.diagnostics, ...marginIssues],
+      text,
+      // Comment text must come from the *pre-strip* text - `text` has every comment
+      // already blanked to whitespace.
+      comments: commentRangesToTokens(comments, textWithoutMargins, uri),
+      diagnostics: marginIssues,
     };
   }
 
@@ -157,11 +189,13 @@ export class PliLexer {
     unit: CompilationUnit,
     uri: URI,
     compilerOptionsResult: CompilerOptionsProcessorResult,
-    tokenization: TokenizationResult,
+    prepared: PreparedSource,
     pipeline: PipelineResult,
+    annotated: AnnotateResult,
   ): void {
-    unit.diagnostics.addAll(DiagnosticCategory.Lexer, tokenization.diagnostics);
+    unit.diagnostics.addAll(DiagnosticCategory.Lexer, prepared.diagnostics);
     unit.diagnostics.addAll(DiagnosticCategory.Lexer, pipeline.diagnostics);
+    unit.diagnostics.addAll(DiagnosticCategory.Lexer, annotated.diagnostics);
     const uriString = uri.toString();
     unit.diagnostics.addAll(
       DiagnosticCategory.CompilerOptions,
@@ -172,23 +206,124 @@ export class PliLexer {
   }
 
   /**
-   * Register the file's tokens with the file store.
+   * Register the file's tokens with the file store. Registers `annotated.tokens` - the
+   * exact objects `LexerResult.all` returns and the real parser will mutate with
+   * `.kind`/`.element` - so LSP services reading `unit.services.files.getTokens(uri)`
+   * later (after parsing) see those attachments too. Registering a separately re-tokenized
+   * array here would silently desync from what the parser actually built the CST from.
+   *
+   * Also merges in this file's own `directiveTokens` (see `PhaseResult.directiveTokens`) -
+   * `%IF`/`%DCL`/`EXEC`/... tokens consumed by a directive and otherwise unreachable, needed
+   * by `pli/skippedCode`, type-at-a-`%DCL`, semantic highlighting of macro variable
+   * references, and similar features that inspect a directive rather than its expansion.
    */
   private registerFileTokens(
     unit: CompilationUnit,
     document: TextDocument,
     uri: URI,
     compilerOptionsResult: CompilerOptionsProcessorResult,
-    tokenization: TokenizationResult,
+    annotated: AnnotateResult,
+    directiveTokens: Token[],
+    prepared: PreparedSource,
   ): void {
     const optionTokens = compilerOptionsResult.result?.tokens ?? [];
     const optionComments = compilerOptionsResult.result?.comments ?? [];
+    const uriString = uri.toString();
+    const ownDirectiveTokens = directiveTokens.filter(
+      (t) => t.uri?.toString() === uriString,
+    );
+    // `annotated.tokens` spans the whole composed text, so it also carries tokens that
+    // annotateTokens attributed to a foreign file (e.g. content pulled in via `%INCLUDE`/
+    // `EXEC SQL INCLUDE`). Those tokens' offsets are only meaningful in *that* file's own
+    // numbering - registering them here too would collide with this file's own tokens at
+    // the same numeric offset (see the `EXEC SQL INCLUDE <file>` case, which replaces the
+    // whole directive's span). The foreign file gets its own, correctly-offset registration
+    // independently (see `runInclude`), so this file's own view only needs its own tokens.
+    // `synthetic` tokens (lexed from generated text, offsets collapsed to the directive's
+    // start) are excluded - see `Token.synthetic`.
+    const ownTokens = annotated.tokens.filter(
+      (t) => !t.synthetic && t.uri?.toString() === uriString,
+    );
+    // Identity-dedupe: an `EXEC` host-variable sub-token is registered as a directive
+    // token by the SQL/CICS phase AND emitted verbatim into the final token stream by the
+    // annotate pass (`MappedToken.sourceToken`), so it shows up in both lists.
+    const tokens = [
+      ...new Set([...optionTokens, ...ownTokens, ...ownDirectiveTokens]),
+    ];
+    tokens.sort((a, b) => a.startOffset - b.startOffset);
     unit.services.files.set({
       textDocument: document,
-      tokens: [...optionTokens, ...tokenization.tokens],
-      comments: [...optionComments, ...tokenization.comments],
+      tokens,
+      comments: [...optionComments, ...prepared.comments],
       uri,
     });
+    // The final stream's tokens attributed to a foreign file belong in *that* file's
+    // registration (their offsets are file-local, see the `ownTokens` note above). The
+    // real parser runs after this and attaches `.kind`/`.element` to these exact objects,
+    // so merging them (replacing the include registration's raw, never-annotated tokens)
+    // is what gives an included file its own semantic highlighting/hover/definition. Same
+    // identity-dedupe as above.
+    const foreignTokens = annotated.tokens.filter(
+      (t) => !t.synthetic && t.uri && t.uri.toString() !== uriString,
+    );
+    this.mergeForeignTokens(
+      unit,
+      [...new Set([...directiveTokens, ...foreignTokens])],
+      uriString,
+    );
+  }
+
+  /**
+   * Merges final-stream tokens that belong to a *foreign* file into that file's own
+   * registration: content spliced in via `%INCLUDE`/`EXEC SQL INCLUDE` re-surfaces in the
+   * composed text with the include's own uri/offsets, and directive tokens (an `EXEC`
+   * statement inside an included file, its classified sub-tokens, ...) are remapped there
+   * too. Both carry - or will receive, from the real parse - `.kind`/`.element`/
+   * `semanticType`, while the include's base registration (`runInclude`, the SQL/CICS
+   * phase's `files.set`) only holds the raw, unannotated tokenization. Replace the raw
+   * tokens the incoming ones cover, keeping the array sorted and overlap-free.
+   */
+  private mergeForeignTokens(
+    unit: CompilationUnit,
+    incomingTokens: Token[],
+    ownUriString: string,
+  ): void {
+    const byUri = new Map<string, Token[]>();
+    for (const token of incomingTokens) {
+      const tokenUri = token.uri?.toString();
+      if (!tokenUri || tokenUri === ownUriString) {
+        continue;
+      }
+      let list = byUri.get(tokenUri);
+      if (!list) {
+        list = [];
+        byUri.set(tokenUri, list);
+      }
+      list.push(token);
+    }
+    for (const [foreignUri, foreignTokens] of byUri) {
+      const existing = unit.services.files.get(foreignUri);
+      if (!existing) {
+        continue;
+      }
+      foreignTokens.sort((a, b) => a.startOffset - b.startOffset);
+      let index = 0;
+      const merged = existing.tokens.filter((token) => {
+        while (
+          index < foreignTokens.length &&
+          foreignTokens[index].endOffset < token.startOffset
+        ) {
+          index++;
+        }
+        return !(
+          index < foreignTokens.length &&
+          foreignTokens[index].startOffset <= token.endOffset
+        );
+      });
+      merged.push(...foreignTokens);
+      merged.sort((a, b) => a.startOffset - b.startOffset);
+      unit.services.files.set({ ...existing, tokens: merged });
+    }
   }
 }
 
@@ -196,7 +331,7 @@ export class PliLexer {
  * Build the preprocessor phase list from the PP() compiler option.
  * The PP option contains an ordered list of preprocessor items
  * (MACRO, SQL, CICS, INCLUDE), and each maps to a PreprocessorPhase.
- * The phases run sequentially: Token[] -> Phase1 -> Token[] -> Phase2 -> ...
+ * The phases run sequentially: {text,sourceMap} -> Phase1 -> {text,sourceMap} -> Phase2 -> ...
  */
 function buildPhases(
   opts: CompilerOptions,
@@ -207,7 +342,9 @@ function buildPhases(
   const pp = opts.pp;
 
   if (!pp || !pp.items) {
-    // No PP option - default to just macro phase
+    // No PP items at all (the *documented* default, `getDefaultCompilerOptions`, does
+    // carry PP(MACRO SQL CICS) - this branch means the options explicitly ended up
+    // without any) - run just the macro phase.
     phases.push(
       new MacroPreprocessorPhase(compilerOptionsResult, marginsProcessor),
     );

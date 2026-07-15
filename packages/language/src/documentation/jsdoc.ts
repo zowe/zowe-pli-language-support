@@ -88,37 +88,17 @@ export interface JSDocRenderOptions {
 }
 
 /**
- * Parses a JSDoc from a `Token` containing a comment.
- *
- * @param token A `Token` from a parsed document.
- */
-export function parseJSDoc(token: Token): JSDocComment;
-/**
  * Parses a JSDoc from a string comment.
  *
  * @param content A string containing the source of the JSDoc comment.
- * @param start The start position the comment occupies in the source document.
+ * @param start The start position the comment occupies in the source document. Callers
+ * parsing a `Token`'s comment should compute this themselves via `offsetToPosition` -
+ * `Token` no longer carries line/column.
  */
-export function parseJSDoc(content: string, start?: Position): JSDocComment;
-export function parseJSDoc(
-  node: Token | string,
-  start?: Position,
-): JSDocComment {
+export function parseJSDoc(content: string, start?: Position): JSDocComment {
   const opts = DefaultOptions;
-  let position: Position | undefined;
-  if (typeof node === "string") {
-    position = start as Position | undefined;
-  } else {
-    position = {
-      line: node.startLine,
-      character: node.startColumn,
-    };
-  }
-  if (!position) {
-    position = Position.create(0, 0);
-  }
-
-  const lines = getLines(node);
+  const position = start ?? Position.create(0, 0);
+  const lines = getLines(content);
 
   const tokens = tokenize({
     lines,

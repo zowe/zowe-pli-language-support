@@ -17,7 +17,7 @@ describe("CICS RUN", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RUN ACTIVITY(1) SYNCHRONOUS",
     );
     expect(diagnostics).toHaveLength(0);
@@ -35,7 +35,7 @@ describe("CICS RUN", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RUN ACTIVITY(1) SYNCHRONOUS BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,7 +44,7 @@ describe("CICS RUN", async () => {
 
   // checkDefaultRun -> checkHasExactlyOneOption (none provided)
   test("Default without ACTIVITY/ACQACTIVITY/ACQPROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RUN SYNCHRONOUS");
+    const { diagnostics } = await cicsPreprocessor.parse("RUN SYNCHRONOUS");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,7 +54,7 @@ describe("CICS RUN", async () => {
 
   // checkDefaultRun -> checkHasMandatoryOptions(SYNCHRONOUS/ASYNCHRONOUS/FACILITYTOKN)
   test("Default missing SYNCHRONOUS/ASYNCHRONOUS/FACILITYTOKN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RUN ACTIVITY(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("RUN ACTIVITY(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -64,7 +64,7 @@ describe("CICS RUN", async () => {
 
   // checkTransidRun -> checkHasMandatoryOptions(CHILD)
   test("Transid missing CHILD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RUN TRANSID(1)");
+    const { diagnostics } = await cicsPreprocessor.parse("RUN TRANSID(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: CHILD/);
@@ -72,7 +72,7 @@ describe("CICS RUN", async () => {
 
   // checkDuplicates
   test("Duplicated ACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+    const { diagnostics } = await cicsPreprocessor.parse(
       "RUN ACTIVITY(1) ACTIVITY(2) SYNCHRONOUS",
     );
     expect(diagnostics).toHaveLength(1);
