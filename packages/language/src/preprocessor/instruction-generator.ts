@@ -682,7 +682,7 @@ function generateIterateInstruction(
   const gotoInstruction: inst.GotoInstruction = {
     kind: inst.InstructionKind.Goto,
   };
-  const label = node.label?.label?.text;
+  const label = node.label?.label?.element?.ref?.text;
   context.onFinish(() => {
     const doNode = lookupDoNode(context, node, label);
     if (doNode) {
@@ -700,7 +700,7 @@ function generateLeaveInstruction(
   const gotoInstruction: inst.GotoInstruction = {
     kind: inst.InstructionKind.Goto,
   };
-  const label = node.label?.label?.text;
+  const label = node.label?.label?.element?.ref?.text;
   context.onFinish(() => {
     const doNode = lookupDoNode(context, node, label);
     if (doNode) {
@@ -718,7 +718,7 @@ function generateGotoInstruction(
   const gotoInstruction: inst.GotoInstruction = {
     kind: inst.InstructionKind.Goto,
   };
-  const label = node.label?.label?.text;
+  const label = node.label?.label?.element?.ref?.text;
   if (label) {
     context.onFinish(() => {
       const nodeByLabel = context.labels.get(label);

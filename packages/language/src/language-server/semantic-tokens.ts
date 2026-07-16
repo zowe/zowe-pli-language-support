@@ -258,11 +258,6 @@ function getReferenceTarget(token: Token): SyntaxNode | undefined {
         return token.element.ref?.node ?? undefined;
       }
       break;
-    case CstNodeKind.LabelReference_LabelRef:
-      if (token.element?.kind === SyntaxKind.LabelReference) {
-        return token.element.label?.node ?? undefined;
-      }
-      break;
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:
       if (token.element?.kind === SyntaxKind.TypeAttribute) {
@@ -325,7 +320,6 @@ function isVariableType(token: Token): boolean {
     case CstNodeKind.TypeAttribute_TypeId1:
     case CstNodeKind.HandleAttribute_TypeId0:
     case CstNodeKind.HandleAttribute_TypeId1:
-    case CstNodeKind.LabelReference_LabelRef:
     case CstNodeKind.IncludeItem_FileID:
     case CstNodeKind.IncludeItem_MemberID:
     case CstNodeKind.SqlHostVariableReference_HostVariable:
