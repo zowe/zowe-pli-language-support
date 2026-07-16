@@ -189,7 +189,10 @@ export class CompilerOptionTranslator {
     configuration?: RuleConfiguration,
   ): void {
     const items: CompilerOptions.PPValue[] = [
-      ...(ppDirectValue ? [ppDirectValue] : []),
+      // The direct value (e.g. from PPSQL/PPMACRO) is a one-time setting. Once it has been
+      // translated, it must not be re-applied on a later call to parseNestedOptions (which
+      // happens once per *PROCESS directive).
+      ...(ppDirectValue && !ppDirectValue.processed ? [ppDirectValue] : []),
     ];
 
     // Process items from pp.items array and mark them as processed
