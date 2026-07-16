@@ -15,6 +15,8 @@ import {
   CancellationToken,
   Connection,
   Diagnostic,
+  FileChangeType,
+  FileEvent,
 } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
@@ -348,12 +350,11 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     const uri = UriUtils.toUri(uriString);
     const workspace = new WorkspaceContext(uri, this.fs, this.connection);
     this.addWorkspaceFolder(uri, workspace);
-    return workspace.config.init(uri).then((diagnosticsByUri) => {
-      if (this.connection) {
-        publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
-      }
-      return workspace;
-    });
+    const diagnosticsByUri = await workspace.config.init(uri);
+    if (this.connection) {
+      publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
+    }
+    return workspace;
   }
 
   getCompilationUnit(uri: URI): CompilationUnit | undefined {
@@ -518,6 +519,98 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     });
     return Promise.all(promises).then(() => undefined);
   }
+
+  async triggerOnFileChange(params: { changes: FileEvent[] }, connection?: Connection): Promise<void> {
+    // First thing: Figure out whether any of the changed files are plugin config files
+    // If they are, we need to reindex the workspace anyway - no need to check for other changes.
+    function isPluginConfigFile(uri: string): boolean {
+      return (
+        uri.endsWith("/.pliplugin") ||
+        uri.endsWith("/.pliplugin/pgm_conf.json") ||
+        uri.endsWith("/.pliplugin/proc_grps.json")
+      );
+    }
+
+    const fileEventsByWorkspace = new Map<WorkspaceContext, FileEvent[]>();
+    for (const change of params.changes) {
+      const workspace = this.getWorkspaceFolderOf(change.uri);
+      if (workspace) {
+        if (!fileEventsByWorkspace.has(workspace)) {
+          fileEventsByWorkspace.set(workspace, []);
+        }
+        fileEventsByWorkspace.get(workspace)!.push(change);
+      }
+    }
+
+    for (const [workspace, changes] of fileEventsByWorkspace.entries()) {
+      // Since we cannot know whether a created directory is a lib in advance
+      // We always have to reindex if a directory is created, since it may contain a lib.
+      let directoryCreated = false;
+      for (const change of changes) {
+        if (change.type === FileChangeType.Created) {
+          // Try to stat the changed file to see if it's a directory.
+          const uri = UriUtils.toUri(change.uri);
+          try {
+            const stats = await this.fs.stat(uri);
+            if (stats.isDirectory) {
+              directoryCreated = true;
+              break;
+            }
+          } catch {
+            // Ignore errors, assume it's not a directory.
+          }
+        }
+      }
+      const pluginConfigHasChanged = changes.some((change) =>
+        isPluginConfigFile(change.uri),
+      );
+      if (
+        directoryCreated ||
+        pluginConfigHasChanged ||
+        changeAffectsLibs(workspace, changes)
+      ) {
+        if (connection) {
+          const promises = this
+            .getAllWorkspaceFolders()
+            .map(async (workspaceContext) => {
+              await pluginConfigChanged(connection, this, workspaceContext);
+            });
+          await Promise.all(promises);
+        }
+      } else {
+        const compilationUnits = new Set<CompilationUnit>();
+        // Not a plugin config change, meaning that individual folders/files have changed.
+        for (const compilationUnit of this
+          .getAllWorkspaceFolders()
+          .flatMap((workspace) => workspace.getAllCompilationUnits())) {
+          if (compilationUnit.includeError) {
+            // If the compilation unit has an unresolved include, we need to re-run the lifecycle
+            // to see if the include can now be resolved.
+            compilationUnits.add(compilationUnit);
+            // No need to change the change contents for this
+            continue;
+          }
+          changeLoop: for (const change of changes) {
+            for (const file of compilationUnit.services.files.keys()) {
+              // Either equal (i.e. file has changed) or the changed dir is a parent of the file
+              if (UriUtils.contains(change.uri, file)) {
+                compilationUnits.add(compilationUnit);
+                break changeLoop;
+              }
+            }
+          }
+        }
+        // Finally, update the compilation units themselves that might be affected by the change
+        for (const compilationUnit of compilationUnits) {
+          await this.updateUri(compilationUnit.uri);
+        }
+        if (compilationUnits.size > 0) {
+          // refresh semantic tokens so syntax coloring updates immediately
+          connection?.languages.semanticTokens.refresh();
+        }
+      }
+    }
+  }
 }
 
 export function publishPluginConfigDiagnostics(
@@ -530,4 +623,53 @@ export function publishPluginConfigDiagnostics(
       diagnostics,
     });
   }
+}
+
+export async function pluginConfigChanged(
+  connection: Connection,
+  compilationUnitHandler: CompilationUnitHandler,
+  workspaceContext: WorkspaceContext,
+): Promise<void> {
+  // handle changes to the .pliplugin config folder's contents
+  const diagnosticsByUri =
+    await workspaceContext.config.reloadConfigurations();
+  publishPluginConfigDiagnostics(connection, diagnosticsByUri);
+
+  // reindex reachable compilation units
+  await compilationUnitHandler.reindex(connection, CancellationToken.None);
+
+  // refresh semantic tokens so syntax coloring updates immediately
+  connection.languages.semanticTokens.refresh();
+}
+
+// A structural change to a lib folder (a file/dir created or deleted
+// inside a lib, or a directory removed that is or contains a lib)
+// invalidates the computed lib index, so the libs must be re-expanded.
+// Note: Simple file edits are not considered structural changes,
+// so they don't trigger a reindex.
+function changeAffectsLibs(
+  workspace: WorkspaceContext,
+  changes: readonly FileEvent[],
+): boolean {
+  const libDirs = workspace.config.getLibDirectoryUris();
+  if (libDirs.length === 0) {
+    return false;
+  }
+  for (const change of changes) {
+    if (change.type === FileChangeType.Changed) {
+      continue;
+    }
+    const changeUri = UriUtils.toUri(change.uri);
+    for (const libDir of libDirs) {
+      // Change inside a lib (create/delete of a member) OR the change
+      // is/contains the lib dir itself (whole lib folder gone).
+      if (
+        UriUtils.contains(libDir, changeUri) ||
+        UriUtils.contains(changeUri, libDir)
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
