@@ -57,18 +57,29 @@ export class CompilerOptionTranslator {
 
   protected diagnosticAnchor: DiagnosticAnchor | null | undefined = undefined;
 
+  /**
+   * Tracks whether the default PP items (MACRO, SQL, CICS) have already been discarded
+   * in favor of accumulated user-specified PP items.
+   */
+  protected ppDefaultsCleared = false;
+
   translateCompilerOptions(
     input: AbstractCompilerOptions,
     configuration?: RuleConfiguration,
   ): void {
     const options = this.optionsToUpperCase(input.options);
-    if (options.some((option) => option.name === "PP")) {
-      // If there are PP compiler options, ignore the defaults, because the settings in PP start empty and are accumulated.
+    if (
+      !this.ppDefaultsCleared &&
+      options.some((option) => option.name === "PP")
+    ) {
+      // The first time a PP compiler option is encountered, ignore the defaults, because
+      // the settings in PP start empty and are accumulated from there on.
       // Keep the ppInclude value that might have been set previously.
       this.translator.options.pp = {
         items: [],
         ppInclude: this.translator.options.pp?.ppInclude,
       };
+      this.ppDefaultsCleared = true;
     }
     for (const option of options) {
       this.translator.translate(option, configuration);
@@ -123,6 +134,7 @@ export class CompilerOptionTranslator {
     this.translatorMacro.clear();
     this.translatorSQL.clear();
     this.translatorCICS.clear();
+    this.ppDefaultsCleared = false;
     this.result = {
       options: getDefaultCompilerOptions(),
       tokens: [],
