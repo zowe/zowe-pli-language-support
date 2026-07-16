@@ -2271,7 +2271,7 @@ translator.rule(
           CompilerOptionsCodes.PP.InvalidParameter,
           CompilerOptions.PPItemName,
         );
-        options.pp.items.push({ name });
+        options.pp.items.push({ name, token: value.token });
       } else if (value.kind === SyntaxKind.CompilerOption) {
         const name = ensureEnum(
           {

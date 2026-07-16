@@ -35,7 +35,12 @@ import {
   RuleConfiguration,
   Translator,
 } from "./translator";
-import { Diagnostic, Range } from "../../language-server/types";
+import {
+  Diagnostic,
+  diagnosticFromCode,
+  Range,
+} from "../../language-server/types";
+import { CompilerOptionsCodes } from "./codes";
 
 export interface DiagnosticAnchor {
   range: Range;
@@ -83,6 +88,23 @@ export class CompilerOptionTranslator {
     }
     for (const option of options) {
       this.translator.translate(option, configuration);
+    }
+
+    // If the MACRO option is specified along with the PP option, the MACRO preprocessor
+    // is added to the beginning of the list of preprocessors in the PP option, unless it
+    // is already first in that list.
+    if (this.ppDefaultsCleared && this.translator.options.macro) {
+      const items = this.translator.options.pp?.items;
+      const first = items?.[0];
+      if (items && first?.name !== CompilerOptions.PPItemName.MACRO) {
+        items.unshift({ name: CompilerOptions.PPItemName.MACRO });
+        this.translator.diagnostics.push(
+          diagnosticFromCode(
+            CompilerOptionsCodes.PP.MacroImplicitlyAdded,
+            first?.token,
+          ),
+        );
+      }
     }
 
     // Handle nested compiler options that are not yet parsed.

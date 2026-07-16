@@ -783,6 +783,12 @@ export const CompilerOptionsCodes = {
       message: (pp: string, value: number) =>
         `Expected exactly one value for the ${pp} option, but received ${value}.`,
     },
+    MacroImplicitlyAdded: {
+      code: "COPP04",
+      severity: Severity.W,
+      message: () =>
+        `The MACRO option was specified, so the MACRO preprocessor is added to the beginning of the PP option's preprocessor list.`,
+    },
   },
 
   PrecType: {
