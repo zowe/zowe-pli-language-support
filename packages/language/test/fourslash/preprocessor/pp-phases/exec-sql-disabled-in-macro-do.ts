@@ -12,8 +12,9 @@
 /// <reference path="../../framework.ts" />
 
 // Mirrors exec-cics-disabled-in-macro-do-no-proc.ts for EXEC SQL, confirming the behavior
-// is not CICS-specific: with SQL excluded from PP(...), an EXEC SQL statement nested inside a
-// %DO/%IF block must not be silently processed by the MACRO phase's own internal walk.
+// is not CICS-specific: with SQL excluded from PP(...), an EXEC SQL statement nested inside
+// a %DO/%IF block must not be silently processed by the MACRO phase's own internal walk,
+// and gets the dedicated "requires PP(SQL)" diagnostic (once per EXEC SQL statement).
 
 // @wrap: process
 ////*PROCESS PP(MACRO);
@@ -22,10 +23,15 @@
 //// %THEN %DO;
 ////      <|1:EXEC|> SQL BEGIN DECLARE SECTION;
 ////      DCL EMPNO CHAR(6);
-////      EXEC SQL END DECLARE SECTION;
+////      <|2:EXEC|> SQL END DECLARE SECTION;
 //// %END;
 //// %ELSE %DO;
 ////      SIGNAL ERROR;
 //// %END;
 
-verify.expectDiagnosticsAt(1, code.Parser.unexpectedToken("EXEC"));
+verify.expectExclusiveDiagnosticsAt(1, {
+  message: code.CompilerOptions.PP.SqlPreprocessorRequired.message(),
+});
+verify.expectExclusiveDiagnosticsAt(2, {
+  message: code.CompilerOptions.PP.SqlPreprocessorRequired.message(),
+});

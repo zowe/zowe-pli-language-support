@@ -811,6 +811,18 @@ export const CompilerOptionsCodes = {
       message: () =>
         `The SQL preprocessor can only be invoked twice if the first invocation specifies INCONLY as its option.`,
     },
+    CicsPreprocessorRequired: {
+      code: "COPP09",
+      severity: Severity.E,
+      message: () =>
+        `EXEC CICS requires the CICS preprocessor to be enabled via PP(CICS).`,
+    },
+    SqlPreprocessorRequired: {
+      code: "COPP10",
+      severity: Severity.E,
+      message: () =>
+        `EXEC SQL requires the SQL preprocessor to be enabled via PP(SQL).`,
+    },
   },
 
   PrecType: {

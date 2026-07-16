@@ -11,14 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-// With CICS excluded from PP(...), an EXEC CICS statement nested inside a %DO/%IF block
-// (even with no enclosing PROC) must NOT be silently processed by the MACRO phase's own
-// internal walk. It should be preserved unchanged, and since no dedicated CICS phase is
-// configured to process it, the pipeline's final UnresolvedExecPhase reports a dedicated
-// "requires PP(CICS)" diagnostic instead of the generic parser error.
+// PP(MACRO("CASE(UPPER)")) fully replaces the defaults, so CICS is genuinely not
+// configured here. Both the %DO-nested and the completely bare EXEC CICS statement
+// should get the dedicated "requires PP(CICS)" diagnostic.
 
-// @wrap: process
-////*PROCESS PP(MACRO);
+// @filename: main.pli
+////%PROCESS OR('|'), NOT ('^') ;
+////%PROCESS PP(MACRO("CASE(UPPER)"));
 ////
 //// %IF TRIM(SYSTEM) ^= 'CICS'
 //// %THEN %DO;
@@ -27,7 +26,12 @@
 //// %ELSE %DO;
 ////      SIGNAL ERROR;
 //// %END;
+////
+//// <|2:EXEC|> CICS ABEND ABCODE('$CAN');
 
 verify.expectExclusiveDiagnosticsAt(1, {
+  message: code.CompilerOptions.PP.CicsPreprocessorRequired.message(),
+});
+verify.expectExclusiveDiagnosticsAt(2, {
   message: code.CompilerOptions.PP.CicsPreprocessorRequired.message(),
 });

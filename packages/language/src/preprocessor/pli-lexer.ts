@@ -35,6 +35,7 @@ import { MacroPreprocessorPhase } from "./macro-phase";
 import {
   ExecCicsPreprocessorPhase,
   ExecSqlPreprocessorPhase,
+  UnresolvedExecPhase,
 } from "./exec-phase";
 
 export interface LexerResult {
@@ -210,10 +211,15 @@ function buildPhases(
     phases.push(
       new MacroPreprocessorPhase(compilerOptionsResult, marginsProcessor),
     );
+    // Neither CICS nor SQL is configured, so any EXEC CICS/SQL
+    // statement in the source is unresolved.
+    phases.push(new UnresolvedExecPhase(false, false));
     return phases;
   }
 
   let hasMacroPhase = false;
+  let hasSqlPhase = false;
+  let hasCicsPhase = false;
 
   for (const item of pp.items) {
     switch (item.name) {
@@ -237,11 +243,13 @@ function buildPhases(
         }
         break;
       case PliCompilerOptions.PPItemName.SQL:
+        hasSqlPhase = true;
         phases.push(
           new ExecSqlPreprocessorPhase(compilerOptionsResult, marginsProcessor),
         );
         break;
       case PliCompilerOptions.PPItemName.CICS:
+        hasCicsPhase = true;
         phases.push(
           new ExecCicsPreprocessorPhase(
             compilerOptionsResult,
@@ -251,6 +259,10 @@ function buildPhases(
         break;
     }
   }
+
+  // Runs unconditionally, last, after every configured phase above has already had a
+  // chance to process the token stream to detect a unconfigured EXEC CICS/SQL statement.
+  phases.push(new UnresolvedExecPhase(hasCicsPhase, hasSqlPhase));
 
   return phases;
 }

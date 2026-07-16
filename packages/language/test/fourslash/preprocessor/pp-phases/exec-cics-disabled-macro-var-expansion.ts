@@ -11,16 +11,17 @@
 
 /// <reference path="../../framework.ts" />
 
-// Even though CICS is excluded from PP(...) here (so the EXEC CICS statement's tokens are
-// preserved unchanged rather than processed), macro variable references embedded in the
-// preserved ExecFragment text must still be expanded by the MACRO phase.
+// With CICS excluded from PP(...), the "requires PP(CICS)" diagnostic must still fire
+// correctly for an EXEC CICS statement whose fragment contains a macro variable reference.
 
 // @wrap: process
 ////*PROCESS PP(MACRO);
 //// %DCL CODEVAR CHAR;
 //// %CODEVAR = '''$CAN''';
 //// %DO;
-////   EXEC CICS ABEND ABCODE(CODEVAR);
+////   <|1:EXEC|> CICS ABEND ABCODE(CODEVAR);
 //// %END;
 
-preprocessor.containsTokens(["CICS ABEND ABCODE('$CAN')"]);
+verify.expectExclusiveDiagnosticsAt(1, {
+  message: code.CompilerOptions.PP.CicsPreprocessorRequired.message(),
+});

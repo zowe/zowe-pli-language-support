@@ -11,9 +11,10 @@
 
 /// <reference path="../../framework.ts" />
 
-// With CICS excluded from PP(...), an EXEC CICS statement nested inside a %DO block placed inside
-// a real PROC body. This test guards against a regression that would make it silently succeed,
-// and documents that the behavior is now uniform regardless of whether an enclosing PROC is present.
+// With CICS excluded from PP(...), an EXEC CICS statement nested inside a %DO block placed
+// inside a real PROC body. This test guards against a regression that would make it
+// silently succeed, and documents that the "requires PP(CICS)" diagnostic is now uniform
+// regardless of whether an enclosing PROC is present.
 
 // @wrap: process
 ////*PROCESS PP(MACRO);
@@ -27,4 +28,6 @@
 ////   %END;
 //// END;
 
-verify.expectDiagnosticsAt(1, code.Parser.unexpectedToken("EXEC"));
+verify.expectExclusiveDiagnosticsAt(1, {
+  message: code.CompilerOptions.PP.CicsPreprocessorRequired.message(),
+});
