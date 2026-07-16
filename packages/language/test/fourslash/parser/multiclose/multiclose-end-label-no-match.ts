@@ -17,6 +17,4 @@
 ////       PUT SKIP LIST('HELLO');
 //// <|END|> NONEXISTENT;
 
-verify.expectDiagnosticsAt("END", {
-  message: /Expected any of .+, but found "END"/,
-});
+verify.expectDiagnosticsAt("END", code.Parser.unexpectedToken("END"));

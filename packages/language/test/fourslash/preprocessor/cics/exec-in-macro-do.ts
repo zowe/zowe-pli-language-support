@@ -17,8 +17,8 @@
 ////   %END;
 //// END;
 
-// EXEC CICS inside a %DO block should be recognized and processed,
-// generating CICS declarations and replacing the statement with DO; END;
+// EXEC CICS inside a %DO block should be recognized and processed, generating CICS
+// declarations and replacing the statement with DO; END;.
 preprocessor.expectTokens(`
 TEST: PROC;
     DCL 

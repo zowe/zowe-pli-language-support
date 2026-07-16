@@ -54,6 +54,7 @@ import {
   Label,
   TestBuilder,
   DiagnosticExpectation,
+  TestDiagnostic,
 } from "../test-builder";
 import {
   SemanticTokenModifiers,
@@ -435,6 +436,15 @@ export interface HarnessTesterInterface {
     LSP: typeof LspCodes;
     CompilerOptions: typeof CompilerOptionsCodes;
     TypeSystem: typeof TypeSystemCodes;
+    Parser: {
+      /**
+       * Matches the generic parser recovery diagnostic ("Expected any of {...}, but
+       * found ...") raised when the current token doesn't match any alternative in a
+       * grammar rule.
+       * @param tokenImage The raw image of the unexpected token (e.g. "EXEC").
+       */
+      unexpectedToken(tokenImage: string): TestDiagnostic;
+    };
   };
 
   constants: {
