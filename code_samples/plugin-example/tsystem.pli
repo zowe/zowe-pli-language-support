@@ -1,0 +1,131 @@
+ 
+ declare fractial_digit fixed decimal(5,3) init(34,567); 
+ dcl X fixed binary(31,0) automatic;
+
+
+ /**
+  Allocation for a given variable can take place statically (before the 
+  execution of the program) or dynamically (during execution)
+
+  STATIC is the default for external variables, but internal variables 
+  can also be static.
+
+  
+ */
+ Package: Package exports (*);
+    dcl Y char(10);
+ 
+    A: proc options(main);
+      B: proc;
+        declare X static internal;
+      end B;
+      call B();
+    end A;
+ 
+    C: proc;
+      Y = 'hello';
+    end C;
+ 
+ end Package;
+ 
+
+ /**
+ AUTO-AUTOMATIC is the default. Automatic variables are always internal.
+ */
+  A: proc; 
+   call B;
+   B: proc;
+      declare X,Y auto; 
+   end B; 
+  call B;
+  end A;
+
+
+  /* based 
+  The maximum length of a based VARYING, VARYING4, or VARYINGZ string 
+  must be equal to the maximum length of any string upon which the 
+  based VARYING, VARYING4, or VARYINGZ string is overlaid.*/
+  dcl
+                1 a1(3)  based,
+                  2 b,
+                    3 b1   fixed bin(31),
+                    3 b2   fixed bin(31);
+
+ declare A2 char(50) varying based(Q),
+          B char(50) varying;
+          Q=addr(B);
+        
+ 
+ dcl An(3,2) character(5) based(P),
+      Bn char(5) based(Q),
+      Cn(3,2) character(5);
+  P = addr(Cn);
+  Q = addr(An(2,1));
+
+
+  /*list processing 
+  List processing is the name for a number of techniques to help 
+  manipulate collections of data 
+  Although arrays, structures, and unions are also used for manipulating
+  collections of data, list processing techniques are more flexible 
+  because they allow collections of data to be indefinitely reordered 
+  and extended during program execution.*/
+
+  dcl H fixed initial(3);
+  dcl 1 STR based(H),
+        2 P pointer,
+        2 data,
+      T  pointer;
+
+        allocate STR;
+        T=H;
+
+        do loop;
+          allocate STR set(T->P);
+            T=T->P;
+            T->P=null; 
+ end;
+ 
+
+  /*assignable or not 
+  If a variable has the NONASSIGNABLE attribute, the variable 
+  cannot be assigned.*/
+     call test( 17 );
+
+     test: proc( x );
+       dcl x fixed bin(31) NONASSIGNABLE;
+       dcl e ext entry( ASSIGNABLE fixed bin(31) );
+       call e(x);
+     end;
+ 
+
+ /*connected or not */
+ dcl Az(10,10) fixed bin(31);
+ 
+ display( sum_Slice( Az(1,*) ) );     /* first row    */
+ display( sum_Slice( Az(*,1) ) );     /* first column */
+ 
+  sum_Slice:proc(X) returns(fixed bin(31));
+ 
+    dcl X (*) fixed bin(31) nonconnected; /* default */
+  return(sum(X) );
+  end;
+
+ /*
+  Following structure, the interleaved arrays A.B and A.C are 
+  both in unconnected storage.
+ */
+ dcl 1 Al(10),
+    2 B,
+    2 C;
+
+ 
+ /*dimension attr  od Array ?? where array ? 
+ 3	for dcl a(*)  fixed bin init( 2,3,5 );
+ 7	for	dcl b(*) fixed bin init( 2,3,(5)7 );
+ 17	for	dcl c(*) fixed bin init( 2,3,(2)(5,(3) (7,11) ), 13 );
+ */
+
+
+
+ 

@@ -8,8 +8,7 @@ dist/
 out/
 .DS_Store
 .env
-*.tsbuildinfo
-*.vsix
+*.tsbuildinfo 
 **/*.DS_Store
 scripts/*
 !scripts/*.mts
