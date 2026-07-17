@@ -15,7 +15,7 @@ import { UriUtils, VirtualFileSystemProvider } from "../../src";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 describe("Multi Workspace Tests", () => {
-  test("Example Test", async () => {
+  test("With plugin configs", async () => {
     const fs = new VirtualFileSystemProvider();
     resetDocumentProviders(fs);
     const ch = new CompilationUnitHandler(fs);
@@ -45,7 +45,6 @@ describe("Multi Workspace Tests", () => {
           "name": "xxx",
           "compiler-options": [
             "AGGREGATE",
-            "MARGINS(2,72)"
           ],
           "member-name-validation": true,
           "libs": [
@@ -90,8 +89,16 @@ describe("Multi Workspace Tests", () => {
     await fs.writeFile(second.program, "/* test2 */");
 
     const firstWorkspace = await ch.initializeWorkspaceFolder("file:///first");
-  // const secondWorkspace = await ch.initializeWorkspaceFolder("file:///second");
+    const secondWorkspace = await ch.initializeWorkspaceFolder("file:///second");
     
-    expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy(); 
+    expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy();
+    const firstConfig = firstWorkspace.config.getProgramConfig(first.program)!;
+    const firstGroup = firstWorkspace.config.getProcessGroupConfig(firstConfig.pgroup.value)!;
+    expect(firstGroup.compilerOptions.map(co => co.value).includes("AGGREGATE")).toBeTruthy();
+
+    expect(secondWorkspace.config.hasProgramConfig(second.program)).toBeTruthy(); 
+    const secondConfig = secondWorkspace.config.getProgramConfig(second.program)!;
+    const secondGroup = secondWorkspace.config.getProcessGroupConfig(secondConfig.pgroup.value)!;
+    expect(secondGroup.compilerOptions.map(co => co.value).includes("MARGINS(20,100)")).toBeTruthy();
   });
 });
