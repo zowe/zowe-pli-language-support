@@ -15,17 +15,19 @@ import { UriUtils, VirtualFileSystemProvider } from "../../src";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 
 describe("Multi Workspace Tests", () => {
-  test("With plugin configs", async () => {
+  test("With plugin configs under disjoint folders", async () => {
     const fs = new VirtualFileSystemProvider();
     resetDocumentProviders(fs);
     const ch = new CompilationUnitHandler(fs);
 
     const first = {
+      workspaceFolder: UriUtils.toUri("file:///first"),
       programConfig: UriUtils.toUri("file:///first/.pliplugin/pgm_conf.json"),
       groupsConfig: UriUtils.toUri("file:///first/.pliplugin/proc_grps.json"),
       program: UriUtils.toUri("file:///first/test1.pli"),
     };
     const second = {
+      workspaceFolder: UriUtils.toUri("file:///second"),
       programConfig: UriUtils.toUri("file:///second/.pliplugin/pgm_conf.json"),
       groupsConfig: UriUtils.toUri("file:///second/.pliplugin/proc_grps.json"),
       program: UriUtils.toUri("file:///second/test2.pli"),
@@ -84,9 +86,119 @@ describe("Multi Workspace Tests", () => {
     );
     await fs.writeFile(second.program, "/* test2 */");
 
-    const firstWorkspace = await ch.initializeWorkspaceFolder("file:///first");
-    const secondWorkspace =
-      await ch.initializeWorkspaceFolder("file:///second");
+    const firstWorkspace = await ch.initializeWorkspaceFolder(
+      first.workspaceFolder,
+    );
+    const secondWorkspace = await ch.initializeWorkspaceFolder(
+      second.workspaceFolder,
+    );
+
+    expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy();
+    const firstConfig = firstWorkspace.config.getProgramConfig(first.program)!;
+    const firstGroup = firstWorkspace.config.getProcessGroupConfig(
+      firstConfig.pgroup.value,
+    )!;
+    expect(
+      firstGroup.compilerOptions.map((co) => co.value).includes("AGGREGATE"),
+    ).toBeTruthy();
+
+    expect(
+      secondWorkspace.config.hasProgramConfig(second.program),
+    ).toBeTruthy();
+    const secondConfig = secondWorkspace.config.getProgramConfig(
+      second.program,
+    )!;
+    const secondGroup = secondWorkspace.config.getProcessGroupConfig(
+      secondConfig.pgroup.value,
+    )!;
+    expect(
+      secondGroup.compilerOptions
+        .map((co) => co.value)
+        .includes("MARGINS(20,100)"),
+    ).toBeTruthy();
+  });
+
+  test("With plugin configs under nested folders", async () => {
+    const fs = new VirtualFileSystemProvider();
+    resetDocumentProviders(fs);
+    const ch = new CompilationUnitHandler(fs);
+
+    const first = {
+      workspaceFolder: UriUtils.toUri("file:///first"),
+      programConfig: UriUtils.toUri("file:///first/.pliplugin/pgm_conf.json"),
+      groupsConfig: UriUtils.toUri("file:///first/.pliplugin/proc_grps.json"),
+      program: UriUtils.toUri("file:///first/test1.pli"),
+    };
+    const second = {
+      workspaceFolder: UriUtils.toUri("file:///first/second"),
+      programConfig: UriUtils.toUri(
+        "file:///first/second/.pliplugin/pgm_conf.json",
+      ),
+      groupsConfig: UriUtils.toUri(
+        "file:///first/second/.pliplugin/proc_grps.json",
+      ),
+      program: UriUtils.toUri("file:///first/second/test2.pli"),
+    };
+
+    await fs.writeFile(
+      first.programConfig,
+      JSON.stringify({
+        pgms: [
+          {
+            program: "*.pli",
+            pgroup: "xxx",
+          },
+        ],
+      }),
+    );
+    await fs.writeFile(
+      first.groupsConfig,
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "xxx",
+            "compiler-options": ["AGGREGATE"],
+            "member-name-validation": true,
+            libs: ["cpy"],
+            "include-extensions": [".pli", ".cpy", ".inc"],
+          },
+        ],
+      }),
+    );
+    await fs.writeFile(first.program, "/* test1 */");
+    await fs.writeFile(
+      second.programConfig,
+      JSON.stringify({
+        pgms: [
+          {
+            program: "*.pli",
+            pgroup: "yyy",
+          },
+        ],
+      }),
+    );
+    await fs.writeFile(
+      second.groupsConfig,
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "yyy",
+            "compiler-options": ["MARGINS(20,100)"],
+            "member-name-validation": true,
+            libs: ["cpy"],
+            "include-extensions": [".pli", ".cpy", ".inc"],
+          },
+        ],
+      }),
+    );
+    await fs.writeFile(second.program, "/* test2 */");
+
+    const firstWorkspace = await ch.initializeWorkspaceFolder(
+      first.workspaceFolder,
+    );
+    const secondWorkspace = await ch.initializeWorkspaceFolder(
+      second.workspaceFolder,
+    );
 
     expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy();
     const firstConfig = firstWorkspace.config.getProgramConfig(first.program)!;
