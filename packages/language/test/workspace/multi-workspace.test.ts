@@ -31,74 +31,85 @@ describe("Multi Workspace Tests", () => {
       program: UriUtils.toUri("file:///second/test2.pli"),
     };
 
-    await fs.writeFile(first.programConfig, JSON.stringify({
-      "pgms": [
-        {
-          "program": "*.pli",
-          "pgroup": "xxx"
-        }
-      ]
-    }));
-    await fs.writeFile(first.groupsConfig, JSON.stringify({
-      "pgroups": [
-        {
-          "name": "xxx",
-          "compiler-options": [
-            "AGGREGATE",
-          ],
-          "member-name-validation": true,
-          "libs": [
-            "cpy"
-          ],
-          "include-extensions": [
-            ".pli",
-            ".cpy",
-            ".inc"
-          ]
-        }
-      ]
-    }));
+    await fs.writeFile(
+      first.programConfig,
+      JSON.stringify({
+        pgms: [
+          {
+            program: "*.pli",
+            pgroup: "xxx",
+          },
+        ],
+      }),
+    );
+    await fs.writeFile(
+      first.groupsConfig,
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "xxx",
+            "compiler-options": ["AGGREGATE"],
+            "member-name-validation": true,
+            libs: ["cpy"],
+            "include-extensions": [".pli", ".cpy", ".inc"],
+          },
+        ],
+      }),
+    );
     await fs.writeFile(first.program, "/* test1 */");
-    await fs.writeFile(second.programConfig, JSON.stringify({
-      "pgms": [
-        {
-          "program": "*.pli",
-          "pgroup": "yyy"
-        }
-      ]
-    }));
-    await fs.writeFile(second.groupsConfig, JSON.stringify({
-      "pgroups": [
-        {
-          "name": "yyy",
-          "compiler-options": [
-            "MARGINS(20,100)"
-          ],
-          "member-name-validation": true,
-          "libs": [
-            "cpy"
-          ],
-          "include-extensions": [
-            ".pli",
-            ".cpy",
-            ".inc"
-          ]
-        }
-      ]
-    }));
+    await fs.writeFile(
+      second.programConfig,
+      JSON.stringify({
+        pgms: [
+          {
+            program: "*.pli",
+            pgroup: "yyy",
+          },
+        ],
+      }),
+    );
+    await fs.writeFile(
+      second.groupsConfig,
+      JSON.stringify({
+        pgroups: [
+          {
+            name: "yyy",
+            "compiler-options": ["MARGINS(20,100)"],
+            "member-name-validation": true,
+            libs: ["cpy"],
+            "include-extensions": [".pli", ".cpy", ".inc"],
+          },
+        ],
+      }),
+    );
     await fs.writeFile(second.program, "/* test2 */");
 
     const firstWorkspace = await ch.initializeWorkspaceFolder("file:///first");
-    const secondWorkspace = await ch.initializeWorkspaceFolder("file:///second");
-    
+    const secondWorkspace =
+      await ch.initializeWorkspaceFolder("file:///second");
+
     expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy();
     const firstConfig = firstWorkspace.config.getProgramConfig(first.program)!;
-    const firstGroup = firstWorkspace.config.getProcessGroupConfig(firstConfig.pgroup.value)!;
-    expect(firstGroup.compilerOptions.map(co => co.value).includes("AGGREGATE")).toBeTruthy();
+    const firstGroup = firstWorkspace.config.getProcessGroupConfig(
+      firstConfig.pgroup.value,
+    )!;
+    expect(
+      firstGroup.compilerOptions.map((co) => co.value).includes("AGGREGATE"),
+    ).toBeTruthy();
 
-    expect(secondWorkspace.config.hasProgramConfig(second.program)).toBeTruthy(); 
-    const secondConfig = secondWorkspace.config.getProgramConfig(second.program)!;
-    const secondGroup = secondWorkspace.config.getProcessGroupConfig(secondConfig.pgroup.value)!;
-    expect(secondGroup.compilerOptions.map(co => co.value).includes("MARGINS(20,100)")).toBeTruthy();
+    expect(
+      secondWorkspace.config.hasProgramConfig(second.program),
+    ).toBeTruthy();
+    const secondConfig = secondWorkspace.config.getProgramConfig(
+      second.program,
+    )!;
+    const secondGroup = secondWorkspace.config.getProcessGroupConfig(
+      secondConfig.pgroup.value,
+    )!;
+    expect(
+      secondGroup.compilerOptions
+        .map((co) => co.value)
+        .includes("MARGINS(20,100)"),
+    ).toBeTruthy();
   });
 });

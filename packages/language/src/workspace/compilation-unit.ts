@@ -520,7 +520,10 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     return Promise.all(promises).then(() => undefined);
   }
 
-  async triggerOnFileChange(params: { changes: FileEvent[] }, connection?: Connection): Promise<void> {
+  async triggerOnFileChange(
+    params: { changes: FileEvent[] },
+    connection?: Connection,
+  ): Promise<void> {
     // First thing: Figure out whether any of the changed files are plugin config files
     // If they are, we need to reindex the workspace anyway - no need to check for other changes.
     function isPluginConfigFile(uri: string): boolean {
@@ -570,19 +573,19 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
         changeAffectsLibs(workspace, changes)
       ) {
         if (connection) {
-          const promises = this
-            .getAllWorkspaceFolders()
-            .map(async (workspaceContext) => {
+          const promises = this.getAllWorkspaceFolders().map(
+            async (workspaceContext) => {
               await pluginConfigChanged(connection, this, workspaceContext);
-            });
+            },
+          );
           await Promise.all(promises);
         }
       } else {
         const compilationUnits = new Set<CompilationUnit>();
         // Not a plugin config change, meaning that individual folders/files have changed.
-        for (const compilationUnit of this
-          .getAllWorkspaceFolders()
-          .flatMap((workspace) => workspace.getAllCompilationUnits())) {
+        for (const compilationUnit of this.getAllWorkspaceFolders().flatMap(
+          (workspace) => workspace.getAllCompilationUnits(),
+        )) {
           if (compilationUnit.includeError) {
             // If the compilation unit has an unresolved include, we need to re-run the lifecycle
             // to see if the include can now be resolved.
@@ -631,8 +634,7 @@ export async function pluginConfigChanged(
   workspaceContext: WorkspaceContext,
 ): Promise<void> {
   // handle changes to the .pliplugin config folder's contents
-  const diagnosticsByUri =
-    await workspaceContext.config.reloadConfigurations();
+  const diagnosticsByUri = await workspaceContext.config.reloadConfigurations();
   publishPluginConfigDiagnostics(connection, diagnosticsByUri);
 
   // reindex reachable compilation units

@@ -424,7 +424,11 @@ export function startLanguageServer(
       const promises = compilationUnitHandler
         .getAllWorkspaceFolders()
         .map(async (workspaceContext) => {
-          await pluginConfigChanged(connection, compilationUnitHandler, workspaceContext);
+          await pluginConfigChanged(
+            connection,
+            compilationUnitHandler,
+            workspaceContext,
+          );
         });
       await Promise.all(promises);
     },
