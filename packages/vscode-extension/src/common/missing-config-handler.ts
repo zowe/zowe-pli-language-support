@@ -30,13 +30,14 @@ export async function handleMissingConfig(
   let workspaceFolderUri: vscode.Uri | undefined;
 
   for (const folder of workspaceFolders) {
-    if (
-      !workspaceFolderUri ||
-      (UriUtils.contains(textEditorUri, folder) &&
+    if (UriUtils.contains(folder, textEditorUri)) {
+      if (
+        !workspaceFolderUri ||
         UriUtils.toNormalizedKey(folder).length >
-          UriUtils.toNormalizedKey(workspaceFolderUri).length)
-    ) {
-      workspaceFolderUri = folder;
+          UriUtils.toNormalizedKey(workspaceFolderUri).length
+      ) {
+        workspaceFolderUri = folder;
+      }
     }
   }
 
