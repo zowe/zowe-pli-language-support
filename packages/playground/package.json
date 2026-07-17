@@ -9,30 +9,31 @@
   "scripts": {
     "clean": "shx rm -fr *.tsbuildinfo out",
     "copy:extensions": "shx cp ../vscode-extension/pli-language-support.vsix ./pli-language-support.vsix",
-    "build": "pnpm copy:extensions && vite -c vite.config.ts build",
-    "serve": "vite -c vite.config.ts serve",
-    "preview": "vite -c vite.config.ts preview",
+    "build": "pnpm build:production:main",    
+    "build:production:main": "pnpm copy:extensions && vite -c vite.config.production.ts build",
+    "serve": "vite -c vite.config.production.ts serve",
+    "preview": "vite -c vite.config.preview.ts preview",
     "build:clean": "pnpm clean && pnpm build",
     "dev": "vite -c vite.config.ts",
     "dev:debug": "vite -c vite.config.ts --debug --force"
   },
   "dependencies": {
-    "@codingame/monaco-vscode-api": "^35.0.0",
-    "@codingame/monaco-vscode-editor-api": "^35.0.0",
-    "@codingame/monaco-vscode-explorer-service-override": "^35.0.0",
-    "@codingame/monaco-vscode-files-service-override": "^35.0.0",
-    "@codingame/monaco-vscode-keybindings-service-override": "^35.0.0",
-    "@codingame/monaco-vscode-markers-service-override": "^35.0.0",
-    "@codingame/monaco-vscode-outline-service-override": "^35.0.0",
-    "@codingame/monaco-vscode-views-service-override": "^35.0.0",
-    "@codingame/monaco-vscode-textmate-service-override": "^35.0.0",
+    "@codingame/monaco-vscode-api": "^35.0.1",
+    "@codingame/monaco-vscode-editor-api": "^35.0.1",
+    "@codingame/monaco-vscode-explorer-service-override": "^35.0.1",
+    "@codingame/monaco-vscode-files-service-override": "^35.0.1",
+    "@codingame/monaco-vscode-keybindings-service-override": "^35.0.1",
+    "@codingame/monaco-vscode-markers-service-override": "^35.0.1",
+    "@codingame/monaco-vscode-outline-service-override": "^35.0.1",
+    "@codingame/monaco-vscode-views-service-override": "^35.0.1",
+    "@codingame/monaco-vscode-textmate-service-override": "^35.0.1",
     "lz-string": "^1.5.0",
-    "monaco-languageclient": "11.0.0-next.0",
-    "vscode": "npm:@codingame/monaco-vscode-extension-api@^35.0.0",
-    "vscode-json-languageservice": "~5.4.4"
+    "monaco-languageclient": "11.0.0-next.1",
+    "vscode": "npm:@codingame/monaco-vscode-extension-api@^35.0.1",
+    "vscode-json-languageservice": "^5.7.2"
   },
   "devDependencies": {
-    "@codingame/monaco-vscode-rollup-vsix-plugin": "^35.0.0",
-    "vite": "^8.0.16"
+    "@codingame/monaco-vscode-rollup-vsix-plugin": "^35.0.1",
+    "vite": "^8.1.5"
   }
 }

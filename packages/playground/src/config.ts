@@ -9,22 +9,24 @@
  *
  */
 
-import * as vscode from "vscode";
 import { LogLevel } from "@codingame/monaco-vscode-api";
+import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
 import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-service-override";
 import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
-import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
 import getOutlineServiceOverride from "@codingame/monaco-vscode-outline-service-override";
+import type { MonacoVscodeApiConfig } from "monaco-languageclient/vscodeApiWrapper";
 import {
+  configureDefaultWorkerFactory,
+  PossibleWorkerLabelsExtended,
   useWorkerFactory,
   Worker,
   WorkerLoader,
 } from "monaco-languageclient/workerFactory";
-import type { MonacoVscodeApiConfig } from "monaco-languageclient/vscodeApiWrapper";
+import * as vscode from "vscode";
 
 // Load the PL/I extension directly - no need to load the worker
-import "../pli-language-support.vsix";
 import { ILogger } from "@codingame/monaco-vscode-api/vscode/vs/platform/log/common/log";
+import "../pli-language-support.vsix";
 
 export const configure = async (
   htmlContainer?: HTMLElement,
@@ -95,7 +97,9 @@ export const configure = async (
     advanced: {
       enableExtHostWorker: true,
     },
-    monacoWorkerFactory: configureDefaultWorkerFactory,
+    monacoWorkerFactory: import.meta.env.DEV
+      ? configureDefaultWorkerFactoryDev
+      : configureDefaultWorkerFactory,
   };
 
   return vscodeApiConfig;
@@ -169,8 +173,8 @@ const viewsInit = async () => {
   }
 };
 
-const defineDefaultWorkerLoaders: () => Partial<
-  Record<string, WorkerLoader>
+const defineDefaultWorkerLoadersDev: () => Partial<
+  Record<PossibleWorkerLabelsExtended, WorkerLoader>
 > = () => {
   console.log(import.meta.url);
   const defaultEditorWorkerService = () => {
@@ -203,9 +207,9 @@ const defineDefaultWorkerLoaders: () => Partial<
   };
 };
 
-export const configureDefaultWorkerFactory = (logger?: ILogger) => {
+const configureDefaultWorkerFactoryDev = (logger?: ILogger) => {
   useWorkerFactory({
-    workerLoaders: defineDefaultWorkerLoaders(),
+    workerLoaders: defineDefaultWorkerLoadersDev(),
     logger,
   });
 };
