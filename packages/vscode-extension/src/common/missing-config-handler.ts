@@ -23,12 +23,20 @@ export async function handleMissingConfig(
     return;
   }
 
-  // settle on the 1st workspace folder available
-  // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!workspaceFolder) {
+  const workspaceFolders = (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri);
+  const textEditorUri = textEditor.document.uri;
+  let workspaceFolderUri: vscode.Uri | undefined;
+
+  for (const folder of workspaceFolders) {
+    if (!workspaceFolderUri || (UriUtils.contains(textEditorUri, folder) && UriUtils.toNormalizedKey(folder).length > UriUtils.toNormalizedKey(workspaceFolderUri).length)) {
+      workspaceFolderUri = folder;
+    }
+  }
+
+  if (!workspaceFolderUri) {
     return;
   }
+  const workspaceFolder = workspaceFolderUri.fsPath;
 
   // check if we can create a .pliplugin folder
   const plipluginPath = path.join(workspaceFolder, ".pliplugin");
