@@ -35,6 +35,7 @@ import {
   plainItem,
   ProcessGroup,
   ProgramConfig,
+  ProgramOrigin,
   ProgramRecord,
 } from "../config/schema";
 import { isBoolean, isNumber, isStringArray } from "../utils/types";
@@ -65,6 +66,7 @@ export {
   type ProcessGroup,
   type ProgramConfig,
   type ProgramEntry,
+  type ProgramOrigin,
   type ProgramRecord,
 } from "../config/schema";
 
@@ -185,6 +187,26 @@ interface ConfigSource {
   entry?: ParseEntry;
   document: TextDocument;
 }
+
+/**
+ * Precedence of a program-config match against a file, **lowest value wins**.
+ * Used by {@link PluginConfigurationProvider.getProgramConfig} to pick the
+ * best match rather than the first hit, so a user-scope `settings.json` entry
+ * can never shadow a project `.pliplugin/` entry that also matches:
+ *
+ *  1. source — project (`.pliplugin/`) beats settings;
+ *  2. specificity — an exact path beats a glob (within the same source).
+ *
+ * Ties beyond this are broken by insertion order (project entries are merged
+ * first). `ProjectExact` is the best possible rank, so matching it lets the
+ * lookup stop early.
+ */
+const ProgramMatchRank = {
+  ProjectExact: 0,
+  ProjectGlob: 1,
+  SettingsExact: 2,
+  SettingsGlob: 3,
+} as const;
 
 /**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
@@ -473,22 +495,31 @@ export class PluginConfigurationProvider {
       (source): source is ConfigSource => source !== undefined,
     );
 
-    // Parse pgm_conf sources and merge by resolved program URI.
+    // Parse pgm_conf sources and merge by resolved program URI, tagging each
+    // entry with its origin (project `.pliplugin/` vs. user-scope settings).
     //
-    // Precedence is HIGHEST-FIRST here (the reverse of `pgmSources`), because
-    // `getProgramConfig` resolves a file to a program config by returning the
-    // *first* glob match in insertion order. Iterating `.pliplugin/` first and
-    // only keeping the first entry for a given key means project configs both
-    // (a) win exact-key collisions and (b) shadow broader settings globs (e.g.
-    // a user-scope `program: "**/*"`) instead of being shadowed by them. If we
-    // inserted settings first, a catch-all settings glob would bind every file
-    // to the settings pgroup and the `.pliplugin/` entry would never be reached.
-    const mergedPrograms = new Map<string, ProgramConfig>();
+    // Two layers of precedence work together:
+    //  1. Here, `.pliplugin/` sources are processed FIRST (the reverse of
+    //     `pgmSources`) and the `has` guard keeps the first entry per key, so a
+    //     project entry wins any exact-key collision with settings.
+    //  2. `getProgramConfig` then prefers project entries over settings entries
+    //     at lookup time (see its ranking). Together these guarantee a settings
+    //     program entry can never shadow a project entry that also matches the
+    //     file — whether the settings entry is a broad glob (e.g. `**/*`) or an
+    //     exact path (e.g. `a.pli`, which a plain `Map.get` would otherwise let
+    //     win via a direct key hit).
+    const projectPgmConfUri = plipluginPgmConfUri.toString();
+    const mergedPrograms = new Map<
+      string,
+      { config: ProgramConfig; origin: ProgramOrigin }
+    >();
     for (const source of [...pgmSources].reverse()) {
       this.knownPgmConfUris.add(source.uri.toString());
       const result = parseProgramConfigs(source.text, source.uri, source.entry);
       diagnostics.push(...result.diagnostics);
       if (result.config) {
+        const origin: ProgramOrigin =
+          source.uri.toString() === projectPgmConfUri ? "project" : "settings";
         for (const config of result.config) {
           const resolvedUri = this.resolveProgramPath(
             config.program.value,
@@ -496,12 +527,12 @@ export class PluginConfigurationProvider {
           );
           const key = resolvedUri.toString();
           if (!mergedPrograms.has(key)) {
-            mergedPrograms.set(key, config);
+            mergedPrograms.set(key, { config, origin });
           }
         }
       }
     }
-    this.setProgramConfigs(
+    this.applyProgramConfigs(
       this.workspacePath,
       Array.from(mergedPrograms.values()),
     );
@@ -879,9 +910,27 @@ export class PluginConfigurationProvider {
     workspaceUri: URI,
     programConfigs: ProgramConfig[],
   ): void {
+    // Direct callers (quick-fix add, `.pliplugin/`-only parse, tests) are all
+    // project-scoped, so their entries bind at project precedence.
+    this.applyProgramConfigs(
+      workspaceUri,
+      programConfigs.map((config) => ({ config, origin: "project" as const })),
+    );
+  }
+
+  /**
+   * Rebuilds the program-config map from the given entries, each tagged with
+   * the source it came from ({@link ProgramOrigin}). Program paths are
+   * normalized and resolved relative to the workspace (unless absolute), then
+   * post-processed so abstract options are built.
+   */
+  private applyProgramConfigs(
+    workspaceUri: URI,
+    entries: Array<{ config: ProgramConfig; origin: ProgramOrigin }>,
+  ): void {
     this.programConfigs.clear();
 
-    for (const config of programConfigs) {
+    for (const { config, origin } of entries) {
       const resolvedUri = this.resolveProgramPath(
         config.program.value,
         workspaceUri,
@@ -893,6 +942,7 @@ export class PluginConfigurationProvider {
         ...config,
         abstractOptions: { options: [], tokens: [], issues: [], comments: [] },
         issues: [],
+        origin,
       });
     }
     this.postProcessProgramConfigs();
@@ -1008,11 +1058,14 @@ export class PluginConfigurationProvider {
 
   /**
    * Returns the program config for the given program URI.
-   * Lookup order:
-   * 1. Exact match against registered config keys.
-   * 2. Glob pattern match (using minimatch) against decoded URIs.
    *
-   * @see https://github.com/isaacs/minimatch
+   * Rather than returning the first hit, this picks the *highest-precedence*
+   * match (see {@link ProgramMatchRank}) so a user-scope `settings.json` entry
+   * can never shadow a project `.pliplugin/` entry that also matches. This is
+   * what fixes the exact-path settings case: a plain `Map.get(uri)` direct hit
+   * would return a settings `program: "a.pli"` entry even when a project glob
+   * (e.g. `*.pli`) also matches; ranking lets the project glob win instead.
+   *
    * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
@@ -1022,32 +1075,60 @@ export class PluginConfigurationProvider {
     // the path alone is sufficient.
     // Note that we need to decode the URI
     const uri = program.toString(true);
-    const direct = this.programConfigs.get(uri);
-    if (direct) {
-      return direct;
-    }
-    // fallback to glob matching
+
+    let best: ProgramRecord | undefined;
+    let bestRank = Number.POSITIVE_INFINITY;
     for (const [pattern, config] of this.programConfigs.entries()) {
-      if (pattern === uri) {
-        continue; // already checked
+      const rank = this.programMatchRank(uri, pattern, config);
+      if (rank === undefined || rank >= bestRank) {
+        continue; // no match, or not better than what we already have
       }
+      best = config;
+      bestRank = rank;
+      if (rank === ProgramMatchRank.ProjectExact) {
+        break; // best possible rank
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Precedence of a single program-config entry as a match for `uri`, or
+   * `undefined` when its pattern does not match the file. Lower ranks win;
+   * see {@link ProgramMatchRank}.
+   *
+   * @param uri Decoded program URI being resolved.
+   * @param pattern The program config's key (an exact path or a glob).
+   * @param record The candidate program config.
+   */
+  private programMatchRank(
+    uri: string,
+    pattern: string,
+    record: ProgramRecord,
+  ): number | undefined {
+    const isExact = pattern === uri;
+    if (!isExact) {
       try {
         // attempt match on decoded URI
-        if (
-          minimatch(uri, decodeURIComponent(pattern), {
-            nocase: true,
-          })
-        ) {
-          return config;
+        if (!minimatch(uri, decodeURIComponent(pattern), { nocase: true })) {
+          return undefined;
         }
       } catch (e) {
         console.error(
-          `Invalid glob pattern "${pattern}" for program "${program}": ${e}`,
+          `Invalid glob pattern "${pattern}" for program "${uri}": ${e}`,
         );
+        return undefined;
       }
     }
-    // no match
-    return undefined;
+    // Absent origin is treated as "project" (see ProgramRecord.origin).
+    if (record.origin === "settings") {
+      return isExact
+        ? ProgramMatchRank.SettingsExact
+        : ProgramMatchRank.SettingsGlob;
+    }
+    return isExact
+      ? ProgramMatchRank.ProjectExact
+      : ProgramMatchRank.ProjectGlob;
   }
 
   /**
