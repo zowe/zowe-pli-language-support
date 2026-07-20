@@ -35,12 +35,7 @@ import {
   RuleConfiguration,
   Translator,
 } from "./translator";
-import {
-  Diagnostic,
-  diagnosticFromCode,
-  Range,
-} from "../../language-server/types";
-import { CompilerOptionsCodes } from "./codes";
+import { Diagnostic, Range } from "../../language-server/types";
 
 export interface DiagnosticAnchor {
   range: Range;
@@ -168,102 +163,24 @@ export class CompilerOptionTranslator {
   /**
    * Perform a compiler option post-processing for tasks that involve all compiler options
    * instead of the options grouped by a single process directives.
-   * Should be called once per compilation.
+   * Runs every registered {@link PostProcessHook} (colocated with the rule it belongs to,
+   * e.g. in translator-pli.ts) once per compilation, in dependency order.
    */
   postProcessCompilerOptions(): void {
-    this.applyImplicitMacroOption();
-    this.validatePPLimits();
-  }
+    this.translator.postProcess();
+    this.translatorMacro.postProcess();
+    this.translatorSQL.postProcess();
 
-  /**
-   * If the MACRO option is specified along with the PP option, the MACRO preprocessor is
-   * added to the beginning of the final, fully accumulated list of preprocessors in the
-   * PP option, unless it is already first in that list.
-   */
-  protected applyImplicitMacroOption(): void {
-    if (!this.ppDefaultsCleared || !this.translator.options.macro) {
-      return;
-    }
-    const items = this.translator.options.pp?.items;
-    const first = items?.[0];
-    if (items && first?.name !== CompilerOptions.PPItemName.MACRO) {
-      items.unshift({ name: CompilerOptions.PPItemName.MACRO });
-      this.result.issues.push(
-        ...this.applyDiagnosticAnchor([
-          diagnosticFromCode(
-            CompilerOptionsCodes.PP.MacroImplicitlyAdded,
-            first?.token,
-          ),
-        ]),
-      );
-    }
-  }
-
-  /**
-   * Validates pp.items array against the documented PP invocation limits:
-   * a maximum of 31 preprocessor steps in total, the CICS preprocessor invoked at most once,
-   * and the SQL preprocessor invoked no more than twice (and only twice if the first SQL
-   * invocation specifies INCONLY as its option).
-   */
-  protected validatePPLimits(): void {
-    const items = this.translator.options.pp?.items;
-    if (!items) {
-      return;
-    }
-
-    const diagnostics: Diagnostic[] = [];
-
-    if (items.length > 31) {
-      diagnostics.push(
-        diagnosticFromCode(
-          CompilerOptionsCodes.PP.TooManyPreprocessorSteps,
-          items[31]?.token,
-          items.length,
-        ),
-      );
-    }
-
-    let cicsCount = 0;
-    let sqlCount = 0;
-    let firstSqlHasIncOnly = false;
-
-    for (const item of items) {
-      if (item.name === CompilerOptions.PPItemName.CICS) {
-        cicsCount++;
-        if (cicsCount > 1) {
-          diagnostics.push(
-            diagnosticFromCode(
-              CompilerOptionsCodes.PP.CicsInvokedMoreThanOnce,
-              item.token,
-            ),
-          );
-        }
-      } else if (item.name === CompilerOptions.PPItemName.SQL) {
-        sqlCount++;
-        if (sqlCount === 1) {
-          firstSqlHasIncOnly =
-            typeof item.value === "string" && /\bINCONLY\b/i.test(item.value);
-        } else if (sqlCount === 2) {
-          if (!firstSqlHasIncOnly) {
-            diagnostics.push(
-              diagnosticFromCode(
-                CompilerOptionsCodes.PP.SqlSecondInvocationRequiresIncOnly,
-                item.token,
-              ),
-            );
-          }
-        } else if (sqlCount > 2) {
-          diagnostics.push(
-            diagnosticFromCode(
-              CompilerOptionsCodes.PP.SqlInvokedTooManyTimes,
-              item.token,
-            ),
-          );
-        }
-      }
-    }
-
-    this.result.issues.push(...this.applyDiagnosticAnchor(diagnostics));
+    this.result.issues.push(
+      ...this.applyDiagnosticAnchor([
+        ...this.translator.diagnostics,
+        ...this.translatorMacro.diagnostics,
+        ...this.translatorSQL.diagnostics,
+      ]),
+    );
+    this.translator.clearIssues();
+    this.translatorMacro.clearIssues();
+    this.translatorSQL.clearIssues();
   }
 
   protected parseNestedOptions<T extends CompilerOptionsPP>(

@@ -11,13 +11,22 @@
 
 /// <reference path="../../../framework.ts" />
 
-// @wrap: process
-////*PROCESS PPINCLUDE(<|1:'ID(-inc)'|>);
+// The PPINCLUDE/PP(INCLUDE) validation looks at the final, fully-merged compiler
+// options, so it doesn't matter which *PROCESS directive PP(INCLUDE) appears in
+// relative to PPINCLUDE.
 
-// PPINCLUDE has no effect without PP(INCLUDE) also being enabled.
-verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.PPInclude.NoEffectWithoutPPInclude.message(),
-});
+// @wrap: process
+////*PROCESS <|1:PPINCLUDE('ID(-inc)');|>
+////*PROCESS PP(INCLUDE);
+
+verify.noDiagnostics(1);
 verify.expectCompilerOptions({
   ppInclude: { value: "ID(-inc)" },
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.INCLUDE,
+      },
+    ],
+  },
 });

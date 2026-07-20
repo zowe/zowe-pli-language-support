@@ -11,13 +11,24 @@
 
 /// <reference path="../../../framework.ts" />
 
-// @wrap: process
-////*PROCESS PPINCLUDE(<|1:'ID(-inc)'|>);
+// PPINCLUDE('ID(-inc)') is overridden by the alt-keyword specified via
+// PP(INCLUDE('ID(++include)')).
 
-// PPINCLUDE has no effect without PP(INCLUDE) also being enabled.
+// @wrap: process
+////*PROCESS PPINCLUDE(<|1:'ID(-inc)'|>) PP(INCLUDE('ID(++include)'));
+
 verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.PPInclude.NoEffectWithoutPPInclude.message(),
+  message: code.CompilerOptions.PPInclude.OverriddenByPPInclude.message(),
 });
 verify.expectCompilerOptions({
   ppInclude: { value: "ID(-inc)" },
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.INCLUDE,
+        value: "ID(++include)",
+      },
+    ],
+    ppInclude: { value: "++INCLUDE" },
+  },
 });

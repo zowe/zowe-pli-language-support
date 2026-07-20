@@ -395,7 +395,7 @@ export interface CompilerOptions {
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-ppinclude
    */
-  ppInclude?: string | false;
+  ppInclude?: CompilerOptions.PPValue | false;
   /**
    * https://www.ibm.com/docs/en/epfz/6.1?topic=descriptions-pplist
    */
@@ -1657,9 +1657,9 @@ export function getEffectiveIncludeAlt(
   if (!includeActive) {
     return undefined;
   }
-  if (typeof options.ppInclude === "string") {
+  if (options.ppInclude && typeof options.ppInclude.value === "string") {
     // Fall back to the PPINCLUDE base value (bare PP(INCLUDE), no args).
-    const match = options.ppInclude.match(/ID\(([^)]+)\)\s*$/);
+    const match = options.ppInclude.value.match(/ID\(([^)]+)\)\s*$/);
     if (match) {
       return match[0].slice(3, -1).toUpperCase();
     }
