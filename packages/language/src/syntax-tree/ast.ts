@@ -3027,7 +3027,7 @@ export function createLabelPrefix(): LabelPrefix {
 }
 export interface LabelReference extends AstNode {
   kind: SyntaxKind.LabelReference;
-  label: Reference<LabelPrefix> | null;
+  label: MemberCall | null;
 }
 export function createLabelReference(): LabelReference {
   return {

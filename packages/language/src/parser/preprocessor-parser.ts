@@ -670,16 +670,7 @@ function goToStatement(state: ParserState): ast.GoToStatement {
 
 function labelReference(state: ParserState): ast.LabelReference {
   const reference = ast.createLabelReference();
-  const label = state.consume(
-    reference,
-    CstNodeKind.LabelReference_LabelRef,
-    t.ID,
-  );
-  reference.label = ast.createReference(
-    reference,
-    label,
-    ast.ReferenceType.Variable,
-  );
+  reference.label = memberCall(state, true);
   return reference;
 }
 
@@ -783,12 +774,29 @@ function includeStatement(state: ParserState): ast.IncludeDirective {
         item.memberName = ddnameOrMember;
         item.token = nextIdToken;
       }
+    } else if (
+      state.tryConsume(item, CstNodeKind.IncludeItem_OpenParen, t.OpenParen)
+    ) {
+      // DISCREPANCY: The compiler also accepts (ID) here (with parenthesis)
+      item = ast.createIncludeItemMember();
+      const memberToken = state.consume(
+        item,
+        CstNodeKind.IncludeItem_MemberID,
+        t.ID,
+      );
+      if (memberToken) {
+        range = tokenToRange(memberToken);
+        item.memberName = memberToken?.image ?? null;
+        item.token = memberToken;
+      } else {
+        parseError = true;
+      }
+      state.consume(item, CstNodeKind.IncludeItem_CloseParen, t.CloseParen);
+      if (parseError) {
+        break;
+      }
     } else {
       item = ast.createIncludeItemFile();
-      for (const idToken of idTokens) {
-        idToken.element = item;
-      }
-
       // direct file include, not a member (from string)
       const stringToken = state.tryConsume(
         item,
@@ -881,16 +889,7 @@ function endStatement(
   if (state.canConsume(t.ID)) {
     const label = ast.createLabelReference();
     statement.label = label;
-    const labelToken = state.consume(
-      label,
-      CstNodeKind.LabelReference_LabelRef,
-      t.ID,
-    );
-    label.label = ast.createReference(
-      label,
-      labelToken,
-      ast.ReferenceType.Variable,
-    );
+    label.label = memberCall(state, false);
   }
   statement.semicolon = state.consume(
     statement,

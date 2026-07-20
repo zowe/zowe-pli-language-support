@@ -590,7 +590,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
           labels: value.labels,
         };
       } else if (value.kind === SyntaxKind.LabelReference) {
-        return value.label?.text;
+        return value.label?.element?.ref?.text;
       }
     }
     return value;

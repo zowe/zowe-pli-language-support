@@ -42,7 +42,10 @@ export function IBM1213I_unreferenced_procedure(
   for (const label of labels) {
     const references = compilationUnit.referencesCache.findReferences(label);
     for (const ref of references) {
-      if (ref.owner.container?.kind !== ast.SyntaxKind.EndStatement) {
+      if (
+        ref.owner.container?.container?.container?.kind !==
+        ast.SyntaxKind.EndStatement
+      ) {
         // The label is referenced somewhere, so we don't generate a warning
         return;
       }
