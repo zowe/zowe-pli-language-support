@@ -683,7 +683,6 @@ export enum CstNodeKind {
   ProcedureCallArgs_Comma,
   ProcedureCallArgs_Star1,
   ProcedureCallArgs_CloseParen,
-  LabelReference_LabelRef,
   TypeReference_StartColon,
   TypeReference_Ref,
   TypeReference_EndColon,

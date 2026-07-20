@@ -475,8 +475,18 @@ export const AttributeStringifiers: {
 
     let parameters = "";
     if (data.parameters.length > 0) {
-      parameters = data.parameters.map((param) => param.toString()).join(", ");
-      parameters = `(${parameters})`;
+      let values = "";
+      for (const param of data.parameters) {
+        if (values !== "") {
+          values += ", ";
+        }
+        if (param.type === DataType.Unknown) {
+          values += "*";
+        } else {
+          values += param.toString();
+        }
+      }
+      parameters = `(${values})`;
     }
 
     let returns = "";

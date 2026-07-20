@@ -1085,19 +1085,26 @@ const attachStatement = rule(
 
     state.consume(element, CstNodeKind.AttachStatement_ATTACH, tokens.ATTACH);
     element.reference = locatorCall.rule(state);
-    state.consume(element, CstNodeKind.AttachStatement_THREAD, tokens.THREAD);
-    state.consume(
-      element,
-      CstNodeKind.AttachStatement_OpenParenTask,
-      tokens.OpenParen,
-    );
-    element.task = locatorCall.rule(state);
-    state.consume(
-      element,
-      CstNodeKind.AttachStatement_CloseParenTask,
-      tokens.CloseParen,
-    );
-
+    // Optional THREAD clause
+    if (
+      state.tryConsume(
+        element,
+        CstNodeKind.AttachStatement_THREAD,
+        tokens.THREAD,
+      )
+    ) {
+      state.consume(
+        element,
+        CstNodeKind.AttachStatement_OpenParenTask,
+        tokens.OpenParen,
+      );
+      element.task = locatorCall.rule(state);
+      state.consume(
+        element,
+        CstNodeKind.AttachStatement_CloseParenTask,
+        tokens.CloseParen,
+      );
+    }
     // Optional ENVIRONMENT clause
     if (
       state.tryConsume(
@@ -3267,7 +3274,7 @@ const genericReference = rule(
         tokens.OpenParen,
       );
 
-      if (state.canConsumeFirst(genericDescriptor.first())) {
+      while (state.canConsumeFirst(genericDescriptor.first())) {
         const descr = genericDescriptor.rule(state);
         descr && element.descriptors.push(descr);
       }
@@ -5933,11 +5940,20 @@ const entryAttribute = rule(
         tokens.OpenParen,
       )
     ) {
+      const startsWithComma = state.canConsume(tokens.Comma);
       // DISCREPANCY: The language spec says that the parameter list cannot be empty
       // But the compiler seems to allow it, so we do the same here
-      if (state.canConsumeFirst(entryDescription.first())) {
-        const lhs = entryDescription.rule(state);
-        lhs && element.attributes.push(lhs);
+      if (startsWithComma || state.canConsumeFirst(entryDescription.first())) {
+        // DISCREPANCY: The language spec says that the attribute cannot be empty
+        // But the compiler accepts an empty attribute as a * (wildcard).
+        if (startsWithComma) {
+          const emptyAttribute = ast.createEntryParameterDescription();
+          emptyAttribute.star = true;
+          element.attributes.push(emptyAttribute);
+        } else {
+          const lhs = entryDescription.rule(state);
+          lhs && element.attributes.push(lhs);
+        }
 
         const { inc } = state.createLoopContext("EntryAttribute 2");
         while (
@@ -5948,6 +5964,17 @@ const entryAttribute = rule(
           )
         ) {
           inc();
+          const emptyAttribute = ast.createEntryParameterDescription();
+          emptyAttribute.star = true;
+          if (state.canConsume(tokens.CloseParen)) {
+            // Empty attribute at the end, e.g., ENTRY(A,B,)
+            element.attributes.push(emptyAttribute);
+            break;
+          } else if (state.canConsume(tokens.Comma)) {
+            // Empty attribute between commas, e.g., ENTRY(A,,B)
+            element.attributes.push(emptyAttribute);
+            continue;
+          }
           const rhs = entryDescription.rule(state);
           rhs && element.attributes.push(rhs);
         }
@@ -6358,7 +6385,13 @@ const parenthesizedExpression = rule(
     );
 
     // See documentation of RepeatedExpression for details on this syntax
-    if (params.init && repeatedExpressionLookahead(state)) {
+    if (
+      (params.init && repeatedExpressionLookahead(state)) ||
+      // Even if not within an INITIAL attribute, we still allow repeated expressions
+      // for constant values (strings and numbers)
+      state.canConsume(tokens.STRING_TERM) ||
+      state.canConsume(tokens.NUMBER)
+    ) {
       const repeated = expression.rule(state, params);
       if (repeated !== null) {
         const repeatedExpr = ast.createRepeatedExpression();
@@ -6480,20 +6513,7 @@ const labelReference = rule(
   sequence(tokens.ID),
   (state: ParserState): ast.LabelReference => {
     const element = ast.createLabelReference();
-
-    const idToken = state.consume(
-      element,
-      CstNodeKind.LabelReference_LabelRef,
-      tokens.ID,
-    );
-    if (idToken) {
-      element.label = ast.createReference(
-        element,
-        idToken,
-        ast.ReferenceType.Variable,
-      );
-    }
-
+    element.label = memberCall.rule(state, ast.ReferenceType.Variable);
     return element;
   },
 );
