@@ -474,8 +474,17 @@ export class PluginConfigurationProvider {
     );
 
     // Parse pgm_conf sources and merge by resolved program URI.
+    //
+    // Precedence is HIGHEST-FIRST here (the reverse of `pgmSources`), because
+    // `getProgramConfig` resolves a file to a program config by returning the
+    // *first* glob match in insertion order. Iterating `.pliplugin/` first and
+    // only keeping the first entry for a given key means project configs both
+    // (a) win exact-key collisions and (b) shadow broader settings globs (e.g.
+    // a user-scope `program: "**/*"`) instead of being shadowed by them. If we
+    // inserted settings first, a catch-all settings glob would bind every file
+    // to the settings pgroup and the `.pliplugin/` entry would never be reached.
     const mergedPrograms = new Map<string, ProgramConfig>();
-    for (const source of pgmSources) {
+    for (const source of [...pgmSources].reverse()) {
       this.knownPgmConfUris.add(source.uri.toString());
       const result = parseProgramConfigs(source.text, source.uri, source.entry);
       diagnostics.push(...result.diagnostics);
@@ -485,7 +494,10 @@ export class PluginConfigurationProvider {
             config.program.value,
             this.workspacePath,
           );
-          mergedPrograms.set(resolvedUri.toString(), config);
+          const key = resolvedUri.toString();
+          if (!mergedPrograms.has(key)) {
+            mergedPrograms.set(key, config);
+          }
         }
       }
     }
