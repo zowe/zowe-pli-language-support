@@ -22,12 +22,14 @@ import { CompilerOption, SyntaxKind } from "../../syntax-tree/ast";
 import { getTranslator as getTranslatorPLI } from "./translator-pli";
 import { getTranslator as getTranslatorMacro } from "./translator-macro";
 import { getTranslator as getTranslatorSQL } from "./translator-sql";
+import { getTranslator as getTranslatorCICS } from "./translator-cics";
 import {
   CompilerOptions,
   CompilerOptions as CompilerOptionsPLI,
 } from "./options-pli";
 import { CompilerOptions as CompilerOptionsMacro } from "./options-macro";
 import { CompilerOptions as CompilerOptionsSQL } from "./options-sql";
+import { CompilerOptions as CompilerOptionsCICS } from "./options-cics";
 import {
   CompilerOptionSource,
   RuleConfiguration,
@@ -44,6 +46,7 @@ export class CompilerOptionTranslator {
   protected translator = getTranslatorPLI();
   protected translatorMacro = getTranslatorMacro();
   protected translatorSQL = getTranslatorSQL();
+  protected translatorCICS = getTranslatorCICS();
 
   protected result: CompilerOptionResult = {
     options: getDefaultCompilerOptions(),
@@ -84,11 +87,18 @@ export class CompilerOptionTranslator {
       this.translator.options.ppSql,
       configuration,
     );
+    this.parseNestedOptions(
+      this.translatorCICS,
+      CompilerOptions.PPItemName.CICS,
+      this.translator.options.ppCics,
+      configuration,
+    );
 
     this.result.options = {
       ...(this.translator.options as CompilerOptionsPLI),
       macroOptions: this.translatorMacro.options as CompilerOptionsMacro,
       sqlOptions: this.translatorSQL.options as CompilerOptionsSQL,
+      cicsOptions: this.translatorCICS.options as CompilerOptionsCICS,
     };
     if (configuration?.source === CompilerOptionSource.SOURCE_FILE) {
       this.result.tokens.push(...input.tokens);
@@ -99,17 +109,20 @@ export class CompilerOptionTranslator {
         ...this.translator.diagnostics,
         ...this.translatorMacro.diagnostics,
         ...this.translatorSQL.diagnostics,
+        ...this.translatorCICS.diagnostics,
       ]),
     );
     this.translator.clearIssues();
     this.translatorMacro.clearIssues();
     this.translatorSQL.clearIssues();
+    this.translatorCICS.clearIssues();
   }
 
   clear(): void {
     this.translator.clear();
     this.translatorMacro.clear();
     this.translatorSQL.clear();
+    this.translatorCICS.clear();
     this.result = {
       options: getDefaultCompilerOptions(),
       tokens: [],
@@ -124,13 +137,14 @@ export class CompilerOptionTranslator {
 
   /**
    * Returns a stable fingerprint of all forceRecompile-flagged rules and their arguments
-   * across PLI, Macro, and SQL translators. Used to invalidate InstructionCache.
+   * across PLI, Macro, SQL, and CICS translators. Used to invalidate InstructionCache.
    */
   getRecompileFingerprint(): string {
     return [
       this.translator.getRecompileFingerprint(),
       this.translatorMacro.getRecompileFingerprint("MACRO"),
       this.translatorSQL.getRecompileFingerprint("SQL"),
+      this.translatorCICS.getRecompileFingerprint("CICS"),
     ].join("\n--\n");
   }
 

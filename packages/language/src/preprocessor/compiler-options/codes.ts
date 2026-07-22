@@ -1226,4 +1226,39 @@ export const CompilerOptionsCodes = {
       },
     },
   },
+
+  PPCICS: {
+    Flag: {
+      InvalidParameter: {
+        code: "COPPICS01",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "I", "W", "E" or "S", but received '${value}'.`,
+      },
+    },
+
+    NatLang: {
+      InvalidParameter: {
+        code: "COPPICS02",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "EN" or "KA", but received '${value}'.`,
+      },
+    },
+
+    Margins: {
+      InvalidMarginPosition: {
+        code: "COPPICS03",
+        severity: Severity.E,
+        message: () => `The left margin must be less than the right margin.`,
+      },
+
+      InvalidAnsPosition: {
+        code: "COPPICS04",
+        severity: Severity.E,
+        message: () =>
+          `The ANS character should be located outside of the values specified by m and n.`,
+      },
+    },
+  },
 };
