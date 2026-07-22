@@ -11,16 +11,23 @@
 
 /// <reference path="../../../framework.ts" />
 
+// The SQL preprocessor can be invoked twice, since the first invocation specifies
+// INCONLY as its option.
+
 // @wrap: process
-////*PROCESS PP(CICS("DLI EXCI SP SYSEIB"));
+////*PROCESS PP(SQL("INCONLY") SQL);
 
 verify.noDiagnostics();
-
 verify.expectCompilerOptions({
-  cicsOptions: {
-    dli: true,
-    exci: true,
-    sp: true,
-    sysEib: true,
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.SQL,
+        value: "INCONLY",
+      },
+      {
+        name: constants.CompilerOptions.PPItemName.SQL,
+      },
+    ],
   },
 });

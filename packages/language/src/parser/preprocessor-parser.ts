@@ -32,7 +32,7 @@ import {
 import { PLICodes } from "../validation/pli-codes";
 import { performAssignmentLookahead } from "./parser-lookahead";
 import { ExpressionParameter } from "./parser-types";
-import { execStatement } from "./exec-parser";
+import { deferredExecStatement, execStatement } from "./exec-parser";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const tokenEndSet = new Set(t.PPSignifier.map((tok) => tok.tokenTypeIdx!));
@@ -85,9 +85,16 @@ export async function statement(
         labels: true,
       });
     } else {
-      // Try to parse EXEC CICS/SQL statement
+      /* Try to recognize an EXEC CICS/SQL statement. This never invokes the real
+       * preprocessor engine here - it only needs to correctly consume the statement so
+       * that surrounding %DO/%IF blocks are delimited correctly; the actual processing is
+       * deferred to whichever dedicated PP(CICS)/PP(SQL) phase (if any) runs
+       * later in the pipeline (see {@link deferredExecStatement}).
+       */
       if (state.token?.tokenTypeIdx === t.EXEC.tokenTypeIdx) {
-        const execStmt = await parseExecStatement(state, textDocument);
+        const execStmt = await parseExecStatement(state, textDocument, {
+          deferred: true,
+        });
         if (execStmt) {
           return execStmt;
         }
@@ -204,7 +211,7 @@ export async function commonStatement(
           state.canConsume(t.EXEC, t.ExecFragment) &&
           hasNextWordToken(state)
         ) {
-          unit = await execStatement(state, textDocument);
+          unit = deferredExecStatement(state);
         }
         break;
       case t.GO.tokenTypeIdx:
@@ -374,6 +381,9 @@ function performRecovery(
 export async function parseExecStatement(
   state: ParserState,
   textDocument: TextDocument,
+  options: {
+    deferred: boolean;
+  } = { deferred: false },
 ): Promise<ast.Statement | undefined> {
   const statement = ast.createStatement();
   if (!state.canConsume(t.EXEC, t.ExecFragment)) {
@@ -385,7 +395,11 @@ export async function parseExecStatement(
     return undefined;
   }
 
-  statement.value = await execStatement(state, textDocument);
+  if (options.deferred) {
+    statement.value = deferredExecStatement(state);
+  } else {
+    statement.value = await execStatement(state, textDocument);
+  }
   return statement;
 }
 

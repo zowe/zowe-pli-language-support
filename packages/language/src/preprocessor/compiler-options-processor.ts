@@ -125,6 +125,8 @@ export class CompilerOptionsProcessor {
       });
     }
 
+    this.translator.postProcessCompilerOptions();
+
     return {
       result: this.translator.getResults(),
       text: newText,

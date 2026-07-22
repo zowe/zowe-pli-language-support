@@ -11,16 +11,23 @@
 
 /// <reference path="../../../framework.ts" />
 
+// The CICS preprocessor must be invoked at most once.
+
 // @wrap: process
-////*PROCESS PP(CICS("DLI EXCI SP SYSEIB"));
+////*PROCESS PP(CICS <|1:CICS|>);
 
-verify.noDiagnostics();
-
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.PP.CicsInvokedMoreThanOnce.message(),
+});
 verify.expectCompilerOptions({
-  cicsOptions: {
-    dli: true,
-    exci: true,
-    sp: true,
-    sysEib: true,
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.CICS,
+      },
+      {
+        name: constants.CompilerOptions.PPItemName.CICS,
+      },
+    ],
   },
 });

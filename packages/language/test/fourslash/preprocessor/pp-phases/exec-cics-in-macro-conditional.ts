@@ -11,10 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
-// EXEC CICS embedded inside a macro %IF/%THEN/%DO conditional must be handled by the
-// CICS phase after the MACRO phase decides which branch survives. Here SYSTEM = 'CICS',
-// so the condition is false and the %ELSE branch is taken, leaving only the SIGNAL ERROR
-// statement. The CICS phase still runs cleanly over the macro output.
+// EXEC CICS embedded inside a macro %IF/%THEN/%DO conditional is handled by the dedicated
+// CICS phase only after the MACRO phase decides which branch survives - the MACRO phase's
+// own internal walk merely recognizes the EXEC statement to correctly delimit the %DO
+// block, without invoking the real CICS engine itself. Here SYSTEM = 'CICS', so the
+// condition is false and the %ELSE branch is taken, leaving only the SIGNAL ERROR
+// statement; the %THEN branch's EXEC CICS statement is discarded entirely and never
+// reaches the CICS phase at all.
 
 //// TEST: PROC;
 ////   %DECLARE SYSTEM CHARACTER;
