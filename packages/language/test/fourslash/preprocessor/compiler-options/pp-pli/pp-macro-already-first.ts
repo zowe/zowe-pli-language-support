@@ -11,16 +11,21 @@
 
 /// <reference path="../../../framework.ts" />
 
-// @wrap: process
-////*PROCESS PP(CICS("DLI EXCI SP SYSEIB"));
+// Specifying MACRO and PP(MACRO SQL) leaves the PP option unchanged, since MACRO is
+// already first in the list, and no diagnostic is reported.
+
+////*PROCESS MACRO PP(MACRO SQL);
 
 verify.noDiagnostics();
-
 verify.expectCompilerOptions({
-  cicsOptions: {
-    dli: true,
-    exci: true,
-    sp: true,
-    sysEib: true,
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.MACRO,
+      },
+      {
+        name: constants.CompilerOptions.PPItemName.SQL,
+      },
+    ],
   },
 });

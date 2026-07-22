@@ -31,6 +31,16 @@ import {
 } from "../language-server/types";
 import { HostLanguageType } from "preprocessor-cics";
 
+/**
+ * Parses the `EXEC CICS`/`EXEC SQL` statement, invoking the actual CICS/SQL
+ * preprocessor engine. This should only be called from the dedicated
+ * `ExecCicsPreprocessorPhase`/`ExecSqlPreprocessorPhase`'s own handler
+ * (`exec-phase.ts`'s `createExecHandler`), which already checked that the fragment's
+ * prefix matches that phase's own type before calling this.
+ * Any other caller that merely needs to recognize and correctly skip over an EXEC statement
+ * (e.g. the MACRO phase's internal walk, used only to delimit `%DO`/`%IF` blocks) must use
+ * {@link deferredExecStatement} instead, which never invokes the real engine.
+ */
 export async function execStatement(
   state: ParserState,
   textDocument: TextDocument,
@@ -84,6 +94,26 @@ export async function execStatement(
     t.Semicolon,
   );
   return execStatement;
+}
+
+/**
+ * Recognizes and correctly consumes an `EXEC CICS`/`EXEC SQL` statement WITHOUT invoking
+ * the real preprocessor engine. Used by any caller that isn't the dedicated
+ * `PP(CICS)`/`PP(SQL)` phase's own handler (see {@link execStatement}). Since no
+ * preprocessing happens here, there's nothing CICS/SQL-specific to represent - the
+ * statement's tokens are preserved verbatim as a plain `ast.TokenStatement` (the same
+ * shape `consumeTokenStatement` produces for other unrecognized text), which the
+ * existing token-based instruction generation already re-emits unchanged, deferring real
+ * processing entirely to whichever dedicated phase (if any) is configured to run later.
+ */
+export function deferredExecStatement(state: ParserState): ast.TokenStatement {
+  const tokenStatement = ast.createTokenStatement();
+  const start = state.index;
+  state.consume(undefined, undefined, t.EXEC);
+  state.consume(undefined, undefined, t.ExecFragment);
+  state.consume(undefined, undefined, t.Semicolon);
+  tokenStatement.tokens = state.tokens.slice(start, state.index);
+  return tokenStatement;
 }
 
 function handleTokens(
@@ -190,18 +220,27 @@ function handleExecFragment(
   const startOffset = fragmentToken.startOffset + prefixLength;
   const statementText = fragmentToken.image.substring(prefixLength);
   let preprocessor: Preprocessor | undefined;
-  switch (prefixMatch?.[1].toUpperCase()) {
-    case "CICS":
-      execStatement.preprocessorType = ast.PreprocessorType.CICS;
+  const recognizedType = recognizeExecType(prefixMatch?.[1]);
+  execStatement.preprocessorType = recognizedType;
+
+  switch (recognizedType) {
+    case ast.PreprocessorType.CICS:
       preprocessor = new CICSPreprocessor(HostLanguageType.PLI);
       break;
-    case "SQL":
-      execStatement.preprocessorType = ast.PreprocessorType.SQL;
+    case ast.PreprocessorType.SQL:
       preprocessor = new Db2SqlPreprocessor();
-      break;
-    default:
-      execStatement.preprocessorType = ast.PreprocessorType.UNKNOWN;
       break;
   }
   return { preprocessor, statementText, startOffset };
+}
+
+function recognizeExecType(prefix: string | undefined): ast.PreprocessorType {
+  switch (prefix?.toUpperCase()) {
+    case "CICS":
+      return ast.PreprocessorType.CICS;
+    case "SQL":
+      return ast.PreprocessorType.SQL;
+    default:
+      return ast.PreprocessorType.UNKNOWN;
+  }
 }

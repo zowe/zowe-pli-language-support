@@ -11,16 +11,22 @@
 
 /// <reference path="../../../framework.ts" />
 
+// If you specify the PP option more than once, the compiler effectively concatenates
+// them. So specifying PP(SQL) PP(CICS) is the same as specifying PP(SQL CICS).
+
 // @wrap: process
-////*PROCESS PP(CICS("DLI EXCI SP SYSEIB"));
+////*PROCESS PP(SQL) PP(CICS);
 
 verify.noDiagnostics();
-
 verify.expectCompilerOptions({
-  cicsOptions: {
-    dli: true,
-    exci: true,
-    sp: true,
-    sysEib: true,
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.SQL,
+      },
+      {
+        name: constants.CompilerOptions.PPItemName.CICS,
+      },
+    ],
   },
 });

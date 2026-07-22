@@ -12,13 +12,7 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("NODEBUG"));
-////*PROCESS PP(CICS("NOEDF"));
-////*PROCESS PP(CICS("NOLENGTH"));
-////*PROCESS PP(CICS("NOOPTIONS"));
-////*PROCESS PP(CICS("NOSOURCE"));
-////*PROCESS PP(CICS("NOSPIE"));
-////*PROCESS PP(CICS("XREF"));
+////*PROCESS PP(CICS("NODEBUG NOEDF NOLENGTH NOOPTIONS NOSOURCE NOSPIE XREF"));
 
 verify.noDiagnostics();
 

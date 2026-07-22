@@ -11,6 +11,7 @@
 
 import { CompilerOptionsCodes } from "../../../src/preprocessor/compiler-options/codes";
 import { PliMarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
+import { Severity } from "../../../src/language-server/types";
 import {
   InternalCodes,
   TypeSystemCodes,
@@ -35,4 +36,14 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
   LSP: LspCodes,
   CompilerOptions: CompilerOptionsCodes,
   TypeSystem: TypeSystemCodes,
+  Parser: {
+    unexpectedToken: (tokenImage) => ({
+      severity: Severity.S,
+      message: new RegExp(`but found "${escapeRegExp(tokenImage)}"\\.$`),
+    }),
+  },
 };
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

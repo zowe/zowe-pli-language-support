@@ -783,6 +783,46 @@ export const CompilerOptionsCodes = {
       message: (pp: string, value: number) =>
         `Expected exactly one value for the ${pp} option, but received ${value}.`,
     },
+    MacroImplicitlyAdded: {
+      code: "COPP04",
+      severity: Severity.W,
+      message: () =>
+        `The MACRO option was specified, so the MACRO preprocessor is added to the beginning of the PP option's preprocessor list.`,
+    },
+    TooManyPreprocessorSteps: {
+      code: "COPP05",
+      severity: Severity.E,
+      message: (count: number) =>
+        `A maximum of 31 preprocessor steps can be specified, but received ${count}.`,
+    },
+    CicsInvokedMoreThanOnce: {
+      code: "COPP06",
+      severity: Severity.E,
+      message: () => `The CICS preprocessor must be invoked at most once.`,
+    },
+    SqlInvokedTooManyTimes: {
+      code: "COPP07",
+      severity: Severity.E,
+      message: () => `The SQL preprocessor must be invoked no more than twice.`,
+    },
+    SqlSecondInvocationRequiresIncOnly: {
+      code: "COPP08",
+      severity: Severity.E,
+      message: () =>
+        `The SQL preprocessor can only be invoked twice if the first invocation specifies INCONLY as its option.`,
+    },
+    CicsPreprocessorRequired: {
+      code: "COPP09",
+      severity: Severity.E,
+      message: () =>
+        `EXEC CICS requires the CICS preprocessor to be enabled via PP(CICS).`,
+    },
+    SqlPreprocessorRequired: {
+      code: "COPP10",
+      severity: Severity.E,
+      message: () =>
+        `EXEC SQL requires the SQL preprocessor to be enabled via PP(SQL).`,
+    },
   },
 
   PrecType: {

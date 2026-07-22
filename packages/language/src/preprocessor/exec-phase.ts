@@ -22,7 +22,10 @@ import {
   sqlAttributeStatement,
 } from "../parser/sql-attribute-parser";
 import * as t from "../parser/tokens";
+import { tokenize } from "../parser/tokenizer";
 import * as ast from "../syntax-tree/ast";
+import { Diagnostic, diagnosticFromCode } from "../language-server/types";
+import { CompilerOptionsCodes } from "./compiler-options/codes";
 import { CompilerOptionResult } from "./compiler-options/options";
 import { generateInstructions } from "./instruction-generator";
 import { runInstructions } from "./instruction-interpreter";
@@ -161,5 +164,73 @@ export class ExecCicsPreprocessorPhase extends ExecPreprocessorPhase {
       createCicsResponseHandler(),
       createExecHandler(textDocument, ast.PreprocessorType.CICS),
     ];
+  }
+}
+
+/**
+ * Runs unconditionally, after every configured PP() phase has already had a chance to
+ * process the token stream. By this point, any `EXEC CICS`/`EXEC SQL` statement that was
+ * actually handled has already been replaced. So an `EXEC`/`ExecFragment` pair still present here means
+ * the corresponding preprocessor was never configured via `PP(CICS)`/`PP(SQL)`.
+ *
+ * Replaces the offending statement with `DO; END;` (matching the same fallback shape the
+ * real phases use) so the final PL/I grammar parse doesn't ALSO raise its own generic
+ * "unexpected token" error for the same statement.
+ */
+export class UnresolvedExecPhase implements PreprocessorPhase {
+  constructor(
+    private readonly hasCics: boolean,
+    private readonly hasSql: boolean,
+  ) {}
+
+  async execute(input: PhaseInput): Promise<PhaseResult> {
+    if (this.hasCics && this.hasSql) {
+      // Both preprocessors are configured, so no EXEC statement can be left unresolved.
+      return {
+        tokens: input.tokens,
+        statements: [],
+        diagnostics: [],
+        references: [],
+      };
+    }
+
+    const tokens = [...input.tokens];
+    const diagnostics: Diagnostic[] = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      const execToken = tokens[i];
+      if (execToken.tokenTypeIdx !== t.EXEC.tokenTypeIdx) {
+        continue;
+      }
+      const fragmentToken = tokens[i + 1];
+      if (fragmentToken?.tokenTypeIdx !== t.ExecFragment.tokenTypeIdx) {
+        continue;
+      }
+
+      const prefix = fragmentToken.image.match(/^(\w+)/i)?.[1]?.toUpperCase();
+      const code =
+        prefix === "CICS" && !this.hasCics
+          ? CompilerOptionsCodes.PP.CicsPreprocessorRequired
+          : prefix === "SQL" && !this.hasSql
+            ? CompilerOptionsCodes.PP.SqlPreprocessorRequired
+            : undefined;
+      if (!code) {
+        continue;
+      }
+
+      diagnostics.push(diagnosticFromCode(code, execToken));
+
+      // Replace EXEC/ExecFragment(/Semicolon) with a harmless DO; END; so the final
+      // grammar parse doesn't also raise its own diagnostic for the same statement.
+      let replaceCount = 2;
+      if (tokens[i + 2]?.tokenTypeIdx === t.Semicolon.tokenTypeIdx) {
+        replaceCount = 3;
+      }
+      const replacementTokens = tokenize("DO; END;", undefined).tokens;
+      tokens.splice(i, replaceCount, ...replacementTokens);
+      i += replacementTokens.length - 1;
+    }
+
+    return { tokens, statements: [], diagnostics, references: [] };
   }
 }

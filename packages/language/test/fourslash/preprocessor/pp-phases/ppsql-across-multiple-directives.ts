@@ -11,10 +11,15 @@
 
 /// <reference path="../../framework.ts" />
 
-////*PROCESS RULES(MULTICLOSE);
-//// P: PROC OPTIONS(MAIN);
-////    DO;
-////       PUT SKIP LIST('HELLO');
-//// <|END|> NONEXISTENT;
+// PPSQL(...) is a one-time setting. It must not be re-applied to the SQL sub-translator
+// every time a later.
 
-verify.expectDiagnosticsAt("END", code.Parser.unexpectedToken("END"));
+////*PROCESS PPSQL('CCSID0');
+////*PROCESS PP(MACRO SQL);
+
+verify.noDiagnostics();
+verify.expectCompilerOptions({
+  sqlOptions: {
+    ccsid0: true,
+  },
+});

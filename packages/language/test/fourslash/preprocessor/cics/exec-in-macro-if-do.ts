@@ -26,7 +26,7 @@
 
 // EXEC CICS inside a %IF/%THEN/%DO block should be recognized and processed.
 // Since SYSTEM = 'CICS', the condition is false, so the ELSE branch is taken.
-// The CICS declarations should still be generated (for the %THEN branch even though not executed)
+// The CICS declarations should still be generated (for the %THEN branch even though not executed).
 preprocessor.containsTokens([
   "TEST",
   ":",
