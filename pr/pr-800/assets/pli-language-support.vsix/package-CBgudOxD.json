@@ -30,6 +30,30 @@
     "code4z"
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "pli.goToProgramConfiguration",
+        "title": "Go to Program Configuration"
+      },
+      {
+        "command": "pli.goToProcessGroup",
+        "title": "Go to Process Group"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "pli.goToProgramConfiguration",
+          "when": "resourceLangId == pli",
+          "group": "navigation@10"
+        },
+        {
+          "command": "pli.goToProcessGroup",
+          "when": "resourceLangId == pli",
+          "group": "navigation@11"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "pli",
