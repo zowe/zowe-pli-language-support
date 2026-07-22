@@ -36,8 +36,8 @@ export async function activate(
   registerConfigFileSystem(context);
   settings = Settings.getInstance();
   context.subscriptions.push(settings);
-  registerCommands(context);
   client = await startLanguageClient(context);
+  registerCommands(context, client);
 }
 
 // This function is called when the extension is deactivated.

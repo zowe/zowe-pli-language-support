@@ -81,4 +81,43 @@ export namespace Messages {
   export const GetGlobalConfig = createRequestType<void, GlobalConfig>(
     "config/getGlobal",
   );
+
+  /**
+   * Location information for a plugin configuration entry (either a
+   * program entry in pgm_conf.json or a process group entry in
+   * proc_grps.json). Used by the "Go to Program Configuration" and
+   * "Go to Process Group" commands to navigate to the entry that
+   * applies to a given .pli file.
+   */
+  export interface PluginConfigEntryLocation {
+    /** URI of the config file (or settings.json / .code-workspace file) */
+    uri: string;
+    /** Range of the entry in the file */
+    range: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    };
+  }
+
+  /**
+   * Request sent to the LS to get the source location of the program
+   * configuration that applies to a given file URI.
+   * Returns null if no configuration matches the file.
+   */
+  export const GetProgramConfigLocation = createRequestType<
+    string,
+    PluginConfigEntryLocation | null
+  >("pli/getProgramConfigLocation");
+
+  /**
+   * Request sent to the LS to get the source location of the process
+   * group configuration bound to the program configuration that applies
+   * to a given file URI.
+   * Returns null if no configuration matches the file, or the matching
+   * program configuration has no resolvable process group.
+   */
+  export const GetProcessGroupLocation = createRequestType<
+    string,
+    PluginConfigEntryLocation | null
+  >("pli/getProcessGroupLocation");
 }

@@ -46,7 +46,11 @@ import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { FileSystemProvider } from "../workspace/file-system-provider";
 import { WorkspaceContext } from "../workspace/workspace-context";
-import { EditorDocuments, resetDocumentProviders } from "./text-documents";
+import {
+  EditorDocuments,
+  resetDocumentProviders,
+  TextDocuments as PliTextDocuments,
+} from "./text-documents";
 import { completionRequest } from "./completion/completion-request";
 import { hoverRequest } from "./hover-request";
 import { applyQuickFixes } from "./code-actions/apply-quick-fixes";
@@ -57,6 +61,7 @@ import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { MultiMap } from "../utils/collections";
+import { JsonItemMeta } from "../config/schema";
 export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
@@ -542,6 +547,74 @@ export function startLanguageServer(
     const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
     return compilationUnit !== undefined;
   });
+
+  /**
+   * Resolves a {@link JsonItemMeta} into a client-facing
+   * {@link Messages.PluginConfigEntryLocation}.
+   */
+  async function resolveConfigEntryLocation(
+    meta: JsonItemMeta | undefined,
+  ): Promise<Messages.PluginConfigEntryLocation | null> {
+    if (!meta) return null;
+    const configDoc = await PliTextDocuments.get(meta.uri.toString());
+    if (!configDoc) return null;
+
+    const lspRange = rangeToLSP(configDoc, meta.range);
+    return {
+      uri: meta.uri.toString(),
+      range: lspRange,
+    };
+  }
+
+  /**
+   * Resolves the {@link ProgramRecord} that applies to `uri`.
+   *
+   * `uri` may be an included file rather than a compilation unit's entry
+   * point (e.g. a `%INCLUDE`d copybook opened directly in the editor).
+   * `pgm_conf.json` only lists entry points, so looking up `uri` itself
+   * would fail to find a match in that case. Instead, resolve the owning
+   * compilation unit first (`compilationUnitHandler` already maps every
+   * file that's part of a processed unit back to that unit - see
+   * `CompilationUnitHandler.process`) and use its cached `programConfig`,
+   * which was already resolved from the unit's actual entry-point URI.
+   */
+  function resolveProgramConfig(
+    uri: URI,
+    compilationUnit: CompilationUnit | undefined,
+  ) {
+    if (compilationUnit) {
+      return compilationUnit.programConfig;
+    }
+    return workspace.config.getProgramConfig(uri);
+  }
+
+  onRequest(
+    connection,
+    Messages.GetProgramConfigLocation,
+    (uriString: string): Promise<Messages.PluginConfigEntryLocation | null> =>
+      withReadMutex(uriString, async (uri, compilationUnit) => {
+        const programConfig = resolveProgramConfig(uri, compilationUnit);
+        if (!programConfig) return null;
+
+        return resolveConfigEntryLocation(programConfig.program.meta);
+      }),
+  );
+
+  onRequest(
+    connection,
+    Messages.GetProcessGroupLocation,
+    (uriString: string): Promise<Messages.PluginConfigEntryLocation | null> =>
+      withReadMutex(uriString, async (uri, compilationUnit) => {
+        const programConfig = resolveProgramConfig(uri, compilationUnit);
+        if (!programConfig) return null;
+
+        const pgroupName = programConfig.pgroup.value;
+        const groupConfig = workspace.config.getProcessGroupConfig(pgroupName);
+        if (!groupConfig) return null;
+
+        return resolveConfigEntryLocation(groupConfig.meta);
+      }),
+  );
 
   connection.onCodeAction(async (params) => {
     const requestedKinds = params.context.only;
