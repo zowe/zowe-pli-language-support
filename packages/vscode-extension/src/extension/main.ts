@@ -56,7 +56,7 @@ export async function activate(
     watchPluginSettings(client),
   );
 
-  registerCommands(context);
+  registerCommands(context, client);
 
   void handleMissingConfig(vscode.window.activeTextEditor);
 }
