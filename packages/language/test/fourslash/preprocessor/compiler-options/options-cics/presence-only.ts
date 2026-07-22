@@ -12,10 +12,7 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("DLI"));
-////*PROCESS PP(CICS("EXCI"));
-////*PROCESS PP(CICS("SP"));
-////*PROCESS PP(CICS("SYSEIB"));
+////*PROCESS PP(CICS("DLI EXCI SP SYSEIB"));
 
 verify.noDiagnostics();
 
