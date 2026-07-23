@@ -3,7 +3,6 @@ import { buildBaseConfig } from "./vite.config.base";
 
 /// <reference lib="rolldown-vite/config" />
 
-export default defineConfig(({ command }) => {
-  console.log(`Running vite.config.ts with command: ${command}`);
+export default defineConfig(() => {
   return buildBaseConfig();
 });

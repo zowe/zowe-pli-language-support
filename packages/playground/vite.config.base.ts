@@ -1,5 +1,4 @@
 import vsixPlugin from "@codingame/monaco-vscode-rollup-vsix-plugin";
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { UserConfig } from "vite";
 
