@@ -37,18 +37,10 @@ export async function handleMissingConfig(
     return;
   }
 
-  const workspaceParts = UriUtils.parts(
-    UriUtils.toNormalizedKey(workspaceFolder),
+  const currentFileRelativePath = UriUtils.workspaceRelativeEntryPath(
+    workspaceFolder,
+    textEditor.document.fileName,
   );
-  const entryParts = UriUtils.parts(
-    UriUtils.toNormalizedKey(textEditor.document.fileName),
-  );
-  const isInsideWorkspace = workspaceParts.every(
-    (part, index) => part === entryParts[index],
-  );
-  const currentFileRelativePath = isInsideWorkspace
-    ? entryParts.slice(workspaceParts.length).join("/")
-    : UriUtils.normalizePath(textEditor.document.fileName);
 
   const options = {
     DONT_SHOW_AGAIN: "Don't show again",

@@ -241,6 +241,36 @@ export namespace UriUtils {
   }
 
   /**
+   * Computes the entry-point path to record for a program (e.g. the `program`
+   * field of `pgm_conf.json` and the value shown when offering to create a
+   * startup configuration).
+   *
+   * - If `entry` is inside `workspace`, returns the workspace-relative path
+   *   with forward slashes and the **original casing preserved**.
+   * - Otherwise returns the absolute file path of `entry`.
+   *
+   * Both inputs are run through {@link toFilePath}, so backslashes are
+   * normalized and Windows drive letters are uppercased consistently. The
+   * inside-workspace check is case-insensitive so it behaves correctly on
+   * case-insensitive file systems (Windows, default macOS) without discarding
+   * the original casing of the returned path.
+   */
+  export function workspaceRelativeEntryPath(
+    workspace: URI | string,
+    entry: URI | string,
+  ): string {
+    const entryPath = toFilePath(entry);
+    const workspaceParts = parts(toFilePath(workspace));
+    const entryParts = parts(entryPath);
+    const isInsideWorkspace = workspaceParts.every(
+      (part, index) => part.toLowerCase() === entryParts[index]?.toLowerCase(),
+    );
+    return isInsideWorkspace
+      ? entryParts.slice(workspaceParts.length).join("/")
+      : entryPath;
+  }
+
+  /**
    * Compute workspace-relative parent folder for a found file candidate.
    *
    * Examples:

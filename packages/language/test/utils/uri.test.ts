@@ -478,3 +478,53 @@ describe("UriUtils.composeRelativePath", () => {
     );
   });
 });
+
+describe("UriUtils.workspaceRelativeEntryPath", () => {
+  test("preserves original casing of the workspace-relative path", () => {
+    expect(
+      UriUtils.workspaceRelativeEntryPath(
+        "/Users/dev/Project",
+        "/Users/dev/Project/SOURCE/Foo.pli",
+      ),
+    ).toBe("SOURCE/Foo.pli");
+  });
+
+  test("matches the workspace prefix case-insensitively", () => {
+    // Same file/workspace, but the workspace prefix casing differs from the
+    // entry's (as can happen on case-insensitive file systems). The relative
+    // remainder must still keep its own original casing.
+    expect(
+      UriUtils.workspaceRelativeEntryPath(
+        "/users/DEV/project",
+        "/Users/dev/Project/SOURCE/Foo.pli",
+      ),
+    ).toBe("SOURCE/Foo.pli");
+  });
+
+  test("normalizes Windows backslashes while preserving casing", () => {
+    expect(
+      UriUtils.workspaceRelativeEntryPath(
+        "C:\\Users\\Dev\\Project",
+        "C:\\Users\\Dev\\Project\\SOURCE\\Foo.pli",
+      ),
+    ).toBe("SOURCE/Foo.pli");
+  });
+
+  test("returns the absolute file path when entry is outside the workspace", () => {
+    expect(
+      UriUtils.workspaceRelativeEntryPath(
+        "/Users/dev/project",
+        "/Users/dev/other/Foo.pli",
+      ),
+    ).toBe("/Users/dev/other/Foo.pli");
+  });
+
+  test("accepts URI string inputs and strips the scheme", () => {
+    expect(
+      UriUtils.workspaceRelativeEntryPath(
+        "file:///workspace",
+        "file:///workspace/SOURCE/Foo.pli",
+      ),
+    ).toBe("SOURCE/Foo.pli");
+  });
+});
