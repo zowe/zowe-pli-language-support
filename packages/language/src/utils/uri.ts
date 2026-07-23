@@ -271,15 +271,22 @@ export namespace UriUtils {
   }
 
   /**
-   * Compute workspace-relative parent folder for a found file candidate.
+   * Compute the workspace-relative parent folder for a found file candidate,
+   * preserving the candidate's original casing.
    *
    * Examples:
    *  - workspace root: /repo/plugin-example
-   *  - candidate: /repo/plugin-example/cpy/test-nested-included/nested-not-here.pli
-   *  -> returns "cpy/test-nested-included"
+   *  - candidate: /repo/plugin-example/CopyBooks/Common/nested.pli
+   *  -> returns "CopyBooks/Common"
    *
-   * If workspace-relative cannot be computed, returns the parent folder name (e.g. "test-nested-included").
-   * Returns undefined if candidate looks invalid.
+   * Built on {@link workspaceRelativeEntryPath}, so the inside-workspace check
+   * is case-insensitive (correct on case-insensitive file systems) while the
+   * returned folder keeps the candidate's on-disk casing — important because
+   * this value is written into `proc_grps.json` as a lib path, which must match
+   * the real directory name on case-sensitive file systems.
+   *
+   * Returns "" when the candidate sits directly in the workspace root, and
+   * `undefined` when the candidate is outside the workspace (or invalid).
    */
   export function computeWorkspaceRelativeParentFolder(
     candidateRaw: URI,
@@ -287,18 +294,19 @@ export namespace UriUtils {
   ): string | undefined {
     if (!candidateRaw) return undefined;
 
-    const candidate = toNormalizedKey(candidateRaw);
-    const workspaceFolder = toNormalizedKey(workspaceFolderUri);
+    const relativePath = workspaceRelativeEntryPath(
+      workspaceFolderUri,
+      candidateRaw,
+    );
 
-    if (!candidate.startsWith(workspaceFolder)) return undefined;
+    // Outside the workspace the relative computation falls back to an absolute
+    // path; there's no meaningful workspace-relative lib folder to suggest.
+    if (computePathType(relativePath) !== PathType.Relative) {
+      return undefined;
+    }
 
-    const relativePath = candidate.slice(workspaceFolder.length);
-    const parentDir = relativePath.substring(0, relativePath.lastIndexOf("/"));
-    const parentRelativePath = parentDir.startsWith("/")
-      ? parentDir.slice(1)
-      : parentDir;
-
-    return parentRelativePath;
+    const lastSlash = relativePath.lastIndexOf("/");
+    return lastSlash === -1 ? "" : relativePath.slice(0, lastSlash);
   }
 }
 
