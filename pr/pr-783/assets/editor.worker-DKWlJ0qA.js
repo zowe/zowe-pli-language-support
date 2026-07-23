@@ -1,1 +1,0 @@
-export * from '@codingame/monaco-vscode-api/workers/editor.worker'
