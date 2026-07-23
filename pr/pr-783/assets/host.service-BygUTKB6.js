@@ -1,1 +1,0 @@
-import{sb as e}from"./standaloneServices-BwCD3x6d.js";var t=e(`hostService`);export{t};
