@@ -7,6 +7,7 @@ import type { UserConfig } from "vite";
 
 export const buildBaseConfig: () => UserConfig = () => {
   return {
+    base: "./",
     build: {
       rolldownOptions: {
         input: {
