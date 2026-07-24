@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0.42% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/237</span>
+                <span class='fraction'>1/238</span>
             </div>
         
             
@@ -1010,8 +1010,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1027,8 +1027,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1162,7 +1162,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1625,7 +1625,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
         }
 &nbsp;
         const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-        const <span class="cstat-no" title="statement not covered" >response = hoverRequest(compilationUnit, uri, offset);</span>
+        const response = <span class="cstat-no" title="statement not covered" >hoverRequest(compilationUnit, uri, offset);</span>
 <span class="cstat-no" title="statement not covered" >        if (!response) {</span>
 <span class="cstat-no" title="statement not covered" >          return null;</span>
         }
@@ -1694,9 +1694,9 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >            return [];</span>
           }
           const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-          const <span class="cstat-no" title="statement not covered" >result = completionRequest(compilationUnit, uri, offset).<span class="fstat-no" title="function not covered" >map(</span></span>
-            (<span class="cstat-no" title="statement not covered" >completionItem) =&gt;</span>
-              completionItemToLSP(textDocument, completionItem),
+          const result = <span class="cstat-no" title="statement not covered" >completionRequest(compilationUnit, uri, offset).<span class="fstat-no" title="function not covered" >map(</span></span>
+            (completionItem) =&gt;
+<span class="cstat-no" title="statement not covered" >              completionItemToLSP(textDocument, completionItem),</span>
           );
 <span class="cstat-no" title="statement not covered" >          return result;</span>
         },
@@ -1712,8 +1712,8 @@ export function <span class="fstat-no" title="function not covered" >startLangua
         textDocument.getText(),
         offset,
         docUri,
-      ).<span class="fstat-no" title="function not covered" >map((<span class="cstat-no" title="statement not covered" >c</span>ompletionItem) =&gt;</span>
-        completionItemToLSP(textDocument, completionItem),
+      ).<span class="fstat-no" title="function not covered" >map((c</span>ompletionItem) =&gt;
+<span class="cstat-no" title="statement not covered" >        completionItemToLSP(textDocument, completionItem),</span>
       );
     }
   });
@@ -1727,12 +1727,12 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >          return [];</span>
         }
         const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-        const <span class="cstat-no" title="statement not covered" >definition = definitionRequest(compilationUnit, uri, offset);</span>
+        const definition = <span class="cstat-no" title="statement not covered" >definitionRequest(compilationUnit, uri, offset);</span>
         const lspDefinitions: LocationLink[] = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >        for (const def of definition) {</span>
           const doc = <span class="cstat-no" title="statement not covered" >compilationUnit.services.files.getDocument(def.uri);</span>
 <span class="cstat-no" title="statement not covered" >          if (doc) {</span>
-            const <span class="cstat-no" title="statement not covered" >range = rangeToLSP(doc, def.range);</span>
+            const range = <span class="cstat-no" title="statement not covered" >rangeToLSP(doc, def.range);</span>
             const sourceRange = <span class="cstat-no" title="statement not covered" >def.source</span>
               ? rangeToLSP(textDocument, def.source)
               : undefined;
@@ -1758,12 +1758,12 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >          return [];</span>
         }
         const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-        const <span class="cstat-no" title="statement not covered" >definition = referencesRequest(compilationUnit, uri, offset);</span>
+        const definition = <span class="cstat-no" title="statement not covered" >referencesRequest(compilationUnit, uri, offset);</span>
         const lspDefinitions: Location[] = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >        for (const def of definition) {</span>
           const doc = <span class="cstat-no" title="statement not covered" >compilationUnit.services.files.getDocument(def.uri);</span>
 <span class="cstat-no" title="statement not covered" >          if (doc) {</span>
-            const <span class="cstat-no" title="statement not covered" >range = rangeToLSP(doc, def.range);</span>
+            const range = <span class="cstat-no" title="statement not covered" >rangeToLSP(doc, def.range);</span>
 <span class="cstat-no" title="statement not covered" >            lspDefinitions.push({</span>
               uri: def.uri,
               range,
@@ -1800,7 +1800,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >          return [];</span>
         }
         const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-        const <span class="cstat-no" title="statement not covered" >definitions = getReferenceLocations(compilationUnit, uri, offset);</span>
+        const definitions = <span class="cstat-no" title="statement not covered" >getReferenceLocations(compilationUnit, uri, offset);</span>
 <span class="cstat-no" title="statement not covered" >        return definitions</span>
           .<span class="fstat-no" title="function not covered" >filter((e</span>) =&gt; <span class="cstat-no" title="statement not covered" >e.uri === uri.toString())</span>
           .<span class="fstat-no" title="function not covered" >map((d</span>ef) =&gt;
@@ -1819,7 +1819,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >          return null;</span>
         }
         const offset = <span class="cstat-no" title="statement not covered" >textDocument.offsetAt(position);</span>
-        const <span class="cstat-no" title="statement not covered" >renameLocations = renameRequest(compilationUnit, uri, offset);</span>
+        const renameLocations = <span class="cstat-no" title="statement not covered" >renameRequest(compilationUnit, uri, offset);</span>
         const changes: Record&lt;string, TextEdit[]&gt; = <span class="cstat-no" title="statement not covered" >{};</span>
 <span class="cstat-no" title="statement not covered" >        for (const [key, locations] of Object.entries(renameLocations)) {</span>
           const textDocument = <span class="cstat-no" title="statement not covered" >compilationUnit.services.files.getDocument(key);</span>
@@ -1845,9 +1845,9 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >        if (!textDocument || !compilationUnit) {</span>
 <span class="cstat-no" title="statement not covered" >          return [];</span>
         }
-        const <span class="cstat-no" title="statement not covered" >requestResult = documentSymbolRequest(uri, compilationUnit);</span>
-<span class="cstat-no" title="statement not covered" >        return requestResult.<span class="fstat-no" title="function not covered" >map((<span class="cstat-no" title="statement not covered" >s</span>ymbol) =&gt;</span></span>
-          documentSymbolToLSP(textDocument, symbol),
+        const requestResult = <span class="cstat-no" title="statement not covered" >documentSymbolRequest(uri, compilationUnit);</span>
+<span class="cstat-no" title="statement not covered" >        return requestResult.<span class="fstat-no" title="function not covered" >map((s</span>ymbol) =&gt;</span>
+<span class="cstat-no" title="statement not covered" >          documentSymbolToLSP(textDocument, symbol),</span>
         );
       },
     );
@@ -1994,7 +1994,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
     const configDoc = <span class="cstat-no" title="statement not covered" >await PliTextDocuments.get(meta.uri.toString());</span>
 <span class="cstat-no" title="statement not covered" >    if (!configDoc) <span class="cstat-no" title="statement not covered" >return null;</span></span>
 &nbsp;
-    const <span class="cstat-no" title="statement not covered" >lspRange = rangeToLSP(configDoc, meta.range);</span>
+    const lspRange = <span class="cstat-no" title="statement not covered" >rangeToLSP(configDoc, meta.range);</span>
 <span class="cstat-no" title="statement not covered" >    return {</span>
       uri: meta.uri.toString(),
       range: lspRange,
@@ -2125,7 +2125,7 @@ export function <span class="fstat-no" title="function not covered" >sendNotific
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-22T11:00:31.989Z
+                at 2026-07-24T13:36:26.186Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
