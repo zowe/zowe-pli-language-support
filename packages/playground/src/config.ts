@@ -9,14 +9,14 @@
  *
  */
 
-import * as vscode from "vscode";
 import { LogLevel } from "@codingame/monaco-vscode-api";
+import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
 import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-service-override";
 import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
-import getExplorerServiceOverride from "@codingame/monaco-vscode-explorer-service-override";
 import getOutlineServiceOverride from "@codingame/monaco-vscode-outline-service-override";
-import { configureDefaultWorkerFactory } from "monaco-languageclient/workerFactory";
 import type { MonacoVscodeApiConfig } from "monaco-languageclient/vscodeApiWrapper";
+import { configureDefaultWorkerFactory } from "monaco-languageclient/workerFactory";
+import * as vscode from "vscode";
 
 // Load the PL/I extension directly - no need to load the worker
 import "../pli-language-support.vsix";
