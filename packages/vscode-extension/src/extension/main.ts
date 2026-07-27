@@ -77,8 +77,6 @@ function registerOnDidOpenTextDocListener(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
   const listener = async (document: vscode.TextDocument) => {
-    // settle on the 1st workspace folder available
-    // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
     const workspaceFolder = locateWorkspaceFolder(document.uri);
     if (!workspaceFolder) {
       return;
