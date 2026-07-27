@@ -11,9 +11,15 @@
 
 import { Connection } from "vscode-languageserver";
 import { FileSystemProvider } from "./file-system-provider";
-import { PluginConfigurationProvider } from "./plugin-configuration-provider";
+import {
+  PluginConfigurationProvider,
+  PluginConfigurationProviderEvents,
+} from "./plugin-configuration-provider";
 import { CompilationUnit, createCompilationUnit } from "./compilation-unit";
 import { URI, UriUtils } from "../utils/uri";
+import { Cancellation, startLongRunningOperation } from "../utils/promises";
+import { sendRequest } from "../language-server/connection-handler";
+import { Messages } from "../utils/messages";
 
 /**
  * WorkspaceContext bundles the per-language-server-instance state that
@@ -43,9 +49,41 @@ export class WorkspaceContext {
   constructor(
     public readonly uri: URI,
     public readonly fs: FileSystemProvider,
-    connection?: Connection,
+    public readonly connection?: Connection,
   ) {
-    this.config = new PluginConfigurationProvider(fs, connection);
+    const cancellations = new Map<number, Cancellation>();
+    this.config = new PluginConfigurationProvider(fs);
+    this.config.onNotification(
+      PluginConfigurationProviderEvents.LongRunningOperation.Started,
+      (params) => {
+        cancellations.set(
+          params.id,
+          startLongRunningOperation(
+            connection,
+            "Processing plugin configuration...",
+          ),
+        );
+      },
+    );
+    this.config.onNotification(
+      PluginConfigurationProviderEvents.LongRunningOperation.Finished,
+      (params) => {
+        const cancel = cancellations.get(params.id);
+        if (cancel) {
+          cancel();
+          cancellations.delete(params.id);
+        }
+      },
+    );
+    this.config.onRequest(
+      PluginConfigurationProviderEvents.GlobalConfig,
+      async () => {
+        if (connection !== undefined) {
+          return sendRequest(connection, Messages.GetGlobalConfig, undefined);
+        }
+        return undefined;
+      },
+    );
   }
 
   setCompilationUnit(uri: URI, unit: CompilationUnit): void {

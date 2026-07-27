@@ -27,7 +27,6 @@ import {
   toLspDiagnostic,
 } from "../config/loader";
 import { Messages } from "../utils/messages";
-import { sendRequest } from "../language-server/connection-handler";
 import {
   GroupRecord,
   isLibsDir,
@@ -45,11 +44,11 @@ import { DEFAULT_INSTRUCTION_LIMIT } from "../preprocessor/instruction-interpret
 import { PluginConfiguration } from "../language-server/constants";
 import { type JSONPath } from "../utils/jsonc";
 import { LspCodes } from "../validation/lsp-codes";
-import { Connection } from "vscode-languageserver";
-import { startLongRunningOperation } from "../utils/promises";
+import { NotificationType, RequestType } from "vscode-languageserver";
 import { validatePgroupReferences } from "../config/cross-validation";
 import { MultiMap } from "../utils/collections";
 import { TextDocuments } from "../language-server/text-documents";
+import { EventEmitter } from "./events";
 
 // Re-export the schema types so existing imports of the provider module
 // keep working without churn at every call site.
@@ -208,11 +207,25 @@ const ProgramMatchRank = {
   SettingsGlob: 3,
 } as const;
 
+export namespace PluginConfigurationProviderEvents {
+  export namespace LongRunningOperation {
+    export const Started = new NotificationType<{ id: number }>(
+      "StartedLongRunningOperation",
+    );
+    export const Finished = new NotificationType<{ id: number }>(
+      "FinishedLongRunningOperation",
+    );
+  }
+  export const GlobalConfig = new RequestType<void, Messages.GlobalConfig, any>(
+    "GlobalConfig",
+  );
+}
+
 /**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
  * processing their contents, and making those settings available to the language server.
  */
-export class PluginConfigurationProvider {
+export class PluginConfigurationProvider extends EventEmitter {
   /**
    * Direct prefix-and-extension index for library file membership checks.
    * Maps a lower-cased URI prefix (`<workspace>/<libDir>/`) to the set of
@@ -272,16 +285,9 @@ export class PluginConfigurationProvider {
    */
   private readonly fs: FileSystemProvider;
 
-  /**
-   * Connection used to send status updates about file loading and config parsing.
-   * In some cases, such as when working with remote file system, loading and processing of config files can be slow.
-   * Having the connection allows us to send progress updates to the client, so the user knows something is happening.
-   */
-  private readonly connection: Connection | undefined;
-
-  constructor(fs: FileSystemProvider, connection?: Connection) {
+  constructor(fs: FileSystemProvider) {
+    super();
     this.fs = fs;
-    this.connection = connection;
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
@@ -428,6 +434,7 @@ export class PluginConfigurationProvider {
     return this.loadConfigurations();
   }
 
+  private loadConfigurationsInstanceId = 0;
   /**
    * Loads the plugin configurations, overwriting any existing configs.
    *
@@ -447,9 +454,10 @@ export class PluginConfigurationProvider {
    */
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
-    const cancel = startLongRunningOperation(
-      this.connection,
-      "Processing plugin configuration...",
+    const id = this.loadConfigurationsInstanceId++;
+    this.notify(
+      PluginConfigurationProviderEvents.LongRunningOperation.Started,
+      { id },
     );
 
     this.programConfigs.clear();
@@ -587,7 +595,10 @@ export class PluginConfigurationProvider {
         this.previouslyPublishedUris.add(uri);
       }
     }
-    cancel();
+    this.notify(
+      PluginConfigurationProviderEvents.LongRunningOperation.Finished,
+      { id },
+    );
     return lspDiagnostics;
   }
 
@@ -629,17 +640,10 @@ export class PluginConfigurationProvider {
   private async fetchGlobalSettings(): Promise<
     Messages.GlobalConfig | undefined
   > {
-    if (!this.connection) return undefined;
-    try {
-      return await sendRequest(
-        this.connection,
-        Messages.GetGlobalConfig,
-        undefined,
-      );
-    } catch (err) {
-      console.error("Failed to fetch global plugin configuration:", err);
-      return undefined;
-    }
+    return await this.request(
+      PluginConfigurationProviderEvents.GlobalConfig,
+      undefined,
+    );
   }
 
   /**
