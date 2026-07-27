@@ -13,6 +13,7 @@ import * as vscode from "vscode";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { PluginConfiguration, UriUtils } from "pli-language";
+import { locateWorkspaceFolder } from "../extension/config-loader";
 
 let shouldShowInfoMessage = true;
 
@@ -23,24 +24,7 @@ export async function handleMissingConfig(
     return;
   }
 
-  const workspaceFolders = (vscode.workspace.workspaceFolders ?? []).map(
-    (folder) => folder.uri,
-  );
-  const textEditorUri = textEditor.document.uri;
-  let workspaceFolderUri: vscode.Uri | undefined;
-
-  for (const folder of workspaceFolders) {
-    if (UriUtils.contains(folder, textEditorUri)) {
-      if (
-        !workspaceFolderUri ||
-        UriUtils.toNormalizedKey(folder).length >
-          UriUtils.toNormalizedKey(workspaceFolderUri).length
-      ) {
-        workspaceFolderUri = folder;
-      }
-    }
-  }
-
+  const workspaceFolderUri = locateWorkspaceFolder(textEditor.document.uri);
   if (!workspaceFolderUri) {
     return;
   }

@@ -9,7 +9,7 @@
  *
  */
 
-import { Messages } from "pli-language";
+import { Messages, UriUtils } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
 import { onRequest, sendNotification } from "./messages";
@@ -51,13 +51,12 @@ export function registerConfigLoader(
 export async function getGlobalConfig(
   userSettingsUri: vscode.Uri,
 ): Promise<Messages.GlobalConfig> {
-  // TODO: support multi-root workspaces here as well
-  const folder = vscode.workspace.workspaceFolders?.[0];
+  const workspaceFolder = locateWorkspaceFolder(userSettingsUri);
   const result: Messages.GlobalConfig = {};
-  if (folder) {
-    const pgmConf = locate("pgm_conf", folder, userSettingsUri);
+  if (workspaceFolder) {
+    const pgmConf = locate("pgm_conf", workspaceFolder, userSettingsUri);
     if (pgmConf) result.pgmConf = pgmConf;
-    const procGrps = locate("proc_grps", folder, userSettingsUri);
+    const procGrps = locate("proc_grps", workspaceFolder, userSettingsUri);
     if (procGrps) result.procGrps = procGrps;
   }
   return result;
@@ -65,7 +64,7 @@ export async function getGlobalConfig(
 
 function locate(
   key: ConfigKey,
-  folder: vscode.WorkspaceFolder,
+  folder: vscode.Uri,
   userSettingsUri: vscode.Uri,
 ): Messages.GlobalConfigEntry | undefined {
   const inspect = vscode.workspace.getConfiguration("pli", folder).inspect(key);
@@ -80,7 +79,7 @@ function locate(
     configKey: `pli.${key}`,
   });
   const vscodeSettingsUri = vscode.Uri.joinPath(
-    folder.uri,
+    folder,
     ".vscode",
     "settings.json",
   );
@@ -139,4 +138,26 @@ export function watchPluginSettings(
       );
     }
   });
+}
+
+export function locateWorkspaceFolder(
+  textEditorUri: vscode.Uri,
+): vscode.Uri | undefined {
+  const workspaceFolders = (vscode.workspace.workspaceFolders ?? []).map(
+    (folder) => folder.uri,
+  );
+  let workspaceFolderUri: vscode.Uri | undefined;
+
+  for (const folder of workspaceFolders) {
+    if (UriUtils.contains(folder, textEditorUri)) {
+      if (
+        !workspaceFolderUri ||
+        UriUtils.toNormalizedKey(folder).length >
+          UriUtils.toNormalizedKey(workspaceFolderUri).length
+      ) {
+        workspaceFolderUri = folder;
+      }
+    }
+  }
+  return workspaceFolderUri;
 }
