@@ -43,7 +43,6 @@ import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { FileSystemProvider } from "../workspace/file-system-provider";
-import { WorkspaceContext } from "../workspace/workspace-context";
 import {
   EditorDocuments,
   resetDocumentProviders,
@@ -58,7 +57,6 @@ import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import { Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
-import { MultiMap } from "../utils/collections";
 import { JsonItemMeta } from "../config/schema";
 import { assertType } from "../preprocessor/util";
 export { PluginConfiguration, Commands } from "./constants";
@@ -483,7 +481,8 @@ export function startLanguageServer(
     if (compilationUnit) {
       return compilationUnit.programConfig;
     }
-    return workspace.config.getProgramConfig(uri);
+    const workspace = compilationUnitHandler.getWorkspaceFolderOf(uri);
+    return workspace?.config.getProgramConfig(uri);
   }
 
   onRequest(
@@ -506,8 +505,9 @@ export function startLanguageServer(
         const programConfig = resolveProgramConfig(uri, compilationUnit);
         if (!programConfig) return null;
 
+        const workspace = compilationUnitHandler.getWorkspaceFolderOf(uri);
         const pgroupName = programConfig.pgroup.value;
-        const groupConfig = workspace.config.getProcessGroupConfig(pgroupName);
+        const groupConfig = workspace?.config.getProcessGroupConfig(pgroupName);
         if (!groupConfig) return null;
 
         return resolveConfigEntryLocation(groupConfig.meta);
