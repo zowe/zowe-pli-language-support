@@ -423,6 +423,10 @@ export const AttributeStringifiers: {
     }
   },
   [AttributeKind.DataType]: function (value: DataType): string | undefined {
+    switch (value) {
+      case DataType.Label:
+        return "LABEL";
+    }
     return undefined;
   },
   [AttributeKind.Dimension]: function (

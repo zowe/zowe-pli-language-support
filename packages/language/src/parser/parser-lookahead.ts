@@ -92,6 +92,56 @@ export function performAssignmentLookahead(state: ParserState): boolean {
   return false;
 }
 
+/**
+ * Checks whether the tokens starting at lookahead position `index` form a
+ * label prefix: `ID [ ( ...balanced... ) ]* :`
+ * Dimensions are allowed since labels can reference declared label arrays,
+ * e.g. `DCL L(2) LABEL; L(1): PUT("HELLO");`
+ *
+ * @returns the lookahead index directly after the colon, or undefined if no label prefix is present
+ */
+export function skipLabelPrefixLookahead(
+  state: ParserState,
+  index: number,
+): number | undefined {
+  // The compiler will not use more than 160 tokens to perform the lookahead
+  const max = index + 160;
+  let token = state.peek(index);
+  if (!token || !tokenMatcher(token, tokens.ID)) {
+    return undefined;
+  }
+  let i = index + 1;
+  token = state.peek(i);
+  // Skip any number of balanced parenthesis groups (label array dimensions)
+  while (token && tokenMatcher(token, tokens.OpenParen)) {
+    let parenthesis = 1;
+    i++;
+    while (parenthesis > 0) {
+      if (i >= max) {
+        return undefined;
+      }
+      const inner = state.peek(i++);
+      if (!inner || tokenMatcher(inner, tokens.Semicolon)) {
+        return undefined;
+      }
+      if (tokenMatcher(inner, tokens.OpenParen)) {
+        parenthesis++;
+      } else if (tokenMatcher(inner, tokens.CloseParen)) {
+        parenthesis--;
+      }
+    }
+    token = state.peek(i);
+  }
+  if (token && tokenMatcher(token, tokens.Colon)) {
+    return i + 1;
+  }
+  return undefined;
+}
+
+export function performLabelPrefixLookahead(state: ParserState): boolean {
+  return skipLabelPrefixLookahead(state, 1) !== undefined;
+}
+
 function performIfLookahead(state: ParserState): boolean {
   let i = 1;
   let token = state.peek(i++);
@@ -162,18 +212,11 @@ export function performEndStatementLookahead(
   let token: tokens.Token | undefined = undefined;
 
   while ((token = lookahead(index)) && !tokenMatcher(token, tokens.END)) {
-    const idToken = lookahead(index);
-    const colonToken = lookahead(index + 1);
-    if (!idToken || !colonToken) {
+    const next = skipLabelPrefixLookahead(state, index);
+    if (next === undefined) {
       return { endStatement: false };
     }
-    if (
-      !tokenMatcher(idToken, tokens.ID) ||
-      !tokenMatcher(colonToken, tokens.Colon)
-    ) {
-      return { endStatement: false };
-    }
-    index += 2;
+    index = next;
   }
 
   if (!token || !tokenMatcher(token, tokens.END)) {

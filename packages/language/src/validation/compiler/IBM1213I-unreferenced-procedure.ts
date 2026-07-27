@@ -11,6 +11,10 @@
 
 import { diagnosticFromCode } from "../../language-server/types";
 import * as ast from "../../syntax-tree/ast";
+import {
+  getLabelPrefixName,
+  getLabelPrefixNameToken,
+} from "../../syntax-tree/ast-utils";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { PLICodes } from "../pli-codes";
 import { ValidationAcceptor } from "../validator";
@@ -36,12 +40,18 @@ export function IBM1213I_unreferenced_procedure(
   }
   const labels = container.labels;
   const label = labels[0];
-  if (!label || !label.nameToken || !label.name) {
+  const nameToken = getLabelPrefixNameToken(label);
+  const name = getLabelPrefixName(label);
+  if (!label || !nameToken || !name) {
     return;
   }
   for (const label of labels) {
     const references = compilationUnit.referencesCache.findReferences(label);
     for (const ref of references) {
+      if (ref.owner.container?.kind === ast.SyntaxKind.LabelPrefix) {
+        // The label prefix's own name reference — not a real usage
+        continue;
+      }
       if (
         ref.owner.container?.container?.container?.kind !==
         ast.SyntaxKind.EndStatement
@@ -51,7 +61,5 @@ export function IBM1213I_unreferenced_procedure(
       }
     }
   }
-  acceptor(
-    diagnosticFromCode(PLICodes.Warning.IBM1213I, label.nameToken, label.name),
-  );
+  acceptor(diagnosticFromCode(PLICodes.Warning.IBM1213I, nameToken, name));
 }

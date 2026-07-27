@@ -3014,15 +3014,13 @@ export function createKeywordCondition(): KeywordCondition {
 
 export interface LabelPrefix extends AstNode {
   kind: SyntaxKind.LabelPrefix;
-  nameToken: Token | null;
-  name: string | null;
+  item: ReferenceItem | null;
 }
 export function createLabelPrefix(): LabelPrefix {
   return {
     kind: SyntaxKind.LabelPrefix,
     container: null,
-    nameToken: null,
-    name: null,
+    item: null,
   };
 }
 export interface LabelReference extends AstNode {

@@ -86,7 +86,6 @@ export enum CstNodeKind {
   ProcedureStatement_Semicolon,
   ProcedureStatement_PROCEDURE_END,
   ScopeAttribute_Scope,
-  LabelPrefix_Name,
   LabelPrefix_Colon,
   EntryStatement_ENTRY,
   EntryStatement_OpenParenParams,
