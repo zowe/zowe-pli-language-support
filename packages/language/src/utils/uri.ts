@@ -241,19 +241,9 @@ export namespace UriUtils {
   }
 
   /**
-   * Computes the entry-point path to record for a program (e.g. the `program`
-   * field of `pgm_conf.json` and the value shown when offering to create a
-   * startup configuration).
-   *
-   * - If `entry` is inside `workspace`, returns the workspace-relative path
-   *   with forward slashes and the **original casing preserved**.
-   * - Otherwise returns the absolute file path of `entry`.
-   *
-   * Both inputs are run through {@link toFilePath}, so backslashes are
-   * normalized and Windows drive letters are uppercased consistently. The
-   * inside-workspace check is case-insensitive so it behaves correctly on
-   * case-insensitive file systems (Windows, default macOS) without discarding
-   * the original casing of the returned path.
+   * Returns `entry` relative to `workspace` (original casing preserved), or its
+   * absolute path when outside the workspace. Membership is matched
+   * case-insensitively for correctness on case-insensitive file systems.
    */
   export function workspaceRelativeEntryPath(
     workspace: URI | string,
@@ -271,22 +261,9 @@ export namespace UriUtils {
   }
 
   /**
-   * Compute the workspace-relative parent folder for a found file candidate,
-   * preserving the candidate's original casing.
-   *
-   * Examples:
-   *  - workspace root: /repo/plugin-example
-   *  - candidate: /repo/plugin-example/CopyBooks/Common/nested.pli
-   *  -> returns "CopyBooks/Common"
-   *
-   * Built on {@link workspaceRelativeEntryPath}, so the inside-workspace check
-   * is case-insensitive (correct on case-insensitive file systems) while the
-   * returned folder keeps the candidate's on-disk casing — important because
-   * this value is written into `proc_grps.json` as a lib path, which must match
-   * the real directory name on case-sensitive file systems.
-   *
-   * Returns "" when the candidate sits directly in the workspace root, and
-   * `undefined` when the candidate is outside the workspace (or invalid).
+   * Returns the candidate's workspace-relative parent folder (original casing
+   * preserved), `""` when it sits in the workspace root, or `undefined` when it
+   * is outside the workspace or invalid.
    */
   export function computeWorkspaceRelativeParentFolder(
     candidateRaw: URI,
