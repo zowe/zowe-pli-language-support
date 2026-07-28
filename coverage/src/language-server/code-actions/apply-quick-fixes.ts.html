@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.84% </span>
+                <span class="strong">91.57% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>169/184</span>
+                <span class='fraction'>163/178</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.65% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>87/104</span>
+                <span class='fraction'>85/102</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.45% </span>
+                <span class="strong">95.23% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>21/22</span>
+                <span class='fraction'>20/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92% </span>
+                <span class="strong">91.71% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>161/175</span>
+                <span class='fraction'>155/169</span>
             </div>
         
             
@@ -572,16 +572,7 @@
 <a name='L507'></a><a href='#L507'>507</a>
 <a name='L508'></a><a href='#L508'>508</a>
 <a name='L509'></a><a href='#L509'>509</a>
-<a name='L510'></a><a href='#L510'>510</a>
-<a name='L511'></a><a href='#L511'>511</a>
-<a name='L512'></a><a href='#L512'>512</a>
-<a name='L513'></a><a href='#L513'>513</a>
-<a name='L514'></a><a href='#L514'>514</a>
-<a name='L515'></a><a href='#L515'>515</a>
-<a name='L516'></a><a href='#L516'>516</a>
-<a name='L517'></a><a href='#L517'>517</a>
-<a name='L518'></a><a href='#L518'>518</a>
-<a name='L519'></a><a href='#L519'>519</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L510'></a><a href='#L510'>510</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -721,20 +712,14 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -742,10 +727,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1238,19 +1220,10 @@ export async function quickFixCreateConfig(
   if (!workspaceUri || !entryUri) {
     return;
   }
-  const resolvedEntry = UriUtils.toFilePath(entryUri);
-  const workspacePath = UriUtils.toFilePath(workspaceUri);
-&nbsp;
-  const workspaceParts = UriUtils.parts(workspacePath);
-  const entryParts = UriUtils.parts(resolvedEntry);
-&nbsp;
-  const isInsideWorkspace = workspaceParts.every(
-    (part, index) =&gt; part === entryParts[index],
+  const programPath = UriUtils.workspaceRelativeEntryPath(
+    workspaceUri,
+    entryUri,
   );
-&nbsp;
-  const programPath = isInsideWorkspace
-    ? entryParts.slice(workspaceParts.length).join("/")
-    : resolvedEntry;
 &nbsp;
   const action: CodeAction = {
     title: `Create a startup configuration for this file.`,
@@ -1624,7 +1597,7 @@ export async function applyQuickFixes(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-24T13:36:26.016Z
+                at 2026-07-28T11:36:39.237Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
