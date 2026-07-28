@@ -38,8 +38,7 @@ let workspace: WorkspaceContext;
 beforeEach(async () => {
   // Reset in-memory providers
   vfs = new VirtualFileSystemProvider();
-  const uri = UriUtils.toUri("/workspace");
-  workspace = new WorkspaceContext(uri, vfs);
+  workspace = new WorkspaceContext(vfs);
   resetDocumentProviders(vfs);
   pluginConfig = workspace.config;
   await setupParsedProcGrps([]);

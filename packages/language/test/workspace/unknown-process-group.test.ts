@@ -37,7 +37,7 @@ let pluginConfig: PluginConfigurationProvider;
 
 beforeEach(() => {
   vfs = new VirtualFileSystemProvider();
-  workspace = new WorkspaceContext(WORKSPACE_PATH, vfs);
+  workspace = new WorkspaceContext(vfs);
   pluginConfig = workspace.config;
   resetDocumentProviders(vfs);
 });

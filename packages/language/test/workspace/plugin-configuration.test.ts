@@ -46,7 +46,7 @@ describe("Plugin Configuration Tests", () => {
 
   beforeEach(() => {
     vfs = new VirtualFileSystemProvider();
-    workspace = new WorkspaceContext(UriUtils.toUri("file:///"), vfs);
+    workspace = new WorkspaceContext(vfs);
     resetDocumentProviders(vfs);
   });
 
@@ -245,7 +245,6 @@ describe("Plugin Configuration Tests", () => {
         }`,
       );
       workspace = new WorkspaceContext(
-        UriUtils.toUri(WORKSPACE),
         vfs,
         makeConnection(settingsConfig({ pgmConf: true, procGrps: true })),
       );
@@ -279,7 +278,6 @@ describe("Plugin Configuration Tests", () => {
         }`,
       );
       workspace = new WorkspaceContext(
-        UriUtils.toUri(WORKSPACE),
         vfs,
         makeConnection(settingsConfig({ procGrps: true })),
       );
