@@ -31,9 +31,9 @@ export function registerConfigLoader(
   client: BaseLanguageClient,
   userSettingsUri: vscode.Uri,
 ): void {
-  onRequest(client, Messages.GetGlobalConfig, () =>
-    getGlobalConfig(userSettingsUri),
-  );
+  onRequest(client, Messages.GetGlobalConfig, (workspaceUri) => {
+    return getGlobalConfig(vscode.Uri.parse(workspaceUri), userSettingsUri);
+  });
 }
 
 /**
@@ -49,9 +49,10 @@ export function registerConfigLoader(
  * `.code-workspace` file.
  */
 export async function getGlobalConfig(
+  workspaceUri: vscode.Uri,
   userSettingsUri: vscode.Uri,
 ): Promise<Messages.GlobalConfig> {
-  const workspaceFolder = locateWorkspaceFolder(userSettingsUri);
+  const workspaceFolder = locateWorkspaceFolder(workspaceUri);
   const result: Messages.GlobalConfig = {};
   if (workspaceFolder) {
     const pgmConf = locate("pgm_conf", workspaceFolder, userSettingsUri);

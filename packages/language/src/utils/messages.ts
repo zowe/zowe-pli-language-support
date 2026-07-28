@@ -78,7 +78,7 @@ export namespace Messages {
    * Request sent to the language client to get the global configuration.
    * Only required if no plugin configuration file is present in the workspace.
    */
-  export const GetGlobalConfig = createRequestType<void, GlobalConfig>(
+  export const GetGlobalConfig = createRequestType<string, GlobalConfig>(
     "config/getGlobal",
   );
 

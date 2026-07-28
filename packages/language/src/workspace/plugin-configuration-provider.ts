@@ -475,7 +475,7 @@ export class PluginConfigurationProvider {
     // Collect sources in PRECEDENCE-LOWEST-FIRST order. Map-based merge
     // means later writes overwrite earlier writes, so listing
     // .pliplugin/ second makes it the winning source on key collisions.
-    const global = await this.fetchGlobalSettings();
+    const global = await this.fetchGlobalSettings(this.workspacePath);
 
     // Read every source concurrently. Precedence (settings < .pliplugin/)
     // is established by the order we assemble each array below, not by the
@@ -626,15 +626,15 @@ export class PluginConfigurationProvider {
    * and `pli.proc_grps`. Returns `undefined` when no connection is
    * available (e.g. tests) or the request fails.
    */
-  private async fetchGlobalSettings(): Promise<
-    Messages.GlobalConfig | undefined
-  > {
+  private async fetchGlobalSettings(
+    workspaceUri: URI,
+  ): Promise<Messages.GlobalConfig | undefined> {
     if (!this.connection) return undefined;
     try {
       return await sendRequest(
         this.connection,
         Messages.GetGlobalConfig,
-        undefined,
+        workspaceUri.fsPath,
       );
     } catch (err) {
       console.error("Failed to fetch global plugin configuration:", err);
