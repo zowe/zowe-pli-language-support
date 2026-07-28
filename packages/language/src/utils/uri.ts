@@ -241,15 +241,29 @@ export namespace UriUtils {
   }
 
   /**
-   * Compute workspace-relative parent folder for a found file candidate.
-   *
-   * Examples:
-   *  - workspace root: /repo/plugin-example
-   *  - candidate: /repo/plugin-example/cpy/test-nested-included/nested-not-here.pli
-   *  -> returns "cpy/test-nested-included"
-   *
-   * If workspace-relative cannot be computed, returns the parent folder name (e.g. "test-nested-included").
-   * Returns undefined if candidate looks invalid.
+   * Returns `entry` relative to `workspace` (original casing preserved), or its
+   * absolute path when outside the workspace. Membership is matched
+   * case-insensitively for correctness on case-insensitive file systems.
+   */
+  export function workspaceRelativeEntryPath(
+    workspace: URI | string,
+    entry: URI | string,
+  ): string {
+    const entryPath = toFilePath(entry);
+    const workspaceParts = parts(toFilePath(workspace));
+    const entryParts = parts(entryPath);
+    const isInsideWorkspace = workspaceParts.every(
+      (part, index) => part.toLowerCase() === entryParts[index]?.toLowerCase(),
+    );
+    return isInsideWorkspace
+      ? entryParts.slice(workspaceParts.length).join("/")
+      : entryPath;
+  }
+
+  /**
+   * Returns the candidate's workspace-relative parent folder (original casing
+   * preserved), `""` when it sits in the workspace root, or `undefined` when it
+   * is outside the workspace or invalid.
    */
   export function computeWorkspaceRelativeParentFolder(
     candidateRaw: URI,
@@ -257,18 +271,19 @@ export namespace UriUtils {
   ): string | undefined {
     if (!candidateRaw) return undefined;
 
-    const candidate = toNormalizedKey(candidateRaw);
-    const workspaceFolder = toNormalizedKey(workspaceFolderUri);
+    const relativePath = workspaceRelativeEntryPath(
+      workspaceFolderUri,
+      candidateRaw,
+    );
 
-    if (!candidate.startsWith(workspaceFolder)) return undefined;
+    // Outside the workspace the relative computation falls back to an absolute
+    // path; there's no meaningful workspace-relative lib folder to suggest.
+    if (computePathType(relativePath) !== PathType.Relative) {
+      return undefined;
+    }
 
-    const relativePath = candidate.slice(workspaceFolder.length);
-    const parentDir = relativePath.substring(0, relativePath.lastIndexOf("/"));
-    const parentRelativePath = parentDir.startsWith("/")
-      ? parentDir.slice(1)
-      : parentDir;
-
-    return parentRelativePath;
+    const lastSlash = relativePath.lastIndexOf("/");
+    return lastSlash === -1 ? "" : relativePath.slice(0, lastSlash);
   }
 }
 

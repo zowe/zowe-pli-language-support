@@ -137,19 +137,10 @@ export async function quickFixCreateConfig(
   if (!workspaceUri || !entryUri) {
     return;
   }
-  const resolvedEntry = UriUtils.toFilePath(entryUri);
-  const workspacePath = UriUtils.toFilePath(workspaceUri);
-
-  const workspaceParts = UriUtils.parts(workspacePath);
-  const entryParts = UriUtils.parts(resolvedEntry);
-
-  const isInsideWorkspace = workspaceParts.every(
-    (part, index) => part === entryParts[index],
+  const programPath = UriUtils.workspaceRelativeEntryPath(
+    workspaceUri,
+    entryUri,
   );
-
-  const programPath = isInsideWorkspace
-    ? entryParts.slice(workspaceParts.length).join("/")
-    : resolvedEntry;
 
   const action: CodeAction = {
     title: `Create a startup configuration for this file.`,
