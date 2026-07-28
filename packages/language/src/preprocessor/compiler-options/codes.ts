@@ -1182,6 +1182,18 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected a string up to 1000 characters long, but received length ${value.length}.`,
     },
+    NoEffectWithoutPPInclude: {
+      code: "COPPInclude02",
+      severity: Severity.W,
+      message: () =>
+        `PPINCLUDE has no effect unless the INCLUDE preprocessor is also enabled via PP(INCLUDE).`,
+    },
+    OverriddenByPPInclude: {
+      code: "COPPInclude03",
+      severity: Severity.W,
+      message: () =>
+        `PPINCLUDE is overridden by the alt-keyword specified in PP(INCLUDE(...)).`,
+    },
   },
 
   PPMacro: {

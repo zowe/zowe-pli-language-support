@@ -2256,9 +2256,8 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.pp} */
-translator.rule(
-  ["PP"],
-  (option, options) => {
+translator
+  .rule(["PP"], (option, options) => {
     // 1 or more pre-processor options to collect
     ensureArguments(option, 1);
     ensureToBeDefined(options.pp);
@@ -2313,14 +2312,98 @@ translator.rule(
         );
       }
     }
-  },
-  ["NOPP"],
-  (option, options) => {
+  })
+  .negative(["NOPP"], (option, options) => {
     ensureArguments(option, 0, 0);
     options.pp = { items: [] };
-  },
-  { allowDuplicates: true, recompile: true },
-);
+  })
+  .settings({ allowDuplicates: true, recompile: true })
+  .postProcess({
+    // If the MACRO option is specified along with the PP option, the MACRO preprocessor is
+    // added to the beginning of the final, fully accumulated list of preprocessors in the
+    // PP option, unless it is already first in that list.
+    id: "pp.macroImplicit",
+    run: (options, acceptor) => {
+      if (!options.macro) {
+        return;
+      }
+      const items = options.pp?.items;
+      const first = items?.[0];
+      if (items && first?.name !== CompilerOptions.PPItemName.MACRO) {
+        items.unshift({ name: CompilerOptions.PPItemName.MACRO });
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.PP.MacroImplicitlyAdded,
+            first?.token,
+          ),
+        );
+      }
+    },
+  })
+  .postProcess({
+    // Validates pp.items array against the documented PP invocation limits:
+    // a maximum of 31 preprocessor steps in total, the CICS preprocessor invoked at most once,
+    // and the SQL preprocessor invoked no more than twice (and only twice if the first SQL
+    // invocation specifies INCONLY as its option).
+    id: "pp.limits",
+    dependsOn: ["pp.macroImplicit"],
+    run: (options, acceptor) => {
+      const items = options.pp?.items;
+      if (!items) {
+        return;
+      }
+
+      if (items.length > 31) {
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.PP.TooManyPreprocessorSteps,
+            items[31]?.token,
+            items.length,
+          ),
+        );
+      }
+
+      let cicsCount = 0;
+      let sqlCount = 0;
+      let firstSqlHasIncOnly = false;
+
+      for (const item of items) {
+        if (item.name === CompilerOptions.PPItemName.CICS) {
+          cicsCount++;
+          if (cicsCount > 1) {
+            acceptor(
+              diagnosticFromCode(
+                CompilerOptionsCodes.PP.CicsInvokedMoreThanOnce,
+                item.token,
+              ),
+            );
+          }
+        } else if (item.name === CompilerOptions.PPItemName.SQL) {
+          sqlCount++;
+          if (sqlCount === 1) {
+            firstSqlHasIncOnly =
+              typeof item.value === "string" && /\bINCONLY\b/i.test(item.value);
+          } else if (sqlCount === 2) {
+            if (!firstSqlHasIncOnly) {
+              acceptor(
+                diagnosticFromCode(
+                  CompilerOptionsCodes.PP.SqlSecondInvocationRequiresIncOnly,
+                  item.token,
+                ),
+              );
+            }
+          } else if (sqlCount > 2) {
+            acceptor(
+              diagnosticFromCode(
+                CompilerOptionsCodes.PP.SqlInvokedTooManyTimes,
+                item.token,
+              ),
+            );
+          }
+        }
+      }
+    },
+  });
 
 /** {@link CompilerOptions.ppCics} */
 translator.rule(
@@ -2343,9 +2426,8 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.ppInclude} */
-translator.rule(
-  ["PPINCLUDE"],
-  (option, options) => {
+translator
+  .rule(["PPINCLUDE"], (option, options) => {
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "string");
@@ -2356,10 +2438,9 @@ translator.rule(
         value.value,
       );
     }
-    options.ppInclude = value.value;
-  },
-  ["NOPPINCLUDE"],
-  (option, options) => {
+    options.ppInclude = { value: value.value, token: value.token };
+  })
+  .negative(["NOPPINCLUDE"], (option, options) => {
     ensureArguments(option, 0, 0);
 
     // Clear both the base value and any override previously set via
@@ -2368,9 +2449,38 @@ translator.rule(
     if (options.pp) {
       options.pp.ppInclude = undefined;
     }
-  },
-  { recompile: true },
-);
+  })
+  .settings({ recompile: true })
+  .postProcess({
+    // PPINCLUDE has no effect unless PP(INCLUDE) is also enabled, and is
+    // overridden by an explicit PP(INCLUDE('ID(...)')) alt-keyword.
+    id: "ppInclude.usage",
+    dependsOn: ["pp.macroImplicit"],
+    run: (options, acceptor) => {
+      const ppIncludeBase = options.ppInclude;
+      if (!ppIncludeBase) {
+        return;
+      }
+      const includeActive = options.pp?.items.some(
+        (item) => item.name === CompilerOptions.PPItemName.INCLUDE,
+      );
+      if (!includeActive) {
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.PPInclude.NoEffectWithoutPPInclude,
+            ppIncludeBase.token,
+          ),
+        );
+      } else if (options.pp?.ppInclude?.value) {
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.PPInclude.OverriddenByPPInclude,
+            ppIncludeBase.token,
+          ),
+        );
+      }
+    },
+  });
 
 /** {@link CompilerOptions.ppList} */
 translator.rule(
