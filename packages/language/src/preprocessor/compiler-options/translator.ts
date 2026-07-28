@@ -56,6 +56,21 @@ export interface RuleSettings {
   recompile?: boolean;
 }
 
+/**
+ * A cross-option, whole-pipeline post-processing check colocated with the rule
+ * it belongs to. Runs once, after all directives/configuration have been
+ * translated (see {@link Translator.postProcess}).
+ */
+export interface PostProcessHook<
+  T extends CompilerOptionsPP = CompilerOptionsPP,
+> {
+  /** Unique id within this translator, used as a dependency-graph node name. */
+  id: string;
+  /** Ids of other hooks (within the same translator) that must run first. */
+  dependsOn?: string[];
+  run: (options: T, acceptor: TranslationDiagnosticAcceptor) => void;
+}
+
 type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
 
 type Translate<T extends CompilerOptionsPP> = (
@@ -82,6 +97,49 @@ type AppliedRuleRecord = {
   args?: string;
 };
 
+/**
+ * Fluent handle returned by {@link Translator.rule}, allowing the negative
+ * form, settings, and post-process hooks to be attached via chaining instead
+ * of a large positional argument list or a config object.
+ *
+ * @example
+ * ```ts
+ * translator
+ *   .rule(["PP"], (option, options) => { ... })
+ *   .negative(["NOPP"], (option, options) => { ... })
+ *   .settings({ allowDuplicates: true, recompile: true })
+ *   .postProcess({ id: "pp.limits", run: (options, acceptor) => { ... } });
+ * ```
+ */
+export class RuleBuilder<T extends CompilerOptionsPP = CompilerOptionsPP> {
+  constructor(
+    private readonly translator: Translator<T>,
+    private readonly ruleObj: TranslatorRule<T>,
+  ) {}
+
+  /** Attaches the negative form (e.g. `NOPP`) of this rule. */
+  negative(negative: string[], negativeTranslate: Translate<T>): this {
+    this.ruleObj.negative = negative;
+    this.ruleObj.negativeTranslate = negativeTranslate;
+    return this;
+  }
+
+  /** Attaches settings (duplicate handling, recompile flag) to this rule. */
+  settings(settings: RuleSettings): this {
+    this.ruleObj.settings = settings;
+    return this;
+  }
+
+  /**
+   * Registers one or more {@link PostProcessHook}s colocated with this rule.
+   * Hooks run once per compilation via {@link Translator.postProcess}.
+   */
+  postProcess(hook: PostProcessHook<T>): this {
+    this.translator.registerPostProcessHooks(hook);
+    return this;
+  }
+}
+
 export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   options: T;
   diagnostics: Diagnostic[] = [];
@@ -99,20 +157,42 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
 
   private rules: TranslatorRule<T>[] = [];
 
+  /**
+   * A cross-option, whole-pipeline post-processing check colocated with the rule
+   * it belongs to. Runs once, after all directives/configuration have been
+   * translated (see {@link Translator.postProcess}).
+   */
+  private postProcessHooks: PostProcessHook<T>[] = [];
+
+  /**
+   * Registers a rule. Returns a {@link RuleBuilder} so the negative form,
+   * settings, and post-process hooks can optionally be attached via
+   * chaining, e.g. `.negative(...).settings(...).postProcess(...)`.
+   *
+   * The positional `negative`/`negativeTranslate`/`settings` parameters are
+   * still accepted directly for simple rules/call sites that don't need
+   * chaining.
+   */
   rule(
     positive: string[],
     positiveTranslate: Translate<T>,
     negative?: string[],
     negativeTranslate?: Translate<T>,
     settings?: RuleSettings,
-  ) {
-    this.rules.push({
+  ): RuleBuilder<T> {
+    const ruleObj: TranslatorRule<T> = {
       positive,
-      negative,
       positiveTranslate,
+      negative,
       negativeTranslate,
       settings,
-    });
+    };
+    this.rules.push(ruleObj);
+    return new RuleBuilder(this, ruleObj);
+  }
+
+  registerPostProcessHooks(hook: PostProcessHook<T>): void {
+    this.postProcessHooks.push(hook);
   }
 
   flag(
@@ -143,6 +223,91 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     this.appliedRules.clear();
     this.diagnostics = [];
     this.options = this.defaultsFactory();
+  }
+
+  /**
+   * Runs all registered {@link PostProcessHook}s once, each after its
+   * `dependsOn` hooks have run. Hooks are visited in registration order;
+   * whenever a hook has unvisited dependencies, those are visited first, so
+   * the overall order matches a topological sort. Implemented as an
+   * iterative (stack-based) DFS rather than recursion.
+   *
+   * If a hook depends (directly or transitively) on itself, that hook is
+   * skipped and logged via `console.error` rather than aborting the whole
+   * call; all other, non-cyclic hooks still run.
+   */
+  postProcess(): void {
+    if (this.postProcessHooks.length === 0) {
+      return;
+    }
+
+    const byId = new Map<string, PostProcessHook<T>>();
+    for (const hook of this.postProcessHooks) {
+      byId.set(hook.id, hook);
+    }
+
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
+    const reportError = (error: unknown) => {
+      if (isDiagnostic(error)) {
+        this.diagnostics.push(error);
+      } else {
+        console.error(
+          "Encountered unexpected error during compiler options post-processing:",
+          String(error),
+        );
+      }
+    };
+
+    const runHook = (hook: PostProcessHook<T>) => {
+      try {
+        const localDiagnostics: Diagnostic[] = [];
+        const acceptor: TranslationDiagnosticAcceptor = (diagnostic) => {
+          localDiagnostics.push(diagnostic);
+        };
+        hook.run(this.options, acceptor);
+        this.diagnostics.push(...localDiagnostics);
+      } catch (err) {
+        reportError(err);
+      }
+    };
+
+    for (const startHook of this.postProcessHooks) {
+      if (visited.has(startHook.id)) {
+        continue;
+      }
+
+      const stack: PostProcessHook<T>[] = [startHook];
+      visiting.add(startHook.id);
+
+      while (stack.length > 0) {
+        const hook = stack[stack.length - 1];
+        const pendingDepId = (hook.dependsOn ?? []).find(
+          (depId) => byId.has(depId) && !visited.has(depId),
+        );
+
+        if (pendingDepId !== undefined) {
+          if (visiting.has(pendingDepId)) {
+            console.error(
+              `Compiler option post-process hook "${pendingDepId}" is part of a dependency cycle and was skipped.`,
+            );
+            // Treat it as satisfied so this hook doesn't keep finding the
+            // same cyclic dependency on every subsequent iteration.
+            visited.add(pendingDepId);
+            continue;
+          }
+          visiting.add(pendingDepId);
+          stack.push(byId.get(pendingDepId)!);
+          continue;
+        }
+
+        // All dependencies have run; run this hook and pop it.
+        stack.pop();
+        visiting.delete(hook.id);
+        visited.add(hook.id);
+        runHook(hook);
+      }
+    }
   }
 
   clearIssues() {

@@ -11,13 +11,20 @@
 
 /// <reference path="../../../framework.ts" />
 
-// @wrap: process
-////*PROCESS PPINCLUDE(<|1:'ID(-inc)'|>);
+// PPINCLUDE(...) combined with bare PP(INCLUDE), no PP(INCLUDE(...)) override, is the
+// valid/intended usage and must not raise any diagnostic.
 
-// PPINCLUDE has no effect without PP(INCLUDE) also being enabled.
-verify.expectDiagnosticsAt(1, {
-  message: code.CompilerOptions.PPInclude.NoEffectWithoutPPInclude.message(),
-});
+// @wrap: process
+////*PROCESS <|1:PPINCLUDE('ID(-inc)') PP(INCLUDE);|>
+
+verify.noDiagnostics(1);
 verify.expectCompilerOptions({
   ppInclude: { value: "ID(-inc)" },
+  pp: {
+    items: [
+      {
+        name: constants.CompilerOptions.PPItemName.INCLUDE,
+      },
+    ],
+  },
 });
