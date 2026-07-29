@@ -438,11 +438,14 @@ export function hoverRequest(
     return null;
   }
 
-  // edge case: bend preprocessor tokens especially identifiers
+  // edge case: bend preprocessor identifiers
   if (
     token.kind === CstNodeKind.ExecStatement_ExecFragment &&
     token.element &&
-    token.element.kind === SyntaxKind.ExecStatement
+    token.element.kind === SyntaxKind.ExecStatement &&
+    (token.element.replacement === null || // include identifiers are handled separately, so we don't want to bend them here
+      typeof token.element.replacement !== "object" ||
+      token.element.replacement.kind !== SyntaxKind.IncludeDirective)
   ) {
     const ppToken = token.element.preprocessorTokens.find(
       (t) => t.token.startOffset <= offset && t.token.endOffset >= offset,

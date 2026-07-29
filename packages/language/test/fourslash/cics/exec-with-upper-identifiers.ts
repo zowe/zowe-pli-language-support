@@ -12,6 +12,7 @@
 /// <reference path="../framework.ts" />
 
 // @wrap: main
+////*PROCESS <|12:PPMACRO|>('CASE(UPPER)');
 //// DCL <|resourceName1|> CHAR(8) INITIAL('A');
 //// DCL <|ACQFAIL|> CHAR(8) INITIAL('B');
 //// DCL <|RESOURCENAME|> CHAR(8) INITIAL('C');
