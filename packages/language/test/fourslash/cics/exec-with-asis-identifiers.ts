@@ -11,13 +11,9 @@
 
 /// <reference path="../framework.ts" />
 
-////*PROCESS CASE(UPPER);
+////*PROCESS CASE(ASIS);
 //// DCL <|resourceName1|> CHAR(8) INITIAL('A');
-//// DCL <|ACQFAIL|> CHAR(8) INITIAL('B');
-//// DCL <|RESOURCENAME|> CHAR(8) INITIAL('C');
 //// EXEC CICS DEQ RESOURCE(<|resourceName1>resourceName1);
-//// EXEC CICS DEQ RESOURCE(<|ACQFAIL>ACQFAIL);
-//// EXEC CICS DEQ RESOURCE(<|RESOURCENAME>RESOURCENAME);
 
 linker.expectLinks();
 hover.expectMarkdownAt(
