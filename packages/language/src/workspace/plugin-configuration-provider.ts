@@ -634,7 +634,7 @@ export class PluginConfigurationProvider {
       return await sendRequest(
         this.connection,
         Messages.GetGlobalConfig,
-        workspaceUri.fsPath,
+        workspaceUri.toString(),
       );
     } catch (err) {
       console.error("Failed to fetch global plugin configuration:", err);
