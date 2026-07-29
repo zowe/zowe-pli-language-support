@@ -11,13 +11,11 @@
 
 /// <reference path="../framework.ts" />
 
-// Forward GOTO to an implicitly declared label array, with a dimensioned
-// label prefix directly on the END statement.
+// An explicit declaration of a LABEL variable counts as a repetition
+// when the same variable name is used for a label prefix
 
-//// AVERAGE: PROCEDURE OPTIONS (MAIN);
-////   GOTO <|TEST_LABEL>TEST_LABEL(2);
-////   <|TEST_LABEL|>(1): PUT("HELLO");
-////   TEST_LABEL(2): END AVERAGE;
+// @wrap: main
+//// DCL TEST_VALUE(2) LABEL;
+//// TEST_VALUE(<|1|> + 1): PUT("HELLO WORLD");
 
-verify.noParserDiagnostics();
-linker.expectLinks();
+verify.expectDiagnosticsAt("1", code.Severe.IBM3988I);
