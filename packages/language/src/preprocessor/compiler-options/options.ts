@@ -9,7 +9,7 @@
  *
  */
 
-import { Diagnostic } from "../../language-server/types";
+import { Diagnostic, Range } from "../../language-server/types";
 import { Token } from "../../parser/tokens";
 import * as Pli from "./options-pli";
 import * as Macro from "./options-macro";
@@ -27,6 +27,13 @@ export interface CompilerOptions extends Pli.CompilerOptions {
   macroOptions: Macro.CompilerOptions;
   sqlOptions: SQL.CompilerOptions;
   cicsOptions: CICS.CompilerOptions;
+  /**
+   * The source ranges of the PROCESS directives from which these compiler
+   * options were parsed. Since the ranges are no longer needed for the
+   * options themselves after parsing, they are kept primarily for LSP
+   * requests (e.g. compiler-option completion).
+   */
+  ranges: Range[];
 }
 
 export interface CompilerOptionResult {
@@ -115,5 +122,6 @@ export function getDefaultCompilerOptions(): CompilerOptions {
     macroOptions: Macro.getDefaultCompilerOptions(),
     sqlOptions: SQL.getDefaultCompilerOptions(),
     cicsOptions: CICS.getDefaultCompilerOptions(),
+    ranges: [],
   };
 }
