@@ -20,7 +20,7 @@ import {
   Token,
   Severity,
 } from "preprocessor-api";
-import { Case, CICSPreprocessor } from "preprocessor-cics";
+import { CICSPreprocessor } from "preprocessor-cics";
 import { URI } from "vscode-uri";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
@@ -30,7 +30,6 @@ import {
   Diagnostic as LSDiagnostic,
 } from "../language-server/types";
 import { HostLanguageType } from "preprocessor-cics";
-import { CompilerOptions } from "../preprocessor/compiler-options/options-pli";
 
 /**
  * Parses the `EXEC CICS`/`EXEC SQL` statement, invoking the actual CICS/SQL
@@ -57,7 +56,6 @@ export async function execStatement(
     const { preprocessor, statementText, startOffset } = handleExecFragment(
       fragmentToken,
       execStatement,
-      state.compilerOptions,
     );
     if (preprocessor) {
       const { diagnostics, tokens, replacement } =
@@ -213,18 +211,9 @@ function handleDiagnostics(
   );
 }
 
-const TranslateCase: Record<
-  CompilerOptions.Case.ASIS | CompilerOptions.Case.UPPER,
-  Case
-> = {
-  [CompilerOptions.Case.UPPER]: Case.Upper,
-  [CompilerOptions.Case.ASIS]: Case.AsIs,
-};
-
 function handleExecFragment(
   fragmentToken: t.Token,
   execStatement: ast.ExecStatement,
-  compilerOptions: CompilerOptions | undefined,
 ) {
   const prefixMatch = /^(\w+)\s*/i.exec(fragmentToken.image);
   const prefixLength = prefixMatch?.[0].length || 0;
@@ -236,9 +225,7 @@ function handleExecFragment(
 
   switch (recognizedType) {
     case ast.PreprocessorType.CICS:
-      const casing =
-        TranslateCase[compilerOptions?.case ?? CompilerOptions.Case.UPPER];
-      preprocessor = new CICSPreprocessor(HostLanguageType.PLI, casing);
+      preprocessor = new CICSPreprocessor(HostLanguageType.PLI);
       break;
     case ast.PreprocessorType.SQL:
       preprocessor = new Db2SqlPreprocessor();

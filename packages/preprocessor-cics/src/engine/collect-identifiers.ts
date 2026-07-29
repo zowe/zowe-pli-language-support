@@ -16,20 +16,14 @@ import {
   CicsWordsContext,
 } from "../generated/CICSParser";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
-import { Case } from "./preprocessor";
 
 export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
-  static collect(tree: ParseTree, caseSensitivity: Case = Case.Upper): Token[] {
-    const visitor = new CollectingIdentifierVisitor(caseSensitivity);
+  static collect(tree: ParseTree): Token[] {
+    const visitor = new CollectingIdentifierVisitor();
     tree.accept(visitor);
     return visitor.identifiers;
   }
   readonly identifiers: Token[] = [];
-  private readonly caseSensitivity: Case;
-  private constructor(caseSensitivity: Case) {
-    super();
-    this.caseSensitivity = caseSensitivity;
-  }
   private pushIdentifier = (
     image: string,
     startOffset: number,
@@ -37,7 +31,7 @@ export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
   ): void => {
     this.identifiers.push({
       //because linking is case-insensitive
-      image: this.caseSensitivity === Case.Upper ? image.toUpperCase() : image,
+      image: image.toUpperCase(),
       startOffset,
       endOffset,
       semanticsKind: SemanticsKind.Identifier,

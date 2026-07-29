@@ -46,19 +46,11 @@ import {
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
-export enum Case {
-  Upper,
-  AsIs,
-}
-
 export class CICSPreprocessor implements Preprocessor {
   static Name = "CICS Preprocessor";
   private readonly hostLanguage: HostLanguage;
   private readonly messageService: MessageService = new EnglishMessageService();
-  constructor(
-    hostLanguage: HostLanguageType,
-    private readonly caseSensitivity?: Case,
-  ) {
+  constructor(hostLanguage: HostLanguageType) {
     this.hostLanguage = HostLanguageFactories[hostLanguage]();
   }
   get name() {
@@ -82,10 +74,7 @@ export class CICSPreprocessor implements Preprocessor {
     parser.errorHandler = new CICSErrorStrategy(this.messageService);
 
     const tree = parser.startRule();
-    const identifierTokens = CollectingIdentifierVisitor.collect(
-      tree,
-      this.caseSensitivity,
-    );
+    const identifierTokens = CollectingIdentifierVisitor.collect(tree);
     const keywordPattern = /^[a-z_]/i;
     let idIndex = 0;
     const tokens = tokenStream
