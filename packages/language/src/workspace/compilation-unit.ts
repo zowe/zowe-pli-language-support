@@ -358,7 +358,9 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
   }
 
   private fallbackWorkspace: WorkspaceContext | undefined = undefined;
-  override getWorkspaceFolderOf(uri: string | URI): WorkspaceContext | undefined {
+  override getWorkspaceFolderOf(
+    uri: string | URI,
+  ): WorkspaceContext | undefined {
     const workspace = super.getWorkspaceFolderOf(uri);
     if (!workspace) {
       if (!this.fallbackWorkspace) {
