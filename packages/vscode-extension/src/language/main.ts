@@ -24,6 +24,7 @@ import * as fs from "fs";
 import * as glob from "glob";
 import { dirname, join } from "path";
 import { VSCodeFileSystemProvider } from "./file-system";
+import { VscodeGlobalConfigLoader } from "../extension/config-loader";
 
 // Node-specific file system provider
 // This provider is used when running the language server in a Node environment
@@ -144,4 +145,5 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
 }
 
 const connection = createConnection(ProposedFeatures.all);
-startLanguageServer(connection, new NodeFileSystemProvider(connection));
+const globalConfigLoader = new VscodeGlobalConfigLoader(connection);
+startLanguageServer(connection, new NodeFileSystemProvider(connection), globalConfigLoader);

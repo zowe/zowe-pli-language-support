@@ -16,11 +16,13 @@ import {
 } from "../../src/workspace/plugin-configuration-provider";
 import { EmptyFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { UriUtils } from "../../src/utils/uri";
+import { LongRunningOperationImpl } from "../../src/utils/promises";
+import { TestGlobalConfigLoader } from "../../src";
 
 async function setupConfig(
   testLibs: string[],
 ): Promise<PluginConfigurationProvider> {
-  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider);
+  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider, new TestGlobalConfigLoader({}), LongRunningOperationImpl.Dummy);
   const processGroup = deserializeProcessGroup({
     name: "default",
     "include-extensions": [".pli"],

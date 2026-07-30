@@ -14,11 +14,13 @@ import { PluginConfigurationProvider } from "../../src/workspace/plugin-configur
 import { EmptyFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { UriUtils } from "../../src/utils/uri";
 import { makeProgramConfig } from "../config-fixtures";
+import { LongRunningOperationImpl } from "../../src/utils/promises";
+import { TestGlobalConfigLoader } from "../../src";
 
 function setupConfig(
   programConfig: { program: string; pgroup: string }[],
 ): PluginConfigurationProvider {
-  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider);
+  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider, new TestGlobalConfigLoader({}), LongRunningOperationImpl.Dummy); 
   pluginConfig.setProgramConfigs(
     UriUtils.toUri("/workspace"),
     programConfig.map(makeProgramConfig),

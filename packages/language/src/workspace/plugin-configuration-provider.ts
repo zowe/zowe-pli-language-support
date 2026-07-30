@@ -26,8 +26,7 @@ import {
   parseProgramConfigs,
   toLspDiagnostic,
 } from "../config/loader";
-import { Messages } from "../utils/messages";
-import { sendRequest } from "../language-server/connection-handler";
+import { GlobalConfigLoader, Messages } from "../utils/messages";
 import {
   GroupRecord,
   isLibsDir,
@@ -45,8 +44,7 @@ import { DEFAULT_INSTRUCTION_LIMIT } from "../preprocessor/instruction-interpret
 import { PluginConfiguration } from "../language-server/constants";
 import { type JSONPath } from "../utils/jsonc";
 import { LspCodes } from "../validation/lsp-codes";
-import { Connection } from "vscode-languageserver";
-import { startLongRunningOperation } from "../utils/promises";
+import { LongRunningOperation } from "../utils/promises";
 import { validatePgroupReferences } from "../config/cross-validation";
 import { MultiMap } from "../utils/collections";
 import { TextDocuments } from "../language-server/text-documents";
@@ -271,21 +269,18 @@ export class PluginConfigurationProvider {
    * construction so the provider has no dependency on a global FS singleton.
    */
   private readonly fs: FileSystemProvider;
+  private readonly longRunningOperation: LongRunningOperation;
+  private readonly globalConfigLoader: GlobalConfigLoader;
 
-  /**
-   * Connection used to send status updates about file loading and config parsing.
-   * In some cases, such as when working with remote file system, loading and processing of config files can be slow.
-   * Having the connection allows us to send progress updates to the client, so the user knows something is happening.
-   */
-  private readonly connection: Connection | undefined;
-
-  constructor(fs: FileSystemProvider, connection?: Connection) {
+  constructor(fs: FileSystemProvider, globalConfigLoader: GlobalConfigLoader, longRunningOperation: LongRunningOperation) {
     this.fs = fs;
-    this.connection = connection;
+    this.longRunningOperation = longRunningOperation;
+    this.globalConfigLoader = globalConfigLoader;
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
   }
+
 
   /**
    * Snapshot of the file the user is acting on, used by quick-fixes that
@@ -447,9 +442,8 @@ export class PluginConfigurationProvider {
    */
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
-    const cancel = startLongRunningOperation(
-      this.connection,
-      "Processing plugin configuration...",
+    const cancel = this.longRunningOperation.start(
+      "Processing plugin configuration..."
     );
 
     this.programConfigs.clear();
@@ -629,17 +623,7 @@ export class PluginConfigurationProvider {
   private async fetchGlobalSettings(
     workspaceUri: URI,
   ): Promise<Messages.GlobalConfig | undefined> {
-    if (!this.connection) return undefined;
-    try {
-      return await sendRequest(
-        this.connection,
-        Messages.GetGlobalConfig,
-        workspaceUri.toString(),
-      );
-    } catch (err) {
-      console.error("Failed to fetch global plugin configuration:", err);
-      return undefined;
-    }
+    return this.globalConfigLoader.loadGlobalConfig(workspaceUri);
   }
 
   /**

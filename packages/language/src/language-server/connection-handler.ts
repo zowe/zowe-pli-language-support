@@ -55,20 +55,22 @@ import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
-import { Messages, NotificationType, RequestType } from "../utils/messages";
+import { GlobalConfigLoader, Messages, NotificationType, RequestType } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { JsonItemMeta } from "../config/schema";
 import { assertType } from "../preprocessor/util";
+import { LongRunningOperationImpl } from "../utils/promises";
 export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
   connection: Connection,
   fs: FileSystemProvider,
+  globalConfigLoader: GlobalConfigLoader,
 ): void {
   // Wire the on-demand file loader for include URIs to the workspace's fs
   // so the document store doesn't reach for any module-level singleton.
   resetDocumentProviders(fs);
-  const compilationUnitHandler = new CompilationUnitHandler(fs);
+  const compilationUnitHandler = new CompilationUnitHandler(fs, globalConfigLoader, new LongRunningOperationImpl(connection));
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
 

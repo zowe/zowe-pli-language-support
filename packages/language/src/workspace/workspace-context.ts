@@ -9,11 +9,12 @@
  *
  */
 
-import { Connection } from "vscode-languageserver";
 import { FileSystemProvider } from "./file-system-provider";
 import { PluginConfigurationProvider } from "./plugin-configuration-provider";
 import { CompilationUnit, createCompilationUnit } from "./compilation-unit";
 import { URI, UriUtils } from "../utils/uri";
+import { LongRunningOperation, LongRunningOperationImpl } from "../utils/promises";
+import { GlobalConfigLoader } from "../utils/messages";
 
 /**
  * WorkspaceContext bundles the per-language-server-instance state that
@@ -42,9 +43,10 @@ export class WorkspaceContext {
 
   constructor(
     public readonly fs: FileSystemProvider,
-    connection?: Connection,
+    globalConfigLoader: GlobalConfigLoader,
+    longRunningOperation?: LongRunningOperation,
   ) {
-    this.config = new PluginConfigurationProvider(fs, connection);
+    this.config = new PluginConfigurationProvider(fs, globalConfigLoader, longRunningOperation ?? LongRunningOperationImpl.Dummy);
   }
 
   setCompilationUnit(uri: URI, unit: CompilationUnit): void {

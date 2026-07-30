@@ -9,31 +9,25 @@
  *
  */
 
-import { Messages, UriUtils } from "pli-language";
+import { GlobalConfigLoader, Messages, sendRequest, UriUtils } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
-import { onRequest, sendNotification } from "./messages";
+import { sendNotification } from "./messages";
+import { Connection } from "vscode-languageserver";
 
 type ConfigKey = "pgm_conf" | "proc_grps";
 
-/**
- * Registers the LS-side handler for {@link Messages.GetGlobalConfig}.
- * Called once per language client (desktop + browser) so the LS can
- * fall back to VS Code settings when no `.pliplugin/` directory exists.
- *
- * `userSettingsUri` is the URI of the user-scope `settings.json` —
- * derived from {@link vscode.ExtensionContext.globalStorageUri} in the
- * caller, which is the only documented way to reach the user data
- * directory without platform-specific path math. (`vscode-userdata:/`
- * is unreliable on desktop and is NOT used here.)
- */
-export function registerConfigLoader(
-  client: BaseLanguageClient,
-  userSettingsUri: vscode.Uri,
-): void {
-  onRequest(client, Messages.GetGlobalConfig, (workspaceUri) => {
-    return getGlobalConfig(vscode.Uri.parse(workspaceUri), userSettingsUri);
-  });
+export class VscodeGlobalConfigLoader implements GlobalConfigLoader {
+  static register(client: BaseLanguageClient, context: vscode.ExtensionContext): void {
+    client.onRequest(Messages.GetUserSettingsUriRequest.method, async () => {
+      return deriveUserSettingsUri(context.globalStorageUri).toString();
+    });
+  }
+  constructor(private readonly connection: Connection) {}
+  async loadGlobalConfig(workspaceUri: vscode.Uri): Promise<Messages.GlobalConfig> {
+    const userSettingsUri = await sendRequest(this.connection, Messages.GetUserSettingsUriRequest, undefined);
+    return getGlobalConfig(workspaceUri, UriUtils.toUri(userSettingsUri));
+  }
 }
 
 /**
@@ -48,7 +42,7 @@ export function registerConfigLoader(
  * reference (etc.) squiggle inside the right `settings.json` or
  * `.code-workspace` file.
  */
-export async function getGlobalConfig(
+async function getGlobalConfig(
   workspaceUri: vscode.Uri,
   userSettingsUri: vscode.Uri,
 ): Promise<Messages.GlobalConfig> {

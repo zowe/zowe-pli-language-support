@@ -47,7 +47,7 @@ import { GroupRecord, ProgramRecord } from "./plugin-configuration-provider.js";
 import { WorkspaceContext } from "./workspace-context.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { createMutex, Mutex } from "./mutex.js";
-import { Deferred, isOperationCancelled } from "../utils/promises.js";
+import { Deferred, isOperationCancelled, LongRunningOperation } from "../utils/promises.js";
 import {
   InstructionCache,
   TokenizationCache,
@@ -66,6 +66,7 @@ import { LRUCache } from "lru-cache";
 import { WorkspaceFolderTree } from "./workspace-folder-tree.js";
 import { FileSystemProvider } from "./file-system-provider.js";
 import { MultiMap } from "../utils/collections.js";
+import { GlobalConfigLoader } from "../index.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -299,7 +300,7 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
    */
   readonly globalMutex = createMutex();
 
-  constructor(fs: FileSystemProvider) {
+  constructor(fs: FileSystemProvider, private readonly configLoader: GlobalConfigLoader, private readonly longRunningOperation: LongRunningOperation) {
     super(false);
     this.fs = fs;
   }
@@ -348,7 +349,7 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
 
   async initializeWorkspaceFolder(uriString: string | URI) {
     const uri = UriUtils.toUri(uriString);
-    const workspace = new WorkspaceContext(this.fs, this.connection);
+    const workspace = new WorkspaceContext(this.fs, this.configLoader, this.longRunningOperation);
     this.addWorkspaceFolder(uri, workspace);
     const diagnosticsByUri = await workspace.config.init(uri);
     if (this.connection) {
@@ -362,7 +363,7 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
 
   async initializeFallbackFolderForScheme(uriScheme: string) {
     const uri = UriUtils.toUri(`${uriScheme}:///`);
-    const workspace = new WorkspaceContext(this.fs, this.connection);
+    const workspace = new WorkspaceContext(this.fs, this.configLoader, this.longRunningOperation);
     this.fallbackWorkspaces[uriScheme] = workspace;
     const diagnosticsByUri = await workspace.config.init(uri);
     if (this.connection) {

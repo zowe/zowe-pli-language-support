@@ -26,9 +26,8 @@ import { registerPliDocumentIdentifier } from "./document-identification";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import {
-  deriveUserSettingsUri,
   locateWorkspaceFolder,
-  registerConfigLoader,
+  VscodeGlobalConfigLoader,
   watchPluginSettings,
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
@@ -166,7 +165,7 @@ async function startLanguageClient(
 
   // Register custom connection message handlers.
   registerFileSystemProvider(client);
-  registerConfigLoader(client, deriveUserSettingsUri(context.globalStorageUri));
+  VscodeGlobalConfigLoader.register(client, context);
   context.subscriptions.push(
     client,
     registerProgressReporter(client),

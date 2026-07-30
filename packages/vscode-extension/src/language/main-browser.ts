@@ -16,6 +16,7 @@ import {
 } from "vscode-languageserver/browser.js";
 import { startLanguageServer } from "pli-language";
 import { VSCodeFileSystemProvider } from "./file-system";
+import { VscodeGlobalConfigLoader } from "../extension/config-loader";
 
 /* browser specific setup code */
 const messageReader = new BrowserMessageReader(self);
@@ -23,4 +24,6 @@ const messageWriter = new BrowserMessageWriter(self);
 
 const connection = createConnection(messageReader, messageWriter);
 
-startLanguageServer(connection, new VSCodeFileSystemProvider(connection));
+const globalConfigLoader = new VscodeGlobalConfigLoader(connection);
+
+startLanguageServer(connection, new VSCodeFileSystemProvider(connection), globalConfigLoader);

@@ -20,6 +20,7 @@ import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import { PluginConfiguration } from "../../src/language-server/constants";
 import { configCompletionRequest } from "../../src/language-server/completion/completion-plugin-configuration";
+import { TestGlobalConfigLoader } from "../../src";
 
 const MARKER = "<CURSOR>";
 const PGROUP_DETAIL = "Process group from 'proc_grps.json'";
@@ -65,7 +66,7 @@ function makeProcessGroup(name: string) {
 beforeEach(async () => {
   const uri = UriUtils.toUri("/workspace");
   vfs = new VirtualFileSystemProvider();
-  workspace = new WorkspaceContext(vfs);
+  workspace = new WorkspaceContext(vfs, new TestGlobalConfigLoader({}));
   pluginConfig = workspace.config;
 
   await pluginConfig.init(uri);

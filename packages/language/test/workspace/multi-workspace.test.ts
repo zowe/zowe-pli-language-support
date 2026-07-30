@@ -11,16 +11,15 @@
 
 import { describe, expect, test } from "vitest";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
-import { UriUtils, VirtualFileSystemProvider } from "../../src";
+import { TestGlobalConfigLoader, UriUtils, VirtualFileSystemProvider } from "../../src";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
-import { makeConnection } from "./plugin-configuration.test";
-import result from "lodash-es/result";
+import { LongRunningOperationImpl } from "../../src/utils/promises";
 
 describe("Multi Workspace Tests", () => {
   test("With plugin configs under disjoint folders", async () => {
     const fs = new VirtualFileSystemProvider();
     resetDocumentProviders(fs);
-    const ch = new CompilationUnitHandler(fs);
+    const ch = new CompilationUnitHandler(fs, new TestGlobalConfigLoader({}), LongRunningOperationImpl.Dummy);
 
     const first = {
       workspaceFolder: UriUtils.toUri("file:///first"),
@@ -123,7 +122,7 @@ describe("Multi Workspace Tests", () => {
   test("With plugin configs under nested folders", async () => {
     const fs = new VirtualFileSystemProvider();
     resetDocumentProviders(fs);
-    const ch = new CompilationUnitHandler(fs);
+    const ch = new CompilationUnitHandler(fs, new TestGlobalConfigLoader({}),LongRunningOperationImpl.Dummy);
 
     const first = {
       workspaceFolder: UriUtils.toUri("file:///first"),
@@ -230,9 +229,20 @@ describe("Multi Workspace Tests", () => {
   test("For files outside the specified folders", async () => {
     const fs = new VirtualFileSystemProvider();
     resetDocumentProviders(fs);
-    const ch = new CompilationUnitHandler(fs);
-
     const settingsUri = UriUtils.toUri("file:///settings.json");
+    const ch = new CompilationUnitHandler(fs, new TestGlobalConfigLoader({
+      pgmConf: {
+        configKey: "pli.pgm_conf",
+        uri: settingsUri.toString(),
+        containerPath: [],
+      },
+      procGrps: {
+        configKey: "pli.proc_grps",
+        uri: settingsUri.toString(),
+        containerPath: [],
+      },
+    }), LongRunningOperationImpl.Dummy);
+
     const first = {
       workspaceFolder: UriUtils.toUri("file:///first"),
       programConfig: UriUtils.toUri("file:///first/.pliplugin/pgm_conf.json"),
@@ -247,7 +257,7 @@ describe("Multi Workspace Tests", () => {
         "pli.pgm_conf": {
           pgms: [
             {
-              program: "*.pli",
+              program: "**/*.pli",
               pgroup: "xxx",
             },
           ],
@@ -311,6 +321,7 @@ describe("Multi Workspace Tests", () => {
 
     const workspaceOutside = ch.getWorkspaceFolderOf(outsideProgram);
     expect(workspaceOutside).toBeDefined();
-    expect(workspaceOutside!.config.hasProgramConfig(outsideProgram)).toBeFalsy();
+    expect(workspaceOutside!.config.hasProgramConfig(outsideProgram)).toBeTruthy();
+    expect(workspaceOutside!.config.getProgramConfig(outsideProgram)!.pgroup.value).toBe("xxx");
   });
 });

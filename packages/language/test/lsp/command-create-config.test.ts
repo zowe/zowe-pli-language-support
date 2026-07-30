@@ -18,6 +18,7 @@ import { Commands } from "../../src/language-server/constants";
 import { UriUtils } from "../../src/utils/uri";
 import { updateOrCreateConfig } from "../../src/utils/config";
 import { makeProgramConfig } from "../config-fixtures";
+import { TestGlobalConfigLoader } from "../../src";
 
 const WORKSPACE_PATH = UriUtils.toUri("/workspace");
 const CONFIG_FILE_PATH = UriUtils.toUri("/workspace/.pliplugin/pgm_conf.json");
@@ -33,7 +34,7 @@ describe("commandCreateConfig", () => {
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    workspace = new WorkspaceContext(vfs);
+    workspace = new WorkspaceContext(vfs, new TestGlobalConfigLoader({}));
     pluginConfig = workspace.config;
     await pluginConfig.init(WORKSPACE_PATH);
   });
@@ -104,7 +105,7 @@ describe("updateOrCreateConfig", () => {
 
   beforeEach(async () => {
     vfs = new VirtualFileSystemProvider();
-    workspace = new WorkspaceContext(vfs);
+    workspace = new WorkspaceContext(vfs, new TestGlobalConfigLoader({}));
     pluginConfig = workspace.config;
     await pluginConfig.init(WORKSPACE_PATH);
   });
