@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/config" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/documentation" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/language-server" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/linking" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/parser" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/preprocessor" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/syntax-tree" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/typesystem" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/utils" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/validation" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/src/workspace" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/compiler" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/documentation" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/fourslash" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/fourslash-harness" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/lsp" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/parser" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/preprocessor" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/typesystem" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/utils" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/language/test/workspace" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/playground/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-api/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-cics/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-cics/src/antlr" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-cics/src/engine" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-cics/src/generated" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-cics/src/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-db2/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-db2/src/antlr" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-db2/src/antlr/.antlr" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-db2/src/engine" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/preprocessor-db2/src/generated" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/vscode-extension/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/vscode-extension/src/common" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/vscode-extension/src/extension" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/vscode-extension/src/language" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

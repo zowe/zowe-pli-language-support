@@ -1,0 +1,21 @@
+{
+  "pgroups": [
+    {
+      "name": "default",
+      "compiler-options": [],
+      "libs": [
+        "cpy",
+        "inc"
+      ],
+      "member-name-validation": false,
+      "include-extensions": [
+        ".pli",
+        ".pl1",
+        ".inc"
+      ],
+      "lsp-options": {
+        "check-margins": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "pgms": [
+    {
+      "program": "code_samples/plugin-example/sql.pli",
+      "pgroup": "default"
+    }
+  ]
+}
