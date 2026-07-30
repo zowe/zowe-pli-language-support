@@ -357,16 +357,26 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     return workspace;
   }
 
-  private fallbackWorkspace: WorkspaceContext | undefined = undefined;
+  //URI scheme -> WorkspaceContext
+  private fallbackWorkspaces: Record<string, WorkspaceContext> = {};
+
+  async initializeFallbackFolderForScheme(uriScheme: string) {
+    const uri = UriUtils.toUri(`${uriScheme}:///`);
+    const workspace = new WorkspaceContext(this.fs, this.connection);
+    this.fallbackWorkspaces[uriScheme] = workspace;
+    const diagnosticsByUri = await workspace.config.init(uri);
+    if (this.connection) {
+      publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
+    }
+    return workspace;
+  }
+
   override getWorkspaceFolderOf(
     uri: string | URI,
   ): WorkspaceContext | undefined {
     const workspace = super.getWorkspaceFolderOf(uri);
-    if (!workspace) {
-      if (!this.fallbackWorkspace) {
-        this.fallbackWorkspace = new WorkspaceContext(this.fs, this.connection);
-      }
-      return this.fallbackWorkspace;
+    if (!workspace && typeof uri !== "string" && uri.scheme) {
+      return this.fallbackWorkspaces[uri.scheme];
     }
     return workspace;
   }

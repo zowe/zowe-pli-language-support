@@ -152,6 +152,9 @@ export function startLanguageServer(
     });
     const promises = folders.map(async (folder) =>
       compilationUnitHandler.initializeWorkspaceFolder(folder.uri),
+    ).concat(
+      //add more default schemes here if needed
+      compilationUnitHandler.initializeFallbackFolderForScheme("file"),
     );
     await Promise.all(promises);
     compilationUnitHandler.markReady();

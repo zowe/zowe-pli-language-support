@@ -190,7 +190,7 @@ interface ConfigSource {
 
 /**
  * Precedence of a program-config match against a file, **lowest value wins**.
- * Used by {@link PluginConfigurationProvider.getProgramConfig} to pick the
+ * Used by {@link PluginConfigurationProvider["getProgramConfig"]} to pick the
  * best match rather than the first hit, so a user-scope `settings.json` entry
  * can never shadow a project `.pliplugin/` entry that also matches:
  *

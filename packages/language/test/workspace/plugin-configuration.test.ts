@@ -28,7 +28,7 @@ import { resetDocumentProviders } from "../../src/language-server/text-documents
  * given `GlobalConfig`. Other request/notification methods are no-ops so
  * the provider can run end-to-end without a real LSP transport.
  */
-function makeConnection(global: Messages.GlobalConfig): Connection {
+export function makeConnection(global: Messages.GlobalConfig): Connection {
   return {
     sendRequest: async (method: string) => {
       if (method === Messages.GetGlobalConfig.method) return global;
