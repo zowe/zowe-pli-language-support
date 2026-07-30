@@ -9,25 +9,17 @@
  *
  */
 
-import { GlobalConfigLoader, Messages, sendRequest, UriUtils } from "pli-language";
+import { Messages, UriUtils } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
 import { sendNotification } from "./messages";
-import { Connection } from "vscode-languageserver";
 
 type ConfigKey = "pgm_conf" | "proc_grps";
 
-export class VscodeGlobalConfigLoader implements GlobalConfigLoader {
-  static register(client: BaseLanguageClient, context: vscode.ExtensionContext): void {
-    client.onRequest(Messages.GetUserSettingsUriRequest.method, async () => {
-      return deriveUserSettingsUri(context.globalStorageUri).toString();
-    });
-  }
-  constructor(private readonly connection: Connection) {}
-  async loadGlobalConfig(workspaceUri: vscode.Uri): Promise<Messages.GlobalConfig> {
-    const userSettingsUri = await sendRequest(this.connection, Messages.GetUserSettingsUriRequest, undefined);
-    return getGlobalConfig(workspaceUri, UriUtils.toUri(userSettingsUri));
-  }
+export function registerConfigLoader(client: BaseLanguageClient, context: vscode.ExtensionContext): void {
+  client.onRequest(Messages.GetGlobalConfig.method, async (workspaceUri) => {
+    return getGlobalConfig(UriUtils.toUri(workspaceUri), deriveUserSettingsUri(context.globalStorageUri));
+  });
 }
 
 /**

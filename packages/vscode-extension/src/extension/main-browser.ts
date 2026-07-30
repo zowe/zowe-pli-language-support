@@ -18,7 +18,7 @@ import { registerProgressReporter } from "./progress";
 import { registerCustomDecorators } from "./decorators";
 import { Settings } from "./settings";
 import {
-  VscodeGlobalConfigLoader,
+  registerConfigLoader,
   watchPluginSettings,
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
@@ -67,7 +67,7 @@ async function startLanguageClient(
     watchPluginSettings(client),
   );
   registerFileSystemProvider(client);
-  VscodeGlobalConfigLoader.register(client, context);
+  registerConfigLoader(client, context);
   context.subscriptions.push(
     registerProgressReporter(client),
     registerCustomDecorators(client, settings),

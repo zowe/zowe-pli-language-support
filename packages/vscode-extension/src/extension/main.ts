@@ -27,7 +27,7 @@ import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import {
   locateWorkspaceFolder,
-  VscodeGlobalConfigLoader,
+  registerConfigLoader,
   watchPluginSettings,
 } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
@@ -165,7 +165,7 @@ async function startLanguageClient(
 
   // Register custom connection message handlers.
   registerFileSystemProvider(client);
-  VscodeGlobalConfigLoader.register(client, context);
+  registerConfigLoader(client, context);
   context.subscriptions.push(
     client,
     registerProgressReporter(client),

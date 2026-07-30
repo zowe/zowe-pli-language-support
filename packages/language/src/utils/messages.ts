@@ -37,8 +37,8 @@ export function createNotificationType<P>(method: string): NotificationType<P> {
 }
 
 export namespace Messages {
-  export const GetUserSettingsUriRequest = createRequestType<void, string>(
-    "pli/getUserSettingsUri",
+  export const GetGlobalConfig = createRequestType<string, Messages.GlobalConfig>(
+    "pli/getGlobalConfig",
   );
 
   /**

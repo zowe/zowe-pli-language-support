@@ -16,7 +16,7 @@ import {
 } from "vscode-languageserver/browser.js";
 import { startLanguageServer } from "pli-language";
 import { VSCodeFileSystemProvider } from "./file-system";
-import { VscodeGlobalConfigLoader } from "../extension/config-loader";
+import { VscodeGlobalConfigLoader } from "./config-loader";
 
 /* browser specific setup code */
 const messageReader = new BrowserMessageReader(self);
