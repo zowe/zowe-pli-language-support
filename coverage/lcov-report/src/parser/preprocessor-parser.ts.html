@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.53% </span>
+                <span class="strong">93.51% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>752/804</span>
+                <span class='fraction'>750/802</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.95% </span>
+                <span class="strong">78.1% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>290/372</span>
+                <span class='fraction'>289/370</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.5% </span>
+                <span class="strong">93.49% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>749/801</span>
+                <span class='fraction'>747/799</span>
             </div>
         
             
@@ -2014,11 +2014,11 @@
 <span class="cline-any cline-yes">120x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">688643x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">689138x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2026,12 +2026,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1487x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">687156x</span>
+<span class="cline-any cline-yes">687651x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">5696x</span>
-<span class="cline-any cline-yes">5696x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">5711x</span>
+<span class="cline-any cline-yes">5711x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2090,9 +2090,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1416x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1416x</span>
-<span class="cline-any cline-yes">116x</span>
-<span class="cline-any cline-yes">116x</span>
 <span class="cline-any cline-yes">116x</span>
 <span class="cline-any cline-yes">116x</span>
 <span class="cline-any cline-yes">116x</span>
@@ -3284,23 +3284,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">879x</span>
-<span class="cline-any cline-yes">879x</span>
+<span class="cline-any cline-yes">995x</span>
+<span class="cline-any cline-yes">995x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">879x</span>
+<span class="cline-any cline-yes">995x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">879x</span>
+<span class="cline-any cline-yes">995x</span>
 <span class="cline-any cline-yes">752x</span>
 <span class="cline-any cline-yes">195x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">879x</span>
+<span class="cline-any cline-yes">995x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -4001,11 +4001,11 @@ export async function statement(
 &nbsp;
 function labels(state: ParserState): ast.LabelPrefix[] {
   const labels: ast.LabelPrefix[] = [];
+  // Preprocessor labels never carry dimensions (macro label arrays are not
+  // a supported construct), so a plain `ID :` lookahead is sufficient here.
   while (state.canConsume(t.ID, t.Colon)) {
     const label = ast.createLabelPrefix();
-    const labelToken = state.consume(label, CstNodeKind.LabelPrefix_Name, t.ID);
-    label.name = labelToken?.image ?? <span class="branch-1 cbranch-no" title="branch not covered" >null;</span>
-    label.nameToken = labelToken;
+    label.item = parseReferenceItem(state, false);
     state.consume(label, CstNodeKind.LabelPrefix_Colon, t.Colon);
     labels.push(label);
   }
@@ -5803,7 +5803,7 @@ function isXInstruction(token: t.Token | null | undefined): boolean {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-29T10:07:54.081Z
+                at 2026-08-03T15:43:20.210Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
