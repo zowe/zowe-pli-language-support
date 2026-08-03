@@ -11,18 +11,18 @@
 
 import { diagnosticFromCode } from "../../language-server/types";
 import { PLICodes } from "../pli-codes";
-import * as AST from "../../syntax-tree/ast";
+import * as ast from "../../syntax-tree/ast";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { ValidationAcceptor } from "../validator";
 
 export function checkLabelPrefixSyntax(
-  node: AST.ReferenceItem,
+  node: ast.ReferenceItem,
   acceptor: ValidationAcceptor,
   compilationUnit: CompilationUnit,
 ): void {
   if (
     node.dimensions.length === 0 ||
-    node.container?.kind !== AST.SyntaxKind.LabelPrefix
+    node.container?.kind !== ast.SyntaxKind.LabelPrefix
   ) {
     // No need to check anything if its not a label, or if there are no dimensions attached
     return;
@@ -39,12 +39,22 @@ export function checkLabelPrefixSyntax(
     }
     if (entry.upper !== null) {
       const value = entry.upper.expression;
-      if (value && value.kind !== AST.SyntaxKind.NumberLiteral) {
-        // Label prefixes can only be indexed using a number literal
+      if (value && !isSimpleNumericExpression(value)) {
+        // Label prefixes can only be indexed using a numeric expression
         acceptor(
           diagnosticFromCode(PLICodes.Severe.IBM3988I, entry.upper.token),
         );
       }
     }
   }
+}
+
+function isSimpleNumericExpression(node: ast.Expression): boolean {
+  if (node.kind === ast.SyntaxKind.NumberLiteral) {
+    return true;
+  }
+  if (node.kind === ast.SyntaxKind.UnaryExpression && node.expr !== null) {
+    return isSimpleNumericExpression(node.expr);
+  }
+  return false;
 }
