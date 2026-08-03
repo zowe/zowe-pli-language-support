@@ -598,15 +598,30 @@ function handleNode(
     case SyntaxKind.DefineOrdinalStatement:
       parentScope.symbolTable.addOrdinalDefinition(node, context.reporter);
       break;
-    // E.g. `MY_PROC: PROCEDURE;`
-    case SyntaxKind.LabelPrefix:
-      parentScope.symbolTable.addLabelStatement(
-        node,
-        node.name,
-        node.nameToken,
-        context.reporter,
-      );
+    // E.g. `MY_PROC: PROCEDURE;` or `MY_LABEL(1): PUT("HELLO");`
+    case SyntaxKind.LabelPrefix: {
+      const labelRef = node.item?.ref;
+      if (labelRef) {
+        if (node.item!.dimensions.length > 0) {
+          // A dimensioned label prefix implicitly declares the label array.
+          // An explicit `DCL ... LABEL` declaration takes precedence during resolution.
+          parentScope.symbolTable.addImplicitDeclaration(
+            labelRef.text,
+            labelRef.token,
+            node,
+            context.reporter,
+          );
+        } else {
+          parentScope.symbolTable.addLabelStatement(
+            node,
+            labelRef.text,
+            labelRef.token,
+            context.reporter,
+          );
+        }
+      }
       break;
+    }
     // E.g. `DCL A FIXED;`
     case SyntaxKind.DeclareStatement:
       parentScope.symbolTable.addExplicitDeclarationStatement(

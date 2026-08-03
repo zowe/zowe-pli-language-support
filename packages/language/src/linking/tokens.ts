@@ -25,7 +25,6 @@ export function isValidToken(token: Token): boolean {
 export function isNameToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
     case CstNodeKind.DeclaredVariable_Name:
-    case CstNodeKind.LabelPrefix_Name:
     case CstNodeKind.OrdinalValue_Name:
     case CstNodeKind.ReplaceStatement_Id:
     case CstNodeKind.DefineOrdinalStatement_Name:
@@ -43,8 +42,9 @@ export function getNameToken(node: SyntaxNode): Token | undefined {
     case SyntaxKind.ProcedureParameter:
     case SyntaxKind.ReferenceItem:
       return node.ref?.token ?? undefined;
-    case SyntaxKind.DeclaredVariable:
     case SyntaxKind.LabelPrefix:
+      return node.item?.ref?.token ?? undefined;
+    case SyntaxKind.DeclaredVariable:
     case SyntaxKind.OrdinalValue:
     case SyntaxKind.ReplaceStatement:
     case SyntaxKind.DefineOrdinalStatement:

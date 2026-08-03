@@ -333,13 +333,20 @@ function getMatchingSymbols(
    */
 
   const firstImplicitSymbol = implicitSymbols[0];
-  reporter.reportImplicitDeclaration(firstImplicitSymbol);
+  // Implicit declarations created by dimensioned label prefixes (e.g. `L(1): ...;`)
+  // are label constants, not variables — forward `GOTO L(1);` is perfectly fine.
+  if (firstImplicitSymbol.node.kind !== SyntaxKind.LabelPrefix) {
+    reporter.reportImplicitDeclaration(firstImplicitSymbol);
 
-  if (
-    unit.statementOrderCache.isBefore(reference.owner, firstImplicitSymbol.node)
-  ) {
-    // If the node is before the first implicit symbol, we report a potential unset variable.
-    reporter.reportPotentialUnsetVariable(reference.token, getFullName());
+    if (
+      unit.statementOrderCache.isBefore(
+        reference.owner,
+        firstImplicitSymbol.node,
+      )
+    ) {
+      // If the node is before the first implicit symbol, we report a potential unset variable.
+      reporter.reportPotentialUnsetVariable(reference.token, getFullName());
+    }
   }
 
   /**

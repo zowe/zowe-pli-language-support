@@ -29,6 +29,7 @@ import {
 } from "./compiler/IBM2444Iff-deprecate";
 import { IBM1213I_unreferenced_procedure } from "./compiler/IBM1213I-unreferenced-procedure";
 import { checkProcedureCallsDimensions } from "./language-server/call-dimensions";
+import { checkLabelPrefixSyntax } from "./language-server/label-prefix-syntax";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -56,7 +57,11 @@ export function registerPliValidationChecks(): ValidationChecks {
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
       IBM1213I_unreferenced_procedure,
     ],
-    ReferenceItem: [checkImplicitBuiltins, checkProcedureCallsDimensions],
+    ReferenceItem: [
+      checkImplicitBuiltins,
+      checkProcedureCallsDimensions,
+      checkLabelPrefixSyntax,
+    ],
     Statement: [DeprecateStatements],
     // TODO @wagner-laranjeiras -> When adding ReturnStatement to this list, make sure to include comment about IBM2412/10/09I.
   };

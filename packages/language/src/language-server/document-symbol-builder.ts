@@ -13,11 +13,11 @@ import { SymbolKind } from "vscode-languageserver-types";
 import {
   DeclaredItem,
   DeclareStatement,
-  Statement,
   SyntaxKind,
   DefaultAttribute,
   ProcedureStatement,
 } from "../syntax-tree/ast";
+import { getLabelPrefixName } from "../syntax-tree/ast-utils";
 import { Range, getSyntaxNodeRange, DocumentSymbol } from "./types";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { isValidToken } from "../linking/tokens";
@@ -60,7 +60,8 @@ class ProcedureSymbolBuilder implements SymbolBuilder {
       return [];
     }
     const procedureName = labelPrefixStatement.labels
-      .map((label) => label.name)
+      .map((label) => getLabelPrefixName(label))
+      .filter((name) => name !== null)
       .join(" ");
     const range = getSyntaxNodeRange(labelPrefixStatement.labels[0]);
 
@@ -246,13 +247,14 @@ class LevelHierarchyBuilder {
 class LabelSymbolBuilder implements SymbolBuilder {
   canHandle(token: Token): boolean {
     if (
-      token.kind !== CstNodeKind.LabelPrefix_Name ||
-      token.element?.kind !== SyntaxKind.LabelPrefix
+      token.kind !== CstNodeKind.ReferenceItem_Ref ||
+      token.element?.kind !== SyntaxKind.ReferenceItem ||
+      token.element.container?.kind !== SyntaxKind.LabelPrefix
     ) {
       return false;
     }
 
-    const container = token.element.container;
+    const container = token.element.container.container;
     if (!container || container.kind !== SyntaxKind.Statement) {
       return true;
     }
@@ -265,27 +267,25 @@ class LabelSymbolBuilder implements SymbolBuilder {
     elementTokens: Token[],
     childSymbols: DocumentSymbol[],
   ): DocumentSymbol[] {
-    const labelPrefixStatement = token.element?.container as Statement;
-    if (!labelPrefixStatement?.labels?.length) {
+    const labelPrefixStatement = token.element?.container?.container;
+    if (
+      labelPrefixStatement?.kind !== SyntaxKind.Statement ||
+      !labelPrefixStatement.labels.length
+    ) {
       return [];
     }
 
     const documentSymbols: DocumentSymbol[] = [];
     for (const label of labelPrefixStatement.labels) {
       const range = getSyntaxNodeRange(label);
+      const name = getLabelPrefixName(label);
 
-      if (!label.name || !range) {
+      if (!name || !range) {
         continue;
       }
 
       documentSymbols.push(
-        createDocumentSymbol(
-          label.name,
-          SymbolKind.Key,
-          range,
-          range,
-          childSymbols,
-        ),
+        createDocumentSymbol(name, SymbolKind.Key, range, range, childSymbols),
       );
     }
 

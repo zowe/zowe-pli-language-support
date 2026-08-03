@@ -595,6 +595,9 @@ export function forEachNode(
     case SyntaxKind.KeywordCondition:
       break;
     case SyntaxKind.LabelPrefix:
+      if (node.item) {
+        action(node.item);
+      }
       break;
     case SyntaxKind.LabelReference:
       if (node.label) {

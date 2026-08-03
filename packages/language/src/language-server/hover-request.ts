@@ -27,6 +27,10 @@ import {
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
+import {
+  getLabelPrefixName,
+  getLabelPrefixNameToken,
+} from "../syntax-tree/ast-utils";
 import { formatPliCodeBlock } from "../utils/code-block";
 import {
   binaryTokenIndexRightMost,
@@ -167,7 +171,7 @@ function getLabelPrefixRepresentation(labelPrefix: LabelPrefix): string | null {
   }
 
   return formatPliCodeBlock(
-    `${labelPrefix.name ?? ""}: PROC${paramsStr} ${optionsStr};`,
+    `${getLabelPrefixName(labelPrefix) ?? ""}: PROC${paramsStr} ${optionsStr};`,
   );
 }
 
@@ -337,7 +341,9 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     }
     let jsDocsComment = "";
     if (ref.node.kind === SyntaxKind.LabelPrefix) {
-      if (ref.node.nameToken?.uri?.scheme !== BuiltinsUriSchema) {
+      if (
+        getLabelPrefixNameToken(ref.node)?.uri?.scheme !== BuiltinsUriSchema
+      ) {
         // JSDoc is only for builtins
         return getNodeRepresentation(unit, ref.node);
       }
@@ -463,10 +469,11 @@ export function getJSDocCommentBeforeLabelPrefix(
   labelPrefix: LabelPrefix,
   compilationUnit: CompilationUnit,
 ): JSDocComment | null {
-  if (!labelPrefix.nameToken) {
+  const nameToken = getLabelPrefixNameToken(labelPrefix);
+  if (!nameToken) {
     return null;
   }
-  const uri = labelPrefix.nameToken.uri;
+  const uri = nameToken.uri;
   if (!uri || uri.scheme !== BuiltinsUriSchema) {
     //if it's not a builtin, we can skip the work of looking for comments entirely
     //only JSDoc on builtins is currently supported
@@ -477,13 +484,10 @@ export function getJSDocCommentBeforeLabelPrefix(
   if (!tokens || !commentTokens) {
     return null;
   }
-  let tokenIndex = binaryTokenIndexSearch(
-    tokens,
-    labelPrefix.nameToken.startOffset,
-  );
+  let tokenIndex = binaryTokenIndexSearch(tokens, nameToken.startOffset);
   const commentIndex = binaryTokenIndexRightMost(
     commentTokens,
-    labelPrefix.nameToken.startOffset,
+    nameToken.startOffset,
   );
   if (commentIndex > -1) {
     const commentToken = commentTokens[commentIndex];

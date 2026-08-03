@@ -16,9 +16,22 @@ import {
   DeclaredVariable,
   DefineStructureStatement,
   getContainer,
+  LabelPrefix,
   SyntaxKind,
   TypeExtendingAttribute,
 } from "./ast";
+
+export function getLabelPrefixName(
+  label: LabelPrefix | null | undefined,
+): string | null {
+  return label?.item?.ref?.text ?? null;
+}
+
+export function getLabelPrefixNameToken(
+  label: LabelPrefix | null | undefined,
+): Token | null {
+  return label?.item?.ref?.token ?? null;
+}
 
 export function getTypeExtendingAttribute(
   attributes: DeclarationAttribute[],

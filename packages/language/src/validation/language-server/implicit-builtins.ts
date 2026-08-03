@@ -13,6 +13,7 @@ import { diagnosticFromCode, Severity } from "../../language-server/types";
 import { BuiltinsUri, KNOWN_BUILTINS } from "../../workspace/builtins";
 import { PLICodes } from "../pli-codes";
 import * as AST from "../../syntax-tree/ast";
+import { getNameToken } from "../../linking/tokens";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { ValidationAcceptor } from "../validator";
 
@@ -35,7 +36,7 @@ export function checkImplicitBuiltins(
     return;
   }
 
-  const nameToken = node.ref?.node?.nameToken;
+  const nameToken = node.ref?.node ? getNameToken(node.ref.node) : undefined;
   const uri = nameToken?.uri?.toString();
 
   // Check if the reference item is a builtin.

@@ -33,6 +33,7 @@ import {
   hasEndStatementLookahead,
   performAssignmentLookahead,
   performEndStatementLookahead,
+  performLabelPrefixLookahead,
 } from "./parser-lookahead";
 import { Token } from "./tokens";
 import { CompilerOptions } from "../preprocessor/compiler-options/options";
@@ -518,15 +519,7 @@ const labelPrefix = rule(
   sequence(tokens.ID, tokens.Colon),
   (state: ParserState): ast.LabelPrefix => {
     const element = ast.createLabelPrefix();
-    const idToken = state.consume(
-      element,
-      CstNodeKind.LabelPrefix_Name,
-      tokens.ID,
-    );
-    if (idToken) {
-      element.name = idToken.image;
-      element.nameToken = idToken;
-    }
+    element.item = referenceItem.rule(state, ast.ReferenceType.Variable);
     state.consume(element, CstNodeKind.LabelPrefix_Colon, tokens.Colon);
     return element;
   },
@@ -661,7 +654,7 @@ const statement = rule(
     }
 
     const { inc } = state.createLoopContext("Statement");
-    while (state.canConsumeFirst(labelPrefix.first())) {
+    while (performLabelPrefixLookahead(state)) {
       inc();
       const label = labelPrefix.rule(state);
       label && element.labels.push(label);
@@ -1214,7 +1207,7 @@ const endStatement = rule(
 
     // Parse optional label prefixes
     const { inc } = state.createLoopContext("EndStatement");
-    while (state.canConsumeFirst(labelPrefix.first())) {
+    while (performLabelPrefixLookahead(state)) {
       inc();
       const prefix = labelPrefix.rule(state);
       prefix && element.labels.push(prefix);

@@ -11,6 +11,7 @@
 
 import { ValidationAcceptor } from "../validator";
 import * as AST from "../../syntax-tree/ast";
+import { getLabelPrefixNameToken } from "../../syntax-tree/ast-utils";
 import { diagnosticFromCode } from "../../language-server/types";
 import * as PLICodes from "../pli-codes";
 import {
@@ -81,9 +82,9 @@ export function IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att(
   //IBM2410I: Procedures with RETURNS attribute must contain at least one RETURN statement.
   if (hasReturnsAtt && returnStmts.length === 0) {
     const procName =
-      node.container?.kind === AST.SyntaxKind.Statement &&
-      node.container.labels[0]?.nameToken?.originalImage
-        ? node.container.labels[0].nameToken.originalImage
+      node.container?.kind === AST.SyntaxKind.Statement
+        ? (getLabelPrefixNameToken(node.container.labels[0])?.originalImage ??
+          "<unnamed>")
         : "<unnamed>";
 
     acceptor(diagnosticFromCode(PLICodes.Error.IBM2410I, procToken, procName));

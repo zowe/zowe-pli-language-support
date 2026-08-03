@@ -583,7 +583,7 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     }
     if (isSyntaxNode(value)) {
       if (value.kind === SyntaxKind.LabelPrefix) {
-        return value.name;
+        return value.item?.ref?.text ?? null;
       } else if (value.kind === SyntaxKind.Statement) {
         return {
           ...value.value,

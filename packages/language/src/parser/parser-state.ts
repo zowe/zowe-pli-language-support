@@ -146,7 +146,7 @@ export class ParserState {
       return true;
     }
     return this.currentStatementLabels.some(
-      (labelPrefix) => labelPrefix.name === endLabel,
+      (labelPrefix) => labelPrefix.item?.ref?.text === endLabel,
     );
   }
 

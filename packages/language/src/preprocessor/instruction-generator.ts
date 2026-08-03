@@ -11,6 +11,7 @@
 
 import * as inst from "./instructions";
 import * as ast from "../syntax-tree/ast";
+import { getLabelPrefixName } from "../syntax-tree/ast-utils";
 import { assertType, getAttributes } from "./util";
 import { createCicsResponseInstruction } from "./instructions";
 import { SemanticTokenTypes } from "../language-server/semantic-tokens";
@@ -86,9 +87,10 @@ function generateProcedureInstructionContainer(
   const labels = new Map<string, ast.LabelPrefix>();
   const params: string[] = [];
   for (const label of statement.labels) {
-    if (label.name) {
-      names.push(label.name);
-      labels.set(label.name, label);
+    const name = getLabelPrefixName(label);
+    if (name) {
+      names.push(name);
+      labels.set(name, label);
     }
   }
   const procedure = statement.value as ast.ProcedureStatement;
@@ -123,8 +125,9 @@ function generateInstructionForStatement(
     return undefined; // No value to generate instructions for
   }
   for (const label of statement.labels) {
-    if (label.name) {
-      labels.push(label.name);
+    const name = getLabelPrefixName(label);
+    if (name) {
+      labels.push(name);
     }
   }
   let instruction: inst.Instruction | undefined = undefined;
