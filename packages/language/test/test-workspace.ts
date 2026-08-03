@@ -60,5 +60,19 @@ export function createTestWorkspace(
   fs: FileSystemProvider = new VirtualFileSystemProvider(),
 ): WorkspaceContext {
   resetDocumentProviders(fs);
-  return new WorkspaceContext(fs, new TestGlobalConfigLoader({}));
+  return new WorkspaceContext(
+    fs,
+    new TestGlobalConfigLoader({
+      pgmConf: {
+        configKey: "pli.pgm_conf",
+        containerPath: [],
+        uri: ".vscode/settings.json",
+      },
+      procGrps: {
+        configKey: "pli.proc_grps",
+        containerPath: [],
+        uri: ".vscode/settings.json",
+      },
+    }),
+  );
 }
