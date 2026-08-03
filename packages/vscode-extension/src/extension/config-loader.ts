@@ -16,8 +16,8 @@ import { sendNotification } from "./messages";
 
 type ConfigKey = "pgm_conf" | "proc_grps";
 
-export function registerConfigLoader(client: BaseLanguageClient, context: vscode.ExtensionContext): void {
-  client.onRequest(Messages.GetGlobalConfig.method, async (workspaceUri) => {
+export function registerConfigLoader(client: BaseLanguageClient, context: vscode.ExtensionContext): vscode.Disposable {
+  return client.onRequest(Messages.GetGlobalConfig.method, async (workspaceUri) => {
     return getGlobalConfig(UriUtils.toUri(workspaceUri), deriveUserSettingsUri(context.globalStorageUri));
   });
 }
@@ -45,6 +45,17 @@ async function getGlobalConfig(
     if (pgmConf) result.pgmConf = pgmConf;
     const procGrps = locate("proc_grps", workspaceFolder, userSettingsUri);
     if (procGrps) result.procGrps = procGrps;
+  } else {
+    result.pgmConf = {
+      uri: userSettingsUri.toString(),
+      containerPath: [],
+      configKey: "pli.pgm_conf",
+    };
+    result.procGrps = {
+      uri: userSettingsUri.toString(),
+      containerPath: [],
+      configKey: "pli.proc_grps",
+    };
   }
   return result;
 }

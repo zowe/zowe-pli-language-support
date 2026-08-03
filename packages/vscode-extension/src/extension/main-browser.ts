@@ -67,8 +67,8 @@ async function startLanguageClient(
     watchPluginSettings(client),
   );
   registerFileSystemProvider(client);
-  registerConfigLoader(client, context);
   context.subscriptions.push(
+    registerConfigLoader(client, context),
     registerProgressReporter(client),
     registerCustomDecorators(client, settings),
   );

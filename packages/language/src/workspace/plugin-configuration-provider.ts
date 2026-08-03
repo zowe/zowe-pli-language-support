@@ -469,15 +469,15 @@ export class PluginConfigurationProvider {
     // Collect sources in PRECEDENCE-LOWEST-FIRST order. Map-based merge
     // means later writes overwrite earlier writes, so listing
     // .pliplugin/ second makes it the winning source on key collisions.
-    const global = await this.fetchGlobalSettings(this.workspacePath);
+    const globalSettings = await this.fetchGlobalSettings(this.workspacePath);
 
     // Read every source concurrently. Precedence (settings < .pliplugin/)
     // is established by the order we assemble each array below, not by the
     // order the reads resolve, so reading in parallel is safe.
     const [globalPgm, globalProc, plipluginPgm, plipluginProc] =
       await Promise.all([
-        this.readConfigSource(global?.pgmConf),
-        this.readConfigSource(global?.procGrps),
+        this.readConfigSource(globalSettings?.pgmConf),
+        this.readConfigSource(globalSettings?.procGrps),
         this.readConfigSource(plipluginPgmConfUri),
         this.readConfigSource(plipluginProcGrpsUri),
       ]);

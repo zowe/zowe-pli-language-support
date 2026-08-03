@@ -165,9 +165,9 @@ async function startLanguageClient(
 
   // Register custom connection message handlers.
   registerFileSystemProvider(client);
-  registerConfigLoader(client, context);
   context.subscriptions.push(
     client,
+    registerConfigLoader(client, context),
     registerProgressReporter(client),
     registerCustomDecorators(client, settings),
   );
