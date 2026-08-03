@@ -55,7 +55,12 @@ import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
-import { GlobalConfigLoader, Messages, NotificationType, RequestType } from "../utils/messages";
+import {
+  GlobalConfigLoader,
+  Messages,
+  NotificationType,
+  RequestType,
+} from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { JsonItemMeta } from "../config/schema";
 import { assertType } from "../preprocessor/util";
@@ -70,7 +75,11 @@ export function startLanguageServer(
   // Wire the on-demand file loader for include URIs to the workspace's fs
   // so the document store doesn't reach for any module-level singleton.
   resetDocumentProviders(fs);
-  const compilationUnitHandler = new CompilationUnitHandler(fs, globalConfigLoader, new LongRunningOperationImpl(connection));
+  const compilationUnitHandler = new CompilationUnitHandler(
+    fs,
+    globalConfigLoader,
+    new LongRunningOperationImpl(connection),
+  );
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
 
@@ -152,12 +161,14 @@ export function startLanguageServer(
         },
       ],
     });
-    const promises = folders.map(async (folder) =>
-      compilationUnitHandler.initializeWorkspaceFolder(folder.uri),
-    ).concat(
-      //add more default schemes here if needed
-      compilationUnitHandler.initializeFallbackFolderForScheme("file"),
-    );
+    const promises = folders
+      .map(async (folder) =>
+        compilationUnitHandler.initializeWorkspaceFolder(folder.uri),
+      )
+      .concat(
+        //add more default schemes here if needed
+        compilationUnitHandler.initializeFallbackFolder(),
+      );
     await Promise.all(promises);
     compilationUnitHandler.markReady();
   });

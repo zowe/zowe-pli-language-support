@@ -13,7 +13,10 @@ import { FileSystemProvider } from "./file-system-provider";
 import { PluginConfigurationProvider } from "./plugin-configuration-provider";
 import { CompilationUnit, createCompilationUnit } from "./compilation-unit";
 import { URI, UriUtils } from "../utils/uri";
-import { LongRunningOperation, LongRunningOperationImpl } from "../utils/promises";
+import {
+  LongRunningOperation,
+  LongRunningOperationImpl,
+} from "../utils/promises";
 import { GlobalConfigLoader } from "../utils/messages";
 
 /**
@@ -46,7 +49,11 @@ export class WorkspaceContext {
     globalConfigLoader: GlobalConfigLoader,
     longRunningOperation?: LongRunningOperation,
   ) {
-    this.config = new PluginConfigurationProvider(fs, globalConfigLoader, longRunningOperation ?? LongRunningOperationImpl.Dummy);
+    this.config = new PluginConfigurationProvider(
+      fs,
+      globalConfigLoader,
+      longRunningOperation ?? LongRunningOperationImpl.Dummy,
+    );
   }
 
   setCompilationUnit(uri: URI, unit: CompilationUnit): void {

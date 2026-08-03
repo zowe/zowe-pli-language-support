@@ -139,9 +139,7 @@ export class LongRunningOperationImpl implements LongRunningOperation {
       return () => {};
     },
   };
-  constructor(
-    private readonly connection: Connection | undefined
-  ) {}
+  constructor(private readonly connection: Connection | undefined) {}
 
   start(title: string, timeout: number = 500): Cancellation {
     return startLongRunningOperation(this.connection, title, timeout);

@@ -146,4 +146,8 @@ class NodeFileSystemProvider extends VSCodeFileSystemProvider {
 
 const connection = createConnection(ProposedFeatures.all);
 const globalConfigLoader = new VscodeGlobalConfigLoader(connection);
-startLanguageServer(connection, new NodeFileSystemProvider(connection), globalConfigLoader);
+startLanguageServer(
+  connection,
+  new NodeFileSystemProvider(connection),
+  globalConfigLoader,
+);

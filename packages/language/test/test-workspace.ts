@@ -31,7 +31,10 @@ let _defaultTestWorkspace: WorkspaceContext | undefined;
  */
 export function defaultTestWorkspace(): WorkspaceContext {
   if (!_defaultTestWorkspace) {
-    _defaultTestWorkspace = new WorkspaceContext(EmptyFileSystemProvider, new TestGlobalConfigLoader({}));
+    _defaultTestWorkspace = new WorkspaceContext(
+      EmptyFileSystemProvider,
+      new TestGlobalConfigLoader({}),
+    );
   }
   return _defaultTestWorkspace;
 }

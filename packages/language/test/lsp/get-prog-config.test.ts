@@ -20,7 +20,11 @@ import { TestGlobalConfigLoader } from "../../src";
 function setupConfig(
   programConfig: { program: string; pgroup: string }[],
 ): PluginConfigurationProvider {
-  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider, new TestGlobalConfigLoader({}), LongRunningOperationImpl.Dummy); 
+  const pluginConfig = new PluginConfigurationProvider(
+    EmptyFileSystemProvider,
+    new TestGlobalConfigLoader({}),
+    LongRunningOperationImpl.Dummy,
+  );
   pluginConfig.setProgramConfigs(
     UriUtils.toUri("/workspace"),
     programConfig.map(makeProgramConfig),

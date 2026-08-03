@@ -272,7 +272,11 @@ export class PluginConfigurationProvider {
   private readonly longRunningOperation: LongRunningOperation;
   private readonly globalConfigLoader: GlobalConfigLoader;
 
-  constructor(fs: FileSystemProvider, globalConfigLoader: GlobalConfigLoader, longRunningOperation: LongRunningOperation) {
+  constructor(
+    fs: FileSystemProvider,
+    globalConfigLoader: GlobalConfigLoader,
+    longRunningOperation: LongRunningOperation,
+  ) {
     this.fs = fs;
     this.longRunningOperation = longRunningOperation;
     this.globalConfigLoader = globalConfigLoader;
@@ -280,7 +284,6 @@ export class PluginConfigurationProvider {
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
   }
-
 
   /**
    * Snapshot of the file the user is acting on, used by quick-fixes that
@@ -443,7 +446,7 @@ export class PluginConfigurationProvider {
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
     const cancel = this.longRunningOperation.start(
-      "Processing plugin configuration..."
+      "Processing plugin configuration...",
     );
 
     this.programConfigs.clear();

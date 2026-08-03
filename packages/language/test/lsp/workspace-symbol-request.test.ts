@@ -53,7 +53,11 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   );
 
   const fs = new VirtualFileSystemProvider();
-  const handler = new CompilationUnitHandler(fs, new TestGlobalConfigLoader({}), LongRunningOperationImpl.Dummy);
+  const handler = new CompilationUnitHandler(
+    fs,
+    new TestGlobalConfigLoader({}),
+    LongRunningOperationImpl.Dummy,
+  );
   const workspace = defaultTestWorkspace();
   handler.addWorkspaceFolder("file:///", workspace);
   textDocuments.forEach((doc) => EditorDocuments.set(doc));

@@ -228,7 +228,9 @@ describe("Plugin Configuration Tests", () => {
       );
       workspace = new WorkspaceContext(
         vfs,
-        new TestGlobalConfigLoader(settingsConfig({ pgmConf: true, procGrps: true })),
+        new TestGlobalConfigLoader(
+          settingsConfig({ pgmConf: true, procGrps: true }),
+        ),
       );
 
       await workspace.config.init(UriUtils.toUri(WORKSPACE));

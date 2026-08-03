@@ -26,4 +26,8 @@ const connection = createConnection(messageReader, messageWriter);
 
 const globalConfigLoader = new VscodeGlobalConfigLoader(connection);
 
-startLanguageServer(connection, new VSCodeFileSystemProvider(connection), globalConfigLoader);
+startLanguageServer(
+  connection,
+  new VSCodeFileSystemProvider(connection),
+  globalConfigLoader,
+);

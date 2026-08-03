@@ -47,7 +47,11 @@ import { GroupRecord, ProgramRecord } from "./plugin-configuration-provider.js";
 import { WorkspaceContext } from "./workspace-context.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { createMutex, Mutex } from "./mutex.js";
-import { Deferred, isOperationCancelled, LongRunningOperation } from "../utils/promises.js";
+import {
+  Deferred,
+  isOperationCancelled,
+  LongRunningOperation,
+} from "../utils/promises.js";
 import {
   InstructionCache,
   TokenizationCache,
@@ -300,7 +304,11 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
    */
   readonly globalMutex = createMutex();
 
-  constructor(fs: FileSystemProvider, private readonly configLoader: GlobalConfigLoader, private readonly longRunningOperation: LongRunningOperation) {
+  constructor(
+    fs: FileSystemProvider,
+    private readonly configLoader: GlobalConfigLoader,
+    private readonly longRunningOperation: LongRunningOperation,
+  ) {
     super(false);
     this.fs = fs;
   }
@@ -349,7 +357,11 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
 
   async initializeWorkspaceFolder(uriString: string | URI) {
     const uri = UriUtils.toUri(uriString);
-    const workspace = new WorkspaceContext(this.fs, this.configLoader, this.longRunningOperation);
+    const workspace = new WorkspaceContext(
+      this.fs,
+      this.configLoader,
+      this.longRunningOperation,
+    );
     this.addWorkspaceFolder(uri, workspace);
     const diagnosticsByUri = await workspace.config.init(uri);
     if (this.connection) {
@@ -359,12 +371,17 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
   }
 
   //URI scheme -> WorkspaceContext
-  private fallbackWorkspaces: Record<string, WorkspaceContext> = {};
+  private fallbackWorkspace: WorkspaceContext = undefined!;
 
-  async initializeFallbackFolderForScheme(uriScheme: string) {
-    const uri = UriUtils.toUri(`${uriScheme}:///`);
-    const workspace = new WorkspaceContext(this.fs, this.configLoader, this.longRunningOperation);
-    this.fallbackWorkspaces[uriScheme] = workspace;
+  /** must be initialized at least once */
+  async initializeFallbackFolder() {
+    const uri = UriUtils.toUri(`file:///`);
+    const workspace = new WorkspaceContext(
+      this.fs,
+      this.configLoader,
+      this.longRunningOperation,
+    );
+    this.fallbackWorkspace = workspace;
     const diagnosticsByUri = await workspace.config.init(uri);
     if (this.connection) {
       publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
@@ -376,8 +393,8 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     uri: string | URI,
   ): WorkspaceContext | undefined {
     const workspace = super.getWorkspaceFolderOf(uri);
-    if (!workspace && typeof uri !== "string" && uri.scheme) {
-      return this.fallbackWorkspaces[uri.scheme];
+    if (!workspace) {
+      return this.fallbackWorkspace;
     }
     return workspace;
   }

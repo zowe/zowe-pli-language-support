@@ -22,7 +22,11 @@ import { TestGlobalConfigLoader } from "../../src";
 async function setupConfig(
   testLibs: string[],
 ): Promise<PluginConfigurationProvider> {
-  const pluginConfig = new PluginConfigurationProvider(EmptyFileSystemProvider, new TestGlobalConfigLoader({}), LongRunningOperationImpl.Dummy);
+  const pluginConfig = new PluginConfigurationProvider(
+    EmptyFileSystemProvider,
+    new TestGlobalConfigLoader({}),
+    LongRunningOperationImpl.Dummy,
+  );
   const processGroup = deserializeProcessGroup({
     name: "default",
     "include-extensions": [".pli"],

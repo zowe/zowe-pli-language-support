@@ -17,10 +17,7 @@ import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import { registerCustomDecorators } from "./decorators";
 import { Settings } from "./settings";
-import {
-  registerConfigLoader,
-  watchPluginSettings,
-} from "./config-loader";
+import { registerConfigLoader, watchPluginSettings } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
 import { registerCommands } from "./commands";
 

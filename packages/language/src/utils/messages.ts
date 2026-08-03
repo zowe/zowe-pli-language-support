@@ -37,9 +37,10 @@ export function createNotificationType<P>(method: string): NotificationType<P> {
 }
 
 export namespace Messages {
-  export const GetGlobalConfig = createRequestType<string, Messages.GlobalConfig>(
-    "pli/getGlobalConfig",
-  );
+  export const GetGlobalConfig = createRequestType<
+    string,
+    Messages.GlobalConfig
+  >("pli/getGlobalConfig");
 
   /**
    * Notification sent to the LS when the workspace's plugin configuration changes.

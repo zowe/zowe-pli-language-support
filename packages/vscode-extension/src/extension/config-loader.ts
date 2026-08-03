@@ -16,10 +16,19 @@ import { sendNotification } from "./messages";
 
 type ConfigKey = "pgm_conf" | "proc_grps";
 
-export function registerConfigLoader(client: BaseLanguageClient, context: vscode.ExtensionContext): vscode.Disposable {
-  return client.onRequest(Messages.GetGlobalConfig.method, async (workspaceUri) => {
-    return getGlobalConfig(UriUtils.toUri(workspaceUri), deriveUserSettingsUri(context.globalStorageUri));
-  });
+export function registerConfigLoader(
+  client: BaseLanguageClient,
+  context: vscode.ExtensionContext,
+): vscode.Disposable {
+  return client.onRequest(
+    Messages.GetGlobalConfig.method,
+    async (workspaceUri) => {
+      return getGlobalConfig(
+        UriUtils.toUri(workspaceUri),
+        deriveUserSettingsUri(context.globalStorageUri),
+      );
+    },
+  );
 }
 
 /**
