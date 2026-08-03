@@ -294,8 +294,11 @@ function isProcedureType(token: Token): boolean {
   switch (token.kind) {
     case CstNodeKind.Exports_Procedure:
       return true;
-    case CstNodeKind.LabelPrefix_Name:
-      return isProcedurePrefix(token.element);
+    case CstNodeKind.ReferenceItem_Ref:
+      if (token.element?.kind === SyntaxKind.ReferenceItem) {
+        return isProcedurePrefix(token.element.container);
+      }
+      return false;
   }
   return false;
 }

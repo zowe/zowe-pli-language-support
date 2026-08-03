@@ -11,6 +11,7 @@
 
 import { diagnosticFromCode } from "../../language-server/types";
 import * as AST from "../../syntax-tree/ast";
+import { getLabelPrefixNameToken } from "../../syntax-tree/ast-utils";
 import { ValidationAcceptor } from "../validator";
 import { CompilationUnit } from "../../workspace/compilation-unit";
 import { PLICodes } from "../pli-codes";
@@ -37,7 +38,7 @@ export function MACRO_Deprecate(
   const nameTokens =
     node.container?.kind === AST.SyntaxKind.Statement
       ? node.container.labels
-          ?.map((label) => label.nameToken)
+          ?.map((label) => getLabelPrefixNameToken(label))
           .filter((token) => token !== null) || []
       : [];
 

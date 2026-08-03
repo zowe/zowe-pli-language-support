@@ -114,11 +114,11 @@ export async function statement(
 
 function labels(state: ParserState): ast.LabelPrefix[] {
   const labels: ast.LabelPrefix[] = [];
+  // Preprocessor labels never carry dimensions (macro label arrays are not
+  // a supported construct), so a plain `ID :` lookahead is sufficient here.
   while (state.canConsume(t.ID, t.Colon)) {
     const label = ast.createLabelPrefix();
-    const labelToken = state.consume(label, CstNodeKind.LabelPrefix_Name, t.ID);
-    label.name = labelToken?.image ?? null;
-    label.nameToken = labelToken;
+    label.item = parseReferenceItem(state, false);
     state.consume(label, CstNodeKind.LabelPrefix_Colon, t.Colon);
     labels.push(label);
   }
