@@ -47,7 +47,6 @@ import { BuiltinsUriSchema } from "../workspace/builtins";
 import { JSDocComment } from "../documentation/jsdoc";
 import { isJSDoc, parseJSDoc } from "../documentation/jsdoc";
 import { tokenMatcher } from "chevrotain";
-import { CstNodeKind } from "../syntax-tree/cst";
 
 type MarkupResponse = string | null;
 
@@ -433,26 +432,9 @@ export function hoverRequest(
   if (!tokens) {
     return null;
   }
-  let token = binaryTokenSearch(tokens, offset);
+  const token = binaryTokenSearch(tokens, offset);
   if (!token) {
     return null;
-  }
-
-  // edge case: bend preprocessor identifiers
-  if (
-    token.kind === CstNodeKind.ExecStatement_ExecFragment &&
-    token.element &&
-    token.element.kind === SyntaxKind.ExecStatement &&
-    (token.element.replacement === null || // include identifiers are handled separately, so we don't want to bend them here
-      typeof token.element.replacement !== "object" ||
-      token.element.replacement.kind !== SyntaxKind.IncludeDirective)
-  ) {
-    const ppToken = token.element.preprocessorTokens.find(
-      (t) => t.token.startOffset <= offset && t.token.endOffset >= offset,
-    );
-    if (ppToken) {
-      token = ppToken.token;
-    }
   }
 
   const generators: MarkupGenerator[] = [
