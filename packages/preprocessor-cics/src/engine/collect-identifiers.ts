@@ -10,7 +10,11 @@
  */
 import { ParseTree } from "antlr4ng";
 import { Token, SemanticsKind } from "preprocessor-api";
-import { CicsWordContext } from "../generated/CICSParser";
+import {
+  CicsLexerDefinedVariableUsageTokensContext,
+  CicsWordContext,
+  CicsWordsContext,
+} from "../generated/CICSParser";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 
 export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
@@ -20,15 +24,37 @@ export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
     return visitor.identifiers;
   }
   readonly identifiers: Token[] = [];
+  private pushIdentifier = (
+    image: string,
+    startOffset: number,
+    endOffset: number,
+  ): void => {
+    this.identifiers.push({
+      //because linking is case-insensitive
+      image: image.toUpperCase(),
+      startOffset,
+      endOffset,
+      semanticsKind: SemanticsKind.Identifier,
+    });
+  };
+  override visitCicsLexerDefinedVariableUsageTokens = (
+    ctx: CicsLexerDefinedVariableUsageTokensContext,
+  ): void => {
+    if (ctx.start && ctx.stop) {
+      this.pushIdentifier(ctx.getText(), ctx.start.start, ctx.stop.stop);
+    }
+  };
+  override visitCicsWords = (words: CicsWordsContext): void => {
+    if (words.start && words.stop) {
+      this.pushIdentifier(words.getText(), words.start.start, words.stop.stop);
+    }
+  };
   override visitCicsWord = (ctx: CicsWordContext): void => {
     const symbol = ctx.WORD_IDENTIFIER()?.getSymbol();
     if (symbol && symbol.text) {
-      this.identifiers.push({
-        image: symbol.text,
-        startOffset: symbol.start,
-        endOffset: symbol.stop,
-        semanticsKind: SemanticsKind.Identifier,
-      });
+      this.pushIdentifier(symbol.text, symbol.start, symbol.stop);
+    } else {
+      this.visitChildren(ctx);
     }
   };
 }
