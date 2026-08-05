@@ -246,8 +246,6 @@ export enum SyntaxKind {
   XFormatItem,
 
   CicsResponseStatement,
-
-  ExecVariableReference,
 }
 
 export enum KeywordConditions {
@@ -956,8 +954,7 @@ export type SyntaxNode =
   | EnvironmentOption
   | ProcedureOrderOption
   | ProcedureRecursiveOption
-  | ProcedureScopeOption
-  | ExecVariableReference;
+  | ProcedureScopeOption;
 
 export type AllocateAttribute =
   | AllocateDimension
@@ -1141,8 +1138,7 @@ export type Unit =
   | NoPrintDirective
   | SkipDirective
   | SqlAttributeStatement
-  | CicsResponseStatement
-  | ExecVariableReference;
+  | CicsResponseStatement;
 
 // Preprocessor AST
 
@@ -4340,18 +4336,5 @@ export function createCicsResponseStatement(): CicsResponseStatement {
     token: null,
     code: null,
     codeToken: null,
-  };
-}
-
-export interface ExecVariableReference extends AstNode {
-  kind: SyntaxKind.ExecVariableReference;
-  ref: Reference<NamedVariable> | null;
-}
-
-export function createExecVariableReference(): ExecVariableReference {
-  return {
-    kind: SyntaxKind.ExecVariableReference,
-    container: null,
-    ref: null,
   };
 }

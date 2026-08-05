@@ -37,7 +37,7 @@ describe("CICS execute(context)", () => {
     expect(text.slice(edit.range.start, edit.range.end)).toBe(
       "EXEC CICS ABEND ABCODE(12);",
     );
-    expect(edit.text.endsWith("DO; END;")).toBe(true);
+    expect(edit.text.endsWith("DO;\nEND;")).toBe(true);
     // Full classification, not just identifiers - offsets absolute into `context.text`.
     const abend = edit.tokens.find((t) => t.image === "ABEND");
     expect(abend?.semanticsKind).toBe(SemanticsKind.Keyword);

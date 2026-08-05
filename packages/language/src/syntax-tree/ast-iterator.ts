@@ -967,7 +967,6 @@ export function forEachNode(
     case SyntaxKind.SqlAttributeTableLocator:
     case SyntaxKind.SqlAttributeResultSetLocator:
     case SyntaxKind.AnyAttribute:
-    case SyntaxKind.ExecVariableReference:
       break;
     default:
       assertUnreachable(node);

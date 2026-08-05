@@ -265,15 +265,13 @@ describe("buildExecReplacement", () => {
       token("SELECT", SemanticsKind.Keyword, 12),
       token("VAR2", SemanticsKind.Identifier, 20),
     ]);
-    // Identifiers appear verbatim, in token order - the contract the host's embedded-image
-    // search relies on (see `PreprocessorContext.replace`).
-    expect(text).toBe("VAR1 VAR2 DO; END;");
+    expect(text).toBe("DO;\nPUT(VAR1);\nPUT(VAR2);\nEND;");
   });
 
   test("no identifier tokens yields just DO; END;", () => {
     const text = buildExecReplacement([
       token("SELECT", SemanticsKind.Keyword, 0),
     ]);
-    expect(text).toBe("DO; END;");
+    expect(text).toBe("DO;\nEND;");
   });
 });

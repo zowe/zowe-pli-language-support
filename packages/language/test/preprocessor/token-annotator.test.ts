@@ -14,7 +14,6 @@ import { annotateTokens } from "../../src/preprocessor/token-annotator";
 import { SourceMap, Segment } from "../../src/preprocessor/source-map";
 import {
   createTokenInstance,
-  EXEC_VARIABLE_MARKER,
   ID,
 } from "../../src/parser/tokens";
 import { UriUtils } from "../../src/utils/uri";
@@ -102,40 +101,6 @@ describe("annotateTokens - cross-reference restoration", () => {
     );
     expect(tokens[0].element).toBe(targetNode);
     expect(tokens[0].kind).toBe(CstNodeKind.ReferenceItem_Ref);
-  });
-});
-
-describe("annotateTokens - EXEC_VARIABLE_MARKER re-insertion", () => {
-  test("inserts a marker token immediately before an execHostVariable token", () => {
-    const segments: Segment[] = [
-      {
-        origStart: 3,
-        origEnd: 3,
-        genStart: 0,
-        genEnd: 7,
-        uri,
-        verbatim: false,
-        tokens: [
-          {
-            startOffset: 0,
-            endOffset: 6,
-            originalImage: "HOSTVAR",
-            execHostVariable: true,
-          },
-        ],
-      },
-    ];
-    const sourceMap = SourceMap.fromSegments(segments);
-    const { tokens } = annotateTokens(
-      [finalToken("HOSTVAR", 0)],
-      [],
-      sourceMap,
-      uri,
-    );
-    expect(tokens).toHaveLength(2);
-    expect(tokens[0].tokenTypeIdx).toBe(EXEC_VARIABLE_MARKER.tokenTypeIdx);
-    expect(tokens[0].image).toBe("");
-    expect(tokens[1].image).toBe("HOSTVAR");
   });
 });
 

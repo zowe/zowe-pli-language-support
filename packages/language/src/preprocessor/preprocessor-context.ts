@@ -100,6 +100,29 @@ function findEmbeddedImage(text: string, image: string, from: number): number {
 }
 
 /**
+ * The name parts of a (possibly qualified) host-variable image: `A.B` yields `A` and `B`
+ * with their offsets inside the image; a simple name yields itself. The final lex splits a
+ * qualified name at each `.`, so every part needs its own `MappedToken` for the annotate
+ * pass' exact-span matching to fire (see `MappedToken.sourceToken`).
+ */
+function splitQualifiedImage(
+  image: string,
+): { image: string; offset: number }[] {
+  if (!image.includes(".")) {
+    return [{ image, offset: 0 }];
+  }
+  const parts: { image: string; offset: number }[] = [];
+  let offset = 0;
+  for (const part of image.split(".")) {
+    if (part.length > 0) {
+      parts.push({ image: part, offset });
+    }
+    offset += part.length + 1;
+  }
+  return parts;
+}
+
+/**
  * A single `replace`/`insert` edit, recorded against the context's input text and applied
  * when {@link PreprocessorContext.build} runs. `tokens`, if given, are *local* to `text`
  * (0-based offsets into the replacement string) - `build()` translates them into their
@@ -271,9 +294,8 @@ export class PreprocessorContext implements api.PreprocessorContext {
    * Records one edit. Api tokens are a preprocessor's full classified token list in host
    * coordinates (see `Preprocessor`): they are kept as-is for `applyFragmentMetadata`, and
    * each Identifier among them that was re-embedded in `text` (located by
-   * `findEmbeddedImage`) additionally becomes a `MappedToken` - local to `text`, marked
-   * `execHostVariable` so the annotate pass emits the parser's `EXEC_VARIABLE_MARKER` for
-   * it. `MappedToken` inputs (non-api callers, e.g. tests) are already local to `text` and
+   * `findEmbeddedImage`) additionally becomes a `MappedToken` - local to `text`,
+   * `MappedToken` inputs (non-api callers, e.g. tests) are already local to `text` and
    * pass through unchanged.
    */
   private createEdit(
@@ -303,15 +325,19 @@ export class PreprocessorContext implements api.PreprocessorContext {
         continue;
       }
       cursor = local + token.image.length;
-      const mappedToken: MappedToken = {
-        name: token.image,
-        startOffset: local,
-        endOffset: local + token.image.length - 1,
-        originalImage: token.image,
-        execHostVariable: true,
-      };
-      mapped.push(mappedToken);
-      identifierPairs.push({ apiToken: token, mapped: mappedToken });
+      // One MappedToken (and pair) per name part: a qualified image (`A.B`) re-lexes as
+      // several tokens, and each must find its own exact-span match. Pairs are pushed in
+      // part order - `collectExecMetadata` zips them against its per-part tokens.
+      for (const part of splitQualifiedImage(token.image)) {
+        const mappedToken: MappedToken = {
+          name: part.image,
+          startOffset: local + part.offset,
+          endOffset: local + part.offset + part.image.length - 1,
+          originalImage: part.image,
+        };
+        mapped.push(mappedToken);
+        identifierPairs.push({ apiToken: token, mapped: mappedToken });
+      }
     }
     return {
       start,

@@ -507,8 +507,11 @@ export function getReferenceLocations(
   const locations: Location[] = [];
   const reverseReferences = findElementReferences(unit, element);
 
+  // `synthetic` tokens exist only in preprocessor-generated text; their offsets collapse
+  // to the generating edit's anchor (usually whitespace), so reporting them as locations
+  // would point at nothing meaningful - they are suppressed from all location results.
   const nameToken = getNameToken(element);
-  if (nameToken?.uri) {
+  if (nameToken?.uri && !nameToken.synthetic) {
     locations.push({
       uri: nameToken.uri.toString(),
       range: tokenToRange(nameToken),
@@ -516,7 +519,7 @@ export function getReferenceLocations(
   }
 
   for (const ref of reverseReferences) {
-    if (ref.token.uri) {
+    if (ref.token.uri && !ref.token.synthetic) {
       locations.push({
         uri: ref.token.uri.toString(),
         range: tokenToRange(ref.token),

@@ -11,8 +11,6 @@
 
 import { Diagnostic } from "../language-server/types";
 import {
-  createTokenInstance,
-  EXEC_VARIABLE_MARKER,
   Token,
 } from "../parser/tokens";
 import { rightmostIndexLE } from "../utils/search";
@@ -85,12 +83,6 @@ export function annotateTokens(
       const exactSpan =
         genOffset === mapped.startOffset && genEndOffset === mapped.endOffset;
       if (exactSpan && mapped.sourceToken) {
-        // Emit the original, already-positioned token object instead of the re-lexed one,
-        // so the real parser's attachments land where LSP lookups will find them - see
-        // `MappedToken.sourceToken`.
-        if (mapped.execHostVariable) {
-          tokens.push(createExecVariableMarker(mapped.sourceToken));
-        }
         tokens.push(mapped.sourceToken);
         continue;
       }
@@ -101,9 +93,6 @@ export function annotateTokens(
       if (mapped.refTarget) {
         token.element = mapped.refTarget;
         token.kind = mapped.refKind;
-      }
-      if (mapped.execHostVariable) {
-        tokens.push(createExecVariableMarker(token));
       }
     }
     tokens.push(token);
@@ -227,17 +216,4 @@ function remapDiagnostic(
     uri: (start.uri ?? entryUri).toString(),
     range: { start: start.offset, end: end.offset },
   };
-}
-
-function createExecVariableMarker(hostVariableToken: Token): Token {
-  const marker = createTokenInstance(
-    "",
-    "",
-    EXEC_VARIABLE_MARKER,
-    hostVariableToken.startOffset,
-    hostVariableToken.startOffset,
-    hostVariableToken.uri,
-  );
-  marker.synthetic = true;
-  return marker;
 }

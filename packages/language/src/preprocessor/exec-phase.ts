@@ -471,6 +471,48 @@ function toPliToken(token: ApiToken, uri: URI): t.Token {
   );
 }
 
+/**
+ * Builds the PL/I tokens for a classified api token (host coordinates). A qualified
+ * host-variable identifier (`A.B`) yields one token per name part, located in the host
+ * text within the api token's span (the engine's image concatenates the parts without any
+ * whitespace the host text may carry around the `.`); everything else yields one token
+ * covering the whole span. Falls back to the single-token form when a part cannot be
+ * located.
+ */
+function toPliTokens(token: ApiToken, uri: URI, hostText: string): t.Token[] {
+  if (
+    token.semanticsKind === SemanticsKind.Identifier &&
+    token.image.includes(".")
+  ) {
+    const result: t.Token[] = [];
+    let cursor = token.startOffset;
+    for (const part of token.image.split(".")) {
+      if (part.length === 0) {
+        continue;
+      }
+      const index = hostText.indexOf(part, cursor);
+      if (index === -1 || index + part.length - 1 > token.endOffset) {
+        return [toPliToken(token, uri)];
+      }
+      result.push(
+        t.createTokenInstance(
+          part,
+          part,
+          t.ID,
+          index,
+          index + part.length - 1,
+          uri,
+        ),
+      );
+      cursor = index + part.length;
+    }
+    if (result.length > 0) {
+      return result;
+    }
+  }
+  return [toPliToken(token, uri)];
+}
+
 function toSemanticType(kind: SemanticsKind): SemanticTokenTypes {
   switch (kind) {
     case SemanticsKind.Comment:
@@ -509,9 +551,8 @@ interface ExecMetadata {
  *   `string`-typed tokens for `EXEC` and the fragment's leading `SQL`/`CICS` word (which
  *   the engine's classification doesn't cover - it only sees the fragment body),
  * - each re-embedded identifier's `MappedToken.sourceToken` - the annotate pass emits that
- *   exact object (after the `EXEC_VARIABLE_MARKER`) instead of the re-lexed token, so the
- *   real parser's resolved reference lands on a token whose offsets point at the actual
- *   source, which position-based go-to-definition needs,
+ *   exact object instead of the re-lexed token, so the real parser's resolved reference lands
+ *   on a token whose offsets point at the actual source, which position-based go-to-definition needs,
  * - for each `EXEC SQL INCLUDE` (identified by a recorded `resolveInclude` attempt) a
  *   regular `IncludeDirective` statement, taking the exact same hover/definition/validation
  *   paths as `%INCLUDE`; `filePath` only when resolution succeeded.
@@ -567,15 +608,23 @@ function collectExecMetadata(
       collected.push(prefixToken);
     }
 
-    const pliTokens = new Map<ApiToken, t.Token>();
+    const pliTokens = new Map<ApiToken, t.Token[]>();
     for (const apiToken of edit.apiTokens) {
-      const pliToken = toPliToken(apiToken, uri);
-      pliToken.semanticType = toSemanticType(apiToken.semanticsKind);
-      pliTokens.set(apiToken, pliToken);
-      collected.push(pliToken);
+      const parts = toPliTokens(apiToken, uri, context.text);
+      for (const part of parts) {
+        part.semanticType = toSemanticType(apiToken.semanticsKind);
+        collected.push(part);
+      }
+      pliTokens.set(apiToken, parts);
     }
+    // `identifierPairs` lists one entry per name part, in part order (see `createEdit`) -
+    // zip them against the per-part tokens built above.
+    const pairCursor = new Map<ApiToken, number>();
     for (const pair of edit.identifierPairs ?? []) {
-      const sourceToken = pliTokens.get(pair.apiToken);
+      const parts = pliTokens.get(pair.apiToken);
+      const index = pairCursor.get(pair.apiToken) ?? 0;
+      pairCursor.set(pair.apiToken, index + 1);
+      const sourceToken = parts?.[index];
       if (sourceToken) {
         pair.mapped.sourceToken = sourceToken;
       }
@@ -654,7 +703,7 @@ function buildIncludeDirective(
   context: PreprocessorContext,
   attempt: IncludeAttempt,
   apiTokens: ApiToken[],
-  pliTokens: Map<ApiToken, t.Token>,
+  pliTokens: Map<ApiToken, t.Token[]>,
 ): ast.IncludeDirective {
   const item = ast.createIncludeItemFile();
   item.sql = true;
@@ -662,7 +711,8 @@ function buildIncludeDirective(
   const memberToken = apiTokens.find(
     (apiToken) => apiToken.semanticsKind === SemanticsKind.Identifier,
   );
-  const token = memberToken && pliTokens.get(memberToken);
+  // Include member names are never qualified, so the api token maps to exactly one part.
+  const token = memberToken && pliTokens.get(memberToken)?.[0];
   if (token) {
     token.kind = CstNodeKind.IncludeItem_MemberID;
     token.element = item;

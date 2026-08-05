@@ -42,12 +42,6 @@ export interface MappedToken {
   /** `Token.kind` to restore alongside `refTarget` - `getReferenceTarget`-style lookups key off both. */
   refKind?: CstNodeKind;
   /**
-   * Whether this span is an `EXEC` host-variable reference, so the final annotate pass
-   * inserts a synthetic `EXEC_VARIABLE_MARKER` token in front of it (the real parser
-   * requires that marker; see `parser.ts`'s `execVariableReference` rule).
-   */
-  execHostVariable?: boolean;
-  /**
    * The already-positioned token object this span was serialized from, when one exists.
    * The annotate pass emits this exact object instead of the re-lexed token, so the real
    * parser attaches `.kind`/`.element` to a token that (a) carries real original offsets

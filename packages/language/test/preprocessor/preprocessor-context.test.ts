@@ -445,7 +445,6 @@ describe("findEmbeddedImage - PL/I identifier boundaries", () => {
       const pairs = context.getEdits()[0].identifierPairs;
       expect(pairs, text).toHaveLength(1);
       expect(pairs![0].mapped.startOffset, text).toBe(expectedOffset);
-      expect(pairs![0].mapped.execHostVariable).toBe(true);
     }
   });
 });

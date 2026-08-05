@@ -35,7 +35,7 @@ describe("DB2 execute(context)", () => {
     // The host variable appears verbatim in the replacement, in token order - the contract
     // the host's embedded-image search relies on.
     expect(edit.text).toContain("HV1");
-    expect(edit.text.endsWith("DO; END;")).toBe(true);
+    expect(edit.text.endsWith("END;")).toBe(true);
     const hostVariable = edit.tokens.find(
       (t) => t.semanticsKind === SemanticsKind.Identifier,
     );

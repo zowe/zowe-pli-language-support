@@ -204,10 +204,10 @@ export function buildExecReplacement(tokens: Token[]): string {
   const named = tokens.filter(
     (token) => token.semanticsKind === SemanticsKind.Identifier,
   );
-  let text = "";
+  let text = "DO;\n";
   for (const token of named) {
-    text += token.image + " ";
+    text += "PUT(" + token.image + ");\n";
   }
-  text += "DO; END;";
+  text += "END;";
   return text;
 }
