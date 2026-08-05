@@ -370,7 +370,6 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     return workspace;
   }
 
-  //URI scheme -> WorkspaceContext
   private fallbackWorkspace: WorkspaceContext = undefined!;
 
   /** must be initialized at least once */
@@ -387,6 +386,14 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
       publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
     }
     return workspace;
+  }
+
+  override getAllWorkspaceFolders(): WorkspaceContext[] {
+    const folders = super.getAllWorkspaceFolders();
+    if (this.fallbackWorkspace) {
+      folders.push(this.fallbackWorkspace);
+    }
+    return folders;
   }
 
   override getWorkspaceFolderOf(

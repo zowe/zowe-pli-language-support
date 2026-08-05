@@ -102,6 +102,8 @@ describe("Multi Workspace Tests", () => {
       second.workspaceFolder,
     );
 
+    expect(ch.getAllWorkspaceFolders().length).toBe(2);
+
     expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy();
     const firstConfig = firstWorkspace.config.getProgramConfig(first.program)!;
     const firstGroup = firstWorkspace.config.getProcessGroupConfig(
@@ -212,6 +214,8 @@ describe("Multi Workspace Tests", () => {
     const secondWorkspace = await ch.initializeWorkspaceFolder(
       second.workspaceFolder,
     );
+
+    expect(ch.getAllWorkspaceFolders().length).toBe(2);
 
     expect(firstWorkspace.config.hasProgramConfig(first.program)).toBeTruthy();
     const firstConfig = firstWorkspace.config.getProgramConfig(first.program)!;
@@ -326,6 +330,8 @@ describe("Multi Workspace Tests", () => {
 
     await ch.initializeFallbackFolder();
     await ch.initializeWorkspaceFolder(first.workspaceFolder);
+
+    expect(ch.getAllWorkspaceFolders().length).toBe(2);
 
     const firstWorkspace = ch.getWorkspaceFolderOf(first.program);
     expect(firstWorkspace).toBeDefined();
