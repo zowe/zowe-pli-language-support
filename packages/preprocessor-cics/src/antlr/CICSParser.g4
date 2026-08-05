@@ -275,7 +275,7 @@ cics_define_process: (PROCESS cics_data_value | (PROCESSTYPE | TRANSID | PROGRAM
 cics_define_timer: TIMER cics_data_value ((EVENT | DAYS | HOURS | MINUTES | SECONDS | YEAR | MONTH | DAYOFMONTH | DAYOFYEAR) cics_data_value | AFTER  | AT | ON | cics_handle_response)+;
 
 /** DELAY */
-cics_delay: DELAY cics_delay_opts;
+cics_delay: DELAY cics_delay_opts?;
 cics_delay_opts: (INTERVAL cics_zero_digit | (INTERVAL | TIME) cics_hhmmss
  | FOR | (HOURS | MINUTES | SECONDS | MILLISECS) cics_data_value | UNTIL | REQID cics_name | cics_handle_response)+;
 

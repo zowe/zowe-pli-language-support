@@ -34,6 +34,28 @@ describe("CICS ISSUE", async () => {
     );
   });
 
+  test("Duplicated DESTIDLENG", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ISSUE ABORT DESTID(DD) DESTIDLENG(DD) DESTIDLENG(DD)",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: DESTIDLENG/,
+    );
+  });
+
+    test("Duplicated DESTID", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ISSUE ABORT DESTID(DD) DESTID(DD)",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: DESTID/,
+    );
+  });
+
   test("ABEND", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ISSUE ABEND");
     expect(diagnostics).toHaveLength(0);

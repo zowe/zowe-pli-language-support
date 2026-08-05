@@ -23,6 +23,39 @@ describe("CICS CONVERSE", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Conflicting ALTERNATE and DEFAULT", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "CONVERSE ALTERNATE DEFAULT",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options \"ALTERNATE or DEFAULT\" are mutually exclusive./,
+    );
+  });
+
+  test("Conflicting CONVID and SESSION", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "CONVERSE CONVID(1) SESSION(2)",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options \"CONVID or SESSION\" are mutually exclusive./,
+    );
+  });
+
+  test("Conflicting LDC and FMH", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "CONVERSE LDC(1) FMH",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options \"LDC or FMH\" are mutually exclusive./,
+    );
+  });
+
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "CONVERSE FROM(1) FROMLENGTH(2) BLA",
