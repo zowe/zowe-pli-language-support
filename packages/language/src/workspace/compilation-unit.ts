@@ -370,11 +370,11 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     return workspace;
   }
 
-  private fallbackWorkspace: WorkspaceContext = undefined!;
+  private fallbackWorkspace: WorkspaceContext | undefined = undefined;
 
   /** must be initialized at least once */
   async initializeFallbackFolder() {
-    const uri = UriUtils.toUri(`file:///`);
+    const uri = UriUtils.toUri(`${BuiltinsUriSchema}://`);
     const workspace = new WorkspaceContext(
       this.fs,
       this.configLoader,

@@ -278,7 +278,7 @@ describe("Multi Workspace Tests", () => {
           "pli.pgm_conf": {
             pgms: [
               {
-                program: "**/*.pli",
+                program: "*.pli",
                 pgroup: "xxx",
               },
             ],
@@ -348,9 +348,6 @@ describe("Multi Workspace Tests", () => {
     expect(workspaceOutside).toBeDefined();
     expect(
       workspaceOutside!.config.hasProgramConfig(outsideProgram),
-    ).toBeTruthy();
-    expect(
-      workspaceOutside!.config.getProgramConfig(outsideProgram)!.pgroup.value,
-    ).toBe("xxx");
+    ).toBeFalsy();
   });
 });
