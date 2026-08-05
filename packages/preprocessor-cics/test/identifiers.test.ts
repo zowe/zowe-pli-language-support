@@ -17,16 +17,12 @@ describe("CICS Identifiers", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("ID is `cicsLexerDefinedVariableUsageTokens`", () => {
-    const { tokens } = cicsPreprocessor.parse(
-      "DEQ RESOURCE(resourceName)",
-    );
+    const { tokens } = cicsPreprocessor.parse("DEQ RESOURCE(resourceName)");
     expect(tokens[2].semanticsKind).toBe(SemanticsKind.Identifier);
   });
 
   test("ID is `cicsWord`", () => {
-    const { tokens } = cicsPreprocessor.parse(
-      "DEQ RESOURCE(resourceName1)",
-    );
+    const { tokens } = cicsPreprocessor.parse("DEQ RESOURCE(resourceName1)");
     expect(tokens[2].semanticsKind).toBe(SemanticsKind.Identifier);
   });
 
