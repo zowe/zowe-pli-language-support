@@ -50,7 +50,7 @@ allSPRules: cics_acquire_terminal | cics_disable | cics_discard | cics_enable | 
 cics_receive:                   RECEIVE (cics_receive_group_one | cics_receive_partn | cics_receive_map | cics_receive_map_mappingdev);
 
 // CICS Group 1 (zOS DEFAULT, LUTYPE (2,3,4), 2260, 3270-logical, 3790 / 3270-display, 3600 pipeline, 3600-3601, 3600-3614, 3650, 3767, 3770, 3790 FF, 2980, Non z Default, APPC, LUTYPE 6.1, MRO)
-cics_receive_group_one:         ((INTO | LENGTH | FLENGTH) cics_data_area | SET cics_ref | (MAXLENGTH | MAXFLENGTH) cics_data_value | (CONVID | SESSION) cics_name | STATE cics_cvda | ASIS | BUFFER | NOTRUNCATE | LEAVEKB | NOTRUNCATE | PASSBK | cics_handle_response)*;
+cics_receive_group_one:         ((INTO | LENGTH | FLENGTH) cics_data_area | SET cics_ref | (MAXLENGTH | MAXFLENGTH) cics_data_value | (CONVID | SESSION) cics_name | STATE cics_cvda | ASIS | BUFFER | NOTRUNCATE | LEAVEKB | NOTRUNCATE | PASSBK | PSEUDOBIN | cics_handle_response)*;
 
 cics_receive_partn:             (PARTN cics_data_area | SET cics_ref | (INTO | LENGTH | INTO) cics_data_area | ASIS | cics_handle_response)*;
 
