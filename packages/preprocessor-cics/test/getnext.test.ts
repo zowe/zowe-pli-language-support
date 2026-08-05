@@ -29,7 +29,9 @@ describe("CICS GETNEXT", async () => {
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Excessive options provided for: ACTIVITY/);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: ACTIVITY/,
+    );
   });
 
   test("Expecting EOF", async () => {

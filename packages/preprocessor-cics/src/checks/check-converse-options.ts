@@ -71,7 +71,11 @@ export class ConverseOptionsChecker extends CICSOptionsCheckerBase {
   }
 
   private checkRule(ctx: Cics_converse_groupContext) {
-    this.checkMutuallyExclusiveOptions("CONVID or SESSION", ctx.CONVID(), ctx.SESSION());
+    this.checkMutuallyExclusiveOptions(
+      "CONVID or SESSION",
+      ctx.CONVID(),
+      ctx.SESSION(),
+    );
     this.checkMutuallyExclusiveOptions("LDC or FMH", ctx.LDC(), ctx.FMH());
 
     if (ctx.ASIS().length !== 0) {
@@ -90,7 +94,11 @@ export class ConverseOptionsChecker extends CICSOptionsCheckerBase {
     if (ctx.cics_converse_erase().length !== 0) {
       this.checkHasIllegalOptions(ctx.STRFIELD(), "STRFIELD");
       ctx.cics_converse_erase().forEach((eraseCtx) => {
-        this.checkMutuallyExclusiveOptions("ALTERNATE or DEFAULT", eraseCtx.ALTERNATE(), eraseCtx.DEFAULT());
+        this.checkMutuallyExclusiveOptions(
+          "ALTERNATE or DEFAULT",
+          eraseCtx.ALTERNATE(),
+          eraseCtx.DEFAULT(),
+        );
       });
     }
     if (ctx.STRFIELD().length !== 0) {

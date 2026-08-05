@@ -45,7 +45,7 @@ describe("CICS ISSUE", async () => {
     );
   });
 
-    test("Duplicated DESTID", async () => {
+  test("Duplicated DESTID", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "ISSUE ABORT DESTID(DD) DESTID(DD)",
     );
