@@ -207,6 +207,9 @@ function mayContainMacroStatements(
   if (text.includes("%")) {
     return true;
   }
+  // The alternate-include keyword (e.g. `++INCLUDE` with `PP(INCLUDE)`) is configurable
+  // text, so escape any regex metacharacters in it and look for it as a case-insensitive
+  // literal substring.
   const includeAlt = opts ? getEffectiveIncludeAlt(opts) : undefined;
   if (includeAlt) {
     const escaped = includeAlt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

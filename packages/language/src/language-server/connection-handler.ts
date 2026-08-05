@@ -58,6 +58,11 @@ import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import {
+  Messages,
+  onNotification,
+  onRequest,
+  sendNotification,
+  sendRequest,
   GlobalConfigLoader,
   Messages,
   NotificationType,
@@ -602,34 +607,4 @@ export function startLanguageServer(
   connection.listen();
 }
 
-export function onRequest<P, R>(
-  connection: Connection,
-  type: RequestType<P, R>,
-  handler: (params: P) => R | Promise<R>,
-): void {
-  connection.onRequest(type.method, handler);
-}
-
-export function sendRequest<P, R>(
-  connection: Connection,
-  type: RequestType<P, R>,
-  params: P,
-): Promise<R> {
-  return connection.sendRequest(type.method, params);
-}
-
-export function onNotification<P>(
-  connection: Connection,
-  type: NotificationType<P>,
-  handler: (params: P) => void | Promise<void>,
-): void {
-  connection.onNotification(type.method, handler);
-}
-
-export function sendNotification<P>(
-  connection: Connection,
-  type: NotificationType<P>,
-  params: P,
-): void {
-  connection.sendNotification(type.method, params);
-}
+export { onRequest, sendRequest, onNotification, sendNotification };

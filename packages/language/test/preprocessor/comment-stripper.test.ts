@@ -63,6 +63,18 @@ describe("stripComments - length preservation", () => {
     const { text } = stripComments(input);
     expect(text.length).toBe(input.length);
   });
+
+  test("multi-code-unit Unicode in a comment blanks per UTF-16 code unit, keeping offsets aligned", () => {
+    // All offsets in the pipeline are UTF-16 code units (JS string indices), and blanking
+    // replaces each code unit with one space - so an astral character (here 2 code units)
+    // inside a comment can never shift the offsets of the code that follows.
+    const input = "A;/* 🙂 comment */B;";
+    const start = input.indexOf("/*");
+    const end = input.indexOf("*/") + 1;
+    expectBlanked(input, [{ startOffset: start, endOffset: end }]);
+    const { text } = stripComments(input);
+    expect(text.indexOf("B;")).toBe(input.indexOf("B;"));
+  });
 });
 
 describe("stripComments - line comments", () => {

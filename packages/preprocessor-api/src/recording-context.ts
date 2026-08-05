@@ -35,8 +35,13 @@ export interface RecordedInclude {
  */
 export class RecordingPreprocessorContext implements PreprocessorContext {
   readonly diagnostics: Diagnostic[] = [];
+  /** Recorded `replace` calls - how a preprocessor rewrites `EXEC` fragments in place. */
   readonly edits: RecordedEdit[] = [];
   readonly includes: RecordedInclude[] = [];
+  /**
+   * Recorded `insertContext` calls - how a preprocessor splices a resolved include's own
+   * (recursively processed) context into the text, as opposed to a flat `replace`.
+   */
   readonly insertions: { offset: number; context: PreprocessorContext }[] = [];
 
   constructor(readonly text: string) {}

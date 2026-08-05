@@ -71,7 +71,8 @@ export class CollectingErrorListener extends BaseErrorListener {
 export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
   // Reused across parses: constructing a generated visitor initializes one
   // per-instance field per grammar rule, which dominates the profile when done
-  // once per EXEC statement.
+  // once per EXEC statement. Sharing is safe because `collect` is fully
+  // synchronous - reset and traversal can never interleave with another call.
   private static readonly instance = new CollectingIdentifierVisitor();
   static collect(tree: ParseTree): Token[] {
     const visitor = CollectingIdentifierVisitor.instance;
@@ -96,7 +97,8 @@ export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
 }
 
 export class CollectingIncludeVisitor extends Db2SqlExecParserVisitor<void> {
-  // Reused across parses, see CollectingIdentifierVisitor.
+  // Reused across parses (safe: `collect` is fully synchronous), see
+  // CollectingIdentifierVisitor.
   private static readonly instance = new CollectingIncludeVisitor();
   static collect(tree: ParseTree): PreprocessorReplacement | null {
     const visitor = CollectingIncludeVisitor.instance;

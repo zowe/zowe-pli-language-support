@@ -513,22 +513,13 @@ function toPliTokens(token: ApiToken, uri: URI, hostText: string): t.Token[] {
   return [toPliToken(token, uri)];
 }
 
-function toSemanticType(kind: SemanticsKind): SemanticTokenTypes {
-  switch (kind) {
-    case SemanticsKind.Comment:
-      return SemanticTokenTypes.comment;
-    case SemanticsKind.Identifier:
-      return SemanticTokenTypes.variable;
-    case SemanticsKind.Keyword:
-      return SemanticTokenTypes.keyword;
-    case SemanticsKind.Number:
-      return SemanticTokenTypes.number;
-    case SemanticsKind.String:
-      return SemanticTokenTypes.string;
-    default:
-      return SemanticTokenTypes.modifier;
-  }
-}
+const semanticTypes: Record<SemanticsKind, SemanticTokenTypes | undefined> = {
+  [SemanticsKind.Comment]: SemanticTokenTypes.comment,
+  [SemanticsKind.Identifier]: SemanticTokenTypes.variable,
+  [SemanticsKind.Keyword]: SemanticTokenTypes.keyword,
+  [SemanticsKind.Number]: SemanticTokenTypes.number,
+  [SemanticsKind.String]: SemanticTokenTypes.string,
+};
 
 /** What `collectExecMetadata` extracted from one `process()` pass' recorded edits. */
 interface ExecMetadata {
@@ -545,7 +536,7 @@ interface ExecMetadata {
  * statement (the edit covering it carries the fragment's full classified token list, host
  * coordinates - see `PreprocessorContext.createEdit`) this produces:
  *
- * - one plain token per classified sub-token, carrying `Token.semanticType` (semantic
+ * - one plain token per classified sub-token, carrying `Token.ppSemanticType` (semantic
  *   highlighting) and directly findable by the position-based lookups in
  *   `unit.services.files` (cursor resolution on host variables/include members), plus
  *   `string`-typed tokens for `EXEC` and the fragment's leading `SQL`/`CICS` word (which
@@ -591,7 +582,7 @@ function collectExecMetadata(
     }
 
     if (isExec) {
-      execToken.semanticType = SemanticTokenTypes.string;
+      execToken.ppSemanticType = SemanticTokenTypes.string;
       collected.push(execToken);
     }
     const prefixMatch = /^(\w+)/i.exec(token.image);
@@ -604,7 +595,7 @@ function collectExecMetadata(
         token.startOffset + prefixMatch[1].length - 1,
         uri,
       );
-      prefixToken.semanticType = SemanticTokenTypes.string;
+      prefixToken.ppSemanticType = SemanticTokenTypes.string;
       collected.push(prefixToken);
     }
 
@@ -612,7 +603,7 @@ function collectExecMetadata(
     for (const apiToken of edit.apiTokens) {
       const parts = toPliTokens(apiToken, uri, context.text);
       for (const part of parts) {
-        part.semanticType = toSemanticType(apiToken.semanticsKind);
+        part.ppSemanticType = semanticTypes[apiToken.semanticsKind];
         collected.push(part);
       }
       pliTokens.set(apiToken, parts);

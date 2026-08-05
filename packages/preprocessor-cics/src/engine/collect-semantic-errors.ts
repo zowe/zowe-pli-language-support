@@ -27,6 +27,8 @@ export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   // checker instances (each copying option maps), which dominates the profile
   // when done once per EXEC statement. The checkers keep a reference to
   // `errors`, so `collect` drains the shared array instead of replacing it.
+  // Sharing is safe because `collect` is fully synchronous - reset, traversal,
+  // and drain can never interleave with another call.
   private static readonly instance = new CollectingSemanticErrorVisitor();
   static collect(tree: ParseTree): Diagnostic[] {
     const visitor = CollectingSemanticErrorVisitor.instance;

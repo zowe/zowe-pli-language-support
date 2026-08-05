@@ -1110,7 +1110,9 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
 
   /**
    * Ensure find-references from every definition label returns the definition itself plus
-   * every reference marker of the same index - across all test files.
+   * every reference marker of the same index - across all test files. The counterpart of
+   * `expectLinks`: that one drives go-to-definition from each reference marker, this one
+   * drives the references request from each definition.
    * @returns This test builder
    *
    * @example

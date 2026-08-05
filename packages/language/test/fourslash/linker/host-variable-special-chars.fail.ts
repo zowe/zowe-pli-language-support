@@ -16,11 +16,11 @@
  * identifier characters (`#`) resolves to its `DCL` - the embedded-image lookup must
  * treat `#`/`@`/`$` as identifier characters, not word boundaries.
  *
- * Marked `.fail.`: the host-side embedded-image lookup (`findEmbeddedImage`) handles
+ * TODO: Marked `.fail.`: the host-side embedded-image lookup (`findEmbeddedImage`) handles
  * `#`/`@`/`$` correctly, but the db2 engine's lexer (`Db2SqlExecLexer.g4`, `IDENTIFIER`
  * rule) does not include `#`/`@`/`$` in its identifier character set, so `DEPT#X` never
- * reaches the host as a single Identifier token. Remove the `.fail.` marker once the
- * engine lexer accepts the PL/I extra identifier characters.
+ * reaches the host as a single Identifier token. Extend the engine lexer's identifier
+ * character set to the PL/I extra identifier characters, then remove the `.fail.` marker.
  */
 // @wrap: main
 //// DCL <|1:DEPT#X|> CHAR(3);

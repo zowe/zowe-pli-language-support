@@ -12,10 +12,7 @@
 import { describe, expect, test } from "vitest";
 import { annotateTokens } from "../../src/preprocessor/token-annotator";
 import { SourceMap, Segment } from "../../src/preprocessor/source-map";
-import {
-  createTokenInstance,
-  ID,
-} from "../../src/parser/tokens";
+import { createTokenInstance, ID } from "../../src/parser/tokens";
 import { UriUtils } from "../../src/utils/uri";
 import * as ast from "../../src/syntax-tree/ast";
 import { CstNodeKind } from "../../src/syntax-tree/cst";

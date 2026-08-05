@@ -63,7 +63,7 @@ describe("PL/1 Lexer", () => {
     const result = await lexer.tokenize(unit, document, uri);
     // The macro replaced A with B in the final text.
     expect(result.preprocessedText).toContain("B");
-    expect(result.preprocessedText).not.toContain("%decl");
+    expect(result.preprocessedText).not.toContain("%DCL");
     // Serialization keeps rough line structure via `startsNewLine`.
     expect(result.preprocessedText).toContain("\n");
     // The result tokens are exactly what lexing the preprocessed text yields.

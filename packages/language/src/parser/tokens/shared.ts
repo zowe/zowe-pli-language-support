@@ -59,7 +59,7 @@ export interface Token {
    * classification comes from the external preprocessor engine rather than the PL/I
    * grammar). Rendered with the `preprocessor` modifier by semantic highlighting.
    */
-  semanticType?: SemanticTokenTypes;
+  ppSemanticType?: SemanticTokenTypes;
 }
 class TokenImpl implements Token {
   image: string;

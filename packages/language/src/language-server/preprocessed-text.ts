@@ -12,7 +12,7 @@
 import { Connection } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { isVirtualFile } from "../utils/uri";
-import { Messages } from "../utils/messages";
+import { Messages, sendNotification } from "../utils/messages";
 
 /**
  * Notifies the client that the preprocessed text of the given compilation unit
@@ -34,9 +34,7 @@ export function notifyPreprocessedText(
     );
     const uris = new Set(compilationUnit.services.files.keys());
     uris.add(compilationUnit.uri.toString());
-    // Direct send instead of the connection-handler helper to avoid an import
-    // cycle (compilation-unit -> here -> connection-handler -> compilation-unit).
-    connection.sendNotification(Messages.PreprocessedTextChanged.method, {
+    sendNotification(connection, Messages.PreprocessedTextChanged, {
       uris: [...uris],
     });
   }

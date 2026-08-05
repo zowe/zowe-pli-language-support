@@ -19,10 +19,12 @@
  * empty statement body; the host grammar parse stays clean.
  */
 //// TEST: PROC;
-////   EXEC SQL;
+////   <|1:EXEC SQL;|>
 //// END;
 
 verify.noParserDiagnostics();
+// The SQL engine reports its own diagnostic for the empty statement body.
+verify.expectDiagnosticsAt("1", { code: "syntax" });
 // The statement was replaced with the standard `DO; END;` shape ...
 preprocessor.containsTokens(["DO", ";", "END", ";"]);
 // ... and no raw EXEC tokens leaked to the parser.

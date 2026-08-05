@@ -279,7 +279,7 @@ export class PliLexer {
    * composed text with the include's own uri/offsets, and directive tokens (an `EXEC`
    * statement inside an included file, its classified sub-tokens, ...) are remapped there
    * too. Both carry - or will receive, from the real parse - `.kind`/`.element`/
-   * `semanticType`, while the include's base registration (`runInclude`, the SQL/CICS
+   * `ppSemanticType`, while the include's base registration (`runInclude`, the SQL/CICS
    * phase's `files.set`) only holds the raw, unannotated tokenization. Replace the raw
    * tokens the incoming ones cover, keeping the array sorted and overlap-free.
    */

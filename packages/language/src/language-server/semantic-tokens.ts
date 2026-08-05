@@ -82,14 +82,14 @@ export function semanticTokens(
     }
 
     // Tokens a preprocessor phase classified itself (e.g. inside an `EXEC SQL`/`EXEC CICS`
-    // statement's body) carry their type directly - see `Token.semanticType`.
-    if (token.semanticType !== undefined) {
+    // statement's body) carry their type directly - see `Token.ppSemanticType`.
+    if (token.ppSemanticType !== undefined) {
       const pos = offsetToPosition(textDocument, token.startOffset);
       semanticTokens.push(
         pos.line,
         pos.character,
         token.image.length,
-        token.semanticType,
+        token.ppSemanticType,
         1 << SemanticTokenModifiers.preprocessor,
       );
       continue;

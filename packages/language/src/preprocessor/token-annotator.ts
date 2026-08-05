@@ -10,9 +10,7 @@
  */
 
 import { Diagnostic } from "../language-server/types";
-import {
-  Token,
-} from "../parser/tokens";
+import { Token } from "../parser/tokens";
 import { rightmostIndexLE } from "../utils/search";
 import { URI } from "../utils/uri";
 import { MappedToken, Segment, SourceMap } from "./source-map";

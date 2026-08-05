@@ -28,6 +28,10 @@ export interface MappedToken {
   name?: string;
   /** Offset within the generated text this segment produces. */
   startOffset: number;
+  /**
+   * INCLUSIVE end offset (the last covered character), matching the lexer's
+   * `Token.endOffset` convention - unlike `Segment`'s exclusive `origEnd`/`genEnd`.
+   */
   endOffset: number;
   /**
    * The exact text this span was synthesized with - restored onto the final re-lexed token
@@ -79,8 +83,10 @@ export interface MappedToken {
  */
 export interface Segment {
   origStart: number;
+  /** EXCLUSIVE (one past the last covered original offset, like `String.slice`). */
   origEnd: number;
   genStart: number;
+  /** EXCLUSIVE (one past the last covered generated offset, like `String.slice`). */
   genEnd: number;
   uri?: URI;
   verbatim: boolean;
@@ -247,71 +253,79 @@ export class SourceMap {
         continue;
       }
 
-      let a = secondSegment.origStart;
+      // Cursor through the `second` segment's original span - offsets in `first`'s
+      // generated space.
+      let origOffset = secondSegment.origStart;
       // Position into `first` independently per `second` segment (binary search, the same
       // helper `segmentAt` uses) instead of carrying a monotonic cursor across segments:
       // `serializeTokens` legitimately emits verbatim segments whose `origStart` REWINDS
       // (a `%DO` loop or backward `%GOTO` re-emits the same source tokens once per
       // iteration), and a forward-only cursor would resolve those through the wrong
       // segment (negative delta) or silently drop them once `first`'s segments were
-      // consumed. Within one `second` segment `a` only increases, so the local index
-      // below still advances linearly.
-      let firstIndex = rightmostIndexLE(firstSegments, a, segmentGenStart);
+      // consumed. Within one `second` segment `origOffset` only increases, so the local
+      // index below still advances linearly.
+      let firstIndex = rightmostIndexLE(
+        firstSegments,
+        origOffset,
+        segmentGenStart,
+      );
       if (firstIndex === -1) {
-        // `a` lies before `first`'s first segment - outside `first`'s generated space,
-        // nothing to resolve through (mirrors running past the last segment below).
+        // `origOffset` lies before `first`'s first segment - outside `first`'s generated
+        // space, nothing to resolve through (mirrors running past the last segment below).
         continue;
       }
 
-      while (a < secondSegment.origEnd) {
-        const fs = firstSegments[firstIndex];
-        if (!fs) {
+      while (origOffset < secondSegment.origEnd) {
+        const firstSegment = firstSegments[firstIndex];
+        if (!firstSegment) {
           break;
         }
-        if (fs.genEnd <= a) {
+        if (firstSegment.genEnd <= origOffset) {
           firstIndex++;
           continue;
         }
-        const overlapEnd = Math.min(fs.genEnd, secondSegment.origEnd);
-        const len = overlapEnd - a;
-        const genStart = secondSegment.genStart + (a - secondSegment.origStart);
-        // `fs.tokens` are in `first`'s generated space (= `second`'s original space); the
-        // composed map's generated space is `second`'s, so re-base them by the overlap's
-        // shift - and keep only the ones inside this overlap, since `fs` may be split
-        // across several `second` segments. Dropping them here would lose foreign-run
-        // metadata (`sourceToken`/`refTarget`) as soon as a later phase's map composes
-        // over an earlier one's.
+        const overlapEnd = Math.min(firstSegment.genEnd, secondSegment.origEnd);
+        const len = overlapEnd - origOffset;
+        const genStart =
+          secondSegment.genStart + (origOffset - secondSegment.origStart);
+        // `firstSegment.tokens` are in `first`'s generated space (= `second`'s original
+        // space); the composed map's generated space is `second`'s, so re-base them by the
+        // overlap's shift - and keep only the ones inside this overlap, since
+        // `firstSegment` may be split across several `second` segments. Dropping them here
+        // would lose foreign-run metadata (`sourceToken`/`refTarget`) as soon as a later
+        // phase's map composes over an earlier one's.
         const tokens = sliceMappedTokens(
-          fs.tokens,
-          a,
+          firstSegment.tokens,
+          origOffset,
           overlapEnd,
-          genStart - a,
+          genStart - origOffset,
         );
-        if (fs.verbatim) {
-          const origStart = fs.origStart + (a - fs.genStart);
+        if (firstSegment.verbatim) {
+          const origStart =
+            firstSegment.origStart + (origOffset - firstSegment.genStart);
           composed.push({
             genStart,
             genEnd: genStart + len,
             origStart,
             origEnd: origStart + len,
-            uri: fs.uri,
+            uri: firstSegment.uri,
             verbatim: true,
-            foreign: fs.foreign,
+            foreign: firstSegment.foreign,
             tokens,
           });
         } else {
           composed.push({
             genStart,
             genEnd: genStart + len,
-            origStart: fs.origStart,
-            origEnd: fs.origEnd,
-            uri: fs.uri,
+            origStart: firstSegment.origStart,
+            origEnd: firstSegment.origEnd,
+            uri: firstSegment.uri,
             verbatim: false,
             tokens,
           });
         }
-        a = overlapEnd;
-        if (a >= fs.genEnd) {
+        origOffset = overlapEnd;
+        if (origOffset >= firstSegment.genEnd) {
           firstIndex++;
         }
       }
