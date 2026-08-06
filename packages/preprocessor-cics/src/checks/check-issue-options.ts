@@ -398,6 +398,8 @@ export class IssueOptionsChecker extends CICSOptionsCheckerBase {
   }
 
   private checkIssueCommon(ctx: Cics_issue_commonContext[]) {
+    ctx.forEach((context) => this.checkDuplicates(context));
+
     const destIds: TerminalNode[] = ctx.flatMap((context) => context.DESTID());
     const subAddrs: TerminalNode[] = ctx.flatMap((context) =>
       context.SUBADDR(),

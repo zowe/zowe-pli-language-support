@@ -70,6 +70,7 @@ export class GetnextOptionsChecker extends CICSOptionsCheckerBase {
       default:
         break;
     }
+    this.checkDuplicates(ctx);
   }
 
   private checkActivity(ctx: Cics_getnext_activityContext) {
