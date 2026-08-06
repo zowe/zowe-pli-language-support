@@ -21,6 +21,13 @@ describe("CICS RECEIVE", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Positive STATE & PSEUDOBIN", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "RECEIVE INTO(DRAIN_AREA) STATE(123) PSEUDOBIN",
+    );
+    expect(diagnostics).toHaveLength(0);
+  });
+
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "RECEIVE INTO(1) BLA",

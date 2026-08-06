@@ -23,6 +23,17 @@ describe("CICS GETNEXT", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Duplicated ACTIVITY", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "GETNEXT ACTIVITY(1) ACTIVITY(1) BROWSETOKEN(2)",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: ACTIVITY/,
+    );
+  });
+
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "GETNEXT ACTIVITY(1) BROWSETOKEN(2) BLA",
