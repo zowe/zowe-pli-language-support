@@ -1,1 +1,2 @@
  DCL ABC FIXED;
+ %include c;
