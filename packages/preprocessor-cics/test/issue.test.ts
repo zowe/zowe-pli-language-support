@@ -177,6 +177,18 @@ describe("CICS ISSUE", async () => {
     );
     expect(diagnostics).toHaveLength(0);
   });
+  test("RECEIVE with conflicting INTO/SET and missing LENGTH", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "ISSUE RECEIVE INTO(IN) SET(NAME)",
+    );
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options "INTO or SET" are mutually exclusive/,
+    );
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(/Missing required option: LENGTH/);
+  });
   test("RECEIVE without INTO or SET", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ISSUE RECEIVE");
     expect(diagnostics).toHaveLength(1);

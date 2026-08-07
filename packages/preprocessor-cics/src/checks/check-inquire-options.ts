@@ -66,11 +66,18 @@ export class InquireOptionsChecker extends CICSOptionsCheckerBase {
           containerContext.ACTIVITYID(),
           containerContext.PROCESS(),
         );
-        if (containerContext.PROCESS().length === 0)
+        if (containerContext.PROCESS().length !== 0) {
+          this.checkHasMandatoryOptions(
+            containerContext.PROCESSTYPE(),
+            ctx,
+            "PROCESSTYPE",
+          );
+        } else {
           this.checkHasIllegalOptions(
             containerContext.PROCESSTYPE(),
             "PROCESSTYPE without PROCESS",
           );
+        }
         break;
       }
       case CICSParser.RULE_cics_inquire_process: {
