@@ -27,6 +27,7 @@ import {
   toLspDiagnostic,
 } from "../config/loader";
 import { GlobalConfigLoader, Messages } from "../utils/messages";
+import { Messages, sendRequest } from "../utils/messages";
 import {
   GroupRecord,
   isLibsDir,

@@ -17,12 +17,12 @@ describe("CICS DELETEQ / DEQ", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (DELETEQ TD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("DELETEQ TD QUEUE(1)");
+    const { diagnostics } = cicsPreprocessor.parse("DELETEQ TD QUEUE(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "DELETEQ TD QUEUE(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS DELETEQ / DEQ", async () => {
 
   // checkDeleteqTd -> checkHasMandatoryOptions(QUEUE)
   test("DELETEQ TD missing QUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("DELETEQ TD");
+    const { diagnostics } = cicsPreprocessor.parse("DELETEQ TD");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: QUEUE/);
@@ -39,7 +39,7 @@ describe("CICS DELETEQ / DEQ", async () => {
 
   // checkDeqCmds -> checkHasMandatoryOptions(RESOURCE)
   test("DEQ missing RESOURCE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("DEQ LENGTH(1)");
+    const { diagnostics } = cicsPreprocessor.parse("DEQ LENGTH(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RESOURCE/);
@@ -47,7 +47,7 @@ describe("CICS DELETEQ / DEQ", async () => {
 
   // checkDeqCmds -> checkHasMutuallyExclusiveOptions
   test("DEQ mutually exclusive UOW and TASK", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "DEQ RESOURCE(1) UOW TASK",
     );
     expect(diagnostics).toHaveLength(2);
@@ -59,7 +59,7 @@ describe("CICS DELETEQ / DEQ", async () => {
 
   // checkDuplicates
   test("Duplicated QUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "DELETEQ TD QUEUE(1) QUEUE(2)",
     );
     expect(diagnostics).toHaveLength(1);

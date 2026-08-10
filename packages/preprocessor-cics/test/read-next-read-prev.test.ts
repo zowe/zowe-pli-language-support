@@ -17,14 +17,14 @@ describe("CICS READNEXT/READPREV", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) INTO(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS READNEXT/READPREV", async () => {
 
   // checkReadNextReadPrevBody -> checkHasMandatoryOptions(cics_file_name)
   test("Missing FILE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT RIDFLD(1) INTO(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS READNEXT/READPREV", async () => {
 
   // checkReadNextReadPrevBody -> checkHasMandatoryOptions(RIDFLD)
   test("Missing RIDFLD", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) INTO(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS READNEXT/READPREV", async () => {
 
   // checkReadNextReadPrevBody -> checkHasExactlyOneOption (INTO or SET none)
   test("Neither INTO nor SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -65,7 +65,7 @@ describe("CICS READNEXT/READPREV", async () => {
 
   // checkReadNextReadPrevBody -> checkHasIllegalOptions (TOKEN without UPDATE)
   test("TOKEN without UPDATE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) INTO(3) TOKEN(4)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -78,7 +78,7 @@ describe("CICS READNEXT/READPREV", async () => {
   // checkDuplicates (RIDFLD is a direct child; FILE is nested in cics_file_name
   // which checkDuplicates does not descend into, so it cannot be flagged)
   test("Duplicated RIDFLD", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) RIDFLD(3) INTO(4)",
     );
     expect(diagnostics).toHaveLength(1);

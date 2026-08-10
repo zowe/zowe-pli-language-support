@@ -14,7 +14,7 @@ import { Location } from "./types";
 import { groupBy } from "../utils/common";
 import {
   findTokenElementReference,
-  getReferenceLocations,
+  getElementReferenceLocations,
   getTokenAt,
 } from "../linking/resolver";
 import { getNameToken } from "../linking/tokens";
@@ -24,6 +24,8 @@ import { BuiltinsUriSchema } from "../workspace/builtins-constants";
 
 export type RenameResult =
   | { kind: "edits"; changes: Record<DocumentUri, Location[]> }
+  /** No renameable symbol at the given position. */
+  | { kind: "none" }
   /** The symbol's declaration only exists in preprocessor-generated text - renaming it is impossible. */
   | { kind: "generated"; name: string }
   /** The symbol is a built-in and cannot be renamed. */
@@ -34,28 +36,24 @@ export function renameRequest(
   uri: URI,
   offset: number,
 ): RenameResult {
+  const token = getTokenAt(unit, uri, offset);
+  const element = token && findTokenElementReference(token);
+  if (!element) {
+    return { kind: "none" };
+  }
   // A symbol whose declaration only exists in preprocessor-generated text (e.g. the CICS
   // `DFH*` declarations) cannot be renamed: the declaration is regenerated on every run,
   // so the rename can never take effect - refuse instead of silently renaming only the
   // real-source usages.
-  const token = getTokenAt(unit, uri, offset);
-  if (token) {
-    const element = findTokenElementReference(token);
-    const nameToken = element && getNameToken(element);
-    if (nameToken?.synthetic) {
-      return { kind: "generated", name: nameToken.image };
-    } else if (nameToken?.uri?.scheme === BuiltinsUriSchema) {
-      return { kind: "builtin", name: nameToken.image };
-    }
+  const nameToken = getNameToken(element);
+  if (nameToken?.synthetic) {
+    return { kind: "generated", name: nameToken.image };
+  } else if (nameToken?.uri?.scheme === BuiltinsUriSchema) {
+    return { kind: "builtin", name: nameToken.image };
   }
 
   // Locations of `synthetic` usage tokens are already suppressed by
-  // `getReferenceLocations`, so the edit set only touches real source text.
-  const references = getReferenceLocations(unit, uri, offset);
-  const referencesGroupedByUri = groupBy(
-    references,
-    (reference) => reference.uri,
-  );
-
-  return { kind: "edits", changes: referencesGroupedByUri };
+  // `getElementReferenceLocations`, so the edit set only touches real source text.
+  const references = getElementReferenceLocations(unit, element);
+  return { kind: "edits", changes: groupBy(references, (ref) => ref.uri) };
 }

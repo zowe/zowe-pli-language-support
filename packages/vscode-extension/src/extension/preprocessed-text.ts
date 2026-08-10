@@ -55,7 +55,13 @@ export function registerPreprocessedText(
     Commands.SHOW_PREPROCESSED_TEXT,
     async () => {
       const editor = vscode.window.activeTextEditor;
-      if (!editor || editor.document.languageId !== "pli") {
+      if (
+        !editor ||
+        editor.document.languageId !== "pli" ||
+        // Already a preprocessed view (reachable via the command palette even though
+        // the editor/title button is hidden there) - don't open a view of the view.
+        editor.document.uri.scheme === PreprocessedTextUriSchema
+      ) {
         return;
       }
       const originalUri = editor.document.uri;

@@ -17,21 +17,21 @@ describe("CICS RETURN", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) COMMAREA(456) LENGTH(5)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("RETURN BLA");
+    const { diagnostics } = cicsPreprocessor.parse("RETURN BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkPrerequisiteIsMet
   test("COMMAREA without TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN COMMAREA(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS RETURN", async () => {
 
   // checkRule -> checkMutuallyExclusiveOptions
   test("Mutually exclusive COMMAREA and CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) COMMAREA(456) CHANNEL(789)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -55,7 +55,7 @@ describe("CICS RETURN", async () => {
 
   // checkRule -> checkOptionalWithLength (optional present without required field)
   test("LENGTH without COMMAREA", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) LENGTH(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -67,7 +67,7 @@ describe("CICS RETURN", async () => {
 
   // checkDuplicates
   test("Duplicated TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) TRANSID(456)",
     );
     expect(diagnostics).toHaveLength(1);

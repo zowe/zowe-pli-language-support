@@ -17,14 +17,14 @@ describe("CICS ACQUIRE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,7 +32,7 @@ describe("CICS ACQUIRE", async () => {
   });
 
   test("Duplicated PROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESS(DEF) PROCESSTYPE(XYZ)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS ACQUIRE", async () => {
   });
 
   test("Duplicated PROCESSTYPE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) PROCESSTYPE(DEF)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -54,7 +54,7 @@ describe("CICS ACQUIRE", async () => {
   });
 
   test("Missing PROCESSTYPE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC)",
     );
     expect(diagnostics).toHaveLength(1);

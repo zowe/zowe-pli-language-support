@@ -17,14 +17,14 @@ describe("CICS EXTRACT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (ATTACH)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACHID(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACHID(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS EXTRACT", async () => {
 
   // checkAttach -> checkHasMutuallyExclusiveOptions
   test("ATTACH mutually exclusive ATTACHID and CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACHID(1) CONVID(2)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -45,7 +45,7 @@ describe("CICS EXTRACT", async () => {
 
   // checkLogonMsg -> checkHasMandatoryOptions(LENGTH)
   test("LOGONMSG missing LENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT LOGONMSG INTO(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -55,7 +55,7 @@ describe("CICS EXTRACT", async () => {
 
   // checkDuplicates
   test("Duplicated ATTACH", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACH ATTACHID(1)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -17,14 +17,14 @@ describe("CICS ACQUIRE TERMINAL", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,7 +32,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
   });
 
   test("Duplicated TERMINAL", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) TERMINAL(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
   });
 
   test("Duplicated NOQUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE NOQUEUE",
     );
     expect(diagnostics).toHaveLength(1);
@@ -54,7 +54,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
   });
 
   test("Mutual exclusive NOQUEUE and QNOTENAB", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE QNOTENAB",
     );
     expect(diagnostics).toHaveLength(2);
@@ -75,7 +75,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
   });
 
   test("RELREQ without QALL or QSESSLIM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) RELREQ",
     );
     expect(diagnostics).toHaveLength(1);
@@ -86,7 +86,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
   });
 
   test("USERDATALEN without USERDATA", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) USERDATALEN(10)",
     );
     expect(diagnostics).toHaveLength(1);

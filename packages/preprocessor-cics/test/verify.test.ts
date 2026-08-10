@@ -17,14 +17,14 @@ describe("CICS VERIFY", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (PASSWORD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) USERID(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS VERIFY", async () => {
 
   // checkVerifyPassword -> checkHasMandatoryOptions(USERID)
   test("PASSWORD missing USERID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("VERIFY PASSWORD(1)");
+    const { diagnostics } = cicsPreprocessor.parse("VERIFY PASSWORD(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: USERID/);
@@ -41,7 +41,7 @@ describe("CICS VERIFY", async () => {
 
   // checkVerifyToken -> checkHasExactlyOneOption (none provided)
   test("Token without TOKENTYPE/BASICAUTH/JWT/KERBEROS", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY TOKEN(1) TOKENLEN(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS VERIFY", async () => {
 
   // checkDuplicates
   test("Duplicated PASSWORD", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) PASSWORD(2) USERID(3)",
     );
     expect(diagnostics).toHaveLength(1);

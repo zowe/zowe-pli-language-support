@@ -17,20 +17,20 @@ describe("CICS ADDRESS (SET)", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ADDRESS COMMAREA(12)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ADDRESS BLA");
+    const { diagnostics } = cicsPreprocessor.parse("ADDRESS BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicate COMMAREA", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ADDRESS COMMAREA(12) COMMAREA(34)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -40,7 +40,7 @@ describe("CICS ADDRESS (SET)", async () => {
   });
 
   test("Missing USING", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ADDRESS SET(ABC)");
+    const { diagnostics } = cicsPreprocessor.parse("ADDRESS SET(ABC)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: USING/);

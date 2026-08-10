@@ -17,23 +17,23 @@ describe("CICS SYNCPOINT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (no options)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("SYNCPOINT");
+    const { diagnostics } = cicsPreprocessor.parse("SYNCPOINT");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Positive (ROLLBACK)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("SYNCPOINT ROLLBACK");
+    const { diagnostics } = cicsPreprocessor.parse("SYNCPOINT ROLLBACK");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("SYNCPOINT BLA");
+    const { diagnostics } = cicsPreprocessor.parse("SYNCPOINT BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicated ROLLBACK", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SYNCPOINT ROLLBACK ROLLBACK",
     );
     expect(diagnostics).toHaveLength(1);

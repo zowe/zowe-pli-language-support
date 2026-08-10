@@ -17,19 +17,19 @@ describe("CICS LOAD", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("LOAD PROGRAM(P)");
+    const { diagnostics } = cicsPreprocessor.parse("LOAD PROGRAM(P)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("LOAD PROGRAM(P) BLA");
+    const { diagnostics } = cicsPreprocessor.parse("LOAD PROGRAM(P) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkLoad -> checkHasMandatoryOptions
   test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("LOAD HOLD");
+    const { diagnostics } = cicsPreprocessor.parse("LOAD HOLD");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
@@ -37,7 +37,7 @@ describe("CICS LOAD", async () => {
 
   // checkLoad -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive LENGTH and FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "LOAD PROGRAM(P) LENGTH(5) FLENGTH(6)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -49,7 +49,7 @@ describe("CICS LOAD", async () => {
 
   // checkDuplicates (warning severity)
   test("Duplicated HOLD", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "LOAD PROGRAM(P) HOLD HOLD",
     );
     expect(diagnostics).toHaveLength(1);

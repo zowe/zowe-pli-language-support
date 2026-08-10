@@ -17,7 +17,7 @@ describe("CICS ALLOCATE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (PARTNER)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ALLOCATE PARTNER(1)");
+    const { diagnostics } = cicsPreprocessor.parse("ALLOCATE PARTNER(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
@@ -33,12 +33,12 @@ describe("CICS ALLOCATE", async () => {
   });
 
   test("Positive (SYSID)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ALLOCATE SYSID(1)");
+    const { diagnostics } = cicsPreprocessor.parse("ALLOCATE SYSID(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ALLOCATE PARTNER(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -47,7 +47,7 @@ describe("CICS ALLOCATE", async () => {
 
   // checkAppcPartner -> checkHasMandatoryOptions(PARTNER)
   test("Missing PARTNER", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ALLOCATE NOQUEUE");
+    const { diagnostics } = cicsPreprocessor.parse("ALLOCATE NOQUEUE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PARTNER/);
@@ -55,7 +55,7 @@ describe("CICS ALLOCATE", async () => {
 
   // checkDuplicates
   test("Duplicated PARTNER", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ALLOCATE PARTNER(1) PARTNER(2)",
     );
     expect(diagnostics).toHaveLength(1);

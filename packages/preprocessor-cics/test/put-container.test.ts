@@ -17,14 +17,14 @@ describe("CICS PUT CONTAINER", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT CONTAINER(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT CONTAINER(1) FROM(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS PUT CONTAINER", async () => {
 
   // checkBTS -> checkHasMandatoryOptions(FROM)
   test("Missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("PUT CONTAINER(1)");
+    const { diagnostics } = cicsPreprocessor.parse("PUT CONTAINER(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
@@ -41,7 +41,7 @@ describe("CICS PUT CONTAINER", async () => {
 
   // checkBTS -> checkMutuallyExclusiveOptions
   test("Mutually exclusive ACTIVITY and ACQACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT ACTIVITY(1) ACQACTIVITY CONTAINER(2) FROM(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS PUT CONTAINER", async () => {
 
   // checkOptions -> checkHasIllegalOptions(PUT64)
   test("PUT64 is only available in Assembly", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT64 CONTAINER(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -65,7 +65,7 @@ describe("CICS PUT CONTAINER", async () => {
 
   // checkDuplicates
   test("Duplicated CONTAINER", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT CONTAINER(1) CONTAINER(2) FROM(3)",
     );
     expect(diagnostics).toHaveLength(1);

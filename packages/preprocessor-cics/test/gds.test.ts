@@ -21,7 +21,7 @@ describe("CICS GDS", async () => {
 
   // checkGds -> checkHasIllegalOptions(GDS)
   test("GDS is only available in Assembly", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("GDS");
+    const { diagnostics } = cicsPreprocessor.parse("GDS");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

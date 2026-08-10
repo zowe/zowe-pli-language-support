@@ -257,12 +257,8 @@ export class PliLexer {
       comments: [...optionComments, ...prepared.comments],
       uri,
     });
-    // The final stream's tokens attributed to a foreign file belong in *that* file's
-    // registration (their offsets are file-local, see the `ownTokens` note above). The
-    // real parser runs after this and attaches `.kind`/`.element` to these exact objects,
-    // so merging them (replacing the include registration's raw, never-annotated tokens)
-    // is what gives an included file its own semantic highlighting/hover/definition. Same
-    // identity-dedupe as above.
+    // Tokens attributed to a foreign file belong in that file's registration - see
+    // `mergeForeignTokens`. Same identity-dedupe as above.
     const foreignTokens = annotated.tokens.filter(
       (t) => !t.synthetic && t.uri && t.uri.toString() !== uriString,
     );

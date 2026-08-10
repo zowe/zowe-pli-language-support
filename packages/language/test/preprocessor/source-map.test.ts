@@ -318,11 +318,11 @@ describe("SourceMap.compose", () => {
   });
 
   test("a foreign verbatim segment survives composition atomically, not resolved through first", () => {
-    // A real bug: a foreign segment's origStart/origEnd are real offsets in *another*
-    // file (e.g. content pulled in via `%INCLUDE`/`EXEC SQL INCLUDE`), not positions in
-    // `first`'s generated space. Composing it like an ordinary verbatim span - subdividing
-    // and re-anchoring through `first` - corrupted both its uri and its offsets, and could
-    // silently drop the rest of the segment if `first` ran out of segments early.
+    // A foreign segment's origStart/origEnd are real offsets in *another* file (e.g.
+    // content pulled in via `%INCLUDE`/`EXEC SQL INCLUDE`), not positions in `first`'s
+    // generated space. Composing it like an ordinary verbatim span - subdividing and
+    // re-anchoring through `first` - would corrupt its uri and offsets, and silently
+    // drop the rest of the segment if `first` ran out of segments early.
     const uriForeign = UriUtils.toUri("memory:///foreign.pli");
     // first (text -> A): identity over a short host file, far shorter than the foreign
     // segment's own offsets - if compose mistakenly treated the foreign segment's

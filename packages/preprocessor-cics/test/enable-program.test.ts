@@ -17,12 +17,12 @@ describe("CICS ENABLE PROGRAM", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ENABLE PROGRAM(1)");
+    const { diagnostics } = cicsPreprocessor.parse("ENABLE PROGRAM(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS ENABLE PROGRAM", async () => {
 
   // checkEnableProgram -> checkHasMandatoryOptions(PROGRAM)
   test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ENABLE ENTRYNAME(1)");
+    const { diagnostics } = cicsPreprocessor.parse("ENABLE ENTRYNAME(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
@@ -39,7 +39,7 @@ describe("CICS ENABLE PROGRAM", async () => {
 
   // checkEnableProgram -> checkHasIllegalOptions(GAEXECUTABLE) when GALENGTH absent
   test("GAEXECUTABLE without GALENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) GAEXECUTABLE",
     );
     expect(diagnostics).toHaveLength(1);
@@ -51,7 +51,7 @@ describe("CICS ENABLE PROGRAM", async () => {
 
   // checkEnableProgram -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive QUASIRENT and THREADSAFE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) QUASIRENT THREADSAFE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -63,7 +63,7 @@ describe("CICS ENABLE PROGRAM", async () => {
 
   // checkDuplicates
   test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) PROGRAM(2)",
     );
     expect(diagnostics).toHaveLength(1);

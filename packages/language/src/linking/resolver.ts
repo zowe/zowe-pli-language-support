@@ -493,17 +493,19 @@ export function getReferenceLocations(
   uri: URI,
   offset: number,
 ): Location[] {
-  let token = getTokenAt(unit, uri, offset);
+  const token = getTokenAt(unit, uri, offset);
+  const element = token && findTokenElementReference(token);
+  return element ? getElementReferenceLocations(unit, element) : [];
+}
 
-  if (!token) {
-    return [];
-  }
-
-  const element = findTokenElementReference(token);
-  if (!element) {
-    return [];
-  }
-
+/**
+ * The reference locations of an already-resolved element - for callers that resolved the
+ * token/element themselves (e.g. `renameRequest`) and should not repeat the lookup.
+ */
+export function getElementReferenceLocations(
+  unit: CompilationUnit,
+  element: SyntaxNode,
+): Location[] {
   const locations: Location[] = [];
   const reverseReferences = findElementReferences(unit, element);
 

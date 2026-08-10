@@ -32,6 +32,17 @@ describe("Rename", () => {
     expect(result.kind === "generated" && result.name).toBe("TEST_VAR");
   });
 
+  test("reports 'none' when there is no symbol at the position", async () => {
+    const text = `
+    MAIN: PROC;
+    END;`;
+    const unit = await parseAndLink(text);
+    // Offset 0 is whitespace - nothing to rename, and the handler must answer
+    // "no result" instead of an empty (seemingly successful) edit set.
+    const result = renameRequest(unit, UriUtils.toUri("test.pli"), 0);
+    expect(result.kind).toBe("none");
+  });
+
   test("refuses renaming a built-in symbol", async () => {
     const text = `
     MAIN: PROC;

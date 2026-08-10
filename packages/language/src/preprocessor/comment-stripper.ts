@@ -59,16 +59,10 @@ const stringRegex = new RegExp(
  * fragment rather than tokens - never see comment characters embedded in `EXEC` code (a
  * comment could contain unbalanced quotes or a stray `EXEC SQL`-looking substring). It runs
  * once, on the margin-stripped *original* source text, before any preprocessor phase runs.
- * It is unrelated to the MACRO preprocessor's "unfinished token" problem (a comment opened by
- * one macro emission and closed by another) - that is fixed by lexing the final composed
- * text exactly once.
  *
  * String literals are skipped whole (reusing the real tokenizer's own `STRING_TERM` pattern)
  * so a comment-looking sequence inside a string is never mistaken for a real comment.
- *
- * Linear in the length of `text`: a single left-to-right pass, with blanking done once per
- * comment span (never re-scanning already-processed text), matching the perf requirements of
- * the tokenize hot path.
+ * Single left-to-right pass, linear in the length of `text` (tokenize hot path).
  */
 export function stripComments(text: string): StripCommentsResult {
   const comments: CommentRange[] = [];
@@ -171,11 +165,7 @@ function findLineCommentEnd(text: string, from: number): number {
 
 /** Replaces `text[start, end)` with spaces, except newline characters, which are kept as-is. */
 function blank(text: string, start: number, end: number): string {
-  const parts = new Array<string>(end - start);
-  for (let k = start; k < end; k++) {
-    const code = text.charCodeAt(k);
-    parts[k - start] =
-      code === LINE_FEED || code === CARRIAGE_RETURN ? text[k] : " ";
-  }
-  return parts.join("");
+  return text
+    .slice(start, end)
+    .replace(/[^\n\r]+/g, (m) => " ".repeat(m.length));
 }

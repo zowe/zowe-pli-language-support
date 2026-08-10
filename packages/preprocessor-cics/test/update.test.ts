@@ -17,14 +17,14 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) VALUE(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) VALUE(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
 
   // checkUpdateCounterDcounter -> checkHasExactlyOneOption (none provided)
   test("Neither COUNTER nor DCOUNTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("UPDATE VALUE(1)");
+    const { diagnostics } = cicsPreprocessor.parse("UPDATE VALUE(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -43,7 +43,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
 
   // checkUpdateCounterDcounter -> checkHasExactlyOneOption (both provided -> mutually exclusive)
   test("Both COUNTER and DCOUNTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) DCOUNTER(D) VALUE(1)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -55,7 +55,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
 
   // checkUpdateCounterDcounter -> checkHasMandatoryOptions(VALUE)
   test("Missing VALUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("UPDATE COUNTER(C)");
+    const { diagnostics } = cicsPreprocessor.parse("UPDATE COUNTER(C)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: VALUE/);
@@ -63,7 +63,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
 
   // checkDuplicates
   test("Duplicated VALUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) VALUE(1) VALUE(2)",
     );
     expect(diagnostics).toHaveLength(1);

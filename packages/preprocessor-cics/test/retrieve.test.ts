@@ -17,12 +17,12 @@ describe("CICS RETRIEVE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (standard)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("RETRIEVE INTO(1)");
+    const { diagnostics } = cicsPreprocessor.parse("RETRIEVE INTO(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETRIEVE INTO(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS RETRIEVE", async () => {
 
   // checkRetrieveStandard -> checkHasExactlyOneOption (none provided)
   test("Standard without INTO or SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("RETRIEVE WAIT");
+    const { diagnostics } = cicsPreprocessor.parse("RETRIEVE WAIT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -41,7 +41,7 @@ describe("CICS RETRIEVE", async () => {
 
   // checkRetrieveStandard -> SET requires LENGTH
   test("SET requires LENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("RETRIEVE SET(1)");
+    const { diagnostics } = cicsPreprocessor.parse("RETRIEVE SET(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: LENGTH/);
@@ -49,7 +49,7 @@ describe("CICS RETRIEVE", async () => {
 
   // checkRetrieveReattach -> checkHasMandatoryOptions(EVENT)
   test("REATTACH missing EVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("RETRIEVE REATTACH");
+    const { diagnostics } = cicsPreprocessor.parse("RETRIEVE REATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: EVENT/);
@@ -57,7 +57,7 @@ describe("CICS RETRIEVE", async () => {
 
   // checkDuplicates
   test("Duplicated INTO", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETRIEVE INTO(1) INTO(2)",
     );
     expect(diagnostics).toHaveLength(1);

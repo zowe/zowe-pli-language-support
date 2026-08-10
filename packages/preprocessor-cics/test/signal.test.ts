@@ -17,12 +17,12 @@ describe("CICS SIGNAL EVENT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("SIGNAL EVENT(123)");
+    const { diagnostics } = cicsPreprocessor.parse("SIGNAL EVENT(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -31,7 +31,7 @@ describe("CICS SIGNAL EVENT", async () => {
 
   // checkSignalEvent -> checkHasMandatoryOptions(EVENT)
   test("Missing EVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL FROMCHANNEL(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -41,7 +41,7 @@ describe("CICS SIGNAL EVENT", async () => {
 
   // checkSignalEvent -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive FROMCHANNEL and FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) FROMCHANNEL(456) FROM(789)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -53,7 +53,7 @@ describe("CICS SIGNAL EVENT", async () => {
 
   // checkSignalEvent -> checkOptionalWithLength (optional present without required field)
   test("FROMLENGTH without FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) FROMLENGTH(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -65,7 +65,7 @@ describe("CICS SIGNAL EVENT", async () => {
 
   // checkDuplicates
   test("Duplicated EVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) EVENT(456)",
     );
     expect(diagnostics).toHaveLength(1);

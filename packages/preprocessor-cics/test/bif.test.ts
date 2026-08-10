@@ -17,14 +17,14 @@ describe("CICS BIF", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (DEEDIT)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BIF DEEDIT FIELD(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BIF DEEDIT FIELD(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS BIF", async () => {
 
   // checkDeedit -> checkHasMandatoryOptions(FIELD)
   test("DEEDIT missing FIELD", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("BIF DEEDIT");
+    const { diagnostics } = cicsPreprocessor.parse("BIF DEEDIT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FIELD/);
@@ -41,7 +41,7 @@ describe("CICS BIF", async () => {
 
   // checkDigest -> checkHasMandatoryOptions(RESULT)
   test("DIGEST missing RESULT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BIF DIGEST RECORD(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -51,7 +51,7 @@ describe("CICS BIF", async () => {
 
   // checkDigest -> checkHasMutuallyExclusiveOptions
   test("DIGEST mutually exclusive HEX and BINARY", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BIF DIGEST RECORD(123) RESULT(456) HEX BINARY",
     );
     expect(diagnostics).toHaveLength(2);
@@ -63,7 +63,7 @@ describe("CICS BIF", async () => {
 
   // checkDuplicates
   test("Duplicated RECORD", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BIF DIGEST RECORD(123) RECORD(456) RESULT(789)",
     );
     expect(diagnostics).toHaveLength(1);

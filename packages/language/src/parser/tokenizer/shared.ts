@@ -30,11 +30,8 @@ export class TokenizerContext {
 
   private storedIndex: number = 0;
   /**
-   * Whether a line break has been seen since the last token (or comment) was created.
-   * Cheap to maintain (a single flag flip while scanning whitespace/comments, which the
-   * tokenizer already does character-by-character) and replaces per-token line/column
-   * tracking - see `Token.startsNewLine`. Public (like the other tokenizer-internal fields
-   * on this class) so comment-scanning functions in this module can set it directly.
+   * Whether a line break has been seen since the last token (or comment) was created -
+   * replaces per-token line/column tracking, see `Token.startsNewLine`.
    */
   public sawNewlineSinceLastToken: boolean = false;
 
@@ -206,13 +203,10 @@ export interface KeywordToken {
   kind: TokenType;
 }
 
-// 32-bit FNV-1a. Deliberately *not* the 64-bit variant: this hash runs once per identifier
-// character of every file (the tokenizer's single hottest loop), and BigInt arithmetic
-// heap-allocates on every operation - profiling showed it cost ~half the tokenizer's time,
-// mostly as GC pressure. 32-bit hashes collide more readily in principle, but
-// `generateKeywords` still throws on any collision within the keyword set, and a
-// non-keyword identifier landing on a keyword's hash is caught by the `image` comparison
-// in `tokenizeIdentifier`.
+// 32-bit FNV-1a. Deliberately not the 64-bit variant: this runs in the tokenizer's
+// hottest loop and BigInt arithmetic heap-allocates per operation (~half the tokenizer's
+// time in profiles). Collisions are safe: `generateKeywords` throws on any within the
+// keyword set, and `tokenizeIdentifier` re-compares the `image`.
 export const FNV_OFFSET_BASIS = 0x811c9dc5;
 export const FNV_PRIME = 0x01000193;
 
@@ -245,7 +239,6 @@ export function tokenizeSlashWithComment(
     const nextChar = context.input[context.index + 1];
 
     if (nextChar === "*") {
-      // Block comment
       let i = context.index + 2;
       let crossedNewline = false;
       // `startsNewLine` describes line breaks between *tokens* - a comment must not

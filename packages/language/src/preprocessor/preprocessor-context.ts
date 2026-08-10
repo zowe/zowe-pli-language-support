@@ -440,25 +440,18 @@ export class PreprocessorContext implements api.PreprocessorContext {
       !this.unit.processGroup && !this.unit.programConfig;
     // Without a range the diagnostic has no position and `DiagnosticsStore` drops it -
     // anchor it to the include statement whenever the caller told us where that is.
-    const diagnostic = range
-      ? missingConfiguration
-        ? diagnosticFromCodeAtRange(
-            LspCodes.IncludeResolution.MissingConfiguration,
-            this.file.toString(),
-            range,
-          )
-        : diagnosticFromCodeAtRange(
-            PLICodes.Severe.IBM1848I,
-            this.file.toString(),
-            range,
-            name,
-          )
-      : missingConfiguration
-        ? diagnosticFromCode(
-            LspCodes.IncludeResolution.MissingConfiguration,
-            null,
-          )
-        : diagnosticFromCode(PLICodes.Severe.IBM1848I, null, name);
+    let diagnostic: Diagnostic;
+    if (missingConfiguration) {
+      const code = LspCodes.IncludeResolution.MissingConfiguration;
+      diagnostic = range
+        ? diagnosticFromCodeAtRange(code, this.file.toString(), range)
+        : diagnosticFromCode(code, null);
+    } else {
+      const code = PLICodes.Severe.IBM1848I;
+      diagnostic = range
+        ? diagnosticFromCodeAtRange(code, this.file.toString(), range, name)
+        : diagnosticFromCode(code, null, name);
+    }
     diagnostic.data = {
       unresolvedFile: name,
       entryUri: this.entryUri.toString(),

@@ -17,14 +17,14 @@ describe("CICS SPOOLREAD", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123) INTO(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123) INTO(456) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS SPOOLREAD", async () => {
 
   // checkSpoolread -> checkHasMandatoryOptions(TOKEN)
   test("Missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("SPOOLREAD INTO(456)");
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLREAD INTO(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
@@ -41,7 +41,7 @@ describe("CICS SPOOLREAD", async () => {
 
   // checkSpoolread -> checkHasMandatoryOptions(INTO)
   test("Missing INTO", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -51,7 +51,7 @@ describe("CICS SPOOLREAD", async () => {
 
   // checkDuplicates
   test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123) TOKEN(456) INTO(789)",
     );
     expect(diagnostics).toHaveLength(1);

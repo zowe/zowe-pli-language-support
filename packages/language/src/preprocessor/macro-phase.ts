@@ -158,6 +158,19 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
 
     const serialized = serializeTokens(output.all, uri, text);
 
+    // Fragments inside %INCLUDEd files already carry file-local offsets; the entry
+    // file's source map must only remap the entry file's own exec tokens.
+    const ownExecTokens: t.Token[] = [];
+    const foreignExecTokens: t.Token[] = [];
+    for (const token of output.execTokens) {
+      if (token.uri) {
+        (token.uri.toString() === uri.toString()
+          ? ownExecTokens
+          : foreignExecTokens
+        ).push(token);
+      }
+    }
+
     return {
       text: serialized.text,
       sourceMap: serialized.sourceMap,
@@ -171,19 +184,10 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
       evaluationResults: output.evaluationResults,
       directiveTokens: [
         ...extractDirectiveTokens(
-          [
-            ...tokenization.tokens,
-            ...output.execTokens.filter(
-              (t) => t.uri?.toString() === uri.toString(),
-            ),
-          ],
+          [...tokenization.tokens, ...ownExecTokens],
           input.sourceMap,
         ),
-        // Fragments inside %INCLUDEd files already carry file-local offsets; the
-        // entry file's source map must not remap them.
-        ...output.execTokens.filter(
-          (t) => t.uri && t.uri.toString() !== uri.toString(),
-        ),
+        ...foreignExecTokens,
       ],
     };
   }

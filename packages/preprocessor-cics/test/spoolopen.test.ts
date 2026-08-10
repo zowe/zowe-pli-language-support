@@ -17,14 +17,14 @@ describe("CICS SPOOLOPEN", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (INPUT)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) USERID(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS SPOOLOPEN", async () => {
 
   // checkSpoolopenInput -> checkHasMandatoryOptions(TOKEN)
   test("INPUT missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT USERID(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS SPOOLOPEN", async () => {
 
   // checkSpoolopenOutput -> checkHasMandatoryOptions(NODE)
   test("OUTPUT missing NODE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN OUTPUT TOKEN(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS SPOOLOPEN", async () => {
 
   // checkSpoolopenOutput -> checkHasMutuallyExclusiveOptions
   test("OUTPUT mutually exclusive NOCC and ASA", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN OUTPUT TOKEN(1) USERID(2) NODE(3) NOCC ASA",
     );
     expect(diagnostics).toHaveLength(2);
@@ -65,7 +65,7 @@ describe("CICS SPOOLOPEN", async () => {
 
   // checkDuplicates
   test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) TOKEN(2) USERID(3)",
     );
     expect(diagnostics).toHaveLength(1);

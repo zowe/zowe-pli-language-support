@@ -17,18 +17,18 @@ describe("CICS ABEND", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ABEND ABCODE(12)");
+    const { diagnostics } = cicsPreprocessor.parse("ABEND ABCODE(12)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ABEND BLA");
+    const { diagnostics } = cicsPreprocessor.parse("ABEND BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   test("Duplicated ABCODE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ABEND ABCODE(12) ABCODE(34)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -39,7 +39,7 @@ describe("CICS ABEND", async () => {
   });
 
   test("Duplicated CANCEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ABEND CANCEL CANCEL");
+    const { diagnostics } = cicsPreprocessor.parse("ABEND CANCEL CANCEL");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Warning);
     expect(diagnostics[0].message).toMatch(

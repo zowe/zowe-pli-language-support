@@ -17,14 +17,14 @@ describe("CICS POST", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "POST SET(123) AFTER HOURS(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "POST SET(123) AFTER HOURS(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS POST", async () => {
 
   // checkPost -> checkHasMandatoryOptions(SET)
   test("Missing SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("POST AFTER HOURS(1)");
+    const { diagnostics } = cicsPreprocessor.parse("POST AFTER HOURS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: SET/);
@@ -41,7 +41,7 @@ describe("CICS POST", async () => {
 
   // checkPost -> mandatory HOURS/MINUTES/SECONDS when AFTER/AT present
   test("AFTER without HOURS/MINUTES/SECONDS", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("POST SET(123) AFTER");
+    const { diagnostics } = cicsPreprocessor.parse("POST SET(123) AFTER");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -51,7 +51,7 @@ describe("CICS POST", async () => {
 
   // checkPost -> checkHasExactlyOneOption(AFTER or AT) when HOURS/MINUTES/SECONDS present
   test("HOURS without AFTER or AT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "POST SET(123) HOURS(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -63,7 +63,7 @@ describe("CICS POST", async () => {
 
   // checkDuplicates
   test("Duplicated SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "POST SET(123) SET(456) AFTER HOURS(1)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -185,11 +185,11 @@ export function scanExecFragments(
 }
 
 /**
- * Builds the text a `Preprocessor` replaces an `EXEC` statement with: each
- * `SemanticsKind.Identifier` token (a host-variable/reference the LSP pipeline should still
- * be able to resolve, e.g. a `:HV` SQL host variable or a CICS command argument) is
- * re-embedded as its own real identifier, immediately followed by `DO; END;` - the generated
- * code the real PL/I parser always accepts in an `EXEC` statement's place.
+ * Builds the text a `Preprocessor` replaces an `EXEC` statement with: a single
+ * `DO; ... END;` block (one statement, so it stays valid as a bare `IF ... THEN`/`ELSE`
+ * branch) containing one `PUT(name);` per `SemanticsKind.Identifier` token - each
+ * host-variable/reference the LSP pipeline should still be able to resolve (e.g. a `:HV`
+ * SQL host variable or a CICS command argument), re-embedded as a real identifier.
  *
  * Re-embedding the literal name (rather than just carrying it as metadata) is required by
  * the real parser's `execVariableReference` rule, which recognizes exactly this shape

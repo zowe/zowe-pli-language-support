@@ -17,19 +17,19 @@ describe("CICS POINT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("POINT CONVID(A)");
+    const { diagnostics } = cicsPreprocessor.parse("POINT CONVID(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("POINT BLA");
+    const { diagnostics } = cicsPreprocessor.parse("POINT BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkPoint -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive CONVID and SESSION", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "POINT CONVID(A) SESSION(B)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -41,7 +41,7 @@ describe("CICS POINT", async () => {
 
   // checkDuplicates
   test("Duplicated CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "POINT CONVID(A) CONVID(B)",
     );
     expect(diagnostics).toHaveLength(1);

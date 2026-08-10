@@ -17,14 +17,14 @@ describe("CICS SOAPFAULT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (CREATE)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS SOAPFAULT", async () => {
 
   // checkCreate -> checkHasExactlyOneOption (none provided)
   test("CREATE without fault code option", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE FAULTSTRING(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,7 +45,7 @@ describe("CICS SOAPFAULT", async () => {
 
   // checkCreate -> checkHasMandatoryOptions(FAULTSTRING)
   test("CREATE missing FAULTSTRING", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT",
     );
     expect(diagnostics).toHaveLength(1);
@@ -57,7 +57,7 @@ describe("CICS SOAPFAULT", async () => {
 
   // checkAdd -> checkHasExactlyOneOption (none provided)
   test("ADD without FAULTSTRING or SUBCODESTR", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT ADD NATLANG(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -69,7 +69,7 @@ describe("CICS SOAPFAULT", async () => {
 
   // checkDuplicates
   test("Duplicated FAULTSTRING", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1) FAULTSTRING(2)",
     );
     expect(diagnostics).toHaveLength(1);

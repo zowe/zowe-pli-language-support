@@ -17,14 +17,14 @@ describe("CICS SPOOLWRITE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS SPOOLWRITE", async () => {
 
   // checkSpoolwrite -> checkHasMandatoryOptions(TOKEN)
   test("Missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE FROM(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,7 +43,7 @@ describe("CICS SPOOLWRITE", async () => {
 
   // checkSpoolwrite -> checkHasMandatoryOptions(FROM)
   test("Missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,7 +53,7 @@ describe("CICS SPOOLWRITE", async () => {
 
   // checkSpoolwrite -> checkHasMutuallyExclusiveOptions
   test("Mutually exclusive LINE and PAGE", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456) LINE PAGE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -65,7 +65,7 @@ describe("CICS SPOOLWRITE", async () => {
 
   // checkDuplicates
   test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) TOKEN(456) FROM(789)",
     );
     expect(diagnostics).toHaveLength(1);

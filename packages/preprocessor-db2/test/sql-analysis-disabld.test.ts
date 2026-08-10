@@ -16,7 +16,7 @@ describe("DB2 SQL analysis disabled", async () => {
   const preprocessor = new Db2SqlPreprocessor();
 
   test("UPDATE_SQL_EN|DISABLED", async () => {
-    const { diagnostics, tokens } = await preprocessor.parse(`
+    const { diagnostics, tokens } = preprocessor.parse(`
           UPDATE EMP1
           SET SALARY = SALARY + 1000,
           RESUME = UPDATE_RESUME(:HV_RESUME)

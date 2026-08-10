@@ -40,6 +40,12 @@ describe("startsNewLine", () => {
     expect(tokenByImage("\nA;", "A").startsNewLine).toBe(true);
   });
 
+  test("CRLF line endings mark the following token like LF", () => {
+    const result = tokenize("A;\r\nB;", undefined);
+    const b = result.tokens.find((t) => t.image === "B")!;
+    expect(b.startsNewLine).toBe(true);
+  });
+
   test("token after a line-leading block comment is marked as starting a new line", () => {
     // The line break between `A;` and `B` must survive the comment in between:
     // `performRecovery` (preprocessor-parser) relies on it on the `%INCLUDE` path,
@@ -161,6 +167,8 @@ describe("ExecFragment extent", () => {
       "EXEC SQL INSERT INTO T VALUES('it''s;fine');",
       "EXEC SQL INSERT INTO T VALUES(';EXEC SQL X;');",
       "EXEC SQL SELECT 'unterminated\nFROM T;",
+      "EXEC SQL SELECT 'unterminated\r\nFROM T;",
+      "EXEC SQL SELECT 1\r\n  FROM T;",
       "EXEC SQL COMMIT;",
       "EXEC SQL;",
     ];

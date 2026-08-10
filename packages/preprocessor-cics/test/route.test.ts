@@ -17,14 +17,14 @@ describe("CICS ROUTE", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ROUTE AFTER HOURS(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ROUTE AFTER HOURS(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS ROUTE", async () => {
 
   // checkRule -> checkMutuallyExclusiveOptions
   test("Mutually exclusive INTERVAL and TIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ROUTE INTERVAL(0) TIME(123)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,7 +45,7 @@ describe("CICS ROUTE", async () => {
 
   // checkRule -> checkHasAtLeastOneOption when AFTER/AT present
   test("AFTER without HOURS/MINUTES/SECONDS", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("ROUTE AFTER");
+    const { diagnostics } = cicsPreprocessor.parse("ROUTE AFTER");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -55,7 +55,7 @@ describe("CICS ROUTE", async () => {
 
   // checkDuplicates (warning severity)
   test("Duplicated AFTER", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "ROUTE AFTER AFTER HOURS(1)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -17,14 +17,14 @@ describe("CICS REMOVE SUBEVENT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "REMOVE SUBEVENT(1) EVENT(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "REMOVE SUBEVENT(1) EVENT(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS REMOVE SUBEVENT", async () => {
 
   // checkRemoveSubevent -> checkHasMandatoryOptions(SUBEVENT)
   test("Missing SUBEVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("REMOVE EVENT(2)");
+    const { diagnostics } = cicsPreprocessor.parse("REMOVE EVENT(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: SUBEVENT/);
@@ -41,7 +41,7 @@ describe("CICS REMOVE SUBEVENT", async () => {
 
   // checkRemoveSubevent -> checkHasMandatoryOptions(EVENT)
   test("Missing EVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("REMOVE SUBEVENT(1)");
+    const { diagnostics } = cicsPreprocessor.parse("REMOVE SUBEVENT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: EVENT/);
@@ -49,7 +49,7 @@ describe("CICS REMOVE SUBEVENT", async () => {
 
   // checkDuplicates
   test("Duplicated SUBEVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "REMOVE SUBEVENT(1) SUBEVENT(2) EVENT(3)",
     );
     expect(diagnostics).toHaveLength(1);

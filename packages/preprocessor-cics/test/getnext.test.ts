@@ -17,7 +17,7 @@ describe("CICS GETNEXT", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive (ACTIVITY)", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETNEXT ACTIVITY(1) BROWSETOKEN(2)",
     );
     expect(diagnostics).toHaveLength(0);
@@ -35,7 +35,7 @@ describe("CICS GETNEXT", async () => {
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETNEXT ACTIVITY(1) BROWSETOKEN(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,7 +44,7 @@ describe("CICS GETNEXT", async () => {
 
   // checkActivity -> checkHasMandatoryOptions(BROWSETOKEN)
   test("ACTIVITY missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("GETNEXT ACTIVITY(1)");
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT ACTIVITY(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,7 +54,7 @@ describe("CICS GETNEXT", async () => {
 
   // checkContainer -> checkHasMandatoryOptions(BROWSETOKEN)
   test("CONTAINER missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETNEXT CONTAINER(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -66,7 +66,7 @@ describe("CICS GETNEXT", async () => {
 
   // checkEvent -> checkHasMandatoryOptions(BROWSETOKEN)
   test("EVENT missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("GETNEXT EVENT(1)");
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT EVENT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -76,7 +76,7 @@ describe("CICS GETNEXT", async () => {
 
   // checkProcess -> checkHasMandatoryOptions(BROWSETOKEN)
   test("PROCESS missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("GETNEXT PROCESS(1)");
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT PROCESS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

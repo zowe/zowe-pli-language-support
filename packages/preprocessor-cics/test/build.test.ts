@@ -17,14 +17,14 @@ describe("CICS BUILD ATTACH", async () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
   test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -33,7 +33,7 @@ describe("CICS BUILD ATTACH", async () => {
 
   // checkAttachIdOptions -> checkHasMandatoryOptions(ATTACH)
   test("Missing ATTACH", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("BUILD ATTACHID(123)");
+    const { diagnostics } = cicsPreprocessor.parse("BUILD ATTACHID(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ATTACH/);
@@ -41,7 +41,7 @@ describe("CICS BUILD ATTACH", async () => {
 
   // checkAttachIdOptions -> checkHasMandatoryOptions(ATTACHID)
   test("Missing ATTACHID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse("BUILD ATTACH");
+    const { diagnostics } = cicsPreprocessor.parse("BUILD ATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ATTACHID/);
@@ -49,7 +49,7 @@ describe("CICS BUILD ATTACH", async () => {
 
   // checkDuplicates
   test("Duplicated ATTACHID", async () => {
-    const { diagnostics } = await cicsPreprocessor.parse(
+    const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123) ATTACHID(456)",
     );
     expect(diagnostics).toHaveLength(1);

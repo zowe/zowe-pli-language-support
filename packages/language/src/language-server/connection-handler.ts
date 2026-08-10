@@ -394,7 +394,11 @@ export function startLanguageServer(
         }
         const offset = textDocument.offsetAt(position);
         const renameResult = renameRequest(compilationUnit, uri, offset);
-        if (renameResult.kind === "generated") {
+        if (renameResult.kind === "none") {
+          // No renameable symbol at the cursor - answer `null` ("no result") instead of
+          // an empty edit set, which clients would report as a successful rename.
+          return null;
+        } else if (renameResult.kind === "generated") {
           // Surfaced by the client as an error in the rename UI.
           return new ResponseError(
             LSPErrorCodes.RequestFailed,
@@ -606,5 +610,3 @@ export function startLanguageServer(
 
   connection.listen();
 }
-
-export { onRequest, sendRequest, onNotification, sendNotification };

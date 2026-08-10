@@ -344,8 +344,10 @@ export class CompilationUnitHandler {
     textDocuments.onDidChangeContent((event) => {
       const uri = UriUtils.toUri(event.document.uri);
       if (uri.scheme === PreprocessedTextUriSchema) {
-        // Completely reject open notifications for full text output
-        // It should purely be highlighted by textmate, and receive to language support
+        // A preprocessed-text view is a read-only rendering of generated text: its
+        // offsets don't exist in any real source file, so running the LS pipeline on
+        // it would only produce duplicate compilation units and mispositioned
+        // diagnostics. It gets TextMate highlighting only - no language support.
         return;
       }
       this.updateUri(uri);
