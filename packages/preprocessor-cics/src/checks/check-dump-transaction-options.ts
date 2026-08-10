@@ -59,6 +59,7 @@ export class DumpTransactionOptionsChecker extends CICSOptionsCheckerBase {
     if (ctx.ruleIndex === CICSParser.RULE_cics_dump) {
       assertType<Cics_dumpContext>(ctx);
       if (
+        !ctx.DUMPCODE()?.length &&
         !ctx.cics_dump_transaction_from()?.length &&
         !ctx.cics_dump_transaction_segmentlist()?.length &&
         !ctx.cics_dump_code_opts()?.length
