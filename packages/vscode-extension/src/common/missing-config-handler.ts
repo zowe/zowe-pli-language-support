@@ -13,6 +13,7 @@ import * as vscode from "vscode";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { PluginConfiguration, UriUtils } from "pli-language";
+import { locateWorkspaceFolder } from "../extension/config-loader";
 
 let shouldShowInfoMessage = true;
 
@@ -23,12 +24,11 @@ export async function handleMissingConfig(
     return;
   }
 
-  // settle on the 1st workspace folder available
-  // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!workspaceFolder) {
+  const workspaceFolderUri = locateWorkspaceFolder(textEditor.document.uri);
+  if (!workspaceFolderUri) {
     return;
   }
+  const workspaceFolder = workspaceFolderUri.fsPath;
 
   // check if we can create a .pliplugin folder
   const plipluginPath = path.join(workspaceFolder, ".pliplugin");

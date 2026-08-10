@@ -125,7 +125,28 @@ export class Deferred<T = void> {
 
 export type Cancellation = () => void;
 
-export function startLongRunningOperation(
+export interface LongRunningOperation {
+  /**
+   * Starts the long-running operation and returns a cancellation function.
+   * The cancellation function can be called to cancel the operation.
+   */
+  start(title: string, timeout?: number): Cancellation;
+}
+
+export class LongRunningOperationImpl implements LongRunningOperation {
+  static Dummy: LongRunningOperation = {
+    start(title, timeout) {
+      return () => {};
+    },
+  };
+  constructor(private readonly connection: Connection | undefined) {}
+
+  start(title: string, timeout: number = 500): Cancellation {
+    return startLongRunningOperation(this.connection, title, timeout);
+  }
+}
+
+function startLongRunningOperation(
   connection: Connection | undefined,
   title: string,
   timeout = 500,

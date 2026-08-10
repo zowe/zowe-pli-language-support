@@ -26,8 +26,7 @@ import {
   parseProgramConfigs,
   toLspDiagnostic,
 } from "../config/loader";
-import { Messages } from "../utils/messages";
-import { sendRequest } from "../language-server/connection-handler";
+import { GlobalConfigLoader, Messages } from "../utils/messages";
 import {
   GroupRecord,
   isLibsDir,
@@ -45,8 +44,7 @@ import { DEFAULT_INSTRUCTION_LIMIT } from "../preprocessor/instruction-interpret
 import { PluginConfiguration } from "../language-server/constants";
 import { type JSONPath } from "../utils/jsonc";
 import { LspCodes } from "../validation/lsp-codes";
-import { Connection } from "vscode-languageserver";
-import { startLongRunningOperation } from "../utils/promises";
+import { LongRunningOperation } from "../utils/promises";
 import { validatePgroupReferences } from "../config/cross-validation";
 import { MultiMap } from "../utils/collections";
 import { TextDocuments } from "../language-server/text-documents";
@@ -190,7 +188,7 @@ interface ConfigSource {
 
 /**
  * Precedence of a program-config match against a file, **lowest value wins**.
- * Used by {@link PluginConfigurationProvider.getProgramConfig} to pick the
+ * Used by {@link PluginConfigurationProvider["getProgramConfig"]} to pick the
  * best match rather than the first hit, so a user-scope `settings.json` entry
  * can never shadow a project `.pliplugin/` entry that also matches:
  *
@@ -224,6 +222,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Map of program configs, keyed by their entry program.
+   * The key is a path without URI scheme at the beginning.
    * These correspond to the entry point of a compile unit.
    */
   private programConfigs: Map<string, ProgramRecord>;
@@ -271,17 +270,17 @@ export class PluginConfigurationProvider {
    * construction so the provider has no dependency on a global FS singleton.
    */
   private readonly fs: FileSystemProvider;
+  private readonly longRunningOperation: LongRunningOperation;
+  private readonly globalConfigLoader: GlobalConfigLoader;
 
-  /**
-   * Connection used to send status updates about file loading and config parsing.
-   * In some cases, such as when working with remote file system, loading and processing of config files can be slow.
-   * Having the connection allows us to send progress updates to the client, so the user knows something is happening.
-   */
-  private readonly connection: Connection | undefined;
-
-  constructor(fs: FileSystemProvider, connection?: Connection) {
+  constructor(
+    fs: FileSystemProvider,
+    globalConfigLoader: GlobalConfigLoader,
+    longRunningOperation: LongRunningOperation,
+  ) {
     this.fs = fs;
-    this.connection = connection;
+    this.longRunningOperation = longRunningOperation;
+    this.globalConfigLoader = globalConfigLoader;
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
@@ -447,8 +446,7 @@ export class PluginConfigurationProvider {
    */
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
     const workspaceUri = UriUtils.toUri(this.workspacePath);
-    const cancel = startLongRunningOperation(
-      this.connection,
+    const cancel = this.longRunningOperation.start(
       "Processing plugin configuration...",
     );
 
@@ -475,15 +473,15 @@ export class PluginConfigurationProvider {
     // Collect sources in PRECEDENCE-LOWEST-FIRST order. Map-based merge
     // means later writes overwrite earlier writes, so listing
     // .pliplugin/ second makes it the winning source on key collisions.
-    const global = await this.fetchGlobalSettings();
+    const globalSettings = await this.fetchGlobalSettings(this.workspacePath);
 
     // Read every source concurrently. Precedence (settings < .pliplugin/)
     // is established by the order we assemble each array below, not by the
     // order the reads resolve, so reading in parallel is safe.
     const [globalPgm, globalProc, plipluginPgm, plipluginProc] =
       await Promise.all([
-        this.readConfigSource(global?.pgmConf),
-        this.readConfigSource(global?.procGrps),
+        this.readConfigSource(globalSettings?.pgmConf),
+        this.readConfigSource(globalSettings?.procGrps),
         this.readConfigSource(plipluginPgmConfUri),
         this.readConfigSource(plipluginProcGrpsUri),
       ]);
@@ -626,20 +624,10 @@ export class PluginConfigurationProvider {
    * and `pli.proc_grps`. Returns `undefined` when no connection is
    * available (e.g. tests) or the request fails.
    */
-  private async fetchGlobalSettings(): Promise<
-    Messages.GlobalConfig | undefined
-  > {
-    if (!this.connection) return undefined;
-    try {
-      return await sendRequest(
-        this.connection,
-        Messages.GetGlobalConfig,
-        undefined,
-      );
-    } catch (err) {
-      console.error("Failed to fetch global plugin configuration:", err);
-      return undefined;
-    }
+  private async fetchGlobalSettings(
+    workspaceUri: URI,
+  ): Promise<Messages.GlobalConfig | undefined> {
+    return this.globalConfigLoader.loadGlobalConfig(workspaceUri);
   }
 
   /**
@@ -938,7 +926,7 @@ export class PluginConfigurationProvider {
       // Wrap the loaded config into a ProgramRecord. `abstractOptions` and
       // `issues` are filled in by `postProcessProgramConfigs` once the
       // bound process group is also available.
-      this.programConfigs.set(resolvedUri.toString(), {
+      this.programConfigs.set(resolvedUri.path, {
         ...config,
         abstractOptions: { options: [], tokens: [], issues: [], comments: [] },
         issues: [],
@@ -1073,13 +1061,14 @@ export class PluginConfigurationProvider {
     // No PL/I-extension filtering here: callers only ever pass files already
     // identified as PL/I (client language id / auto-detect), so glob matching
     // the path alone is sufficient.
-    // Note that we need to decode the URI
-    const uri = program.toString(true);
+    // Note that we just need the path of the URI in order to match against
+    // the program config patterns
+    const path = program.path;
 
     let best: ProgramRecord | undefined;
     let bestRank = Number.POSITIVE_INFINITY;
     for (const [pattern, config] of this.programConfigs.entries()) {
-      const rank = this.programMatchRank(uri, pattern, config);
+      const rank = this.programMatchRank(path, pattern, config);
       if (rank === undefined || rank >= bestRank) {
         continue; // no match, or not better than what we already have
       }
@@ -1097,25 +1086,25 @@ export class PluginConfigurationProvider {
    * `undefined` when its pattern does not match the file. Lower ranks win;
    * see {@link ProgramMatchRank}.
    *
-   * @param uri Decoded program URI being resolved.
+   * @param path Decoded program path being resolved.
    * @param pattern The program config's key (an exact path or a glob).
    * @param record The candidate program config.
    */
   private programMatchRank(
-    uri: string,
+    path: string,
     pattern: string,
     record: ProgramRecord,
   ): number | undefined {
-    const isExact = pattern === uri;
+    const isExact = pattern === path;
     if (!isExact) {
       try {
-        // attempt match on decoded URI
-        if (!minimatch(uri, decodeURIComponent(pattern), { nocase: true })) {
+        // attempt match on decoded path
+        if (!minimatch(path, decodeURIComponent(pattern), { nocase: true })) {
           return undefined;
         }
       } catch (e) {
         console.error(
-          `Invalid glob pattern "${pattern}" for program "${uri}": ${e}`,
+          `Invalid glob pattern "${pattern}" for program "${path}": ${e}`,
         );
         return undefined;
       }

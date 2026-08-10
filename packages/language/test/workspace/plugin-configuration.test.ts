@@ -10,7 +10,6 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import type { Connection } from "vscode-languageserver";
 import { UriUtils } from "../../src/utils/uri";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
 import {
@@ -18,27 +17,10 @@ import {
   ProcessGroup,
 } from "../../src/workspace/plugin-configuration-provider";
 import { WorkspaceContext } from "../../src/workspace/workspace-context";
-import { Messages } from "../../src/utils/messages";
 import { makeProcessGroup } from "../config-fixtures";
 import { Severity } from "../../src/language-server/types";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
-
-/**
- * Minimal connection stub that responds to `config/getGlobal` with the
- * given `GlobalConfig`. Other request/notification methods are no-ops so
- * the provider can run end-to-end without a real LSP transport.
- */
-function makeConnection(global: Messages.GlobalConfig): Connection {
-  return {
-    sendRequest: async (method: string) => {
-      if (method === Messages.GetGlobalConfig.method) return global;
-      return undefined;
-    },
-    sendNotification: async () => {},
-    onRequest: () => ({ dispose() {} }),
-    onNotification: () => ({ dispose() {} }),
-  } as unknown as Connection;
-}
+import { Messages, TestGlobalConfigLoader } from "../../src";
 
 describe("Plugin Configuration Tests", () => {
   let vfs: VirtualFileSystemProvider;
@@ -46,7 +28,7 @@ describe("Plugin Configuration Tests", () => {
 
   beforeEach(() => {
     vfs = new VirtualFileSystemProvider();
-    workspace = new WorkspaceContext(vfs);
+    workspace = new WorkspaceContext(vfs, new TestGlobalConfigLoader({}));
     resetDocumentProviders(vfs);
   });
 
@@ -246,7 +228,9 @@ describe("Plugin Configuration Tests", () => {
       );
       workspace = new WorkspaceContext(
         vfs,
-        makeConnection(settingsConfig({ pgmConf: true, procGrps: true })),
+        new TestGlobalConfigLoader(
+          settingsConfig({ pgmConf: true, procGrps: true }),
+        ),
       );
 
       await workspace.config.init(UriUtils.toUri(WORKSPACE));
@@ -279,7 +263,7 @@ describe("Plugin Configuration Tests", () => {
       );
       workspace = new WorkspaceContext(
         vfs,
-        makeConnection(settingsConfig({ procGrps: true })),
+        new TestGlobalConfigLoader(settingsConfig({ procGrps: true })),
       );
 
       await workspace.config.init(UriUtils.toUri(WORKSPACE));

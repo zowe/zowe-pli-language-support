@@ -19,6 +19,8 @@ import { workspaceSymbolRequest } from "../../src/language-server/workspace-symb
 import { EditorDocuments } from "../../src/language-server/text-documents";
 import { CancellationToken } from "vscode-languageserver";
 import { defaultTestWorkspace } from "../test-workspace";
+import { TestGlobalConfigLoader, VirtualFileSystemProvider } from "../../src";
+import { LongRunningOperationImpl } from "../../src/utils/promises";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
@@ -50,11 +52,18 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
     ),
   );
 
-  const handler = new CompilationUnitHandler(defaultTestWorkspace());
+  const fs = new VirtualFileSystemProvider();
+  const handler = new CompilationUnitHandler(
+    fs,
+    new TestGlobalConfigLoader({}),
+    LongRunningOperationImpl.Dummy,
+  );
+  const workspace = defaultTestWorkspace();
+  handler.addWorkspaceFolder("file:///", workspace);
   textDocuments.forEach((doc) => EditorDocuments.set(doc));
   await Promise.all(
     textDocuments.map(async (doc, i) => {
-      const unit = await handler.createAndStoreCompilationUnit(
+      const unit = await workspace.createAndStoreCompilationUnit(
         UriUtils.toUri(`/test${i}.pli`),
       );
 

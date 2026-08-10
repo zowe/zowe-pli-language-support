@@ -11,7 +11,13 @@
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
 import { isVirtualFile, URI, UriUtils } from "../utils/uri.js";
-import { CancellationToken, Connection } from "vscode-languageserver";
+import {
+  CancellationToken,
+  Connection,
+  Diagnostic,
+  FileChangeType,
+  FileEvent,
+} from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
 import {
@@ -41,7 +47,11 @@ import { GroupRecord, ProgramRecord } from "./plugin-configuration-provider.js";
 import { WorkspaceContext } from "./workspace-context.js";
 import { EvaluationResults } from "../preprocessor/instruction-interpreter.js";
 import { createMutex, Mutex } from "./mutex.js";
-import { Deferred, isOperationCancelled } from "../utils/promises.js";
+import {
+  Deferred,
+  isOperationCancelled,
+  LongRunningOperation,
+} from "../utils/promises.js";
 import {
   InstructionCache,
   TokenizationCache,
@@ -57,6 +67,10 @@ import {
 import { CompilerOptions as PliCompilerOptions } from "../preprocessor/compiler-options/options-pli.js";
 import { DiagnosticsStore } from "../validation/diagnostics-store.js";
 import { LRUCache } from "lru-cache";
+import { WorkspaceFolderTree } from "./workspace-folder-tree.js";
+import { FileSystemProvider } from "./file-system-provider.js";
+import { MultiMap } from "../utils/collections.js";
+import { GlobalConfigLoader } from "../index.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -118,19 +132,6 @@ export interface CompilationServices {
 }
 
 const FIVE_MINUTES = 1000 * 60 * 5;
-
-/**
- * JSON under `.pliplugin/` is not PL/I source. The client attaches the LS there for code actions;
- * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
- */
-function isPluginConfigurationUri(uri: URI): boolean {
-  const baseName = UriUtils.basename(uri);
-  if (baseName === "settings.json") {
-    return true;
-  }
-  const path = uri.path;
-  return path.includes("/.pliplugin/") && /\.json$/i.test(path);
-}
 
 export async function createCompilationUnit(
   uri: URI,
@@ -294,7 +295,7 @@ export async function addBuiltinUnits(
 }
 
 export class CompilationUnitHandler {
-  private compilationUnits: Map<string, CompilationUnit> = new Map();
+  private fs: FileSystemProvider;
   private connection!: Connection;
   private readyDeferred = new Deferred();
 
@@ -303,70 +304,18 @@ export class CompilationUnitHandler {
    */
   readonly globalMutex = createMutex();
 
-  /**
-   * Workspace context shared by every unit this handler creates. Provides
-   * the file-system provider and the plugin configuration.
-   */
-  readonly workspace: WorkspaceContext;
+  private workspaceFolderTree = new WorkspaceFolderTree<WorkspaceContext>();
 
-  constructor(workspace: WorkspaceContext) {
-    this.workspace = workspace;
+  constructor(
+    fs: FileSystemProvider,
+    private readonly configLoader: GlobalConfigLoader,
+    private readonly longRunningOperation: LongRunningOperation,
+  ) {
+    this.fs = fs;
   }
 
   get ready(): Promise<void> {
     return this.readyDeferred.promise;
-  }
-
-  getCompilationUnit(uri: URI): CompilationUnit | undefined {
-    return this.compilationUnits.get(uri.toString());
-  }
-
-  /**
-   * Gets an existing or creates a new compilation unit for the given URI, except for standalone library files
-   *
-   * @returns Pre-existing or new compilation unit, or undefined if it's a standalone library file
-   */
-  async getOrCreateCompilationUnit(
-    uri: URI,
-  ): Promise<CompilationUnit | undefined> {
-    if (this.compilationUnits.has(uri.toString())) {
-      // existing compilation unit
-      return this.compilationUnits.get(uri.toString());
-    }
-    if (isPluginConfigurationUri(uri)) {
-      return undefined;
-    } else if (!this.workspace.config.isLibFileCandidate(uri)) {
-      // non-library files should always generate a compilation unit
-      const unit = await this.createAndStoreCompilationUnit(uri);
-      return unit;
-    } else {
-      // do not generate compilation units for standalone library files
-      return undefined;
-    }
-  }
-
-  async createAndStoreCompilationUnit(uri: URI): Promise<CompilationUnit> {
-    const unit = await createCompilationUnit(uri, this.workspace);
-    this.compilationUnits.set(uri.toString(), unit);
-    return unit;
-  }
-
-  deleteCompilationUnit(uri: URI): boolean {
-    const unit = this.compilationUnits.get(uri.toString());
-    if (!unit) {
-      return false;
-    }
-
-    for (const file of unit.services.files.keys()) {
-      this.compilationUnits.delete(file);
-    }
-    this.compilationUnits.delete(uri.toString());
-
-    return true;
-  }
-
-  getAllCompilationUnits(): CompilationUnit[] {
-    return Array.from(new Set(this.compilationUnits.values()));
   }
 
   /**
@@ -388,7 +337,11 @@ export class CompilationUnitHandler {
     textDocuments.onDidClose((event) => {
       const uri = UriUtils.toUri(event.document.uri);
       this.globalMutex.read(async () => {
-        const unit = this.compilationUnits.get(uri.toString());
+        const context = this.getWorkspaceFolderOf(uri);
+        if (!context) {
+          return;
+        }
+        const unit = context.getCompilationUnit(uri);
         if (unit && this.tryCloseCompilationUnit(uri)) {
           for (const file of unit.services.files.keys()) {
             // Clear diagnostics for all files in the closed compilation unit
@@ -403,8 +356,99 @@ export class CompilationUnitHandler {
     });
   }
 
+  async initializeWorkspaceFolder(uriString: string | URI) {
+    const uri = UriUtils.toUri(uriString);
+    const workspace = new WorkspaceContext(
+      this.fs,
+      this.configLoader,
+      this.longRunningOperation,
+    );
+    this.addWorkspaceFolder(uri, workspace);
+    const diagnosticsByUri = await workspace.config.init(uri);
+    if (this.connection) {
+      publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
+    }
+    return workspace;
+  }
+
+  private fallbackWorkspace: WorkspaceContext | undefined = undefined;
+
+  /** must be initialized at least once */
+  async initializeFallbackFolder() {
+    const uri = UriUtils.toUri(`file://`);
+    const workspace = new WorkspaceContext(
+      this.fs,
+      this.configLoader,
+      this.longRunningOperation,
+    );
+    this.fallbackWorkspace = workspace;
+    const diagnosticsByUri = await workspace.config.init(uri);
+    if (this.connection) {
+      publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
+    }
+    return workspace;
+  }
+
+  addWorkspaceFolder(uri: string | URI, workspace: WorkspaceContext): void {
+    this.workspaceFolderTree.addWorkspaceFolder(uri, workspace);
+  }
+
+  getAllWorkspaceFolders(): WorkspaceContext[] {
+    const folders = this.workspaceFolderTree.getAllWorkspaceFolders();
+    if (this.fallbackWorkspace) {
+      folders.push(this.fallbackWorkspace);
+    }
+    return folders;
+  }
+
+  getWorkspaceFolderOf(uri: string | URI): WorkspaceContext | undefined {
+    const workspace = this.workspaceFolderTree.getWorkspaceFolderOf(uri);
+    if (!workspace) {
+      return this.fallbackWorkspace;
+    }
+    return workspace;
+  }
+
+  getCompilationUnit(uri: URI): CompilationUnit | undefined {
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return undefined;
+    }
+    return context.getCompilationUnit(uri);
+  }
+
+  async getOrCreateCompilationUnit(
+    uri: URI,
+  ): Promise<CompilationUnit | undefined> {
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return undefined;
+    }
+    return context.getOrCreateCompilationUnit(uri);
+  }
+
+  deleteCompilationUnit(uri: URI): boolean {
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return false;
+    }
+    return context.deleteCompilationUnit(uri);
+  }
+
+  getAllCompilationUnits(): CompilationUnit[] {
+    const units: CompilationUnit[] = [];
+    for (const context of this.getAllWorkspaceFolders()) {
+      units.push(...context.getAllCompilationUnits());
+    }
+    return units;
+  }
+
   private tryCloseCompilationUnit(uri: URI): boolean {
-    const unit = this.compilationUnits.get(uri.toString());
+    const context = this.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return false;
+    }
+    const unit = context.getCompilationUnit(uri);
     if (!unit) {
       // Nothing to close
       return false;
@@ -415,13 +459,17 @@ export class CompilationUnitHandler {
         return false;
       }
     }
-    return this.deleteCompilationUnit(uri);
+    return context.deleteCompilationUnit(uri);
   }
 
   async updateUri(uri: URI): Promise<void> {
     await this.globalMutex.run(async () => {
       await this.ready;
-      const unit = await this.getOrCreateCompilationUnit(uri);
+      const context = this.getWorkspaceFolderOf(uri);
+      if (!context) {
+        return;
+      }
+      const unit = await context.getOrCreateCompilationUnit(uri);
       if (!unit) {
         // standalone library files do not synthesize new compilation units
         return;
@@ -459,7 +507,10 @@ export class CompilationUnitHandler {
     try {
       await lifecycle(unit, document, cancellationToken);
       for (const file of unit.services.files.keys()) {
-        this.compilationUnits.set(file, unit);
+        const context = this.getWorkspaceFolderOf(file);
+        if (context) {
+          context.setCompilationUnit(URI.parse(file), unit);
+        }
       }
       const allDiagnostics = diagnosticsToLSP(unit, unit.diagnostics.getAll());
       for (const file of unit.services.files.keys()) {
@@ -494,28 +545,185 @@ export class CompilationUnitHandler {
   ): Promise<void> {
     const promises: Promise<void>[] = [];
     this.globalMutex.run(async () => {
-      for (const unit of this.getAllCompilationUnits()) {
-        if (cancellationToken.isCancellationRequested) {
-          return;
+      for (const context of this.getAllWorkspaceFolders()) {
+        for (const unit of context.getAllCompilationUnits()) {
+          if (cancellationToken.isCancellationRequested) {
+            return;
+          }
+          promises.push(
+            unit.mutex.run(async (cancellationToken) => {
+              const textDocument = await TextDocuments.get(unit.uri.toString());
+              if (textDocument) {
+                await this.process(
+                  unit,
+                  textDocument,
+                  connection,
+                  cancellationToken,
+                );
+                // Revalidate request caches (margins, skipped code, etc.)
+                // This is necessary so that changes to the plugin configuration are reflected immediately.
+                unit.requestCaches.revalidateAll({ connection, unit });
+              }
+            }),
+          );
         }
-        promises.push(
-          unit.mutex.run(async (cancellationToken) => {
-            const textDocument = await TextDocuments.get(unit.uri.toString());
-            if (textDocument) {
-              await this.process(
-                unit,
-                textDocument,
-                connection,
-                cancellationToken,
-              );
-              // Revalidate request caches (margins, skipped code, etc.)
-              // This is necessary so that changes to the plugin configuration are reflected immediately.
-              unit.requestCaches.revalidateAll({ connection, unit });
-            }
-          }),
-        );
       }
     });
     return Promise.all(promises).then(() => undefined);
   }
+
+  async triggerOnFileChange(
+    params: { changes: FileEvent[] },
+    connection?: Connection,
+  ): Promise<void> {
+    // First thing: Figure out whether any of the changed files are plugin config files
+    // If they are, we need to reindex the workspace anyway - no need to check for other changes.
+    function isPluginConfigFile(uri: string): boolean {
+      return (
+        uri.endsWith("/.pliplugin") ||
+        uri.endsWith("/.pliplugin/pgm_conf.json") ||
+        uri.endsWith("/.pliplugin/proc_grps.json")
+      );
+    }
+
+    const fileEventsByWorkspace = new Map<WorkspaceContext, FileEvent[]>();
+    for (const change of params.changes) {
+      const workspace = this.getWorkspaceFolderOf(change.uri);
+      if (workspace) {
+        if (!fileEventsByWorkspace.has(workspace)) {
+          fileEventsByWorkspace.set(workspace, []);
+        }
+        fileEventsByWorkspace.get(workspace)!.push(change);
+      }
+    }
+
+    for (const [workspace, changes] of fileEventsByWorkspace.entries()) {
+      // Since we cannot know whether a created directory is a lib in advance
+      // We always have to reindex if a directory is created, since it may contain a lib.
+      let directoryCreated = false;
+      for (const change of changes) {
+        if (change.type === FileChangeType.Created) {
+          // Try to stat the changed file to see if it's a directory.
+          const uri = UriUtils.toUri(change.uri);
+          try {
+            const stats = await this.fs.stat(uri);
+            if (stats.isDirectory) {
+              directoryCreated = true;
+              break;
+            }
+          } catch {
+            // Ignore errors, assume it's not a directory.
+          }
+        }
+      }
+      const pluginConfigHasChanged = changes.some((change) =>
+        isPluginConfigFile(change.uri),
+      );
+      if (
+        directoryCreated ||
+        pluginConfigHasChanged ||
+        changeAffectsLibs(workspace, changes)
+      ) {
+        if (connection) {
+          const promises = this.getAllWorkspaceFolders().map(
+            async (workspaceContext) => {
+              await pluginConfigChanged(connection, this, workspaceContext);
+            },
+          );
+          await Promise.all(promises);
+        }
+      } else {
+        const compilationUnits = new Set<CompilationUnit>();
+        // Not a plugin config change, meaning that individual folders/files have changed.
+        for (const compilationUnit of this.getAllWorkspaceFolders().flatMap(
+          (workspace) => workspace.getAllCompilationUnits(),
+        )) {
+          if (compilationUnit.includeError) {
+            // If the compilation unit has an unresolved include, we need to re-run the lifecycle
+            // to see if the include can now be resolved.
+            compilationUnits.add(compilationUnit);
+            // No need to change the change contents for this
+            continue;
+          }
+          changeLoop: for (const change of changes) {
+            for (const file of compilationUnit.services.files.keys()) {
+              // Either equal (i.e. file has changed) or the changed dir is a parent of the file
+              if (UriUtils.contains(change.uri, file)) {
+                compilationUnits.add(compilationUnit);
+                break changeLoop;
+              }
+            }
+          }
+        }
+        // Finally, update the compilation units themselves that might be affected by the change
+        for (const compilationUnit of compilationUnits) {
+          await this.updateUri(compilationUnit.uri);
+        }
+        if (compilationUnits.size > 0) {
+          // refresh semantic tokens so syntax coloring updates immediately
+          connection?.languages.semanticTokens.refresh();
+        }
+      }
+    }
+  }
+}
+
+export function publishPluginConfigDiagnostics(
+  connection: Connection,
+  diagnosticsByUri: MultiMap<string, Diagnostic>,
+): void {
+  for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
+    connection.sendDiagnostics({
+      uri,
+      diagnostics,
+    });
+  }
+}
+
+export async function pluginConfigChanged(
+  connection: Connection,
+  compilationUnitHandler: CompilationUnitHandler,
+  workspaceContext: WorkspaceContext,
+): Promise<void> {
+  // handle changes to the .pliplugin config folder's contents
+  const diagnosticsByUri = await workspaceContext.config.reloadConfigurations();
+  publishPluginConfigDiagnostics(connection, diagnosticsByUri);
+
+  // reindex reachable compilation units
+  await compilationUnitHandler.reindex(connection, CancellationToken.None);
+
+  // refresh semantic tokens so syntax coloring updates immediately
+  connection.languages.semanticTokens.refresh();
+}
+
+// A structural change to a lib folder (a file/dir created or deleted
+// inside a lib, or a directory removed that is or contains a lib)
+// invalidates the computed lib index, so the libs must be re-expanded.
+// Note: Simple file edits are not considered structural changes,
+// so they don't trigger a reindex.
+function changeAffectsLibs(
+  workspace: WorkspaceContext,
+  changes: readonly FileEvent[],
+): boolean {
+  const libDirs = workspace.config.getLibDirectoryUris();
+  if (libDirs.length === 0) {
+    return false;
+  }
+  for (const change of changes) {
+    if (change.type === FileChangeType.Changed) {
+      continue;
+    }
+    const changeUri = UriUtils.toUri(change.uri);
+    for (const libDir of libDirs) {
+      // Change inside a lib (create/delete of a member) OR the change
+      // is/contains the lib dir itself (whole lib folder gone).
+      if (
+        UriUtils.contains(libDir, changeUri) ||
+        UriUtils.contains(changeUri, libDir)
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

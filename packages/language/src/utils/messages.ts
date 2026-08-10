@@ -9,6 +9,8 @@
  *
  */
 
+import { URI } from "./uri";
+
 export type RequestType<P, R> = {
   method: string;
 
@@ -35,6 +37,11 @@ export function createNotificationType<P>(method: string): NotificationType<P> {
 }
 
 export namespace Messages {
+  export const GetGlobalConfig = createRequestType<
+    string,
+    Messages.GlobalConfig
+  >("pli/getGlobalConfig");
+
   /**
    * Notification sent to the LS when the workspace's plugin configuration changes.
    */
@@ -75,14 +82,6 @@ export namespace Messages {
   }
 
   /**
-   * Request sent to the language client to get the global configuration.
-   * Only required if no plugin configuration file is present in the workspace.
-   */
-  export const GetGlobalConfig = createRequestType<void, GlobalConfig>(
-    "config/getGlobal",
-  );
-
-  /**
    * Location information for a plugin configuration entry (either a
    * program entry in pgm_conf.json or a process group entry in
    * proc_grps.json). Used by the "Go to Program Configuration" and
@@ -120,4 +119,15 @@ export namespace Messages {
     string,
     PluginConfigEntryLocation | null
   >("pli/getProcessGroupLocation");
+}
+
+export interface GlobalConfigLoader {
+  loadGlobalConfig(workspaceUri: URI): Promise<Messages.GlobalConfig>;
+}
+
+export class TestGlobalConfigLoader implements GlobalConfigLoader {
+  constructor(private readonly config: Messages.GlobalConfig) {}
+  loadGlobalConfig(_workspaceUri: URI): Promise<Messages.GlobalConfig> {
+    return Promise.resolve(this.config);
+  }
 }

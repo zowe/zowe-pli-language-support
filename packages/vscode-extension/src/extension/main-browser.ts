@@ -17,11 +17,7 @@ import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import { registerCustomDecorators } from "./decorators";
 import { Settings } from "./settings";
-import {
-  deriveUserSettingsUri,
-  registerConfigLoader,
-  watchPluginSettings,
-} from "./config-loader";
+import { registerConfigLoader, watchPluginSettings } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
 import { registerCommands } from "./commands";
 
@@ -68,8 +64,8 @@ async function startLanguageClient(
     watchPluginSettings(client),
   );
   registerFileSystemProvider(client);
-  registerConfigLoader(client, deriveUserSettingsUri(context.globalStorageUri));
   context.subscriptions.push(
+    registerConfigLoader(client, context),
     registerProgressReporter(client),
     registerCustomDecorators(client, settings),
   );

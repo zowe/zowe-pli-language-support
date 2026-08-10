@@ -18,6 +18,7 @@ import { UriUtils } from "../../src/utils/uri";
 import { PluginConfiguration } from "../../src/language-server/constants";
 import { MultiMap } from "../../src/utils/collections";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
+import { TestGlobalConfigLoader } from "../../src";
 
 const WORKSPACE_PATH = UriUtils.toUri("/workspace");
 const PGM_CONF_URI = UriUtils.joinPath(
@@ -37,7 +38,7 @@ let pluginConfig: PluginConfigurationProvider;
 
 beforeEach(() => {
   vfs = new VirtualFileSystemProvider();
-  workspace = new WorkspaceContext(vfs);
+  workspace = new WorkspaceContext(vfs, new TestGlobalConfigLoader({}));
   pluginConfig = workspace.config;
   resetDocumentProviders(vfs);
 });
