@@ -222,6 +222,7 @@ export class PluginConfigurationProvider {
 
   /**
    * Map of program configs, keyed by their entry program.
+   * The key is a path without URI scheme at the beginning.
    * These correspond to the entry point of a compile unit.
    */
   private programConfigs: Map<string, ProgramRecord>;
@@ -925,7 +926,7 @@ export class PluginConfigurationProvider {
       // Wrap the loaded config into a ProgramRecord. `abstractOptions` and
       // `issues` are filled in by `postProcessProgramConfigs` once the
       // bound process group is also available.
-      this.programConfigs.set(resolvedUri.toString(), {
+      this.programConfigs.set(resolvedUri.path, {
         ...config,
         abstractOptions: { options: [], tokens: [], issues: [], comments: [] },
         issues: [],
@@ -1060,8 +1061,9 @@ export class PluginConfigurationProvider {
     // No PL/I-extension filtering here: callers only ever pass files already
     // identified as PL/I (client language id / auto-detect), so glob matching
     // the path alone is sufficient.
-    // Note that we need to decode the URI
-    const uri = program.toString(true);
+    // Note that we just need the path of the URI in order to match against
+    // the program config patterns
+    const uri = program.path;
 
     let best: ProgramRecord | undefined;
     let bestRank = Number.POSITIVE_INFINITY;
