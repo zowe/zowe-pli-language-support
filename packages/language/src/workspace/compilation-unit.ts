@@ -375,7 +375,7 @@ export class CompilationUnitHandler {
 
   /** must be initialized at least once */
   async initializeFallbackFolder() {
-    const uri = UriUtils.toUri(`${BuiltinsUriSchema}://`);
+    const uri = UriUtils.toUri(`file://`);
     const workspace = new WorkspaceContext(
       this.fs,
       this.configLoader,

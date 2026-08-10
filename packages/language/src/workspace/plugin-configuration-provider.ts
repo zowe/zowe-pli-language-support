@@ -1063,12 +1063,12 @@ export class PluginConfigurationProvider {
     // the path alone is sufficient.
     // Note that we just need the path of the URI in order to match against
     // the program config patterns
-    const uri = program.path;
+    const path = program.path;
 
     let best: ProgramRecord | undefined;
     let bestRank = Number.POSITIVE_INFINITY;
     for (const [pattern, config] of this.programConfigs.entries()) {
-      const rank = this.programMatchRank(uri, pattern, config);
+      const rank = this.programMatchRank(path, pattern, config);
       if (rank === undefined || rank >= bestRank) {
         continue; // no match, or not better than what we already have
       }
@@ -1086,25 +1086,25 @@ export class PluginConfigurationProvider {
    * `undefined` when its pattern does not match the file. Lower ranks win;
    * see {@link ProgramMatchRank}.
    *
-   * @param uri Decoded program URI being resolved.
+   * @param path Decoded program path being resolved.
    * @param pattern The program config's key (an exact path or a glob).
    * @param record The candidate program config.
    */
   private programMatchRank(
-    uri: string,
+    path: string,
     pattern: string,
     record: ProgramRecord,
   ): number | undefined {
-    const isExact = pattern === uri;
+    const isExact = pattern === path;
     if (!isExact) {
       try {
-        // attempt match on decoded URI
-        if (!minimatch(uri, decodeURIComponent(pattern), { nocase: true })) {
+        // attempt match on decoded path
+        if (!minimatch(path, decodeURIComponent(pattern), { nocase: true })) {
           return undefined;
         }
       } catch (e) {
         console.error(
-          `Invalid glob pattern "${pattern}" for program "${uri}": ${e}`,
+          `Invalid glob pattern "${pattern}" for program "${path}": ${e}`,
         );
         return undefined;
       }
