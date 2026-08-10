@@ -294,7 +294,7 @@ export async function addBuiltinUnits(
   unit.rootPreprocessorScope = Scope.createChild(macroScope);
 }
 
-export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext> {
+export class CompilationUnitHandler {
   private fs: FileSystemProvider;
   private connection!: Connection;
   private readyDeferred = new Deferred();
@@ -304,12 +304,13 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
    */
   readonly globalMutex = createMutex();
 
+  private workspaceFolderTree = new WorkspaceFolderTree<WorkspaceContext>();
+
   constructor(
     fs: FileSystemProvider,
     private readonly configLoader: GlobalConfigLoader,
     private readonly longRunningOperation: LongRunningOperation,
   ) {
-    super(false);
     this.fs = fs;
   }
 
@@ -388,18 +389,20 @@ export class CompilationUnitHandler extends WorkspaceFolderTree<WorkspaceContext
     return workspace;
   }
 
-  override getAllWorkspaceFolders(): WorkspaceContext[] {
-    const folders = super.getAllWorkspaceFolders();
+  addWorkspaceFolder(uri: string | URI, workspace: WorkspaceContext): void {
+    this.workspaceFolderTree.addWorkspaceFolder(uri, workspace);
+  }
+
+  getAllWorkspaceFolders(): WorkspaceContext[] {
+    const folders = this.workspaceFolderTree.getAllWorkspaceFolders();
     if (this.fallbackWorkspace) {
       folders.push(this.fallbackWorkspace);
     }
     return folders;
   }
 
-  override getWorkspaceFolderOf(
-    uri: string | URI,
-  ): WorkspaceContext | undefined {
-    const workspace = super.getWorkspaceFolderOf(uri);
+  getWorkspaceFolderOf(uri: string | URI): WorkspaceContext | undefined {
+    const workspace = this.workspaceFolderTree.getWorkspaceFolderOf(uri);
     if (!workspace) {
       return this.fallbackWorkspace;
     }
