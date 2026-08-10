@@ -23,6 +23,19 @@ describe("CICS DEFINE", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Define timer", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "DEFINE TIMER('TIMEER1')",
+    );
+    expect(diagnostics).toHaveLength(3);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(/Missing required option: AT/);
+    expect(diagnostics[2].severity).toBe(Severity.Error);
+    expect(diagnostics[2].message).toMatch(/Missing required option: AFTER/);
+  });
+
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "DEFINE ACTIVITY(1) TRANSID(2) BLA",
