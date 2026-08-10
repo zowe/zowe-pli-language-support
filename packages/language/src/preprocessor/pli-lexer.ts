@@ -150,16 +150,10 @@ export class PliLexer {
   }
 
   /**
-   * Applies margins, then strips comments (so external SQL/CICS preprocessors - which will
-   * scan full text rather than tokens - never see comment characters embedded in `EXEC`
-   * code), producing the text that seeds the phase pipeline. Also converts the stripped
-   * comment ranges into tokens for LSP services (semantic highlighting, hover-on-comment,
-   * ...); the file's *real* tokens are registered later, from `LexerResult.all` (see
-   * `registerFileTokens`), not re-tokenized here.
-   *
-   * Margin diagnostics are folded into the result so they stay correct on cache hits (the
-   * pipeline reuses the same margins processor for %INCLUDE files and would otherwise
-   * overwrite `marginsProcessor.issues`).
+   * Applies margins, then strips comments (see `stripComments`), producing the text that
+   * seeds the phase pipeline plus the comment tokens for LSP services. Margin diagnostics
+   * are folded into the (cached) result so they stay correct on cache hits - the shared
+   * margins processor would otherwise overwrite `marginsProcessor.issues`.
    */
   private prepareSource(
     unit: CompilationUnit,
@@ -206,16 +200,12 @@ export class PliLexer {
   }
 
   /**
-   * Register the file's tokens with the file store. Registers `annotated.tokens` - the
-   * exact objects `LexerResult.all` returns and the real parser will mutate with
-   * `.kind`/`.element` - so LSP services reading `unit.services.files.getTokens(uri)`
-   * later (after parsing) see those attachments too. Registering a separately re-tokenized
-   * array here would silently desync from what the parser actually built the CST from.
-   *
-   * Also merges in this file's own `directiveTokens` (see `PhaseResult.directiveTokens`) -
-   * `%IF`/`%DCL`/`EXEC`/... tokens consumed by a directive and otherwise unreachable, needed
-   * by `pli/skippedCode`, type-at-a-`%DCL`, semantic highlighting of macro variable
-   * references, and similar features that inspect a directive rather than its expansion.
+   * Registers the file's tokens with the file store - the exact objects the real parser
+   * will annotate with `.kind`/`.element`, so LSP services see those attachments too
+   * (a separately re-tokenized array would silently desync). Also merges in this file's
+   * own `directiveTokens`: `%IF`/`%DCL`/`EXEC`/... tokens consumed by a directive and
+   * otherwise unreachable, needed by features that inspect a directive rather than its
+   * expansion.
    */
   private registerFileTokens(
     unit: CompilationUnit,
@@ -232,21 +222,15 @@ export class PliLexer {
     const ownDirectiveTokens = directiveTokens.filter(
       (t) => t.uri?.toString() === uriString,
     );
-    // `annotated.tokens` spans the whole composed text, so it also carries tokens that
-    // annotateTokens attributed to a foreign file (e.g. content pulled in via `%INCLUDE`/
-    // `EXEC SQL INCLUDE`). Those tokens' offsets are only meaningful in *that* file's own
-    // numbering - registering them here too would collide with this file's own tokens at
-    // the same numeric offset (see the `EXEC SQL INCLUDE <file>` case, which replaces the
-    // whole directive's span). The foreign file gets its own, correctly-offset registration
-    // independently (see `runInclude`), so this file's own view only needs its own tokens.
-    // `synthetic` tokens (lexed from generated text, offsets collapsed to the directive's
-    // start) are excluded - see `Token.synthetic`.
+    // Only this file's own tokens: foreign-file tokens carry offsets in *that* file's
+    // numbering and would collide with this file's tokens at the same numeric offset
+    // (they're merged into the foreign file's registration below). `synthetic` tokens
+    // are excluded - see `Token.synthetic`.
     const ownTokens = annotated.tokens.filter(
       (t) => !t.synthetic && t.uri?.toString() === uriString,
     );
-    // Identity-dedupe: an `EXEC` host-variable sub-token is registered as a directive
-    // token by the SQL/CICS phase AND emitted verbatim into the final token stream by the
-    // annotate pass (`MappedToken.sourceToken`), so it shows up in both lists.
+    // Identity-dedupe: an `EXEC` host-variable sub-token shows up both as a directive
+    // token and as an annotate-emitted `sourceToken`.
     const tokens = [
       ...new Set([...optionTokens, ...ownTokens, ...ownDirectiveTokens]),
     ];
@@ -271,13 +255,11 @@ export class PliLexer {
 
   /**
    * Merges final-stream tokens that belong to a *foreign* file into that file's own
-   * registration: content spliced in via `%INCLUDE`/`EXEC SQL INCLUDE` re-surfaces in the
-   * composed text with the include's own uri/offsets, and directive tokens (an `EXEC`
-   * statement inside an included file, its classified sub-tokens, ...) are remapped there
-   * too. Both carry - or will receive, from the real parse - `.kind`/`.element`/
-   * `ppSemanticType`, while the include's base registration (`runInclude`, the SQL/CICS
-   * phase's `files.set`) only holds the raw, unannotated tokenization. Replace the raw
-   * tokens the incoming ones cover, keeping the array sorted and overlap-free.
+   * registration. Included content re-surfaces in the composed text with the include's
+   * own uri/offsets and carries (or will receive from the real parse) `.kind`/`.element`/
+   * `ppSemanticType` - while the include's base registration only holds the raw,
+   * unannotated tokenization. Replaces the raw tokens the incoming ones cover, keeping
+   * the array sorted and overlap-free.
    */
   private mergeForeignTokens(
     unit: CompilationUnit,
@@ -338,14 +320,11 @@ function buildPhases(
   const pp = opts.pp;
 
   if (!pp || !pp.items) {
-    // No PP items at all (the *documented* default, `getDefaultCompilerOptions`, does
-    // carry PP(MACRO SQL CICS) - this branch means the options explicitly ended up
-    // without any) - run just the macro phase.
+    // Options explicitly ended up without any PP items: run just the macro phase, and
+    // flag any EXEC CICS/SQL statement as unresolved.
     phases.push(
       new MacroPreprocessorPhase(compilerOptionsResult, marginsProcessor),
     );
-    // Neither CICS nor SQL is configured, so any EXEC CICS/SQL
-    // statement in the source is unresolved.
     phases.push(new UnresolvedExecPhase(false, false));
     return phases;
   }

@@ -34,11 +34,9 @@ export interface MappedToken {
    */
   endOffset: number;
   /**
-   * The exact text this span was synthesized with - restored onto the final re-lexed token
-   * in place of whatever that re-lex's own case-folding produced. Needed because the final
-   * lex is one call over the whole file with one `caseUpper` setting, but a span's casing
-   * may already have been deliberately decided (e.g. `RESCAN(ASIS)` keeps macro-substituted
-   * text exactly as typed, overriding the file's normal upper-casing).
+   * The exact text this span was synthesized with - restored onto the final re-lexed
+   * token, since a span's casing may already have been decided (e.g. `RESCAN(ASIS)`)
+   * while the final lex applies one `caseUpper` setting to the whole file.
    */
   originalImage: string;
   /** Resolved cross-reference target, if this span should link somewhere (e.g. a `DCL`). */
@@ -46,40 +44,26 @@ export interface MappedToken {
   /** `Token.kind` to restore alongside `refTarget` - `getReferenceTarget`-style lookups key off both. */
   refKind?: CstNodeKind;
   /**
-   * The already-positioned token object this span was serialized from, when one exists.
-   * The annotate pass emits this exact object instead of the re-lexed token, so the real
-   * parser attaches `.kind`/`.element` to a token that (a) carries real original offsets
-   * and (b) is the *same object* other registrations hold - which is what position-based
-   * go-to-definition, find-references, and semantic tokens need. Two producers:
-   *
-   * - foreign (`%INCLUDE`d) runs: the included file's own token, the object `runInclude`
-   *   registered with `files.set` for that file (see `token-serializer.ts`);
-   * - `execHostVariable` spans: the classified sub-token for the host variable (see
-   *   `exec-phase.ts`'s `collectExecMetadata`); emitted after the marker token.
+   * The already-positioned token object this span was serialized from, when one exists
+   * (an included file's registered token, or an `execHostVariable` sub-token). The
+   * annotate pass emits this exact object instead of the re-lexed token, so the parser
+   * annotates the same object other registrations hold - which is what position-based
+   * go-to-definition, find-references, and semantic tokens need.
    */
   sourceToken?: Token;
 }
 
 /**
- * One contiguous span of a `SourceMap`. Spans are non-overlapping and cover the whole
- * generated text, sorted ascending by `genStart` - the invariant that makes binary search
- * over that field correct. (`origStart` is *not* globally sorted: a `foreign` segment's
- * offsets live in a different file's coordinate space entirely.)
+ * One contiguous span of a `SourceMap`. Spans are non-overlapping, cover the whole
+ * generated text, and are sorted ascending by `genStart` (enabling binary search).
  *
- * - `verbatim` segments are a straight offset-for-offset copy of the input: no `tokens`
- *   needed, position mapping is `origStart + (offset - genStart)`.
- * - Non-verbatim segments come from a `replace`/`insert` edit: the whole generated span
- *   maps back to the *original* directive's range as one block (there is no 1:1 mapping
- *   inside a replacement), and may carry `tokens` describing sub-spans of interest within
- *   the generated text (e.g. an argument identifier for go-to-definition).
- * - `foreign` marks a segment (verbatim *or* non-verbatim) whose `origStart`/`origEnd` are
- *   *not* positions in this map's own "before this phase ran" space at all, but real offsets
- *   into a different file entirely - either a `%INCLUDE`d file's own tokens (reconstructed by
- *   `token-serializer.ts`'s foreign-run handling, always verbatim), or a spliced-in nested
- *   `PreprocessorContext` result (`PreprocessorContext.insertContext`, which may itself carry
- *   non-verbatim edits from the included file's own EXEC replacements). `compose` must never
- *   subdivide or re-anchor a foreign segment through `first` - unlike same-file text, there is
- *   no relationship between its offsets and `first`'s generated space to resolve.
+ * - `verbatim`: a straight copy of the input, mapped `origStart + (offset - genStart)`.
+ * - Non-verbatim: a `replace`/`insert` edit; the whole span maps back to the directive's
+ *   range as one block, optionally with `tokens` describing sub-spans of interest.
+ * - `foreign`: `origStart`/`origEnd` are real offsets into a *different* file (an
+ *   `%INCLUDE`d file's tokens or a spliced-in nested context). `compose` must never
+ *   subdivide or re-anchor a foreign segment through `first` - its offsets have no
+ *   relationship to `first`'s generated space.
  */
 export interface Segment {
   origStart: number;
@@ -100,11 +84,8 @@ export interface OriginalPosition {
 }
 
 /**
- * Translates `tokens`' offsets from *local* (0-based within whatever generated text they
- * describe) to their final position in the generated text, by adding `genStart` (the start
- * of the segment they belong to). Shared by every producer of `Segment.tokens`
- * (`PreprocessorContext.build()`, `serializeTokens()`) so local-offset bookkeeping only
- * needs to be correct once.
+ * Translates `tokens`' offsets from local (0-based within their generated span) to their
+ * final position in the generated text. Shared by every producer of `Segment.tokens`.
  */
 export function translateLocalTokens(
   tokens: MappedToken[] | undefined,
@@ -125,22 +106,15 @@ const segmentGenStart = (segment: Segment) => segment.genStart;
 /**
  * A bidirectional, offset-based map between an original source text and the text produced
  * by a preprocessor phase (or the composition of several phases). Backs `PreprocessorContext`
- * and the final annotate-pass in `PliLexer`.
- *
- * Performance: this type sits on the tokenize hot path (multiple 100k-LOC files), so lookups
- * are binary search (`O(log segments)`) and `compose` is a merge that re-positions into
- * `first` by binary search per `second` segment
- * (`O(secondSegments * log firstSegments + overlaps)`); mapped-token metadata is located by
- * binary search too, so no operation scans a segment's whole token list - cost is only ever
- * proportional to the tokens actually carried over.
+ * and the final annotate-pass in `PliLexer`. Sits on the tokenize hot path, so all lookups
+ * are binary search - never linear in segment or token count.
  */
 export class SourceMap {
   private constructor(private readonly segments: readonly Segment[]) {}
 
   /**
-   * The map's own segments, in `genStart` order. Exposed so a `PreprocessorContext` can
-   * splice another context's already-built map into its own (`insertContext`), shifting
-   * these segments by the splice offset and marking them `foreign`.
+   * The map's own segments, in `genStart` order. Exposed for
+   * `PreprocessorContext.insertContext`'s splicing.
    */
   getSegments(): readonly Segment[] {
     return this.segments;
@@ -205,14 +179,10 @@ export class SourceMap {
   }
 
   /**
-   * Maps an EXCLUSIVE end offset (one past a range's last character, as diagnostic ranges
-   * use) back to the original source. Mapping such an offset with {@link mapToOriginal}
-   * directly is wrong at segment boundaries: `segmentAt` resolves an offset through the
-   * segment *starting* there, so an end landing exactly on a boundary resolves through the
-   * *next* segment - possibly a foreign (`%INCLUDE`) one in a different file - yielding
-   * cross-file or inverted ranges. Instead this maps the range's last covered character
-   * (`end - 1`) and re-adds the 1; zero-length ranges (`end <= start`) fall back to
-   * mapping `start` itself.
+   * Maps an EXCLUSIVE end offset (as diagnostic ranges use) back to the original source.
+   * Mapping it with {@link mapToOriginal} directly would resolve an end landing exactly on
+   * a segment boundary through the *next* segment - possibly one in a different file - so
+   * this maps the last covered character (`end - 1`) and re-adds the 1.
    */
   mapExclusiveEnd(start: number, end: number): OriginalPosition | undefined {
     if (end <= start) {
@@ -225,15 +195,10 @@ export class SourceMap {
   /**
    * Composes two maps: `first` maps `text -> A`, `second` maps `A -> B`; the result maps
    * `text -> B`. This is how per-phase maps accumulate into one map from the original
-   * document to the final preprocessed text.
-   *
-   * Implemented as a merge over `second`'s segments (in `A`/generated-of-first space),
-   * each positioned into `first` by binary search - `second`'s verbatim segments are NOT
-   * guaranteed to advance monotonically through `A` (a `%DO` re-emission rewinds; see
-   * `serializeTokens`): verbatim spans are subdivided against `first`'s segment boundaries so untouched
-   * source keeps precise, offset-accurate positions across any number of phases; non-verbatim
-   * (replaced/inserted) spans stay atomic blocks, per the `Segment` contract - only their
-   * anchor is resolved through `first`.
+   * document to the final preprocessed text. Verbatim spans are subdivided against
+   * `first`'s segment boundaries so untouched source keeps offset-accurate positions
+   * across any number of phases; non-verbatim spans stay atomic blocks, with only their
+   * anchor resolved through `first`.
    */
   static compose(first: SourceMap, second: SourceMap): SourceMap {
     const composed: Segment[] = [];
@@ -242,9 +207,7 @@ export class SourceMap {
     for (const secondSegment of second.segments) {
       if (secondSegment.foreign) {
         // Already real, final positions in another file - nothing to resolve through
-        // `first`, and `first`'s space is not advanced (this segment didn't come from it).
-        // Applies whether or not the segment is itself verbatim: a spliced-in nested
-        // context's own non-verbatim edits are just as "foreign" as its verbatim text.
+        // `first` (see the `Segment` doc).
         composed.push({ ...secondSegment });
         continue;
       }
@@ -256,22 +219,17 @@ export class SourceMap {
       // Cursor through the `second` segment's original span - offsets in `first`'s
       // generated space.
       let origOffset = secondSegment.origStart;
-      // Position into `first` independently per `second` segment (binary search, the same
-      // helper `segmentAt` uses) instead of carrying a monotonic cursor across segments:
-      // `serializeTokens` legitimately emits verbatim segments whose `origStart` REWINDS
-      // (a `%DO` loop or backward `%GOTO` re-emits the same source tokens once per
-      // iteration), and a forward-only cursor would resolve those through the wrong
-      // segment (negative delta) or silently drop them once `first`'s segments were
-      // consumed. Within one `second` segment `origOffset` only increases, so the local
-      // index below still advances linearly.
+      // Position into `first` by binary search per `second` segment, NOT with a monotonic
+      // cursor across segments: `serializeTokens` legitimately emits verbatim segments
+      // whose `origStart` rewinds (a `%DO` loop re-emits the same source tokens once per
+      // iteration), which a forward-only cursor would resolve through the wrong segment.
       let firstIndex = rightmostIndexLE(
         firstSegments,
         origOffset,
         segmentGenStart,
       );
       if (firstIndex === -1) {
-        // `origOffset` lies before `first`'s first segment - outside `first`'s generated
-        // space, nothing to resolve through (mirrors running past the last segment below).
+        // Before `first`'s first segment - outside its generated space.
         continue;
       }
 
@@ -288,12 +246,9 @@ export class SourceMap {
         const len = overlapEnd - origOffset;
         const genStart =
           secondSegment.genStart + (origOffset - secondSegment.origStart);
-        // `firstSegment.tokens` are in `first`'s generated space (= `second`'s original
-        // space); the composed map's generated space is `second`'s, so re-base them by the
-        // overlap's shift - and keep only the ones inside this overlap, since
-        // `firstSegment` may be split across several `second` segments. Dropping them here
-        // would lose foreign-run metadata (`sourceToken`/`refTarget`) as soon as a later
-        // phase's map composes over an earlier one's.
+        // Re-base `firstSegment.tokens` into the composed map's generated space, keeping
+        // only the ones inside this overlap (`firstSegment` may be split across several
+        // `second` segments).
         const tokens = sliceMappedTokens(
           firstSegment.tokens,
           origOffset,
@@ -338,16 +293,10 @@ export class SourceMap {
 const mappedTokenStartOffset = (token: MappedToken) => token.startOffset;
 
 /**
- * Returns the `tokens` whose span lies within `[start, end)` (in the space the tokens are
- * currently expressed in), shifted by `delta` into the composed map's generated space.
- * Tokens straddling either edge of the range are dropped (a token split across two
- * composed segments matches neither exactly, so its metadata could never be re-attached).
- * Returns `undefined` when nothing falls inside the range, so segments without metadata
- * stay allocation-free.
- *
- * Binary search over the (startOffset-sorted) tokens rather than a full filter: a foreign
- * segment carries one `MappedToken` per token of an entire included file, so filtering per
- * overlap would make composing K slices of it O(N*K).
+ * Returns the `tokens` whose span lies within `[start, end)`, shifted by `delta` into the
+ * composed map's generated space. Tokens straddling either edge are dropped (split
+ * metadata could never be re-attached). Located by binary search - a foreign segment can
+ * carry one `MappedToken` per token of an entire included file.
  */
 function sliceMappedTokens(
   tokens: MappedToken[] | undefined,
@@ -367,7 +316,7 @@ function sliceMappedTokens(
       break;
     }
     if (token.endOffset >= end) {
-      // Straddles the slice's end - dropped, per the contract above.
+      // Straddles the slice's end - dropped.
       continue;
     }
     if (!inRange) {

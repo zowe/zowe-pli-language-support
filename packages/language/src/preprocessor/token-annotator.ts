@@ -35,13 +35,10 @@ export function annotateTokens(
   const diagnostics = finalDiagnostics.map((d) =>
     remapDiagnostic(d, sourceMap, entryUri),
   );
-  // Every token that logically belongs to the same file must share the exact same `URI`
-  // object, not just an equal string - some existing consumers (e.g.
-  // `stringify.ts#extractDeclaration`, checking a multi-token declaration's start/end are
-  // "the same file") compare by reference. In the old pipeline that held for free (one
-  // `tokenize()` call per file handed every token the same `uri` instance); segments now
-  // assign `.uri` independently per span, so without interning, two tokens from the same
-  // included file could end up with two different (if `.toString()`-equal) `URI` objects.
+  // Tokens of the same file must share the exact same `URI` object - some consumers
+  // (e.g. `stringify.ts#extractDeclaration`) compare by reference. Segments assign `.uri`
+  // independently per span, so without interning two tokens from the same included file
+  // could carry different (if string-equal) `URI` objects.
   const uriCache = new Map<string, URI>();
   const internUri = (uri: URI | undefined): URI => {
     const target = uri ?? entryUri;
@@ -110,8 +107,7 @@ export function extractDirectiveTokens(
   sourceMap: SourceMap,
 ): Token[] {
   const result: Token[] = [];
-  // See the matching note in `annotateTokens` - keep one `URI` instance per logical file
-  // so reference-based consumers (`stringify.ts#extractDeclaration`) stay correct.
+  // Keep one `URI` instance per logical file - see the interning note in `annotateTokens`.
   const uriCache = new Map<string, URI>();
   for (const token of tokens) {
     if (token.kind === undefined) {
@@ -169,10 +165,9 @@ function mapOffsetWithinSegment(segment: Segment, genOffset: number): number {
 const mappedTokenStart = (token: MappedToken) => token.startOffset;
 
 /**
- * Finds the `MappedToken` (already in generated-text-global offsets) covering `genOffset`.
- * Binary search - a single foreign segment carries one `MappedToken` per token of the whole
- * included file (see `synthesizeForeignRun`), so a linear scan here would make annotating a
- * file quadratic in the size of its includes.
+ * Finds the `MappedToken` (generated-text-global offsets) covering `genOffset`. Binary
+ * search - a foreign segment can carry one `MappedToken` per token of a whole included
+ * file.
  */
 function findMappedToken(
   segment: Segment,
@@ -200,8 +195,6 @@ function remapDiagnostic(
     return diagnostic;
   }
   const start = sourceMap.mapToOriginal(diagnostic.range.start);
-  // `range.end` is exclusive - mapping it directly would resolve a boundary-exact end
-  // through the NEXT segment (possibly a foreign `%INCLUDE` one); see `mapExclusiveEnd`.
   const end = sourceMap.mapExclusiveEnd(
     diagnostic.range.start,
     diagnostic.range.end,

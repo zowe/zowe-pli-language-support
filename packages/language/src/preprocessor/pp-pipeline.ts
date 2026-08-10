@@ -101,8 +101,6 @@ function remapPhaseDiagnostics(
       return diagnostic;
     }
     const start = inputMap.mapToOriginal(diagnostic.range.start);
-    // `range.end` is exclusive - mapping it directly would resolve a boundary-exact end
-    // through the NEXT segment (possibly a foreign `%INCLUDE` one); see `mapExclusiveEnd`.
     const end = inputMap.mapExclusiveEnd(
       diagnostic.range.start,
       diagnostic.range.end,

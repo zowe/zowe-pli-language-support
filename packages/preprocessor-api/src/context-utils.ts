@@ -42,12 +42,11 @@ export function rebaseToken(token: Token, fragment: ExecFragment): Token {
 }
 
 /**
- * Describes the comment/string syntax a host language uses, so {@link scanExecFragments} can
- * skip over them correctly - a `;` inside a string literal or a comment doesn't end the
- * statement, and `EXEC <prefix>` text inside either doesn't start one. Confirmed against the
- * actual grammars (`Db2SqlExecLexer.g4`, `CICSLexer.g4`): every quoted string in both languages
- * is escaped by doubling its own quote character and never spans a line break; only CICS's
- * `/* *\/` block comment can.
+ * Describes the comment/string syntax a host language uses, so {@link scanExecFragments}
+ * can skip over them - a `;` inside a string or comment doesn't end the statement, and
+ * `EXEC <prefix>` text inside either doesn't start one. Confirmed against
+ * `Db2SqlExecLexer.g4`/`CICSLexer.g4`: strings escape by doubling their own quote and
+ * never span a line break; only CICS's `/* *\/` block comment can.
  */
 export interface Delimiters {
   /** Each entry is both the start and end delimiter (e.g. `'` or `"`). */
@@ -117,17 +116,16 @@ function findTerminator(
 }
 
 /**
- * Scans `text` for every `EXEC <prefix> ...;` statement (case-insensitive on both `EXEC` and
- * `prefix`), the entry point a {@link Preprocessor} uses to find its own fragments instead of
- * being handed them. One linear walk: at each position,
- * first tries to skip a delimited construct (so the `EXEC` anchor can't be found inside a
- * host string literal), and only then tries the anchor itself.
+ * Scans `text` for every `EXEC <prefix> ...;` statement (case-insensitive) - the entry
+ * point a {@link Preprocessor} uses to find its own fragments instead of being handed
+ * them. Delimited constructs are skipped before the anchor is tried, so `EXEC` inside a
+ * host string literal never matches.
  *
- * `delimiters` describes the *embedded* language and applies only between the anchor and the
- * terminating `;` (see {@link findTerminator}). The host text outside fragments is PL/I, where
- * only the quote characters carry over - the embedded language's comment markers are ordinary
- * host code there (`X = A--B;` is a legal PL/I subtraction, not the start of a DB2 `--`
- * comment), and host comments were already blanked by the pipeline's comment-strip pre-pass.
+ * `delimiters` describes the *embedded* language and applies only between the anchor and
+ * the terminating `;`. Outside fragments only the quote characters carry over: the
+ * embedded language's comment markers are ordinary host code there (`X = A--B;` is PL/I
+ * subtraction, not a DB2 `--` comment), and host comments were already blanked by the
+ * pipeline's comment-strip pre-pass.
  */
 export function scanExecFragments(
   text: string,
@@ -167,10 +165,8 @@ export function scanExecFragments(
         i = semicolon + 1;
         continue;
       }
-      // No `;` before EOF: emit the rest as an unterminated fragment (necessarily the last
-      // one - the terminator scan already covered everything up to EOF), so the statement
-      // still gets parsed/diagnosed. See `ExecFragment.terminated` for what a preprocessor
-      // must (not) do with it.
+      // No `;` before EOF: emit the rest as an unterminated fragment so the statement
+      // still gets parsed/diagnosed - see `ExecFragment.terminated`.
       fragments.push({
         range: { start: i, end: text.length },
         bodyText: text.slice(bodyStart),

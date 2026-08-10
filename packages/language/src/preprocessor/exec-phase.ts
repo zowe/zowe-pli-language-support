@@ -143,12 +143,8 @@ const CICS_EXEC_DECLS = `
 /**
  * Per-`process()` bookkeeping so LOB/LOB FILE/CICS declarations are inserted once per
  * procedure (keyed by that procedure's semicolon offset), not once per statement.
- *
- * `declBlocks` accumulates each new block instead of `context.insert`ing it immediately,
- * because `insert` stacks multiple edits at the same offset in *call* order, while the
- * canonical (real-preprocessor) output stacks them in *reverse* - the most recently
- * encountered statement's declarations end up first. Flushed (reversed) once `process()`
- * finishes, in `flushGenerationCache`.
+ * `declBlocks` accumulates blocks and is flushed *reversed* by `flushGenerationCache`,
+ * matching the real preprocessor's output order.
  */
 interface GenerationCache {
   hasCicsExec: boolean;
@@ -178,11 +174,9 @@ interface ProcTarget {
 
 /**
  * Finds the enclosing procedure for the statement at `beforeIndex` in `frame`'s tokens.
- * A nested (`EXEC SQL INCLUDE`'d) context usually contains no `PROCEDURE` of its own - the
- * enclosing procedure is in the file that included it (DCLGEN-style copybooks declaring LOB
- * host variables are exactly this shape) - so the search continues at each parent frame's
- * include site. The returned target names the *parent's* cache in that case; its blocks are
- * flushed into the parent context after its own `preprocessor.execute` pass completes.
+ * A nested (`EXEC SQL INCLUDE`'d) context usually contains no `PROCEDURE` of its own
+ * (DCLGEN-style copybooks), so the search continues at each parent frame's include site -
+ * the returned target then names the *parent's* cache.
  */
 function findEnclosingProc(
   frame: Frame,
@@ -406,11 +400,10 @@ function createCicsResponseHandler(
 
 /**
  * Recognizes `EXEC SQL`/`EXEC CICS` statements whose prefix matches the phase's own type,
- * so the SQL and CICS phases never claim each other's statements. Consumes the statement's
- * tokens without building any AST node: the preprocessor performs its own replacement
- * directly against the context in one whole-text pass, and `collectExecMetadata` afterwards
- * turns what that pass recorded into the statement's LSP-facing tokens/include node. The
- * only thing done here is queueing the CICS runtime declarations.
+ * so the SQL and CICS phases never claim each other's statements. Consumes the tokens
+ * without building an AST node - the preprocessor replaces the statement itself in a
+ * whole-text pass, and `collectExecMetadata` builds the LSP-facing artifacts afterwards.
+ * The only thing done here is queueing the CICS runtime declarations.
  */
 function createExecHandler(
   execType: "SQL" | "CICS",
@@ -432,8 +425,7 @@ function createExecHandler(
     }
 
     const beforeIndex = state.index;
-    // No CST kind/element on any of these tokens: kind-less tokens never surface in
-    // `files.getTokens` (`extractDirectiveTokens` skips them), so nothing EXEC-shaped is
+    // Kind-less tokens never surface in `files.getTokens`, so nothing EXEC-shaped is
     // visible to the language server - `collectExecMetadata` registers the statement's
     // LSP-facing tokens instead.
     state.consume(undefined, undefined, t.EXEC);
@@ -441,10 +433,8 @@ function createExecHandler(
     state.consume(undefined, undefined, t.Semicolon);
 
     if (execType === "CICS") {
-      // Every `EXEC CICS` statement needs the `DFH*` runtime declarations somewhere in its
-      // enclosing procedure - inserted once, right after that procedure's own `;`. The
-      // statement's own text replacement is handled separately, in one whole-text pass -
-      // see `ExecPreprocessorPhase`'s `preprocessor.execute(context)` call.
+      // Every `EXEC CICS`-using procedure needs the `DFH*` runtime declarations once,
+      // right after the procedure's own `;`.
       const proc = findEnclosingProc(frame, beforeIndex);
       if (proc) {
         const entry = getGenerationCacheEntry(proc.cache, proc.offset);
@@ -474,10 +464,8 @@ function toPliToken(token: ApiToken, uri: URI): t.Token {
 /**
  * Builds the PL/I tokens for a classified api token (host coordinates). A qualified
  * host-variable identifier (`A.B`) yields one token per name part, located in the host
- * text within the api token's span (the engine's image concatenates the parts without any
- * whitespace the host text may carry around the `.`); everything else yields one token
- * covering the whole span. Falls back to the single-token form when a part cannot be
- * located.
+ * text (which may carry whitespace around the `.` that the engine's image lacks);
+ * everything else yields one token covering the whole span.
  */
 function toPliTokens(token: ApiToken, uri: URI, hostText: string): t.Token[] {
   if (
@@ -531,26 +519,19 @@ interface ExecMetadata {
 
 /**
  * Turns what `preprocessor.execute(context)` recorded into the `EXEC` statements'
- * LSP-facing artifacts - the language server itself has no notion of an EXEC statement,
- * so everything is expressed through the generic channels it already understands. Per
- * statement (the edit covering it carries the fragment's full classified token list, host
- * coordinates - see `PreprocessorContext.createEdit`) this produces:
+ * LSP-facing artifacts - the language server itself has no notion of an EXEC statement.
+ * Per statement this produces:
  *
- * - one plain token per classified sub-token, carrying `Token.ppSemanticType` (semantic
- *   highlighting) and directly findable by the position-based lookups in
- *   `unit.services.files` (cursor resolution on host variables/include members), plus
- *   `string`-typed tokens for `EXEC` and the fragment's leading `SQL`/`CICS` word (which
- *   the engine's classification doesn't cover - it only sees the fragment body),
- * - each re-embedded identifier's `MappedToken.sourceToken` - the annotate pass emits that
- *   exact object instead of the re-lexed token, so the real parser's resolved reference lands
- *   on a token whose offsets point at the actual source, which position-based go-to-definition needs,
- * - for each `EXEC SQL INCLUDE` (identified by a recorded `resolveInclude` attempt) a
- *   regular `IncludeDirective` statement, taking the exact same hover/definition/validation
- *   paths as `%INCLUDE`; `filePath` only when resolution succeeded.
+ * - one plain token per classified sub-token (semantic highlighting via
+ *   `Token.ppSemanticType`, position-based cursor resolution), plus `string`-typed tokens
+ *   for `EXEC` and the leading `SQL`/`CICS` word the engine's classification doesn't see,
+ * - each re-embedded identifier's `MappedToken.sourceToken`, so resolved references land
+ *   on tokens with real source offsets (see `MappedToken.sourceToken`),
+ * - a regular `IncludeDirective` statement per `EXEC SQL INCLUDE`, riding the same
+ *   hover/definition/validation paths as `%INCLUDE`.
  *
- * Must run after `preprocessor.execute(context)` (the edits exist). The returned tokens
- * are already remapped to original-source space (tokens the source map can't place are
- * dropped, mirroring `extractDirectiveTokens`).
+ * Must run after `preprocessor.execute(context)`. The returned tokens are already
+ * remapped to original-source space.
  */
 function collectExecMetadata(
   context: PreprocessorContext,
@@ -652,12 +633,10 @@ function collectExecMetadata(
 /**
  * The edit recorded for the statement owning the `ExecFragment` CST token at
  * `fragmentOffset`: normally the edit consuming the whole `EXEC ...;` range, or - for an
- * unterminated statement - the zero-width annotation edit at its start (see
- * `ExecFragment.terminated`). A zero-width edit carries no upper bound, so containment
- * can't scope it; it belongs to exactly the statement starting at its own offset
- * (`statementStart`, the fragment's `EXEC` keyword) - anything else would let it claim a
- * *later* statement's fragment (e.g. an `EXEC CICS` following broken `EXEC SQL` source),
- * re-registering its api tokens and stamping the foreign fragment's `EXEC`/prefix words.
+ * unterminated statement - the zero-width annotation edit at its start. A zero-width edit
+ * has no upper bound to scope it by containment, so it only matches the statement
+ * starting at its exact offset - anything looser would let it claim a *later* statement's
+ * fragment.
  */
 function findFragmentEdit(
   edits: readonly ReturnType<PreprocessorContext["getEdits"]>[number][],
@@ -681,14 +660,10 @@ function findFragmentEdit(
 }
 
 /**
- * Builds the `IncludeDirective`/`IncludeItemFile` node for an `EXEC SQL INCLUDE` statement
- * from the engine's recorded metadata: the member token is the fragment's Identifier token
- * (the engine classifies exactly the include member as `SemanticsKind.Identifier` - reused
- * as-is from `pliTokens`, so the node's token is the same object the position-based lookups
- * find), and the resolved path comes from the recorded `resolveInclude` attempt - present
- * only on success, so an unresolved include yields a node without `filePath`, exactly like
- * the `%INCLUDE` handling (its failure diagnostic was already pushed by `resolveInclude`
- * itself).
+ * Builds the `IncludeDirective`/`IncludeItemFile` node for an `EXEC SQL INCLUDE`
+ * statement. The member token is reused from `pliTokens` (the same object the
+ * position-based lookups find); an unresolved include yields a node without `filePath`,
+ * exactly like the `%INCLUDE` handling.
  */
 function buildIncludeDirective(
   context: PreprocessorContext,
@@ -735,18 +710,16 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
   ) {}
 
   /**
-   * Cheap pre-scan trigger: when this pattern has no match in the phase's input text, none
-   * of the phase's constructs (`EXEC <host> ...`, `SQL TYPE IS`, `DFHRESP(...)`) can occur,
-   * so the whole tokenize/parse/scan pass is skipped as a guaranteed identity transform.
-   * False positives (e.g. the keyword inside a string literal or identifier) merely run the
-   * phase; each pattern is a strict textual prerequisite of its constructs' tokens.
+   * Cheap pre-scan trigger: no match in the input text means none of the phase's
+   * constructs can occur, so the whole pass is skipped as a guaranteed identity
+   * transform. False positives merely run the phase.
    */
   protected abstract readonly triggerPattern: RegExp;
 
   /**
    * The external preprocessor that finds and replaces its own `EXEC` statements directly
-   * against a `PreprocessorContext` (see `Preprocessor.execute(context)`); one instance per
-   * phase, reused for the outer context and every nested (`resolveInclude`d) one below.
+   * against a `PreprocessorContext` - one instance per phase, shared with every nested
+   * (`resolveInclude`d) context.
    */
   protected abstract readonly preprocessor: Preprocessor;
 
@@ -765,9 +738,8 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
     const allStatements: ast.Statement[] = [];
     const allDirectiveTokens: t.Token[] = [];
     const frames = new Map<PreprocessorContext, Frame>();
-    // Comment tokens of each `resolveInclude`d file, captured by the `prepareText` hook
-    // below (the only place the pre-strip text still exists), keyed by file uri - consumed
-    // when `process()` registers that file with `files.set`.
+    // Comment tokens per `resolveInclude`d file, captured by the `prepareText` hook below
+    // (the only place the pre-strip text still exists).
     const includeComments = new Map<string, t.Token[]>();
 
     const process = async (
@@ -787,15 +759,12 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
         includeOffset: nestedInfo?.includeRange?.start,
       };
       frames.set(context, frame);
-      // Positions/diagnostics inside a nested include belong to the *included* document -
-      // handing the handlers the outer one would stamp the outer file's uri onto the
-      // include's own offsets.
+      // Positions/diagnostics inside a nested include belong to the *included* document.
       const contextDocument = nestedInfo?.document ?? textDocument;
-      // Register the included file for position-based LSP lookups (go-to-definition into
-      // the file, token/comment queries within it) - mirroring the MACRO phase's
-      // `runInclude`. First registration wins: a file the MACRO phase already `%INCLUDE`d
-      // keeps its (annotated) registration, and `files` is cleared on every rebuild, so
-      // nothing goes stale. The entry file is registered later, by `registerFileTokens`.
+      // Register the included file for position-based LSP lookups, mirroring the MACRO
+      // phase's `runInclude`. First registration wins: a file the MACRO phase already
+      // `%INCLUDE`d keeps its (annotated) registration. The entry file is registered
+      // later, by `registerFileTokens`.
       if (nestedInfo?.document && !unit.services.files.get(context.file)) {
         unit.services.files.set({
           textDocument: nestedInfo.document,
@@ -813,17 +782,12 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
       for (const diagnostic of diagnostics) {
         context.pushDiagnostic(diagnostic);
       }
-      // The native handlers above only build AST nodes/queue declarations (`SQL TYPE IS`,
-      // `DFHRESP`, the CICS DFH block); the `EXEC` statements' own replacement is a separate,
-      // whole-text pass - the preprocessor finds its own `EXEC <keyword> ...;` occurrences in
-      // `context.text` (see `scanExecFragments`). Runs before the token extraction below,
-      // whose offset rewrites would invalidate `collectExecMetadata`'s matching.
+      // The `EXEC` statements' own replacement: the preprocessor finds its own
+      // `EXEC <keyword> ...;` occurrences in `context.text` in one whole-text pass.
       await this.preprocessor.execute(context);
-      // Flushed only now: nested (`EXEC SQL INCLUDE`'d) contexts are processed inside
-      // `preprocessor.execute` above, and their handlers may queue declarations against
-      // *this* frame's cache when the enclosing procedure lives in this file - see
-      // `findEnclosingProc`. (`build()` orders the resulting zero-width inserts before any
-      // consuming edit at the same offset, so the later recording order is safe.)
+      // Flushed only now: nested contexts are processed inside `preprocessor.execute`
+      // above and may queue declarations against *this* frame's cache when the enclosing
+      // procedure lives in this file - see `findEnclosingProc`.
       flushGenerationCache(context, frame.cache);
       const execMetadata = collectExecMetadata(
         context,
@@ -843,13 +807,10 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
       input.text,
       unit,
       uri,
-      // Recursively populate a nested (EXEC SQL INCLUDE'd) context with this same phase's
-      // edits before its caller splices it in - see `PreprocessorContext`'s constructor doc.
       (nested, info) =>
         process(nested, SourceMap.identity(nested.text, nested.file), info),
-      // Included files get the same margins-blanking + comment-stripping as the entry file
-      // (both length-preserving), so a copybook's sequence-number columns and comments never
-      // reach the raw-text `EXEC` scan - mirroring the MACRO phase's `runInclude`.
+      // Included files get the same length-preserving margins-blanking +
+      // comment-stripping as the entry file - see `PreprocessorContext.prepareText`.
       (text, includeUri) => {
         const textWithoutMargins = this.marginsProcessor.processMargins(
           {
@@ -920,14 +881,10 @@ export class ExecCicsPreprocessorPhase extends ExecPreprocessorPhase {
 }
 
 /**
- * Runs unconditionally, after every configured PP() phase has already had a chance to
- * process the text. By this point, any `EXEC CICS`/`EXEC SQL` statement that was actually
- * handled has already been replaced. So an `EXEC`/`ExecFragment` pair still present here
- * means the corresponding preprocessor was never configured via `PP(CICS)`/`PP(SQL)`.
- *
- * Replaces the offending statement with `DO; END;` (matching the same fallback shape the
- * real phases use) so the final PL/I grammar parse doesn't ALSO raise its own generic
- * "unexpected token" error for the same statement.
+ * Runs unconditionally, after every configured PP() phase: an `EXEC`/`ExecFragment` pair
+ * still present at this point means the corresponding preprocessor was never configured
+ * via `PP(CICS)`/`PP(SQL)`. Replaces the statement with `DO; END;` so the final grammar
+ * parse doesn't also raise its own generic error for it.
  */
 export class UnresolvedExecPhase implements PreprocessorPhase {
   constructor(

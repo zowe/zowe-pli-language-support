@@ -26,49 +26,26 @@ export interface SerializedTokens {
 const WHITESPACE_ONLY = /^\s*$/;
 
 /**
- * Converts a preprocessor phase's final `Token[]` (the MACRO interpreter's own internal
- * representation, deliberately kept token-based) into the `{text, sourceMap}` shape the
- * rest of the pipeline passes between phases.
+ * Converts a preprocessor phase's final `Token[]` (the MACRO interpreter's internal,
+ * deliberately token-based representation) into the `{text, sourceMap}` shape the rest of
+ * the pipeline passes between phases. Tokens fall into three categories:
  *
- * Tokens fall into three categories:
+ * - **Same-file verbatim** (`token.uri` matches `phaseUri`): consecutive tokens are
+ *   sliced directly out of `phaseText` as one segment - but only while the gap between
+ *   them is whitespace-only (a statement that expanded to nothing leaves a non-whitespace
+ *   gap that must not be re-included).
+ * - **Foreign** (`token.uri` set but different, e.g. `%INCLUDE`d): real positions in
+ *   another file, so there's no `phaseText` to slice. Runs are reconstructed from
+ *   `token.image` with exact-length space padding for gaps, preserving the file's offset
+ *   stride, and become `foreign` verbatim segments.
+ * - **Generated** (`token.uri` undefined, e.g. macro-substituted values): no real
+ *   position at all; the run is resynthesized from `token.image` and anchored to the
+ *   nearest preceding same-file position.
  *
- * - **Same-file verbatim** (`token.uri` matches `phaseUri`): untouched source. Consecutive
- *   such tokens are sliced directly out of `phaseText` as one segment *only* when the gap
- *   between them is whitespace-only - i.e. nothing was removed there (a statement that
- *   expanded to nothing, e.g. a null `%;`, leaves a gap in `tokens` that is *not* just
- *   whitespace in `phaseText`, and must not be blindly re-included).
- * - **Foreign** (`token.uri` is set but does not match `phaseUri`, e.g. pulled in via
- *   `%INCLUDE`): still a real, correctly-positioned token, just not from this phase's own
- *   input text - so there's no `phaseText` to slice. Consecutive tokens from the *same*
- *   foreign file are still merged into one `verbatim: true` segment, reconstructed from
- *   `token.image` with exact-length space padding for any gap (padding preserves the
- *   original offset stride without needing that file's text - the padding's *content*
- *   never matters, only that re-lexing can't merge two distinct tokens). Anchoring these to
- *   a single point in the current file, as a `generated` span would, was a real bug: it
- *   misattributed every include-derived identifier to the wrong file and offset.
- * - **Generated** (`token.uri` is `undefined`, e.g. `lex()` on a macro-substituted value):
- *   there is no real position at all, so the whole contiguous run is resynthesized from
- *   `token.image` and anchored to the nearest preceding same-file position.
- *
- * Every segment-to-segment boundary (verbatim-to-verbatim split, verbatim-to-generated,
- * generated-to-verbatim, generated-to-generated, ...) inserts a single separating space -
- * or a newline when the following token's `startsNewLine` says it began a line in its
- * source, keeping the output roughly line-structured for human consumption (the
- * preprocessed text view) - unless the preceding token's `immediateFollow` says there was
- * truly no gap in the source -
- * that flag is exactly the signal the interpreter already tracks for its own rescan/merge
- * logic, so reusing it here guarantees re-lexing the joined text can never accidentally merge
- * two distinct tokens into one. A separator that isn't part of any real span becomes its own
- * tiny non-verbatim segment (never a bare, unmapped character), preserving the invariant that
- * segments cover the whole generated text contiguously.
- *
- * Every non-verbatim-by-slicing span (foreign and generated alike) carries a `MappedToken`
- * per contributing token, so cross-references (`token.element`) and exact casing
- * (`originalImage`, needed since e.g. `RESCAN(ASIS)` deliberately keeps macro-substituted
- * text as typed, overriding the final re-lex's own case-folding) survive that final re-lex.
- *
- * Linear in the number of tokens: one pass, building the output text with a single
- * array-join (never repeated concatenation), per the pipeline's performance requirements.
+ * Segment boundaries get a single separating space (or newline, per `startsNewLine`)
+ * unless `immediateFollow` says there was no gap - so re-lexing the joined text can never
+ * merge two distinct tokens. Foreign and generated spans carry one `MappedToken` per
+ * contributing token, so cross-references and exact casing survive the final re-lex.
  */
 export function serializeTokens(
   tokens: Token[],
@@ -207,10 +184,7 @@ export function serializeTokens(
   }
 
   if (segments.length === 0) {
-    // Degenerate case: this phase's tokens produced no output text at all (e.g. a null
-    // `%;` statement, or a whole file's worth of macro directives expanding to nothing).
-    // Keep a zero-length segment so offset 0 still resolves, matching
-    // SourceMap.identity("")'s and PreprocessorContext.build()'s handling of empty output.
+    // No output text at all: keep a zero-length segment so offset 0 still resolves.
     segments.push({
       origStart: 0,
       origEnd: 0,
@@ -234,12 +208,9 @@ function isWhitespaceGap(text: string, start: number, end: number): boolean {
 }
 
 /**
- * Rebuilds a run of tokens from a single foreign file, padding any gap between two tokens
- * with exactly as many characters as that file's own text had there. The padding's *content*
- * is never inspected by anything downstream (only offsets are), so generic spaces are enough
- * to keep the offset stride correct without needing that file's real text - but a token
- * whose `startsNewLine` flag is set gets a leading newline in its padding, so the rebuilt
- * text keeps the file's rough line structure (with the remaining spaces as indentation).
+ * Rebuilds a run of tokens from a single foreign file, padding gaps with exactly as many
+ * characters as that file's own text had there (spaces - only the offsets matter
+ * downstream; a leading newline when `startsNewLine` is set keeps rough line structure).
  */
 function synthesizeForeignRun(
   tokens: Token[],
@@ -268,9 +239,6 @@ function synthesizeForeignRun(
       originalImage: image,
       refTarget: token.element,
       refKind: token.kind,
-      // The annotate pass emits this exact object instead of the re-lexed token, so the
-      // real parser's `.kind`/`.element` attachments land on the same object `runInclude`
-      // registered for the included file - see `MappedToken.sourceToken`.
       sourceToken: token,
     });
     localCursor += image.length;
@@ -310,10 +278,8 @@ function synthesizeRun(
       });
       lastContributor = token;
     }
-    // The next real token in this run immediately follows this one's source characters
-    // unless `immediateFollow` says otherwise - preserve that as a single separating space
-    // (or newline, mirroring the next token's `startsNewLine`) so re-lexing the joined
-    // text can't accidentally merge two distinct tokens into one.
+    // Separate from the next token unless `immediateFollow` says there was no gap, so
+    // re-lexing can't merge two distinct tokens.
     const next = nextContentToken(tokens, i + 1, end);
     if (!token.immediateFollow && next) {
       chunks.push(next.startsNewLine ? "\n" : " ");
