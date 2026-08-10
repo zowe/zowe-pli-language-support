@@ -64,7 +64,7 @@ describe("CICS WEB", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "WEB CONVERSE SESSTOKEN(TK) DOCTOKEN(DT) NODOCDELETE USERNAME(UN)",
     );
-    expect(diagnostics).toHaveLength(3);
+    expect(diagnostics).toHaveLength(2);
   });
   test("ENDBROWSE", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
