@@ -23,6 +23,17 @@ describe("CICS RUN", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("RUN without any options", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("RUN");
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(
+      /Exactly one option required, none provided: ACQACTIVITY or ACQPROCESS or ACTIVITY or TRANSID/,
+    );
+  });
+
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "RUN ACTIVITY(1) SYNCHRONOUS BLA",

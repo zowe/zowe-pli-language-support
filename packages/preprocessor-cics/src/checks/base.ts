@@ -83,6 +83,8 @@ export abstract class CICSOptionsCheckerBase {
    */
   abstract checkOptions<E extends ParserRuleContext>(ctx: E): void;
 
+  checkRootRule<E extends ParserRuleContext>(ctx: E): void {}
+
   protected throwException(
     errorSeverity: Severity,
     range: WithRange,
