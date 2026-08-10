@@ -13,11 +13,13 @@ import {
   Cics_allocate_appc_mro_lut61_sysidContext,
   Cics_allocate_appc_partnerContext,
   Cics_allocate_lut61_sessionContext,
+  Cics_allocateContext,
   CICSParser,
 } from "../generated/CICSParser";
 import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { CICSLexer } from "../generated/CICSLexer";
 import { ParserRuleContext } from "antlr4ng";
+import { assertType } from "./utils";
 
 export class AllocateOptionsChecker extends CICSOptionsCheckerBase {
   public static readonly RULE_INDEX = CICSParser.RULE_cics_allocate;
@@ -41,6 +43,18 @@ export class AllocateOptionsChecker extends CICSOptionsCheckerBase {
     super(errors, AllocateOptionsChecker.DUPLICATE_CHECK_OPTIONS, params);
   }
 
+  override checkRootRule<E extends ParserRuleContext>(ctx: E): void {
+    if (ctx.ruleIndex === CICSParser.RULE_cics_allocate) {
+      assertType<Cics_allocateContext>(ctx);
+      if (
+        !ctx.cics_allocate_appc_partner() &&
+        !ctx.cics_allocate_appc_mro_lut61_sysid() &&
+        !ctx.cics_allocate_lut61_session()
+      ) {
+        this.checkHasAtLeastOneOption("SESSION, SYSID, PARTNER", ctx);
+      }
+    }
+  }
   /**
    * Entrypoint to check CICS Allocate rule options
    *
