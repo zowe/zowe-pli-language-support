@@ -18,6 +18,7 @@ import {
 import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { CICSLexer } from "../generated/CICSLexer";
 import { ParserRuleContext } from "antlr4ng";
+import { assertType } from "./utils";
 
 export class DumpTransactionOptionsChecker extends CICSOptionsCheckerBase {
   public static readonly RULE_INDEX = CICSParser.RULE_cics_dump;
@@ -52,6 +53,22 @@ export class DumpTransactionOptionsChecker extends CICSOptionsCheckerBase {
       DumpTransactionOptionsChecker.DUPLICATE_CHECK_OPTIONS,
       params,
     );
+  }
+
+  override checkRootRule<E extends ParserRuleContext>(ctx: E): void {
+    if (ctx.ruleIndex === CICSParser.RULE_cics_dump) {
+      assertType<Cics_dumpContext>(ctx);
+      if (
+        !ctx.cics_dump_transaction_from()?.length &&
+        !ctx.cics_dump_transaction_segmentlist()?.length &&
+        !ctx.cics_dump_code_opts()?.length
+      ) {
+        this.checkHasExactlyOneOption(
+          "DUMPCODE, DUMPID, FROM, COMPLETE, TRT, TASK, STORAGE, PROGRAM, TERMINAL, TABLES, FCT, PCT, PPT, SIT, TCT, SEGMENTLIST, LENGTHLIST, NUMSEGMENTS",
+          ctx,
+        );
+      }
+    }
   }
 
   /**
