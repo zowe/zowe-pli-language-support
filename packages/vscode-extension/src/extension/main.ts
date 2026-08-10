@@ -26,7 +26,7 @@ import { registerPliDocumentIdentifier } from "./document-identification";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
 import {
-  deriveUserSettingsUri,
+  locateWorkspaceFolder,
   registerConfigLoader,
   watchPluginSettings,
 } from "./config-loader";
@@ -76,15 +76,13 @@ function registerOnDidOpenTextDocListener(
   telemetryReporter: TelemetryReporter | undefined,
 ) {
   const listener = async (document: vscode.TextDocument) => {
-    // settle on the 1st workspace folder available
-    // TODO @montymxb May 15th, 2025: Support configs across multiple workspace folders
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const workspaceFolder = locateWorkspaceFolder(document.uri);
     if (!workspaceFolder) {
       return;
     }
 
     // check if we can create a .pliplugin folder
-    const plipluginPath = path.join(workspaceFolder, ".pliplugin");
+    const plipluginPath = path.join(workspaceFolder.fsPath, ".pliplugin");
     if (document.languageId !== "pli" || fs.existsSync(plipluginPath)) {
       // not a pli file or config already exists
       return;
@@ -167,9 +165,9 @@ async function startLanguageClient(
 
   // Register custom connection message handlers.
   registerFileSystemProvider(client);
-  registerConfigLoader(client, deriveUserSettingsUri(context.globalStorageUri));
   context.subscriptions.push(
     client,
+    registerConfigLoader(client, context),
     registerProgressReporter(client),
     registerCustomDecorators(client, settings),
   );

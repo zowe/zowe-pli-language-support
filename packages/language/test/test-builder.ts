@@ -32,7 +32,7 @@ import {
 } from "../src/workspace/file-system-provider";
 import { completionRequest } from "../src/language-server/completion/completion-request";
 import { AssertionError, fail } from "assert";
-import { Connection, MarkupContent, Position } from "vscode-languageserver";
+import { MarkupContent, Position } from "vscode-languageserver";
 import { hoverRequest } from "../src/language-server/hover-request";
 import { semanticTokens } from "../src/language-server/semantic-tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -71,7 +71,6 @@ import {
   Label,
   TestDiagnostic,
 } from "./abstract-test-builder";
-import { Messages } from "../src/utils/messages";
 
 export type { DiagnosticExpectation, Label, TestDiagnostic };
 
@@ -206,9 +205,7 @@ export class TestBuilder extends AbstractTestBuilder {
       const fs = new VirtualFileSystemProvider();
       this.options.fs = fs;
     }
-    const globalConfig = this.extractGlobalConfig();
-    const connection = this.makeConnection(globalConfig);
-    setDefaultTestWorkspace(createTestWorkspace(this.options.fs, connection));
+    setDefaultTestWorkspace(createTestWorkspace(this.options.fs));
     for (const [uri, file] of this.files) {
       await this.options.fs.writeFile(UriUtils.toUri(uri), file.output);
     }
@@ -1535,59 +1532,42 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     return `${uriOverride}:${line + lineOffset}:${character + characterOffset}`;
   }
 
-  /**
-   * Minimal connection stub that responds to `config/getGlobal` with the
-   * given `GlobalConfig`. Other request/notification methods are no-ops so
-   * the provider can run end-to-end without a real LSP transport.
-   */
-  private makeConnection(global: Messages.GlobalConfig): Connection {
-    return {
-      sendRequest: async (method: string) => {
-        if (method === Messages.GetGlobalConfig.method) return global;
-        return undefined;
-      },
-      sendNotification: async () => {},
-      onRequest: () => ({ dispose() {} }),
-      onNotification: () => ({ dispose() {} }),
-    } as unknown as Connection;
-  }
-
-  private extractGlobalConfig(): Messages.GlobalConfig {
-    const pliPgmConf = "pli.pgm_conf";
-    const pliProcGrps = "pli.proc_grps";
-    let pgmConf: Messages.GlobalConfigEntry | undefined;
-    let procGrps: Messages.GlobalConfigEntry | undefined;
-    const settingsFile = "/.vscode/settings.json";
-    for (const [uri, file] of this.files) {
-      if (uri.endsWith(settingsFile)) {
-        try {
-          const config = JSON.parse(file.textDocument.getText());
-          if (config && typeof config === "object") {
-            if (pliPgmConf in config) {
-              pgmConf = {
-                uri,
-                configKey: pliPgmConf,
-                containerPath: [],
-              };
-            }
-            if (pliProcGrps in config) {
-              procGrps = {
-                uri,
-                configKey: pliProcGrps,
-                containerPath: [],
-              };
-            }
-          }
-        } catch (e) {
-          // Ignore JSON parsing errors
-        }
-      }
-    }
-    return {
-      pgmConf,
-      procGrps,
-    };
-  }
+  // private extractGlobalConfig(): Messages.GlobalConfig {
+  //   const pliPgmConf = "pli.pgm_conf";
+  //   const pliProcGrps = "pli.proc_grps";
+  //   let pgmConf: Messages.GlobalConfigEntry | undefined;
+  //   let procGrps: Messages.GlobalConfigEntry | undefined;
+  //   const settingsFile = "/.vscode/settings.json";
+  //   for (const [uri, file] of this.files) {
+  //     if (uri.endsWith(settingsFile)) {
+  //       try {
+  //         const config = JSON.parse(file.textDocument.getText());
+  //         if (config && typeof config === "object") {
+  //           if (pliPgmConf in config) {
+  //             pgmConf = {
+  //               uri,
+  //               configKey: pliPgmConf,
+  //               containerPath: [],
+  //             };
+  //           }
+  //           if (pliProcGrps in config) {
+  //             procGrps = {
+  //               uri,
+  //               configKey: pliProcGrps,
+  //               containerPath: [],
+  //             };
+  //           }
+  //         }
+  //       } catch (e) {
+  //         // Ignore JSON parsing errors
+  //       }
+  //     }
+  //   }
+  //   return {
+  //     pgmConf,
+  //     procGrps,
+  //   };
+  // }
 }
 
 function formatPosition(position: Position): string {

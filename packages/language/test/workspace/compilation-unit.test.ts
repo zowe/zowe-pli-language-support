@@ -9,13 +9,25 @@
  *
  */
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { UriUtils } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
 import { makeProcessGroup, makeProgramConfig } from "../config-fixtures";
 import { defaultTestWorkspace } from "../test-workspace";
+import {
+  FileSystemProvider,
+  TestGlobalConfigLoader,
+  VirtualFileSystemProvider,
+} from "../../src";
+import { LongRunningOperationImpl } from "../../src/utils/promises";
 
 describe("Compilation Unit Tests", () => {
+  let fs: FileSystemProvider;
+
+  beforeEach(() => {
+    fs = new VirtualFileSystemProvider();
+  });
+
   afterEach(async () => {
     defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), []);
     await defaultTestWorkspace().config.setProcessGroupConfigs([]);
@@ -23,7 +35,15 @@ describe("Compilation Unit Tests", () => {
 
   test("Create", async () => {
     const uri = UriUtils.toUri("memory:///test/test.pli");
-    const ch = new CompilationUnitHandler(defaultTestWorkspace());
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    ch.addWorkspaceFolder(
+      UriUtils.toUri("memory:///test/"),
+      defaultTestWorkspace(),
+    );
 
     const unit0 = ch.getCompilationUnit(uri);
     expect(unit0).toBeUndefined();
@@ -37,7 +57,15 @@ describe("Compilation Unit Tests", () => {
 
   test("Delete", async () => {
     const uri = UriUtils.toUri("memory:///test/test.pli");
-    const ch = new CompilationUnitHandler(defaultTestWorkspace());
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    ch.addWorkspaceFolder(
+      UriUtils.toUri("memory:///test/"),
+      defaultTestWorkspace(),
+    );
 
     const unit1 = await ch.getOrCreateCompilationUnit(uri);
     expect(unit1).toBeDefined();
@@ -55,7 +83,15 @@ describe("Compilation Unit Tests", () => {
   test("Create with config", async () => {
     const uriEntry = UriUtils.toUri("file:///test/entry.pli");
     const uriLib = UriUtils.toUri("file:///test/lib.pli");
-    const ch = new CompilationUnitHandler(defaultTestWorkspace());
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    ch.addWorkspaceFolder(
+      UriUtils.toUri("file:///test/"),
+      defaultTestWorkspace(),
+    );
 
     // register configs
     expect(defaultTestWorkspace().config.hasRegisteredProgramConfigs()).toBe(
@@ -84,7 +120,12 @@ describe("Compilation Unit Tests", () => {
     const uriEntry1 = UriUtils.toUri("file:///test/entry1.pli");
     const uriEntry2 = UriUtils.toUri("file:///test/entry2.pli");
     const uriOther = UriUtils.toUri("file:///other/entry3.pli");
-    const ch = new CompilationUnitHandler(defaultTestWorkspace());
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    ch.addWorkspaceFolder(UriUtils.toUri("file:///"), defaultTestWorkspace());
 
     // register wildcard config
     defaultTestWorkspace().config.setProgramConfigs(UriUtils.toUri(""), [
@@ -115,7 +156,12 @@ describe("Compilation Unit Tests", () => {
   });
 
   test("Cannot create compile unit from copybook directly", async () => {
-    const ch = new CompilationUnitHandler(defaultTestWorkspace());
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    ch.addWorkspaceFolder(UriUtils.toUri("file:///"), defaultTestWorkspace());
 
     await defaultTestWorkspace().config.init(UriUtils.toUri("file:///"));
 

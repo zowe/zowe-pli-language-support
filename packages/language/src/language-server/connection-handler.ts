@@ -12,14 +12,12 @@
 import {
   CompilationUnit,
   CompilationUnitHandler,
+  pluginConfigChanged,
 } from "../workspace/compilation-unit";
 import {
-  CancellationToken,
   Connection,
   DidChangeWatchedFilesNotification,
   DocumentHighlight,
-  FileChangeType,
-  FileEvent,
   TextDocumentSyncKind,
 } from "vscode-languageserver";
 import { URI, UriUtils } from "../utils/uri";
@@ -45,7 +43,6 @@ import { getReferenceLocations } from "../linking/resolver";
 import { documentSymbolRequest } from "./document-symbol-request";
 import { workspaceSymbolRequest } from "./workspace-symbol-request";
 import { FileSystemProvider } from "../workspace/file-system-provider";
-import { WorkspaceContext } from "../workspace/workspace-context";
 import {
   EditorDocuments,
   resetDocumentProviders,
@@ -58,34 +55,33 @@ import { applySourceActions } from "./code-actions/apply-source-actions";
 import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
-import { Messages, NotificationType, RequestType } from "../utils/messages";
+import {
+  GlobalConfigLoader,
+  Messages,
+  NotificationType,
+  RequestType,
+} from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
-import { MultiMap } from "../utils/collections";
 import { JsonItemMeta } from "../config/schema";
+import { assertType } from "../preprocessor/util";
+import { LongRunningOperationImpl } from "../utils/promises";
 export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
   connection: Connection,
   fs: FileSystemProvider,
+  globalConfigLoader: GlobalConfigLoader,
 ): void {
-  const workspace = new WorkspaceContext(fs, connection);
   // Wire the on-demand file loader for include URIs to the workspace's fs
   // so the document store doesn't reach for any module-level singleton.
   resetDocumentProviders(fs);
-  const compilationUnitHandler = new CompilationUnitHandler(workspace);
+  const compilationUnitHandler = new CompilationUnitHandler(
+    fs,
+    globalConfigLoader,
+    new LongRunningOperationImpl(connection),
+  );
   compilationUnitHandler.listen(connection);
   let folders: WorkspaceFolder[] = [];
-
-  function publishPluginConfigDiagnostics(
-    diagnosticsByUri: MultiMap<string, Diagnostic>,
-  ): void {
-    for (const [uri, diagnostics] of diagnosticsByUri.entriesGroupedByKey()) {
-      connection.sendDiagnostics({
-        uri,
-        diagnostics,
-      });
-    }
-  }
 
   async function withReadMutex<T>(
     uri: string,
@@ -94,8 +90,8 @@ export function startLanguageServer(
     await compilationUnitHandler.ready;
     return compilationUnitHandler.globalMutex.read(() => {
       const parsedUri = UriUtils.toUri(uri);
-      const compilationUnit =
-        compilationUnitHandler.getCompilationUnit(parsedUri);
+      const context = compilationUnitHandler.getWorkspaceFolderOf(parsedUri);
+      const compilationUnit = context?.getCompilationUnit(parsedUri);
       if (!compilationUnit) {
         return cb(parsedUri, undefined);
       }
@@ -165,16 +161,14 @@ export function startLanguageServer(
         },
       ],
     });
-    const promises: Promise<void>[] = [];
-    for (const folder of folders) {
-      promises.push(
-        workspace.config
-          .init(UriUtils.toUri(folder.uri))
-          .then((diagnosticsByUri) => {
-            publishPluginConfigDiagnostics(diagnosticsByUri);
-          }),
+    const promises = folders
+      .map(async (folder) =>
+        compilationUnitHandler.initializeWorkspaceFolder(folder.uri),
+      )
+      .concat(
+        //add more default schemes here if needed
+        compilationUnitHandler.initializeFallbackFolder(),
       );
-    }
     await Promise.all(promises);
     compilationUnitHandler.markReady();
   });
@@ -225,6 +219,10 @@ export function startLanguageServer(
     triggerChar: string | undefined,
     docUri: string,
   ): LANG_LIST | undefined {
+    const workspace = compilationUnitHandler.getWorkspaceFolderOf(docUri);
+    if (!workspace) {
+      return undefined;
+    }
     const isConfigDocument = workspace.config.isPluginConfigDocumentUri(docUri);
     const triggerLang = triggerChar
       ? TRIGGER_CHAR_LANG[triggerChar]
@@ -233,7 +231,7 @@ export function startLanguageServer(
       (triggerLang === "config" && !isConfigDocument) ||
       (triggerLang === "pli" && isConfigDocument)
     ) {
-      return;
+      return undefined;
     }
     if (isConfigDocument) {
       return "config";
@@ -272,6 +270,10 @@ export function startLanguageServer(
         return [];
       }
       const offset = textDocument.offsetAt(position);
+      const workspace = compilationUnitHandler.getWorkspaceFolderOf(docUri);
+      if (!workspace) {
+        return [];
+      }
       return configCompletionRequest(
         workspace.config,
         textDocument.getText(),
@@ -421,130 +423,40 @@ export function startLanguageServer(
     return compilationUnitHandler.globalMutex.read(async () => {
       return workspaceSymbolRequest(
         params.query,
-        compilationUnitHandler.getAllCompilationUnits(),
+        compilationUnitHandler
+          .getAllWorkspaceFolders()
+          .flatMap((workspace) => workspace.getAllCompilationUnits()),
       );
     });
   });
 
-  async function pluginConfigChanged() {
-    // handle changes to the .pliplugin config folder's contents
-    const diagnosticsByUri = await workspace.config.reloadConfigurations();
-    publishPluginConfigDiagnostics(diagnosticsByUri);
-
-    // reindex reachable compilation units
-    await compilationUnitHandler.reindex(connection, CancellationToken.None);
-
-    // refresh semantic tokens so syntax coloring updates immediately
-    connection.languages.semanticTokens.refresh();
-  }
-
-  // A structural change to a lib folder (a file/dir created or deleted
-  // inside a lib, or a directory removed that is or contains a lib)
-  // invalidates the computed lib index, so the libs must be re-expanded.
-  // Note: Simple file edits are not considered structural changes,
-  // so they don't trigger a reindex.
-  function changeAffectsLibs(changes: readonly FileEvent[]): boolean {
-    const libDirs = workspace.config.getLibDirectoryUris();
-    if (libDirs.length === 0) {
-      return false;
-    }
-    for (const change of changes) {
-      if (change.type === FileChangeType.Changed) {
-        continue;
-      }
-      const changeUri = UriUtils.toUri(change.uri);
-      for (const libDir of libDirs) {
-        // Change inside a lib (create/delete of a member) OR the change
-        // is/contains the lib dir itself (whole lib folder gone).
-        if (
-          UriUtils.contains(libDir, changeUri) ||
-          UriUtils.contains(changeUri, libDir)
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
   onNotification(
     connection,
     Messages.OnDidChangePluginConfigSettingsNotification,
     async () => {
       // Handle changes to the pli.pgm_conf and pli.proc_grps settings in vscode
-      await pluginConfigChanged();
+      const promises = compilationUnitHandler
+        .getAllWorkspaceFolders()
+        .map(async (workspaceContext) => {
+          await pluginConfigChanged(
+            connection,
+            compilationUnitHandler,
+            workspaceContext,
+          );
+        });
+      await Promise.all(promises);
     },
   );
   connection.onDidChangeWatchedFiles(async (params) => {
-    // First thing: Figure out whether any of the changed files are plugin config files
-    // If they are, we need to reindex the workspace anyway - no need to check for other changes.
-    function isPluginConfigFile(uri: string): boolean {
-      return (
-        uri.endsWith("/.pliplugin") ||
-        uri.endsWith("/.pliplugin/pgm_conf.json") ||
-        uri.endsWith("/.pliplugin/proc_grps.json")
-      );
-    }
-    // Since we cannot know whether a created directory is a lib in advance
-    // We always have to reindex if a directory is created, since it may contain a lib.
-    let directoryCreated = false;
-    for (const change of params.changes) {
-      if (change.type === FileChangeType.Created) {
-        // Try to stat the changed file to see if it's a directory.
-        const uri = UriUtils.toUri(change.uri);
-        try {
-          const stats = await workspace.fs.stat(uri);
-          if (stats.isDirectory) {
-            directoryCreated = true;
-            break;
-          }
-        } catch {
-          // Ignore errors, assume it's not a directory.
-        }
-      }
-    }
-    const pluginConfigHasChanged = params.changes.some((change) =>
-      isPluginConfigFile(change.uri),
-    );
-    if (
-      directoryCreated ||
-      pluginConfigHasChanged ||
-      changeAffectsLibs(params.changes)
-    ) {
-      await pluginConfigChanged();
-    } else {
-      const compilationUnits = new Set<CompilationUnit>();
-      // Not a plugin config change, meaning that individual folders/files have changed.
-      for (const compilationUnit of compilationUnitHandler.getAllCompilationUnits()) {
-        if (compilationUnit.includeError) {
-          // If the compilation unit has an unresolved include, we need to re-run the lifecycle
-          // to see if the include can now be resolved.
-          compilationUnits.add(compilationUnit);
-          // No need to change the change contents for this
-          continue;
-        }
-        changeLoop: for (const change of params.changes) {
-          for (const file of compilationUnit.services.files.keys()) {
-            // Either equal (i.e. file has changed) or the changed dir is a parent of the file
-            if (UriUtils.contains(change.uri, file)) {
-              compilationUnits.add(compilationUnit);
-              break changeLoop;
-            }
-          }
-        }
-      }
-      // Finally, update the compilation units themselves that might be affected by the change
-      for (const compilationUnit of compilationUnits) {
-        await compilationUnitHandler.updateUri(compilationUnit.uri);
-      }
-      if (compilationUnits.size > 0) {
-        // refresh semantic tokens so syntax coloring updates immediately
-        connection.languages.semanticTokens.refresh();
-      }
-    }
+    await compilationUnitHandler.triggerOnFileChange(params, connection);
   });
   onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
     const uri = UriUtils.toUri(uriString);
-    const compilationUnit = compilationUnitHandler.getCompilationUnit(uri);
+    const context = compilationUnitHandler.getWorkspaceFolderOf(uri);
+    if (!context) {
+      return false;
+    }
+    const compilationUnit = context.getCompilationUnit(uri);
     return compilationUnit !== undefined;
   });
 
@@ -585,7 +497,8 @@ export function startLanguageServer(
     if (compilationUnit) {
       return compilationUnit.programConfig;
     }
-    return workspace.config.getProgramConfig(uri);
+    const workspace = compilationUnitHandler.getWorkspaceFolderOf(uri);
+    return workspace?.config.getProgramConfig(uri);
   }
 
   onRequest(
@@ -608,8 +521,9 @@ export function startLanguageServer(
         const programConfig = resolveProgramConfig(uri, compilationUnit);
         if (!programConfig) return null;
 
+        const workspace = compilationUnitHandler.getWorkspaceFolderOf(uri);
         const pgroupName = programConfig.pgroup.value;
-        const groupConfig = workspace.config.getProcessGroupConfig(pgroupName);
+        const groupConfig = workspace?.config.getProcessGroupConfig(pgroupName);
         if (!groupConfig) return null;
 
         return resolveConfigEntryLocation(groupConfig.meta);
@@ -631,10 +545,15 @@ export function startLanguageServer(
     } else {
       const diagnostics = params.context.diagnostics as Diagnostic[];
       if (!diagnostics || !diagnostics.length) return [];
-
+      const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(
+        params.textDocument.uri,
+      );
+      if (workspaceContext === undefined) {
+        return [];
+      }
       const actions = await applyQuickFixes(
         diagnostics,
-        workspace,
+        workspaceContext,
         params.textDocument.uri,
       );
       return actions || [];
@@ -644,7 +563,13 @@ export function startLanguageServer(
   connection.onExecuteCommand(async (params) => {
     switch (params.command) {
       case Commands.CREATE_CONFIG:
-        await commandCreateConfig(params, workspace);
+        assertType<string[]>(params.arguments);
+        const workspaceContext = compilationUnitHandler.getWorkspaceFolderOf(
+          params.arguments[0],
+        );
+        if (workspaceContext) {
+          await commandCreateConfig(params, workspaceContext);
+        }
         break;
     }
   });

@@ -10,6 +10,7 @@
  */
 
 import { describe, test, expect, beforeEach } from "vitest";
+import { TestGlobalConfigLoader } from "../../src";
 import { CodeAction, Diagnostic } from "vscode-languageserver-types";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { VirtualFileSystemProvider } from "../../src/workspace/file-system-provider";
@@ -38,7 +39,7 @@ let workspace: WorkspaceContext;
 beforeEach(async () => {
   // Reset in-memory providers
   vfs = new VirtualFileSystemProvider();
-  workspace = new WorkspaceContext(vfs);
+  workspace = new WorkspaceContext(vfs, new TestGlobalConfigLoader({}));
   resetDocumentProviders(vfs);
   pluginConfig = workspace.config;
   await setupParsedProcGrps([]);

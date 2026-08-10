@@ -9,7 +9,6 @@
  *
  */
 
-import { Connection } from "vscode-languageserver";
 import { resetDocumentProviders } from "../src/language-server/text-documents";
 import {
   EmptyFileSystemProvider,
@@ -17,6 +16,7 @@ import {
   VirtualFileSystemProvider,
 } from "../src/workspace/file-system-provider";
 import { WorkspaceContext } from "../src/workspace/workspace-context";
+import { TestGlobalConfigLoader } from "../src";
 
 let _defaultTestWorkspace: WorkspaceContext | undefined;
 
@@ -31,7 +31,10 @@ let _defaultTestWorkspace: WorkspaceContext | undefined;
  */
 export function defaultTestWorkspace(): WorkspaceContext {
   if (!_defaultTestWorkspace) {
-    _defaultTestWorkspace = new WorkspaceContext(EmptyFileSystemProvider);
+    _defaultTestWorkspace = new WorkspaceContext(
+      EmptyFileSystemProvider,
+      new TestGlobalConfigLoader({}),
+    );
   }
   return _defaultTestWorkspace;
 }
@@ -55,8 +58,21 @@ export function setDefaultTestWorkspace(
  */
 export function createTestWorkspace(
   fs: FileSystemProvider = new VirtualFileSystemProvider(),
-  connection?: Connection,
 ): WorkspaceContext {
   resetDocumentProviders(fs);
-  return new WorkspaceContext(fs, connection);
+  return new WorkspaceContext(
+    fs,
+    new TestGlobalConfigLoader({
+      pgmConf: {
+        configKey: "pli.pgm_conf",
+        containerPath: [],
+        uri: ".vscode/settings.json",
+      },
+      procGrps: {
+        configKey: "pli.proc_grps",
+        containerPath: [],
+        uri: ".vscode/settings.json",
+      },
+    }),
+  );
 }
