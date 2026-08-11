@@ -18,6 +18,7 @@ import { EmptyFileSystemProvider } from "../../src/workspace/file-system-provide
 import { UriUtils } from "../../src/utils/uri";
 import { LongRunningOperationImpl } from "../../src/utils/promises";
 import { TestGlobalConfigLoader } from "../../src";
+import { newLibraryCaches } from "../../src/config/lib-expander";
 
 async function setupConfig(
   testLibs: string[],
@@ -26,6 +27,7 @@ async function setupConfig(
     EmptyFileSystemProvider,
     new TestGlobalConfigLoader({}),
     LongRunningOperationImpl.Dummy,
+    newLibraryCaches()
   );
   const processGroup = deserializeProcessGroup({
     name: "default",

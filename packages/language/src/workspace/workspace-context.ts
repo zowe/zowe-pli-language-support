@@ -18,6 +18,7 @@ import {
   LongRunningOperationImpl,
 } from "../utils/promises";
 import { GlobalConfigLoader } from "../utils/messages";
+import { LibraryCaches, newLibraryCaches } from "../config/lib-expander";
 
 /**
  * WorkspaceContext bundles the per-language-server-instance state that
@@ -48,11 +49,13 @@ export class WorkspaceContext {
     public readonly fs: FileSystemProvider,
     globalConfigLoader: GlobalConfigLoader,
     longRunningOperation?: LongRunningOperation,
+    caches?: LibraryCaches,
   ) {
     this.config = new PluginConfigurationProvider(
       fs,
       globalConfigLoader,
       longRunningOperation ?? LongRunningOperationImpl.Dummy,
+      caches ?? newLibraryCaches(),
     );
   }
 

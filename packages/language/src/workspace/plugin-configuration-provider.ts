@@ -18,7 +18,7 @@ import {
   offsetLengthToRange,
 } from "../language-server/types";
 import { mergeAbstractOptions } from "../config/compiler-options-merge";
-import { expandGroup } from "../config/lib-expander";
+import { expandGroup, LibraryCaches } from "../config/lib-expander";
 import { resolveLibUri } from "../config/path-resolver";
 import {
   ParseEntry,
@@ -272,11 +272,13 @@ export class PluginConfigurationProvider {
   private readonly fs: FileSystemProvider;
   private readonly longRunningOperation: LongRunningOperation;
   private readonly globalConfigLoader: GlobalConfigLoader;
+  private readonly caches: LibraryCaches;
 
   constructor(
     fs: FileSystemProvider,
     globalConfigLoader: GlobalConfigLoader,
     longRunningOperation: LongRunningOperation,
+    caches: LibraryCaches,
   ) {
     this.fs = fs;
     this.longRunningOperation = longRunningOperation;
@@ -284,6 +286,7 @@ export class PluginConfigurationProvider {
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
     this.workspacePath = UriUtils.parse(""); // empty workspace to start with
+    this.caches = caches;
   }
 
   /**
@@ -796,6 +799,7 @@ export class PluginConfigurationProvider {
         record.libs,
         this.fs,
         this.workspacePath,
+        this.caches
       );
       record.computedLibs = expanded.libs;
 

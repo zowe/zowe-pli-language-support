@@ -18,6 +18,7 @@ import {
 } from "../../src";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 import { LongRunningOperationImpl } from "../../src/utils/promises";
+import { newLibraryCaches } from "../../src/config/lib-expander";
 
 describe("Multi Workspace Tests", () => {
   test("With plugin configs under disjoint folders", async () => {
@@ -26,6 +27,7 @@ describe("Multi Workspace Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
 
@@ -135,6 +137,7 @@ describe("Multi Workspace Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
 
@@ -260,6 +263,7 @@ describe("Multi Workspace Tests", () => {
           containerPath: [],
         },
       }),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
 

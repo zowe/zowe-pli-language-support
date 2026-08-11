@@ -120,6 +120,53 @@ interface PlannedLib {
   baseDepth: number;
 }
 
+export interface LibraryCache<T> {
+  invalidate(workspace: URI, libItem?: string): void;
+  lookupLibrary(workspace: URI, libItem: string): T | undefined;
+  setLibrary(workspace: URI, libItem: string, value: T): void;
+}
+
+export class LibraryCacheImpl<T> implements LibraryCache<T> {
+  private readonly cache = new Map<string, T>();
+
+  invalidate(workspace: URI, libItem?: string): void {
+    if (libItem) {
+      this.cache.delete(this.key(workspace, libItem));
+    } else {
+      const prefix = UriUtils.toNormalizedKey(workspace);
+      for (const key of this.cache.keys()) {
+        if (key.startsWith(prefix)) {
+          this.cache.delete(key);
+        }
+      }
+    }
+  }
+
+  lookupLibrary(workspace: URI, libItem: string): T | undefined {
+    return this.cache.get(this.key(workspace, libItem));
+  }
+
+  setLibrary(workspace: URI, libItem: string, value: T): void {
+    this.cache.set(this.key(workspace, libItem), value);
+  }
+
+  private key(workspace: URI, libItem: string): string {
+    return `${UriUtils.toNormalizedKey(workspace)}|${libItem}`;
+  }
+}
+
+export type LibraryCaches = {
+  planCache: LibraryCache<PlannedLib[]>;
+  expandCache: LibraryCache<ExpandedLib>;
+};
+
+export function newLibraryCaches(): LibraryCaches {
+  return {
+    planCache: new LibraryCacheImpl<PlannedLib[]>(),
+    expandCache: new LibraryCacheImpl<ExpandedLib>(),
+  };
+}
+
 /** Segment count of a (normalized) path, used as a lib's base depth. */
 function baseDepthOf(base: string): number {
   return UriUtils.parts(UriUtils.normalizePath(base)).length;
@@ -135,27 +182,33 @@ async function planLibs(
   libItems: readonly JsonItem<string>[],
   fs: FileSystemProvider,
   workspace: URI,
+  caches: LibraryCaches,
 ): Promise<PlannedLib[]> {
   const planned: PlannedLib[] = [];
   for (let configIndex = 0; configIndex < libItems.length; configIndex++) {
     const item = libItems[configIndex];
+    const cached = caches.planCache.lookupLibrary(workspace, item.value);
+    if (cached) {
+      planned.push(...cached);
+      continue;
+    }
     if (!item.value.includes("*")) {
-      planned.push({ item, configIndex, baseDepth: baseDepthOf(item.value) });
+      const plan = { item, configIndex, baseDepth: baseDepthOf(item.value) };
+      planned.push(plan);
+      caches.planCache.setLibrary(workspace, item.value, [plan]);
       continue;
     }
     const matched = await expandWildcardLib(item.value, fs, workspace);
     if (!matched.length) {
-      planned.push({ item, configIndex, baseDepth: baseDepthOf(item.value) });
+      const plan = { item, configIndex, baseDepth: baseDepthOf(item.value) };
+      planned.push(plan);
+      caches.planCache.setLibrary(workspace, item.value, [plan]);
       continue;
     }
     const baseDepth = baseDepthOf(splitGlobPattern(item.value).base);
-    for (const rel of matched) {
-      planned.push({
-        item: { value: rel, meta: item.meta },
-        configIndex,
-        baseDepth,
-      });
-    }
+    const plans = matched.map((rel) => ({ item: { value: rel, meta: item.meta }, configIndex, baseDepth }));
+    planned.push(...plans);
+    caches.planCache.setLibrary(workspace, item.value, plans);
   }
   return planned;
 }
@@ -168,10 +221,18 @@ export async function expandGroup(
   libItems: readonly JsonItem<string>[],
   fs: FileSystemProvider,
   workspace: URI,
+  caches: LibraryCaches,
 ): Promise<ExpandedGroup> {
-  const planned = await planLibs(libItems, fs, workspace);
+  const planned = await planLibs(libItems, fs, workspace, caches);
   const expansions = await Promise.all(
-    planned.map((p) => expandLib(p.item, fs, workspace)),
+    planned.map(async (p) => {
+      let lib = caches.expandCache.lookupLibrary(workspace, p.item.value);
+      if (!lib) {
+        lib = await expandLib(p.item, fs, workspace);
+        caches.expandCache.setLibrary(workspace, p.item.value, lib);
+      }
+      return lib;
+    }),
   );
 
   const seen = new Set<string>();

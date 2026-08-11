@@ -65,6 +65,7 @@ import { configCompletionRequest } from "./completion/completion-plugin-configur
 import { JsonItemMeta } from "../config/schema";
 import { assertType } from "../preprocessor/util";
 import { LongRunningOperationImpl } from "../utils/promises";
+import { newLibraryCaches } from "../config/lib-expander";
 export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
@@ -78,6 +79,7 @@ export function startLanguageServer(
   const compilationUnitHandler = new CompilationUnitHandler(
     fs,
     globalConfigLoader,
+    newLibraryCaches(),
     new LongRunningOperationImpl(connection),
   );
   compilationUnitHandler.listen(connection);

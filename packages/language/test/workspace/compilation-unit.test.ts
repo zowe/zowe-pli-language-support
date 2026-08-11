@@ -20,6 +20,7 @@ import {
   VirtualFileSystemProvider,
 } from "../../src";
 import { LongRunningOperationImpl } from "../../src/utils/promises";
+import { newLibraryCaches } from "../../src/config/lib-expander";
 
 describe("Compilation Unit Tests", () => {
   let fs: FileSystemProvider;
@@ -38,6 +39,7 @@ describe("Compilation Unit Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
     ch.addWorkspaceFolder(
@@ -60,6 +62,7 @@ describe("Compilation Unit Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
     ch.addWorkspaceFolder(
@@ -86,6 +89,7 @@ describe("Compilation Unit Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
     ch.addWorkspaceFolder(
@@ -123,6 +127,7 @@ describe("Compilation Unit Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(), 
       LongRunningOperationImpl.Dummy,
     );
     ch.addWorkspaceFolder(UriUtils.toUri("file:///"), defaultTestWorkspace());
@@ -159,6 +164,7 @@ describe("Compilation Unit Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({}),
+      newLibraryCaches(),
       LongRunningOperationImpl.Dummy,
     );
     ch.addWorkspaceFolder(UriUtils.toUri("file:///"), defaultTestWorkspace());

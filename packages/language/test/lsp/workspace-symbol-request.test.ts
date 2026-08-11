@@ -21,6 +21,7 @@ import { CancellationToken } from "vscode-languageserver";
 import { defaultTestWorkspace } from "../test-workspace";
 import { TestGlobalConfigLoader, VirtualFileSystemProvider } from "../../src";
 import { LongRunningOperationImpl } from "../../src/utils/promises";
+import { newLibraryCaches } from "../../src/config/lib-expander";
 
 const formatTestPLI = (code: string): string =>
   code.startsWith("\n") ? code.slice(1) : code;
@@ -56,6 +57,7 @@ async function expectWorkspaceSymbols(annotatedCode: string[]): Promise<void> {
   const handler = new CompilationUnitHandler(
     fs,
     new TestGlobalConfigLoader({}),
+    newLibraryCaches(),
     LongRunningOperationImpl.Dummy,
   );
   const workspace = defaultTestWorkspace();

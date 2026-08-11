@@ -71,6 +71,7 @@ import { WorkspaceFolderTree } from "./workspace-folder-tree.js";
 import { FileSystemProvider } from "./file-system-provider.js";
 import { MultiMap } from "../utils/collections.js";
 import { GlobalConfigLoader } from "../index.js";
+import { LibraryCaches } from "../config/lib-expander.js";
 
 /**
  * A compilation unit is a representation of a PL/I program in the language server.
@@ -309,6 +310,7 @@ export class CompilationUnitHandler {
   constructor(
     fs: FileSystemProvider,
     private readonly configLoader: GlobalConfigLoader,
+    private readonly caches: LibraryCaches,
     private readonly longRunningOperation: LongRunningOperation,
   ) {
     this.fs = fs;
@@ -362,6 +364,7 @@ export class CompilationUnitHandler {
       this.fs,
       this.configLoader,
       this.longRunningOperation,
+      this.caches,
     );
     this.addWorkspaceFolder(uri, workspace);
     const diagnosticsByUri = await workspace.config.init(uri);
@@ -380,6 +383,7 @@ export class CompilationUnitHandler {
       this.fs,
       this.configLoader,
       this.longRunningOperation,
+      this.caches,
     );
     this.fallbackWorkspace = workspace;
     const diagnosticsByUri = await workspace.config.init(uri);

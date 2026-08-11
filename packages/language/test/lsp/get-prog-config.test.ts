@@ -16,6 +16,7 @@ import { UriUtils } from "../../src/utils/uri";
 import { makeProgramConfig } from "../config-fixtures";
 import { LongRunningOperationImpl } from "../../src/utils/promises";
 import { TestGlobalConfigLoader } from "../../src";
+import { newLibraryCaches } from "../../src/config/lib-expander";
 
 function setupConfig(
   programConfig: { program: string; pgroup: string }[],
@@ -24,6 +25,7 @@ function setupConfig(
     EmptyFileSystemProvider,
     new TestGlobalConfigLoader({}),
     LongRunningOperationImpl.Dummy,
+    newLibraryCaches()
   );
   pluginConfig.setProgramConfigs(
     UriUtils.toUri("/workspace"),
