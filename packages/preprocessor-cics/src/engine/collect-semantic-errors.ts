@@ -11,15 +11,48 @@
 import { ParserRuleContext, ParseTree } from "antlr4ng";
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 import {
+  AggregatableDiagnostic,
   CICSCheckUtilityParameters,
   CICSLiteralCheckOption,
+  isAggregatableDiagnostic,
 } from "../checks/base";
 import { OptionsRegistry } from "../checks/options-registry";
 import { Diagnostic } from "preprocessor-api";
+import { orify } from "../checks/utils";
 
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   ParseTree[] | null
 > {
+  static aggregateErrors(errors: Diagnostic[]): Diagnostic[] {
+    const nonAggregatableErrors: Diagnostic[] = [];
+    const aggregatableErrors: AggregatableDiagnostic[] = [];
+    for (const error of errors) {
+      if (isAggregatableDiagnostic(error)) {
+        aggregatableErrors.push(error);
+      } else {
+        nonAggregatableErrors.push(error);
+      }
+    }
+    const groups = Object.groupBy(
+      aggregatableErrors,
+      (error) =>
+        `${error.startOffset}-${error.endOffset}:${error.code}:${error.commonMessage}`,
+    );
+    for (const group of Object.values(groups)) {
+      if (group && group.length > 0) {
+        nonAggregatableErrors.push({
+          code: group[0].code,
+          message:
+            group[0].commonMessage +
+            orify(group.map((e) => e.enumerablePart).sort()),
+          severity: group[0].severity,
+          startOffset: group[0].startOffset,
+          endOffset: group[0].endOffset,
+        });
+      }
+    }
+    return nonAggregatableErrors;
+  }
   private readonly optionsRegistry: OptionsRegistry;
   private readonly cicsOptionsCheckUtilityParams: CICSCheckUtilityParameters;
   public readonly errors: Diagnostic[] = [];

@@ -34,6 +34,17 @@ export class CICSCheckUtilityParameters {
   public literalChecks: CICSLiteralCheckOption = CICSLiteralCheckOption.APOST;
 }
 
+export type AggregatableDiagnostic = Diagnostic & {
+  commonMessage: string;
+  enumerablePart: string;
+};
+
+export function isAggregatableDiagnostic(
+  diagnostic: Diagnostic,
+): diagnostic is AggregatableDiagnostic {
+  return "commonMessage" in diagnostic && "enumerablePart" in diagnostic;
+}
+
 export abstract class CICSOptionsCheckerBase {
   //private context: DialectProcessingContext;
 
@@ -83,17 +94,21 @@ export abstract class CICSOptionsCheckerBase {
    */
   abstract checkOptions<E extends ParserRuleContext>(ctx: E): void;
 
+  checkRootRule<E extends ParserRuleContext>(ctx: E): void {}
+
   protected throwException(
     errorSeverity: Severity,
     range: WithRange,
     msg: string,
     wrongToken: string,
   ): void {
-    const error: Diagnostic = {
+    const error: AggregatableDiagnostic = {
       ...range,
       severity: errorSeverity,
       message: msg + wrongToken,
       code: "cics.invalid.options",
+      commonMessage: msg,
+      enumerablePart: wrongToken,
     };
     this.errors.push(error);
   }

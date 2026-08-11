@@ -21,6 +21,17 @@ describe("CICS DUMP TRANSACTION", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Command alone", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("DUMP TRANSACTION");
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(
+      /Exactly one option required, none provided: DUMPCODE, DUMPID, FROM, COMPLETE, TRT, TASK, STORAGE, PROGRAM, TERMINAL, TABLES, FCT, PCT, PPT, SIT, TCT, SEGMENTLIST, LENGTHLIST, NUMSEGMENTS/,
+    );
+  });
+
   test("Expecting EOF", async () => {
     const { diagnostics } = await cicsPreprocessor.execute(
       "DUMP DUMPCODE(1) BLA",

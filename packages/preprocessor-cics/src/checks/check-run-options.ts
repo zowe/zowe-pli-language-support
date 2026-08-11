@@ -12,11 +12,13 @@ import { Diagnostic, Severity } from "preprocessor-api";
 import {
   Cics_run_defaultContext,
   Cics_run_transidContext,
+  Cics_runContext,
   CICSParser,
 } from "../generated/CICSParser";
 import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { CICSLexer } from "../generated/CICSLexer";
 import { ParserRuleContext, TerminalNode } from "antlr4ng";
+import { assertType } from "./utils";
 
 export class RunOptionsChecker extends CICSOptionsCheckerBase {
   public static readonly RULE_INDEX = CICSParser.RULE_cics_run;
@@ -37,6 +39,18 @@ export class RunOptionsChecker extends CICSOptionsCheckerBase {
 
   constructor(errors: Diagnostic[], params: CICSCheckUtilityParameters) {
     super(errors, RunOptionsChecker.DUPLICATE_CHECK_OPTIONS, params);
+  }
+
+  override checkRootRule<E extends ParserRuleContext>(ctx: E): void {
+    if (ctx.ruleIndex === CICSParser.RULE_cics_run) {
+      assertType<Cics_runContext>(ctx);
+      if (!ctx.cics_run_default() && !ctx.cics_run_transid()) {
+        this.checkHasExactlyOneOption(
+          "ACQACTIVITY, ACQPROCESS, ACTIVITY or TRANSID",
+          ctx,
+        );
+      }
+    }
   }
 
   /**

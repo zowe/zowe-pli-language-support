@@ -23,6 +23,17 @@ describe("CICS ALLOCATE", async () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Alone allocate", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute("ALLOCATE");
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(
+      /Must include one or more of the following: SESSION, SYSID, PARTNER/,
+    );
+  });
+
   test("Positive (SYSID)", async () => {
     const { diagnostics } = await cicsPreprocessor.execute("ALLOCATE SYSID(1)");
     expect(diagnostics).toHaveLength(0);
