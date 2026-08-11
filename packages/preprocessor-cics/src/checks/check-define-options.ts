@@ -193,6 +193,9 @@ export class DefineOptionsChecker extends CICSOptionsCheckerBase {
         // Neither AT nor AND
         this.checkHasMandatoryOptions(ctx.AFTER(), ctx, "AFTER");
       }
+      if (ctx.ON().length !== 0) {
+        this.checkHasMandatoryOptions(ctx.YEAR(), ctx, "YEAR");
+      }
     } else if (
       ctx.AT().length === 0 &&
       this.checkHasMandatoryOptions(ctx.AFTER(), ctx, "AFTER")

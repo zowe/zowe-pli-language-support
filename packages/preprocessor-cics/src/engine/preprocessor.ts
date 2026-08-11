@@ -32,7 +32,6 @@ import {
   Preprocessor,
   PreprocessorResult,
   SemanticsKind,
-  Severity,
   Token,
 } from "preprocessor-api";
 import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
@@ -116,7 +115,11 @@ export class CICSPreprocessor implements Preprocessor {
     const diagnostics: Diagnostic[] = [];
     diagnostics.push(...lexerErrors.errors);
     diagnostics.push(...parserErrors.errors);
-    diagnostics.push(...semanticErrorCollector.errors);
+    diagnostics.push(
+      ...CollectingSemanticErrorVisitor.aggregateErrors(
+        semanticErrorCollector.errors,
+      ),
+    );
     return {
       diagnostics,
       tokens,

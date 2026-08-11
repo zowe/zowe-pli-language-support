@@ -35,3 +35,16 @@ export function assertType<T>(
     throw new Error(message || "Assertion failed");
   }
 }
+
+export function orify(items: string[]): string {
+  if (items.length === 0) {
+    return "";
+  } else if (items.length === 1) {
+    return items[0];
+  } else if (items.length === 2) {
+    return `${items[0]} or ${items[1]}`;
+  } else {
+    const lastItem = items.pop();
+    return `${items.join(", ")} or ${lastItem}`;
+  }
+}

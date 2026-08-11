@@ -43,6 +43,17 @@ describe("CICS INQUIRE", async () => {
     );
   });
 
+  test("CONTAINER PROCESS without PROCESSTYPE", async () => {
+    const { diagnostics } = await cicsPreprocessor.execute(
+      "INQUIRE CONTAINER(1) PROCESS(2)",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Missing required option: PROCESSTYPE/,
+    );
+  });
+
   // process branch -> checkHasMandatoryOptions(PROCESSTYPE)
   test("PROCESS missing PROCESSTYPE", async () => {
     const { diagnostics } =

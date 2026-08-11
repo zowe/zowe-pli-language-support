@@ -335,10 +335,14 @@ export class IssueOptionsChecker extends CICSOptionsCheckerBase {
   }
 
   private checkReceive(ctx: Cics_issue_receiveContext) {
+    this.checkMutuallyExclusiveOptions("INTO or SET", ctx.INTO(), ctx.SET());
     this.checkHasMandatoryOptions(ctx.RECEIVE(), ctx, "RECEIVE");
     if (ctx.INTO().length === 0)
       this.checkHasMandatoryOptions(ctx.SET(), ctx, "INTO or SET");
     if (this.noLengthOptionsEnabled()) {
+      this.checkHasMandatoryOptions(ctx.LENGTH(), ctx, "LENGTH");
+    }
+    if (ctx.SET().length !== 0) {
       this.checkHasMandatoryOptions(ctx.LENGTH(), ctx, "LENGTH");
     }
   }
