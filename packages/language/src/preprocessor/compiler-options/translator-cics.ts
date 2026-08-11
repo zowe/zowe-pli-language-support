@@ -223,6 +223,9 @@ translator.rule(["SYSEIB"], (option, options) => {
 
 translator.flag("vbref", ["VBREF", "XREF"], ["NOVBREF", "NOXREF"]);
 
+translator.crossMutex("EXCI", "CICS");
+translator.crossMutex("EXCI", "DLI");
+
 export function getTranslator(): Translator<CompilerOptions> {
   return translator;
 }

@@ -182,45 +182,94 @@ translator.rule(
 translator.flag("blkoff", ["BLKOFF"], ["NOBLKOFF"]);
 
 /** {@link CompilerOptions.brackets} */
-translator.rule(
-  ["BRACKETS"],
-  stringTranslate((options, value) => {
-    const length = value.value.length;
-    if (length !== 2) {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.Brackets.InvalidParameterLength,
-        value.token,
-        value.value,
-      );
-    }
-    const start = value.value.charAt(0);
-    const end = value.value.charAt(1);
+translator
+  .rule(
+    ["BRACKETS"],
+    stringTranslate((options, value) => {
+      const length = value.value.length;
+      if (length !== 2) {
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Brackets.InvalidParameterLength,
+          value.token,
+          value.value,
+        );
+      }
+      const start = value.value.charAt(0);
+      const end = value.value.charAt(1);
 
-    if (
-      Options.PLI_CHARACTER_REGEX.test(start) ||
-      Options.PLI_CHARACTER_REGEX.test(end)
-    ) {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.Brackets.InvalidParameter,
-        value.token,
-        value.value,
-      );
-    }
+      if (
+        Options.PLI_CHARACTER_REGEX.test(start) ||
+        Options.PLI_CHARACTER_REGEX.test(end)
+      ) {
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Brackets.InvalidParameter,
+          value.token,
+          value.value,
+        );
+      }
 
-    if (start === end) {
-      throw diagnosticFromCode(
-        CompilerOptionsCodes.Brackets.InvalidEqualCharacters,
-        value.token,
-        value.value,
-      );
-    }
+      if (start === end) {
+        throw diagnosticFromCode(
+          CompilerOptionsCodes.Brackets.InvalidEqualCharacters,
+          value.token,
+          value.value,
+        );
+      }
 
-    options.brackets = [start, end];
-  }),
-  undefined,
-  undefined,
-  { recompile: true },
-);
+      options.brackets = [start, end];
+    }),
+    undefined,
+    undefined,
+    { recompile: true },
+  )
+  .postProcess({
+    // The two BRACKETS characters must not be characters used by other PL/I
+    // options such as NAMES, NOT, or OR.
+    id: "brackets.conflictsWithOtherOptions",
+    run: (options, acceptor, getOwnToken) => {
+      if (!options.brackets) {
+        return;
+      }
+
+      const conflictsWith: { chars: string; option: string }[] = [];
+      if (options.names?.extralingChar) {
+        conflictsWith.push({
+          chars: options.names.extralingChar,
+          option: "NAMES",
+        });
+      }
+      if (
+        options.names?.uppExtralingChar &&
+        options.names.uppExtralingChar !== options.names.extralingChar
+      ) {
+        conflictsWith.push({
+          chars: options.names.uppExtralingChar,
+          option: "NAMES",
+        });
+      }
+      if (options.not) {
+        conflictsWith.push({ chars: options.not, option: "NOT" });
+      }
+      if (options.or) {
+        conflictsWith.push({ chars: options.or, option: "OR" });
+      }
+
+      for (const bracketChar of options.brackets) {
+        for (const { chars, option } of conflictsWith) {
+          if (chars.includes(bracketChar)) {
+            acceptor(
+              diagnosticFromCode(
+                CompilerOptionsCodes.Brackets.ConflictWithOption,
+                getOwnToken(),
+                bracketChar,
+                option,
+              ),
+            );
+          }
+        }
+      }
+    },
+  });
 
 /** {@link CompilerOptions.case} */
 translator.rule(
@@ -351,7 +400,42 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.common} */
-translator.flag("common", ["COMMON"], ["NOCOMMON"]);
+translator
+  .flag("common", ["COMMON"], ["NOCOMMON"])
+  .postProcess({
+    id: "common.conflictsWithRent",
+    run: (options, acceptor, getOwnToken) => {
+      if (!options.common) {
+        return;
+      }
+      if (options.rent) {
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.Common.ConflictWithRent,
+            getOwnToken(),
+          ),
+        );
+      }
+    },
+  })
+  .postProcess({
+    id: "common.conflictsWithExtName",
+    run: (options, acceptor, getOwnToken) => {
+      if (!options.common) {
+        return;
+      }
+      const extname = options.limits?.extname;
+      if (extname !== undefined && extname > 7) {
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.Common.ConflictWithExtName,
+            getOwnToken(),
+            extname,
+          ),
+        );
+      }
+    },
+  });
 
 /** {@link CompilerOptions.compile} */
 translator.rule(
@@ -433,7 +517,18 @@ translator.rule(["CURRENCY", "CURR"], (option, options) => {
 });
 
 /** {@link CompilerOptions.dbcs} */
-translator.flag("dbcs", ["DBCS"], ["NODBCS"]);
+translator.flag("dbcs", ["DBCS"], ["NODBCS"]).postProcess({
+  id: "dbcs.conflictsWithGraphic",
+  run: (options, acceptor, getOwnToken) => {
+    const token = getOwnToken();
+    if (token === undefined || options.dbcs !== false || !options.graphic) {
+      return;
+    }
+    acceptor(
+      diagnosticFromCode(CompilerOptionsCodes.Dbcs.ConflictWithGraphic, token),
+    );
+  },
+});
 
 /** {@link CompilerOptions.dbrmlib} */
 translator.rule(
@@ -589,361 +684,385 @@ translator.rule(["DECIMAL", "DEC"], (option, options, acceptor) => {
 translator.flag("decomp", ["DECOMP"], ["NODECOMP"]);
 
 /** {@link CompilerOptions.default} */
-translator.rule(
-  ["DEFAULT", "DFT"],
-  (option, options, acceptor) => {
-    ensureArguments(option, 1);
-    ensureToBeDefined(options.default);
-    const def = options.default;
-    for (const opt of option.values) {
-      if (opt.kind === SyntaxKind.CompilerOptionText) {
-        const val = opt.value;
-        switch (val) {
-          case "ALIGNED":
-          case "UNALIGNED":
-            def.aligned = val === "ALIGNED";
-            break;
-          case "IBM":
-          case "ANS":
-            def.architecture = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultArchitecture,
-            );
-            break;
-          case "EBCDIC":
-          case "ASCII":
-            def.encoding = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultEncoding,
-            );
-            break;
-          case "ASGN":
-          case "ASSIGNABLE":
-          case "NONASGN":
-          case "NONASSIGNABLE":
-            def.assignable = val === "ASSIGNABLE" || val === "ASGN";
-            break;
-          case "BIN1ARG":
-          case "NOBIN1ARG":
-            def.bin1arg = val === "BIN1ARG";
-            break;
-          case "BYADDR":
-          case "BYVALUE":
-            def.allocator = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultAllocator,
-            );
-            break;
-          case "CONN":
-          case "CONNECTED":
-          case "NONCONN":
-          case "NONCONNECTED":
-            def.connected = val === "CONNECTED" || val === "CONN";
-            break;
-          case "DESCLIST":
-          case "DESCLOCATOR":
-            def.desc = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultDesc,
-              [
-                ["LIST", "DESCLIST"],
-                ["LOCATOR", "DESCLOCATOR"],
-              ],
-            );
-            break;
-          case "DESCRIPTOR":
-          case "NODESCRIPTOR":
-            def.descriptor = val === "DESCRIPTOR";
-            break;
-          case "EVENDEC":
-          case "NOEVENDEC":
-            def.evendec = val === "EVENDEC";
-            break;
-          case "HEXADEC":
-          case "IEEE":
-            def.format = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultFormat,
-            );
-            break;
-          case "INITFILL":
-          case "NOINITFILL":
-            // Initfill is actually valid without a parameter and falls back to 00 in that case.
-            def.initfill = val === "INITFILL" ? "00" : false;
-            break;
-          case "INL":
-          case "INLINE":
-          case "NOINL":
-          case "NOINLINE":
-            def.inline = val === "INLINE" || val === "INL";
-            break;
-          case "LAXQUAL":
-          case "NOLAXQUAL":
-            def.laxqual = val === "LAXQUAL";
-            break;
-          case "LOWERINC":
-          case "UPPERINC":
-            def.inc = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultInc,
-            );
-            break;
-          case "NATIVE":
-          case "NONNATIVE":
-            def.native = val === "NATIVE";
-            break;
-          case "NATIVEADDR":
-          case "NONNATIVEADDR":
-            def.nativeAddr = val === "NATIVEADDR";
-            break;
-          case "NULLSYS":
-          case "NULL370":
-            def.nullsys = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultNullSys,
-            );
-            break;
-          case "NULLSTRADDR":
-          case "NONULLSTRADDR":
-            def.nullStrAddr = val === "NULLSTRADDR";
-            break;
-          case "ORDER":
-          case "REORDER":
-            def.order = ensureEnum(
-              opt,
-              CompilerOptionsCodes.Default.InvalidParameter,
-              CompilerOptions.DefaultOrder,
-            );
-            break;
-          case "OVERLAP":
-          case "NOOVERLAP":
-            def.overlap = val === "OVERLAP";
-            break;
-          case "PADDING":
-          case "NOPADDING":
-            def.padding = val === "PADDING";
-            break;
-          case "PSEUDODUMMY":
-          case "NOPSEUDODUMMY":
-            def.pseudodummy = val === "PSEUDODUMMY";
-            break;
-          case "RECURSIVE":
-          case "NONRECURSIVE":
-            def.recursive = val === "RECURSIVE";
-            break;
-          case "RETCODE":
-          case "NORETCODE":
-            def.retcode = val === "RETCODE";
-            break;
-          case "":
-            // Empty is valid.
-            break;
-          case "DUMMY":
-          case "E":
-          case "LINKAGE":
-          case "NULLINIT":
-          case "NULLSTRPTR":
-          case "ORDINAL":
-          case "RETURNS":
-          case "SHORT":
-            // All option values should report an expected option error.
-            throw diagnosticFromCode(
-              CompilerOptionsCodes.ExpectedOption,
-              opt.token,
-            );
-          default:
-            throw diagnosticFromCode(
-              CompilerOptionsCodes.Default.InvalidParameter,
-              opt.token,
-              val,
-            );
-        }
-      } else if (opt.kind === SyntaxKind.CompilerOption) {
-        ensureArguments(opt, 1, 1);
-        ensureType(opt.values[0], "plainNotEmpty");
-        const value = opt.values[0].value;
+translator
+  .rule(
+    ["DEFAULT", "DFT"],
+    (option, options, acceptor) => {
+      ensureArguments(option, 1);
+      ensureToBeDefined(options.default);
+      const def = options.default;
+      for (const opt of option.values) {
+        if (opt.kind === SyntaxKind.CompilerOptionText) {
+          const val = opt.value;
+          switch (val) {
+            case "ALIGNED":
+            case "UNALIGNED":
+              def.aligned = val === "ALIGNED";
+              break;
+            case "IBM":
+            case "ANS":
+              def.architecture = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultArchitecture,
+              );
+              break;
+            case "EBCDIC":
+            case "ASCII":
+              def.encoding = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultEncoding,
+              );
+              break;
+            case "ASGN":
+            case "ASSIGNABLE":
+            case "NONASGN":
+            case "NONASSIGNABLE":
+              def.assignable = val === "ASSIGNABLE" || val === "ASGN";
+              break;
+            case "BIN1ARG":
+            case "NOBIN1ARG":
+              def.bin1arg = val === "BIN1ARG";
+              break;
+            case "BYADDR":
+            case "BYVALUE":
+              def.allocator = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultAllocator,
+              );
+              break;
+            case "CONN":
+            case "CONNECTED":
+            case "NONCONN":
+            case "NONCONNECTED":
+              def.connected = val === "CONNECTED" || val === "CONN";
+              break;
+            case "DESCLIST":
+            case "DESCLOCATOR":
+              def.desc = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultDesc,
+                [
+                  ["LIST", "DESCLIST"],
+                  ["LOCATOR", "DESCLOCATOR"],
+                ],
+              );
+              break;
+            case "DESCRIPTOR":
+            case "NODESCRIPTOR":
+              def.descriptor = val === "DESCRIPTOR";
+              break;
+            case "EVENDEC":
+            case "NOEVENDEC":
+              def.evendec = val === "EVENDEC";
+              break;
+            case "HEXADEC":
+            case "IEEE":
+              def.format = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultFormat,
+              );
+              break;
+            case "INITFILL":
+            case "NOINITFILL":
+              // Initfill is actually valid without a parameter and falls back to 00 in that case.
+              def.initfill = val === "INITFILL" ? "00" : false;
+              break;
+            case "INL":
+            case "INLINE":
+            case "NOINL":
+            case "NOINLINE":
+              def.inline = val === "INLINE" || val === "INL";
+              break;
+            case "LAXQUAL":
+            case "NOLAXQUAL":
+              def.laxqual = val === "LAXQUAL";
+              break;
+            case "LOWERINC":
+            case "UPPERINC":
+              def.inc = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultInc,
+              );
+              break;
+            case "NATIVE":
+            case "NONNATIVE":
+              def.native = val === "NATIVE";
+              break;
+            case "NATIVEADDR":
+            case "NONNATIVEADDR":
+              def.nativeAddr = val === "NATIVEADDR";
+              break;
+            case "NULLSYS":
+            case "NULL370":
+              def.nullsys = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultNullSys,
+              );
+              break;
+            case "NULLSTRADDR":
+            case "NONULLSTRADDR":
+              def.nullStrAddr = val === "NULLSTRADDR";
+              break;
+            case "ORDER":
+            case "REORDER":
+              def.order = ensureEnum(
+                opt,
+                CompilerOptionsCodes.Default.InvalidParameter,
+                CompilerOptions.DefaultOrder,
+              );
+              break;
+            case "OVERLAP":
+            case "NOOVERLAP":
+              def.overlap = val === "OVERLAP";
+              break;
+            case "PADDING":
+            case "NOPADDING":
+              def.padding = val === "PADDING";
+              break;
+            case "PSEUDODUMMY":
+            case "NOPSEUDODUMMY":
+              def.pseudodummy = val === "PSEUDODUMMY";
+              break;
+            case "RECURSIVE":
+            case "NONRECURSIVE":
+              def.recursive = val === "RECURSIVE";
+              break;
+            case "RETCODE":
+            case "NORETCODE":
+              def.retcode = val === "RETCODE";
+              break;
+            case "":
+              // Empty is valid.
+              break;
+            case "DUMMY":
+            case "E":
+            case "LINKAGE":
+            case "NULLINIT":
+            case "NULLSTRPTR":
+            case "ORDINAL":
+            case "RETURNS":
+            case "SHORT":
+              // All option values should report an expected option error.
+              throw diagnosticFromCode(
+                CompilerOptionsCodes.ExpectedOption,
+                opt.token,
+              );
+            default:
+              throw diagnosticFromCode(
+                CompilerOptionsCodes.Default.InvalidParameter,
+                opt.token,
+                val,
+              );
+          }
+        } else if (opt.kind === SyntaxKind.CompilerOption) {
+          ensureArguments(opt, 1, 1);
+          ensureType(opt.values[0], "plainNotEmpty");
+          const value = opt.values[0].value;
 
-        const invalidOption = () => {
+          const invalidOption = () => {
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Default.InvalidParameter,
+              opt.values[0].token,
+              value,
+            );
+          };
+
+          switch (opt.name) {
+            case "DUMMY":
+              def.dummy = {};
+              if (value === "ALIGNED" || value === "") {
+                def.dummy.aligned = true;
+              } else if (value === "UNALIGNED") {
+                def.dummy.aligned = false;
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "E":
+              def.e = {};
+              if (value === "HEXADEC" || value === "") {
+                def.e.format = CompilerOptions.DefaultFormat.HEXADEC;
+              } else if (value === "IEEE") {
+                def.e.format = CompilerOptions.DefaultFormat.IEEE;
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "INITFILL":
+              // TODO ssmifi: INITFILL can also accept a string value in which case the hex value should not have an X suffix.
+              if (/[0-9a-fA-F]{2}x/i.test(value)) {
+                def.initfill = value;
+              } else {
+                throw diagnosticFromCode(
+                  CompilerOptionsCodes.Default.InvalidInitFillParameter,
+                  opt.values[0].token,
+                  value,
+                );
+              }
+              break;
+
+            case "LINKAGE":
+              def.linkage = {};
+              if (value === "OPTLINK" || value === "") {
+                def.linkage.type = CompilerOptions.DefaultLinkageType.OPTLINK;
+              } else if (value === "SYSTEM") {
+                def.linkage.type = CompilerOptions.DefaultLinkageType.SYSTEM;
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "NULLINIT":
+              def.nullinit = {};
+              if (value === "NULL" || value === "") {
+                def.nullinit.type = CompilerOptions.DefaultNullInitType.NULL;
+              } else if (value === "SYSNULL") {
+                def.nullinit.type = CompilerOptions.DefaultNullInitType.SYSNULL;
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "NULLSTRPTR":
+              def.nullStrPtr = {};
+              if (value === "NULL") {
+                def.nullStrPtr.type =
+                  CompilerOptions.DefaultNullStrPtrType.NULL;
+              } else if (value === "STRICT") {
+                def.nullStrPtr.type =
+                  CompilerOptions.DefaultNullStrPtrType.STRICT;
+              } else if (value === "SYSNULL") {
+                def.nullStrPtr.type =
+                  CompilerOptions.DefaultNullStrPtrType.SYSNULL;
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "ORDINAL":
+              if (value === "MIN") {
+                def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MIN };
+              } else if (value === "MAX") {
+                def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MAX };
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "RETURNS":
+              // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
+              if (value === "" || value === "BYADDR") {
+                def.returns = {
+                  type: CompilerOptions.DefaultReturnsType.BYADDR,
+                };
+              } else if (value === "BYVALUE") {
+                def.returns = {
+                  type: CompilerOptions.DefaultReturnsType.BYVALUE,
+                };
+              } else {
+                invalidOption();
+              }
+              break;
+
+            case "SHORT":
+              // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
+              if (value === "" || value === "HEXADEC") {
+                def.short = { format: CompilerOptions.DefaultFormat.HEXADEC };
+              } else if (value === "IEEE") {
+                def.short = { format: CompilerOptions.DefaultFormat.IEEE };
+              } else {
+                invalidOption();
+              }
+              break;
+
+            default:
+              invalidOption();
+          }
+        } else {
           throw diagnosticFromCode(
             CompilerOptionsCodes.Default.InvalidParameter,
-            opt.values[0].token,
-            value,
+            opt.token,
+            opt.value,
           );
-        };
-
-        switch (opt.name) {
-          case "DUMMY":
-            def.dummy = {};
-            if (value === "ALIGNED" || value === "") {
-              def.dummy.aligned = true;
-            } else if (value === "UNALIGNED") {
-              def.dummy.aligned = false;
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "E":
-            def.e = {};
-            if (value === "HEXADEC" || value === "") {
-              def.e.format = CompilerOptions.DefaultFormat.HEXADEC;
-            } else if (value === "IEEE") {
-              def.e.format = CompilerOptions.DefaultFormat.IEEE;
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "INITFILL":
-            // TODO ssmifi: INITFILL can also accept a string value in which case the hex value should not have an X suffix.
-            if (/[0-9a-fA-F]{2}x/i.test(value)) {
-              def.initfill = value;
-            } else {
-              throw diagnosticFromCode(
-                CompilerOptionsCodes.Default.InvalidInitFillParameter,
-                opt.values[0].token,
-                value,
-              );
-            }
-            break;
-
-          case "LINKAGE":
-            def.linkage = {};
-            if (value === "OPTLINK" || value === "") {
-              def.linkage.type = CompilerOptions.DefaultLinkageType.OPTLINK;
-            } else if (value === "SYSTEM") {
-              def.linkage.type = CompilerOptions.DefaultLinkageType.SYSTEM;
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "NULLINIT":
-            def.nullinit = {};
-            if (value === "NULL" || value === "") {
-              def.nullinit.type = CompilerOptions.DefaultNullInitType.NULL;
-            } else if (value === "SYSNULL") {
-              def.nullinit.type = CompilerOptions.DefaultNullInitType.SYSNULL;
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "NULLSTRPTR":
-            def.nullStrPtr = {};
-            if (value === "NULL") {
-              def.nullStrPtr.type = CompilerOptions.DefaultNullStrPtrType.NULL;
-            } else if (value === "STRICT") {
-              def.nullStrPtr.type =
-                CompilerOptions.DefaultNullStrPtrType.STRICT;
-            } else if (value === "SYSNULL") {
-              def.nullStrPtr.type =
-                CompilerOptions.DefaultNullStrPtrType.SYSNULL;
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "ORDINAL":
-            if (value === "MIN") {
-              def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MIN };
-            } else if (value === "MAX") {
-              def.ordinal = { type: CompilerOptions.DefaultOrdinalType.MAX };
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "RETURNS":
-            // Diagram specifies that no option inside the parenthesesis valid. Default is BYADDR.
-            if (value === "" || value === "BYADDR") {
-              def.returns = { type: CompilerOptions.DefaultReturnsType.BYADDR };
-            } else if (value === "BYVALUE") {
-              def.returns = {
-                type: CompilerOptions.DefaultReturnsType.BYVALUE,
-              };
-            } else {
-              invalidOption();
-            }
-            break;
-
-          case "SHORT":
-            // Diagram specifies that no option inside the parentheses is valid. Default is HEXADEC.
-            if (value === "" || value === "HEXADEC") {
-              def.short = { format: CompilerOptions.DefaultFormat.HEXADEC };
-            } else if (value === "IEEE") {
-              def.short = { format: CompilerOptions.DefaultFormat.IEEE };
-            } else {
-              invalidOption();
-            }
-            break;
-
-          default:
-            invalidOption();
         }
-      } else {
-        throw diagnosticFromCode(
-          CompilerOptionsCodes.Default.InvalidParameter,
-          opt.token,
-          opt.value,
-        );
       }
-    }
-    reportDuplicateSubOptions(option, acceptor, {
-      ASGN: "ASSIGNABLE",
-      NONASGN: "NONASSIGNABLE",
-      CONN: "CONNECTED",
-      NONCONN: "NONCONNECTED",
-      INL: "INLINE",
-      NOINL: "NOINLINE",
-    });
-    reportMutexSubOptions(option, acceptor, [
-      ["ALIGNED", "UNALIGNED"],
-      ["IBM", "ANS"],
-      ["EBCDIC", "ASCII"],
-      ["ASSIGNABLE", "NONASSIGNABLE"],
-      ["ASSIGNABLE", "NONASGN"],
-      ["ASGN", "NONASSIGNABLE"],
-      ["ASGN", "NONASGN"],
-      ["BIN1ARG", "NOBIN1ARG"],
-      ["BYADDR", "BYVALUE"],
-      ["CONNECTED", "NONCONNECTED"],
-      ["CONNECTED", "NONCONN"],
-      ["CONN", "NONCONNECTED"],
-      ["CONN", "NONCONN"],
-      ["DESCLIST", "DESCLOCATOR"],
-      ["DESCRIPTOR", "NODESCRIPTOR"],
-      ["EVENDEC", "NOEVENDEC"],
-      ["HEXADEC", "IEEE"],
-      ["INLINE", "NOINLINE"],
-      ["INLINE", "NOINL"],
-      ["INL", "NOINLINE"],
-      ["INL", "NOINL"],
-      ["LAXQUAL", "NOLAXQUAL"],
-      ["LOWERINC", "UPPERINC"],
-      ["NATIVE", "NONNATIVE"],
-      ["NATIVEADDR", "NONNATIVEADDR"],
-      ["NULLSYS", "NULL370"],
-      ["NULLSTRADDR", "NONULLSTRADDR"],
-      ["ORDER", "REORDER"],
-      ["OVERLAP", "NOOVERLAP"],
-      ["PADDING", "NOPADDING"],
-      ["PSEUDODUMMY", "NOPSEUDODUMMY"],
-      ["RECURSIVE", "NORECURSIVE"],
-      ["RETCODE", "NORETCODE"],
-    ]);
-  },
-  undefined,
-  undefined,
-  { recompile: true },
-);
+      reportDuplicateSubOptions(option, acceptor, {
+        ASGN: "ASSIGNABLE",
+        NONASGN: "NONASSIGNABLE",
+        CONN: "CONNECTED",
+        NONCONN: "NONCONNECTED",
+        INL: "INLINE",
+        NOINL: "NOINLINE",
+      });
+      reportMutexSubOptions(option, acceptor, [
+        ["ALIGNED", "UNALIGNED"],
+        ["IBM", "ANS"],
+        ["EBCDIC", "ASCII"],
+        ["ASSIGNABLE", "NONASSIGNABLE"],
+        ["ASSIGNABLE", "NONASGN"],
+        ["ASGN", "NONASSIGNABLE"],
+        ["ASGN", "NONASGN"],
+        ["BIN1ARG", "NOBIN1ARG"],
+        ["BYADDR", "BYVALUE"],
+        ["CONNECTED", "NONCONNECTED"],
+        ["CONNECTED", "NONCONN"],
+        ["CONN", "NONCONNECTED"],
+        ["CONN", "NONCONN"],
+        ["DESCLIST", "DESCLOCATOR"],
+        ["DESCRIPTOR", "NODESCRIPTOR"],
+        ["EVENDEC", "NOEVENDEC"],
+        ["HEXADEC", "IEEE"],
+        ["INLINE", "NOINLINE"],
+        ["INLINE", "NOINL"],
+        ["INL", "NOINLINE"],
+        ["INL", "NOINL"],
+        ["LAXQUAL", "NOLAXQUAL"],
+        ["LOWERINC", "UPPERINC"],
+        ["NATIVE", "NONNATIVE"],
+        ["NATIVEADDR", "NONNATIVEADDR"],
+        ["NULLSYS", "NULL370"],
+        ["NULLSTRADDR", "NONULLSTRADDR"],
+        ["ORDER", "REORDER"],
+        ["OVERLAP", "NOOVERLAP"],
+        ["PADDING", "NOPADDING"],
+        ["PSEUDODUMMY", "NOPSEUDODUMMY"],
+        ["RECURSIVE", "NORECURSIVE"],
+        ["RETCODE", "NORETCODE"],
+      ]);
+    },
+    undefined,
+    undefined,
+    { recompile: true },
+  )
+  .postProcess({
+    id: "default.desclistConflictsWithCmpat",
+    run: (options, acceptor, getOwnToken) => {
+      if (
+        options.default?.desc !== CompilerOptions.DefaultDesc.LIST ||
+        options.cmpat === undefined ||
+        options.cmpat === CompilerOptions.CMPat.LE
+      ) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Default.DescListConflictsWithCmpat,
+          getOwnToken(),
+          CompilerOptions.CMPat[options.cmpat],
+        ),
+      );
+      options.default.desc = CompilerOptions.DefaultDesc.LOCATOR;
+    },
+  });
 
 /** {@link CompilerOptions.deprecate} */
 /** {@link CompilerOptions.deprecateNext} */
@@ -1662,23 +1781,52 @@ translator.rule(["LINECOUNT", "LC"], (option, options) => {
 translator.flag("lineDir", ["LINEDIR"], ["NOLINEDIR"]);
 
 /** {@link CompilerOptions.list} */
-translator.flag("list", ["LIST"], ["NOLIST"]);
+translator.flag("list", ["LIST"], ["NOLIST"]).postProcess({
+  id: "list.ignoredWithNoObject",
+  run: (options, acceptor, getOwnToken) => {
+    if (!options.list || options.object !== false) {
+      return;
+    }
+    acceptor(
+      diagnosticFromCode(
+        CompilerOptionsCodes.Object.IgnoredOption,
+        getOwnToken(),
+        "LIST",
+      ),
+    );
+  },
+});
 
 /** {@link CompilerOptions.listView} */
-translator.rule(["LISTVIEW"], (option, options, acceptor) => {
-  ensureArguments(option, 1);
-  for (const value of option.values) {
-    ensureType(value, "plain");
-    options.listView = ensureEnum(
-      value,
-      CompilerOptionsCodes.ListView.InvalidParameter,
-      CompilerOptions.ListView,
-    );
-  }
-  reportMutexSubOptions(option, acceptor, [
-    ["SOURCE", "AFTERALL", "AFTERCICS", "AFTERMACRO", "AFTERSQL"],
-  ]);
-});
+translator
+  .rule(["LISTVIEW"], (option, options, acceptor) => {
+    ensureArguments(option, 1);
+    for (const value of option.values) {
+      ensureType(value, "plain");
+      options.listView = ensureEnum(
+        value,
+        CompilerOptionsCodes.ListView.InvalidParameter,
+        CompilerOptions.ListView,
+      );
+    }
+    reportMutexSubOptions(option, acceptor, [
+      ["SOURCE", "AFTERALL", "AFTERCICS", "AFTERMACRO", "AFTERSQL"],
+    ]);
+  })
+  .postProcess({
+    id: "listView.ignoredWithNoSource",
+    run: (options, acceptor, getOwnToken) => {
+      if (options.listView === undefined || options.source) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.ListView.IgnoredWithNoSource,
+          getOwnToken(),
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.LP} */
 translator.rule(["LP"], (option, options) => {
@@ -1699,7 +1847,21 @@ translator.rule(["LP"], (option, options) => {
 translator.flag("macro", ["MACRO", "M"], ["NOMACRO", "NM"]);
 
 /** {@link CompilerOptions.map} */
-translator.flag("map", ["MAP"], ["NOMAP"]);
+translator.flag("map", ["MAP"], ["NOMAP"]).postProcess({
+  id: "map.ignoredWithNoObject",
+  run: (options, acceptor, getOwnToken) => {
+    if (!options.map || options.object !== false) {
+      return;
+    }
+    acceptor(
+      diagnosticFromCode(
+        CompilerOptionsCodes.Object.IgnoredOption,
+        getOwnToken(),
+        "MAP",
+      ),
+    );
+  },
+});
 
 /** {@link CompilerOptions.margini} */
 translator.rule(
@@ -1961,34 +2123,57 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.name} */
-translator.rule(
-  ["NAME", "N"],
-  (option, options) => {
-    ensureArguments(option, 0, 1);
-    if (option.values.length === 1) {
-      const value = option.values[0];
-      ensureType(value, "plainOrString");
-      if (
-        value.kind === SyntaxKind.CompilerOptionText &&
-        value.value.length === 0
-      ) {
-        // If it is just plain text, no text is not recognized.
-        throw diagnosticFromCode(
-          CompilerOptionsCodes.ExpectedPlainNotEmpty,
-          value.token,
-        );
+translator
+  .rule(
+    ["NAME", "N"],
+    (option, options) => {
+      ensureArguments(option, 0, 1);
+      if (option.values.length === 1) {
+        const value = option.values[0];
+        ensureType(value, "plainOrString");
+        if (
+          value.kind === SyntaxKind.CompilerOptionText &&
+          value.value.length === 0
+        ) {
+          // If it is just plain text, no text is not recognized.
+          throw diagnosticFromCode(
+            CompilerOptionsCodes.ExpectedPlainNotEmpty,
+            value.token,
+          );
+        }
+        options.name = value.value;
+      } else {
+        options.name = true;
       }
-      options.name = value.value;
-    } else {
-      options.name = true;
-    }
-  },
-  ["NONAME"],
-  (option, options) => {
-    ensureArguments(option, 0, 0);
-    options.name = false;
-  },
-);
+    },
+    ["NONAME"],
+    (option, options) => {
+      ensureArguments(option, 0, 0);
+      options.name = false;
+    },
+  )
+  .postProcess({
+    id: "name.tooLongForExtName",
+    run: (options, acceptor, getOwnToken) => {
+      const extname = options.limits?.extname;
+      if (
+        typeof options.name !== "string" ||
+        options.name.length <= 8 ||
+        extname === undefined ||
+        extname > 8
+      ) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Name.TooLongForExtName,
+          getOwnToken(),
+          options.name,
+          extname,
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.names} */
 translator.rule(
@@ -2102,23 +2287,53 @@ translator.flag("nullDate", ["NULLDATE"], ["NONULLDATE"]);
 translator.flag("object", ["OBJECT", "OBJ"], ["NOOBJECT", "NOBJ"]);
 
 /** {@link CompilerOptions.offset} */
-translator.flag("offset", ["OFFSET", "OF"], ["NOOFFSET", "NOF"]);
+translator.flag("offset", ["OFFSET", "OF"], ["NOOFFSET", "NOF"]).postProcess({
+  id: "offset.ignoredWithNoObject",
+  run: (options, acceptor, getOwnToken) => {
+    if (!options.offset || options.object !== false) {
+      return;
+    }
+    acceptor(
+      diagnosticFromCode(
+        CompilerOptionsCodes.Object.IgnoredOption,
+        getOwnToken(),
+        "OFFSET",
+      ),
+    );
+  },
+});
 
 /** {@link CompilerOptions.offsetSize} */
-translator.rule(["OFFSETSIZE"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "plainNotEmpty");
-  const offsetSize = ensureNumberValue(value);
-  if (offsetSize !== 4 && offsetSize !== 8) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.OffsetSize.InvalidParameter,
-      value.token,
-      value.value,
-    );
-  }
-  options.offsetSize = offsetSize;
-});
+translator
+  .rule(["OFFSETSIZE"], (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    const offsetSize = ensureNumberValue(value);
+    if (offsetSize !== 4 && offsetSize !== 8) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.OffsetSize.InvalidParameter,
+        value.token,
+        value.value,
+      );
+    }
+    options.offsetSize = offsetSize;
+  })
+  .postProcess({
+    id: "offsetSize.ignoredWithLp32",
+    run: (options, acceptor, getOwnToken) => {
+      const token = getOwnToken();
+      if (token === undefined || options.LP !== CompilerOptions.LP.LP32) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.OffsetSize.IgnoredWithLp32,
+          token,
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.onSnap} */
 translator.rule(
@@ -2656,33 +2871,64 @@ translator.rule(
 );
 
 /** {@link CompilerOptions.quote} */
-translator.rule(["QUOTE"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  // TODO ssmifi: The directive does not allow to use " as string delimiter. It must be set via '.
-  ensureType(value, "string");
-  if (value.value.length !== 1) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Quote.InvalidParameterLength,
-      value.token,
-      value.value,
-    );
-  }
-  if (value.value !== '"' && Options.PLI_CHARACTER_REGEX.test(value.value)) {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Quote.InvalidParameterCharacter,
-      value.token,
-      value.value,
-    );
-  }
-  options.quote = value.value;
-});
+translator
+  .rule(["QUOTE"], (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    // TODO ssmifi: The directive does not allow to use " as string delimiter. It must be set via '.
+    ensureType(value, "string");
+    if (value.value.length !== 1) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Quote.InvalidParameterLength,
+        value.token,
+        value.value,
+      );
+    }
+    if (value.value !== '"' && Options.PLI_CHARACTER_REGEX.test(value.value)) {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Quote.InvalidParameterCharacter,
+        value.token,
+        value.value,
+      );
+    }
+    options.quote = value.value;
+  })
+  .postProcess({
+    id: "quote.ignoredWithGraphic",
+    run: (options, acceptor, getOwnToken) => {
+      const token = getOwnToken();
+      if (token === undefined || !options.graphic) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Quote.IgnoredWithGraphic,
+          token,
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.reduce} */
 translator.flag("reduce", ["REDUCE"], ["NOREDUCE"]);
 
 /** {@link CompilerOptions.rent} */
-translator.flag("rent", ["RENT"], ["NORENT"]);
+translator.flag("rent", ["RENT"], ["NORENT"]).postProcess({
+  id: "rent.ignoredWithLp64",
+  run: (options, acceptor, getOwnToken) => {
+    const token = getOwnToken();
+    if (
+      token === undefined ||
+      !options.rent ||
+      options.LP !== CompilerOptions.LP.LP64
+    ) {
+      return;
+    }
+    acceptor(
+      diagnosticFromCode(CompilerOptionsCodes.Rent.IgnoredWithLp64, token),
+    );
+  },
+});
 
 /** {@link CompilerOptions.resExp} */
 translator.flag("resExp", ["RESEXP"], ["NORESEXP"]);
@@ -3562,7 +3808,23 @@ translator.flag("stdsys", ["STDSYS"], ["NOSTDSYS"]);
 translator.flag("stmt", ["STMT"], ["NOSTMT"]);
 
 /** {@link CompilerOptions.storage} */
-translator.flag("storage", ["STORAGE", "STG"], ["NOSTORAGE", "NSTG"]);
+translator
+  .flag("storage", ["STORAGE", "STG"], ["NOSTORAGE", "NSTG"])
+  .postProcess({
+    id: "storage.ignoredWithNoObject",
+    run: (options, acceptor, getOwnToken) => {
+      if (!options.storage || options.object !== false) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Object.IgnoredOption,
+          getOwnToken(),
+          "STORAGE",
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.stringOfGraphic} */
 translator.rule(["STRINGOFGRAPHIC", "CHAR", "G"], (option, options) => {
@@ -3660,110 +3922,152 @@ translator.rule(
 translator.flag("terminal", ["TERMINAL", "TERM"], ["NOTERMINAL", "NTERM"]);
 
 /** {@link CompilerOptions.test} */
-translator.rule(
-  ["TEST"],
-  (option, options, acceptor) => {
-    // If there are multiple *PROCESS TEST directives,
-    // the last one takes precedence and all suboptions that are not specified
-    // are set to default.
-    options.test = {
-      level: CompilerOptions.TestLevel.ALL,
-      hook: true,
-      separate: false,
-      sepName: true,
-      source: false,
-      sym: true,
-    };
-    for (const value of option.values) {
-      ensureType(value, "plain");
-      const name = value.value.toUpperCase();
-      switch (name) {
-        case "ALL":
-        case "BLOCK":
-        case "NONE":
-        case "PATH":
-        case "STMT":
-          options.test.level = ensureEnum(
-            value,
-            CompilerOptionsCodes.Test.InvalidParameter,
-            CompilerOptions.TestLevel,
-          );
-          break;
-        case "HOOK":
-          options.test.hook = true;
-          break;
-        case "NOHOOK":
-          options.test.hook = false;
-          break;
-        case "SEPARATE":
-          options.test.separate = true;
-          break;
-        case "NOSEPARATE":
-          options.test.separate = false;
-          break;
-        case "SEPNAME":
-          options.test.sepName = true;
-          break;
-        case "NOSEPNAME":
-          options.test.sepName = false;
-          break;
-        case "SOURCE":
-          options.test.source = true;
-          break;
-        case "NOSOURCE":
-          options.test.source = false;
-          break;
-        case "SYM":
-          options.test.sym = true;
-          break;
-        case "NOSYM":
-          options.test.sym = false;
-          break;
-        default:
-          throw diagnosticFromCode(
-            CompilerOptionsCodes.Test.InvalidParameter,
-            value.token,
-            name,
-          );
+translator
+  .rule(
+    ["TEST"],
+    (option, options, acceptor) => {
+      // If there are multiple *PROCESS TEST directives,
+      // the last one takes precedence and all suboptions that are not specified
+      // are set to default.
+      options.test = {
+        level: CompilerOptions.TestLevel.ALL,
+        hook: true,
+        separate: false,
+        sepName: true,
+        source: false,
+        sym: true,
+      };
+      let sepNameToken: CompilerOption["token"] | undefined;
+      for (const value of option.values) {
+        ensureType(value, "plain");
+        const name = value.value.toUpperCase();
+        switch (name) {
+          case "ALL":
+          case "BLOCK":
+          case "NONE":
+          case "PATH":
+          case "STMT":
+            options.test.level = ensureEnum(
+              value,
+              CompilerOptionsCodes.Test.InvalidParameter,
+              CompilerOptions.TestLevel,
+            );
+            break;
+          case "HOOK":
+            options.test.hook = true;
+            break;
+          case "NOHOOK":
+            options.test.hook = false;
+            break;
+          case "SEPARATE":
+            options.test.separate = true;
+            break;
+          case "NOSEPARATE":
+            options.test.separate = false;
+            break;
+          case "SEPNAME":
+            options.test.sepName = true;
+            sepNameToken = value.token;
+            break;
+          case "NOSEPNAME":
+            options.test.sepName = false;
+            break;
+          case "SOURCE":
+            options.test.source = true;
+            break;
+          case "NOSOURCE":
+            options.test.source = false;
+            break;
+          case "SYM":
+            options.test.sym = true;
+            break;
+          case "NOSYM":
+            options.test.sym = false;
+            break;
+          default:
+            throw diagnosticFromCode(
+              CompilerOptionsCodes.Test.InvalidParameter,
+              value.token,
+              name,
+            );
+        }
       }
-    }
-    reportDuplicateSubOptions(option, acceptor);
-    reportMutexSubOptions(option, acceptor, [
-      ["ALL", "BLOCK", "NONE", "PATH", "STMT"],
-      ["HOOK", "NOHOOK"],
-      ["SEPARATE", "NOSEPARATE"],
-      ["SEPNAME", "NOSEPNAME"],
-      ["SOURCE", "NOSOURCE"],
-      ["SYM", "NOSYM"],
-    ]);
-  },
-  ["NOTEST"],
-  (option, options) => {
-    ensureArguments(option, 0, 0);
-    options.test = false;
-  },
-);
+      reportDuplicateSubOptions(option, acceptor);
+      reportMutexSubOptions(option, acceptor, [
+        ["ALL", "BLOCK", "NONE", "PATH", "STMT"],
+        ["HOOK", "NOHOOK"],
+        ["SEPARATE", "NOSEPARATE"],
+        ["SEPNAME", "NOSEPNAME"],
+        ["SOURCE", "NOSOURCE"],
+        ["SYM", "NOSYM"],
+      ]);
+      // SEPNAME is ignored if SEPARATE is not in effect.
+      if (sepNameToken && !options.test.separate) {
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.Test.SepNameIgnoredWithoutSeparate,
+            sepNameToken,
+          ),
+        );
+      }
+    },
+    ["NOTEST"],
+    (option, options) => {
+      ensureArguments(option, 0, 0);
+      options.test = false;
+    },
+  )
+  .postProcess({
+    id: "test.conflictsWithLineDir",
+    run: (options, acceptor, getOwnToken) => {
+      if (!options.lineDir || !options.test || !options.test.separate) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Test.ConflictWithLineDir,
+          getOwnToken(),
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.unroll} */
-translator.rule(["UNROLL"], (option, options) => {
-  ensureArguments(option, 1, 1);
-  const value = option.values[0];
-  ensureType(value, "plainNotEmpty");
-  const name = value.value.toUpperCase();
-  if (["AUTO", "NO"].includes(name)) {
-    options.unroll = ensureEnum(
-      value,
-      CompilerOptionsCodes.Unroll.InvalidParameter,
-      CompilerOptions.Unroll,
-    );
-  } else {
-    throw diagnosticFromCode(
-      CompilerOptionsCodes.Unroll.InvalidParameter,
-      value.token,
-      name,
-    );
-  }
-});
+translator
+  .rule(["UNROLL"], (option, options) => {
+    ensureArguments(option, 1, 1);
+    const value = option.values[0];
+    ensureType(value, "plainNotEmpty");
+    const name = value.value.toUpperCase();
+    if (["AUTO", "NO"].includes(name)) {
+      options.unroll = ensureEnum(
+        value,
+        CompilerOptionsCodes.Unroll.InvalidParameter,
+        CompilerOptions.Unroll,
+      );
+    } else {
+      throw diagnosticFromCode(
+        CompilerOptionsCodes.Unroll.InvalidParameter,
+        value.token,
+        name,
+      );
+    }
+  })
+  .postProcess({
+    id: "unroll.ignoredWithNoOptimize",
+    run: (options, acceptor, getOwnToken) => {
+      const token = getOwnToken();
+      if (token === undefined || options.optimize !== 0) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Unroll.IgnoredWithNoOptimize,
+          token,
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.usage} */
 translator.rule(["USAGE"], (option, options, acceptor) => {
@@ -3859,30 +4163,52 @@ translator.rule(["WINDOW"], (option, options) => {
 });
 
 /** {@link CompilerOptions.writable} */
-translator.rule(
-  ["WRITABLE"],
-  (option, options) => {
-    ensureArguments(option, 0, 0);
-    options.writable = true;
-  },
-  ["NOWRITABLE"],
-  (option, options) => {
-    ensureArguments(option, 0, 1);
-    if (option.values.length === 0) {
-      options.writable = { noWritable: CompilerOptions.WritableNoWritable.FWS };
-      return;
-    }
-    const value = option.values[0];
-    ensureType(value, "plainNotEmpty");
-    options.writable = {
-      noWritable: ensureEnum(
-        value,
-        CompilerOptionsCodes.Writable.InvalidParameter,
-        CompilerOptions.WritableNoWritable,
-      ),
-    };
-  },
-);
+translator
+  .rule(
+    ["WRITABLE"],
+    (option, options) => {
+      ensureArguments(option, 0, 0);
+      options.writable = true;
+    },
+    ["NOWRITABLE"],
+    (option, options) => {
+      ensureArguments(option, 0, 1);
+      if (option.values.length === 0) {
+        options.writable = {
+          noWritable: CompilerOptions.WritableNoWritable.FWS,
+        };
+        return;
+      }
+      const value = option.values[0];
+      ensureType(value, "plainNotEmpty");
+      options.writable = {
+        noWritable: ensureEnum(
+          value,
+          CompilerOptionsCodes.Writable.InvalidParameter,
+          CompilerOptions.WritableNoWritable,
+        ),
+      };
+    },
+  )
+  .postProcess({
+    id: "writable.ignoredWithLp64",
+    run: (options, acceptor, getOwnToken) => {
+      const token = getOwnToken();
+      if (
+        token === undefined ||
+        options.writable !== true ||
+        options.LP !== CompilerOptions.LP.LP64
+      ) {
+        return;
+      }
+      acceptor(
+        diagnosticFromCode(
+          CompilerOptionsCodes.Writable.IgnoredWithLp64,
+          token,
+        ),
+      );
+    },
+  });
 
 /** {@link CompilerOptions.xInfo} */
 translator.rule(["XINFO"], (option, options, acceptor) => {

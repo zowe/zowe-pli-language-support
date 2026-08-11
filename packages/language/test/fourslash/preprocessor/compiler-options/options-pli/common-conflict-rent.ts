@@ -12,13 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS RENT;
+////*PROCESS <|1:COMMON|>;
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Common.ConflictWithRent.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  common: true,
+  rent: true,
 });

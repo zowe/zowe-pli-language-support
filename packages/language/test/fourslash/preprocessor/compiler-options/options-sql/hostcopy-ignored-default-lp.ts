@@ -12,13 +12,17 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS PP(SQL("<|1:HOSTCOPY|>"));
+
+// LP is never specified here, so its default value of LP(32) applies, which
+// still causes HOSTCOPY to be ignored.
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.PPSQL.HostCopy.IgnoredWithLp32.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  LP: constants.CompilerOptions.LP.LP32,
+  sqlOptions: {
+    hostCopy: true,
   },
 });

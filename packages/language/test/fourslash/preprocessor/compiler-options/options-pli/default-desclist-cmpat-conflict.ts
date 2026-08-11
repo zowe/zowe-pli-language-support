@@ -12,13 +12,18 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS CMPAT(V2);
+////*PROCESS <|1:DEFAULT|>(DESCLIST);
 
+verify.expectDiagnosticsAt(1, {
+  message:
+    code.CompilerOptions.Default.DescListConflictsWithCmpat.message("V2"),
+});
+
+// DFT(DESCLOCATOR) is assumed instead of DFT(DESCLIST) as specified in the spec.
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  cmpat: constants.CompilerOptions.CMPat.V2,
+  default: {
+    desc: constants.CompilerOptions.DefaultDesc.LOCATOR,
   },
 });

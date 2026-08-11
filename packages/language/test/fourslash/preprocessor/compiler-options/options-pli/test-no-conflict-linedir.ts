@@ -12,13 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS LINEDIR;
+////*PROCESS TEST(NOSEPARATE);
+
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  lineDir: true,
+  test: {
+    separate: false,
   },
 });

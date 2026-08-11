@@ -172,17 +172,20 @@ export class CompilerOptionTranslator {
     this.translator.postProcess();
     this.translatorMacro.postProcess();
     this.translatorSQL.postProcess();
+    this.translatorCICS.postProcess();
 
     this.result.issues.push(
       ...this.applyDiagnosticAnchor([
         ...this.translator.diagnostics,
         ...this.translatorMacro.diagnostics,
         ...this.translatorSQL.diagnostics,
+        ...this.translatorCICS.diagnostics,
       ]),
     );
     this.translator.clearIssues();
     this.translatorMacro.clearIssues();
     this.translatorSQL.clearIssues();
+    this.translatorCICS.clearIssues();
   }
 
   protected parseNestedOptions<T extends CompilerOptionsPP>(

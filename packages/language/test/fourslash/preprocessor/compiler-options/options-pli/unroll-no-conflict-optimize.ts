@@ -12,13 +12,12 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS OPTIMIZE;
+////*PROCESS UNROLL(AUTO);
+
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  optimize: 3,
+  unroll: constants.CompilerOptions.Unroll.AUTO,
 });

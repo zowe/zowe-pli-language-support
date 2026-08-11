@@ -12,13 +12,16 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS LP(32);
+////*PROCESS PP(SQL("<|1:HOSTCOPY|>"));
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.PPSQL.HostCopy.IgnoredWithLp32.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  LP: constants.CompilerOptions.LP.LP32,
+  sqlOptions: {
+    hostCopy: true,
   },
 });

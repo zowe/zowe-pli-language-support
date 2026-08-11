@@ -11,8 +11,10 @@
 
 import { diagnosticFromCode } from "../../language-server/types";
 import { CompilerOptionsCodes } from "./codes";
+import { CompilerOptions as CompilerOptionsPLI } from "./options-pli";
 import { CompilerOptions, getDefaultCompilerOptions } from "./options-sql";
 import { ensureArguments, ensureType, Translator } from "./translator";
+import { getTranslator as getTranslatorPLI } from "./translator-pli";
 
 const translator = new Translator<CompilerOptions>(() =>
   getDefaultCompilerOptions(),
@@ -57,7 +59,25 @@ translator.rule(["DEPRECATE"], (option, options) => {
 
 translator.flag("emptyDbrm", ["EMPTYDBRM"], ["NOEMPTYDBRM"]);
 
-translator.flag("hostCopy", ["HOSTCOPY"], ["NOHOSTCOPY"]);
+translator.flag("hostCopy", ["HOSTCOPY"], ["NOHOSTCOPY"]).postProcess({
+  id: "hostCopy.ignoredWithLp32",
+  run: (options, acceptor, getOwnToken) => {
+    const token = getOwnToken();
+    if (
+      token === undefined ||
+      !options.hostCopy ||
+      getTranslatorPLI().options.LP !== CompilerOptionsPLI.LP.LP32
+    ) {
+      return;
+    }
+    acceptor(
+      diagnosticFromCode(
+        CompilerOptionsCodes.PPSQL.HostCopy.IgnoredWithLp32,
+        token,
+      ),
+    );
+  },
+});
 
 translator.flag("incOnly", ["INCONLY"], ["NOINCONLY"]);
 
