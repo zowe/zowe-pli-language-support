@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS MOVE", async () => {
+describe("CICS MOVE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS MOVE", async () => {
   });
 
   // checkMoveOptions -> checkHasMandatoryOptions(CONTAINER)
-  test("Missing CONTAINER", async () => {
+  test("Missing CONTAINER", () => {
     const { diagnostics } = cicsPreprocessor.parse("MOVE AS(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -42,7 +42,7 @@ describe("CICS MOVE", async () => {
   });
 
   // checkMoveOptions -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive FROMPROCESS and FROMACTIVITY", async () => {
+  test("Mutually exclusive FROMPROCESS and FROMACTIVITY", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456) FROMPROCESS FROMACTIVITY(789)",
     );
@@ -54,7 +54,7 @@ describe("CICS MOVE", async () => {
   });
 
   // checkMoveOptions -> checkHasIllegalOptions when FROMPROCESS present
-  test("CHANNEL illegal with FROMPROCESS", async () => {
+  test("CHANNEL illegal with FROMPROCESS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456) FROMPROCESS CHANNEL(789)",
     );
@@ -66,7 +66,7 @@ describe("CICS MOVE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONTAINER", async () => {
+  test("Duplicated CONTAINER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) CONTAINER(456) AS(789)",
     );

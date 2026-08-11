@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DEFINE", async () => {
+describe("CICS DEFINE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (ACTIVITY)", async () => {
+  test("Positive (ACTIVITY)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) TRANSID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Define timer", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Define timer", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE TIMER('TIMER1')",
     );
     expect(diagnostics).toHaveLength(2);
@@ -36,8 +36,8 @@ describe("CICS DEFINE", async () => {
     );
   });
 
-  test("Define timer with aggregated missing options on missing year", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Define timer with aggregated missing options on missing year", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE TIMER('TIMER1') AT HOURS(1) ON",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,8 +45,8 @@ describe("CICS DEFINE", async () => {
     expect(diagnostics[0].message).toMatch(/Missing required option: YEAR/);
   });
 
-  test("Define timer with aggregated missing options on missing month", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Define timer with aggregated missing options on missing month", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE TIMER('TIMER1') AT HOURS(1) ON YEAR(2026)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,7 +56,7 @@ describe("CICS DEFINE", async () => {
     );
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) TRANSID(2) BLA",
     );
@@ -65,7 +65,7 @@ describe("CICS DEFINE", async () => {
   });
 
   // checkActivity -> checkHasMandatoryOptions(TRANSID)
-  test("ACTIVITY missing TRANSID", async () => {
+  test("ACTIVITY missing TRANSID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) PROGRAM(2)",
     );
@@ -75,10 +75,8 @@ describe("CICS DEFINE", async () => {
   });
 
   // checkCompositeEvent -> checkHasExactlyOneOption (AND or OR none)
-  test("COMPOSITE without AND or OR", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DEFINE COMPOSITE EVENT(2)",
-    );
+  test("COMPOSITE without AND or OR", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DEFINE COMPOSITE EVENT(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -87,7 +85,7 @@ describe("CICS DEFINE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TRANSID", async () => {
+  test("Duplicated TRANSID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DEFINE ACTIVITY(1) TRANSID(2) TRANSID(3)",
     );

@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS RESET", async () => {
+describe("CICS RESET", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (ACQPROCESS)", async () => {
+  test("Positive (ACQPROCESS)", () => {
     const { diagnostics } = cicsPreprocessor.parse("RESET ACQPROCESS");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RESET ACQPROCESS BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RESET ACQPROCESS BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkResetAcqprocess -> checkHasMandatoryOptions(ACQPROCESS)
-  test("Missing ACQPROCESS", async () => {
+  test("Missing ACQPROCESS", () => {
     const { diagnostics } = cicsPreprocessor.parse("RESET NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS RESET", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ACTIVITY", async () => {
+  test("Duplicated ACTIVITY", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "RESET ACTIVITY(1) ACTIVITY(2)",
     );

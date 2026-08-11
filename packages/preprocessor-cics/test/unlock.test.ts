@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS UNLOCK", async () => {
+describe("CICS UNLOCK", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("UNLOCK FILE(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "UNLOCK FILE(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("UNLOCK FILE(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkUnlock -> checkHasMandatoryOptions(cics_file_name)
-  test("Missing FILE", async () => {
+  test("Missing FILE", () => {
     const { diagnostics } = cicsPreprocessor.parse("UNLOCK TOKEN(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS UNLOCK", async () => {
   });
 
   // checkUnlock -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive FILE and DATASET", async () => {
+  test("Mutually exclusive FILE and DATASET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "UNLOCK FILE(123) DATASET(456)",
     );
@@ -50,7 +48,7 @@ describe("CICS UNLOCK", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
+  test("Duplicated TOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "UNLOCK FILE(123) TOKEN(456) TOKEN(789)",
     );

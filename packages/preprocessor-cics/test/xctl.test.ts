@@ -13,22 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS XCTL", async () => {
+describe("CICS XCTL", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("XCTL PROGRAM(P)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse("XCTL PROGRAM(P) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkXctl -> checkHasMandatoryOptions
-  test("Missing PROGRAM", async () => {
+  test("Missing PROGRAM", () => {
     const { diagnostics } = cicsPreprocessor.parse("XCTL COMMAREA(A)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -36,7 +36,7 @@ describe("CICS XCTL", async () => {
   });
 
   // checkXctl -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive COMMAREA and CHANNEL", async () => {
+  test("Mutually exclusive COMMAREA and CHANNEL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "XCTL PROGRAM(P) COMMAREA(A) CHANNEL(C)",
     );
@@ -48,10 +48,8 @@ describe("CICS XCTL", async () => {
   });
 
   // checkXctl -> checkOptionalWithLength (optional present without its required field)
-  test("LENGTH without COMMAREA", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "XCTL PROGRAM(P) LENGTH(5)",
-    );
+  test("LENGTH without COMMAREA", () => {
+    const { diagnostics } = cicsPreprocessor.parse("XCTL PROGRAM(P) LENGTH(5)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -60,7 +58,7 @@ describe("CICS XCTL", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PROGRAM", async () => {
+  test("Duplicated PROGRAM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "XCTL PROGRAM(P) PROGRAM(Q)",
     );

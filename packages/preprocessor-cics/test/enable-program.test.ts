@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENABLE PROGRAM", async () => {
+describe("CICS ENABLE PROGRAM", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENABLE PROGRAM(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ENABLE PROGRAM(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENABLE PROGRAM(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEnableProgram -> checkHasMandatoryOptions(PROGRAM)
-  test("Missing PROGRAM", async () => {
+  test("Missing PROGRAM", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENABLE ENTRYNAME(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS ENABLE PROGRAM", async () => {
   });
 
   // checkEnableProgram -> checkHasIllegalOptions(GAEXECUTABLE) when GALENGTH absent
-  test("GAEXECUTABLE without GALENGTH", async () => {
+  test("GAEXECUTABLE without GALENGTH", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) GAEXECUTABLE",
     );
@@ -50,7 +48,7 @@ describe("CICS ENABLE PROGRAM", async () => {
   });
 
   // checkEnableProgram -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive QUASIRENT and THREADSAFE", async () => {
+  test("Mutually exclusive QUASIRENT and THREADSAFE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) QUASIRENT THREADSAFE",
     );
@@ -62,7 +60,7 @@ describe("CICS ENABLE PROGRAM", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PROGRAM", async () => {
+  test("Duplicated PROGRAM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) PROGRAM(2)",
     );

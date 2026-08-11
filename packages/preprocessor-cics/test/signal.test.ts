@@ -13,34 +13,30 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SIGNAL EVENT", async () => {
+describe("CICS SIGNAL EVENT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("SIGNAL EVENT(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SIGNAL EVENT(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SIGNAL EVENT(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkSignalEvent -> checkHasMandatoryOptions(EVENT)
-  test("Missing EVENT", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SIGNAL FROMCHANNEL(123)",
-    );
+  test("Missing EVENT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SIGNAL FROMCHANNEL(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: EVENT/);
   });
 
   // checkSignalEvent -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive FROMCHANNEL and FROM", async () => {
+  test("Mutually exclusive FROMCHANNEL and FROM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) FROMCHANNEL(456) FROM(789)",
     );
@@ -52,7 +48,7 @@ describe("CICS SIGNAL EVENT", async () => {
   });
 
   // checkSignalEvent -> checkOptionalWithLength (optional present without required field)
-  test("FROMLENGTH without FROM", async () => {
+  test("FROMLENGTH without FROM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) FROMLENGTH(5)",
     );
@@ -64,7 +60,7 @@ describe("CICS SIGNAL EVENT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated EVENT", async () => {
+  test("Duplicated EVENT", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SIGNAL EVENT(123) EVENT(456)",
     );

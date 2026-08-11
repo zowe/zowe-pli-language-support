@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SPOOLWRITE", async () => {
+describe("CICS SPOOLWRITE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456) BLA",
     );
@@ -32,27 +32,23 @@ describe("CICS SPOOLWRITE", async () => {
   });
 
   // checkSpoolwrite -> checkHasMandatoryOptions(TOKEN)
-  test("Missing TOKEN", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SPOOLWRITE FROM(456)",
-    );
+  test("Missing TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLWRITE FROM(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
   });
 
   // checkSpoolwrite -> checkHasMandatoryOptions(FROM)
-  test("Missing FROM", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SPOOLWRITE TOKEN(123)",
-    );
+  test("Missing FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLWRITE TOKEN(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
   });
 
   // checkSpoolwrite -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive LINE and PAGE", async () => {
+  test("Mutually exclusive LINE and PAGE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456) LINE PAGE",
     );
@@ -64,7 +60,7 @@ describe("CICS SPOOLWRITE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
+  test("Duplicated TOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) TOKEN(456) FROM(789)",
     );

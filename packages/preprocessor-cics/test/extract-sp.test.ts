@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS EXTRACT (SP)", async () => {
+describe("CICS EXTRACT (SP)", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (EXIT)", async () => {
+  test("Positive (EXIT)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT EXIT PROGRAM(1) GALENGTH(LEN) GASET(PTR)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT EXIT PROGRAM(1) GALENGTH(LEN) GASET(PTR) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkExtractExit -> checkHasMandatoryOptions(PROGRAM)
-  test("EXIT missing PROGRAM", async () => {
+  test("EXIT missing PROGRAM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT EXIT GALENGTH(LEN) GASET(PTR)",
     );
@@ -42,7 +42,7 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkExtractStatistics -> checkHasMandatoryOptions(SET)
-  test("STATISTICS missing SET", async () => {
+  test("STATISTICS missing SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR",
     );
@@ -52,7 +52,7 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkRestypeOptions -> multiple RESTYPE options not allowed
-  test("Multiple RESTYPE options", async () => {
+  test("Multiple RESTYPE options", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR FILE SET(PTR)",
     );
@@ -64,7 +64,7 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkForResidRequiredOptions -> RESIDLEN without RESID
-  test("RESIDLEN without RESID", async () => {
+  test("RESIDLEN without RESID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR SET(PTR) RESIDLEN(2)",
     );
@@ -76,7 +76,7 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkLastTimeOptions -> LASTRESETABS with LASTRESET
-  test("LASTRESET with LASTRESETABS", async () => {
+  test("LASTRESET with LASTRESETABS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR SET(PTR) LASTRESET(X) LASTRESETABS(Y)",
     );
@@ -88,7 +88,7 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated SET", async () => {
+  test("Duplicated SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR SET(PTR) SET(PTR2)",
     );

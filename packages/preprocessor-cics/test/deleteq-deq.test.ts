@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DELETEQ / DEQ", async () => {
+describe("CICS DELETEQ / DEQ", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (DELETEQ TD)", async () => {
+  test("Positive (DELETEQ TD)", () => {
     const { diagnostics } = cicsPreprocessor.parse("DELETEQ TD QUEUE(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DELETEQ TD QUEUE(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DELETEQ TD QUEUE(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkDeleteqTd -> checkHasMandatoryOptions(QUEUE)
-  test("DELETEQ TD missing QUEUE", async () => {
+  test("DELETEQ TD missing QUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse("DELETEQ TD");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS DELETEQ / DEQ", async () => {
   });
 
   // checkDeqCmds -> checkHasMandatoryOptions(RESOURCE)
-  test("DEQ missing RESOURCE", async () => {
+  test("DEQ missing RESOURCE", () => {
     const { diagnostics } = cicsPreprocessor.parse("DEQ LENGTH(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -46,10 +44,8 @@ describe("CICS DELETEQ / DEQ", async () => {
   });
 
   // checkDeqCmds -> checkHasMutuallyExclusiveOptions
-  test("DEQ mutually exclusive UOW and TASK", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DEQ RESOURCE(1) UOW TASK",
-    );
+  test("DEQ mutually exclusive UOW and TASK", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DEQ RESOURCE(1) UOW TASK");
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -58,7 +54,7 @@ describe("CICS DELETEQ / DEQ", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated QUEUE", async () => {
+  test("Duplicated QUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DELETEQ TD QUEUE(1) QUEUE(2)",
     );

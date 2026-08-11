@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS REWRITE", async () => {
+describe("CICS REWRITE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) FROM(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) FROM(456) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkRule -> checkHasExactlyOneOption (none provided)
-  test("Neither FILE nor DATASET", async () => {
+  test("Neither FILE nor DATASET", () => {
     const { diagnostics } = cicsPreprocessor.parse("REWRITE FROM(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -42,7 +42,7 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkRule -> checkHasExactlyOneOption (both provided -> mutually exclusive)
-  test("Both FILE and DATASET", async () => {
+  test("Both FILE and DATASET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) DATASET(456) FROM(789)",
     );
@@ -54,7 +54,7 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkRule -> checkHasMandatoryOptions(FROM)
-  test("Missing FROM", async () => {
+  test("Missing FROM", () => {
     const { diagnostics } = cicsPreprocessor.parse("REWRITE FILE(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -62,7 +62,7 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated FROM", async () => {
+  test("Duplicated FROM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) FROM(456) FROM(789)",
     );

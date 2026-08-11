@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS READ", async () => {
+describe("CICS READ", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2) INTO(3) BLA",
     );
@@ -32,10 +32,8 @@ describe("CICS READ", async () => {
   });
 
   // checkRule -> checkHasExactlyOneOption (FILE or DATASET none)
-  test("Neither FILE nor DATASET", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "READ RIDFLD(1) INTO(2)",
-    );
+  test("Neither FILE nor DATASET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("READ RIDFLD(1) INTO(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -44,20 +42,16 @@ describe("CICS READ", async () => {
   });
 
   // checkRule -> checkHasMandatoryOptions(RIDFLD)
-  test("Missing RIDFLD", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "READ FILE(1) INTO(2)",
-    );
+  test("Missing RIDFLD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("READ FILE(1) INTO(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RIDFLD/);
   });
 
   // checkRule -> checkHasExactlyOneOption (INTO or SET none)
-  test("Neither INTO nor SET", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "READ FILE(1) RIDFLD(2)",
-    );
+  test("Neither INTO nor SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("READ FILE(1) RIDFLD(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -66,7 +60,7 @@ describe("CICS READ", async () => {
   });
 
   // checkRule -> checkPrerequisiteIsMet (TOKEN requires UPDATE)
-  test("TOKEN without UPDATE", async () => {
+  test("TOKEN without UPDATE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READ FILE(1) RIDFLD(2) INTO(3) TOKEN(4)",
     );
@@ -78,7 +72,7 @@ describe("CICS READ", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated FILE", async () => {
+  test("Duplicated FILE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READ FILE(1) FILE(2) RIDFLD(3) INTO(4)",
     );

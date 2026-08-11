@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS FREE", async () => {
+describe("CICS FREE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("FREE CONVID(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "FREE CONVID(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("FREE CONVID(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkMutuallyExclusiveOptions
-  test("Mutually exclusive CONVID and SESSION", async () => {
+  test("Mutually exclusive CONVID and SESSION", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FREE CONVID(123) SESSION(456)",
     );
@@ -42,7 +40,7 @@ describe("CICS FREE", async () => {
   });
 
   // checkRule -> checkHasIllegalOptions when CHILD is present
-  test("CONVID illegal with CHILD", async () => {
+  test("CONVID illegal with CHILD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FREE CHILD(123) CONVID(456)",
     );
@@ -52,7 +50,7 @@ describe("CICS FREE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONVID", async () => {
+  test("Duplicated CONVID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FREE CONVID(123) CONVID(456)",
     );

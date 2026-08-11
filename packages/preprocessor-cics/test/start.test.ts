@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS START", async () => {
+describe("CICS START", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (TRANSID)", async () => {
+  test("Positive (TRANSID)", () => {
     const { diagnostics } = cicsPreprocessor.parse("START TRANSID(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "START TRANSID(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("START TRANSID(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkStartTransid -> checkHasMandatoryOptions(TRANSID)
-  test("Transid missing TRANSID", async () => {
+  test("Transid missing TRANSID", () => {
     const { diagnostics } = cicsPreprocessor.parse("START FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS START", async () => {
   });
 
   // checkStartTransid -> checkMutuallyExclusiveOptions
-  test("Mutually exclusive INTERVAL and TIME", async () => {
+  test("Mutually exclusive INTERVAL and TIME", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "START TRANSID(1) INTERVAL(123) TIME(456)",
     );
@@ -50,7 +48,7 @@ describe("CICS START", async () => {
   });
 
   // checkStartAttach -> checkHasMandatoryOptions(TRANSID)
-  test("ATTACH missing TRANSID", async () => {
+  test("ATTACH missing TRANSID", () => {
     const { diagnostics } = cicsPreprocessor.parse("START ATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -58,7 +56,7 @@ describe("CICS START", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TRANSID", async () => {
+  test("Duplicated TRANSID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "START TRANSID(1) TRANSID(2)",
     );

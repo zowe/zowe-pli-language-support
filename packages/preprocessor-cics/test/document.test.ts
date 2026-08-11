@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DOCUMENT", async () => {
+describe("CICS DOCUMENT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (CREATE)", async () => {
+  test("Positive (CREATE)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DOCUMENT CREATE DOCTOKEN(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DOCUMENT CREATE DOCTOKEN(1) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS DOCUMENT", async () => {
   });
 
   // checkDocumentCreate -> checkHasMandatoryOptions(DOCTOKEN)
-  test("CREATE missing DOCTOKEN", async () => {
+  test("CREATE missing DOCTOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse("DOCUMENT CREATE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +40,7 @@ describe("CICS DOCUMENT", async () => {
   });
 
   // checkDocumentDelete -> checkHasMandatoryOptions(DOCTOKEN)
-  test("DELETE missing DOCTOKEN", async () => {
+  test("DELETE missing DOCTOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse("DOCUMENT DELETE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -48,7 +48,7 @@ describe("CICS DOCUMENT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated DOCTOKEN", async () => {
+  test("Duplicated DOCTOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DOCUMENT CREATE DOCTOKEN(1) DOCTOKEN(2)",
     );

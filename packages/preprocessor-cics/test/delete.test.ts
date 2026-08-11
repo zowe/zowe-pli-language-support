@@ -13,17 +13,15 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DELETE", async () => {
+describe("CICS DELETE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (group one)", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DELETE FILE(1) RIDFLD(2)",
-    );
+  test("Positive (group one)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DELETE FILE(1) RIDFLD(2)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DELETE FILE(1) RIDFLD(2) BLA",
     );
@@ -32,7 +30,7 @@ describe("CICS DELETE", async () => {
   });
 
   // checkDeleteGroupOne -> checkHasMandatoryOptions(cics_file_name)
-  test("Group one missing FILE", async () => {
+  test("Group one missing FILE", () => {
     const { diagnostics } = cicsPreprocessor.parse("DELETE TOKEN(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS DELETE", async () => {
   });
 
   // checkDeleteGroupOne -> checkHasIllegalOptions(KEYLENGTH) when RIDFLD absent
-  test("Group one KEYLENGTH illegal without RIDFLD", async () => {
+  test("Group one KEYLENGTH illegal without RIDFLD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DELETE FILE(1) KEYLENGTH(2)",
     );
@@ -52,7 +50,7 @@ describe("CICS DELETE", async () => {
   });
 
   // checkDeleteGroupThree -> checkHasMandatoryOptions(CONTAINER)
-  test("Group three missing CONTAINER", async () => {
+  test("Group three missing CONTAINER", () => {
     const { diagnostics } = cicsPreprocessor.parse("DELETE ACQPROCESS");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -62,7 +60,7 @@ describe("CICS DELETE", async () => {
   });
 
   // checkDeleteGroupFour -> checkHasExactlyOneOption (none provided)
-  test("Group four without COUNTER or DCOUNTER", async () => {
+  test("Group four without COUNTER or DCOUNTER", () => {
     const { diagnostics } = cicsPreprocessor.parse("DELETE POOL(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -72,7 +70,7 @@ describe("CICS DELETE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated RIDFLD", async () => {
+  test("Duplicated RIDFLD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DELETE FILE(1) RIDFLD(2) RIDFLD(3)",
     );

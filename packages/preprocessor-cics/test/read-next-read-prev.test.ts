@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS READNEXT/READPREV", async () => {
+describe("CICS READNEXT/READPREV", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) INTO(3) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS READNEXT/READPREV", async () => {
   });
 
   // checkReadNextReadPrevBody -> checkHasMandatoryOptions(cics_file_name)
-  test("Missing FILE", async () => {
+  test("Missing FILE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT RIDFLD(1) INTO(2)",
     );
@@ -42,17 +42,15 @@ describe("CICS READNEXT/READPREV", async () => {
   });
 
   // checkReadNextReadPrevBody -> checkHasMandatoryOptions(RIDFLD)
-  test("Missing RIDFLD", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "READNEXT FILE(1) INTO(2)",
-    );
+  test("Missing RIDFLD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("READNEXT FILE(1) INTO(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RIDFLD/);
   });
 
   // checkReadNextReadPrevBody -> checkHasExactlyOneOption (INTO or SET none)
-  test("Neither INTO nor SET", async () => {
+  test("Neither INTO nor SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2)",
     );
@@ -64,7 +62,7 @@ describe("CICS READNEXT/READPREV", async () => {
   });
 
   // checkReadNextReadPrevBody -> checkHasIllegalOptions (TOKEN without UPDATE)
-  test("TOKEN without UPDATE", async () => {
+  test("TOKEN without UPDATE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) INTO(3) TOKEN(4)",
     );
@@ -77,7 +75,7 @@ describe("CICS READNEXT/READPREV", async () => {
 
   // checkDuplicates (RIDFLD is a direct child; FILE is nested in cics_file_name
   // which checkDuplicates does not descend into, so it cannot be flagged)
-  test("Duplicated RIDFLD", async () => {
+  test("Duplicated RIDFLD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READNEXT FILE(1) RIDFLD(2) RIDFLD(3) INTO(4)",
     );

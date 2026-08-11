@@ -13,16 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DUMP TRANSACTION", async () => {
+describe("CICS DUMP TRANSACTION", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("DUMP DUMPCODE(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Command alone", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DUMP TRANSACTION");
+  test("Command alone", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DUMP TRANSACTION");
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
@@ -32,7 +32,7 @@ describe("CICS DUMP TRANSACTION", async () => {
     );
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) BLA",
     );
@@ -41,20 +41,16 @@ describe("CICS DUMP TRANSACTION", async () => {
   });
 
   // checkDumpTransaction (on parent) -> checkHasMandatoryOptions(DUMPCODE) when FROM present
-  test("Missing DUMPCODE with FROM", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DUMP FROM(1) LENGTH(2)",
-    );
+  test("Missing DUMPCODE with FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DUMP FROM(1) LENGTH(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: DUMPCODE/);
   });
 
   // checkDumpTransactionFrom -> checkHasExactlyOneOption (LENGTH or FLENGTH none)
-  test("FROM without LENGTH or FLENGTH", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DUMP DUMPCODE(1) FROM(2)",
-    );
+  test("FROM without LENGTH or FLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DUMP DUMPCODE(1) FROM(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -63,7 +59,7 @@ describe("CICS DUMP TRANSACTION", async () => {
   });
 
   // checkDumpTransactionSegmentList -> checkHasMandatoryOptions(NUMSEGMENTS)
-  test("SEGMENTLIST missing NUMSEGMENTS", async () => {
+  test("SEGMENTLIST missing NUMSEGMENTS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) SEGMENTLIST(2) LENGTHLIST(3)",
     );
@@ -75,7 +71,7 @@ describe("CICS DUMP TRANSACTION", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated FROM", async () => {
+  test("Duplicated FROM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "DUMP DUMPCODE(1) FROM(2) FROM(3) LENGTH(4)",
     );

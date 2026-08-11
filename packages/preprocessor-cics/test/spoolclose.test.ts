@@ -13,26 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SPOOLCLOSE", async () => {
+describe("CICS SPOOLCLOSE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SPOOLCLOSE TOKEN(123)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLCLOSE TOKEN(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SPOOLCLOSE TOKEN(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLCLOSE TOKEN(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkSpoolcloseToken -> checkHasMandatoryOptions
-  test("Missing TOKEN", async () => {
+  test("Missing TOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse("SPOOLCLOSE KEEP");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +36,7 @@ describe("CICS SPOOLCLOSE", async () => {
   });
 
   // checkSpoolcloseToken -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive KEEP and DELETE", async () => {
+  test("Mutually exclusive KEEP and DELETE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLCLOSE TOKEN(123) KEEP DELETE",
     );
@@ -52,7 +48,7 @@ describe("CICS SPOOLCLOSE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
+  test("Duplicated TOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLCLOSE TOKEN(123) TOKEN(456)",
     );

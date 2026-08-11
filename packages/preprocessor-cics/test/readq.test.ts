@@ -13,17 +13,15 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS READQ", async () => {
+describe("CICS READQ", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (TD)", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "READQ TD QUEUE(1) INTO(2)",
-    );
+  test("Positive (TD)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("READQ TD QUEUE(1) INTO(2)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READQ TD QUEUE(1) INTO(2) BLA",
     );
@@ -32,7 +30,7 @@ describe("CICS READQ", async () => {
   });
 
   // checkTd -> checkHasMandatoryOptions(QUEUE)
-  test("TD missing QUEUE", async () => {
+  test("TD missing QUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse("READQ TD INTO(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS READQ", async () => {
   });
 
   // checkTd -> checkHasIllegalOptions(NEXT)
-  test("TD illegal NEXT", async () => {
+  test("TD illegal NEXT", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READQ TD QUEUE(1) INTO(2) NEXT",
     );
@@ -50,7 +48,7 @@ describe("CICS READQ", async () => {
   });
 
   // checkTs -> checkHasExactlyOneOption (QUEUE or QNAME none)
-  test("TS without QUEUE or QNAME", async () => {
+  test("TS without QUEUE or QNAME", () => {
     const { diagnostics } = cicsPreprocessor.parse("READQ TS INTO(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -60,7 +58,7 @@ describe("CICS READQ", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated QUEUE", async () => {
+  test("Duplicated QUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "READQ TD QUEUE(1) QUEUE(2) INTO(3)",
     );

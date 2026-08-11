@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS VERIFY", async () => {
+describe("CICS VERIFY", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (PASSWORD)", async () => {
+  test("Positive (PASSWORD)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) USERID(2) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS VERIFY", async () => {
   });
 
   // checkVerifyPassword -> checkHasMandatoryOptions(USERID)
-  test("PASSWORD missing USERID", async () => {
+  test("PASSWORD missing USERID", () => {
     const { diagnostics } = cicsPreprocessor.parse("VERIFY PASSWORD(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +40,7 @@ describe("CICS VERIFY", async () => {
   });
 
   // checkVerifyToken -> checkHasExactlyOneOption (none provided)
-  test("Token without TOKENTYPE/BASICAUTH/JWT/KERBEROS", async () => {
+  test("Token without TOKENTYPE/BASICAUTH/JWT/KERBEROS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY TOKEN(1) TOKENLEN(2)",
     );
@@ -52,7 +52,7 @@ describe("CICS VERIFY", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PASSWORD", async () => {
+  test("Duplicated PASSWORD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) PASSWORD(2) USERID(3)",
     );

@@ -13,22 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENDBR", async () => {
+describe("CICS ENDBR", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENDBR FILE(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENDBR FILE(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEndbr -> checkHasExactlyOneOption (none provided)
-  test("Neither FILE nor DATASET", async () => {
+  test("Neither FILE nor DATASET", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENDBR REQID(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,10 +38,8 @@ describe("CICS ENDBR", async () => {
   });
 
   // checkEndbr -> checkHasExactlyOneOption (both -> mutually exclusive)
-  test("Both FILE and DATASET", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ENDBR FILE(1) DATASET(2)",
-    );
+  test("Both FILE and DATASET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENDBR FILE(1) DATASET(2)");
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -50,7 +48,7 @@ describe("CICS ENDBR", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated REQID", async () => {
+  test("Duplicated REQID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENDBR FILE(1) REQID(2) REQID(3)",
     );

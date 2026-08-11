@@ -13,34 +13,30 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS QUERY", async () => {
+describe("CICS QUERY", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (CHANNEL)", async () => {
+  test("Positive (CHANNEL)", () => {
     const { diagnostics } = cicsPreprocessor.parse("QUERY CHANNEL(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "QUERY CHANNEL(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("QUERY CHANNEL(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkQueryChannel -> checkHasMandatoryOptions(CHANNEL)
-  test("Channel missing CHANNEL", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "QUERY CONTAINERCNT(1)",
-    );
+  test("Channel missing CHANNEL", () => {
+    const { diagnostics } = cicsPreprocessor.parse("QUERY CONTAINERCNT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: CHANNEL/);
   });
 
   // checkQueryCounter -> checkHasExactlyOneOption (none provided)
-  test("Counter without COUNTER or DCOUNTER", async () => {
+  test("Counter without COUNTER or DCOUNTER", () => {
     const { diagnostics } = cicsPreprocessor.parse("QUERY POOL(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -50,17 +46,15 @@ describe("CICS QUERY", async () => {
   });
 
   // checkQuerySecurity -> checkHasMandatoryOptions(RESID)
-  test("Security missing RESID", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "QUERY SECURITY RESTYPE(1)",
-    );
+  test("Security missing RESID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("QUERY SECURITY RESTYPE(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RESID/);
   });
 
   // checkDuplicates
-  test("Duplicated CHANNEL", async () => {
+  test("Duplicated CHANNEL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "QUERY CHANNEL(1) CHANNEL(2)",
     );

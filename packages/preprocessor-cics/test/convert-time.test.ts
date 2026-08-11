@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CONVERTTIME", async () => {
+describe("CICS CONVERTTIME", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CONVERTTIME ABSTIME(123) DATESTRING(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CONVERTTIME ABSTIME(123) DATESTRING(456) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS CONVERTTIME", async () => {
   });
 
   // checkConvertTime -> checkHasMandatoryOptions(ABSTIME)
-  test("Missing ABSTIME", async () => {
+  test("Missing ABSTIME", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CONVERTTIME DATESTRING(456)",
     );
@@ -42,10 +42,8 @@ describe("CICS CONVERTTIME", async () => {
   });
 
   // checkConvertTime -> checkHasMandatoryOptions(DATESTRING)
-  test("Missing DATESTRING", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CONVERTTIME ABSTIME(123)",
-    );
+  test("Missing DATESTRING", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CONVERTTIME ABSTIME(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,7 +52,7 @@ describe("CICS CONVERTTIME", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ABSTIME", async () => {
+  test("Duplicated ABSTIME", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CONVERTTIME ABSTIME(123) ABSTIME(456) DATESTRING(789)",
     );

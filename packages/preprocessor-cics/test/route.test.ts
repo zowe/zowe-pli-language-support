@@ -13,26 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ROUTE", async () => {
+describe("CICS ROUTE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ROUTE AFTER HOURS(1)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ROUTE AFTER HOURS(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ROUTE AFTER HOURS(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ROUTE AFTER HOURS(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkMutuallyExclusiveOptions
-  test("Mutually exclusive INTERVAL and TIME", async () => {
+  test("Mutually exclusive INTERVAL and TIME", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ROUTE INTERVAL(0) TIME(123)",
     );
@@ -44,7 +40,7 @@ describe("CICS ROUTE", async () => {
   });
 
   // checkRule -> checkHasAtLeastOneOption when AFTER/AT present
-  test("AFTER without HOURS/MINUTES/SECONDS", async () => {
+  test("AFTER without HOURS/MINUTES/SECONDS", () => {
     const { diagnostics } = cicsPreprocessor.parse("ROUTE AFTER");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -54,7 +50,7 @@ describe("CICS ROUTE", async () => {
   });
 
   // checkDuplicates (warning severity)
-  test("Duplicated AFTER", async () => {
+  test("Duplicated AFTER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ROUTE AFTER AFTER HOURS(1)",
     );

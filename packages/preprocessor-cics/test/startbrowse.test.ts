@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS STARTBROWSE", async () => {
+describe("CICS STARTBROWSE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBROWSE ACTIVITY BROWSETOKEN(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBROWSE ACTIVITY BROWSETOKEN(1) BLA",
     );
@@ -32,10 +32,8 @@ describe("CICS STARTBROWSE", async () => {
   });
 
   // checkBody -> checkHasMandatoryOptions(BROWSETOKEN)
-  test("Missing BROWSETOKEN", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "STARTBROWSE ACTIVITY",
-    );
+  test("Missing BROWSETOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("STARTBROWSE ACTIVITY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -44,7 +42,7 @@ describe("CICS STARTBROWSE", async () => {
   });
 
   // checkBody -> checkHasExactlyOneOption (no browse type provided)
-  test("Missing browse type", async () => {
+  test("Missing browse type", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBROWSE BROWSETOKEN(1)",
     );
@@ -56,7 +54,7 @@ describe("CICS STARTBROWSE", async () => {
   });
 
   // checkBody (PROCESS branch) -> checkHasMandatoryOptions(PROCESSTYPE)
-  test("PROCESS missing PROCESSTYPE", async () => {
+  test("PROCESS missing PROCESSTYPE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBROWSE PROCESS BROWSETOKEN(1)",
     );

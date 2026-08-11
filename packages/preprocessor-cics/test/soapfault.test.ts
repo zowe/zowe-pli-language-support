@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SOAPFAULT", async () => {
+describe("CICS SOAPFAULT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (CREATE)", async () => {
+  test("Positive (CREATE)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS SOAPFAULT", async () => {
   });
 
   // checkCreate -> checkHasExactlyOneOption (none provided)
-  test("CREATE without fault code option", async () => {
+  test("CREATE without fault code option", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE FAULTSTRING(1)",
     );
@@ -44,10 +44,8 @@ describe("CICS SOAPFAULT", async () => {
   });
 
   // checkCreate -> checkHasMandatoryOptions(FAULTSTRING)
-  test("CREATE missing FAULTSTRING", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SOAPFAULT CREATE CLIENT",
-    );
+  test("CREATE missing FAULTSTRING", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SOAPFAULT CREATE CLIENT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -56,10 +54,8 @@ describe("CICS SOAPFAULT", async () => {
   });
 
   // checkAdd -> checkHasExactlyOneOption (none provided)
-  test("ADD without FAULTSTRING or SUBCODESTR", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SOAPFAULT ADD NATLANG(1)",
-    );
+  test("ADD without FAULTSTRING or SUBCODESTR", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SOAPFAULT ADD NATLANG(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -68,7 +64,7 @@ describe("CICS SOAPFAULT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated FAULTSTRING", async () => {
+  test("Duplicated FAULTSTRING", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SOAPFAULT CREATE CLIENT FAULTSTRING(1) FAULTSTRING(2)",
     );

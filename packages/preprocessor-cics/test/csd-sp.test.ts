@@ -13,10 +13,10 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CSD (SP)", async () => {
+describe("CICS CSD (SP)", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD ADD LIST(L) GROUP(G) BLA",
     );
@@ -25,7 +25,7 @@ describe("CICS CSD (SP)", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ADD", async () => {
+  test("Duplicated ADD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD ADD ADD LIST(L) GROUP(G)",
     );
@@ -36,139 +36,129 @@ describe("CICS CSD (SP)", async () => {
     );
   });
 
-  test("ADD", async () => {
+  test("ADD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD ADD LIST(LL) GROUP(GG)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("ADD missing GROUP", async () => {
+  test("ADD missing GROUP", () => {
     const { diagnostics } = cicsPreprocessor.parse("CSD ADD LIST(LL)");
     expect(diagnostics).toHaveLength(1);
   });
-  test("ALTER", async () => {
+  test("ALTER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD ALTER RESID(RR) GROUP(GG) ATTRIBUTES(AA) PROGRAM",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("ALTER missing RESID", async () => {
+  test("ALTER missing RESID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD ALTER GROUP(GG) ATTRIBUTES(AA) PROGRAM",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("APPEND", async () => {
+  test("APPEND", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD APPEND LIST(LL) TO(TT)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("COPY", async () => {
+  test("COPY", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD COPY GROUP(GG) AS(AA) RESID(RR) PROGRAM",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("COPY without AS or TO", async () => {
+  test("COPY without AS or TO", () => {
     const { diagnostics } = cicsPreprocessor.parse("CSD COPY GROUP(GG)");
     expect(diagnostics).toHaveLength(1);
   });
-  test("DEFINE", async () => {
+  test("DEFINE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD DEFINE RESID(RR) GROUP(GG) ATTRIBUTES(AA) PROGRAM",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("DELETE", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CSD DELETE GROUP(GG)",
-    );
+  test("DELETE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CSD DELETE GROUP(GG)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("GETNEXTGROUP", async () => {
+  test("GETNEXTGROUP", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD GETNEXTGROUP GROUP(GG)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("GETNEXTLIST", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CSD GETNEXTLIST LIST(LL)",
-    );
+  test("GETNEXTLIST", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CSD GETNEXTLIST LIST(LL)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("GETNEXTRSRCE", async () => {
+  test("GETNEXTRSRCE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD GETNEXTRSRCE RESTYPE(RT) RESID(RR) GROUP(GG) ATTRIBUTES(AA)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("GETNEXTRSRCE ATTRLEN without ATTRIBUTES/SET", async () => {
+  test("GETNEXTRSRCE ATTRLEN without ATTRIBUTES/SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD GETNEXTRSRCE RESTYPE(RT) RESID(RR) GROUP(GG) ATTRLEN(AL)",
     );
     expect(diagnostics).toHaveLength(2);
   });
-  test("INQUIREGROUP", async () => {
+  test("INQUIREGROUP", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD INQUIREGROUP GROUP(GG)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("INQUIRELIST", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CSD INQUIRELIST LIST(LL)",
-    );
+  test("INQUIRELIST", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CSD INQUIRELIST LIST(LL)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("INQUIRERSRCE", async () => {
+  test("INQUIRERSRCE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD INQUIRERSRCE RESID(RR) GROUP(GG) PROGRAM ATTRIBUTES(AA)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("INSTALL", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CSD INSTALL GROUP(GG)",
-    );
+  test("INSTALL", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CSD INSTALL GROUP(GG)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("INSTALL LIST with cvda illegal", async () => {
+  test("INSTALL LIST with cvda illegal", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD INSTALL LIST(LL) PROGRAM",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("LOCK", async () => {
+  test("LOCK", () => {
     const { diagnostics } = cicsPreprocessor.parse("CSD LOCK GROUP(GG)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("REMOVE", async () => {
+  test("REMOVE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD REMOVE GROUP(GG) LIST(LL)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("RENAME", async () => {
+  test("RENAME", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD RENAME GROUP(GG) AS(AA) RESID(RR) PROGRAM",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("STARTBRRSRCE", async () => {
+  test("STARTBRRSRCE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD STARTBRRSRCE GROUP(GG)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("UNLOCK", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CSD UNLOCK GROUP(GG)",
-    );
+  test("UNLOCK", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CSD UNLOCK GROUP(GG)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("USERDEFINE", async () => {
+  test("USERDEFINE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CSD USERDEFINE GROUP(GG) ATTRIBUTES(AA) RESID(RR) PROGRAM",
     );

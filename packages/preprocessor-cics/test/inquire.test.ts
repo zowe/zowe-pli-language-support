@@ -13,26 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS INQUIRE", async () => {
+describe("CICS INQUIRE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (CONTAINER)", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "INQUIRE CONTAINER(1)",
-    );
+  test("Positive (CONTAINER)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CONTAINER(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "INQUIRE CONTAINER(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CONTAINER(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // container branch -> checkHasIllegalOptions(PROCESSTYPE) without PROCESS
-  test("CONTAINER PROCESSTYPE without PROCESS", async () => {
+  test("CONTAINER PROCESSTYPE without PROCESS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1) PROCESSTYPE(2)",
     );
@@ -55,7 +51,7 @@ describe("CICS INQUIRE", async () => {
   });
 
   // process branch -> checkHasMandatoryOptions(PROCESSTYPE)
-  test("PROCESS missing PROCESSTYPE", async () => {
+  test("PROCESS missing PROCESSTYPE", () => {
     const { diagnostics } = cicsPreprocessor.parse("INQUIRE PROCESS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -65,7 +61,7 @@ describe("CICS INQUIRE", async () => {
   });
 
   // checkDuplicates (CONTAINER is the single lead token; SET is repeatable)
-  test("Duplicated SET", async () => {
+  test("Duplicated SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1) SET(2) SET(3)",
     );

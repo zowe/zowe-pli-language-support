@@ -13,22 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SUSPEND", async () => {
+describe("CICS SUSPEND", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("SUSPEND ACTIVITY(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse("SUSPEND BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkSuspend -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive ACQACTIVITY and ACQPROCESS", async () => {
+  test("Mutually exclusive ACQACTIVITY and ACQPROCESS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SUSPEND ACQACTIVITY ACQPROCESS",
     );
@@ -40,7 +40,7 @@ describe("CICS SUSPEND", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ACQACTIVITY", async () => {
+  test("Duplicated ACQACTIVITY", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SUSPEND ACQACTIVITY ACQACTIVITY",
     );

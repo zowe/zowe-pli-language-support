@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS COLLECT STATISTICS", async () => {
+describe("CICS COLLECT STATISTICS", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) MONITOR",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) MONITOR BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS COLLECT STATISTICS", async () => {
   });
 
   // checkOpts -> checkHasMandatoryOptions(SET)
-  test("Missing SET", async () => {
+  test("Missing SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS MONITOR",
     );
@@ -42,7 +42,7 @@ describe("CICS COLLECT STATISTICS", async () => {
   });
 
   // checkOpts -> big mutually-exclusive resource list
-  test("Mutually exclusive MONITOR and FILE", async () => {
+  test("Mutually exclusive MONITOR and FILE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) MONITOR FILE(2)",
     );
@@ -54,7 +54,7 @@ describe("CICS COLLECT STATISTICS", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated SET", async () => {
+  test("Duplicated SET", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) SET(2) MONITOR",
     );

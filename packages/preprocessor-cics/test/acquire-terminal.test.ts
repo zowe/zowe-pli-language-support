@@ -13,25 +13,23 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ACQUIRE TERMINAL", async () => {
+describe("CICS ACQUIRE TERMINAL", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ACQUIRE TERMINAL(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ACQUIRE TERMINAL(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  test("Duplicated TERMINAL", async () => {
+  test("Duplicated TERMINAL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) TERMINAL(456)",
     );
@@ -42,7 +40,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("Duplicated NOQUEUE", async () => {
+  test("Duplicated NOQUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE NOQUEUE",
     );
@@ -53,7 +51,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("Mutual exclusive NOQUEUE and QNOTENAB", async () => {
+  test("Mutual exclusive NOQUEUE and QNOTENAB", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE QNOTENAB",
     );
@@ -74,7 +72,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("RELREQ without QALL or QSESSLIM", async () => {
+  test("RELREQ without QALL or QSESSLIM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) RELREQ",
     );
@@ -85,7 +83,7 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("USERDATALEN without USERDATA", async () => {
+  test("USERDATALEN without USERDATA", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) USERDATALEN(10)",
     );

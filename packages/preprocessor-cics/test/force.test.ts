@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS FORCE TIMER", async () => {
+describe("CICS FORCE TIMER", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("FORCE TIMER(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "FORCE TIMER(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("FORCE TIMER(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkOpts -> checkHasMandatoryOptions(TIMER)
-  test("Missing TIMER", async () => {
+  test("Missing TIMER", () => {
     const { diagnostics } = cicsPreprocessor.parse("FORCE ACQACTIVITY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS FORCE TIMER", async () => {
   });
 
   // checkOpts -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive ACQACTIVITY and ACQPROCESS", async () => {
+  test("Mutually exclusive ACQACTIVITY and ACQPROCESS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FORCE TIMER(123) ACQACTIVITY ACQPROCESS",
     );
@@ -50,7 +48,7 @@ describe("CICS FORCE TIMER", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TIMER", async () => {
+  test("Duplicated TIMER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FORCE TIMER(123) TIMER(456)",
     );

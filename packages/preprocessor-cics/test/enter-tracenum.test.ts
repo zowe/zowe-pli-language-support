@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENTER TRACENUM", async () => {
+describe("CICS ENTER TRACENUM", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENTER TRACENUM(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ENTER TRACENUM(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENTER TRACENUM(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEnq -> checkHasMandatoryOptions(TRACENUM)
-  test("Missing TRACENUM", async () => {
+  test("Missing TRACENUM", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENTER FROM(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS ENTER TRACENUM", async () => {
   });
 
   // checkEnq -> FROM becomes mandatory when FROMLENGTH is present
-  test("FROMLENGTH without FROM", async () => {
+  test("FROMLENGTH without FROM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENTER TRACENUM(123) FROMLENGTH(5)",
     );
@@ -48,7 +46,7 @@ describe("CICS ENTER TRACENUM", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TRACENUM", async () => {
+  test("Duplicated TRACENUM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENTER TRACENUM(123) TRACENUM(456)",
     );

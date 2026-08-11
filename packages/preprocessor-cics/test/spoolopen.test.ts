@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SPOOLOPEN", async () => {
+describe("CICS SPOOLOPEN", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (INPUT)", async () => {
+  test("Positive (INPUT)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) USERID(2) BLA",
     );
@@ -32,17 +32,15 @@ describe("CICS SPOOLOPEN", async () => {
   });
 
   // checkSpoolopenInput -> checkHasMandatoryOptions(TOKEN)
-  test("INPUT missing TOKEN", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SPOOLOPEN INPUT USERID(1)",
-    );
+  test("INPUT missing TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLOPEN INPUT USERID(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
   });
 
   // checkSpoolopenOutput -> checkHasMandatoryOptions(NODE)
-  test("OUTPUT missing NODE", async () => {
+  test("OUTPUT missing NODE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN OUTPUT TOKEN(1) USERID(2)",
     );
@@ -52,7 +50,7 @@ describe("CICS SPOOLOPEN", async () => {
   });
 
   // checkSpoolopenOutput -> checkHasMutuallyExclusiveOptions
-  test("OUTPUT mutually exclusive NOCC and ASA", async () => {
+  test("OUTPUT mutually exclusive NOCC and ASA", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN OUTPUT TOKEN(1) USERID(2) NODE(3) NOCC ASA",
     );
@@ -64,7 +62,7 @@ describe("CICS SPOOLOPEN", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
+  test("Duplicated TOKEN", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) TOKEN(2) USERID(3)",
     );

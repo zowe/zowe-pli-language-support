@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS RETRIEVE", async () => {
+describe("CICS RETRIEVE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (standard)", async () => {
+  test("Positive (standard)", () => {
     const { diagnostics } = cicsPreprocessor.parse("RETRIEVE INTO(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RETRIEVE INTO(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RETRIEVE INTO(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRetrieveStandard -> checkHasExactlyOneOption (none provided)
-  test("Standard without INTO or SET", async () => {
+  test("Standard without INTO or SET", () => {
     const { diagnostics } = cicsPreprocessor.parse("RETRIEVE WAIT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS RETRIEVE", async () => {
   });
 
   // checkRetrieveStandard -> SET requires LENGTH
-  test("SET requires LENGTH", async () => {
+  test("SET requires LENGTH", () => {
     const { diagnostics } = cicsPreprocessor.parse("RETRIEVE SET(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -48,7 +46,7 @@ describe("CICS RETRIEVE", async () => {
   });
 
   // checkRetrieveReattach -> checkHasMandatoryOptions(EVENT)
-  test("REATTACH missing EVENT", async () => {
+  test("REATTACH missing EVENT", () => {
     const { diagnostics } = cicsPreprocessor.parse("RETRIEVE REATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -56,10 +54,8 @@ describe("CICS RETRIEVE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated INTO", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RETRIEVE INTO(1) INTO(2)",
-    );
+  test("Duplicated INTO", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RETRIEVE INTO(1) INTO(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

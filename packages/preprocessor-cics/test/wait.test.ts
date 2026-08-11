@@ -13,22 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WAIT", async () => {
+describe("CICS WAIT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (CONVID)", async () => {
+  test("Positive (CONVID)", () => {
     const { diagnostics } = cicsPreprocessor.parse("WAIT CONVID(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse("WAIT CONVID(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEvent -> checkHasMandatoryOptions(ECADDR)
-  test("EVENT missing ECADDR", async () => {
+  test("EVENT missing ECADDR", () => {
     const { diagnostics } = cicsPreprocessor.parse("WAIT EVENT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -36,7 +36,7 @@ describe("CICS WAIT", async () => {
   });
 
   // checkExternal -> checkHasMutuallyExclusiveOptions
-  test("EXTERNAL mutually exclusive PURGEABLE and NOTPURGEABLE", async () => {
+  test("EXTERNAL mutually exclusive PURGEABLE and NOTPURGEABLE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WAIT EXTERNAL ECBLIST(1) NUMEVENTS(2) PURGEABLE NOTPURGEABLE",
     );
@@ -48,10 +48,8 @@ describe("CICS WAIT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONVID", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "WAIT CONVID(1) CONVID(2)",
-    );
+  test("Duplicated CONVID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WAIT CONVID(1) CONVID(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

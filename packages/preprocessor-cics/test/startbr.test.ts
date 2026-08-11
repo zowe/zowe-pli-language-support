@@ -13,17 +13,15 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS STARTBR", async () => {
+describe("CICS STARTBR", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "STARTBR FILE(1) RIDFLD(2)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("STARTBR FILE(1) RIDFLD(2)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) BLA",
     );
@@ -32,7 +30,7 @@ describe("CICS STARTBR", async () => {
   });
 
   // checkStartbr -> checkHasMandatoryOptions(RIDFLD)
-  test("Missing RIDFLD", async () => {
+  test("Missing RIDFLD", () => {
     const { diagnostics } = cicsPreprocessor.parse("STARTBR FILE(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS STARTBR", async () => {
   });
 
   // checkStartbr -> KEYLENGTH mandatory when GENERIC present
-  test("GENERIC without KEYLENGTH", async () => {
+  test("GENERIC without KEYLENGTH", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) GENERIC",
     );
@@ -52,7 +50,7 @@ describe("CICS STARTBR", async () => {
   });
 
   // checkStartbr -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive GTEQ and EQUAL", async () => {
+  test("Mutually exclusive GTEQ and EQUAL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) GTEQ EQUAL",
     );
@@ -64,7 +62,7 @@ describe("CICS STARTBR", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated REQID", async () => {
+  test("Duplicated REQID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "STARTBR FILE(1) RIDFLD(2) REQID(3) REQID(4)",
     );

@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS EXTRACT", async () => {
+describe("CICS EXTRACT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (ATTACH)", async () => {
+  test("Positive (ATTACH)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACHID(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACHID(1) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS EXTRACT", async () => {
   });
 
   // checkAttach -> checkHasMutuallyExclusiveOptions
-  test("ATTACH mutually exclusive ATTACHID and CONVID", async () => {
+  test("ATTACH mutually exclusive ATTACHID and CONVID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACHID(1) CONVID(2)",
     );
@@ -44,17 +44,15 @@ describe("CICS EXTRACT", async () => {
   });
 
   // checkLogonMsg -> checkHasMandatoryOptions(LENGTH)
-  test("LOGONMSG missing LENGTH", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "EXTRACT LOGONMSG INTO(1)",
-    );
+  test("LOGONMSG missing LENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse("EXTRACT LOGONMSG INTO(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: LENGTH/);
   });
 
   // checkDuplicates
-  test("Duplicated ATTACH", async () => {
+  test("Duplicated ATTACH", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT ATTACH ATTACH ATTACHID(1)",
     );

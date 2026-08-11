@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS REWIND COUNTER", async () => {
+describe("CICS REWIND COUNTER", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("REWIND COUNTER(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "REWIND COUNTER(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("REWIND COUNTER(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkOpts -> checkHasExactlyOneOption (none provided)
-  test("Neither COUNTER nor DCOUNTER", async () => {
+  test("Neither COUNTER nor DCOUNTER", () => {
     const { diagnostics } = cicsPreprocessor.parse("REWIND NOSUSPEND");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS REWIND COUNTER", async () => {
   });
 
   // checkOpts -> checkHasExactlyOneOption (both provided -> mutually exclusive)
-  test("Both COUNTER and DCOUNTER", async () => {
+  test("Both COUNTER and DCOUNTER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "REWIND COUNTER(123) DCOUNTER(456)",
     );
@@ -52,7 +50,7 @@ describe("CICS REWIND COUNTER", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated POOL", async () => {
+  test("Duplicated POOL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "REWIND COUNTER(123) POOL(1) POOL(2)",
     );

@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SIGNON", async () => {
+describe("CICS SIGNON", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("SIGNON USERID(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SIGNON USERID(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SIGNON USERID(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkMainBody -> checkHasMandatoryOptions(USERID)
-  test("Body missing USERID", async () => {
+  test("Body missing USERID", () => {
     const { diagnostics } = cicsPreprocessor.parse("SIGNON PASSWORD(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS SIGNON", async () => {
   });
 
   // checkMainBody -> checkPrerequisiteIsMet
-  test("NEWPASSWORD without PASSWORD", async () => {
+  test("NEWPASSWORD without PASSWORD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SIGNON USERID(1) NEWPASSWORD(2)",
     );
@@ -50,17 +48,15 @@ describe("CICS SIGNON", async () => {
   });
 
   // checkToken -> checkHasMandatoryOptions(TOKENLEN)
-  test("Token missing TOKENLEN", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "SIGNON KERBEROS TOKEN(1)",
-    );
+  test("Token missing TOKENLEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SIGNON KERBEROS TOKEN(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKENLEN/);
   });
 
   // checkDuplicates
-  test("Duplicated USERID", async () => {
+  test("Duplicated USERID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "SIGNON USERID(1) USERID(2)",
     );

@@ -13,26 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS RESUME", async () => {
+describe("CICS RESUME", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RESUME ACTIVITY(123)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RESUME ACTIVITY(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RESUME ACTIVITY(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RESUME ACTIVITY(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkBody -> checkHasExactlyOneOption (none provided)
-  test("None of ACQACTIVITY/ACQPROCESS/ACTIVITY", async () => {
+  test("None of ACQACTIVITY/ACQPROCESS/ACTIVITY", () => {
     const { diagnostics } = cicsPreprocessor.parse("RESUME NOHANDLE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -42,7 +38,7 @@ describe("CICS RESUME", async () => {
   });
 
   // checkBody -> checkHasExactlyOneOption (multiple -> mutually exclusive)
-  test("Both ACQACTIVITY and ACQPROCESS", async () => {
+  test("Both ACQACTIVITY and ACQPROCESS", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "RESUME ACQACTIVITY ACQPROCESS",
     );
@@ -54,7 +50,7 @@ describe("CICS RESUME", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ACQACTIVITY", async () => {
+  test("Duplicated ACQACTIVITY", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "RESUME ACQACTIVITY ACQACTIVITY",
     );

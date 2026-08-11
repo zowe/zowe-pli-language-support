@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WRITEQ", async () => {
+describe("CICS WRITEQ", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (TD)", async () => {
+  test("Positive (TD)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WRITEQ TD QUEUE(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WRITEQ TD QUEUE(1) FROM(2) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS WRITEQ", async () => {
   });
 
   // checkWriteqTd -> checkHasMandatoryOptions(QUEUE)
-  test("TD missing QUEUE", async () => {
+  test("TD missing QUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse("WRITEQ TD FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +40,7 @@ describe("CICS WRITEQ", async () => {
   });
 
   // checkWriteqTs -> checkHasExactlyOneOption (none provided)
-  test("TS without QUEUE or QNAME", async () => {
+  test("TS without QUEUE or QNAME", () => {
     const { diagnostics } = cicsPreprocessor.parse("WRITEQ TS FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -50,7 +50,7 @@ describe("CICS WRITEQ", async () => {
   });
 
   // checkWriteqTs -> checkHasMutuallyExclusiveOptions
-  test("TS mutually exclusive NUMITEMS and ITEM", async () => {
+  test("TS mutually exclusive NUMITEMS and ITEM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WRITEQ TS QUEUE(1) FROM(2) NUMITEMS(3) ITEM(4)",
     );
@@ -62,7 +62,7 @@ describe("CICS WRITEQ", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated QUEUE", async () => {
+  test("Duplicated QUEUE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WRITEQ TD QUEUE(1) QUEUE(2) FROM(3)",
     );

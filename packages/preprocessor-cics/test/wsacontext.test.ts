@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WSACONTEXT", async () => {
+describe("CICS WSACONTEXT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (BUILD)", async () => {
+  test("Positive (BUILD)", () => {
     const { diagnostics } = cicsPreprocessor.parse("WSACONTEXT BUILD");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "WSACONTEXT BUILD BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WSACONTEXT BUILD BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkWSAContextBuild -> checkPrerequisiteIsMet
-  test("RELATESTYPE without RELATESURI", async () => {
+  test("RELATESTYPE without RELATESURI", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WSACONTEXT BUILD RELATESTYPE(1)",
     );
@@ -42,7 +40,7 @@ describe("CICS WSACONTEXT", async () => {
   });
 
   // checkWSAContextDelete -> checkHasMandatoryOptions(CHANNEL)
-  test("DELETE missing CHANNEL", async () => {
+  test("DELETE missing CHANNEL", () => {
     const { diagnostics } = cicsPreprocessor.parse("WSACONTEXT DELETE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -50,10 +48,8 @@ describe("CICS WSACONTEXT", async () => {
   });
 
   // checkWSAContextGet -> checkHasMandatoryOptions(CONTEXTTYPE)
-  test("GET missing CONTEXTTYPE", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "WSACONTEXT GET CHANNEL(1)",
-    );
+  test("GET missing CONTEXTTYPE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WSACONTEXT GET CHANNEL(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -62,7 +58,7 @@ describe("CICS WSACONTEXT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CHANNEL", async () => {
+  test("Duplicated CHANNEL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "WSACONTEXT DELETE CHANNEL(1) CHANNEL(2)",
     );

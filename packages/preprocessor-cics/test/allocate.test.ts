@@ -13,16 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ALLOCATE", async () => {
+describe("CICS ALLOCATE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (PARTNER)", async () => {
+  test("Positive (PARTNER)", () => {
     const { diagnostics } = cicsPreprocessor.parse("ALLOCATE PARTNER(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Alone allocate", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ALLOCATE");
+  test("Alone allocate", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ALLOCATE");
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
@@ -32,21 +32,19 @@ describe("CICS ALLOCATE", async () => {
     );
   });
 
-  test("Positive (SYSID)", async () => {
+  test("Positive (SYSID)", () => {
     const { diagnostics } = cicsPreprocessor.parse("ALLOCATE SYSID(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ALLOCATE PARTNER(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ALLOCATE PARTNER(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkAppcPartner -> checkHasMandatoryOptions(PARTNER)
-  test("Missing PARTNER", async () => {
+  test("Missing PARTNER", () => {
     const { diagnostics } = cicsPreprocessor.parse("ALLOCATE NOQUEUE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -54,7 +52,7 @@ describe("CICS ALLOCATE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PARTNER", async () => {
+  test("Duplicated PARTNER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ALLOCATE PARTNER(1) PARTNER(2)",
     );

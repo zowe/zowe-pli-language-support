@@ -13,22 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS POINT", async () => {
+describe("CICS POINT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("POINT CONVID(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse("POINT BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkPoint -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive CONVID and SESSION", async () => {
+  test("Mutually exclusive CONVID and SESSION", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "POINT CONVID(A) SESSION(B)",
     );
@@ -40,10 +40,8 @@ describe("CICS POINT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONVID", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "POINT CONVID(A) CONVID(B)",
-    );
+  test("Duplicated CONVID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("POINT CONVID(A) CONVID(B)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

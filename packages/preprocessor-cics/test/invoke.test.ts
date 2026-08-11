@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS INVOKE", async () => {
+describe("CICS INVOKE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (APPLICATION)", async () => {
+  test("Positive (APPLICATION)", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INVOKE APPLICATION(123) OPERATION(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INVOKE APPLICATION(123) OPERATION(456) BLA",
     );
@@ -32,10 +32,8 @@ describe("CICS INVOKE", async () => {
   });
 
   // checkInvokeApplication -> checkHasMandatoryOptions(OPERATION)
-  test("APPLICATION missing OPERATION", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "INVOKE APPLICATION(123)",
-    );
+  test("APPLICATION missing OPERATION", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INVOKE APPLICATION(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -44,7 +42,7 @@ describe("CICS INVOKE", async () => {
   });
 
   // checkInvokeApplication -> MAJORVERSION mandatory when MINORVERSION present
-  test("MINORVERSION without MAJORVERSION", async () => {
+  test("MINORVERSION without MAJORVERSION", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INVOKE APPLICATION(123) OPERATION(456) MINORVERSION(7)",
     );
@@ -56,7 +54,7 @@ describe("CICS INVOKE", async () => {
   });
 
   // checkInvokeService -> checkHasExactlyOneOption (both -> mutually exclusive)
-  test("SERVICE: both SERVICE and WEBSERVICE", async () => {
+  test("SERVICE: both SERVICE and WEBSERVICE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INVOKE SERVICE(1) WEBSERVICE(2) CHANNEL(3) OPERATION(4)",
     );
@@ -68,7 +66,7 @@ describe("CICS INVOKE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated APPLICATION", async () => {
+  test("Duplicated APPLICATION", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "INVOKE APPLICATION(123) APPLICATION(456) OPERATION(789)",
     );

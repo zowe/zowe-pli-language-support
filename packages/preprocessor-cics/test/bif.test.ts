@@ -13,26 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS BIF", async () => {
+describe("CICS BIF", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (DEEDIT)", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "BIF DEEDIT FIELD(123)",
-    );
+  test("Positive (DEEDIT)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("BIF DEEDIT FIELD(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "BIF DEEDIT FIELD(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("BIF DEEDIT FIELD(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkDeedit -> checkHasMandatoryOptions(FIELD)
-  test("DEEDIT missing FIELD", async () => {
+  test("DEEDIT missing FIELD", () => {
     const { diagnostics } = cicsPreprocessor.parse("BIF DEEDIT");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,17 +36,15 @@ describe("CICS BIF", async () => {
   });
 
   // checkDigest -> checkHasMandatoryOptions(RESULT)
-  test("DIGEST missing RESULT", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "BIF DIGEST RECORD(123)",
-    );
+  test("DIGEST missing RESULT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("BIF DIGEST RECORD(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RESULT/);
   });
 
   // checkDigest -> checkHasMutuallyExclusiveOptions
-  test("DIGEST mutually exclusive HEX and BINARY", async () => {
+  test("DIGEST mutually exclusive HEX and BINARY", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "BIF DIGEST RECORD(123) RESULT(456) HEX BINARY",
     );
@@ -62,7 +56,7 @@ describe("CICS BIF", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated RECORD", async () => {
+  test("Duplicated RECORD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "BIF DIGEST RECORD(123) RECORD(456) RESULT(789)",
     );

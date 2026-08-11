@@ -13,29 +13,23 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS RESYNC ENTRYNAME", async () => {
+describe("CICS RESYNC ENTRYNAME", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RESYNC ENTRYNAME(123)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RESYNC ENTRYNAME(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RESYNC ENTRYNAME(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RESYNC ENTRYNAME(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkOpts -> checkHasMandatoryOptions(ENTRYNAME)
-  test("Missing ENTRYNAME", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RESYNC QUALIFIER(123)",
-    );
+  test("Missing ENTRYNAME", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RESYNC QUALIFIER(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -44,7 +38,7 @@ describe("CICS RESYNC ENTRYNAME", async () => {
   });
 
   // checkOpts -> checkOptionalWithLength (optional present without required field)
-  test("IDLISTLENGTH without IDLIST", async () => {
+  test("IDLISTLENGTH without IDLIST", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "RESYNC ENTRYNAME(123) IDLISTLENGTH(5)",
     );
@@ -56,7 +50,7 @@ describe("CICS RESYNC ENTRYNAME", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ENTRYNAME", async () => {
+  test("Duplicated ENTRYNAME", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "RESYNC ENTRYNAME(123) ENTRYNAME(456)",
     );

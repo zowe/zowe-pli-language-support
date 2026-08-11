@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS BUILD ATTACH", async () => {
+describe("CICS BUILD ATTACH", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS BUILD ATTACH", async () => {
   });
 
   // checkAttachIdOptions -> checkHasMandatoryOptions(ATTACH)
-  test("Missing ATTACH", async () => {
+  test("Missing ATTACH", () => {
     const { diagnostics } = cicsPreprocessor.parse("BUILD ATTACHID(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +40,7 @@ describe("CICS BUILD ATTACH", async () => {
   });
 
   // checkAttachIdOptions -> checkHasMandatoryOptions(ATTACHID)
-  test("Missing ATTACHID", async () => {
+  test("Missing ATTACHID", () => {
     const { diagnostics } = cicsPreprocessor.parse("BUILD ATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -48,7 +48,7 @@ describe("CICS BUILD ATTACH", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ATTACHID", async () => {
+  test("Duplicated ATTACHID", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123) ATTACHID(456)",
     );

@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CREATE (SP)", async () => {
+describe("CICS CREATE (SP)", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE PROGRAM(1) ATTRIBUTES(AREA)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE PROGRAM(1) ATTRIBUTES(AREA) BLA",
     );
@@ -32,10 +32,8 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // checkOpts -> checkHasExactlyOneOption(resource) none provided
-  test("No resource option", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CREATE ATTRIBUTES(AREA)",
-    );
+  test("No resource option", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CREATE ATTRIBUTES(AREA)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -44,10 +42,8 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // CONNECTION/TERMINAL branch -> checkHasExactlyOneOption(ATTRIBUTES or COMPLETE or DISCARD)
-  test("CONNECTION without ATTRIBUTES/COMPLETE/DISCARD", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "CREATE CONNECTION(1)",
-    );
+  test("CONNECTION without ATTRIBUTES/COMPLETE/DISCARD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CREATE CONNECTION(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -56,7 +52,7 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // else branch -> checkHasIllegalOptions(DISCARD) when no CONNECTION/TERMINAL
-  test("DISCARD without CONNECTION/TERMINAL", async () => {
+  test("DISCARD without CONNECTION/TERMINAL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE PROGRAM(1) DISCARD ATTRIBUTES(AREA)",
     );
@@ -66,7 +62,7 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // checkDataValueCompleteDiscard -> operand value not allowed
-  test("CONNECTION with value and DISCARD", async () => {
+  test("CONNECTION with value and DISCARD", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE CONNECTION(1) DISCARD",
     );
@@ -76,7 +72,7 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // checkRequiredSubOperand -> operand value required
-  test("CONNECTION without value and ATTRIBUTES", async () => {
+  test("CONNECTION without value and ATTRIBUTES", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE CONNECTION ATTRIBUTES(AREA)",
     );
@@ -86,7 +82,7 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // checkHasMutuallyExclusiveOptions(LOG or NOLOG or LOGMESSAGE)
-  test("LOG and NOLOG mutually exclusive", async () => {
+  test("LOG and NOLOG mutually exclusive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE PROGRAM(1) ATTRIBUTES(AREA) LOG NOLOG",
     );
@@ -98,7 +94,7 @@ describe("CICS CREATE (SP)", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PROGRAM", async () => {
+  test("Duplicated PROGRAM", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CREATE PROGRAM(1) PROGRAM(2) ATTRIBUTES(AREA)",
     );

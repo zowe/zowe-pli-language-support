@@ -13,29 +13,29 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS RECEIVE", async () => {
+describe("CICS RECEIVE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (group one)", async () => {
+  test("Positive (group one)", () => {
     const { diagnostics } = cicsPreprocessor.parse("RECEIVE INTO(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Positive STATE & PSEUDOBIN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive STATE & PSEUDOBIN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "RECEIVE INTO(DRAIN_AREA) STATE(123) PSEUDOBIN",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse("RECEIVE INTO(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkGroupOne -> checkHasExactlyOneOption(LENGTH or FLENGTH) when SET present
-  test("SET requires LENGTH or FLENGTH", async () => {
+  test("SET requires LENGTH or FLENGTH", () => {
     const { diagnostics } = cicsPreprocessor.parse("RECEIVE SET(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -45,10 +45,8 @@ describe("CICS RECEIVE", async () => {
   });
 
   // checkMap -> checkHasExactlyOneOption(INTO or SET) when MAP has no literal
-  test("MAP without INTO or SET", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RECEIVE MAP(MP) FROM(1)",
-    );
+  test("MAP without INTO or SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RECEIVE MAP(MP) FROM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -57,10 +55,8 @@ describe("CICS RECEIVE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated INTO", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "RECEIVE INTO(1) INTO(2)",
-    );
+  test("Duplicated INTO", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RECEIVE INTO(1) INTO(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

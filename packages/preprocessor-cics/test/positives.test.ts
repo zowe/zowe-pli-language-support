@@ -25,19 +25,16 @@ describe("CICS Preprocessor: Positives", async () => {
     .split(/\r?\n/)
     .map((statement, index) => ({ line: index + 1, statement }));
 
-  test.each(statements)(
-    "should parse statements",
-    async ({ line, statement }) => {
-      const { diagnostics } = cicsPreprocessor.parse(statement);
-      expect(
-        diagnostics,
-        diagnostics.length > 0
-          ? `Error at ${fileName}:${line}:\n` +
-              diagnostics
-                .map((diagnostic) => `- ${diagnostic.message}`)
-                .join("\n")
-          : undefined,
-      ).toHaveLength(0);
-    },
-  );
+  test.each(statements)("should parse statements", ({ line, statement }) => {
+    const { diagnostics } = cicsPreprocessor.parse(statement);
+    expect(
+      diagnostics,
+      diagnostics.length > 0
+        ? `Error at ${fileName}:${line}:\n` +
+            diagnostics
+              .map((diagnostic) => `- ${diagnostic.message}`)
+              .join("\n")
+        : undefined,
+    ).toHaveLength(0);
+  });
 });

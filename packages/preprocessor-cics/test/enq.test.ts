@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENQ", async () => {
+describe("CICS ENQ", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENQ RESOURCE(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ENQ RESOURCE(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENQ RESOURCE(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEnq -> checkHasMandatoryOptions
-  test("Missing RESOURCE", async () => {
+  test("Missing RESOURCE", () => {
     const { diagnostics } = cicsPreprocessor.parse("ENQ UOW");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -38,7 +36,7 @@ describe("CICS ENQ", async () => {
   });
 
   // checkEnq -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive UOW and TASK", async () => {
+  test("Mutually exclusive UOW and TASK", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENQ RESOURCE(123) UOW TASK",
     );
@@ -50,7 +48,7 @@ describe("CICS ENQ", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated RESOURCE", async () => {
+  test("Duplicated RESOURCE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ENQ RESOURCE(123) RESOURCE(456)",
     );

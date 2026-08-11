@@ -10,7 +10,12 @@
  */
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
-import { isVirtualFile, URI, PreprocessedTextUriSchema, UriUtils } from "../utils/uri.js";
+import {
+  isVirtualFile,
+  URI,
+  PreprocessedTextUriSchema,
+  UriUtils,
+} from "../utils/uri.js";
 import {
   CancellationToken,
   Connection,

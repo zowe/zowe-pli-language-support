@@ -13,17 +13,15 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ADD SUBEVENT", async () => {
+describe("CICS ADD SUBEVENT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ADD SUBEVENT(1) EVENT(2)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ADD SUBEVENT(1) EVENT(2)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ADD SUBEVENT(1) EVENT(2) BLA",
     );
@@ -32,7 +30,7 @@ describe("CICS ADD SUBEVENT", async () => {
   });
 
   // checkAddEventSubEvent -> checkHasMandatoryOptions(SUBEVENT)
-  test("Missing SUBEVENT", async () => {
+  test("Missing SUBEVENT", () => {
     const { diagnostics } = cicsPreprocessor.parse("ADD EVENT(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -40,7 +38,7 @@ describe("CICS ADD SUBEVENT", async () => {
   });
 
   // checkAddEventSubEvent -> checkHasMandatoryOptions(EVENT)
-  test("Missing EVENT", async () => {
+  test("Missing EVENT", () => {
     const { diagnostics } = cicsPreprocessor.parse("ADD SUBEVENT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -48,7 +46,7 @@ describe("CICS ADD SUBEVENT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated SUBEVENT", async () => {
+  test("Duplicated SUBEVENT", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ADD SUBEVENT(1) SUBEVENT(2) EVENT(3)",
     );

@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS FETCH", async () => {
+describe("CICS FETCH", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS FETCH", async () => {
   });
 
   // checkFetchAnyChild -> checkHasExactlyOneOption (none provided)
-  test("Neither ANY nor CHILD", async () => {
+  test("Neither ANY nor CHILD", () => {
     const { diagnostics } = cicsPreprocessor.parse("FETCH COMPSTATUS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -42,7 +42,7 @@ describe("CICS FETCH", async () => {
   });
 
   // checkFetchAnyChild -> checkHasMandatoryOptions(COMPSTATUS)
-  test("Missing COMPSTATUS", async () => {
+  test("Missing COMPSTATUS", () => {
     const { diagnostics } = cicsPreprocessor.parse("FETCH ANY(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -52,7 +52,7 @@ describe("CICS FETCH", async () => {
   });
 
   // checkFetchAnyChild -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive NOSUSPEND and TIMEOUT", async () => {
+  test("Mutually exclusive NOSUSPEND and TIMEOUT", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2) NOSUSPEND TIMEOUT(3)",
     );
@@ -64,7 +64,7 @@ describe("CICS FETCH", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CHANNEL", async () => {
+  test("Duplicated CHANNEL", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "FETCH ANY(1) COMPSTATUS(2) CHANNEL(3) CHANNEL(4)",
     );

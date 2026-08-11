@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS TEST EVENT", async () => {
+describe("CICS TEST EVENT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "TEST EVENT(123) FIRESTATUS(NORMAL)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "TEST EVENT(123) FIRESTATUS(NORMAL) BLA",
     );
@@ -32,17 +32,15 @@ describe("CICS TEST EVENT", async () => {
   });
 
   // checkTestEvent -> checkHasMandatoryOptions(EVENT)
-  test("Missing EVENT", async () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "TEST FIRESTATUS(NORMAL)",
-    );
+  test("Missing EVENT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("TEST FIRESTATUS(NORMAL)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: EVENT/);
   });
 
   // checkTestEvent -> checkHasMandatoryOptions(FIRESTATUS)
-  test("Missing FIRESTATUS", async () => {
+  test("Missing FIRESTATUS", () => {
     const { diagnostics } = cicsPreprocessor.parse("TEST EVENT(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -52,7 +50,7 @@ describe("CICS TEST EVENT", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated EVENT", async () => {
+  test("Duplicated EVENT", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "TEST EVENT(123) EVENT(456) FIRESTATUS(NORMAL)",
     );

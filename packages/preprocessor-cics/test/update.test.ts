@@ -13,17 +13,17 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
+describe("CICS UPDATE COUNTER/DCOUNTER", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
+  test("Positive", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) VALUE(1)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
+  test("Expecting EOF", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) VALUE(1) BLA",
     );
@@ -32,7 +32,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
   });
 
   // checkUpdateCounterDcounter -> checkHasExactlyOneOption (none provided)
-  test("Neither COUNTER nor DCOUNTER", async () => {
+  test("Neither COUNTER nor DCOUNTER", () => {
     const { diagnostics } = cicsPreprocessor.parse("UPDATE VALUE(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -42,7 +42,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
   });
 
   // checkUpdateCounterDcounter -> checkHasExactlyOneOption (both provided -> mutually exclusive)
-  test("Both COUNTER and DCOUNTER", async () => {
+  test("Both COUNTER and DCOUNTER", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) DCOUNTER(D) VALUE(1)",
     );
@@ -54,7 +54,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
   });
 
   // checkUpdateCounterDcounter -> checkHasMandatoryOptions(VALUE)
-  test("Missing VALUE", async () => {
+  test("Missing VALUE", () => {
     const { diagnostics } = cicsPreprocessor.parse("UPDATE COUNTER(C)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
@@ -62,7 +62,7 @@ describe("CICS UPDATE COUNTER/DCOUNTER", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated VALUE", async () => {
+  test("Duplicated VALUE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "UPDATE COUNTER(C) VALUE(1) VALUE(2)",
     );

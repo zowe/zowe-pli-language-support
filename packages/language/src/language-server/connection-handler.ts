@@ -58,15 +58,10 @@ import { commandCreateConfig } from "./commands";
 import { Commands } from "./constants";
 import { signatureHelpRequest } from "./signature-help-request";
 import {
-  Messages,
   onNotification,
   onRequest,
-  sendNotification,
-  sendRequest,
   GlobalConfigLoader,
   Messages,
-  NotificationType,
-  RequestType,
 } from "../utils/messages";
 import { configCompletionRequest } from "./completion/completion-plugin-configuration";
 import { JsonItemMeta } from "../config/schema";
