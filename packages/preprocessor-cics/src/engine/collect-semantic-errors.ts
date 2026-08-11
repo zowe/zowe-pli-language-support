@@ -18,6 +18,7 @@ import {
 } from "../checks/base";
 import { OptionsRegistry } from "../checks/options-registry";
 import { Diagnostic } from "preprocessor-api";
+import { orify } from "../checks/utils";
 
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   ParseTree[] | null
@@ -43,10 +44,7 @@ export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
           code: group[0].code,
           message:
             group[0].commonMessage +
-            group
-              .map((e) => e.enumerablePart)
-              .sort()
-              .join(" or "),
+            orify(group.map((e) => e.enumerablePart).sort()),
           severity: group[0].severity,
           startOffset: group[0].startOffset,
           endOffset: group[0].endOffset,

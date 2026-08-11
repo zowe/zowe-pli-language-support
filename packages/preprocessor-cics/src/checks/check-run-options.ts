@@ -46,7 +46,7 @@ export class RunOptionsChecker extends CICSOptionsCheckerBase {
       assertType<Cics_runContext>(ctx);
       if (!ctx.cics_run_default() && !ctx.cics_run_transid()) {
         this.checkHasExactlyOneOption(
-          "ACQACTIVITY or ACQPROCESS or ACTIVITY or TRANSID",
+          "ACQACTIVITY, ACQPROCESS, ACTIVITY or TRANSID",
           ctx,
         );
       }

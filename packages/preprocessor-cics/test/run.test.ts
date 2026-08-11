@@ -30,7 +30,7 @@ describe("CICS RUN", async () => {
     expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
     expect(diagnostics[1].severity).toBe(Severity.Error);
     expect(diagnostics[1].message).toMatch(
-      /Exactly one option required, none provided: ACQACTIVITY or ACQPROCESS or ACTIVITY or TRANSID/,
+      /Exactly one option required, none provided: ACQACTIVITY, ACQPROCESS, ACTIVITY or TRANSID/,
     );
   });
 
