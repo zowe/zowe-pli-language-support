@@ -39,8 +39,8 @@ describe("CICS INQUIRE", () => {
     );
   });
 
-  test("CONTAINER PROCESS without PROCESSTYPE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("CONTAINER PROCESS without PROCESSTYPE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CONTAINER(1) PROCESS(2)",
     );
     expect(diagnostics).toHaveLength(1);

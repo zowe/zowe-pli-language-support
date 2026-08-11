@@ -24,9 +24,7 @@ describe("CICS DEFINE", () => {
   });
 
   test("Define timer", () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "DEFINE TIMER('TIMER1')",
-    );
+    const { diagnostics } = cicsPreprocessor.parse("DEFINE TIMER('TIMER1')");
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Unexpected end of file/);

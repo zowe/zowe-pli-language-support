@@ -182,19 +182,8 @@ export function scanExecFragments(
 
 /**
  * Builds the text a `Preprocessor` replaces an `EXEC` statement with: a single
- * `DO; ... END;` block (one statement, so it stays valid as a bare `IF ... THEN`/`ELSE`
- * branch) containing one `PUT(name);` per `SemanticsKind.Identifier` token - each
- * host-variable/reference the LSP pipeline should still be able to resolve (e.g. a `:HV`
- * SQL host variable or a CICS command argument), re-embedded as a real identifier.
- *
- * Re-embedding the literal name (rather than just carrying it as metadata) is required by
- * the real parser's `execVariableReference` rule, which recognizes exactly this shape
- * (a synthetic marker immediately before a real identifier token) to resolve host-variable/
- * reference clicks back to their declaration - see `token-annotator.ts`'s
- * `MappedToken.execHostVariable` handling in the language package. The host locates each
- * identifier inside the replacement text itself (in-order, verbatim - the contract this
- * function's output upholds), so only the text is returned; the classified token list goes
- * to `PreprocessorContext.replace` separately, in host coordinates.
+ * `DO; ... END;` with PUT statements that contain the values of every identifier used in the statement.
+ * Allows the host to see identifiers, link them and then provide LSP support later on.
  */
 export function buildExecReplacement(tokens: Token[]): string {
   const named = tokens.filter(

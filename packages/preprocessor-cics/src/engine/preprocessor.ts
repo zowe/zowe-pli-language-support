@@ -174,9 +174,7 @@ export class CICSPreprocessor implements Preprocessor {
     diagnostics.push(...lexerErrors.errors);
     diagnostics.push(...parserErrors.errors);
     diagnostics.push(
-      ...CollectingSemanticErrorVisitor.aggregateErrors(
-        semanticErrors,
-      ),
+      ...CollectingSemanticErrorVisitor.aggregateErrors(semanticErrors),
     );
     return {
       diagnostics,
