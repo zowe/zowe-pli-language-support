@@ -50,7 +50,7 @@
       "editor/title": [
         {
           "command": "pli.showPreprocessedText",
-          "when": "resourceLangId == pli",
+          "when": "resourceLangId == pli && resourceScheme != pli-preprocessed",
           "group": "navigation"
         }
       ],
