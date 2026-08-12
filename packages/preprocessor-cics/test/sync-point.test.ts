@@ -13,28 +13,27 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SYNCPOINT", async () => {
+describe("CICS SYNCPOINT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (no options)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SYNCPOINT");
+  test("Positive (no options)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SYNCPOINT");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Positive (ROLLBACK)", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("SYNCPOINT ROLLBACK");
+  test("Positive (ROLLBACK)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SYNCPOINT ROLLBACK");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("SYNCPOINT BLA");
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SYNCPOINT BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  test("Duplicated ROLLBACK", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ROLLBACK", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SYNCPOINT ROLLBACK ROLLBACK",
     );
     expect(diagnostics).toHaveLength(1);

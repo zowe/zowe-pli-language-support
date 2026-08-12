@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS REMOVE SUBEVENT", async () => {
+describe("CICS REMOVE SUBEVENT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REMOVE SUBEVENT(1) EVENT(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REMOVE SUBEVENT(1) EVENT(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,25 +32,24 @@ describe("CICS REMOVE SUBEVENT", async () => {
   });
 
   // checkRemoveSubevent -> checkHasMandatoryOptions(SUBEVENT)
-  test("Missing SUBEVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("REMOVE EVENT(2)");
+  test("Missing SUBEVENT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("REMOVE EVENT(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: SUBEVENT/);
   });
 
   // checkRemoveSubevent -> checkHasMandatoryOptions(EVENT)
-  test("Missing EVENT", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("REMOVE SUBEVENT(1)");
+  test("Missing EVENT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("REMOVE SUBEVENT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: EVENT/);
   });
 
   // checkDuplicates
-  test("Duplicated SUBEVENT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated SUBEVENT", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REMOVE SUBEVENT(1) SUBEVENT(2) EVENT(3)",
     );
     expect(diagnostics).toHaveLength(1);

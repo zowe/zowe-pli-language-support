@@ -13,6 +13,7 @@ import { URI } from "vscode-uri";
 import * as ast from "../../syntax-tree/ast";
 import { CstNodeKind } from "../../syntax-tree/cst";
 import { createToken } from "../token-type-factory";
+import type { SemanticTokenTypes } from "../../language-server/semantic-tokens";
 
 export const ID = createToken({
   name: "ID",
@@ -34,11 +35,7 @@ export interface Token {
   image: string;
   originalImage: string;
   startOffset: number;
-  startLine: number;
-  startColumn: number;
   endOffset: number;
-  endLine: number;
-  endColumn: number;
   tokenTypeIdx: number;
   isInsertedInRecovery?: boolean;
   tokenType: TokenType;
@@ -46,17 +43,30 @@ export interface Token {
   kind: CstNodeKind | undefined;
   element: ast.SyntaxNode | undefined;
   immediateFollow: boolean;
+  /**
+   * Whether at least one line break occurs between the end of the previous token and the
+   * start of this one. Parser error recovery needs to know whether it has crossed onto a new line.
+   */
+  startsNewLine: boolean;
+  /**
+   * Whether this token was lexed from preprocessor-generated text rather than text present
+   * in any source file.
+   */
+  synthetic?: boolean;
+  /**
+   * Semantic token type assigned by a preprocessor phase for tokens inside
+   * preprocessor-owned text (e.g. the body of an `EXEC SQL`/`EXEC CICS` statement, whose
+   * classification comes from the external preprocessor engine rather than the PL/I
+   * grammar). Rendered with the `preprocessor` modifier by semantic highlighting.
+   */
+  ppSemanticType?: SemanticTokenTypes;
 }
 class TokenImpl implements Token {
   image: string;
   originalImage: string;
   id: number = 0;
   startOffset: number;
-  startLine: number;
-  startColumn: number;
   endOffset: number;
-  endLine: number;
-  endColumn: number;
   tokenTypeIdx: number;
   isInsertedInRecovery: boolean;
   tokenType: TokenType;
@@ -64,28 +74,22 @@ class TokenImpl implements Token {
   kind: CstNodeKind | undefined;
   element: ast.SyntaxNode | undefined;
   immediateFollow: boolean;
+  startsNewLine: boolean;
   constructor(
     image: string,
     originalImage: string,
     id: number,
     tokenType: TokenType,
     startOffset: number,
-    startLine: number,
-    startColumn: number,
     endOffset: number,
-    endLine: number,
-    endColumn: number,
     uri: URI | undefined,
+    startsNewLine: boolean = false,
   ) {
     this.image = image;
     this.originalImage = originalImage;
     this.id = id;
     this.startOffset = startOffset;
-    this.startLine = startLine;
-    this.startColumn = startColumn;
     this.endOffset = endOffset;
-    this.endLine = endLine;
-    this.endColumn = endColumn;
     this.tokenTypeIdx = tokenType.tokenTypeIdx!;
     this.tokenType = tokenType;
     this.uri = uri;
@@ -93,6 +97,7 @@ class TokenImpl implements Token {
     this.element = undefined;
     this.isInsertedInRecovery = false;
     this.immediateFollow = false;
+    this.startsNewLine = startsNewLine;
   }
 }
 /**
@@ -107,12 +112,9 @@ export function createTokenInstance(
   originalImage: string,
   tokenType: TokenType,
   startOffset: number,
-  startLine: number,
-  startColumn: number,
   endOffset: number,
-  endLine: number,
-  endColumn: number,
   uri: URI | undefined,
+  startsNewLine: boolean = false,
 ): Token {
   return new TokenImpl(
     image,
@@ -120,12 +122,9 @@ export function createTokenInstance(
     nextTokenId++,
     tokenType,
     startOffset,
-    startLine,
-    startColumn,
     endOffset,
-    endLine,
-    endColumn,
     uri,
+    startsNewLine,
   );
 }
 

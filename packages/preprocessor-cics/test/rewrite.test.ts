@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS REWRITE", async () => {
+describe("CICS REWRITE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) FROM(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) FROM(456) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkRule -> checkHasExactlyOneOption (none provided)
-  test("Neither FILE nor DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("REWRITE FROM(456)");
+  test("Neither FILE nor DATASET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("REWRITE FROM(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -42,8 +42,8 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkRule -> checkHasExactlyOneOption (both provided -> mutually exclusive)
-  test("Both FILE and DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Both FILE and DATASET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) DATASET(456) FROM(789)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -54,16 +54,16 @@ describe("CICS REWRITE", async () => {
   });
 
   // checkRule -> checkHasMandatoryOptions(FROM)
-  test("Missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("REWRITE FILE(123)");
+  test("Missing FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("REWRITE FILE(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
   });
 
   // checkDuplicates
-  test("Duplicated FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REWRITE FILE(123) FROM(456) FROM(789)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -53,7 +53,3 @@ export function cicsResponseStatement(
   );
   return statement;
 }
-
-export function isCicsExecStatement(state: ParserState): boolean {
-  return state.canConsume(t.EXEC, t.CICS);
-}

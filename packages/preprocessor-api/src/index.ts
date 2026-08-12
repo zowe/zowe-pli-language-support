@@ -9,3 +9,5 @@
  *
  */
 export * from "./types";
+export * from "./context-utils";
+export * from "./recording-context";

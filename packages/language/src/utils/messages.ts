@@ -10,6 +10,7 @@
  */
 
 import { URI } from "./uri";
+import type { Connection } from "vscode-languageserver";
 
 export type RequestType<P, R> = {
   method: string;
@@ -34,6 +35,42 @@ export type NotificationType<P> = {
 
 export function createNotificationType<P>(method: string): NotificationType<P> {
   return { method };
+}
+
+// Typed wrappers around the raw string-keyed connection API. They live here (not in
+// connection-handler.ts) so modules reachable from `CompilationUnit` can use them
+// without an import cycle through connection-handler.
+
+export function onRequest<P, R>(
+  connection: Connection,
+  type: RequestType<P, R>,
+  handler: (params: P) => R | Promise<R>,
+): void {
+  connection.onRequest(type.method, handler);
+}
+
+export function sendRequest<P, R>(
+  connection: Connection,
+  type: RequestType<P, R>,
+  params: P,
+): Promise<R> {
+  return connection.sendRequest(type.method, params);
+}
+
+export function onNotification<P>(
+  connection: Connection,
+  type: NotificationType<P>,
+  handler: (params: P) => void | Promise<void>,
+): void {
+  connection.onNotification(type.method, handler);
+}
+
+export function sendNotification<P>(
+  connection: Connection,
+  type: NotificationType<P>,
+  params: P,
+): void {
+  connection.sendNotification(type.method, params);
 }
 
 export namespace Messages {
@@ -119,6 +156,25 @@ export namespace Messages {
     string,
     PluginConfigEntryLocation | null
   >("pli/getProcessGroupLocation");
+
+  /**
+   * Request sent to the LS to get the fully preprocessed text of the
+   * compilation unit that contains the given file URI.
+   * Returns null if no compilation unit exists for the file.
+   */
+  export const GetPreprocessedText = createRequestType<string, string | null>(
+    "pli/getPreprocessedText",
+  );
+
+  /**
+   * Notification sent to the language client when the preprocessed text of a
+   * compilation unit has changed. Carries the URIs of all files belonging to
+   * the unit, so the client only refreshes preprocessed text views showing
+   * that unit.
+   */
+  export const PreprocessedTextChanged = createNotificationType<{
+    uris: string[];
+  }>("pli/preprocessedTextChanged");
 }
 
 export interface GlobalConfigLoader {

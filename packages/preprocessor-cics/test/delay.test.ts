@@ -13,26 +13,23 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DELAY", async () => {
+describe("CICS DELAY", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("DELAY FOR HOURS(1)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DELAY FOR HOURS(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "DELAY FOR HOURS(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DELAY FOR HOURS(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkOpts -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive INTERVAL and TIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive INTERVAL and TIME", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DELAY INTERVAL(0) TIME(123)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -43,8 +40,8 @@ describe("CICS DELAY", async () => {
   });
 
   // checkOpts -> checkHasIllegalOptions when INTERVAL is present
-  test("HOURS illegal with INTERVAL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("HOURS illegal with INTERVAL", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DELAY INTERVAL(0) HOURS(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,8 +50,8 @@ describe("CICS DELAY", async () => {
   });
 
   // checkOpts -> mandatory HOURS/MINUTES/SECONDS when UNTIL is present
-  test("UNTIL without HOURS/MINUTES/SECONDS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DELAY UNTIL");
+  test("UNTIL without HOURS/MINUTES/SECONDS", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DELAY UNTIL");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -63,8 +60,8 @@ describe("CICS DELAY", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated HOURS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated HOURS", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DELAY FOR HOURS(1) HOURS(2)",
     );
     expect(diagnostics).toHaveLength(1);

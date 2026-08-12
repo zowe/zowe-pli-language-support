@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CONNECT PROCESS", async () => {
+describe("CICS CONNECT PROCESS", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONNECT PROCESS CONVID(1) PROCNAME(2) SYNCLEVEL(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONNECT PROCESS CONVID(1) PROCNAME(2) SYNCLEVEL(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS CONNECT PROCESS", async () => {
   });
 
   // checkConnectProcessOptions -> checkHasExactlyOneOption (none provided)
-  test("Neither CONVID nor SESSION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Neither CONVID nor SESSION", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONNECT PROCESS SYNCLEVEL(3) PROCNAME(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,8 +44,8 @@ describe("CICS CONNECT PROCESS", async () => {
   });
 
   // checkConnectProcessOptions -> checkHasMandatoryOptions(SYNCLEVEL)
-  test("Missing SYNCLEVEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Missing SYNCLEVEL", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONNECT PROCESS CONVID(1) PROCNAME(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,8 +56,8 @@ describe("CICS CONNECT PROCESS", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CONVID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONNECT PROCESS CONVID(1) CONVID(2) PROCNAME(3) SYNCLEVEL(4)",
     );
     expect(diagnostics).toHaveLength(1);

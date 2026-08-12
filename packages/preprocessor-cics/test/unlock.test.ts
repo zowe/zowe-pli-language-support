@@ -13,33 +13,31 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS UNLOCK", async () => {
+describe("CICS UNLOCK", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("UNLOCK FILE(123)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("UNLOCK FILE(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "UNLOCK FILE(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("UNLOCK FILE(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkUnlock -> checkHasMandatoryOptions(cics_file_name)
-  test("Missing FILE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("UNLOCK TOKEN(123)");
+  test("Missing FILE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("UNLOCK TOKEN(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FILE/);
   });
 
   // checkUnlock -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive FILE and DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive FILE and DATASET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "UNLOCK FILE(123) DATASET(456)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -50,8 +48,8 @@ describe("CICS UNLOCK", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "UNLOCK FILE(123) TOKEN(456) TOKEN(789)",
     );
     expect(diagnostics).toHaveLength(1);

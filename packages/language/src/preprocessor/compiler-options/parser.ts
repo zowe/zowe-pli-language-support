@@ -277,12 +277,8 @@ export function parseAbstractCompilerOptions(
   input: string,
   uri?: URI,
   offset?: number,
-  line?: number,
-  column?: number,
 ): AbstractCompilerOptions {
   offset ??= 0;
-  column ??= 0;
-  line ??= 0;
   // Remove everything after the first ;.
   // *PROCESS MARGINS(2, 72) ; MARGINS(1, 72); is valid, but everything after the first ; is ignored.
   const lexerResult = lexer.tokenize(input);
@@ -297,19 +293,11 @@ export function parseAbstractCompilerOptions(
   if (uri) {
     for (const token of tokens) {
       token.uri = uri;
-      token.startLine += line - 1;
-      token.startColumn += column - 1;
-      token.endLine += line - 1;
-      token.endColumn += column - 1;
       token.startOffset += offset;
       token.endOffset += offset;
     }
     for (const comment of comments) {
       comment.uri = uri;
-      comment.startLine += line - 1;
-      comment.startColumn += column - 1;
-      comment.endLine += line - 1;
-      comment.endColumn += column - 1;
       comment.startOffset += offset;
       comment.endOffset += offset;
     }

@@ -17,8 +17,8 @@
 ////   %END;
 //// END;
 
-// EXEC CICS inside a %DO block should be recognized and processed, generating CICS
-// declarations and replacing the statement with DO; END;.
+// EXEC CICS inside a %DO block passes through the macro phase as plain text and is then
+// processed by the CICS phase, generating the declarations and the DO; END; replacement.
 preprocessor.expectTokens(`
 TEST: PROC;
     DCL 
@@ -65,7 +65,7 @@ TEST: PROC;
       1 DFHCNTBS  STATIC,
         2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 730.');
     DCL DFHDUMMY STATIC FIXED BIN(15) INIT(0);
-    DCL DFHEI0 ENTRY VARIABLE INIT(DFHEI01) AUTO OPTIONS(INTER ASSEMBLER);
+    DCL DFHEI0 ENTRY VARIABLE OPTIONS(INTER ASSEMBLER) INIT(DFHEI01) AUTO;
     DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
 
     DO; END;

@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ISSUE", async () => {
+describe("CICS ISSUE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE ABEND BLA");
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE ABEND BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkDuplicates
-  test("Duplicated ADD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ADD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ADD ADD DESTID(DD) FROM(FF)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -34,8 +34,8 @@ describe("CICS ISSUE", async () => {
     );
   });
 
-  test("Duplicated DESTIDLENG", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated DESTIDLENG", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ABORT DESTID(DD) DESTIDLENG(DD) DESTIDLENG(DD)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,8 +45,8 @@ describe("CICS ISSUE", async () => {
     );
   });
 
-  test("Duplicated DESTID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated DESTID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ABORT DESTID(DD) DESTID(DD)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,129 +56,114 @@ describe("CICS ISSUE", async () => {
     );
   });
 
-  test("ABEND", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE ABEND");
+  test("ABEND", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE ABEND");
     expect(diagnostics).toHaveLength(0);
   });
-  test("ABORT (issue common DESTID)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE ABORT DESTID(DD)",
-    );
+  test("ABORT (issue common DESTID)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE ABORT DESTID(DD)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("ABORT SUBADDR CONSOLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ABORT SUBADDR CONSOLE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ABORT SUBADDR(SA) CONSOLE",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("ABORT DESTIDLENG without DESTID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ABORT DESTIDLENG without DESTID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ABORT DESTIDLENG(DL)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("ADD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ADD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ADD DESTID(DD) FROM(FF)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("ADD missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE ADD DESTID(DD)",
-    );
+  test("ADD missing FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE ADD DESTID(DD)");
     expect(diagnostics).toHaveLength(1);
   });
-  test("ADD RRN without RIDFLD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ADD RRN without RIDFLD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ADD DESTID(DD) FROM(FF) RRN",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("CONFIRMATION", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("ISSUE CONFIRMATION");
+  test("CONFIRMATION", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE CONFIRMATION");
     expect(diagnostics).toHaveLength(0);
   });
-  test("COPY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE COPY TERMID(TM)",
-    );
+  test("COPY", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE COPY TERMID(TM)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("DISCONNECT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE DISCONNECT");
+  test("DISCONNECT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE DISCONNECT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("END", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE END");
+  test("END", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("EODS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE EODS");
+  test("EODS", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE EODS");
     expect(diagnostics).toHaveLength(0);
   });
-  test("ERASE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ERASE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ERASE RIDFLD(RF) DESTID(DD) RRN",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("ERASE without RRN or KEYLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ERASE without RRN or KEYLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE ERASE RIDFLD(RF) DESTID(DD)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("ERROR", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE ERROR");
+  test("ERROR", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE ERROR");
     expect(diagnostics).toHaveLength(0);
   });
-  test("LOAD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE LOAD PROGRAM(PG)",
-    );
+  test("LOAD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE LOAD PROGRAM(PG)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("NOTE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("NOTE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE NOTE DESTID(DD) RIDFLD(RF) RRN",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("PASS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE PASS LUNAME(LU)",
-    );
+  test("PASS", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE PASS LUNAME(LU)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("PASS missing LUNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE PASS");
+  test("PASS missing LUNAME", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE PASS");
     expect(diagnostics).toHaveLength(1);
   });
-  test("PREPARE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE PREPARE");
+  test("PREPARE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE PREPARE");
     expect(diagnostics).toHaveLength(0);
   });
-  test("PRINT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE PRINT");
+  test("PRINT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE PRINT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("QUERY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE QUERY DESTID(DD)",
-    );
+  test("QUERY", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE QUERY DESTID(DD)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("RECEIVE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE RECEIVE INTO(IN)",
-    );
+  test("RECEIVE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE RECEIVE INTO(IN)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("RECEIVE with conflicting INTO/SET and missing LENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("RECEIVE with conflicting INTO/SET and missing LENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE RECEIVE INTO(IN) SET(NAME)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -189,36 +174,34 @@ describe("CICS ISSUE", async () => {
     expect(diagnostics[1].severity).toBe(Severity.Error);
     expect(diagnostics[1].message).toMatch(/Missing required option: LENGTH/);
   });
-  test("RECEIVE without INTO or SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE RECEIVE");
+  test("RECEIVE without INTO or SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE RECEIVE");
     expect(diagnostics).toHaveLength(1);
   });
-  test("REPLACE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("REPLACE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE REPLACE DESTID(DD) RIDFLD(RF) FROM(FF) RRN",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("SEND", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("SEND", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE SEND FROM(FF) DESTID(DD)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("SIGNAL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ISSUE SIGNAL");
+  test("SIGNAL", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE SIGNAL");
     expect(diagnostics).toHaveLength(0);
   });
-  test("SIGNAL SESSION with CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("SIGNAL SESSION with CONVID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ISSUE SIGNAL CONVID(CV) SESSION(SES)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("WAIT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ISSUE WAIT DESTID(DD)",
-    );
+  test("WAIT", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ISSUE WAIT DESTID(DD)");
     expect(diagnostics).toHaveLength(0);
   });
 });

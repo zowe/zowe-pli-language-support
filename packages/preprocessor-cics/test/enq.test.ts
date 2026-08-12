@@ -13,33 +13,31 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENQ", async () => {
+describe("CICS ENQ", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ENQ RESOURCE(123)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENQ RESOURCE(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ENQ RESOURCE(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENQ RESOURCE(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEnq -> checkHasMandatoryOptions
-  test("Missing RESOURCE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ENQ UOW");
+  test("Missing RESOURCE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENQ UOW");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RESOURCE/);
   });
 
   // checkEnq -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive UOW and TASK", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive UOW and TASK", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENQ RESOURCE(123) UOW TASK",
     );
     expect(diagnostics).toHaveLength(2);
@@ -50,8 +48,8 @@ describe("CICS ENQ", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated RESOURCE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated RESOURCE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENQ RESOURCE(123) RESOURCE(456)",
     );
     expect(diagnostics).toHaveLength(1);

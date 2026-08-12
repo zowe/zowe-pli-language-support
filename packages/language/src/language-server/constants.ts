@@ -60,4 +60,10 @@ export namespace Commands {
    * program configuration is bound to.
    */
   export const GO_TO_PROCESS_GROUP = "pli.goToProcessGroup";
+
+  /**
+   * Client-side command to open the fully preprocessed text of the
+   * compilation unit containing the active .pli file in a read-only editor.
+   */
+  export const SHOW_PREPROCESSED_TEXT = "pli.showPreprocessedText";
 }

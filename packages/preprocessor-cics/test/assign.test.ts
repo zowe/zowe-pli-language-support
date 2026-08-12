@@ -19,16 +19,16 @@ import { Severity } from "preprocessor-api";
 // checker once per single option. checkDuplicates therefore never sees two of the
 // same option within one context and cannot raise a diagnostic. There is no
 // reachable failure branch to assert on; only positive/parse cases are testable.
-describe("CICS ASSIGN", async () => {
+describe("CICS ASSIGN", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ASSIGN APPLID(A)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ASSIGN APPLID(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ASSIGN BLA");
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ASSIGN BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
@@ -36,8 +36,8 @@ describe("CICS ASSIGN", async () => {
   // EXPECTED TO FAIL: see note above — the duplicate APPLID lands in two separate
   // cics_assign_parameter contexts, so checkDuplicates never sees both and emits
   // no diagnostic. Kept so the unreachable branch is visible.
-  test.fails("Duplicated APPLID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test.fails("Duplicated APPLID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ASSIGN APPLID(A) APPLID(B)",
     );
     expect(diagnostics).toHaveLength(1);

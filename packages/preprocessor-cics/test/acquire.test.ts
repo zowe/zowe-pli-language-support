@@ -13,26 +13,26 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ACQUIRE", async () => {
+describe("CICS ACQUIRE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) BLA",
     );
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  test("Duplicated PROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PROCESS", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESS(DEF) PROCESSTYPE(XYZ)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -42,8 +42,8 @@ describe("CICS ACQUIRE", async () => {
     );
   });
 
-  test("Duplicated PROCESSTYPE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PROCESSTYPE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) PROCESSTYPE(DEF)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,10 +53,8 @@ describe("CICS ACQUIRE", async () => {
     );
   });
 
-  test("Missing PROCESSTYPE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ACQUIRE PROCESS(ABC)",
-    );
+  test("Missing PROCESSTYPE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ACQUIRE PROCESS(ABC)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

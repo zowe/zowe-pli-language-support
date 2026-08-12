@@ -13,6 +13,12 @@ import { URI, Utils } from "vscode-uri";
 import { BuiltinsUriSchema } from "../workspace/builtins-constants";
 export { URI };
 
+/**
+ * URI scheme of the client-side virtual documents that show a compilation
+ * unit's fully preprocessed text.
+ */
+export const PreprocessedTextUriSchema = "pli-preprocessed";
+
 /** Matches Windows absolute paths: letter + colon + slash, e.g. C:\ or D:/ */
 const WINDOWS_DRIVE_REGEX = /^[a-zA-Z]:[\\\/]/;
 /** Matches URI scheme prefixes, e.g. file:, memory:, https: */
@@ -287,7 +293,12 @@ export namespace UriUtils {
   }
 }
 
-const virtualSchemes = ["git", "untitled", BuiltinsUriSchema];
+const virtualSchemes = [
+  "git",
+  "untitled",
+  BuiltinsUriSchema,
+  PreprocessedTextUriSchema,
+];
 
 export function isVirtualFile(uri: string): boolean {
   return virtualSchemes.some((scheme) => uri.startsWith(`${scheme}:`));

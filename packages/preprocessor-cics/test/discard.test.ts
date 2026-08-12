@@ -18,19 +18,16 @@ import { Severity } from "preprocessor-api";
 // so a resource option can never appear twice without being a parse error. The
 // checker therefore has no reachable duplicate-failure branch; only
 // positive/parse cases are testable.
-describe("CICS DISCARD", async () => {
+describe("CICS DISCARD", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("DISCARD PROGRAM(A)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DISCARD PROGRAM(A)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "DISCARD PROGRAM(A) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DISCARD PROGRAM(A) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
@@ -38,8 +35,8 @@ describe("CICS DISCARD", async () => {
   // EXPECTED TO FAIL: see note above — cics_discard_body matches exactly one
   // resource, so a second PROGRAM is a parse error rather than a duplicate-option
   // diagnostic. Kept so the unreachable branch is visible.
-  test.fails("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test.fails("Duplicated PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DISCARD PROGRAM(A) PROGRAM(B)",
     );
     expect(diagnostics).toHaveLength(1);

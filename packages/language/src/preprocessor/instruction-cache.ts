@@ -11,7 +11,6 @@
 
 import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { TokenizationResult } from "../parser/tokenizer";
 import { Statement } from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import { InstructionGeneratorResult } from "./instruction-generator";
@@ -65,6 +64,21 @@ export interface FileInstructionResult {
 export class InstructionCache extends TextKeyedCache<FileInstructionResult> {}
 
 /**
- * Caches the raw tokenization (margins + tokenize) of the main compilation unit's source.
+ * Margins + comment-strip applied - `text` is what seeds the preprocessor phase pipeline.
+ * `comments` (converted from `stripComments`' ranges) are registered for LSP services
+ * (semantic highlighting, hover-on-comment, ...) - see `PliLexer.prepareSource`. Real
+ * tokens are *not* cached here: `unit.services.files` must register the exact token
+ * objects the real parser mutates with `.kind`/`.element` (`LexerResult.all`), not a
+ * separately re-tokenized array - see `PliLexer.registerFileTokens`.
  */
-export class TokenizationCache extends TextKeyedCache<TokenizationResult> {}
+export interface PreparedSource {
+  text: string;
+  comments: Token[];
+  diagnostics: Diagnostic[];
+}
+
+/**
+ * Caches the margins + comment-strip + raw tokenization of the main compilation unit's
+ * source.
+ */
+export class TokenizationCache extends TextKeyedCache<PreparedSource> {}

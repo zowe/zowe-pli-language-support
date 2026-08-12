@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS COLLECT STATISTICS", async () => {
+describe("CICS COLLECT STATISTICS", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) MONITOR",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) MONITOR BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS COLLECT STATISTICS", async () => {
   });
 
   // checkOpts -> checkHasMandatoryOptions(SET)
-  test("Missing SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Missing SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS MONITOR",
     );
     expect(diagnostics).toHaveLength(1);
@@ -42,8 +42,8 @@ describe("CICS COLLECT STATISTICS", async () => {
   });
 
   // checkOpts -> big mutually-exclusive resource list
-  test("Mutually exclusive MONITOR and FILE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive MONITOR and FILE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) MONITOR FILE(2)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -54,8 +54,8 @@ describe("CICS COLLECT STATISTICS", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "COLLECT STATISTICS SET(1) SET(2) MONITOR",
     );
     expect(diagnostics).toHaveLength(1);

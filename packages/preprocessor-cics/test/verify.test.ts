@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS VERIFY", async () => {
+describe("CICS VERIFY", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (PASSWORD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (PASSWORD)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) USERID(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,17 +32,16 @@ describe("CICS VERIFY", async () => {
   });
 
   // checkVerifyPassword -> checkHasMandatoryOptions(USERID)
-  test("PASSWORD missing USERID", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("VERIFY PASSWORD(1)");
+  test("PASSWORD missing USERID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("VERIFY PASSWORD(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: USERID/);
   });
 
   // checkVerifyToken -> checkHasExactlyOneOption (none provided)
-  test("Token without TOKENTYPE/BASICAUTH/JWT/KERBEROS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Token without TOKENTYPE/BASICAUTH/JWT/KERBEROS", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY TOKEN(1) TOKENLEN(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,8 +52,8 @@ describe("CICS VERIFY", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PASSWORD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PASSWORD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "VERIFY PASSWORD(1) PASSWORD(2) USERID(3)",
     );
     expect(diagnostics).toHaveLength(1);

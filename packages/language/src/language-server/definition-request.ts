@@ -51,7 +51,9 @@ export function definitionRequest(
     }
     for (const node of iterateReferenceNodes(ref)) {
       const nameToken = getNameToken(node);
-      if (!nameToken?.uri) {
+      // A `synthetic` name token belongs to a preprocessor-generated declaration.
+      // There is no meaningful source location to jump to, so we skip it.
+      if (!nameToken?.uri || nameToken.synthetic) {
         continue;
       }
       locations.push({

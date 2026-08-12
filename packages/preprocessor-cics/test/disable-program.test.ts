@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS DISABLE PROGRAM", async () => {
+describe("CICS DISABLE PROGRAM", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) PURGEABLE",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) PURGEABLE BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,17 +32,16 @@ describe("CICS DISABLE PROGRAM", async () => {
   });
 
   // checkDisableProgram -> checkHasMandatoryOptions(PROGRAM)
-  test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("DISABLE EXIT(1)");
+  test("Missing PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DISABLE EXIT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
   });
 
   // checkDisableProgram -> checkHasAtLeastOneOption (none provided)
-  test("No accessory option", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("DISABLE PROGRAM(1)");
+  test("No accessory option", () => {
+    const { diagnostics } = cicsPreprocessor.parse("DISABLE PROGRAM(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -51,8 +50,8 @@ describe("CICS DISABLE PROGRAM", async () => {
   });
 
   // checkDisableProgram -> checkHasMutuallyExclusiveOptions (EXIT vs PURGEABLE)
-  test("EXIT mutually exclusive with PURGEABLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("EXIT mutually exclusive with PURGEABLE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) EXIT(2) PURGEABLE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -63,8 +62,8 @@ describe("CICS DISABLE PROGRAM", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "DISABLE PROGRAM(1) PROGRAM(2) PURGEABLE",
     );
     expect(diagnostics).toHaveLength(1);

@@ -13,25 +13,23 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CANCEL", async () => {
+describe("CICS CANCEL", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("CANCEL REQID(123)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CANCEL REQID(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "CANCEL REQID(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CANCEL REQID(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkBts -> checkHasExactlyOneOption (multiple -> mutually exclusive)
-  test("BTS: ACTIVITY and ACQACTIVITY mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("BTS: ACTIVITY and ACQACTIVITY mutually exclusive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CANCEL ACTIVITY(123) ACQACTIVITY",
     );
     expect(diagnostics).toHaveLength(2);
@@ -42,16 +40,16 @@ describe("CICS CANCEL", async () => {
   });
 
   // checkReq -> checkHasMandatoryOptions(REQID) when SYSID/TRANSID present
-  test("REQID: SYSID without REQID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("CANCEL SYSID(123)");
+  test("REQID: SYSID without REQID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CANCEL SYSID(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: REQID/);
   });
 
   // checkDuplicates
-  test("Duplicated ACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ACTIVITY", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CANCEL ACTIVITY(123) ACTIVITY(456)",
     );
     expect(diagnostics).toHaveLength(1);

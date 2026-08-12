@@ -13,18 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS PUT CONTAINER", async () => {
+describe("CICS PUT CONTAINER", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PUT CONTAINER(1) FROM(2)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PUT CONTAINER(1) FROM(2)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT CONTAINER(1) FROM(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,16 +30,16 @@ describe("CICS PUT CONTAINER", async () => {
   });
 
   // checkBTS -> checkHasMandatoryOptions(FROM)
-  test("Missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("PUT CONTAINER(1)");
+  test("Missing FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PUT CONTAINER(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
   });
 
   // checkBTS -> checkMutuallyExclusiveOptions
-  test("Mutually exclusive ACTIVITY and ACQACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive ACTIVITY and ACQACTIVITY", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT ACTIVITY(1) ACQACTIVITY CONTAINER(2) FROM(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,8 +50,8 @@ describe("CICS PUT CONTAINER", async () => {
   });
 
   // checkOptions -> checkHasIllegalOptions(PUT64)
-  test("PUT64 is only available in Assembly", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("PUT64 is only available in Assembly", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT64 CONTAINER(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -64,8 +62,8 @@ describe("CICS PUT CONTAINER", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONTAINER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CONTAINER", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PUT CONTAINER(1) CONTAINER(2) FROM(3)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS BUILD ATTACH", async () => {
+describe("CICS BUILD ATTACH", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,26 +32,24 @@ describe("CICS BUILD ATTACH", async () => {
   });
 
   // checkAttachIdOptions -> checkHasMandatoryOptions(ATTACH)
-  test("Missing ATTACH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "BUILD ATTACHID(123)",
-    );
+  test("Missing ATTACH", () => {
+    const { diagnostics } = cicsPreprocessor.parse("BUILD ATTACHID(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ATTACH/);
   });
 
   // checkAttachIdOptions -> checkHasMandatoryOptions(ATTACHID)
-  test("Missing ATTACHID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("BUILD ATTACH");
+  test("Missing ATTACHID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("BUILD ATTACH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ATTACHID/);
   });
 
   // checkDuplicates
-  test("Duplicated ATTACHID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ATTACHID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "BUILD ATTACH ATTACHID(123) ATTACHID(456)",
     );
     expect(diagnostics).toHaveLength(1);

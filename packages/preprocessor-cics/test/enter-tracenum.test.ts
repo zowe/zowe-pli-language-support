@@ -13,35 +13,31 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENTER TRACENUM", async () => {
+describe("CICS ENTER TRACENUM", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ENTER TRACENUM(123)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENTER TRACENUM(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ENTER TRACENUM(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENTER TRACENUM(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEnq -> checkHasMandatoryOptions(TRACENUM)
-  test("Missing TRACENUM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ENTER FROM(123)");
+  test("Missing TRACENUM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENTER FROM(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TRACENUM/);
   });
 
   // checkEnq -> FROM becomes mandatory when FROMLENGTH is present
-  test("FROMLENGTH without FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("FROMLENGTH without FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENTER TRACENUM(123) FROMLENGTH(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -50,8 +46,8 @@ describe("CICS ENTER TRACENUM", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TRACENUM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TRACENUM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENTER TRACENUM(123) TRACENUM(456)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -14,8 +14,7 @@ import {
   CancellationTokenSource,
   Connection,
 } from "vscode-languageserver";
-import { Messages } from "./messages";
-import { sendNotification } from "../language-server/connection-handler";
+import { Messages, sendNotification } from "./messages";
 
 export type MaybePromise<T> = T | Promise<T>;
 

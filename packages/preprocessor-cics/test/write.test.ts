@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WRITE", async () => {
+describe("CICS WRITE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (FILE)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (FILE)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WRITE FILE(1) FROM(2) RIDFLD(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WRITE FILE(1) FROM(2) RIDFLD(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,20 +32,16 @@ describe("CICS WRITE", async () => {
   });
 
   // checkWriteFile -> checkHasMandatoryOptions(FROM)
-  test("FILE missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WRITE FILE(1) RIDFLD(2)",
-    );
+  test("FILE missing FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WRITE FILE(1) RIDFLD(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
   });
 
   // checkWriteFile -> checkHasExactlyOneOption (none provided)
-  test("Neither FILE nor DATASET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WRITE FROM(1) RIDFLD(2)",
-    );
+  test("Neither FILE nor DATASET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WRITE FROM(1) RIDFLD(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,8 +50,8 @@ describe("CICS WRITE", async () => {
   });
 
   // checkWriteJournalname -> checkHasMandatoryOptions(JTYPEID)
-  test("JOURNALNAME missing JTYPEID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JOURNALNAME missing JTYPEID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WRITE JOURNALNAME(1) FROM(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -64,8 +60,8 @@ describe("CICS WRITE", async () => {
   });
 
   // checkWriteOperator -> checkHasMutuallyExclusiveOptions
-  test("OPERATOR mutually exclusive EVENTUAL and ACTION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("OPERATOR mutually exclusive EVENTUAL and ACTION", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WRITE OPERATOR TEXT(1) EVENTUAL ACTION(2)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -76,8 +72,8 @@ describe("CICS WRITE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WRITE FILE(1) FROM(2) FROM(3) RIDFLD(4)",
     );
     expect(diagnostics).toHaveLength(1);

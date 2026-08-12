@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WSAEPR", async () => {
+describe("CICS WSAEPR", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WSAEPR CREATE EPRINTO(1) EPRLENGTH(2) ADDRESS(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WSAEPR CREATE EPRINTO(1) EPRLENGTH(2) ADDRESS(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS WSAEPR", async () => {
   });
 
   // checkWSAEPR -> checkHasMandatoryOptions(EPRLENGTH)
-  test("Missing EPRLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Missing EPRLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WSAEPR CREATE EPRINTO(1) ADDRESS(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,8 +44,8 @@ describe("CICS WSAEPR", async () => {
   });
 
   // checkWSAEPR -> checkHasExactlyOneOption (EPRINTO or EPRSET none)
-  test("Neither EPRINTO nor EPRSET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Neither EPRINTO nor EPRSET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WSAEPR CREATE EPRLENGTH(1) ADDRESS(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,8 +56,8 @@ describe("CICS WSAEPR", async () => {
   });
 
   // checkWSAEPR -> checkHasMandatoryOptions(ADDRESS/REFPARMS/METADATA)
-  test("Missing ADDRESS/REFPARMS/METADATA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Missing ADDRESS/REFPARMS/METADATA", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WSAEPR CREATE EPRINTO(1) EPRLENGTH(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -68,8 +68,8 @@ describe("CICS WSAEPR", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CREATE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CREATE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WSAEPR CREATE CREATE EPRINTO(1) EPRLENGTH(2) ADDRESS(3)",
     );
     expect(diagnostics).toHaveLength(1);

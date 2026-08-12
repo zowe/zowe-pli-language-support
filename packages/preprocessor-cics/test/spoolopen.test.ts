@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SPOOLOPEN", async () => {
+describe("CICS SPOOLOPEN", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (INPUT)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (INPUT)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) USERID(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,18 +32,16 @@ describe("CICS SPOOLOPEN", async () => {
   });
 
   // checkSpoolopenInput -> checkHasMandatoryOptions(TOKEN)
-  test("INPUT missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SPOOLOPEN INPUT USERID(1)",
-    );
+  test("INPUT missing TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLOPEN INPUT USERID(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
   });
 
   // checkSpoolopenOutput -> checkHasMandatoryOptions(NODE)
-  test("OUTPUT missing NODE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("OUTPUT missing NODE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN OUTPUT TOKEN(1) USERID(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,8 +50,8 @@ describe("CICS SPOOLOPEN", async () => {
   });
 
   // checkSpoolopenOutput -> checkHasMutuallyExclusiveOptions
-  test("OUTPUT mutually exclusive NOCC and ASA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("OUTPUT mutually exclusive NOCC and ASA", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN OUTPUT TOKEN(1) USERID(2) NODE(3) NOCC ASA",
     );
     expect(diagnostics).toHaveLength(2);
@@ -64,8 +62,8 @@ describe("CICS SPOOLOPEN", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLOPEN INPUT TOKEN(1) TOKEN(2) USERID(3)",
     );
     expect(diagnostics).toHaveLength(1);

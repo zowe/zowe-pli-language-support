@@ -13,18 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS IGNORE CONDITION", async () => {
+describe("CICS IGNORE CONDITION", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "IGNORE CONDITION ERROR",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("IGNORE CONDITION ERROR");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "IGNORE CONDITION ERROR BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +30,8 @@ describe("CICS IGNORE CONDITION", async () => {
   });
 
   // checkIgnoreCondition -> checkHasMandatoryOptions(CONDITION)
-  test("Missing CONDITION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("IGNORE ERROR");
+  test("Missing CONDITION", () => {
+    const { diagnostics } = cicsPreprocessor.parse("IGNORE ERROR");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -42,18 +40,16 @@ describe("CICS IGNORE CONDITION", async () => {
   });
 
   // checkHasNormalCondition -> NORMAL is not allowed
-  test("NORMAL condition is illegal", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "IGNORE CONDITION NORMAL",
-    );
+  test("NORMAL condition is illegal", () => {
+    const { diagnostics } = cicsPreprocessor.parse("IGNORE CONDITION NORMAL");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Invalid option provided: NORMAL/);
   });
 
   // checkDuplicates (warning severity)
-  test("Duplicated CONDITION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CONDITION", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "IGNORE CONDITION CONDITION ERROR",
     );
     expect(diagnostics).toHaveLength(1);

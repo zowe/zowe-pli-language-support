@@ -36,7 +36,7 @@ describe("DB2 SQL Positive Tests", async () => {
   );
 
   test.each(blocks)("should parse statements", async ({ line, statement }) => {
-    const { diagnostics } = await preprocessor.execute(statement);
+    const { diagnostics } = preprocessor.parse(statement);
     expect(
       diagnostics,
       diagnostics.length > 0

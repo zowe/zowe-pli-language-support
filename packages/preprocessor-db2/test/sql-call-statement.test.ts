@@ -16,7 +16,7 @@ describe("DB2 SQL call statement", async () => {
   const preprocessor = new Db2SqlPreprocessor();
 
   test("CALL", async () => {
-    const { diagnostics, tokens } = await preprocessor.execute(`
+    const { diagnostics, tokens } = preprocessor.parse(`
            CALL myProc USING DESCRIPTOR :SQLD
        `);
     expect(diagnostics).toHaveLength(0);

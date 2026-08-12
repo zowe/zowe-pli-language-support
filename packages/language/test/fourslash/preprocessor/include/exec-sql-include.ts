@@ -12,12 +12,13 @@
 /// <reference path="../../framework.ts" />
 
 // @filename: cpy/lib.pli
-//// DECLARE LIB_VAR FIXED;
+////<|click:|> DECLARE LIB_VAR FIXED;
 
 // @filename: main.pli
-//// EXEC SQL INCLUDE lib;
+//// EXEC SQL INCLUDE <|click>lib;
 
 // Should simply run the normal include logic
 preprocessor.expectTokens(`
   DECLARE LIB_VAR FIXED;
 `);
+linker.expectLinks();

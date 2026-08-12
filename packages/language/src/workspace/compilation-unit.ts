@@ -10,7 +10,12 @@
  */
 
 import { Program, SyntaxKind } from "../syntax-tree/ast.js";
-import { isVirtualFile, URI, UriUtils } from "../utils/uri.js";
+import {
+  isVirtualFile,
+  URI,
+  PreprocessedTextUriSchema,
+  UriUtils,
+} from "../utils/uri.js";
 import {
   CancellationToken,
   Connection,
@@ -29,6 +34,7 @@ import {
 } from "./lifecycle.js";
 import { skippedCode } from "../language-server/skipped-code.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
+import { notifyPreprocessedText } from "../language-server/preprocessed-text.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
@@ -92,6 +98,12 @@ export interface CompilationUnit {
   preprocessorAst: Program;
   preprocessorEvaluationResults: EvaluationResults;
   tokens: Token[];
+  /**
+   * The text produced by the last preprocessing phase — exactly the text that was
+   * lexed to produce {@link tokens}. Positions in it map back to the original
+   * sources only via the pipeline's composed source map (already baked into the tokens).
+   */
+  preprocessedText: string;
   referencesCache: ReferencesCache;
   statementOrderCache: StatementOrderCache;
   diagnostics: DiagnosticsStore;
@@ -170,6 +182,7 @@ export async function createCompilationUnit(
       branchExecutions: new Map(),
     },
     tokens: [],
+    preprocessedText: "",
     referencesCache: new ReferencesCache(),
     statementOrderCache: new StatementOrderCache(),
     scopeCaches: new ScopeCacheGroups(),
@@ -182,6 +195,9 @@ export async function createCompilationUnit(
       })
       .onRevalidate("skippedCodeRanges", ({ connection, unit }) => {
         skippedCode(connection, unit);
+      })
+      .onRevalidate("preprocessedText", ({ connection, unit }) => {
+        notifyPreprocessedText(connection, unit);
       }),
     rootScope: Scope.createRoot(),
     rootPreprocessorScope: Scope.createRoot(),
@@ -332,6 +348,13 @@ export class CompilationUnitHandler {
     textDocuments.listen(connection);
     textDocuments.onDidChangeContent((event) => {
       const uri = UriUtils.toUri(event.document.uri);
+      if (uri.scheme === PreprocessedTextUriSchema) {
+        // A preprocessed-text view is a read-only rendering of generated text: its
+        // offsets don't exist in any real source file, so running the LS pipeline on
+        // it would only produce duplicate compilation units and mispositioned
+        // diagnostics. It gets TextMate highlighting only - no language support.
+        return;
+      }
       this.updateUri(uri);
     });
     textDocuments.onDidClose((event) => {

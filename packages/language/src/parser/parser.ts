@@ -746,7 +746,6 @@ const unit = orRule<ast.Unit, []>(
   () => writeStatement,
   () => procedureStatement,
   () => packageRule,
-  () => execVariableReference,
 );
 
 const allocateStatement = rule(
@@ -6565,31 +6564,6 @@ const numberLiteral = rule(
       element.value = numberToken.image;
     }
 
-    return element;
-  },
-);
-
-const execVariableReference = rule(
-  sequence(tokens.EXEC_VARIABLE_MARKER),
-  (state: ParserState): ast.ExecVariableReference => {
-    const element = ast.createExecVariableReference();
-    state.consume(
-      element,
-      CstNodeKind.CicsVariableReference_Marker,
-      tokens.EXEC_VARIABLE_MARKER,
-    );
-    const id = state.consume(
-      element,
-      CstNodeKind.CicsVariableReference_HostVariable,
-      tokens.ID,
-    );
-    if (id) {
-      element.ref = ast.createReference(
-        element,
-        id,
-        ast.ReferenceType.Variable,
-      );
-    }
     return element;
   },
 );

@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS MOVE", async () => {
+describe("CICS MOVE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS MOVE", async () => {
   });
 
   // checkMoveOptions -> checkHasMandatoryOptions(CONTAINER)
-  test("Missing CONTAINER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("MOVE AS(456)");
+  test("Missing CONTAINER", () => {
+    const { diagnostics } = cicsPreprocessor.parse("MOVE AS(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -42,8 +42,8 @@ describe("CICS MOVE", async () => {
   });
 
   // checkMoveOptions -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive FROMPROCESS and FROMACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive FROMPROCESS and FROMACTIVITY", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456) FROMPROCESS FROMACTIVITY(789)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -54,8 +54,8 @@ describe("CICS MOVE", async () => {
   });
 
   // checkMoveOptions -> checkHasIllegalOptions when FROMPROCESS present
-  test("CHANNEL illegal with FROMPROCESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("CHANNEL illegal with FROMPROCESS", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) AS(456) FROMPROCESS CHANNEL(789)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -66,8 +66,8 @@ describe("CICS MOVE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONTAINER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CONTAINER", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "MOVE CONTAINER(123) CONTAINER(456) AS(789)",
     );
     expect(diagnostics).toHaveLength(1);

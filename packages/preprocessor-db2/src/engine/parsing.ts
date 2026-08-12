@@ -69,12 +69,18 @@ export class CollectingErrorListener extends BaseErrorListener {
 }
 
 export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
+  // Reused across parses: constructing a generated visitor initializes one
+  // per-instance field per grammar rule, which dominates the profile when done
+  // once per EXEC statement. Sharing is safe because `collect` is fully
+  // synchronous - reset and traversal can never interleave with another call.
+  private static readonly instance = new CollectingIdentifierVisitor();
   static collect(tree: ParseTree): Token[] {
-    const visitor = new CollectingIdentifierVisitor();
+    const visitor = CollectingIdentifierVisitor.instance;
+    visitor.identifiers = [];
     tree.accept(visitor);
     return visitor.identifiers;
   }
-  readonly identifiers: Token[] = [];
+  identifiers: Token[] = [];
   override visitDbs_host_identifier = (
     ctx: Dbs_host_identifierContext,
   ): void => {
@@ -91,14 +97,20 @@ export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
 }
 
 export class CollectingIncludeVisitor extends Db2SqlExecParserVisitor<void> {
+  // Reused across parses (safe: `collect` is fully synchronous), see
+  // CollectingIdentifierVisitor.
+  private static readonly instance = new CollectingIncludeVisitor();
   static collect(tree: ParseTree): PreprocessorReplacement | null {
-    const visitor = new CollectingIncludeVisitor();
+    const visitor = CollectingIncludeVisitor.instance;
+    visitor.includePath = null;
     tree.accept(visitor);
-    return visitor.includePath
+    // Cast defeats TS assignment narrowing (`accept` mutates `includePath`).
+    const includePath = visitor.includePath as Token | null;
+    return includePath
       ? {
           type: "include",
-          token: visitor.includePath,
-          filePath: visitor.includePath.image ?? "",
+          token: includePath,
+          filePath: includePath.image ?? "",
         }
       : null;
   }
