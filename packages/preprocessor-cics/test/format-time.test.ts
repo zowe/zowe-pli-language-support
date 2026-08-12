@@ -13,18 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS FORMATTIME", async () => {
+describe("CICS FORMATTIME", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "FORMATTIME ABSTIME(123)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("FORMATTIME ABSTIME(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "FORMATTIME ABSTIME(123) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,18 +30,16 @@ describe("CICS FORMATTIME", async () => {
   });
 
   // checkOpts -> checkHasMandatoryOptions(ABSTIME)
-  test("Missing ABSTIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "FORMATTIME DATE(123)",
-    );
+  test("Missing ABSTIME", () => {
+    const { diagnostics } = cicsPreprocessor.parse("FORMATTIME DATE(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ABSTIME/);
   });
 
   // checkOpts -> DATESTRING becomes mandatory when STRINGZONE is present
-  test("STRINGZONE without DATESTRING", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("STRINGZONE without DATESTRING", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "FORMATTIME ABSTIME(123) STRINGZONE(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -54,8 +50,8 @@ describe("CICS FORMATTIME", async () => {
   });
 
   // checkOpts -> TIME becomes mandatory when TIMESEP is present
-  test("TIMESEP without TIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("TIMESEP without TIME", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "FORMATTIME ABSTIME(123) TIMESEP(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -64,8 +60,8 @@ describe("CICS FORMATTIME", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ABSTIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ABSTIME", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "FORMATTIME ABSTIME(123) ABSTIME(456)",
     );
     expect(diagnostics).toHaveLength(1);

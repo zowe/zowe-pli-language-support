@@ -20,6 +20,7 @@ import { Settings } from "./settings";
 import { registerConfigLoader, watchPluginSettings } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
 import { registerCommands } from "./commands";
+import { registerPreprocessedText } from "./preprocessed-text";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -34,6 +35,7 @@ export async function activate(
   context.subscriptions.push(settings);
   client = await startLanguageClient(context);
   registerCommands(context, client);
+  context.subscriptions.push(registerPreprocessedText(client));
 }
 
 // This function is called when the extension is deactivated.

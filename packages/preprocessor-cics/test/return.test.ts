@@ -13,27 +13,25 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS RETURN", async () => {
+describe("CICS RETURN", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) COMMAREA(456) LENGTH(5)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("RETURN BLA");
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RETURN BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkRule -> checkPrerequisiteIsMet
-  test("COMMAREA without TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "RETURN COMMAREA(456)",
-    );
+  test("COMMAREA without TRANSID", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RETURN COMMAREA(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -42,8 +40,8 @@ describe("CICS RETURN", async () => {
   });
 
   // checkRule -> checkMutuallyExclusiveOptions
-  test("Mutually exclusive COMMAREA and CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive COMMAREA and CHANNEL", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) COMMAREA(456) CHANNEL(789)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -54,8 +52,8 @@ describe("CICS RETURN", async () => {
   });
 
   // checkRule -> checkOptionalWithLength (optional present without required field)
-  test("LENGTH without COMMAREA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("LENGTH without COMMAREA", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) LENGTH(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -66,8 +64,8 @@ describe("CICS RETURN", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TRANSID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TRANSID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "RETURN TRANSID(123) TRANSID(456)",
     );
     expect(diagnostics).toHaveLength(1);

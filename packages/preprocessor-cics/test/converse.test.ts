@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CONVERSE", async () => {
+describe("CICS CONVERSE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE FROM(1) FROMLENGTH(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Conflicting ALTERNATE and DEFAULT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Conflicting ALTERNATE and DEFAULT", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE ALTERNATE DEFAULT",
     );
     expect(diagnostics).toHaveLength(1);
@@ -34,8 +34,8 @@ describe("CICS CONVERSE", async () => {
     );
   });
 
-  test("Conflicting CONVID and SESSION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Conflicting CONVID and SESSION", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE CONVID(1) SESSION(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -45,10 +45,8 @@ describe("CICS CONVERSE", async () => {
     );
   });
 
-  test("Conflicting LDC and FMH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "CONVERSE LDC(1) FMH",
-    );
+  test("Conflicting LDC and FMH", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CONVERSE LDC(1) FMH");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -56,8 +54,8 @@ describe("CICS CONVERSE", async () => {
     );
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE FROM(1) FROMLENGTH(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -65,28 +63,24 @@ describe("CICS CONVERSE", async () => {
   });
 
   // checkRule -> checkHasMandatoryOptions(FROM) when FROMLENGTH present
-  test("FROMLENGTH without FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "CONVERSE FROMLENGTH(2)",
-    );
+  test("FROMLENGTH without FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CONVERSE FROMLENGTH(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
   });
 
   // checkRule -> checkHasIllegalOptions(LEAVEKB) when ASIS present
-  test("LEAVEKB illegal with ASIS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "CONVERSE ASIS LEAVEKB",
-    );
+  test("LEAVEKB illegal with ASIS", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CONVERSE ASIS LEAVEKB");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Invalid option provided: LEAVEKB/);
   });
 
   // checkDuplicates -> custom duplicate rule (FROMLENGTH or FROMFLENGTH)
-  test("Duplicated FROMLENGTH rule", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated FROMLENGTH rule", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE FROM(1) FROMLENGTH(2) FROMFLENGTH(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -97,8 +91,8 @@ describe("CICS CONVERSE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONVID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CONVID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE CONVID(1) CONVID(2)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -13,24 +13,22 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ASKTIME", async () => {
+describe("CICS ASKTIME", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ASKTIME ABSTIME(ABC)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ASKTIME ABSTIME(ABC)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ASKTIME BLA");
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ASKTIME BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  test("Duplicated ABSTIME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ABSTIME", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ASKTIME ABSTIME(ABC) ABSTIME(DEF)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -13,18 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS GETMAIN", async () => {
+describe("CICS GETMAIN", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "GETMAIN SET(1) FLENGTH(2)",
-    );
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETMAIN SET(1) FLENGTH(2)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETMAIN SET(1) FLENGTH(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,17 +30,16 @@ describe("CICS GETMAIN", async () => {
   });
 
   // checkGetMain -> checkHasMandatoryOptions(SET)
-  test("Missing SET", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("GETMAIN FLENGTH(1)");
+  test("Missing SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETMAIN FLENGTH(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: SET/);
   });
 
   // checkGetMain -> checkHasExactlyOneOption (none provided)
-  test("Neither FLENGTH nor LENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("GETMAIN SET(1)");
+  test("Neither FLENGTH nor LENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETMAIN SET(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -51,8 +48,8 @@ describe("CICS GETMAIN", async () => {
   });
 
   // checkGetMain -> checkHasIllegalOptions(BELOW) when FLENGTH absent
-  test("BELOW without FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("BELOW without FLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETMAIN SET(1) LENGTH(2) BELOW",
     );
     expect(diagnostics).toHaveLength(1);
@@ -63,8 +60,8 @@ describe("CICS GETMAIN", async () => {
   });
 
   // checkDuplicates (SET is not in the duplicate map; FLENGTH is)
-  test("Duplicated FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated FLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETMAIN SET(1) FLENGTH(2) FLENGTH(3)",
     );
     expect(diagnostics).toHaveLength(1);

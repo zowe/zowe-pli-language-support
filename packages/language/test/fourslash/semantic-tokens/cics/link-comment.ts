@@ -12,8 +12,11 @@
 /// <reference path="../../framework.ts" />
 
 // @wrap: main
-//// EXEC CICS <|LINK|> <|ACTIVITY|>("BOOT") <|comment:*> Hallo|>;
+//// EXEC CICS <|LINK|> <|ACTIVITY|>("BOOT") <|comment:*> Hallo;|>
 
+// The CICS line comment runs to end of line, so it swallows the `;` on its own line - the
+// quote/comment-aware fragment scan (`scanExecFragments`) is the single source of the
+// statement's tokens, and it highlights the comment including that `;`.
 semanticTokens.expectAt("LINK", "keyword");
 semanticTokens.expectAt("ACTIVITY", "keyword");
 semanticTokens.expectAt("comment", "comment");

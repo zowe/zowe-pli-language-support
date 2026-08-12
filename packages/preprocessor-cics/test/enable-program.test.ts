@@ -13,35 +13,31 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ENABLE PROGRAM", async () => {
+describe("CICS ENABLE PROGRAM", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("ENABLE PROGRAM(1)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENABLE PROGRAM(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ENABLE PROGRAM(1) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENABLE PROGRAM(1) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkEnableProgram -> checkHasMandatoryOptions(PROGRAM)
-  test("Missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ENABLE ENTRYNAME(1)",
-    );
+  test("Missing PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ENABLE ENTRYNAME(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
   });
 
   // checkEnableProgram -> checkHasIllegalOptions(GAEXECUTABLE) when GALENGTH absent
-  test("GAEXECUTABLE without GALENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("GAEXECUTABLE without GALENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) GAEXECUTABLE",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,8 +48,8 @@ describe("CICS ENABLE PROGRAM", async () => {
   });
 
   // checkEnableProgram -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive QUASIRENT and THREADSAFE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive QUASIRENT and THREADSAFE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) QUASIRENT THREADSAFE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -64,8 +60,8 @@ describe("CICS ENABLE PROGRAM", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ENABLE PROGRAM(1) PROGRAM(2)",
     );
     expect(diagnostics).toHaveLength(1);

@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SPOOLWRITE", async () => {
+describe("CICS SPOOLWRITE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,28 +32,24 @@ describe("CICS SPOOLWRITE", async () => {
   });
 
   // checkSpoolwrite -> checkHasMandatoryOptions(TOKEN)
-  test("Missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SPOOLWRITE FROM(456)",
-    );
+  test("Missing TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLWRITE FROM(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
   });
 
   // checkSpoolwrite -> checkHasMandatoryOptions(FROM)
-  test("Missing FROM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SPOOLWRITE TOKEN(123)",
-    );
+  test("Missing FROM", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLWRITE TOKEN(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: FROM/);
   });
 
   // checkSpoolwrite -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive LINE and PAGE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive LINE and PAGE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) FROM(456) LINE PAGE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -64,8 +60,8 @@ describe("CICS SPOOLWRITE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLWRITE TOKEN(123) TOKEN(456) FROM(789)",
     );
     expect(diagnostics).toHaveLength(1);

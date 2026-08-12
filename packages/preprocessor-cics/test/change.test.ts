@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS CHANGE", async () => {
+describe("CICS CHANGE", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (PASSWORD)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (PASSWORD)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CHANGE PASSWORD(1) NEWPASSWORD(2) USERID(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CHANGE PASSWORD(1) NEWPASSWORD(2) USERID(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS CHANGE", async () => {
   });
 
   // checkChangePassword -> checkHasMandatoryOptions(NEWPASSWORD)
-  test("PASSWORD missing NEWPASSWORD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("PASSWORD missing NEWPASSWORD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CHANGE PASSWORD(1) USERID(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,8 +44,8 @@ describe("CICS CHANGE", async () => {
   });
 
   // checkChangePhrase -> checkHasMandatoryOptions(USERID)
-  test("PHRASE missing USERID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("PHRASE missing USERID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CHANGE PHRASE(1) NEWPHRASE(2) NEWPHRASELEN(3) PHRASELEN(4)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -54,8 +54,8 @@ describe("CICS CHANGE", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PASSWORD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PASSWORD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "CHANGE PASSWORD(1) PASSWORD(2) NEWPASSWORD(3) USERID(4)",
     );
     expect(diagnostics).toHaveLength(1);

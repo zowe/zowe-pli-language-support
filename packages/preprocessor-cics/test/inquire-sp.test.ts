@@ -13,11 +13,11 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS INQUIRE (system programming)", async () => {
+describe("CICS INQUIRE (system programming)", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE STORAGE ADDRESS(AD) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -25,8 +25,8 @@ describe("CICS INQUIRE (system programming)", async () => {
   });
 
   // storage -> checkHasExactlyOneOption(ADDRESS or NUMELEMENTS)
-  test("STORAGE without ADDRESS or NUMELEMENTS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE STORAGE");
+  test("STORAGE without ADDRESS or NUMELEMENTS", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE STORAGE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -35,8 +35,8 @@ describe("CICS INQUIRE (system programming)", async () => {
   });
 
   // vtam -> checkHasMutuallyExclusiveOptions
-  test("VTAM PSDINTERVAL and PSDINTHRS mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("VTAM PSDINTERVAL and PSDINTHRS mutually exclusive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE VTAM PSDINTERVAL(PI) PSDINTHRS(PH)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -46,8 +46,8 @@ describe("CICS INQUIRE (system programming)", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ADDRESS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ADDRESS", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE STORAGE ADDRESS(AD) ADDRESS(AD2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -57,419 +57,342 @@ describe("CICS INQUIRE (system programming)", async () => {
     );
   });
 
-  test("association_list", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("association_list", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE ASSOCIATION LIST LISTSIZE(5)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("bundle", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("INQUIRE BUNDLE(BN)");
+  test("bundle", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE BUNDLE(BN)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("bundle browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE BUNDLE START",
-    );
+  test("bundle browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE BUNDLE START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("bundlepart", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("bundlepart", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE BUNDLEPART(BP) START BUNDLE(BN)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("bundlepart end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("bundlepart end", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE BUNDLEPART(BP) END",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("capdatapred", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("capdatapred", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CAPDATAPRED START CAPTURESPEC(CS) EVENTBINDING(EB)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("capdatapred end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE CAPDATAPRED END",
-    );
+  test("capdatapred end", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CAPDATAPRED END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("capdatapred next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE CAPDATAPRED NEXT",
-    );
+  test("capdatapred next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CAPDATAPRED NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("capinfosrce", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("capinfosrce", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CAPINFOSRCE START CAPTURESPEC(CS) EVENTBINDING(EB)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("capinfosrce end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE CAPINFOSRCE END",
-    );
+  test("capinfosrce end", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CAPINFOSRCE END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("capinfosrce next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE CAPINFOSRCE NEXT",
-    );
+  test("capinfosrce next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CAPINFOSRCE NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("capoptpred", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("capoptpred", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CAPOPTPRED START CAPTURESPEC(CS) EVENTBINDING(EB)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("capoptpred end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE CAPOPTPRED END",
-    );
+  test("capoptpred end", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CAPOPTPRED END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("capoptpred next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE CAPOPTPRED NEXT",
-    );
+  test("capoptpred next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE CAPOPTPRED NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("capturespec", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("capturespec", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CAPTURESPEC(CS) START EVENTBINDING(EB)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("capturespec end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("capturespec end", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE CAPTURESPEC(CS) END",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("deletshipped", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE DELETSHIPPED",
-    );
+  test("deletshipped", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE DELETSHIPPED");
     expect(diagnostics).toHaveLength(0);
   });
-  test("enq next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE ENQ NEXT");
+  test("enq next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE ENQ NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("enq end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE ENQ END");
+  test("enq end", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE ENQ END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("epadaptinset", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("epadaptinset", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE EPADAPTINSET EPADAPTERSET(ES) EPADAPTER(EP)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("epadaptinset browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("epadaptinset browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE EPADAPTINSET START",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("epadaptinset next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE EPADAPTINSET NEXT",
-    );
+  test("epadaptinset next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE EPADAPTINSET NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("exitprogram", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE EXITPROGRAM(EX)",
-    );
+  test("exitprogram", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE EXITPROGRAM(EX)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("exitprogram browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE EXITPROGRAM START",
-    );
+  test("exitprogram browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE EXITPROGRAM START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("exitprogram next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE EXITPROGRAM NEXT",
-    );
+  test("exitprogram next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE EXITPROGRAM NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("featurekey", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("featurekey", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE FEATUREKEY(FK) VALUE(VL)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("featurekey browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE FEATUREKEY START",
-    );
+  test("featurekey browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE FEATUREKEY START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("statistics", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("INQUIRE STATISTICS");
+  test("statistics", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE STATISTICS");
     expect(diagnostics).toHaveLength(0);
   });
-  test("jvmendpoint", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("jvmendpoint", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE JVMENDPOINT(JE) START JVMSERVER(JS)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("jvmendpoint end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("jvmendpoint end", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE JVMENDPOINT(JE) END",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("modename", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE MODENAME(MN)",
-    );
+  test("modename", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE MODENAME(MN)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("modename browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE MODENAME START",
-    );
+  test("modename browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE MODENAME START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("mvstcb next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE MVSTCB NEXT",
-    );
+  test("mvstcb next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE MVSTCB NEXT");
     expect(diagnostics).toHaveLength(1);
   });
-  test("mvstcb start", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE MVSTCB START",
-    );
+  test("mvstcb start", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE MVSTCB START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("netname", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE NETNAME(NN)",
-    );
+  test("netname", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE NETNAME(NN)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("netname browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE NETNAME START",
-    );
+  test("netname browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE NETNAME START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("osgibundle", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("osgibundle", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE OSGIBUNDLE(OB) START JVMSERVER(JS)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("osgibundle end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("osgibundle end", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE OSGIBUNDLE(OB) END",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("osgiservice", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("osgiservice", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE OSGISERVICE(OS) START JVMSERVER(JS)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("osgiservice end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("osgiservice end", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE OSGISERVICE(OS) END",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("policyrule", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("policyrule", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE POLICYRULE(PR) START POLICY(PL)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("policyrule end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("policyrule end", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE POLICYRULE(PR) END",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("program", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE PROGRAM(PG)",
-    );
+  test("program", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE PROGRAM(PG)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("program browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE PROGRAM START",
-    );
+  test("program browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE PROGRAM START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("program end", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE PROGRAM END",
-    );
+  test("program end", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE PROGRAM END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("reqid", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE REQID(RQ)");
+  test("reqid", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE REQID(RQ)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("reqid browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE REQID START",
-    );
+  test("reqid browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE REQID START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("storage", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("storage", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE STORAGE ADDRESS(AD)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("storage numelements", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("storage numelements", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE STORAGE NUMELEMENTS(NE)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("storage64", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("storage64", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE STORAGE64 ADDRESS64(AD)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("storage64 numelements", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("storage64 numelements", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE STORAGE64 NUMELEMENTS(NE)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("subpool", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE SUBPOOL(SP)",
-    );
+  test("subpool", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE SUBPOOL(SP)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("subpool browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE SUBPOOL START",
-    );
+  test("subpool browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE SUBPOOL START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("tag next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE TAG NEXT");
+  test("tag next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TAG NEXT");
     expect(diagnostics).toHaveLength(1);
   });
-  test("tag start", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE TAG START");
+  test("tag start", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TAG START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("task_list", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("task_list", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE TASK LIST LISTSIZE(5)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("terminal", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TERMINAL(TM)",
-    );
+  test("terminal", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TERMINAL(TM)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("terminal browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TERMINAL START",
-    );
+  test("terminal browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TERMINAL START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("tracetype", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("tracetype", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "INQUIRE TRACETYPE STANDARD",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("tranclass", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TRANCLASS(TC)",
-    );
+  test("tranclass", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TRANCLASS(TC)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("tranclass browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TRANCLASS START",
-    );
+  test("tranclass browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TRANCLASS START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("transaction", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TRANSACTION(TR)",
-    );
+  test("transaction", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TRANSACTION(TR)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("transaction browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TRANSACTION START",
-    );
+  test("transaction browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TRANSACTION START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("tsqueue", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TSQUEUE(TQ)",
-    );
+  test("tsqueue", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TSQUEUE(TQ)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("tsqueue browse", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE TSQUEUE START",
-    );
+  test("tsqueue browse", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE TSQUEUE START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("uowdsnfail next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE UOWDSNFAIL NEXT",
-    );
+  test("uowdsnfail next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE UOWDSNFAIL NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("uowdsnfail start", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE UOWDSNFAIL START",
-    );
+  test("uowdsnfail start", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE UOWDSNFAIL START");
     expect(diagnostics).toHaveLength(0);
   });
-  test("uowenq next", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE UOWENQ NEXT",
-    );
+  test("uowenq next", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE UOWENQ NEXT");
     expect(diagnostics).toHaveLength(0);
   });
-  test("uowenq end", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("INQUIRE UOWENQ END");
+  test("uowenq end", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE UOWENQ END");
     expect(diagnostics).toHaveLength(0);
   });
-  test("vtam", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE VTAM");
+  test("vtam", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE VTAM");
     expect(diagnostics).toHaveLength(0);
   });
-  test("common (FILE)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("INQUIRE FILE(FF)");
+  test("common (FILE)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE FILE(FF)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("common (ATOMSERVICE)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "INQUIRE ATOMSERVICE START",
-    );
+  test("common (ATOMSERVICE)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("INQUIRE ATOMSERVICE START");
     expect(diagnostics).toHaveLength(0);
   });
 });

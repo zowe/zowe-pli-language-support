@@ -85,10 +85,6 @@ export enum InstructionKind {
   Inscan,
   Goto,
   Note,
-  CicsResponseCode,
-  ExecVariable,
-  ExecStatement,
-  SqlAttribute,
 
   // Expression types
   BinaryExpression,
@@ -116,42 +112,7 @@ export type Instruction =
   | DeactivateInstruction
   | DeclareInstruction
   | NoteInstruction
-  | CallInstruction
-  | CicsResponseInstruction
-  | ExecVariableInstruction
-  | ExecInstruction
-  | SqlAttributeInstruction;
-
-export interface SqlAttributeInstruction {
-  kind: InstructionKind.SqlAttribute;
-  attribute: ast.SqlAttributeStatement;
-}
-
-export interface CicsResponseInstruction {
-  kind: InstructionKind.CicsResponseCode;
-  code: ast.CicsResponseCode;
-}
-
-export function createCicsResponseInstruction(
-  code: ast.CicsResponseCode,
-): CicsResponseInstruction {
-  return {
-    kind: InstructionKind.CicsResponseCode,
-    code,
-  };
-}
-
-export interface ExecInstruction {
-  kind: InstructionKind.ExecStatement;
-  preprocessorType: ast.PreprocessorType;
-  variables: ExecVariableInstruction[];
-  replaceWithText?: string;
-}
-
-export interface ExecVariableInstruction {
-  kind: InstructionKind.ExecVariable;
-  token: Token;
-}
+  | CallInstruction;
 
 export interface ProcedureInstructionContainer {
   names: string[];

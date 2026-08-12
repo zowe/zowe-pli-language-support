@@ -13,18 +13,16 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS PERFORM (SP)", async () => {
+describe("CICS PERFORM (SP)", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (DUMP)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PERFORM DUMP DUMPCODE(1)",
-    );
+  test("Positive (DUMP)", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM DUMP DUMPCODE(1)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM DUMP DUMPCODE(1) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,16 +30,16 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkDump -> checkHasMandatoryOptions(DUMPCODE)
-  test("DUMP missing DUMPCODE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("PERFORM DUMP");
+  test("DUMP missing DUMPCODE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM DUMP");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: DUMPCODE/);
   });
 
   // checkDump -> checkAllOptionsArePresentOrAbsent(TITLE, TITLELENGTH)
-  test("DUMP TITLE without TITLELENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("DUMP TITLE without TITLELENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM DUMP DUMPCODE(1) TITLE(T)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,8 +50,8 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkDumpDuplicates
-  test("DUMP duplicated DUMP", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("DUMP duplicated DUMP", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM DUMP DUMP DUMPCODE(1)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -64,20 +62,16 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkEndAffinity -> checkHasMandatoryOptions(NETNAME)
-  test("ENDAFFINITY missing NETNAME", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PERFORM ENDAFFINITY",
-    );
+  test("ENDAFFINITY missing NETNAME", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM ENDAFFINITY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: NETNAME/);
   });
 
   // checkSecdiscovery -> checkHasExactlyOneOption(ACTION or WRITE)
-  test("SECDISCOVERY without ACTION or WRITE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PERFORM SECDISCOVERY",
-    );
+  test("SECDISCOVERY without ACTION or WRITE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM SECDISCOVERY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -86,24 +80,24 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkSecurity -> checkHasMandatoryOptions(REBUILD)
-  test("SECURITY missing REBUILD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("PERFORM SECURITY");
+  test("SECURITY missing REBUILD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM SECURITY");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: REBUILD/);
   });
 
   // checkSsl -> checkHasMandatoryOptions(REBUILD)
-  test("SSL missing REBUILD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("PERFORM SSL");
+  test("SSL missing REBUILD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM SSL");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: REBUILD/);
   });
 
   // checkShutdown -> checkHasIllegalOptions(RESTART) when IMMEDIATE
-  test("SHUTDOWN IMMEDIATE with RESTART", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("SHUTDOWN IMMEDIATE with RESTART", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM SHUTDOWN IMMEDIATE RESTART",
     );
     expect(diagnostics).toHaveLength(1);
@@ -112,17 +106,16 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkStatistics -> checkHasMandatoryOptions(RECORD)
-  test("STATISTICS missing RECORD", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("PERFORM STATISTICS");
+  test("STATISTICS missing RECORD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM STATISTICS");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: RECORD/);
   });
 
   // checkAll -> ALL combined with individual resource types
-  test("STATISTICS ALL combined with resource", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("STATISTICS ALL combined with resource", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM STATISTICS RECORD ALL CONNECTION",
     );
     expect(diagnostics).toHaveLength(1);
@@ -133,10 +126,8 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkJvmServer -> checkHasExactlyOneOption(JVMTYPE or JVM or LIBERTY or OSGI)
-  test("JVMSERVER without JVMTYPE/JVM/LIBERTY/OSGI", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PERFORM JVMSERVER(AREA)",
-    );
+  test("JVMSERVER without JVMTYPE/JVM/LIBERTY/OSGI", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM JVMSERVER(AREA)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -145,8 +136,8 @@ describe("CICS PERFORM (SP)", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated DUMPCODE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated DUMPCODE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM DUMP DUMPCODE(1) DUMPCODE(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -156,68 +147,64 @@ describe("CICS PERFORM (SP)", async () => {
     );
   });
 
-  test("PIPELINE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PERFORM PIPELINE(PL)",
-    );
+  test("PIPELINE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM PIPELINE(PL)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("PIPELINE ACTION and SCAN mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("PIPELINE ACTION and SCAN mutually exclusive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM PIPELINE(PL) ACTION(AC) SCAN",
     );
     expect(diagnostics).toHaveLength(2);
   });
-  test("JVMSERVER JVM DUMP branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JVMSERVER JVM DUMP branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM JVMSERVER(JS) JVM DUMP",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("JVMSERVER JVM GATHER branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JVMSERVER JVM GATHER branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM JVMSERVER(JS) JVM GATHER",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("JVMSERVER JVM STACKTRACE missing TASKID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JVMSERVER JVM STACKTRACE missing TASKID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM JVMSERVER(JS) JVM STACKTRACE",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("JVMSERVER LIBERTY REFRESH branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JVMSERVER LIBERTY REFRESH branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM JVMSERVER(JS) LIBERTY REFRESH",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("JVMSERVER OSGI branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JVMSERVER OSGI branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM JVMSERVER(JS) OSGI",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("JVMSERVER APPID else branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JVMSERVER APPID else branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM JVMSERVER(JS) APPID(AP)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("DUMP TITLE and TITLELENGTH present", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("DUMP TITLE and TITLELENGTH present", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM DUMP DUMPCODE(DC) TITLE(TT) TITLELENGTH(TL)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("SHUTDOWN TAKEOVER branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "PERFORM SHUTDOWN TAKEOVER",
-    );
+  test("SHUTDOWN TAKEOVER branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse("PERFORM SHUTDOWN TAKEOVER");
     expect(diagnostics).toHaveLength(0);
   });
-  test("SHUTDOWN PLT and PLTNAME mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("SHUTDOWN PLT and PLTNAME mutually exclusive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "PERFORM SHUTDOWN PLT(PT) PLTNAME(PN)",
     );
     expect(diagnostics).toHaveLength(2);

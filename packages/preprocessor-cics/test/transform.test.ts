@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS TRANSFORM", async () => {
+describe("CICS TRANSFORM", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (JSON)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (JSON)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "TRANSFORM DATATOJSON CHANNEL(1) INCONTAINER(2) TRANSFORMER(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "TRANSFORM DATATOJSON CHANNEL(1) INCONTAINER(2) TRANSFORMER(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS TRANSFORM", async () => {
   });
 
   // checkJSON -> checkHasExactlyOneOption (both -> mutually exclusive)
-  test("JSON both DATATOJSON and JSONTODATA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JSON both DATATOJSON and JSONTODATA", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "TRANSFORM DATATOJSON JSONTODATA CHANNEL(1) INCONTAINER(2) TRANSFORMER(3)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -44,8 +44,8 @@ describe("CICS TRANSFORM", async () => {
   });
 
   // checkJSON -> checkHasMandatoryOptions(TRANSFORMER)
-  test("JSON missing TRANSFORMER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("JSON missing TRANSFORMER", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "TRANSFORM DATATOJSON CHANNEL(1) INCONTAINER(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,8 +56,8 @@ describe("CICS TRANSFORM", async () => {
   });
 
   // checkXML -> checkHasIllegalOptions(NSCONTAINER) when DATATOXML present
-  test("XML NSCONTAINER illegal with DATATOXML", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("XML NSCONTAINER illegal with DATATOXML", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "TRANSFORM DATATOXML CHANNEL(1) DATCONTAINER(2) XMLTRANSFORM(3) XMLCONTAINER(4) NSCONTAINER(5)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -68,8 +68,8 @@ describe("CICS TRANSFORM", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CHANNEL", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "TRANSFORM DATATOJSON CHANNEL(1) CHANNEL(2) INCONTAINER(3) TRANSFORMER(4)",
     );
     expect(diagnostics).toHaveLength(1);

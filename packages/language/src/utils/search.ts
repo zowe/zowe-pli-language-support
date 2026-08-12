@@ -105,13 +105,29 @@ export function binaryTokenIndexRightMost(
   tokens: Token[],
   offset: number,
 ): number {
+  return rightmostIndexLE(tokens, offset, tokenStartOffset);
+}
+
+const tokenStartOffset = (token: { startOffset: number }) => token.startOffset;
+
+/**
+ * Rightmost index whose `start(item)` is `<= value`, in an array sorted ascending by that
+ * key - or `-1` if every key is greater. The shared binary-search primitive behind every
+ * offset-based token/segment lookup ({@link binaryTokenIndexRightMost},
+ * `SourceMap.segmentAt`, `token-annotator`'s mapped-token lookup, ...). The dual "first
+ * index at or after `value`" is `rightmostIndexLE(items, value - 1, start) + 1`.
+ */
+export function rightmostIndexLE<T>(
+  items: readonly T[],
+  value: number,
+  start: (item: T) => number,
+): number {
   let low = 0;
-  let high = tokens.length - 1;
+  let high = items.length - 1;
   let result = -1;
   while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const token = tokens[mid];
-    if (token.startOffset > offset) {
+    const mid = (low + high) >>> 1;
+    if (start(items[mid]) > value) {
       high = mid - 1;
     } else {
       result = mid;

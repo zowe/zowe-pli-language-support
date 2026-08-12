@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS SPOOLREAD", async () => {
+describe("CICS SPOOLREAD", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123) INTO(456)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123) INTO(456) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,28 +32,24 @@ describe("CICS SPOOLREAD", async () => {
   });
 
   // checkSpoolread -> checkHasMandatoryOptions(TOKEN)
-  test("Missing TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SPOOLREAD INTO(456)",
-    );
+  test("Missing TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLREAD INTO(456)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: TOKEN/);
   });
 
   // checkSpoolread -> checkHasMandatoryOptions(INTO)
-  test("Missing INTO", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "SPOOLREAD TOKEN(123)",
-    );
+  test("Missing INTO", () => {
+    const { diagnostics } = cicsPreprocessor.parse("SPOOLREAD TOKEN(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: INTO/);
   });
 
   // checkDuplicates
-  test("Duplicated TOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "SPOOLREAD TOKEN(123) TOKEN(456) INTO(789)",
     );
     expect(diagnostics).toHaveLength(1);

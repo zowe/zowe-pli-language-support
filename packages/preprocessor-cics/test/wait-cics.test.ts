@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WAITCICS", async () => {
+describe("CICS WAITCICS", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) NUMEVENTS(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) NUMEVENTS(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,20 +32,16 @@ describe("CICS WAITCICS", async () => {
   });
 
   // checkWaitCics -> checkHasMandatoryOptions(ECBLIST)
-  test("Missing ECBLIST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WAITCICS NUMEVENTS(2)",
-    );
+  test("Missing ECBLIST", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WAITCICS NUMEVENTS(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: ECBLIST/);
   });
 
   // checkWaitCics -> checkHasMandatoryOptions(NUMEVENTS)
-  test("Missing NUMEVENTS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WAITCICS ECBLIST(123)",
-    );
+  test("Missing NUMEVENTS", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WAITCICS ECBLIST(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -54,8 +50,8 @@ describe("CICS WAITCICS", async () => {
   });
 
   // checkWaitCics -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive PURGEABLE and NOTPURGEABLE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive PURGEABLE and NOTPURGEABLE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) NUMEVENTS(2) PURGEABLE NOTPURGEABLE",
     );
     expect(diagnostics).toHaveLength(2);
@@ -66,8 +62,8 @@ describe("CICS WAITCICS", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated ECBLIST", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ECBLIST", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WAITCICS ECBLIST(123) ECBLIST(456) NUMEVENTS(2)",
     );
     expect(diagnostics).toHaveLength(1);

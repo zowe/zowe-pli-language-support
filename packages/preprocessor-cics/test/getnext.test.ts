@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS GETNEXT", async () => {
+describe("CICS GETNEXT", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (ACTIVITY)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (ACTIVITY)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETNEXT ACTIVITY(1) BROWSETOKEN(2)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Duplicated ACTIVITY", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated ACTIVITY", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETNEXT ACTIVITY(1) ACTIVITY(1) BROWSETOKEN(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -34,8 +34,8 @@ describe("CICS GETNEXT", async () => {
     );
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETNEXT ACTIVITY(1) BROWSETOKEN(2) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -43,10 +43,8 @@ describe("CICS GETNEXT", async () => {
   });
 
   // checkActivity -> checkHasMandatoryOptions(BROWSETOKEN)
-  test("ACTIVITY missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "GETNEXT ACTIVITY(1)",
-    );
+  test("ACTIVITY missing BROWSETOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT ACTIVITY(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -55,10 +53,8 @@ describe("CICS GETNEXT", async () => {
   });
 
   // checkContainer -> checkHasMandatoryOptions(BROWSETOKEN)
-  test("CONTAINER missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "GETNEXT CONTAINER(1)",
-    );
+  test("CONTAINER missing BROWSETOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT CONTAINER(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -67,8 +63,8 @@ describe("CICS GETNEXT", async () => {
   });
 
   // checkEvent -> checkHasMandatoryOptions(BROWSETOKEN)
-  test("EVENT missing BROWSETOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("GETNEXT EVENT(1)");
+  test("EVENT missing BROWSETOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT EVENT(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -77,9 +73,8 @@ describe("CICS GETNEXT", async () => {
   });
 
   // checkProcess -> checkHasMandatoryOptions(BROWSETOKEN)
-  test("PROCESS missing BROWSETOKEN", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("GETNEXT PROCESS(1)");
+  test("PROCESS missing BROWSETOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETNEXT PROCESS(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(

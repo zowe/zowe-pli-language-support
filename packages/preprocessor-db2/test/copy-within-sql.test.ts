@@ -15,7 +15,7 @@ describe("DB2 SQL Copy within SQL Tests", async () => {
   const preprocessor = new Db2SqlPreprocessor();
 
   test("TEXT1", async () => {
-    const { diagnostics, replacement } = await preprocessor.execute(`
+    const { diagnostics, replacement } = preprocessor.parse(`
        INCLUDE COPY1
     `);
     expect(diagnostics).toHaveLength(0);
@@ -26,7 +26,7 @@ describe("DB2 SQL Copy within SQL Tests", async () => {
   });
 
   test("TEXT2", async () => {
-    const { diagnostics, replacement } = await preprocessor.execute(`
+    const { diagnostics, replacement } = preprocessor.parse(`
        INCLUDE SQLCA
     `);
     expect(diagnostics).toHaveLength(0);

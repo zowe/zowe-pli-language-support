@@ -11,10 +11,10 @@
 import { describe, expect, test } from "vitest";
 import { EnglishMessageService } from "../src/engine/message-service";
 
-describe("Message service", async () => {
+describe("Message service", () => {
   const messageService = new EnglishMessageService();
 
-  test("Syntax error message", async () => {
+  test("Syntax error message", () => {
     const actual = messageService.getMessage(
       "ErrorStrategy.reportMissingToken",
       "token",
@@ -23,12 +23,12 @@ describe("Message service", async () => {
     expect(actual).toBe("Missing token token at main.pli");
   });
 
-  test("End of file error message", async () => {
+  test("End of file error message", () => {
     const actual = messageService.getMessage("ErrorStrategy.endOfFile");
     expect(actual).toBe("Unexpected end of file");
   });
 
-  test("Identical program message", async () => {
+  test("Identical program message", () => {
     const actual = messageService.getMessage(
       "ErrorStrategy.reportInputMismatch",
       "input",

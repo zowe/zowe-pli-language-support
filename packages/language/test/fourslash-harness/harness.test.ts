@@ -58,6 +58,7 @@ async function createTestingHarnessImplementation(
     linker: {
       expectLinks: listen("linker.expectLinks"),
       expectNoLinksAt: listen("linker.expectNoLinksAt"),
+      expectReferences: listen("linker.expectReferences"),
     },
     testAPI: {
       testBuilder: await TestBuilder.create("", {}),

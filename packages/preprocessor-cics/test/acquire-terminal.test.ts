@@ -13,26 +13,24 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS ACQUIRE TERMINAL", async () => {
+describe("CICS ACQUIRE TERMINAL", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "ACQUIRE TERMINAL(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("ACQUIRE TERMINAL(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  test("Duplicated TERMINAL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated TERMINAL", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) TERMINAL(456)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -42,8 +40,8 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("Duplicated NOQUEUE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated NOQUEUE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE NOQUEUE",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,25 +51,29 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("Mutual exclusive NOQUEUE and QNOTENAB", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutual exclusive NOQUEUE and QNOTENAB", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) NOQUEUE QNOTENAB",
     );
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
+    // Offsets are inclusive: "NOQUEUE" spans exactly offsets 22-28.
     expect(diagnostics[0].startOffset).toBe(22);
+    expect(diagnostics[0].endOffset).toBe(28);
     expect(diagnostics[0].message).toMatch(
       /Exactly one option required, options are mutually exclusive: NOQUEUE or QALL or QNOTENAB or QSESSLIM/,
     );
     expect(diagnostics[1].severity).toBe(Severity.Error);
+    // "QNOTENAB" spans exactly offsets 30-37 (inclusive).
     expect(diagnostics[1].startOffset).toBe(30);
+    expect(diagnostics[1].endOffset).toBe(37);
     expect(diagnostics[1].message).toMatch(
       /Exactly one option required, options are mutually exclusive: NOQUEUE or QALL or QNOTENAB or QSESSLIM/,
     );
   });
 
-  test("RELREQ without QALL or QSESSLIM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("RELREQ without QALL or QSESSLIM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) RELREQ",
     );
     expect(diagnostics).toHaveLength(1);
@@ -81,8 +83,8 @@ describe("CICS ACQUIRE TERMINAL", async () => {
     );
   });
 
-  test("USERDATALEN without USERDATA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("USERDATALEN without USERDATA", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE TERMINAL(123) USERDATALEN(10)",
     );
     expect(diagnostics).toHaveLength(1);

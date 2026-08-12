@@ -13,11 +13,11 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS WEB", async () => {
+describe("CICS WEB", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB CLOSE SESSTOKEN(TOK) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -25,16 +25,16 @@ describe("CICS WEB", async () => {
   });
 
   // checkRetrieve -> checkHasMandatoryOptions(DOCTOKEN)
-  test("RETRIEVE missing DOCTOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("WEB RETRIEVE");
+  test("RETRIEVE missing DOCTOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WEB RETRIEVE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: DOCTOKEN/);
   });
 
   // checkDuplicates
-  test("Duplicated SESSTOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated SESSTOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB CLOSE SESSTOKEN(TOK) SESSTOKEN(TK2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -44,148 +44,142 @@ describe("CICS WEB", async () => {
     );
   });
 
-  test("CLOSE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WEB CLOSE SESSTOKEN(TK)",
-    );
+  test("CLOSE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WEB CLOSE SESSTOKEN(TK)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("CLOSE missing SESSTOKEN", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("WEB CLOSE");
+  test("CLOSE missing SESSTOKEN", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WEB CLOSE");
     expect(diagnostics).toHaveLength(1);
   });
-  test("CONVERSE client", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("CONVERSE client", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB CONVERSE SESSTOKEN(TK) GET INTO(IN) TOLENGTH(TL)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("CONVERSE body+auth branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("CONVERSE body+auth branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB CONVERSE SESSTOKEN(TK) DOCTOKEN(DT) NODOCDELETE USERNAME(UN)",
     );
     expect(diagnostics).toHaveLength(2);
   });
-  test("ENDBROWSE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ENDBROWSE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB ENDBROWSE HTTPHEADER SESSTOKEN(TK)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("EXTRACT server", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("EXTRACT server", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB EXTRACT REQUESTTYPE(RT) HTTPMETHOD(HM)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("EXTRACT client", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("EXTRACT client", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB EXTRACT SESSTOKEN(TK) REALM(RM)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("OPEN URIMAP", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("OPEN URIMAP", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB OPEN URIMAP(UM) SESSTOKEN(TK)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("OPEN HOST (missing SCHEME/HTTP/HTTPS)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("OPEN HOST (missing SCHEME/HTTP/HTTPS)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB OPEN HOST(HS) SESSTOKEN(TK)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("PARSE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("WEB PARSE URL(UL)");
+  test("PARSE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WEB PARSE URL(UL)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("READ FORMFIELD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("READ FORMFIELD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB READ FORMFIELD(FF) VALUE(VL) VALUELENGTH(VN)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("READ HTTPHEADER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("READ HTTPHEADER", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB READ HTTPHEADER(HH) VALUE(VL) VALUELENGTH(VN)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("READ QUERYPARM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("READ QUERYPARM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB READ QUERYPARM(QP) VALUE(VL) VALUELENGTH(VN)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("READNEXT", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("READNEXT", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB READNEXT FORMFIELD(FF) NAMELENGTH(NL) VALUE(VL) VALUELENGTH(VN)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("RECEIVE buffer", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("RECEIVE buffer", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB RECEIVE INTO(IN) LENGTH(LN)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("RECEIVE container", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("RECEIVE container", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB RECEIVE TOCONTAINER(TC)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("RECEIVE status branch", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("RECEIVE status branch", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB RECEIVE SESSTOKEN(TK) STATUSCODE(SC) STATUSTEXT(ST)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("RETRIEVE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WEB RETRIEVE DOCTOKEN(DT)",
-    );
+  test("RETRIEVE", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WEB RETRIEVE DOCTOKEN(DT)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("SEND client", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("SEND client", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB SEND SESSTOKEN(TK) GET MEDIATYPE(MT) DOCTOKEN(DT)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("SEND server", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "WEB SEND DOCTOKEN(DT)",
-    );
+  test("SEND server", () => {
+    const { diagnostics } = cicsPreprocessor.parse("WEB SEND DOCTOKEN(DT)");
     expect(diagnostics).toHaveLength(0);
   });
-  test("SEND server status", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("SEND server status", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB SEND STATUSCODE(SC) STATUSTEXT(ST) LENGTH(LN)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("STARTBROWSE FORMFIELD", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("STARTBROWSE FORMFIELD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB STARTBROWSE FORMFIELD(FF)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("STARTBROWSE HTTPHEADER illegal NAMELENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("STARTBROWSE HTTPHEADER illegal NAMELENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB STARTBROWSE HTTPHEADER NAMELENGTH(NL)",
     );
     expect(diagnostics).toHaveLength(1);
   });
-  test("STARTBROWSE QUERYPARM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("STARTBROWSE QUERYPARM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB STARTBROWSE QUERYPARM(QP)",
     );
     expect(diagnostics).toHaveLength(0);
   });
-  test("WRITE", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("WRITE", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "WEB WRITE HTTPHEADER(HH) VALUE(VL)",
     );
     expect(diagnostics).toHaveLength(0);

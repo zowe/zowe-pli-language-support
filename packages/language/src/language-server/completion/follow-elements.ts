@@ -220,7 +220,6 @@ const semicolonFollowKinds = new Set([
   CstNodeKind.DisplayStatement_Semicolon,
   CstNodeKind.DoStatement_Semicolon,
   CstNodeKind.EndStatement_Semicolon,
-  CstNodeKind.ExecStatement_Semicolon,
   CstNodeKind.ExitStatement_Semicolon,
   CstNodeKind.FetchStatement_Semicolon,
   CstNodeKind.FlushStatement_Semicolon,

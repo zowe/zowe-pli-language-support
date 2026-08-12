@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS REQUEST", async () => {
+describe("CICS REQUEST", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REQUEST ENCRYPTPTKT(1) FLENGTH(2) ENCRYPTKEY(3) ESMAPPNAME(4)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REQUEST ENCRYPTPTKT(1) FLENGTH(2) ENCRYPTKEY(3) ESMAPPNAME(4) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,9 +32,8 @@ describe("CICS REQUEST", async () => {
   });
 
   // checkRequestBody -> checkHasExactlyOneOption (none provided)
-  test("Neither ENCRYPTPTKT nor PASSTICKET", async () => {
-    const { diagnostics } =
-      await cicsPreprocessor.execute("REQUEST FLENGTH(1)");
+  test("Neither ENCRYPTPTKT nor PASSTICKET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("REQUEST FLENGTH(1)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -43,8 +42,8 @@ describe("CICS REQUEST", async () => {
   });
 
   // checkRequestBody -> ENCRYPTPTKT requires FLENGTH
-  test("ENCRYPTPTKT missing FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ENCRYPTPTKT missing FLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REQUEST ENCRYPTPTKT(1) ENCRYPTKEY(2) ESMAPPNAME(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -53,8 +52,8 @@ describe("CICS REQUEST", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated FLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "REQUEST ENCRYPTPTKT(1) FLENGTH(2) FLENGTH(3) ENCRYPTKEY(4) ESMAPPNAME(5)",
     );
     expect(diagnostics).toHaveLength(1);

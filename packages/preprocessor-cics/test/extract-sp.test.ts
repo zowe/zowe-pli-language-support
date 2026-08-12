@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS EXTRACT (SP)", async () => {
+describe("CICS EXTRACT (SP)", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (EXIT)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (EXIT)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT EXIT PROGRAM(1) GALENGTH(LEN) GASET(PTR)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT EXIT PROGRAM(1) GALENGTH(LEN) GASET(PTR) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,8 +32,8 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkExtractExit -> checkHasMandatoryOptions(PROGRAM)
-  test("EXIT missing PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("EXIT missing PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT EXIT GALENGTH(LEN) GASET(PTR)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -42,8 +42,8 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkExtractStatistics -> checkHasMandatoryOptions(SET)
-  test("STATISTICS missing SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("STATISTICS missing SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR",
     );
     expect(diagnostics).toHaveLength(1);
@@ -52,8 +52,8 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkRestypeOptions -> multiple RESTYPE options not allowed
-  test("Multiple RESTYPE options", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Multiple RESTYPE options", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR FILE SET(PTR)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -64,8 +64,8 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkForResidRequiredOptions -> RESIDLEN without RESID
-  test("RESIDLEN without RESID", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("RESIDLEN without RESID", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR SET(PTR) RESIDLEN(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -76,8 +76,8 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkLastTimeOptions -> LASTRESETABS with LASTRESET
-  test("LASTRESET with LASTRESETABS", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("LASTRESET with LASTRESETABS", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR SET(PTR) LASTRESET(X) LASTRESETABS(Y)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -88,8 +88,8 @@ describe("CICS EXTRACT (SP)", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "EXTRACT STATISTICS MONITOR SET(PTR) SET(PTR2)",
     );
     expect(diagnostics).toHaveLength(1);

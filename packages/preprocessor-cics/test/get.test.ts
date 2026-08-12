@@ -13,18 +13,18 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS GET", async () => {
+describe("CICS GET", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive (BTS)", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Positive (BTS)", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GET CONTAINER(1) ACTIVITY(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GET CONTAINER(1) ACTIVITY(2) INTO(3) BLA",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,10 +32,8 @@ describe("CICS GET", async () => {
   });
 
   // checkContainerBTS -> checkHasMandatoryOptions(CONTAINER)
-  test("BTS missing CONTAINER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "GET ACTIVITY(1) INTO(2)",
-    );
+  test("BTS missing CONTAINER", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GET ACTIVITY(1) INTO(2)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
@@ -44,8 +42,8 @@ describe("CICS GET", async () => {
   });
 
   // checkContainerBTS -> checkHasExactlyOneOption (none provided)
-  test("BTS without INTO/SET/NODATA", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("BTS without INTO/SET/NODATA", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GET CONTAINER(1) ACTIVITY(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -56,8 +54,8 @@ describe("CICS GET", async () => {
   });
 
   // checkContainerChannel -> checkHasIllegalOptions(GET64)
-  test("GET64 is only available in Assembly", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("GET64 is only available in Assembly", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GET64 CONTAINER(1) CHANNEL(2) INTO(3)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -68,8 +66,8 @@ describe("CICS GET", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated CONTAINER", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated CONTAINER", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GET CONTAINER(1) CONTAINER(2) ACTIVITY(3) INTO(4)",
     );
     expect(diagnostics).toHaveLength(1);

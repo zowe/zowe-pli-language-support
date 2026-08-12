@@ -31,8 +31,14 @@ import {
   CollectingIncludeVisitor,
 } from "./parsing";
 import {
+  buildExecReplacement,
+  Delimiters,
   Diagnostic,
   Preprocessor,
+  PreprocessorContext,
+  rebaseDiagnostic,
+  rebaseToken,
+  scanExecFragments,
   SemanticsKind,
   Token,
   PreprocessorResult,
@@ -40,12 +46,76 @@ import {
 
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
 
+/**
+ * Confirmed against `Db2SqlExecLexer.g4`: `'...'`/`"..."` (each escaped by doubling its own
+ * quote, never spanning a line) cover every DB2 string form here too - the `X`/`B X`/`U X`/
+ * `G X` prefixes on hex/bit/graphic literals are just an ordinary character preceding the
+ * quote, not a separate delimiter the scanner needs to know about. The only comment is `--`
+ * to end of line; DB2 has no block comment.
+ */
+const DB2_DELIMITERS: Delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
+
 export class Db2SqlPreprocessor implements Preprocessor {
   static Name = "DB2 SQL Preprocessor";
   get name() {
     return Db2SqlPreprocessor.Name;
   }
-  public async execute(textSnippet: string): Promise<PreprocessorResult> {
+
+  /**
+   * Finds every `EXEC SQL ...;` statement in `context.text` itself (see `scanExecFragments`)
+   * and replaces each directly: an `EXEC SQL INCLUDE` resolves and splices in the included
+   * file's own (recursively processed) text; any other statement becomes `DO; END;`, with its
+   * host-variable references re-embedded so they stay resolvable (see `buildExecReplacement`).
+   * Each `replace` carries the fragment's full classified token list in host coordinates -
+   * the host's only source for `EXEC` semantic highlighting/hover and the include member
+   * token.
+   */
+  public async execute(context: PreprocessorContext): Promise<void> {
+    for (const fragment of scanExecFragments(
+      context.text,
+      "SQL",
+      DB2_DELIMITERS,
+    )) {
+      const { diagnostics, tokens, replacement } = this.parse(
+        fragment.bodyText,
+      );
+      for (const diagnostic of diagnostics) {
+        context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
+      }
+      const rebased = tokens.map((token) => rebaseToken(token, fragment));
+      if (!fragment.terminated) {
+        // Broken statement (no `;` before EOF): record the classified tokens without
+        // touching the text - see `ExecFragment.terminated`. No include splicing either -
+        // the raw statement must stay in place for the host parser to diagnose.
+        context.replace(
+          { start: fragment.range.start, end: fragment.range.start },
+          "",
+          rebased,
+        );
+        continue;
+      }
+      if (replacement?.type === "include") {
+        const included = await context.resolveInclude(
+          replacement.filePath,
+          fragment.range,
+        );
+        if (included) {
+          context.insertContext(fragment.range.start, included);
+        }
+        context.replace(fragment.range, "", rebased);
+        continue;
+      }
+      context.replace(fragment.range, buildExecReplacement(tokens), rebased);
+    }
+  }
+
+  /**
+   * Parses one bare fragment body (no `EXEC SQL` prefix, no terminating `;`) into its
+   * classified tokens, diagnostics, and include info, offsets local to `textSnippet`. Backs
+   * `execute`; public for the unit tests in this package - the host only ever calls
+   * `execute(context)`.
+   */
+  public parse(textSnippet: string): PreprocessorResult {
     const charStream = antlr.CharStream.fromString(textSnippet);
     const lexer = new Db2SqlExecLexer(charStream);
     const tokenStream = new antlr.CommonTokenStream(lexer);

@@ -44,8 +44,6 @@ import {
 } from "./symbol-table";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
 import { MultiMap } from "../utils/collections";
-import { CstNodeKind } from "../syntax-tree/cst";
-import { SemanticTokenTypes } from "../language-server/semantic-tokens";
 
 function getParentStatement(node: SyntaxNode): SyntaxNode {
   if (node.container?.kind === SyntaxKind.Statement) {
@@ -495,22 +493,27 @@ export function getReferenceLocations(
   uri: URI,
   offset: number,
 ): Location[] {
-  let token = getTokenAt(unit, uri, offset);
+  const token = getTokenAt(unit, uri, offset);
+  const element = token && findTokenElementReference(token);
+  return element ? getElementReferenceLocations(unit, element) : [];
+}
 
-  if (!token) {
-    return [];
-  }
-
-  const element = findTokenElementReference(token);
-  if (!element) {
-    return [];
-  }
-
+/**
+ * The reference locations of an already-resolved element - for callers that resolved the
+ * token/element themselves (e.g. `renameRequest`) and should not repeat the lookup.
+ */
+export function getElementReferenceLocations(
+  unit: CompilationUnit,
+  element: SyntaxNode,
+): Location[] {
   const locations: Location[] = [];
   const reverseReferences = findElementReferences(unit, element);
 
+  // `synthetic` tokens exist only in preprocessor-generated text; their offsets collapse
+  // to the generating edit's anchor (usually whitespace), so reporting them as locations
+  // would point at nothing meaningful - they are suppressed from all location results.
   const nameToken = getNameToken(element);
-  if (nameToken?.uri) {
+  if (nameToken?.uri && !nameToken.synthetic) {
     locations.push({
       uri: nameToken.uri.toString(),
       range: tokenToRange(nameToken),
@@ -518,7 +521,7 @@ export function getReferenceLocations(
   }
 
   for (const ref of reverseReferences) {
-    if (ref.token.uri) {
+    if (ref.token.uri && !ref.token.synthetic) {
       locations.push({
         uri: ref.token.uri.toString(),
         range: tokenToRange(ref.token),
@@ -530,37 +533,7 @@ export function getReferenceLocations(
 }
 
 export function getTokenAt(unit: CompilationUnit, uri: URI, offset: number) {
-  let token = binaryTokenSearch(
-    unit.services.files.getTokens(uri) ?? [],
-    offset,
-  );
-
-  if (token && token.kind === CstNodeKind.ExecStatement_ExecFragment) {
-    const element = token.element;
-    if (element && element.kind === SyntaxKind.ExecStatement) {
-      if (
-        typeof element.replacement === "object" &&
-        element.replacement?.items
-      ) {
-        for (const item of element.replacement.items) {
-          if (!item.token) {
-            continue;
-          }
-          if (
-            offset >= item.token.startOffset &&
-            offset <= item.token.endOffset
-          ) {
-            return item.token;
-          }
-        }
-      }
-      const hostVariableReferences = element.preprocessorTokens
-        .filter((t) => t.semanticType === SemanticTokenTypes.variable)
-        .map(({ token }) => token);
-      token = binaryTokenSearch(hostVariableReferences, offset);
-    }
-  }
-  return token;
+  return binaryTokenSearch(unit.services.files.getTokens(uri) ?? [], offset);
 }
 
 function getRootCompositeNode(node: SyntaxNode): DeclaredItem | null {

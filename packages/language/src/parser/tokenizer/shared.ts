@@ -23,16 +23,17 @@ export class TokenizerContext {
   public input: string;
   public length: number;
   public index: number = 0;
-  public line: number = 0;
-  public column: number = 0;
   public uri: URI | undefined;
   public diagnostics: Diagnostic[] = [];
   public caseUpper: boolean;
   public funcs: TokenizeFunc[] = [];
 
   private storedIndex: number = 0;
-  private storedLine: number = 0;
-  private storedColumn: number = 0;
+  /**
+   * Whether a line break has been seen since the last token (or comment) was created -
+   * replaces per-token line/column tracking, see `Token.startsNewLine`.
+   */
+  public sawNewlineSinceLastToken: boolean = false;
 
   constructor(input: string, uri: URI | undefined, caseUpper: boolean = true) {
     this.input = input;
@@ -44,8 +45,6 @@ export class TokenizerContext {
 
   store() {
     this.storedIndex = this.index;
-    this.storedLine = this.line;
-    this.storedColumn = this.column;
   }
 
   advance(n: number, newLines: boolean): void {
@@ -53,14 +52,9 @@ export class TokenizerContext {
       const end = this.index + n;
       for (let i = this.index; i < end; i++) {
         if (this.input[i] === "\n") {
-          this.line++;
-          this.column = 0;
-        } else {
-          this.column++;
+          this.sawNewlineSinceLastToken = true;
         }
       }
-    } else {
-      this.column += n;
     }
     this.index += n;
   }
@@ -71,10 +65,7 @@ export class TokenizerContext {
       if (isWhitespace(charCode)) {
         this.index++;
         if (charCode === lineFeed) {
-          this.line++;
-          this.column = 0;
-        } else {
-          this.column++;
+          this.sawNewlineSinceLastToken = true;
         }
       } else {
         break;
@@ -84,18 +75,7 @@ export class TokenizerContext {
 
   createTokenInstance(tokenType: TokenType): tokens.Token {
     const image = this.input.substring(this.storedIndex, this.index);
-    return tokens.createTokenInstance(
-      image,
-      image,
-      tokenType,
-      this.storedIndex,
-      this.storedLine,
-      this.storedColumn,
-      this.index - 1,
-      this.line,
-      this.column - 1,
-      this.uri,
-    );
+    return this.createTokenInstanceWithImage(image, image, tokenType);
   }
 
   createTokenInstanceWithImage(
@@ -103,17 +83,16 @@ export class TokenizerContext {
     originalImage: string,
     tokenType: TokenType,
   ): tokens.Token {
+    const startsNewLine = this.sawNewlineSinceLastToken;
+    this.sawNewlineSinceLastToken = false;
     return tokens.createTokenInstance(
       image,
       originalImage,
       tokenType,
       this.storedIndex,
-      this.storedLine,
-      this.storedColumn,
       this.index - 1,
-      this.line,
-      this.column - 1,
       this.uri,
+      startsNewLine,
     );
   }
 }
@@ -224,22 +203,25 @@ export interface KeywordToken {
   kind: TokenType;
 }
 
-export const FNV_OFFSET_BASIS = 0x00000100000001b3n;
-export const FNV_PRIME = 0xcbf29ce484222325n;
+// 32-bit FNV-1a. Deliberately not the 64-bit variant: this runs in the tokenizer's
+// hottest loop and BigInt arithmetic heap-allocates per operation (~half the tokenizer's
+// time in profiles). Collisions are safe: `generateKeywords` throws on any within the
+// keyword set, and `tokenizeIdentifier` re-compares the `image`.
+export const FNV_OFFSET_BASIS = 0x811c9dc5;
+export const FNV_PRIME = 0x01000193;
 
-export function fnvHash(str: string): bigint {
+export function fnvHash(str: string): number {
   let hash = FNV_OFFSET_BASIS;
   for (let i = 0; i < str.length; i++) {
-    hash ^= BigInt(str.charCodeAt(i));
-    hash *= FNV_PRIME;
+    hash = Math.imul(hash ^ str.charCodeAt(i), FNV_PRIME);
   }
-  return hash;
+  return hash >>> 0;
 }
 
 export function generateKeywords(
   keywordMap: Map<string, TokenType>,
-): Map<bigint, KeywordToken> {
-  const keywords = new Map<bigint, KeywordToken>();
+): Map<number, KeywordToken> {
+  const keywords = new Map<number, KeywordToken>();
   for (const [image, kind] of keywordMap) {
     const hash = fnvHash(image);
     if (keywords.has(hash)) {
@@ -257,43 +239,47 @@ export function tokenizeSlashWithComment(
     const nextChar = context.input[context.index + 1];
 
     if (nextChar === "*") {
-      // Block comment
-      let line = context.line;
-      let column = context.column + 2;
       let i = context.index + 2;
+      let crossedNewline = false;
+      // `startsNewLine` describes line breaks between *tokens* - a comment must not
+      // consume the pending flag, or a real token after a line-leading comment would
+      // wrongly report `startsNewLine === false` (which would break `performRecovery`'s
+      // line-boundary detection on the comment-preserving `%INCLUDE` tokenize path).
+      // The comment token itself still takes the pre-comment flag value (via
+      // `createTokenInstance`, which resets it); restored below, with any newline
+      // *inside* the comment carrying forward to the next token as well.
+      const pendingNewline = context.sawNewlineSinceLastToken;
       while (i < context.length) {
         if (context.input[i] === "*" && context.input[i + 1] === "/") {
           i += 2;
-          column += 2;
           break;
         } else if (context.input[i] === "\n") {
-          line++;
-          column = 0;
-        } else {
-          column++;
+          crossedNewline = true;
         }
         i++;
       }
       context.index = i;
-      context.line = line;
-      context.column = column;
       context.comments.push(context.createTokenInstance(tokens.ML_COMMENT));
+      context.sawNewlineSinceLastToken = pendingNewline || crossedNewline;
       return undefined;
     } else if (nextChar === "/") {
       // Line comment
       let i = context.index + 2;
+      let crossedNewline = false;
+      // See the block-comment branch above: preserve the pending flag for the next token.
+      const pendingNewline = context.sawNewlineSinceLastToken;
       while (i < context.length) {
         i++;
         if (context.input[i] === "\n") {
           // Skip the newline character as well
           i++;
-          context.column = 0;
-          context.line++;
+          crossedNewline = true;
           break;
         }
       }
       context.index = i;
       context.comments.push(context.createTokenInstance(tokens.SL_COMMENT));
+      context.sawNewlineSinceLastToken = pendingNewline || crossedNewline;
       return undefined;
     } else if (nextChar === "=") {
       context.advance(2, false);
@@ -340,41 +326,54 @@ export function tokenizeSemicolon(
 const numberRegex = tokens.NUMBER.PATTERN as RegExp;
 export const tokenizeNumber = tokenizeRegex(tokens.NUMBER, numberRegex);
 export function tokenizeIdentifier(
-  keywords: Map<bigint, KeywordToken>,
+  keywords: Map<number, KeywordToken>,
 ): TokenizeFunc {
   return function (context: TokenizerContext): tokens.Token | undefined {
     let start = context.index;
     let hash = FNV_OFFSET_BASIS;
     let i = context.index;
     let charCode: number;
+    let hasLowerCase = false;
     while (i < context.length) {
       charCode = context.input.charCodeAt(i);
       if (!isIdChar(charCode)) {
         break;
       }
-      if (context.caseUpper && charCode >= 97 && charCode <= 122) {
-        // Lowercase character, must be uppercased
-        charCode &= ~0x20;
+      if (charCode >= 97 && charCode <= 122) {
+        hasLowerCase = true;
+        if (context.caseUpper) {
+          // Lowercase character, must be uppercased
+          charCode &= ~0x20;
+        }
       }
-      hash ^= BigInt(charCode);
-      hash *= FNV_PRIME;
+      hash = Math.imul(hash ^ charCode, FNV_PRIME);
       i++;
     }
     const originalImage = context.input.substring(start, i);
-    const image = context.caseUpper
-      ? originalImage.toUpperCase()
-      : originalImage;
+    // `toUpperCase` allocates a second string per identifier; skip it when the scan above
+    // saw no lowercase character (the common case in real PL/I source).
+    const image =
+      context.caseUpper && hasLowerCase
+        ? originalImage.toUpperCase()
+        : originalImage;
     const previousToken = context.tokens[context.tokens.length - 1];
     // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
     if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
-      while (i < context.length && context.input[i] !== ";") {
-        i++;
-      }
-      context.advance(i - start, true);
+      // Scan to the terminating `;`, skipping quoted strings - see
+      // `findExecFragmentEnd` for how this stays in sync with the authoritative
+      // `scanExecFragments` extent in preprocessor-api (and for the accepted
+      // residual mismatch on embedded-language comments).
+      i = tokens.findExecFragmentEnd(context.input, i);
+      // Advance without newline tracking: the fragment's own `startsNewLine` must
+      // come from the pending pre-fragment flag (consumed by `createTokenInstance`
+      // below), and line breaks *inside* the fragment image must not leak to the
+      // token that follows it.
+      context.advance(i - start, false);
       return context.createTokenInstance(tokens.ExecFragment);
     }
     let tokenType = tokens.ID;
-    const keyword = keywords.get(hash);
+    // `>>> 0` matches `fnvHash`'s unsigned normalization (Math.imul returns signed 32-bit).
+    const keyword = keywords.get(hash >>> 0);
     if (keyword && keyword.image === image) {
       tokenType = keyword.kind;
     }

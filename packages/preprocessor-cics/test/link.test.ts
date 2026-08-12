@@ -13,33 +13,31 @@ import { CICSPreprocessor } from "../src/engine/preprocessor";
 import { HostLanguageType } from "../src/engine/host-languages";
 import { Severity } from "preprocessor-api";
 
-describe("CICS LINK", async () => {
+describe("CICS LINK", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
-  test("Positive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("LINK PROGRAM(123)");
+  test("Positive", () => {
+    const { diagnostics } = cicsPreprocessor.parse("LINK PROGRAM(123)");
     expect(diagnostics).toHaveLength(0);
   });
 
-  test("Expecting EOF", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "LINK PROGRAM(123) BLA",
-    );
+  test("Expecting EOF", () => {
+    const { diagnostics } = cicsPreprocessor.parse("LINK PROGRAM(123) BLA");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
   // checkLinkProgram -> checkHasMandatoryOptions(PROGRAM)
-  test("PROGRAM missing", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("LINK SYSID(123)");
+  test("PROGRAM missing", () => {
+    const { diagnostics } = cicsPreprocessor.parse("LINK SYSID(123)");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(/Missing required option: PROGRAM/);
   });
 
   // checkLinkProgram -> checkHasMutuallyExclusiveOptions
-  test("Mutually exclusive COMMAREA and CHANNEL", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Mutually exclusive COMMAREA and CHANNEL", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "LINK PROGRAM(123) COMMAREA(4) CHANNEL(5)",
     );
     expect(diagnostics).toHaveLength(2);
@@ -50,8 +48,8 @@ describe("CICS LINK", async () => {
   });
 
   // checkLinkActivity -> checkHasExactlyOneOption (both -> mutually exclusive)
-  test("ACTIVITY and ACQACTIVITY mutually exclusive", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("ACTIVITY and ACQACTIVITY mutually exclusive", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "LINK ACTIVITY(1) ACQACTIVITY",
     );
     expect(diagnostics).toHaveLength(2);
@@ -62,8 +60,8 @@ describe("CICS LINK", async () => {
   });
 
   // checkDuplicates
-  test("Duplicated PROGRAM", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("Duplicated PROGRAM", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "LINK PROGRAM(1) PROGRAM(2)",
     );
     expect(diagnostics).toHaveLength(1);

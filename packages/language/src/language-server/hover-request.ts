@@ -41,7 +41,7 @@ import { URI } from "../utils/uri";
 import { retrieveProcedureFromLabelPrefix } from "../validation/utils";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { getEffectiveIncludeAlt } from "../preprocessor/compiler-options/options-pli";
-import { HoverResponse, tokenToRange } from "./types";
+import { HoverResponse, offsetToPosition, tokenToRange } from "./types";
 import { getFileContentPreview } from "./cache/include-cache";
 import {
   stringifyDeclaration,
@@ -309,10 +309,6 @@ function computeIncludeType(unit: CompilationUnit, node: SyntaxNode): string {
   if (node.container?.kind === SyntaxKind.IncludeAltDirective && ppInclude) {
     type = ppInclude;
   }
-  // else if (getContainer(node, SyntaxKind.SqlExecStatement)) {
-  //   // Include as part of an EXEC SQL statement
-  //   type = "EXEC SQL INCLUDE";
-  // }
   return type;
 }
 
@@ -372,17 +368,8 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
  * @returns Markup or null if not applicable
  */
 const generateIncludeItemTokenMarkup: MarkupGenerator = ({ unit, token }) => {
-  if (token.element) {
-    if (isIncludeItemToken(token.kind)) {
-      return getNodeRepresentation(unit, token.element);
-    } else if (
-      token.element.kind === SyntaxKind.ExecStatement &&
-      typeof token.element.replacement === "object" &&
-      token.element.replacement!.kind === SyntaxKind.IncludeDirective &&
-      token.element.replacement!.items.length > 0
-    ) {
-      return getNodeRepresentation(unit, token.element.replacement!.items[0]);
-    }
+  if (token.element && isIncludeItemToken(token.kind)) {
+    return getNodeRepresentation(unit, token.element);
   }
   return null;
 };
@@ -525,7 +512,11 @@ export function getJSDocCommentBeforeLabelPrefix(
       }
     }
     if (isJSDoc(commentToken)) {
-      return parseJSDoc(commentToken);
+      const document = compilationUnit.services.files.getDocument(uri);
+      const position = document
+        ? offsetToPosition(document, commentToken.startOffset)
+        : undefined;
+      return parseJSDoc(commentToken.image, position);
     }
   }
   return null;

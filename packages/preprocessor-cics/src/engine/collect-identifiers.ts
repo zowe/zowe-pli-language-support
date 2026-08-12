@@ -18,12 +18,14 @@ import {
 import { CICSParserVisitor } from "../generated/CICSParserVisitor";
 
 export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
+  private static readonly instance = new CollectingIdentifierVisitor();
   static collect(tree: ParseTree): Token[] {
-    const visitor = new CollectingIdentifierVisitor();
+    const visitor = CollectingIdentifierVisitor.instance;
+    visitor.identifiers = [];
     tree.accept(visitor);
     return visitor.identifiers;
   }
-  readonly identifiers: Token[] = [];
+  identifiers: Token[] = [];
   private pushIdentifier = (
     image: string,
     startOffset: number,

@@ -16,12 +16,12 @@ import { Severity } from "preprocessor-api";
 // NOTE: GETMAIN64 is only valid in Assembly, so the checker always reports the
 // GETMAIN64 keyword as illegal. Every command therefore carries that baseline
 // diagnostic; the tests assert it and any additional branch-specific errors.
-describe("CICS GETMAIN64", async () => {
+describe("CICS GETMAIN64", () => {
   const cicsPreprocessor = new CICSPreprocessor(HostLanguageType.PLI);
 
   // checkGetMain -> checkHasIllegalOptions(GETMAIN64)
-  test("GETMAIN64 is only available in Assembly", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("GETMAIN64 is only available in Assembly", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETMAIN64 SET(1) FLENGTH(2)",
     );
     expect(diagnostics).toHaveLength(1);
@@ -32,10 +32,8 @@ describe("CICS GETMAIN64", async () => {
   });
 
   // checkGetMain -> checkHasMandatoryOptions(SET) (plus the GETMAIN64 baseline)
-  test("Missing SET", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
-      "GETMAIN64 FLENGTH(1)",
-    );
+  test("Missing SET", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETMAIN64 FLENGTH(1)");
     expect(diagnostics).toHaveLength(2);
     expect(
       diagnostics.some((d) => /Missing required option: SET/.test(d.message)),
@@ -43,8 +41,8 @@ describe("CICS GETMAIN64", async () => {
   });
 
   // checkGetMain -> checkHasMandatoryOptions(FLENGTH) (plus the GETMAIN64 baseline)
-  test("Missing FLENGTH", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute("GETMAIN64 SET(1)");
+  test("Missing FLENGTH", () => {
+    const { diagnostics } = cicsPreprocessor.parse("GETMAIN64 SET(1)");
     expect(diagnostics).toHaveLength(2);
     expect(
       diagnostics.some((d) =>
@@ -54,8 +52,8 @@ describe("CICS GETMAIN64", async () => {
   });
 
   // checkGetMain -> checkHasIllegalOptions(EXECUTABLE) when LOCATION absent
-  test("EXECUTABLE without LOCATION", async () => {
-    const { diagnostics } = await cicsPreprocessor.execute(
+  test("EXECUTABLE without LOCATION", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
       "GETMAIN64 SET(1) FLENGTH(2) EXECUTABLE",
     );
     expect(diagnostics).toHaveLength(2);
