@@ -133,7 +133,21 @@
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a>
 <a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -155,33 +169,47 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3049x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3177x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3040x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3114x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3040x</span>
+<span class="cline-any cline-yes">3114x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1647x</span>
-<span class="cline-any cline-yes">1647x</span>
-<span class="cline-any cline-yes">1647x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1686x</span>
+<span class="cline-any cline-yes">1686x</span>
+<span class="cline-any cline-yes">1686x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1641x</span>
-<span class="cline-any cline-yes">1641x</span>
-<span class="cline-any cline-yes">1641x</span>
+<span class="cline-any cline-yes">1679x</span>
+<span class="cline-any cline-yes">1679x</span>
+<span class="cline-any cline-yes">1679x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -216,7 +244,6 @@
 &nbsp;
 import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
-import { TokenizationResult } from "../parser/tokenizer";
 import { Statement } from "../syntax-tree/ast";
 import { URI } from "../utils/uri";
 import { InstructionGeneratorResult } from "./instruction-generator";
@@ -270,9 +297,24 @@ export interface FileInstructionResult {
 export class InstructionCache extends TextKeyedCache&lt;FileInstructionResult&gt; {}
 &nbsp;
 /**
- * Caches the raw tokenization (margins + tokenize) of the main compilation unit's source.
+ * Margins + comment-strip applied - `text` is what seeds the preprocessor phase pipeline.
+ * `comments` (converted from `stripComments`' ranges) are registered for LSP services
+ * (semantic highlighting, hover-on-comment, ...) - see `PliLexer.prepareSource`. Real
+ * tokens are *not* cached here: `unit.services.files` must register the exact token
+ * objects the real parser mutates with `.kind`/`.element` (`LexerResult.all`), not a
+ * separately re-tokenized array - see `PliLexer.registerFileTokens`.
  */
-export class TokenizationCache extends TextKeyedCache&lt;TokenizationResult&gt; {}
+export interface PreparedSource {
+  text: string;
+  comments: Token[];
+  diagnostics: Diagnostic[];
+}
+&nbsp;
+/**
+ * Caches the margins + comment-strip + raw tokenization of the main compilation unit's
+ * source.
+ */
+export class TokenizationCache extends TextKeyedCache&lt;PreparedSource&gt; {}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -280,7 +322,7 @@ export class TokenizationCache extends TextKeyedCache&lt;TokenizationResult&gt; 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-11T14:12:45.874Z
+                at 2026-08-12T12:18:10.812Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
