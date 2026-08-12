@@ -1390,6 +1390,170 @@ export const CompilerOptionsCodes = {
         message: () => `The HOSTCOPY option is ignored under LP(32).`,
       },
     },
+
+    Float: {
+      InvalidParameter: {
+        code: "COPPSQL08",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "S390" or "IEEE", but received '${value}'.`,
+      },
+    },
+
+    StdSql: {
+      InvalidParameter: {
+        code: "COPPSQL09",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "YES" or "NO", but received '${value}'.`,
+      },
+    },
+
+    Attach: {
+      InvalidParameter: {
+        code: "COPPSQL13",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "TSO", "CAF", "RRSAF", or "ULI", but received '${value}'.`,
+      },
+    },
+
+    Graphic: {
+      SupersededByCcsid: {
+        code: "COPPSQL14",
+        severity: Severity.W,
+        message: () =>
+          `The GRAPHIC/NOGRAPHIC SQL processing option is ignored because it is superseded by the CCSID option.`,
+      },
+    },
+
+    Date: {
+      InvalidParameter: {
+        code: "COPPSQL15",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "ISO", "USA", "EUR", "JIS", or "LOCAL", but received '${value}'.`,
+      },
+    },
+
+    Dec: {
+      InvalidParameter: {
+        code: "COPPSQL16",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "15" or "31", but received '${value}'.`,
+      },
+    },
+
+    Decp: {
+      InvalidParameterLength: {
+        code: "COPPSQL17",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected a module name with 1 to 8 characters, but received '${value}'.`,
+      },
+    },
+
+    Flag: {
+      InvalidParameter: {
+        code: "COPPSQL18",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "I", "W", "E", or "S", but received '${value}'.`,
+      },
+    },
+
+    Host: {
+      InvalidParameter: {
+        code: "COPPSQL19",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "ASM", "C", "CPP", "IBMCOB", "PLI", "FORTRAN", "SQL", or "SQLPL", but received '${value}'.`,
+      },
+
+      ExpectedPLI: {
+        code: "COPPSQL20",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected PLI host language, but received '${value}'.`,
+      },
+    },
+
+    Level: {
+      InvalidParameter: {
+        code: "COPPSQL22",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected an alphanumeric value of up to 7 characters, but received '${value}'.`,
+      },
+    },
+
+    Margins: {
+      InvalidMarginPosition: {
+        code: "COPPSQL23",
+        severity: Severity.E,
+        message: () =>
+          `The beginning column (m) must be less than the ending column (n).`,
+      },
+
+      InvalidContinuationPosition: {
+        code: "COPPSQL24",
+        severity: Severity.E,
+        message: () =>
+          `The continuation column (c) must not be between the beginning column (m) and ending column (n).`,
+      },
+    },
+
+    NewFun: {
+      InvalidParameter: {
+        code: "COPPSQL25",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "V8", "V9", "V10", "V11", or "V12", but received '${value}'.`,
+      },
+
+      Deprecated: {
+        code: "COPPSQL26",
+        severity: Severity.W,
+        message: () =>
+          `The NEWFUN precompiler option is deprecated. Use the SQLLEVEL option instead.`,
+      },
+    },
+
+    SqlLevel: {
+      InvalidParameter: {
+        code: "COPPSQL31",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "V8R1", "V9R1", "V10R1", "V11R1", or a function level in the format VvvRrMmmm, but received '${value}'.`,
+      },
+    },
+
+    Time: {
+      InvalidParameter: {
+        code: "COPPSQL32",
+        severity: Severity.E,
+        message: (value: string) =>
+          `Expected "ISO", "USA", "EUR", "JIS", or "LOCAL", but received '${value}'.`,
+      },
+    },
+
+    Apost: {
+      QuoteOnlyValidForCobol: {
+        code: "COPPSQL27",
+        severity: Severity.E,
+        message: () => `The QUOTE option is only valid for COBOL applications.`,
+      },
+    },
+
+    ApostSql: {
+      QuoteSqlOnlyValidForCobol: {
+        code: "COPPSQL29",
+        severity: Severity.E,
+        message: () =>
+          `The QUOTESQL option is only valid for COBOL applications.`,
+      },
+    },
   },
 
   PPCICS: {
