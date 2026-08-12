@@ -78,8 +78,15 @@ export class WorkspaceContext {
     }
     if (isPluginConfigurationUri(uri)) {
       return undefined;
-    } else if (!this.config.isLibFileCandidate(uri)) {
-      // non-library files should always generate a compilation unit
+    } else if (
+      this.config.hasProgramConfig(uri) ||
+      !this.config.isLibFileCandidate(uri)
+    ) {
+      // A registered program entry point always heads its own compilation
+      // unit, even when its directory is also configured as a lib — program
+      // status takes precedence over lib membership. Ordinary (non-lib) files
+      // get a unit too. Only files that are lib members *and* not entry points
+      // are treated as standalone library files (handled by the else branch).
       const unit = await this.createAndStoreCompilationUnit(uri);
       return unit;
     } else {
