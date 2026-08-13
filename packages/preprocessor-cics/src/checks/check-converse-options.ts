@@ -88,11 +88,9 @@ export class ConverseOptionsChecker extends CICSOptionsCheckerBase {
 
     if (ctx.CTLCHAR().length !== 0) {
       this.checkHasIllegalOptions(ctx.CONVID(), "CONVID");
-      this.checkHasIllegalOptions(ctx.STRFIELD(), "STRFIELD");
     }
 
     if (ctx.cics_converse_erase().length !== 0) {
-      this.checkHasIllegalOptions(ctx.STRFIELD(), "STRFIELD");
       ctx.cics_converse_erase().forEach((eraseCtx) => {
         this.checkMutuallyExclusiveOptions(
           "ALTERNATE or DEFAULT",
@@ -100,10 +98,18 @@ export class ConverseOptionsChecker extends CICSOptionsCheckerBase {
           eraseCtx.DEFAULT(),
         );
       });
+      this.checkMutuallyExclusiveOptions(
+        "ERASE or STRFIELD",
+        ctx.STRFIELD(),
+        ctx.cics_converse_erase()?.[0].ERASE(),
+      );
     }
-    if (ctx.STRFIELD().length !== 0) {
-      this.checkHasIllegalOptions(ctx.cics_converse_erase(), "ERASE");
-    }
+    this.checkMutuallyExclusiveOptions(
+      "CTLCHAR or STRFIELD",
+      ctx.STRFIELD(),
+      ctx.CTLCHAR(),
+    );
+
     if (this.noLengthOptionsEnabled()) {
       this.checkHasMandatoryOptions(
         ctx.cics_converse_fromlength(),
