@@ -148,21 +148,6 @@ export function deserializeProcessGroup(
   };
 }
 
-function validatePluginConfig(
-  configs: Map<string, ProgramRecord>,
-  pGroups: Map<string, ProcessGroup>,
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  // Check for unknown process groups references under "pgm_conf.json"
-  const pgroupReferences: Iterable<ProgramConfig> = configs.values();
-  const unknownProcessGroupsDiagnostic = validatePgroupReferences(
-    pgroupReferences,
-    new Set(pGroups.keys()),
-  );
-  diagnostics.push(...unknownProcessGroupsDiagnostic);
-  return diagnostics;
-}
-
 export type PluginConfigLspDiagnostics = MultiMap<string, LspDiagnostic>;
 export type PluginConfigDiagnostics = Diagnostic[];
 
@@ -561,16 +546,14 @@ export class PluginConfigurationProvider {
         computedLibs: [],
       });
     }
-    const validationResult = validatePluginConfig(
-      this.programConfigs,
-      mergedGroups,
-    );
-    diagnostics.push(...validationResult);
 
     this.postProcessProgramConfigs();
     const procGrpsDiagnostics =
       await this.postProcessProcessGroups(procGrpsDocuments);
     diagnostics.push(...procGrpsDiagnostics);
+    // Runs AFTER the post-processing above so the program/lib overlap check
+    // sees each group's expanded `computedLibs`.
+    diagnostics.push(...this.validatePluginConfig());
     this.libFileMatchers = undefined;
     this.configDiagnostics = diagnostics;
     const lspDiagnostics = await this.convertDiagnosticsToLsp();
@@ -843,6 +826,88 @@ export class PluginConfigurationProvider {
         text: document.getText(),
         uri: UriUtils.toUri(document.uri),
       });
+    }
+    return diagnostics;
+  }
+
+  /**
+   * Validates the merged plugin configuration and returns the accumulated
+   * diagnostics. Single entry point for the config-level checks, called from
+   * {@link loadConfigurations} *after* the configs are post-processed.
+   */
+  private validatePluginConfig(): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    diagnostics.push(
+      ...validatePgroupReferences(
+        this.programConfigs.values(),
+        new Set(this.processGroupConfigs.keys()),
+      ),
+    );
+    diagnostics.push(...this.validateProgramLibOverlap());
+    return diagnostics;
+  }
+
+  /**
+   * Warns when a directory is both a configured lib and a program-entry
+   * location for one of the lib's include extensions, since such files are
+   * ambiguously both compiled standalone and offered as includes. Emits at
+   * most one diagnostic per (program entry, lib directory) pair.
+   */
+  private validateProgramLibOverlap(): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    for (const processGroup of this.processGroupConfigs.values()) {
+      const extSet = new Set(
+        processGroup.includeExtensions.map((item) =>
+          (item.value.startsWith(".")
+            ? item.value
+            : `.${item.value}`
+          ).toLowerCase(),
+        ),
+      );
+      if (extSet.size === 0) {
+        // No include extensions → nothing can overlap on.
+        continue;
+      }
+      for (const lib of processGroup.computedLibs) {
+        // Only real directories carry a `files` map; skip dataset/DD libs.
+        if (!isLibsDir(lib)) {
+          continue;
+        }
+        const libUri = resolveLibUri(lib.path, this.workspacePath);
+        // Dedupe: one warning per program entry overlapping this lib dir,
+        // even if many files in the dir match that entry.
+        const seenProgramKeys = new Set<string>();
+        for (const realName of lib.files.values()) {
+          const dotIdx = realName.lastIndexOf(".");
+          const ext = dotIdx >= 0 ? realName.slice(dotIdx).toLowerCase() : "";
+          if (!extSet.has(ext)) {
+            continue;
+          }
+          const fileUri = UriUtils.joinPath(libUri, realName);
+          const program = this.getProgramConfig(fileUri);
+          if (!program) {
+            continue;
+          }
+          const key = program.program.value;
+          if (seenProgramKeys.has(key)) {
+            continue;
+          }
+          seenProgramKeys.add(key);
+          const uri = program.program.meta?.uri?.toString();
+          const range =
+            program.program.meta?.range ?? offsetLengthToRange(0, 1);
+          diagnostics.push(
+            diagnosticFromCodeAtRange(
+              LspCodes.PluginConfiguration.AmbiguousProgramLibOverlap,
+              uri,
+              range,
+              lib.path,
+              ext,
+              processGroup.name.value,
+            ),
+          );
+        }
+      }
     }
     return diagnostics;
   }

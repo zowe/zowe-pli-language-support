@@ -10,10 +10,13 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { CancellationToken } from "vscode-languageserver";
 import { UriUtils } from "../../src/utils/uri";
 import { CompilationUnitHandler } from "../../src/workspace/compilation-unit";
+import * as lifecycle from "../../src/workspace/lifecycle";
+import { TextDocuments } from "../../src/language-server/text-documents";
 import { makeProcessGroup, makeProgramConfig } from "../config-fixtures";
-import { defaultTestWorkspace } from "../test-workspace";
+import { createTestWorkspace, defaultTestWorkspace } from "../test-workspace";
 import {
   FileSystemProvider,
   TestGlobalConfigLoader,
@@ -194,5 +197,55 @@ describe("Compilation Unit Tests", () => {
     // Should create a compilation unit for a file in the src folder
     const mainUnit = await ch.getOrCreateCompilationUnit(mainUri);
     expect(mainUnit).toBeDefined();
+  });
+
+  test("Creates and reads a compilation unit for an entry point inside a lib directory", async () => {
+    const testFs = new VirtualFileSystemProvider();
+    const workspace = createTestWorkspace(testFs);
+    const wsUri = UriUtils.toUri("file:///");
+
+    // The program entry lives in `src`, which is ALSO configured as a lib, and
+    // pulls in a neighbouring include from that same directory.
+    const entryUri = UriUtils.toUri("file:///src/a.pli");
+    await testFs.writeFile(entryUri, " DCL B CHAR;\n %INCLUDE inc;\n");
+    await testFs.writeFile(
+      UriUtils.toUri("file:///src/inc.inc"),
+      " DCL A CHAR;\n",
+    );
+
+    await workspace.config.init(wsUri);
+    workspace.config.setProgramConfigs(wsUri, [
+      makeProgramConfig({ program: "src/a.pli", pgroup: "default" }),
+    ]);
+    await workspace.config.setProcessGroupConfigs([
+      makeProcessGroup({
+        name: "default",
+        libs: ["src"],
+        includeExtensions: [".pli", ".inc"],
+      }),
+    ]);
+
+    const ch = new CompilationUnitHandler(
+      testFs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    ch.addWorkspaceFolder(wsUri, workspace);
+
+    // Entry point gets a unit even though `src` is also a lib directory — and
+    // (the actual bug) its text is read and its include resolved through the lib.
+    const entryUnit = await ch.getOrCreateCompilationUnit(entryUri);
+    expect(entryUnit).toBeDefined();
+    const doc = await TextDocuments.get(entryUri);
+    await lifecycle.lifecycle(entryUnit!, doc!, CancellationToken.None);
+    const tokens = entryUnit!.tokens.map((t) => t.image);
+    expect(tokens).toContain("B");
+    expect(tokens).toContain("A");
+
+    // A non-entry file in the same lib directory stays a standalone lib file.
+    const libUnit = await ch.getOrCreateCompilationUnit(
+      UriUtils.toUri("file:///src/inc.inc"),
+    );
+    expect(libUnit).toBeUndefined();
   });
 });
