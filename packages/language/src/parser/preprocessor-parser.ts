@@ -1271,7 +1271,10 @@ function parseReferenceItem(
   );
   if (withDimensions) {
     while (state.canConsume(t.OpenParen)) {
-      reference.dimensions.push(dimensions(state));
+      reference.dimensions = ast.appendList(
+        reference.dimensions,
+        dimensions(state),
+      );
     }
   }
   return reference;
@@ -1373,7 +1376,7 @@ function noprintDirective(state: ParserState): ast.NoPrintDirective {
 
 function assignmentStatement(state: ParserState): ast.AssignmentStatement {
   const assignment = ast.createAssignmentStatement();
-  assignment.refs.push(locatorCall(state, true));
+  assignment.refs = [locatorCall(state, true)];
   const operatorToken = state.consume(
     assignment,
     CstNodeKind.AssignmentStatement_Operator,
@@ -1524,7 +1527,7 @@ function dimensions(state: ParserState): ast.Dimensions {
   }
   let startToken = dimensions.token;
   let endtoken: t.Token | null = null;
-  dimensions.dimensions.push(parseBound(state));
+  dimensions.dimensions = [parseBound(state)];
   while (
     (endtoken = state.tryConsume(
       dimensions,

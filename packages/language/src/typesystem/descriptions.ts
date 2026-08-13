@@ -1021,6 +1021,28 @@ PARAMETER
 [CALL]]
 */
 
+// Shared frozen defaults: one type description exists per declaration node
+// (hundreds of thousands on large files), so a fresh default object per
+// description adds up to serious memory. These are read-only fallbacks - any
+// non-default value is passed in by the caller as its own object.
+const DEFAULT_UNALIGNED: Alignment = Object.freeze({
+  type: AlignmentType.Unaligned,
+});
+const DEFAULT_ALIGNED: Alignment = Object.freeze({
+  type: AlignmentType.Aligned,
+  alignment: 1,
+} as const); //TODO no documentation of default value for alignment
+const EMPTY_WITNESSES: AttributeWitnesses = Object.freeze({
+  order: Object.freeze([]) as unknown as AttributeKind[],
+  witnesses: Object.freeze({}),
+});
+
+// Mirrors the failure mode of the previous per-object wrapper, which called an
+// absent provider.
+function missingToString(): string {
+  throw new TypeError("toString is not a function");
+}
+
 function createBaseTypeDescription(
   type: TypeDescriptions.TypeDescriptionType,
   {
@@ -1048,9 +1070,9 @@ function createBaseTypeDescription(
 ): BaseTypeDescriptionProps {
   if (!alignment) {
     if (type === PictureType || type === StringType) {
-      alignment = { type: AlignmentType.Unaligned };
+      alignment = DEFAULT_UNALIGNED;
     } else {
-      alignment = { type: AlignmentType.Aligned, alignment: 1 }; //TODO no documentation of default value for alignment
+      alignment = DEFAULT_ALIGNED;
     }
   }
 
@@ -1100,10 +1122,9 @@ function createBaseTypeDescription(
     variable,
     volatility,
 
-    witnesses: witnesses ?? { order: [], witnesses: {} },
-    toString() {
-      return toString!();
-    },
+    witnesses: witnesses ?? EMPTY_WITNESSES,
+    // The provider function itself, not a per-object wrapper closure around it.
+    toString: toString ?? missingToString,
   };
 }
 

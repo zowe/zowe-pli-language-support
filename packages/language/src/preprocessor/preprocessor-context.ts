@@ -25,6 +25,7 @@ import {
 } from "../language-server/types";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { URI } from "../utils/uri";
+import { largePush } from "../utils/collections";
 import { LspCodes } from "../validation/lsp-codes";
 import { PLICodes } from "../validation/pli-codes";
 import {
@@ -491,7 +492,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
         }
         // Nested diagnostics keep their ranges: offsets into the included file's own
         // text, which is the space they should be reported in.
-        nestedDiagnostics.push(...edit.subResult.diagnostics);
+        largePush(nestedDiagnostics, edit.subResult.diagnostics);
         chunks.push(edit.subResult.text);
         genCursor += edit.subResult.text.length;
       } else {

@@ -9,6 +9,22 @@
  *
  */
 
+const EMPTY_VALUES: readonly unknown[] = Object.freeze([]);
+
+/**
+ * Pushes all elements of `source` onto `target`. Safe for arbitrarily large
+ * source arrays.
+ */
+export function largePush<T>(target: T[], source: readonly T[]): void {
+  if (source.length < 10_000) {
+    target.push(...(source as T[]));
+  } else {
+    for (const item of source) {
+      target.push(item);
+    }
+  }
+}
+
 export class MultiMap<K, V> {
   private map = new Map<K, V[]>();
 
@@ -65,7 +81,9 @@ export class MultiMap<K, V> {
    * value and `delete` to remove a value from the multimap.
    */
   get(key: K): readonly V[] {
-    return this.map.get(key) ?? [];
+    // Shared frozen empty result: misses are the common case on lookup-heavy
+    // paths (scope chains), and a fresh array per miss is pure GC churn.
+    return this.map.get(key) ?? (EMPTY_VALUES as readonly V[]);
   }
 
   /**
@@ -101,8 +119,12 @@ export class MultiMap<K, V> {
    * Add the given set of key / value pairs to the multimap.
    */
   addAll(key: K, values: Iterable<V>): this {
-    if (this.map.has(key)) {
-      this.map.get(key)!.push(...values);
+    const existing = this.map.get(key);
+    if (existing) {
+      // No `push(...values)`: argument spreads throw a RangeError beyond ~100k elements.
+      for (const value of values) {
+        existing.push(value);
+      }
     } else {
       this.map.set(key, Array.from(values));
     }
@@ -154,7 +176,9 @@ export class MultiMap<K, V> {
   valuesArray(): V[] {
     const result: V[] = [];
     for (const values of this.map.values()) {
-      result.push(...values);
+      for (const value of values) {
+        result.push(value);
+      }
     }
     return result;
   }

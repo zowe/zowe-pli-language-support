@@ -657,7 +657,7 @@ const statement = rule(
     while (performLabelPrefixLookahead(state)) {
       inc();
       const label = labelPrefix.rule(state);
-      label && element.labels.push(label);
+      label && (element.labels = ast.appendList(element.labels, label));
     }
 
     // Store labels in state so compound statements can access them
@@ -998,7 +998,7 @@ const assignmentStatement = rule(
 
     // Parse left-hand side references (comma-separated)
     const lhs = locatorCall.rule(state);
-    lhs && element.refs.push(lhs);
+    lhs && (element.refs = ast.appendList(element.refs, lhs));
     const { inc } = state.createLoopContext("AssignmentStatement");
     while (
       state.tryConsume(
@@ -1009,7 +1009,7 @@ const assignmentStatement = rule(
     ) {
       inc();
       const rhs = locatorCall.rule(state);
-      rhs && element.refs.push(rhs);
+      rhs && (element.refs = ast.appendList(element.refs, rhs));
     }
 
     // Parse assignment operator
@@ -5598,7 +5598,8 @@ const dimensions = rule(
     // Optional dimension bounds
     if (state.canConsumeFirst(dimensionBound.first())) {
       let current = dimensionBound.rule(state, ast.ReferenceType.Variable);
-      current && element.dimensions.push(current);
+      current &&
+        (element.dimensions = ast.appendList(element.dimensions, current));
       const { inc } = state.createLoopContext("Dimensions");
       while (
         (endToken = state.tryConsume(
@@ -5611,7 +5612,8 @@ const dimensions = rule(
         applyBoundsTokens(current);
         startToken = endToken;
         current = dimensionBound.rule(state, ast.ReferenceType.Variable);
-        current && element.dimensions.push(current);
+        current &&
+          (element.dimensions = ast.appendList(element.dimensions, current));
       }
     }
 
@@ -5656,7 +5658,8 @@ const dimensionsWithTypes = rule(
         state,
         ast.ReferenceType.TypeOrVariable,
       );
-      current && element.dimensions.push(current);
+      current &&
+        (element.dimensions = ast.appendList(element.dimensions, current));
       const { inc } = state.createLoopContext("DimensionsWithTypes");
       while (
         (endToken = state.tryConsume(
@@ -5669,7 +5672,8 @@ const dimensionsWithTypes = rule(
         applyBoundsTokens(current);
         startToken = endToken;
         current = dimensionBound.rule(state, ast.ReferenceType.TypeOrVariable);
-        current && element.dimensions.push(current);
+        current &&
+          (element.dimensions = ast.appendList(element.dimensions, current));
       }
     }
 
@@ -6243,11 +6247,11 @@ const referenceItem = rule(
       if (withoutType) {
         // "Normal" dimensions, that simply target variables in their references
         const dim = dimensions.rule(state);
-        dim && element.dimensions.push(dim);
+        dim && (element.dimensions = ast.appendList(element.dimensions, dim));
       } else if (withType) {
         // Dimensions that can also target types in their references
         const dim = dimensionsWithTypes.rule(state);
-        dim && element.dimensions.push(dim);
+        dim && (element.dimensions = ast.appendList(element.dimensions, dim));
       }
     }
     return element;
@@ -6258,15 +6262,23 @@ const expression = rule(
   () => primaryExpression.first(),
   (state: ParserState, params?: ExpressionParameter): ast.Expression | null => {
     params ??= {};
+
+    // Parse first primary expression
+    const lhs = primaryExpression.rule(state, params);
+    if (!state.canConsume(tokens.BinaryOperator)) {
+      // Fast path for the overwhelmingly common single-primary expression:
+      // no operator follows, so skip the IntermediateBinaryExpression
+      // scaffolding entirely (matches constructBinaryExpression's unwrapping
+      // of empty/one-item inputs).
+      return lhs;
+    }
+
     const element: IntermediateBinaryExpression = {
       infix: true,
       items: [],
       operators: [],
       operatorTokens: [],
     };
-
-    // Parse first primary expression
-    const lhs = primaryExpression.rule(state, params);
     lhs && element.items.push(lhs);
 
     // Parse zero or more operator-expression pairs

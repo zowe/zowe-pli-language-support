@@ -30,24 +30,25 @@ export interface TypeInferer {
   ): boolean;
 }
 
+const expressionKinds = new Set<ast.SyntaxKind>([
+  ast.SyntaxKind.BinaryExpression,
+  ast.SyntaxKind.UnaryExpression,
+  ast.SyntaxKind.Parenthesis,
+  ast.SyntaxKind.WildcardItem,
+  ast.SyntaxKind.NumberLiteral,
+  ast.SyntaxKind.StringLiteral,
+  ast.SyntaxKind.RepeatedExpression,
+  ast.SyntaxKind.LocatorCall,
+  ast.SyntaxKind.MemberCall,
+]);
+
 export class DefaultTypeInferer implements TypeInferer {
   inferType(
     node: ast.SyntaxNode,
     compilationUnit: CompilationUnit,
   ): TypeDescriptions.Any {
     return compilationUnit.services.typeCache.get(node, () => {
-      const expressionKinds = [
-        ast.SyntaxKind.BinaryExpression,
-        ast.SyntaxKind.UnaryExpression,
-        ast.SyntaxKind.Parenthesis,
-        ast.SyntaxKind.WildcardItem,
-        ast.SyntaxKind.NumberLiteral,
-        ast.SyntaxKind.StringLiteral,
-        ast.SyntaxKind.RepeatedExpression,
-        ast.SyntaxKind.LocatorCall,
-        ast.SyntaxKind.MemberCall,
-      ];
-      if (expressionKinds.includes(node.kind)) {
+      if (expressionKinds.has(node.kind)) {
         return this.inferExpressionType(
           node as ast.Expression,
           compilationUnit,

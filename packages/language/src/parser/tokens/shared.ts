@@ -61,6 +61,21 @@ export interface Token {
    */
   ppSemanticType?: SemanticTokenTypes;
 }
+// Token instances exist by the millions on large files, so every in-object
+// field is ~8 bytes per token times the token count. The four booleans and the
+// small `ppSemanticType` enum are therefore packed into a single `flags` number
+// behind prototype accessors. This also keeps the hidden class stable when
+// `synthetic`/`ppSemanticType` are assigned after construction - as own fields
+// added late they would force every such token into an out-of-object property
+// store.
+const FLAG_INSERTED_IN_RECOVERY = 1 << 0;
+const FLAG_IMMEDIATE_FOLLOW = 1 << 1;
+const FLAG_STARTS_NEW_LINE = 1 << 2;
+const FLAG_SYNTHETIC = 1 << 3;
+/** Bits above the boolean flags hold `ppSemanticType + 1` (0 = unset). */
+const PP_SEMANTIC_TYPE_SHIFT = 4;
+const PP_SEMANTIC_TYPE_MASK = (1 << PP_SEMANTIC_TYPE_SHIFT) - 1;
+
 class TokenImpl implements Token {
   image: string;
   originalImage: string;
@@ -68,13 +83,11 @@ class TokenImpl implements Token {
   startOffset: number;
   endOffset: number;
   tokenTypeIdx: number;
-  isInsertedInRecovery: boolean;
   tokenType: TokenType;
   uri: URI | undefined;
   kind: CstNodeKind | undefined;
   element: ast.SyntaxNode | undefined;
-  immediateFollow: boolean;
-  startsNewLine: boolean;
+  private flags: number;
   constructor(
     image: string,
     originalImage: string,
@@ -95,10 +108,78 @@ class TokenImpl implements Token {
     this.uri = uri;
     this.kind = undefined;
     this.element = undefined;
-    this.isInsertedInRecovery = false;
-    this.immediateFollow = false;
-    this.startsNewLine = startsNewLine;
+    this.flags = startsNewLine ? FLAG_STARTS_NEW_LINE : 0;
   }
+
+  private setFlag(flag: number, value: boolean): void {
+    this.flags = value ? this.flags | flag : this.flags & ~flag;
+  }
+
+  get isInsertedInRecovery(): boolean {
+    return (this.flags & FLAG_INSERTED_IN_RECOVERY) !== 0;
+  }
+  set isInsertedInRecovery(value: boolean) {
+    this.setFlag(FLAG_INSERTED_IN_RECOVERY, value);
+  }
+
+  get immediateFollow(): boolean {
+    return (this.flags & FLAG_IMMEDIATE_FOLLOW) !== 0;
+  }
+  set immediateFollow(value: boolean) {
+    this.setFlag(FLAG_IMMEDIATE_FOLLOW, value);
+  }
+
+  get startsNewLine(): boolean {
+    return (this.flags & FLAG_STARTS_NEW_LINE) !== 0;
+  }
+  set startsNewLine(value: boolean) {
+    this.setFlag(FLAG_STARTS_NEW_LINE, value);
+  }
+
+  get synthetic(): boolean {
+    return (this.flags & FLAG_SYNTHETIC) !== 0;
+  }
+  set synthetic(value: boolean) {
+    this.setFlag(FLAG_SYNTHETIC, value);
+  }
+
+  get ppSemanticType(): SemanticTokenTypes | undefined {
+    const value = this.flags >>> PP_SEMANTIC_TYPE_SHIFT;
+    return value === 0 ? undefined : value - 1;
+  }
+  set ppSemanticType(value: SemanticTokenTypes | undefined) {
+    this.flags =
+      (this.flags & PP_SEMANTIC_TYPE_MASK) |
+      ((value === undefined ? 0 : value + 1) << PP_SEMANTIC_TYPE_SHIFT);
+  }
+}
+
+/**
+ * Clones a token, optionally overriding fields. Use this instead of an object
+ * spread: `TokenImpl` keeps its boolean flags behind prototype accessors, which
+ * a spread would silently drop.
+ */
+export function cloneToken(
+  token: Token,
+  overrides?: { image?: string; uri?: URI | undefined },
+): Token {
+  const clone = new TokenImpl(
+    overrides?.image ?? token.image,
+    token.originalImage,
+    token.id ?? 0,
+    token.tokenType,
+    token.startOffset,
+    token.endOffset,
+    overrides && "uri" in overrides ? overrides.uri : token.uri,
+    token.startsNewLine,
+  );
+  clone.kind = token.kind;
+  clone.element = token.element;
+  clone.isInsertedInRecovery = token.isInsertedInRecovery ?? false;
+  clone.immediateFollow = token.immediateFollow;
+  clone.synthetic = token.synthetic ?? false;
+  clone.ppSemanticType = token.ppSemanticType;
+  return clone;
 }
 /**
  * A simple incrementing ID generator for tokens.

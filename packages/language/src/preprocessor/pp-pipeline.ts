@@ -58,12 +58,15 @@ export async function runPipeline(
     });
     text = result.text;
     sourceMap = SourceMap.compose(sourceMap, result.sourceMap);
-    allStatements.push(...result.statements);
-    allDiagnostics.push(
-      ...remapPhaseDiagnostics(result.diagnostics, inputMap, input.uri),
+    // No argument spreads: they throw a RangeError beyond ~100k elements, and
+    // several of these lists scale with file size.
+    pushAll(allStatements, result.statements);
+    pushAll(
+      allDiagnostics,
+      remapPhaseDiagnostics(result.diagnostics, inputMap, input.uri),
     );
-    allReferences.push(...result.references);
-    allDirectiveTokens.push(...result.directiveTokens);
+    pushAll(allReferences, result.references);
+    pushAll(allDirectiveTokens, result.directiveTokens);
     if (result.evaluationResults) {
       for (const [key, value] of result.evaluationResults.branchExecutions) {
         evaluationResults.branchExecutions.set(key, value);
@@ -80,6 +83,12 @@ export async function runPipeline(
     evaluationResults,
     directiveTokens: allDirectiveTokens,
   };
+}
+
+function pushAll<T>(target: T[], source: readonly T[]): void {
+  for (const item of source) {
+    target.push(item);
+  }
 }
 
 /**
