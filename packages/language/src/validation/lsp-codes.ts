@@ -99,6 +99,15 @@ export const LspCodes = {
       severity: Severity.E,
       message: (pgroup: string) => `Unknown process group '${pgroup}'.`,
     },
+
+    AmbiguousProgramLibOverlap: {
+      code: "COPC05",
+      severity: Severity.W,
+      message: (dir: string, ext: string, pgroup: string) =>
+        `Directory '${dir}' is both a library in process group '${pgroup}' and a program-entry location for '${ext}' files. ` +
+        `Files ending in '${ext}' there are compiled as standalone programs and also used as includes, which is ambiguous. ` +
+        `Consider using a separate directory for includes, or removing '${ext}' from this group's include-extensions.`,
+    },
   },
 
   Cics: {
