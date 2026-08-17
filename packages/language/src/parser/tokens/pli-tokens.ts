@@ -315,6 +315,12 @@ export const BLKSIZE = registerKeyword({
     [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BLKSIZE],
   ],
 });
+export const BUFFERS = registerKeyword({
+  name: "BUFFERS",
+  categories: [
+    [EnvironmentOptionValueName, ast.EnvironmentOptionValueName.BUFFERS],
+  ],
+});
 export const RECSIZE = registerKeyword({
   name: "RECSIZE",
   categories: [
