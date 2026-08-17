@@ -176,9 +176,7 @@ export class MultiMap<K, V> {
   valuesArray(): V[] {
     const result: V[] = [];
     for (const values of this.map.values()) {
-      for (const value of values) {
-        result.push(value);
-      }
+      largePush(result, values);
     }
     return result;
   }

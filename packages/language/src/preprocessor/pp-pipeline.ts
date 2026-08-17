@@ -16,6 +16,7 @@ import { URI } from "../utils/uri";
 import { EvaluationResults } from "./instruction-interpreter";
 import { PhaseInput, PhaseResult, PreprocessorPhase } from "./pp-phase";
 import { SourceMap } from "./source-map";
+import { largePush } from "../utils/collections";
 
 export interface PipelineResult {
   text: string;
@@ -60,13 +61,13 @@ export async function runPipeline(
     sourceMap = SourceMap.compose(sourceMap, result.sourceMap);
     // No argument spreads: they throw a RangeError beyond ~100k elements, and
     // several of these lists scale with file size.
-    pushAll(allStatements, result.statements);
-    pushAll(
+    largePush(allStatements, result.statements);
+    largePush(
       allDiagnostics,
       remapPhaseDiagnostics(result.diagnostics, inputMap, input.uri),
     );
-    pushAll(allReferences, result.references);
-    pushAll(allDirectiveTokens, result.directiveTokens);
+    largePush(allReferences, result.references);
+    largePush(allDirectiveTokens, result.directiveTokens);
     if (result.evaluationResults) {
       for (const [key, value] of result.evaluationResults.branchExecutions) {
         evaluationResults.branchExecutions.set(key, value);
@@ -83,12 +84,6 @@ export async function runPipeline(
     evaluationResults,
     directiveTokens: allDirectiveTokens,
   };
-}
-
-function pushAll<T>(target: T[], source: readonly T[]): void {
-  for (const item of source) {
-    target.push(item);
-  }
 }
 
 /**
