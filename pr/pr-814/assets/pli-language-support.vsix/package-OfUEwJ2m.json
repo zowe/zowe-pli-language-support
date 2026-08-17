@@ -38,9 +38,22 @@
       {
         "command": "pli.goToProcessGroup",
         "title": "Go to Process Group"
+      },
+      {
+        "command": "pli.showPreprocessedText",
+        "title": "Show Preprocessed Text",
+        "category": "PL/I",
+        "icon": "$(file-code)"
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "pli.showPreprocessedText",
+          "when": "resourceLangId == pli && resourceScheme != pli-preprocessed",
+          "group": "navigation"
+        }
+      ],
       "editor/context": [
         {
           "command": "pli.goToProgramConfiguration",
