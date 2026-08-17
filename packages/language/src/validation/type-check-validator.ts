@@ -140,12 +140,6 @@ function validateBound(
 ) {
   if (bound.expression) {
     if (bound.expression.kind === ast.SyntaxKind.WildcardItem) {
-      if (
-        bound.token &&
-        !ast.getContainer(bound.node, ast.SyntaxKind.ProcedureStatement)
-      ) {
-        acceptor(diagnosticFromCode(PLICodes.Severe.IBM1629I, bound.token));
-      }
       return "unbounded";
     } else {
       const boundDescription = compilationUnit.services.inferer.inferType(
