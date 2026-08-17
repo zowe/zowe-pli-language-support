@@ -37,13 +37,13 @@ async function checkFileType(
   }
   if (proposedFiles.has(document.uri.toString())) {
     // We've already proposed to change the language for this document.
+    // It was previously declined, so don't propose again.
     return;
   }
   if (document.languageId !== "plaintext") {
     // Only attempt to identify PL/I documents that are currently marked as plaintext
     return;
   }
-  proposedFiles.add(document.uri.toString());
   if (
     // Assert that this can even be a PL/I document
     // (and isn't something else, like a .git file or a listing file)
@@ -51,7 +51,7 @@ async function checkFileType(
     // Check that it likely is a PL/I document
     (await isPossiblePliDocument(document, lc))
   ) {
-    proposePliLanguage(document);
+    proposePliLanguage(proposedFiles, document);
   }
 }
 
@@ -122,7 +122,10 @@ async function isPossiblePliDocument(
   return false;
 }
 
-async function proposePliLanguage(document: vscode.TextDocument) {
+async function proposePliLanguage(
+  proposedFiles: Set<string>,
+  document: vscode.TextDocument,
+) {
   console.log(
     `Proposing to set language of ${document.uri.toString(true)} to PL/I`,
   );
@@ -133,11 +136,17 @@ async function proposePliLanguage(document: vscode.TextDocument) {
     "No",
     "Never",
   );
-  if (selection === "Yes") {
-    vscode.languages.setTextDocumentLanguage(document, "pli");
-  } else if (selection === "Never") {
-    // Change the settings to never recommend PL/I for any file.
-    const settings = Settings.getInstance();
-    await settings.setAutoDetect(false);
+  switch (selection) {
+    case "Yes":
+      vscode.languages.setTextDocumentLanguage(document, "pli");
+      break;
+    case "No":
+      proposedFiles.add(document.uri.toString());
+      break;
+    case "Never":
+      // Change the settings to never recommend PL/I for any file.
+      const settings = Settings.getInstance();
+      await settings.setAutoDetect(false);
+      break;
   }
 }
