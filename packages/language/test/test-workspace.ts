@@ -16,7 +16,7 @@ import {
   VirtualFileSystemProvider,
 } from "../src/workspace/file-system-provider";
 import { WorkspaceContext } from "../src/workspace/workspace-context";
-import { TestGlobalConfigLoader } from "../src";
+import { GlobalConfigLoader, TestGlobalConfigLoader } from "../src";
 
 let _defaultTestWorkspace: WorkspaceContext | undefined;
 
@@ -58,21 +58,25 @@ export function setDefaultTestWorkspace(
  */
 export function createTestWorkspace(
   fs: FileSystemProvider = new VirtualFileSystemProvider(),
-): WorkspaceContext {
-  resetDocumentProviders(fs);
-  return new WorkspaceContext(
-    fs,
-    new TestGlobalConfigLoader({
-      pgmConf: {
+  loader: GlobalConfigLoader = new TestGlobalConfigLoader({
+    pgmConf: [
+      {
         configKey: "pli.pgm_conf",
         containerPath: [],
         uri: ".vscode/settings.json",
+        scope: "workspace",
       },
-      procGrps: {
+    ],
+    procGrps: [
+      {
         configKey: "pli.proc_grps",
         containerPath: [],
         uri: ".vscode/settings.json",
+        scope: "workspace",
       },
-    }),
-  );
+    ],
+  }),
+): WorkspaceContext {
+  resetDocumentProviders(fs);
+  return new WorkspaceContext(fs, loader);
 }

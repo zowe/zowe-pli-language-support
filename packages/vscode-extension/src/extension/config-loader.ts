@@ -16,6 +16,17 @@ import { sendNotification } from "./messages";
 
 type ConfigKey = "pgm_conf" | "proc_grps";
 
+/**
+ * Registers the LS-side handler for {@link Messages.GetGlobalConfig}.
+ * Called once per language client (desktop + browser) so the LS can
+ * fall back to VS Code settings when no `.pliplugin/` directory exists.
+ *
+ * The user-scope `settings.json` URI is derived from
+ * {@link vscode.ExtensionContext.globalStorageUri} (via
+ * {@link deriveUserSettingsUri}), which is the only documented way to reach
+ * the user data directory without platform-specific path math.
+ * (`vscode-userdata:/` is unreliable on desktop and is NOT used here.)
+ */
 export function registerConfigLoader(
   client: BaseLanguageClient,
   context: vscode.ExtensionContext,
@@ -35,8 +46,9 @@ export function registerConfigLoader(
  * Locates each PL/I plugin config value in VS Code settings and reports
  * back the actual JSON document URI plus the path inside that document.
  *
- * Scope precedence mirrors VS Code's normal resolution:
- *   workspaceFolder > workspace > user (global).
+ * Unlike VS Code's collapsed resolution, each key may yield an independent
+ * `user` and/or `workspace` entry; the LS decides precedence (workspace over
+ * user, both below `.pliplugin/`).
  *
  * The LS uses the result to read the source file via its `FileSystemProvider`
  * and parse the subtree directly - so diagnostics on a bad `pgroup`
@@ -51,39 +63,54 @@ async function getGlobalConfig(
   const result: Messages.GlobalConfig = {};
   if (workspaceFolder) {
     const pgmConf = locate("pgm_conf", workspaceFolder, userSettingsUri);
-    if (pgmConf) result.pgmConf = pgmConf;
+    if (pgmConf.length > 0) result.pgmConf = pgmConf;
     const procGrps = locate("proc_grps", workspaceFolder, userSettingsUri);
-    if (procGrps) result.procGrps = procGrps;
+    if (procGrps.length > 0) result.procGrps = procGrps;
   } else {
-    result.pgmConf = {
-      uri: userSettingsUri.toString(),
-      containerPath: [],
-      configKey: "pli.pgm_conf",
-    };
-    result.procGrps = {
-      uri: userSettingsUri.toString(),
-      containerPath: [],
-      configKey: "pli.proc_grps",
-    };
+    // No workspace folder contains the file: only user-scope settings can
+    // apply, so report them directly.
+    result.pgmConf = [
+      {
+        uri: userSettingsUri.toString(),
+        containerPath: [],
+        configKey: "pli.pgm_conf",
+        scope: "user",
+      },
+    ];
+    result.procGrps = [
+      {
+        uri: userSettingsUri.toString(),
+        containerPath: [],
+        configKey: "pli.proc_grps",
+        scope: "user",
+      },
+    ];
   }
   return result;
 }
 
+/**
+ * Returns one entry per settings scope that defines a value (user and/or
+ * workspace). Unlike VS Code's `get()`, scopes are not collapsed — the LS
+ * treats each as its own source. `*LanguageValue` variants are ignored.
+ */
 function locate(
   key: ConfigKey,
   folder: vscode.Uri,
   userSettingsUri: vscode.Uri,
-): Messages.GlobalConfigEntry | undefined {
+): Messages.GlobalConfigEntry[] {
   const inspect = vscode.workspace.getConfiguration("pli", folder).inspect(key);
-  if (!inspect) return undefined;
+  if (!inspect) return [];
 
   const entry = (
     uri: vscode.Uri,
+    scope: Messages.GlobalConfigScope,
     containerPath: string[] = [],
   ): Messages.GlobalConfigEntry => ({
     uri: uri.toString(),
     containerPath,
     configKey: `pli.${key}`,
+    scope,
   });
   const vscodeSettingsUri = vscode.Uri.joinPath(
     folder,
@@ -91,26 +118,31 @@ function locate(
     "settings.json",
   );
 
-  // Most-specific scope wins. The `*LanguageValue` variants are
-  // ignored - `pli.pgm_conf` isn't language-scoped.
-  if (inspect.workspaceFolderValue !== undefined) {
-    return entry(vscodeSettingsUri);
+  const entries: Messages.GlobalConfigEntry[] = [];
+
+  // User (global) scope.
+  if (inspect.globalValue !== undefined) {
+    entries.push(entry(userSettingsUri, "user"));
   }
-  if (inspect.workspaceValue !== undefined) {
+
+  // Workspace scope. Within this bucket, workspace-folder settings win over
+  // the workspace file, mirroring VS Code; the whole bucket outranks user.
+  if (inspect.workspaceFolderValue !== undefined) {
+    entries.push(entry(vscodeSettingsUri, "workspace"));
+  } else if (inspect.workspaceValue !== undefined) {
     const workspaceFile = vscode.workspace.workspaceFile;
     if (workspaceFile && workspaceFile.scheme !== "untitled") {
       // Multi-root or saved workspace: value lives inside the
       // `.code-workspace` file under the `settings` object.
-      return entry(workspaceFile, ["settings"]);
+      entries.push(entry(workspaceFile, "workspace", ["settings"]));
+    } else {
+      // Single-folder workspace: VS Code treats `.vscode/settings.json`
+      // as the workspace scope.
+      entries.push(entry(vscodeSettingsUri, "workspace"));
     }
-    // Single-folder workspace: VS Code treats `.vscode/settings.json`
-    // as the workspace scope.
-    return entry(vscodeSettingsUri);
   }
-  if (inspect.globalValue !== undefined) {
-    return entry(userSettingsUri);
-  }
-  return undefined;
+
+  return entries;
 }
 
 /**
@@ -147,6 +179,11 @@ export function watchPluginSettings(
   });
 }
 
+/**
+ * Finds the workspace folder that contains the given file URI. When folders
+ * are nested, the most specific (longest matching) folder wins. Returns
+ * `undefined` when no workspace folder contains the file.
+ */
 export function locateWorkspaceFolder(
   textEditorUri: vscode.Uri,
 ): vscode.Uri | undefined {

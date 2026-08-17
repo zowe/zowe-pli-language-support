@@ -34,7 +34,6 @@ import {
   plainItem,
   ProcessGroup,
   ProgramConfig,
-  ProgramOrigin,
   ProgramRecord,
 } from "../config/schema";
 import { isBoolean, isNumber, isStringArray } from "../utils/types";
@@ -64,7 +63,6 @@ export {
   type ProcessGroup,
   type ProgramConfig,
   type ProgramEntry,
-  type ProgramOrigin,
   type ProgramRecord,
 } from "../config/schema";
 
@@ -173,22 +171,13 @@ interface ConfigSource {
 
 /**
  * Precedence of a program-config match against a file, **lowest value wins**.
- * Used by {@link PluginConfigurationProvider["getProgramConfig"]} to pick the
- * best match rather than the first hit, so a user-scope `settings.json` entry
- * can never shadow a project `.pliplugin/` entry that also matches:
- *
- *  1. source — project (`.pliplugin/`) beats settings;
- *  2. specificity — an exact path beats a glob (within the same source).
- *
- * Ties beyond this are broken by insertion order (project entries are merged
- * first). `ProjectExact` is the best possible rank, so matching it lets the
- * lookup stop early.
+ * Used by {@link PluginConfigurationProvider.getProgramConfig} to prefer an
+ * exact path match over a glob match. `Exact` is the best rank, so matching it
+ * stops the lookup early.
  */
 const ProgramMatchRank = {
-  ProjectExact: 0,
-  ProjectGlob: 1,
-  SettingsExact: 2,
-  SettingsGlob: 3,
+  Exact: 0,
+  Glob: 1,
 } as const;
 
 /**
@@ -224,12 +213,11 @@ export class PluginConfigurationProvider {
   private workspacePath: URI;
 
   /**
-   * Per-source snapshots from the most recent postProcessProcessGroups run.
-   * Keyed by source URI string. With merge enabled, this can hold up to two
-   * entries — `.pliplugin/proc_grps.json` and the `settings.json` /
-   * `.code-workspace` file the `pli.proc_grps` value came from. Quick-fix
-   * code actions look up the snapshot by the URI of the document the user
-   * is acting on.
+   * Per-source snapshots from the most recent postProcessProcessGroups run,
+   * keyed by source URI. `proc_grps` comes from a single selected source, so
+   * this normally holds one entry (`.pliplugin/proc_grps.json` or the
+   * `settings.json` / `.code-workspace` file it came from). Quick-fix code
+   * actions look it up by the acted-on document's URI.
    */
   private procGrpsSnapshots: Map<string, ProcGrpsSnapshot> = new Map();
 
@@ -258,6 +246,15 @@ export class PluginConfigurationProvider {
   private readonly longRunningOperation: LongRunningOperation;
   private readonly globalConfigLoader: GlobalConfigLoader;
 
+  /**
+   * True when this provider backs the fallback workspace (rooted at the
+   * filesystem root) that serves files outside any real workspace folder.
+   * A fallback workspace has no base to resolve workspace-relative library
+   * paths against, so it must not report such libs as unresolved. Set once
+   * via {@link markAsFallbackWorkspace} right after construction.
+   */
+  private isFallbackWorkspace = false;
+
   constructor(
     fs: FileSystemProvider,
     globalConfigLoader: GlobalConfigLoader,
@@ -272,14 +269,20 @@ export class PluginConfigurationProvider {
   }
 
   /**
+   * Marks this provider as backing the fallback workspace. See
+   * {@link isFallbackWorkspace}. Must be called before {@link init}.
+   */
+  public markAsFallbackWorkspace(): void {
+    this.isFallbackWorkspace = true;
+  }
+
+  /**
    * Snapshot of the file the user is acting on, used by quick-fixes that
    * rewrite `proc_grps` to remove unresolved libs.
    *
-   * Pass the diagnostic's source URI (i.e. `params.textDocument.uri` from
-   * the code-action request) to disambiguate when both `.pliplugin/` and
-   * settings contribute a `proc_grps`. Without a URI, returns the only
-   * snapshot if there's exactly one — preserves the legacy single-source
-   * call sites without changing them.
+   * Pass the diagnostic's source URI (`params.textDocument.uri`) to select the
+   * matching snapshot. Without a URI, returns the only snapshot when there's
+   * exactly one — the common case, since `proc_grps` has a single source.
    */
   public getLastProcGrpsSnapshot(
     uri?: string,
@@ -415,15 +418,13 @@ export class PluginConfigurationProvider {
   /**
    * Loads the plugin configurations, overwriting any existing configs.
    *
-   * Both sources contribute unconditionally and are merged: the
-   * `.pliplugin/` files (when present in the workspace) and the
-   * `pli.pgm_conf` / `pli.proc_grps` VS Code settings (when set; the
-   * extension resolves them to whichever `settings.json` /
-   * `.code-workspace` file VS Code attributes the effective value to).
+   * Each config file (`pgm_conf`, `proc_grps`) is taken from exactly one source
+   * by precedence — project `.pliplugin/`, else workspace settings, else user
+   * settings — and the two files are selected independently.
    *
-   * On key collisions (same program path or same `pgroup` name in both
-   * sources), `.pliplugin/` wins — project files override personal /
-   * workspace settings.
+   * Fallback happens only when a `.pliplugin/` file is *missing*. One that
+   * exists (even empty or invalid) is used as-is and blocks fallback; sources
+   * are selected whole, never merged property-by-property.
    *
    * @returns Diagnostics keyed by source URI. Every file we loaded *or*
    *   previously loaded gets an entry — including empty lists, so the
@@ -455,92 +456,62 @@ export class PluginConfigurationProvider {
       "proc_grps.json",
     );
 
-    // Collect sources in PRECEDENCE-LOWEST-FIRST order. Map-based merge
-    // means later writes overwrite earlier writes, so listing
-    // .pliplugin/ second makes it the winning source on key collisions.
-    const globalSettings = await this.fetchGlobalSettings(this.workspacePath);
+    const global = await this.fetchGlobalSettings(this.workspacePath);
 
-    // Read every source concurrently. Precedence (settings < .pliplugin/)
-    // is established by the order we assemble each array below, not by the
-    // order the reads resolve, so reading in parallel is safe.
-    const [globalPgm, globalProc, plipluginPgm, plipluginProc] =
-      await Promise.all([
-        this.readConfigSource(globalSettings?.pgmConf),
-        this.readConfigSource(globalSettings?.procGrps),
-        this.readConfigSource(plipluginPgmConfUri),
-        this.readConfigSource(plipluginProcGrpsUri),
-      ]);
+    const [pgmSource, procGrpsSource] = await Promise.all([
+      this.resolveConfigSource(plipluginPgmConfUri, global?.pgmConf),
+      this.resolveConfigSource(plipluginProcGrpsUri, global?.procGrps),
+    ]);
 
-    const pgmSources = [globalPgm, plipluginPgm].filter(
-      (source): source is ConfigSource => source !== undefined,
-    );
-    const procGrpsSources = [globalProc, plipluginProc].filter(
-      (source): source is ConfigSource => source !== undefined,
-    );
-
-    // Parse pgm_conf sources and merge by resolved program URI, tagging each
-    // entry with its origin (project `.pliplugin/` vs. user-scope settings).
-    //
-    // Two layers of precedence work together:
-    //  1. Here, `.pliplugin/` sources are processed FIRST (the reverse of
-    //     `pgmSources`) and the `has` guard keeps the first entry per key, so a
-    //     project entry wins any exact-key collision with settings.
-    //  2. `getProgramConfig` then prefers project entries over settings entries
-    //     at lookup time (see its ranking). Together these guarantee a settings
-    //     program entry can never shadow a project entry that also matches the
-    //     file — whether the settings entry is a broad glob (e.g. `**/*`) or an
-    //     exact path (e.g. `a.pli`, which a plain `Map.get` would otherwise let
-    //     win via a direct key hit).
-    const projectPgmConfUri = plipluginPgmConfUri.toString();
-    const mergedPrograms = new Map<
-      string,
-      { config: ProgramConfig; origin: ProgramOrigin }
-    >();
-    for (const source of [...pgmSources].reverse()) {
-      this.knownPgmConfUris.add(source.uri.toString());
-      const result = parseProgramConfigs(source.text, source.uri, source.entry);
+    // Parse the selected pgm_conf source (if any). Only one source contributes,
+    // so the `has` guard just dedupes program keys within that file.
+    const selectedPrograms = new Map<string, ProgramConfig>();
+    if (pgmSource) {
+      this.knownPgmConfUris.add(pgmSource.uri.toString());
+      const result = parseProgramConfigs(
+        pgmSource.text,
+        pgmSource.uri,
+        pgmSource.entry,
+      );
       diagnostics.push(...result.diagnostics);
       if (result.config) {
-        const origin: ProgramOrigin =
-          source.uri.toString() === projectPgmConfUri ? "project" : "settings";
         for (const config of result.config) {
           const resolvedUri = this.resolveProgramPath(
             config.program.value,
             this.workspacePath,
           );
           const key = resolvedUri.toString();
-          if (!mergedPrograms.has(key)) {
-            mergedPrograms.set(key, { config, origin });
+          if (!selectedPrograms.has(key)) {
+            selectedPrograms.set(key, config);
           }
         }
       }
     }
     this.applyProgramConfigs(
       this.workspacePath,
-      Array.from(mergedPrograms.values()),
+      Array.from(selectedPrograms.values()),
     );
 
-    // Parse proc_grps sources and merge by pgroup name.
-    const mergedGroups = new Map<string, ProcessGroup>();
-    const procGrpsDocuments = new Map<string, TextDocument>();
-    for (const source of procGrpsSources) {
-      this.knownProcGrpsUris.add(source.uri.toString());
-      procGrpsDocuments.set(source.uri.toString(), source.document);
+    // Parse the selected proc_grps source (if any), keyed by pgroup name;
+    // duplicate names within it are won by the later entry.
+    const selectedGroups = new Map<string, ProcessGroup>();
+    if (procGrpsSource) {
+      this.knownProcGrpsUris.add(procGrpsSource.uri.toString());
       const result = parseProcessGroupConfigs(
-        source.text,
-        source.uri,
-        source.entry,
+        procGrpsSource.text,
+        procGrpsSource.uri,
+        procGrpsSource.entry,
       );
       diagnostics.push(...result.diagnostics);
       if (result.config) {
         for (const config of result.config) {
-          mergedGroups.set(config.name.value, config);
+          selectedGroups.set(config.name.value, config);
         }
       }
     }
     // `processGroupConfigs` was already cleared at the top of this method
     // and nothing has repopulated it since, so we can write straight in.
-    for (const config of mergedGroups.values()) {
+    for (const config of selectedGroups.values()) {
       this.processGroupConfigs.set(config.name.value, {
         ...config,
         computedLibs: [],
@@ -548,8 +519,9 @@ export class PluginConfigurationProvider {
     }
 
     this.postProcessProgramConfigs();
-    const procGrpsDiagnostics =
-      await this.postProcessProcessGroups(procGrpsDocuments);
+    const procGrpsDiagnostics = await this.postProcessProcessGroups(
+      procGrpsSource?.document,
+    );
     diagnostics.push(...procGrpsDiagnostics);
     // Runs AFTER the post-processing above so the program/lib overlap check
     // sees each group's expanded `computedLibs`.
@@ -603,9 +575,9 @@ export class PluginConfigurationProvider {
   private previouslyPublishedUris: Set<string> = new Set();
 
   /**
-   * Asks the client for the VS Code settings backing for `pli.pgm_conf`
-   * and `pli.proc_grps`. Returns `undefined` when no connection is
-   * available (e.g. tests) or the request fails.
+   * Asks the {@link GlobalConfigLoader} for the VS Code settings backing for
+   * `pli.pgm_conf` and `pli.proc_grps` for the given workspace. In production
+   * this round-trips to the client; in tests it's a fixture-backed loader.
    */
   private async fetchGlobalSettings(
     workspaceUri: URI,
@@ -647,6 +619,39 @@ export class PluginConfigurationProvider {
       entry,
       document: textDocument,
     };
+  }
+
+  /**
+   * Returns the highest-priority settings source for one config key —
+   * workspace scope before user scope — or `undefined` if neither resolves
+   * to a document. A file that exists wins its tier even if empty/invalid.
+   */
+  private async readPreferredGlobalConfigSource(
+    entries: Messages.GlobalConfigEntry[] | undefined,
+  ): Promise<ConfigSource | undefined> {
+    for (const scope of ["workspace", "user"] as const) {
+      const entry = entries?.find((e) => e.scope === scope);
+      const source = await this.readConfigSource(entry);
+      if (source) {
+        return source;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Resolves the winning {@link ConfigSource} for one config file by precedence:
+   * project (`.pliplugin/`) first, then settings (workspace before user, read
+   * lazily). Returns `undefined` if no tier provides the file.
+   */
+  private async resolveConfigSource(
+    pluginUri: URI,
+    entries: Messages.GlobalConfigEntry[] | undefined,
+  ): Promise<ConfigSource | undefined> {
+    return (
+      (await this.readConfigSource(pluginUri)) ??
+      (await this.readPreferredGlobalConfigSource(entries))
+    );
   }
 
   /**
@@ -753,10 +758,9 @@ export class PluginConfigurationProvider {
    * file the lib came from (via `libItem.meta?.uri`).
    *
    * Returns diagnostics grouped by source URI string so the caller can
-   * publish to each file separately; the merged config can contribute
-   * diagnostics to multiple sources at once. Also rebuilds
-   * `procGrpsSnapshots`, one entry per source document — quick-fix code
-   * actions need the right document text + entries to rewrite.
+   * publish to each file separately. Also rebuilds `procGrpsSnapshots`, one
+   * entry per source document — quick-fix code actions need the right
+   * document text + entries to rewrite.
    *
    * `documents` maps source URI string → TextDocument; it must include
    * every URI referenced by `libItem.meta?.uri` for ranges to convert
@@ -765,7 +769,7 @@ export class PluginConfigurationProvider {
    * available document.
    */
   private async postProcessProcessGroups(
-    documents: Map<string, TextDocument>,
+    document?: TextDocument,
   ): Promise<Diagnostic[]> {
     this.procGrpsSnapshots.clear();
     const diagnostics: Diagnostic[] = [];
@@ -773,6 +777,10 @@ export class PluginConfigurationProvider {
       string,
       PluginConfigUnresolvedLibData
     >();
+
+    // The fallback workspace has no base for workspace-relative paths, so skip
+    // "unresolved" diagnostics for them (absolute-path libs are still checked).
+    const isFallback = this.isFallbackWorkspace;
 
     for (const record of this.processGroupConfigs.values()) {
       const expanded = await expandGroup(
@@ -793,6 +801,10 @@ export class PluginConfigurationProvider {
         .filter((item) => !unresolvedItems.has(item))
         .map((item) => item.value);
       for (const libItem of expanded.unresolved) {
+        // Skip relative libs in the fallback workspace (see above).
+        if (isFallback && !this.isAbsolutePath(libItem.value)) {
+          continue;
+        }
         const fallbackRange = offsetLengthToRange(0, 1);
         const range = libItem.meta?.range ?? fallbackRange;
         const path = libItem.meta?.path;
@@ -820,13 +832,14 @@ export class PluginConfigurationProvider {
       }
     }
 
-    for (const [uri, document] of documents) {
-      this.procGrpsSnapshots.set(uri, {
-        entries: Array.from(entriesBySource.get(uri)),
+    if (document) {
+      this.procGrpsSnapshots.set(document.uri, {
+        entries: Array.from(entriesBySource.get(document.uri)),
         text: document.getText(),
         uri: UriUtils.toUri(document.uri),
       });
     }
+
     return diagnostics;
   }
 
@@ -963,27 +976,21 @@ export class PluginConfigurationProvider {
     workspaceUri: URI,
     programConfigs: ProgramConfig[],
   ): void {
-    // Direct callers (quick-fix add, `.pliplugin/`-only parse, tests) are all
-    // project-scoped, so their entries bind at project precedence.
-    this.applyProgramConfigs(
-      workspaceUri,
-      programConfigs.map((config) => ({ config, origin: "project" as const })),
-    );
+    this.applyProgramConfigs(workspaceUri, programConfigs);
   }
 
   /**
-   * Rebuilds the program-config map from the given entries, each tagged with
-   * the source it came from ({@link ProgramOrigin}). Program paths are
+   * Rebuilds the program-config map from the given configs. Program paths are
    * normalized and resolved relative to the workspace (unless absolute), then
    * post-processed so abstract options are built.
    */
   private applyProgramConfigs(
     workspaceUri: URI,
-    entries: Array<{ config: ProgramConfig; origin: ProgramOrigin }>,
+    programConfigs: ProgramConfig[],
   ): void {
     this.programConfigs.clear();
 
-    for (const { config, origin } of entries) {
+    for (const config of programConfigs) {
       const resolvedUri = this.resolveProgramPath(
         config.program.value,
         workspaceUri,
@@ -995,7 +1002,6 @@ export class PluginConfigurationProvider {
         ...config,
         abstractOptions: { options: [], tokens: [], issues: [], comments: [] },
         issues: [],
-        origin,
       });
     }
     this.postProcessProgramConfigs();
@@ -1084,11 +1090,7 @@ export class PluginConfigurationProvider {
       });
     }
     this.postProcessProgramConfigs();
-    const documents = new Map<string, TextDocument>();
-    if (configDocument) {
-      documents.set(configDocument.uri, configDocument);
-    }
-    const diagnostics = await this.postProcessProcessGroups(documents);
+    const diagnostics = await this.postProcessProcessGroups(configDocument);
     this.libFileMatchers = undefined;
     return diagnostics;
   }
@@ -1112,77 +1114,53 @@ export class PluginConfigurationProvider {
   /**
    * Returns the program config for the given program URI.
    *
-   * Rather than returning the first hit, this picks the *highest-precedence*
-   * match (see {@link ProgramMatchRank}) so a user-scope `settings.json` entry
-   * can never shadow a project `.pliplugin/` entry that also matches. This is
-   * what fixes the exact-path settings case: a plain `Map.get(uri)` direct hit
-   * would return a settings `program: "a.pli"` entry even when a project glob
-   * (e.g. `*.pli`) also matches; ranking lets the project glob win instead.
+   * An exact path match wins outright; otherwise the first matching glob entry
+   * is returned (see {@link ProgramMatchRank}). This keeps an exact key like
+   * `a.pli` from being shadowed by a broader glob such as `*.pli` that also
+   * matches the same file.
    *
    * @param program Name of the program to get a config for
    * @returns Associated program config, or undefined if not found
    */
   public getProgramConfig(program: URI): ProgramRecord | undefined {
-    // No PL/I-extension filtering here: callers only ever pass files already
-    // identified as PL/I (client language id / auto-detect), so glob matching
-    // the path alone is sufficient.
-    // Note that we just need the path of the URI in order to match against
-    // the program config patterns
     const path = program.path;
 
-    let best: ProgramRecord | undefined;
-    let bestRank = Number.POSITIVE_INFINITY;
+    let globMatch: ProgramRecord | undefined;
     for (const [pattern, config] of this.programConfigs.entries()) {
-      const rank = this.programMatchRank(path, pattern, config);
-      if (rank === undefined || rank >= bestRank) {
-        continue; // no match, or not better than what we already have
+      const rank = this.programMatchRank(path, pattern);
+      if (rank === ProgramMatchRank.Exact) {
+        return config;
       }
-      best = config;
-      bestRank = rank;
-      if (rank === ProgramMatchRank.ProjectExact) {
-        break; // best possible rank
+      if (rank === ProgramMatchRank.Glob) {
+        globMatch = globMatch ?? config;
       }
     }
-    return best;
+    return globMatch;
   }
 
   /**
-   * Precedence of a single program-config entry as a match for `uri`, or
+   * Precedence of a single program-config entry as a match for `path`, or
    * `undefined` when its pattern does not match the file. Lower ranks win;
    * see {@link ProgramMatchRank}.
    *
    * @param path Decoded program path being resolved.
    * @param pattern The program config's key (an exact path or a glob).
-   * @param record The candidate program config.
    */
-  private programMatchRank(
-    path: string,
-    pattern: string,
-    record: ProgramRecord,
-  ): number | undefined {
-    const isExact = pattern === path;
-    if (!isExact) {
-      try {
-        // attempt match on decoded path
-        if (!minimatch(path, decodeURIComponent(pattern), { nocase: true })) {
-          return undefined;
-        }
-      } catch (e) {
-        console.error(
-          `Invalid glob pattern "${pattern}" for program "${path}": ${e}`,
-        );
+  private programMatchRank(path: string, pattern: string): number | undefined {
+    if (pattern === path) {
+      return ProgramMatchRank.Exact;
+    }
+    try {
+      if (!minimatch(path, decodeURIComponent(pattern), { nocase: true })) {
         return undefined;
       }
+    } catch (e) {
+      console.error(
+        `Invalid glob pattern "${pattern}" for program "${path}": ${e}`,
+      );
+      return undefined;
     }
-    // Absent origin is treated as "project" (see ProgramRecord.origin).
-    if (record.origin === "settings") {
-      return isExact
-        ? ProgramMatchRank.SettingsExact
-        : ProgramMatchRank.SettingsGlob;
-    }
-    return isExact
-      ? ProgramMatchRank.ProjectExact
-      : ProgramMatchRank.ProjectGlob;
+    return ProgramMatchRank.Glob;
   }
 
   /**

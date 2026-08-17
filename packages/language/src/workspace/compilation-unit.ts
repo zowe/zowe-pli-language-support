@@ -404,6 +404,9 @@ export class CompilationUnitHandler {
       this.configLoader,
       this.longRunningOperation,
     );
+    // The fallback workspace has no real root; relative library paths from
+    // user-scope settings can't be resolved here and must not be flagged.
+    workspace.config.markAsFallbackWorkspace();
     this.fallbackWorkspace = workspace;
     const diagnosticsByUri = await workspace.config.init(uri);
     if (this.connection) {

@@ -18,6 +18,8 @@ import {
 } from "../../src";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
 import { LongRunningOperationImpl } from "../../src/utils/promises";
+import { LspCodes } from "../../src/validation/lsp-codes";
+import { fullCode } from "../../src/language-server/types";
 
 describe("Multi Workspace Tests", () => {
   test("With plugin configs under disjoint folders", async () => {
@@ -249,16 +251,22 @@ describe("Multi Workspace Tests", () => {
     const ch = new CompilationUnitHandler(
       fs,
       new TestGlobalConfigLoader({
-        pgmConf: {
-          configKey: "pli.pgm_conf",
-          uri: settingsUri.toString(),
-          containerPath: [],
-        },
-        procGrps: {
-          configKey: "pli.proc_grps",
-          uri: settingsUri.toString(),
-          containerPath: [],
-        },
+        pgmConf: [
+          {
+            configKey: "pli.pgm_conf",
+            uri: settingsUri.toString(),
+            containerPath: [],
+            scope: "user",
+          },
+        ],
+        procGrps: [
+          {
+            configKey: "pli.proc_grps",
+            uri: settingsUri.toString(),
+            containerPath: [],
+            scope: "user",
+          },
+        ],
       }),
       LongRunningOperationImpl.Dummy,
     );
@@ -349,5 +357,108 @@ describe("Multi Workspace Tests", () => {
     expect(
       workspaceOutside!.config.hasProgramConfig(outsideProgram),
     ).toBeTruthy();
+  });
+
+  test("Fallback folder does not flag relative libs from user settings", async () => {
+    const fs = new VirtualFileSystemProvider();
+    resetDocumentProviders(fs);
+    const settingsUri = UriUtils.toUri("file:///settings.json");
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({
+        procGrps: [
+          {
+            configKey: "pli.proc_grps",
+            uri: settingsUri.toString(),
+            containerPath: [],
+            scope: "user",
+          },
+        ],
+      }),
+      LongRunningOperationImpl.Dummy,
+    );
+
+    await fs.writeFile(
+      settingsUri,
+      JSON.stringify({
+        "pli.proc_grps": {
+          pgroups: [
+            { name: "default", libs: ["cpy"], "include-extensions": [".inc"] },
+          ],
+        },
+      }),
+    );
+    // The real folder DOES contain the relative lib directory.
+    await fs.writeFile(UriUtils.toUri("file:///ws/cpy/x.inc"), "");
+
+    const realFolder = await ch.initializeWorkspaceFolder("file:///ws");
+    const fallback = await ch.initializeFallbackFolder();
+
+    // Real folder resolves `cpy` against its own root -> no diagnostic.
+    expect(
+      realFolder.config
+        .getConfigInternalDiagnostics()
+        .some(
+          (d) => d.code === LspCodes.PluginConfiguration.UnresolvedEntry.code,
+        ),
+    ).toBe(false);
+
+    // Fallback (rooted at file://) can't resolve the RELATIVE lib, but must
+    // not surface a diagnostic for it on the shared user settings.json.
+    expect(
+      fallback.config
+        .getConfigInternalDiagnostics()
+        .some(
+          (d) => d.code === LspCodes.PluginConfiguration.UnresolvedEntry.code,
+        ),
+    ).toBe(false);
+  });
+
+  test("Fallback folder still flags missing ABSOLUTE libs from user settings", async () => {
+    const fs = new VirtualFileSystemProvider();
+    resetDocumentProviders(fs);
+    const settingsUri = UriUtils.toUri("file:///settings.json");
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({
+        procGrps: [
+          {
+            configKey: "pli.proc_grps",
+            uri: settingsUri.toString(),
+            containerPath: [],
+            scope: "user",
+          },
+        ],
+      }),
+      LongRunningOperationImpl.Dummy,
+    );
+
+    await fs.writeFile(
+      settingsUri,
+      JSON.stringify({
+        "pli.proc_grps": {
+          pgroups: [
+            {
+              name: "default",
+              libs: ["/definitely/missing"],
+              "include-extensions": [".inc"],
+            },
+          ],
+        },
+      }),
+    );
+
+    const fallback = await ch.initializeFallbackFolder();
+
+    // An absolute path that doesn't exist is still a genuine error, even in the
+    // fallback workspace.
+    expect(
+      fallback.config
+        .getConfigInternalDiagnostics()
+        .some(
+          (d) =>
+            d.code === fullCode(LspCodes.PluginConfiguration.UnresolvedEntry),
+        ),
+    ).toBe(true);
   });
 });

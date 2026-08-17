@@ -101,6 +101,12 @@ export namespace Messages {
   );
 
   /**
+   * VS Code settings scope of a {@link GlobalConfigEntry}. `workspace` (folder
+   * or workspace-file settings) ranks above `user`, matching VS Code.
+   */
+  export type GlobalConfigScope = "user" | "workspace";
+
+  /**
    * A single config entry sourced from VS Code settings.
    *
    * The LS reads the file, navigates to the entry, and parses the
@@ -111,11 +117,16 @@ export namespace Messages {
     uri: string;
     containerPath: (string | number)[];
     configKey: string;
+    scope: GlobalConfigScope;
   }
 
+  /**
+   * VS Code settings backing for the plugin config. Each key may carry a
+   * `user` and/or `workspace` entry.
+   */
   export interface GlobalConfig {
-    pgmConf?: GlobalConfigEntry;
-    procGrps?: GlobalConfigEntry;
+    pgmConf?: GlobalConfigEntry[];
+    procGrps?: GlobalConfigEntry[];
   }
 
   /**

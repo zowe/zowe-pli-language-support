@@ -106,13 +106,6 @@ export interface GroupRecord extends ProcessGroup {
 }
 
 /**
- * Where a {@link ProgramRecord} was loaded from. Project (`.pliplugin/`)
- * entries take precedence over user-scope `settings.json` entries when a file
- * matches program configs from both sources — see `getProgramConfig`.
- */
-export type ProgramOrigin = "project" | "settings";
-
-/**
  * A {@link ProgramConfig} together with its merged compiler options. The
  * pli-options strings (this config's plus the bound process group's) are
  * parsed once at load time so each lookup hands back a ready-to-use
@@ -125,12 +118,6 @@ export interface ProgramRecord extends ProgramConfig {
    * compiler-options translator doesn't double-report them.
    */
   issues: Diagnostic[];
-  /**
-   * Configuration source this record came from. Absent is treated as
-   * `"project"` (highest precedence) so non-merge callers (quick-fix add,
-   * tests, `.pliplugin/`-only parse) keep binding at project precedence.
-   */
-  origin?: ProgramOrigin;
 }
 
 /**

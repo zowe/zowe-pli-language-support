@@ -9,12 +9,12 @@
  *
  */
 
-// A project `.pliplugin/pgm_conf.json` entry must win over a broader user-scope
-// `pli.pgm_conf` glob when binding a file to its process group. Here the user
-// settings bind every file (`**/*`) to `DFLT` (which has no libs), while the
-// project binds `*.pli` to `default` (which has the `cpyla` lib). `main.pli`
-// must resolve against `default`, so the include is found — otherwise it would
-// pick the empty settings group and fail with IBM1848I.
+// When both `.pliplugin/` and VS Code settings provide a config file, the
+// project file is selected and the settings file is ignored (no merge). Here
+// both `pgm_conf.json` and `proc_grps.json` exist under `.pliplugin/`, so the
+// settings `pli.pgm_conf`/`pli.proc_grps` are dropped entirely: `main.pli`
+// binds `*.pli` -> `default` (which has the `cpyla` lib) and the include is
+// found — the settings `**/*` -> `DFLT` (no libs) never applies.
 //
 // Regression test for the include that "could not be found" even though the
 // resolvable lib was listed in the project proc_grps.json.

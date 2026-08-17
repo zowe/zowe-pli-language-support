@@ -20,7 +20,7 @@ import { WorkspaceContext } from "../../src/workspace/workspace-context";
 import { makeProcessGroup } from "../config-fixtures";
 import { Severity } from "../../src/language-server/types";
 import { resetDocumentProviders } from "../../src/language-server/text-documents";
-import { Messages, TestGlobalConfigLoader } from "../../src";
+import { TestGlobalConfigLoader } from "../../src";
 
 describe("Plugin Configuration Tests", () => {
   let vfs: VirtualFileSystemProvider;
@@ -165,125 +165,5 @@ describe("Plugin Configuration Tests", () => {
     const dirLibs = processGroup!.computedLibs.filter(isLibsDir);
     expect(dirLibs.length).toBe(1);
     expect(dirLibs[0].path).toBe("lib1/dir1");
-  });
-
-  describe("Merge of .pliplugin/ and VS Code settings", () => {
-    const WORKSPACE = "file:///ws/";
-    const SETTINGS_URI = "file:///ws/.vscode/settings.json";
-
-    async function writePluginFiles(
-      pgmConfText?: string,
-      procGrpsText?: string,
-    ): Promise<void> {
-      if (pgmConfText !== undefined) {
-        await vfs.writeFile(
-          UriUtils.toUri("file:///ws/.pliplugin/pgm_conf.json"),
-          pgmConfText,
-        );
-      }
-      if (procGrpsText !== undefined) {
-        await vfs.writeFile(
-          UriUtils.toUri("file:///ws/.pliplugin/proc_grps.json"),
-          procGrpsText,
-        );
-      }
-    }
-
-    async function writeSettingsFile(text: string): Promise<void> {
-      await vfs.writeFile(UriUtils.toUri(SETTINGS_URI), text);
-    }
-
-    function settingsConfig(args: {
-      pgmConf?: boolean;
-      procGrps?: boolean;
-    }): Messages.GlobalConfig {
-      const result: Messages.GlobalConfig = {};
-      if (args.pgmConf) {
-        result.pgmConf = {
-          uri: SETTINGS_URI,
-          containerPath: [],
-          configKey: "pli.pgm_conf",
-        };
-      }
-      if (args.procGrps) {
-        result.procGrps = {
-          uri: SETTINGS_URI,
-          containerPath: [],
-          configKey: "pli.proc_grps",
-        };
-      }
-      return result;
-    }
-
-    test("Non-overlapping entries from both sources are unioned", async () => {
-      await writePluginFiles(
-        `{ "pgms": [{ "program": "a.pli", "pgroup": "plugin-grp" }] }`,
-        `{ "pgroups": [{ "name": "plugin-grp", "libs": [] }] }`,
-      );
-      await writeSettingsFile(
-        `{
-          "pli.pgm_conf": { "pgms": [{ "program": "b.pli", "pgroup": "settings-grp" }] },
-          "pli.proc_grps": { "pgroups": [{ "name": "settings-grp", "libs": [] }] }
-        }`,
-      );
-      workspace = new WorkspaceContext(
-        vfs,
-        new TestGlobalConfigLoader(
-          settingsConfig({ pgmConf: true, procGrps: true }),
-        ),
-      );
-
-      await workspace.config.init(UriUtils.toUri(WORKSPACE));
-
-      expect(
-        workspace.config.getProcessGroupConfig("plugin-grp"),
-      ).toBeDefined();
-      expect(
-        workspace.config.getProcessGroupConfig("settings-grp"),
-      ).toBeDefined();
-      expect(
-        workspace.config.hasProgramConfig(UriUtils.toUri("file:///ws/a.pli")),
-      ).toBe(true);
-      expect(
-        workspace.config.hasProgramConfig(UriUtils.toUri("file:///ws/b.pli")),
-      ).toBe(true);
-    });
-
-    test(".pliplugin/ wins on duplicate pgroup name", async () => {
-      await vfs.writeFile(UriUtils.toUri("file:///ws/plugin-libs/x.inc"), "");
-      await vfs.writeFile(UriUtils.toUri("file:///ws/settings-libs/x.inc"), "");
-      await writePluginFiles(
-        `{ "pgms": [] }`,
-        `{ "pgroups": [{ "name": "default", "libs": ["plugin-libs"] }] }`,
-      );
-      await writeSettingsFile(
-        `{
-          "pli.proc_grps": { "pgroups": [{ "name": "default", "libs": ["settings-libs"] }] }
-        }`,
-      );
-      workspace = new WorkspaceContext(
-        vfs,
-        new TestGlobalConfigLoader(settingsConfig({ procGrps: true })),
-      );
-
-      await workspace.config.init(UriUtils.toUri(WORKSPACE));
-
-      const def = workspace.config.getProcessGroupConfig("default");
-      const dirPaths = (def?.computedLibs ?? [])
-        .filter(isLibsDir)
-        .map((lib) => lib.path);
-      expect(dirPaths).toContain("plugin-libs");
-      expect(dirPaths).not.toContain("settings-libs");
-    });
-
-    test(".pliplugin/-only mode (no connection) still works", async () => {
-      await writePluginFiles(
-        `{ "pgms": [] }`,
-        `{ "pgroups": [{ "name": "default", "libs": [] }] }`,
-      );
-      // workspace is created with no connection in beforeEach
-      await workspace.config.init(UriUtils.toUri(WORKSPACE));
-      expect(workspace.config.getProcessGroupConfig("default")).toBeDefined();
-    });
   });
 });
