@@ -23,6 +23,26 @@ describe("CICS CONVERSE", () => {
     expect(diagnostics).toHaveLength(0);
   });
 
+  test("Conflicting ERASE and STRFIELD", () => {
+    const { diagnostics } = cicsPreprocessor.parse("CONVERSE ERASE STRFIELD");
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options \"ERASE or STRFIELD\" are mutually exclusive./,
+    );
+  });
+
+  test("Conflicting CTLCHAR and STRFIELD", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
+      "CONVERSE CTLCHAR(1) STRFIELD",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options \"CTLCHAR or STRFIELD\" are mutually exclusive./,
+    );
+  });
+
   test("Conflicting ALTERNATE and DEFAULT", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "CONVERSE ALTERNATE DEFAULT",
