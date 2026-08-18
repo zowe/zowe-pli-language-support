@@ -15,6 +15,7 @@ import {
   DefineAliasStatement,
   DefineOrdinalStatement,
   DefineStructureStatement,
+  getContainer,
   Package,
   ProcedureParameter,
   ProcedureStatement,
@@ -624,6 +625,24 @@ function handleNode(
     case SyntaxKind.LabelPrefix: {
       const labelRef = node.item?.ref;
       if (labelRef) {
+        const statement = node.container;
+        if (
+          statement?.kind === SyntaxKind.Statement &&
+          statement.value?.kind === SyntaxKind.EntryStatement
+        ) {
+          const procedureStatement = getContainer(
+            statement,
+            SyntaxKind.ProcedureStatement,
+          );
+          if (procedureStatement?.container) {
+            // Labels of ENTRY statements declare entry points of a new procedure.
+            // Like the parent procedure itself, they are visible in the
+            // scope that contains the procedure, not just inside of it.
+            parentScope =
+              context.scopeCache.get(procedureStatement.container) ??
+              parentScope;
+          }
+        }
         if (node.item!.dimensions.length > 0) {
           // A dimensioned label prefix implicitly declares the label array.
           // An explicit `DCL ... LABEL` declaration takes precedence during resolution.

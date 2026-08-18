@@ -273,7 +273,10 @@ function isProcedureKind(container: SyntaxNode | null | undefined): boolean {
     return false;
   }
 
-  if (container.kind === SyntaxKind.ProcedureStatement) {
+  if (
+    container.kind === SyntaxKind.ProcedureStatement ||
+    container.kind === SyntaxKind.EntryStatement
+  ) {
     return true;
   }
 

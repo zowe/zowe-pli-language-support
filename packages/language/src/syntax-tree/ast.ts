@@ -2392,6 +2392,7 @@ export enum EnvironmentOptionValueName {
   BUFND,
   BUFNI,
   BUFSP,
+  BUFFERS,
   BLKSIZE,
   RECSIZE,
   PASSWORD,
