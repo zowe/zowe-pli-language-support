@@ -12,13 +12,8 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS PP(CICS("EXCI <|1:DLI|>"));
 
-verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.CrossMutexOptionIssue.message("EXCI", "DLI"),
 });

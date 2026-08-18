@@ -12,13 +12,12 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS SOURCE;
+////*PROCESS LISTVIEW(AFTERALL);
+
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  source: true,
+  listView: constants.CompilerOptions.ListView.AFTERALL,
 });

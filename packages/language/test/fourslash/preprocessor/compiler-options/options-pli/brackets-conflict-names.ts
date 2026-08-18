@@ -12,13 +12,15 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS NAMES('@?');
+////*PROCESS <|1:BRACKETS|>('@}');
 
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Brackets.ConflictWithOption.message(
+    "@",
+    "NAMES",
+  ),
+});
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  brackets: ["@", "}"],
 });

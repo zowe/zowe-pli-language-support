@@ -12,13 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS GRAPHIC;
+////*PROCESS <|1:NODBCS|>;
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Dbcs.ConflictWithGraphic.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  graphic: true,
+  dbcs: false,
 });

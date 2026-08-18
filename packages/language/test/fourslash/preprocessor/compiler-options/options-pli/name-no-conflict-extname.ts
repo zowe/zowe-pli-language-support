@@ -12,13 +12,15 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS LIMITS(EXTNAME(9));
+////*PROCESS NAME('123456789');
+
+// EXTNAME(9) is greater than 8, so the NAME length restriction does not apply.
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  name: "123456789",
+  limits: {
+    extname: 9,
   },
 });

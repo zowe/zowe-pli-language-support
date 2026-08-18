@@ -12,13 +12,16 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS LIMITS(EXTNAME(8));
+////*PROCESS <|1:NAME|>('123456789');
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Name.TooLongForExtName.message("123456789", 8),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  name: "123456789",
+  limits: {
+    extname: 8,
   },
 });

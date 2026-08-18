@@ -12,13 +12,19 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS LIST;
+////*PROCESS MAP;
+////*PROCESS OFFSET;
+////*PROCESS STORAGE;
+////*PROCESS OBJECT;
+
+// OBJECT is in effect, so LIST/MAP/OFFSET/STORAGE are not ignored.
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  object: true,
+  list: true,
+  map: true,
+  offset: true,
+  storage: true,
 });

@@ -71,6 +71,22 @@ export interface PostProcessHook<
   run: (options: T, acceptor: TranslationDiagnosticAcceptor) => void;
 }
 
+/**
+ * A {@link PostProcessHook} registered via {@link RuleBuilder.postProcess},
+ * colocated with the specific rule it belongs to. Its `run` function
+ * receives an additional `getOwnToken` accessor that returns
+ * the token of the option's most recent occurrence.
+ */
+export interface RuleAwarePostProcessHook<
+  T extends CompilerOptionsPP = CompilerOptionsPP,
+> extends Omit<PostProcessHook<T>, "run"> {
+  run: (
+    options: T,
+    acceptor: TranslationDiagnosticAcceptor,
+    getOwnToken: () => CompilerOption["token"] | undefined,
+  ) => void;
+}
+
 type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
 
 type Translate<T extends CompilerOptionsPP> = (
@@ -95,6 +111,8 @@ type AppliedRuleRecord = {
   alignment: RuleAlignment;
   /** Serialized argument values, used for the recompile fingerprint. */
   args?: string;
+  /** The token of the option occurrence that (most recently) applied this rule. */
+  token?: CompilerOption["token"];
 };
 
 /**
@@ -134,8 +152,15 @@ export class RuleBuilder<T extends CompilerOptionsPP = CompilerOptionsPP> {
    * Registers one or more {@link PostProcessHook}s colocated with this rule.
    * Hooks run once per compilation via {@link Translator.postProcess}.
    */
-  postProcess(hook: PostProcessHook<T>): this {
-    this.translator.registerPostProcessHooks(hook);
+  postProcess(hook: RuleAwarePostProcessHook<T>): this {
+    const ruleObj = this.ruleObj;
+    const translator = this.translator;
+    this.translator.registerPostProcessHooks({
+      id: hook.id,
+      dependsOn: hook.dependsOn,
+      run: (options, acceptor) =>
+        hook.run(options, acceptor, () => translator.getRuleToken(ruleObj)),
+    });
     return this;
   }
 }
@@ -195,14 +220,80 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
     this.postProcessHooks.push(hook);
   }
 
+  private findRule(name: string): TranslatorRule<T> | undefined {
+    return this.rules.find(
+      (r) => r.positive?.includes(name) || r.negative?.includes(name),
+    );
+  }
+
+  /**
+   * Returns the token of the option occurrence that most recently,
+   * explicitly applied the given rule, or `undefined` if it was never
+   * explicitly applied.
+   */
+  getRuleToken(rule: TranslatorRule<T>): CompilerOption["token"] | undefined {
+    if (this.isRuleApplied(rule)) {
+      return this.appliedRules.get(rule)?.token;
+    }
+    return undefined;
+  }
+
+  /**
+   * Declares that two option names, registered as separate rules, are
+   * mutually exclusive.
+   */
+  crossMutex(a: string, b: string): void {
+    if (this.crossMutexPairs.length === 0) {
+      this.registerPostProcessHooks({
+        id: "_crossMutex",
+        run: (_options, acceptor) => this.checkCrossMutex(acceptor),
+      });
+    }
+    this.crossMutexPairs.push([a, b]);
+  }
+
+  private crossMutexPairs: [string, string][] = [];
+
+  private checkCrossMutex(acceptor: TranslationDiagnosticAcceptor): void {
+    for (const [a, b] of this.crossMutexPairs) {
+      const ruleA = this.findRule(a);
+      const ruleB = this.findRule(b);
+      if (
+        ruleA &&
+        ruleB &&
+        this.isRuleApplied(ruleA) &&
+        this.isRuleApplied(ruleB)
+      ) {
+        const tokenA = this.appliedRules.get(ruleA)?.token;
+        const tokenB = this.appliedRules.get(ruleB)?.token;
+        // Anchor the diagnostic at whichever of the two options was written
+        // later in the source.
+        const token =
+          tokenA && tokenB
+            ? tokenA.startOffset >= tokenB.startOffset
+              ? tokenA
+              : tokenB
+            : (tokenA ?? tokenB);
+        acceptor(
+          diagnosticFromCode(
+            CompilerOptionsCodes.CrossMutexOptionIssue,
+            token,
+            a,
+            b,
+          ),
+        );
+      }
+    }
+  }
+
   flag(
     key: keyof T,
     positive: string[],
     negative: string[],
     callback?: (option: CompilerOption, options: T) => void,
     settings?: RuleSettings,
-  ) {
-    this.rules.push({
+  ): RuleBuilder<T> {
+    const ruleObj: TranslatorRule<T> = {
       positive,
       positiveTranslate: (option, options) => {
         ensureArguments(option, 0, 0);
@@ -216,7 +307,9 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
         callback?.(option, options);
       },
       settings,
-    });
+    };
+    this.rules.push(ruleObj);
+    return new RuleBuilder(this, ruleObj);
   }
 
   clear() {
@@ -361,7 +454,7 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
 
       if (!this.isRuleApplied(rule)) {
         const args = this.serializeOptionValues(option);
-        this.appliedRules.set(rule, { alignment, args });
+        this.appliedRules.set(rule, { alignment, args, token: option.token });
       } else if (this.isRuleAlignedWith(rule, alignment)) {
         if (!rule.settings?.allowDuplicates) {
           this.reportDupeOptIssue(option, name);

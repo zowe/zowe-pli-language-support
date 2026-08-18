@@ -12,13 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS LP(32);
+////*PROCESS <|1:OFFSETSIZE|>(8);
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.OffsetSize.IgnoredWithLp32.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  LP: constants.CompilerOptions.LP.LP32,
+  offsetSize: 8,
 });

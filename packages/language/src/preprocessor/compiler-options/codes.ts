@@ -124,6 +124,13 @@ export const CompilerOptionsCodes = {
       `The compiler option '${option}' is recognized but not supported by this preprocessor.`,
   },
 
+  CrossMutexOptionIssue: {
+    code: "COOP14",
+    severity: Severity.E,
+    message: (a: string, b: string) =>
+      `Options ${a} and ${b} are mutually exclusive and must not be specified together.`,
+  },
+
   Assert: {
     InvalidParameter: {
       code: "COAS01",
@@ -203,6 +210,12 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected two different characters for brackets, but received '${value}'.`,
     },
+    ConflictWithOption: {
+      code: "COBR04",
+      severity: Severity.E,
+      message: (char: string, option: string) =>
+        `The bracket character '${char}' must not be used by the ${option} option.`,
+    },
   },
 
   Case: {
@@ -244,6 +257,20 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "LE", "V1", "V2" or "V3", but received '${value}'.`,
+    },
+  },
+
+  Common: {
+    ConflictWithRent: {
+      code: "COMM01",
+      severity: Severity.E,
+      message: () => `The COMMON option must not be used with the RENT option.`,
+    },
+    ConflictWithExtName: {
+      code: "COMM02",
+      severity: Severity.E,
+      message: (n: number) =>
+        `The COMMON option must not be used with LIMITS(EXTNAME(${n})) when the value exceeds 7.`,
     },
   },
 
@@ -293,6 +320,15 @@ export const CompilerOptionsCodes = {
     // TODO ssm: Mainframe actually reports a warning IBM1105I, and truncates to the first character.
   },
 
+  Dbcs: {
+    ConflictWithGraphic: {
+      code: "CODB01",
+      severity: Severity.W,
+      message: () =>
+        `The NODBCS option should not be specified if the GRAPHIC option is also specified.`,
+    },
+  },
+
   DBRMLib: {
     InvalidEmptyParameter: {
       code: PLICodes.Warning.IBM1172I.code,
@@ -339,6 +375,7 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `INITFILL expects a hex value, but received '${value}'.`,
     },
+    DescListConflictsWithCmpat: PLICodes.Severe.IBM2135I,
   },
 
   Deprecate: {
@@ -605,6 +642,12 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "SOURCE", "AFTERALL", "AFTERCICS", "AFTERMACRO" or "AFTERSQL", but received '${value}'.`,
     },
+    IgnoredWithNoSource: {
+      code: "COLV02",
+      severity: Severity.W,
+      message: () =>
+        `The LISTVIEW option is ignored if the NOSOURCE option is in effect.`,
+    },
   },
 
   Lp: {
@@ -684,6 +727,15 @@ export const CompilerOptionsCodes = {
     },
   },
 
+  Name: {
+    TooLongForExtName: {
+      code: "CONA01",
+      severity: Severity.W,
+      message: (value: string, n: number) =>
+        `The length of the NAME option value '${value}' must not be greater than 8 characters when LIMITS(EXTNAME(${n})) is used with n <= 8.`,
+    },
+  },
+
   NatLang: {
     InvalidParameter: {
       code: "COLN01",
@@ -713,6 +765,15 @@ export const CompilerOptionsCodes = {
     },
   },
 
+  Object: {
+    IgnoredOption: {
+      code: "COOB01",
+      severity: Severity.W,
+      message: (value: string) =>
+        `The ${value} option is ignored under the NOOBJECT option.`,
+    },
+  },
+
   OffsetSize: {
     // [Warning] IBM1161I: The suboption 3 is not valid for the OFFSETSIZE compiler option.
     InvalidParameter: {
@@ -720,6 +781,12 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "4" or "8", but received '${value}'.`,
+    },
+    IgnoredWithLp32: {
+      code: "COOS03",
+      severity: Severity.W,
+      message: () =>
+        `The OFFSETSIZE option is ignored if the LP(32) option is in effect.`,
     },
   },
 
@@ -878,6 +945,21 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected a valid quote character, but received '${value}'.`,
+    },
+    IgnoredWithGraphic: {
+      code: "COQT03",
+      severity: Severity.W,
+      message: () =>
+        `The QUOTE option is ignored if the GRAPHIC option is also specified.`,
+    },
+  },
+
+  Rent: {
+    IgnoredWithLp64: {
+      code: "CORN01",
+      severity: Severity.W,
+      message: () =>
+        `Under the LP(64) option, the RENT option is ignored; effectively NORENT is in effect.`,
     },
   },
 
@@ -1038,6 +1120,18 @@ export const CompilerOptionsCodes = {
       message: (value: string) =>
         `Expected "ALL", "BLOCK", "NONE", "PATH", "STMT", "HOOK", "NOHOOK", "SEPARATE", "NOSEPARATE", "SEPNAME", "NOSEPNAME", "SOURCE", "NOSOURCE", "SYM" or "NOSYM", but received '${value}'.`,
     },
+    ConflictWithLineDir: {
+      code: "COTS02",
+      severity: Severity.W,
+      message: () =>
+        `The LINEDIR option rejects the use of the SEPARATE suboption of the TEST option.`,
+    },
+    SepNameIgnoredWithoutSeparate: {
+      code: "COTS03",
+      severity: Severity.W,
+      message: () =>
+        `The SEPNAME suboption of the TEST option is ignored if the SEPARATE suboption is not in effect.`,
+    },
   },
 
   Unroll: {
@@ -1046,6 +1140,12 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "AUTO" or "NO", but received '${value}'.`,
+    },
+    IgnoredWithNoOptimize: {
+      code: "COUN02",
+      severity: Severity.W,
+      message: () =>
+        `The UNROLL option is ignored when the NOOPTIMIZE option is in effect.`,
     },
   },
 
@@ -1115,6 +1215,11 @@ export const CompilerOptionsCodes = {
       severity: Severity.E,
       message: (value: string) =>
         `Expected "FWS" or "PRV", but received '${value}'.`,
+    },
+    IgnoredWithLp64: {
+      code: "COWR02",
+      severity: Severity.W,
+      message: () => `The WRITABLE option is ignored under the LP(64) option.`,
     },
   },
 
@@ -1275,6 +1380,14 @@ export const CompilerOptionsCodes = {
         severity: Severity.E,
         message: (value: string) =>
           `Expected "EXPLAIN", "GRANT", "REVOKE", or "SET_CURRENT_SQLID" suboption, but received '${value}'.`,
+      },
+    },
+
+    HostCopy: {
+      IgnoredWithLp32: {
+        code: "COPPSQL03",
+        severity: Severity.W,
+        message: () => `The HOSTCOPY option is ignored under LP(32).`,
       },
     },
   },
