@@ -461,4 +461,53 @@ describe("Multi Workspace Tests", () => {
         ),
     ).toBe(true);
   });
+
+  test("Fallback folder ignores a plugin config dir at the filesystem root", async () => {
+    const fs = new VirtualFileSystemProvider();
+    resetDocumentProviders(fs);
+    const settingsUri = UriUtils.toUri("file:///settings.json");
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({
+        procGrps: [
+          {
+            configKey: "pli.proc_grps",
+            uri: settingsUri.toString(),
+            containerPath: [],
+            scope: "user",
+          },
+        ],
+      }),
+      LongRunningOperationImpl.Dummy,
+    );
+
+    // A `.pliplugin/` directory sitting at the filesystem root.
+    await fs.writeFile(
+      UriUtils.toUri("file:///.pliplugin/proc_grps.json"),
+      JSON.stringify({
+        pgroups: [{ name: "from-root-pliplugin", libs: [] }],
+      }),
+    );
+    await fs.writeFile(
+      settingsUri,
+      JSON.stringify({
+        "pli.proc_grps": {
+          pgroups: [{ name: "from-settings", libs: [] }],
+        },
+      }),
+    );
+
+    // The fallback workspace has no root, so it must not probe
+    // `file:///.pliplugin/` and falls through to the settings source.
+    const fallback = await ch.initializeFallbackFolder();
+    expect(fallback.config.getProcessGroupNames()).toEqual(["from-settings"]);
+
+    // A real workspace folder rooted at `file:///` DOES pick up that config
+    // dir — only the fallback ignores it. (The two were indistinguishable
+    // before workspacePath became optional.)
+    const rootWorkspace = await ch.initializeWorkspaceFolder("file:///");
+    expect(rootWorkspace.config.getProcessGroupNames()).toEqual([
+      "from-root-pliplugin",
+    ]);
+  });
 });
