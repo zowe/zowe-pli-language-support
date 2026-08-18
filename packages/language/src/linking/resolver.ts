@@ -22,6 +22,7 @@ import {
   Reference,
   ReferenceItem,
   ReferenceType,
+  Statement,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
@@ -43,9 +44,9 @@ import {
   reiterateSymbols,
 } from "./symbol-table";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
-import { MultiMap } from "../utils/collections";
+import { largePush, MultiMap } from "../utils/collections";
 
-function getParentStatement(node: SyntaxNode): SyntaxNode {
+function getParentStatement(node: SyntaxNode): Statement {
   if (node.container?.kind === SyntaxKind.Statement) {
     return node.container;
   }
@@ -69,19 +70,18 @@ function getParentStatement(node: SyntaxNode): SyntaxNode {
  */
 export class StatementOrderCache {
   private id: number = 0;
-  private map = new Map<SyntaxNode, number>();
 
-  add(node: SyntaxNode) {
-    this.map.set(node, this.id++);
+  add(node: Statement) {
+    node.statementOrder = this.id++;
   }
 
-  get(node: SyntaxNode) {
-    return this.map.get(node);
+  get(node: Statement) {
+    const order = node.statementOrder;
+    return order < 0 ? undefined : order;
   }
 
   clear(): void {
     this.id = 0;
-    this.map.clear();
   }
 
   /**
@@ -130,7 +130,7 @@ export class ReferencesCache {
   }
 
   addAll(references: Reference[]): void {
-    this.list.push(...references);
+    largePush(this.list, references);
   }
 
   addInverse(reference: Reference): void {
@@ -210,7 +210,9 @@ function assignQualifiedReference(
   }
 
   reference.node = resolved.node;
-  if (matchingSymbols) {
+  if (matchingSymbols && matchingSymbols.length > 1) {
+    // Only allocate the array if there is actually more than one matching symbol.
+    // Otherwise, "node" will be used for all purposes.
     reference.nodes = matchingSymbols.map((symbol) => symbol.node);
   }
 
@@ -239,7 +241,7 @@ function assignReference(
     );
   } else {
     reference.node = resolved.node;
-    if (matchingSymbols) {
+    if (matchingSymbols && matchingSymbols.length > 1) {
       reference.nodes = matchingSymbols.map((symbol) => symbol.node);
     }
   }

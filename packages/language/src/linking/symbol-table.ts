@@ -24,7 +24,6 @@ import {
   TypeExtendingAttribute,
 } from "../syntax-tree/ast";
 import { forEachNode } from "../syntax-tree/ast-iterator";
-import { groupBy } from "../utils/common";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { ReferencesCache, StatementOrderCache } from "./resolver";
 import { getReference } from "./tokens";
@@ -49,9 +48,17 @@ import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
 
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
-  typeSymbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
-  nodeLookup: Map<SyntaxNode, QualifiedSyntaxNode> = new Map();
+  /**
+   * Lazily allocated: type symbols (`DEFINE ALIAS`/`STRUCTURE`/`ORDINAL`) are
+   * rare, and one scope exists per procedure - eagerly allocating an always
+   * empty map per scope wastes memory on large files.
+   */
+  private _typeSymbols?: MultiMap<string, QualifiedSyntaxNode>;
   existingNodes = new Set<string>();
+
+  get typeSymbols(): MultiMap<string, QualifiedSyntaxNode> {
+    return (this._typeSymbols ??= new MultiMap());
+  }
 
   addImplicitDeclaration(
     text: string,
@@ -167,7 +174,6 @@ export class SymbolTable {
 
   addTypeDeclaration(name: string, node: QualifiedSyntaxNode): void {
     this.typeSymbols.add(name, node);
-    this.nodeLookup.set(node.node, node);
   }
 
   addSymbolDeclaration(name: string, node: QualifiedSyntaxNode): void {
@@ -181,7 +187,6 @@ export class SymbolTable {
     }
     this.existingNodes.add(id);
     this.symbols.add(name, node);
-    this.nodeLookup.set(node.node, node);
   }
 
   allDistinctSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
@@ -189,7 +194,10 @@ export class SymbolTable {
   }
 
   allDistinctTypeSymbols(qualifiedName: string[]): QualifiedSyntaxNode[] {
-    return this.distinctMapSymbols(this.typeSymbols, qualifiedName);
+    if (!this._typeSymbols) {
+      return [];
+    }
+    return this.distinctMapSymbols(this._typeSymbols, qualifiedName);
   }
 
   private distinctMapSymbols(
@@ -238,64 +246,79 @@ export class SymbolTable {
     qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
-    if (!name) {
+    if (!name || !this._typeSymbols) {
       return undefined;
     }
-    const symbols = this.typeSymbols.get(name);
+    const symbols = this._typeSymbols.get(name);
+    if (symbols.length === 0) {
+      return undefined;
+    }
     return getQualifiedSymbols(qualifiedName, symbols);
   }
 
   getExplicitSymbols(
     qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
-    const [name] = qualifiedName;
-    if (!name) {
-      return undefined;
-    }
-    const symbols = this.symbols
-      .get(name)
-      .filter((symbol) => !symbol.isImplicit);
-
-    return getQualifiedSymbols(qualifiedName, symbols);
+    return this.getSymbolsByKind(qualifiedName, false);
   }
 
   getImplicitSymbols(
     qualifiedName: readonly string[],
   ): readonly QualifiedSyntaxNode[] | undefined {
+    return this.getSymbolsByKind(qualifiedName, true);
+  }
+
+  /**
+   * This sits on the reference-resolution hot path and misses are the common
+   * case (every lookup walks the scope chain to the root) - so the miss path
+   * and the "nothing filtered out" path are kept allocation-free.
+   */
+  private getSymbolsByKind(
+    qualifiedName: readonly string[],
+    implicit: boolean,
+  ): readonly QualifiedSyntaxNode[] | undefined {
     const [name] = qualifiedName;
     if (!name) {
       return undefined;
     }
-
-    const symbols = this.symbols
-      .get(name)
-      .filter((symbol) => symbol.isImplicit);
-
+    const all = this.symbols.get(name);
+    let matching = 0;
+    for (const symbol of all) {
+      if (symbol.isImplicit === implicit) {
+        matching++;
+      }
+    }
+    if (matching === 0) {
+      return undefined;
+    }
+    const symbols =
+      matching === all.length
+        ? all
+        : all.filter((symbol) => symbol.isImplicit === implicit);
     return getQualifiedSymbols(qualifiedName, symbols);
   }
 }
 
-// Return all qualified symbols
+// Return all qualified symbols, preferring full over partial qualification.
+// Single pass without intermediate group objects - this runs once per scope
+// level for every reference in the file.
 function getQualifiedSymbols(
   qualifiedName: readonly string[],
   symbols: readonly QualifiedSyntaxNode[],
 ): readonly QualifiedSyntaxNode[] | undefined {
-  const qualifiedSymbols = groupBy(symbols, (symbol) =>
-    symbol.getQualificationStatus(qualifiedName),
-  );
-
-  const fullQualification =
-    qualifiedSymbols[QualificationStatus.FullQualification];
-  const partialQualification =
-    qualifiedSymbols[QualificationStatus.PartialQualification];
-
-  if (fullQualification) {
-    return fullQualification;
-  } else if (partialQualification) {
-    return partialQualification;
-  } else {
-    return undefined;
+  let fullQualification: QualifiedSyntaxNode[] | undefined;
+  let partialQualification: QualifiedSyntaxNode[] | undefined;
+  for (const symbol of symbols) {
+    switch (symbol.getQualificationStatus(qualifiedName)) {
+      case QualificationStatus.FullQualification:
+        (fullQualification ??= []).push(symbol);
+        break;
+      case QualificationStatus.PartialQualification:
+        (partialQualification ??= []).push(symbol);
+        break;
+    }
   }
+  return fullQualification ?? partialQualification;
 }
 
 function redeclarationPriority(kind: SyntaxKind): number {
@@ -498,16 +521,15 @@ function handleProcedureStatement(
   context: IterateSymbolTableContext,
 ) {
   const scope = Scope.createChild(parentScope);
-  const newNode: ProcedureStatement | Package = {
-    ...node,
-    end: null,
-  };
 
   context.scopeCache.add(node, scope);
 
-  forEachNode(newNode, (child) =>
-    iterateSymbolTable(child, scope, context, false),
-  );
+  // Iterate all children except the end node (handled below with the parent scope)
+  forEachNode(node, (child) => {
+    if (child !== node.end) {
+      iterateSymbolTable(child, scope, context, false);
+    }
+  });
   if (node.end) {
     // Iterate the end node with a separate scope
     iterateSymbolTable(node.end, parentScope, context, false);

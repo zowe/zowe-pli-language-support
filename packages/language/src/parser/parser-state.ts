@@ -48,6 +48,12 @@ export enum RecoveryResult {
 
 export type RecoveryFunction = () => RecoveryResult;
 
+const NOOP_LOOP_CONTEXT = {
+  inc: () => {
+    /* nothing to do */
+  },
+};
+
 export class ParserState {
   readonly tokens: t.Token[];
   readonly diagnostics: Diagnostic[];
@@ -78,11 +84,10 @@ export class ParserState {
         },
       };
     }
-    return {
-      inc: () => {
-        /* nothing to do */
-      },
-    };
+    // Outside of debugging this is a no-op, and createLoopContext is called
+    // several times per parsed statement - return a shared instance instead of
+    // allocating a fresh closure each time.
+    return NOOP_LOOP_CONTEXT;
   }
 
   enterProcedure(): void {

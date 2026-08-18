@@ -16,7 +16,13 @@ import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse, StatementParser } from "../parser/parser-entry";
 import { ParserState } from "../parser/parser-state";
 import { tokenize } from "../parser/tokenizer";
-import { createTokenInstance, ExecFragment, ID, Token } from "../parser/tokens";
+import {
+  cloneToken,
+  createTokenInstance,
+  ExecFragment,
+  ID,
+  Token,
+} from "../parser/tokens";
 import * as ast from "../syntax-tree/ast";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI, UriUtils } from "../utils/uri";
@@ -41,6 +47,7 @@ import * as inst from "./instructions";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { assertUnreachable } from "../utils/common";
+import { largePush } from "../utils/collections";
 
 interface Variable {
   name: string;
@@ -641,7 +648,7 @@ function runAnswerInstruction(
       if (previousLast) {
         previousLast.immediateFollow = false;
       }
-      context.tokens.push(...tokens);
+      largePush(context.tokens, tokens);
     } else {
       mergePush(context.tokens, tokens, true);
     }
@@ -1624,7 +1631,8 @@ function runTokenInstruction(
       mergePush(context.tokens, result.tokens, i === 0);
       i += result.advance;
     } else {
-      const token = tokens[i];
+      // If the scan found no active variable, push the original token.
+      let token = tokens[i];
       // For ExecFragment tokens, expand macro variables embedded in the image.
       if (token.tokenTypeIdx === ExecFragment.tokenTypeIdx) {
         const expandedImage = expandVariablesInText(token, context);
@@ -1632,18 +1640,17 @@ function runTokenInstruction(
           // The image no longer matches the source span, so the token must count as
           // *generated* (`uri: undefined`) - the serializer emits same-file tokens by
           // slicing the phase text, which would silently discard the expansion.
-          const newToken: Token = {
-            ...token,
-            image: expandedImage,
-            uri: undefined,
-          };
-          mergePush(context.tokens, [newToken], i === 0);
-        } else {
-          mergePush(context.tokens, [token], i === 0);
+          token = cloneToken(token, { image: expandedImage, uri: undefined });
         }
+      }
+      if (i === 0) {
+        // Only the very first token can need lex-merging with an
+        // `immediateFollow` prefix already in the target.
+        mergePush(context.tokens, [token], true);
       } else {
-        // If the scan found no active variable, push the original token
-        mergePush(context.tokens, [token], i === 0);
+        // Hot path: this runs once per passthrough token (millions on large
+        // files) - push directly instead of wrapping each token in an array.
+        context.tokens.push(token);
       }
       i++;
     }
@@ -1706,21 +1713,6 @@ function mergePush(target: Token[], source: Token[], firstSource: boolean) {
     }
   }
   largePush(target, source);
-}
-
-function largePush<T>(target: T[], source: T[]): void {
-  if (source.length < 100_100) {
-    // If the source array is small enough, we can use the spread operator
-    // to push the items into the target array
-    target.push(...source);
-  } else {
-    // This is a workaround for the V8 engine's limit on the number of arguments
-    // that can be passed to a function. We use this to push large arrays into
-    // the result array.
-    for (const item of source) {
-      target.push(item);
-    }
-  }
 }
 
 function replaceTokensInText(
@@ -2272,7 +2264,7 @@ async function runInclude(
           subState,
           context.options.createParseHandlers(document),
         );
-        subProgram.diagnostics.push(...tokenizeResult.diagnostics);
+        largePush(subProgram.diagnostics, tokenizeResult.diagnostics);
         const result = generateInstructions(subProgram.statements);
         return {
           tokens: tokenizeResult.tokens,
@@ -2283,14 +2275,14 @@ async function runInclude(
         };
       },
     );
-    context.statements.push(...cachedResult.statements);
+    largePush(context.statements, cachedResult.statements);
     context.unit.services.files.set({
       textDocument: document,
       tokens: cachedResult.tokens,
       comments: cachedResult.comments,
       uri,
     });
-    context.diagnostics.push(...cachedResult.diagnostics);
+    largePush(context.diagnostics, cachedResult.diagnostics);
     for (const [key, value] of cachedResult.result.procedures.entries()) {
       context.procedures.set(key, value);
     }
