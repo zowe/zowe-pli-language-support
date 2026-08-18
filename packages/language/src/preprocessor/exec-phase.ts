@@ -54,6 +54,7 @@ import {
 } from "./preprocessor-context";
 import { SourceMap } from "./source-map";
 import { extractDirectiveTokens } from "./token-annotator";
+import { largePush } from "../utils/collections";
 
 /** `SQL TYPE IS BINARY/VARBINARY` real numeric ranges - see `computeLobLength`. */
 const LOCATOR_TYPE = "FIXED BIN(31)";
@@ -778,7 +779,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
         state,
         handlers,
       );
-      allStatements.push(...statements);
+      largePush(allStatements, statements);
       for (const diagnostic of diagnostics) {
         context.pushDiagnostic(diagnostic);
       }
@@ -795,10 +796,11 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
         contextDocument,
         sourceMapForDirectives,
       );
-      allStatements.push(...execMetadata.statements);
-      allDirectiveTokens.push(...execMetadata.directiveTokens);
-      allDirectiveTokens.push(
-        ...extractDirectiveTokens(tokenization.tokens, sourceMapForDirectives),
+      largePush(allStatements, execMetadata.statements);
+      largePush(allDirectiveTokens, execMetadata.directiveTokens);
+      largePush(
+        allDirectiveTokens,
+        extractDirectiveTokens(tokenization.tokens, sourceMapForDirectives),
       );
     };
 
@@ -893,7 +895,10 @@ export class UnresolvedExecPhase implements PreprocessorPhase {
   ) {}
 
   async execute(input: PhaseInput): Promise<PhaseResult> {
-    if ((this.hasCics && this.hasSql) || !/EXEC/i.test(input.text)) {
+    if (
+      (this.hasCics && this.hasSql) ||
+      !/\bEXEC\s+(\w+)\b/i.test(input.text)
+    ) {
       // Both preprocessors are configured (no EXEC statement can be left unresolved), or
       // there is no EXEC-looking text at all - skip the tokenize pass entirely, like the
       // real phases' own `triggerPattern` pre-scan.

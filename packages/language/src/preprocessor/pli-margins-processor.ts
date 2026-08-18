@@ -82,14 +82,15 @@ export class PliMarginsProcessor implements MarginsProcessor {
       }
     }
 
-    const lines = this.splitLines(input.text, margins, uri);
-    const adjustedLines = lines.map((line) => this.adjustLine(line, margins));
-    return adjustedLines.join("");
+    // Adjust each line as it is scanned - materializing all raw lines first and
+    // mapping them afterwards would hold two arrays of one string per line alive
+    return this.splitLines(input.text, margins, uri).join("");
   }
 
   private splitLines(text: string, margins: Range, uri: URI): string[] {
     const lines: string[] = [];
     const prefixLength = margins.start - 1;
+    const prefix = " ".repeat(prefixLength);
 
     const reportViolation = (
       side: "left" | "right",
@@ -172,7 +173,7 @@ export class PliMarginsProcessor implements MarginsProcessor {
         }
       }
       const line = text.substring(start, i + 1);
-      lines.push(line);
+      lines.push(this.adjustLine(line, margins, prefix));
 
       // Check the left margin.
       // TODO ssmifi: While COL1 should be reserved for %|*PROCESS, there are examples (ADVNTOPT)
@@ -204,7 +205,7 @@ export class PliMarginsProcessor implements MarginsProcessor {
     return lines;
   }
 
-  private adjustLine(line: string, margins: Range): string {
+  private adjustLine(line: string, margins: Range, prefix: string): string {
     let eol = "";
     if (line.endsWith("\r\n")) {
       eol = "\r\n";
@@ -217,7 +218,6 @@ export class PliMarginsProcessor implements MarginsProcessor {
       return " ".repeat(lineLength) + eol;
     }
     const lineEnd = margins.end;
-    const prefix = " ".repeat(prefixLength);
     let postfix = "";
     if (lineLength > lineEnd) {
       postfix = " ".repeat(lineLength - lineEnd);

@@ -202,9 +202,31 @@ function sameUri(a: URI | undefined, b: URI | undefined): boolean {
   return a !== undefined && b !== undefined && a.toString() === b.toString();
 }
 
+const SPACE = 0x20;
+const TAB = 0x09; // `\t`, first of the \t \n \v \f \r control range
+const CARRIAGE_RETURN = 0x0d; // `\r`, last of the \t \n \v \f \r control range
+const NO_BREAK_SPACE = 0xa0;
+/** First Unicode whitespace code point above Latin-1 (`\s` matches a few beyond it). */
+const OGHAM_SPACE_MARK = 0x1680;
+
 /** Whether `text[start, end)` (a gap between two verbatim tokens) is empty or whitespace-only. */
 function isWhitespaceGap(text: string, start: number, end: number): boolean {
-  return WHITESPACE_ONLY.test(text.slice(start, end));
+  // Called once per adjacent token pair - scan char codes instead of allocating
+  // a substring per call.
+  for (let i = start; i < end; i++) {
+    const code = text.charCodeAt(i);
+    // Matches the characters `/^\s*$/` accepts: space, \t \n \v \f \r, NBSP,
+    // and the (rare in source) Unicode space classes.
+    if (
+      code !== SPACE &&
+      !(code >= TAB && code <= CARRIAGE_RETURN) &&
+      code !== NO_BREAK_SPACE &&
+      !(code >= OGHAM_SPACE_MARK && WHITESPACE_ONLY.test(text[i]))
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**

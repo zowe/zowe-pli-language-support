@@ -11,6 +11,7 @@
 
 import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
 import { URI } from "../utils/uri";
+import { largePush } from "../utils/collections";
 import {
   CompilerOptionsProcessor,
   CompilerOptionsProcessorResult,
@@ -226,14 +227,21 @@ export class PliLexer {
     // numbering and would collide with this file's tokens at the same numeric offset
     // (they're merged into the foreign file's registration below). `synthetic` tokens
     // are excluded - see `Token.synthetic`.
-    const ownTokens = annotated.tokens.filter(
-      (t) => !t.synthetic && t.uri?.toString() === uriString,
-    );
     // Identity-dedupe: an `EXEC` host-variable sub-token shows up both as a directive
-    // token and as an annotate-emitted `sourceToken`.
-    const tokens = [
-      ...new Set([...optionTokens, ...ownTokens, ...ownDirectiveTokens]),
-    ];
+    // token and as an annotate-emitted `sourceToken`. Only the option/directive side is
+    // ever duplicated and it is tiny, so dedupe against that instead of pushing the
+    // full file's tokens (millions on large files) through a Set.
+    const smallSide = new Set([...optionTokens, ...ownDirectiveTokens]);
+    const tokens: Token[] = [...smallSide];
+    for (const token of annotated.tokens) {
+      if (
+        !token.synthetic &&
+        token.uri?.toString() === uriString &&
+        !smallSide.has(token)
+      ) {
+        tokens.push(token);
+      }
+    }
     tokens.sort((a, b) => a.startOffset - b.startOffset);
     unit.services.files.set({
       textDocument: document,
@@ -242,15 +250,21 @@ export class PliLexer {
       uri,
     });
     // Tokens attributed to a foreign file belong in that file's registration - see
-    // `mergeForeignTokens`. Same identity-dedupe as above.
-    const foreignTokens = annotated.tokens.filter(
-      (t) => !t.synthetic && t.uri && t.uri.toString() !== uriString,
-    );
-    this.mergeForeignTokens(
-      unit,
-      [...new Set([...directiveTokens, ...foreignTokens])],
-      uriString,
-    );
+    // `mergeForeignTokens`. Same identity-dedupe as above (against the small
+    // directive-token side only).
+    const directiveSet = new Set(directiveTokens);
+    const incomingTokens: Token[] = [...directiveSet];
+    for (const token of annotated.tokens) {
+      if (
+        !token.synthetic &&
+        token.uri &&
+        token.uri.toString() !== uriString &&
+        !directiveSet.has(token)
+      ) {
+        incomingTokens.push(token);
+      }
+    }
+    this.mergeForeignTokens(unit, incomingTokens, uriString);
   }
 
   /**
@@ -298,7 +312,7 @@ export class PliLexer {
           foreignTokens[index].startOffset <= token.endOffset
         );
       });
-      merged.push(...foreignTokens);
+      largePush(merged, foreignTokens);
       merged.sort((a, b) => a.startOffset - b.startOffset);
       unit.services.files.set({ ...existing, tokens: merged });
     }

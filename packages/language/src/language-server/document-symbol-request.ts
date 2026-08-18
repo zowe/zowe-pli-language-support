@@ -32,22 +32,38 @@ export function documentSymbolRequest(
     return [];
   }
 
-  const tokens = fileTokens
-    .filter((token) => token.element && isValidToken(token))
-    .map((token) => {
-      const element = token.element!;
-      if (!tokensByElement.has(element)) {
-        tokensByElement.set(element, []);
-      }
-      tokensByElement.get(element)?.push(token);
-      return token;
-    });
+  // First pass: find the tokens a builder can actually turn into a symbol,
+  // and remember their elements. Only those elements need a token index -
+  // indexing everything beyond that is quite expensive and unnecessary.
+  type Builder = (typeof DOCUMENT_SYMBOL_BUILDERS)[number];
+  const handledTokens: { token: Token; builder: Builder }[] = [];
+  const usedElements = new Set<SyntaxNode>();
+  for (const token of fileTokens) {
+    if (!token.element || !isValidToken(token)) {
+      continue;
+    }
+    const builder = DOCUMENT_SYMBOL_BUILDERS.find((b) => b.canHandle(token));
+    if (builder) {
+      handledTokens.push({ token, builder });
+      usedElements.add(token.element);
+    }
+  }
+
+  // Second pass: collect the tokens of just those elements.
+  for (const token of fileTokens) {
+    const element = token.element;
+    if (!element || !usedElements.has(element) || !isValidToken(token)) {
+      continue;
+    }
+    let elementTokens = tokensByElement.get(element);
+    if (!elementTokens) {
+      tokensByElement.set(element, (elementTokens = []));
+    }
+    elementTokens.push(token);
+  }
 
   let hierarchy: DocumentSymbol[] = [];
-  for (const token of tokens) {
-    const builder = DOCUMENT_SYMBOL_BUILDERS.find((b) => b.canHandle(token));
-    if (!builder) continue;
-
+  for (const { token, builder } of handledTokens) {
     const symbols = builder.buildSymbols(
       token,
       tokensByElement.get(token.element!)!,

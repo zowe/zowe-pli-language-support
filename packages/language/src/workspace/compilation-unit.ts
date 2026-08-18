@@ -231,6 +231,22 @@ export async function createCompilationUnit(
       unit.scopeCaches.clear();
       unit.includeError = false;
       unit.diagnostics.clear();
+      // Release the previous run's AST, tokens and preprocessed text. reset()
+      // runs at the start of every lifecycle - without this, the old and the
+      // new structures are both reachable while the new ones are built,
+      // doubling the peak heap on every edit of a large file.
+      unit.ast = {
+        kind: SyntaxKind.Program,
+        container: null,
+        statements: [],
+      };
+      unit.preprocessorAst = {
+        kind: SyntaxKind.Program,
+        container: null,
+        statements: [],
+      };
+      unit.tokens = [];
+      unit.preprocessedText = "";
       cachedProcessGroup = null;
       cachedProgramConfig = null;
     },

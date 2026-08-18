@@ -158,6 +158,14 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
 
     const serialized = serializeTokens(output.all, uri, text);
 
+    // Token statements have served their purpose and are no longer useful.
+    // We blank them out (remove their array), so that the garbage collector can reclaim the memory
+    for (const stmt of statements) {
+      if (stmt.value?.kind === ast.SyntaxKind.TokenStatement) {
+        stmt.value.tokens = ast.emptyList();
+      }
+    }
+
     // Fragments inside %INCLUDEd files already carry file-local offsets; the entry
     // file's source map must only remap the entry file's own exec tokens.
     const ownExecTokens: t.Token[] = [];
@@ -183,10 +191,8 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
       references: output.references,
       evaluationResults: output.evaluationResults,
       directiveTokens: [
-        ...extractDirectiveTokens(
-          [...tokenization.tokens, ...ownExecTokens],
-          input.sourceMap,
-        ),
+        ...extractDirectiveTokens(tokenization.tokens, input.sourceMap),
+        ...extractDirectiveTokens(ownExecTokens, input.sourceMap),
         ...foreignExecTokens,
       ],
     };

@@ -628,6 +628,35 @@ export interface AstNode {
   kind: SyntaxKind;
 }
 
+/**
+ * Shared frozen empty array used as the initial value of high-volume AST list
+ * fields (statement labels, reference nodes, dimensions, ...). These fields
+ * stay empty on the vast majority of nodes, and a fresh `[]` per node costs
+ * 32+ bytes times millions of nodes on large files. Reading is transparent;
+ * writers must swap in a real array first - see {@link appendList}.
+ */
+const EMPTY_LIST: readonly unknown[] = Object.freeze([]);
+
+/** The shared frozen empty list, typed for use as a factory initial value. */
+export function emptyList<T>(): T[] {
+  return EMPTY_LIST as T[];
+}
+
+/**
+ * Appends `item` to a lazily-allocated list field and returns the list to
+ * store back: `node.field = appendList(node.field, item)`. The first append
+ * replaces the shared frozen {@link emptyList} with a capacity-1 array literal
+ * (a pushed-into empty array grows straight to capacity 16, wasting ~120 bytes
+ * on the overwhelmingly common single-element case).
+ */
+export function appendList<T>(list: T[], item: T): T[] {
+  if ((list as readonly unknown[]) === EMPTY_LIST) {
+    return [item];
+  }
+  list.push(item);
+  return list;
+}
+
 export function isSyntaxNode(node: unknown): node is SyntaxNode {
   return isObject<AstNode>(node) && typeof node.kind === "number";
 }
@@ -715,7 +744,7 @@ export function createReference<T extends SyntaxNode>(
     owner,
     text: token.image,
     token,
-    nodes: [],
+    nodes: emptyList(),
     node: undefined,
     type,
   };
@@ -1376,7 +1405,7 @@ export function createAssignmentStatement(): AssignmentStatement {
   return {
     kind: SyntaxKind.AssignmentStatement,
     container: null,
-    refs: [],
+    refs: emptyList(),
     operator: null,
     expression: null,
     dimacrossExpr: null,
@@ -2041,7 +2070,7 @@ export function createDimensions(): Dimensions {
   return {
     kind: SyntaxKind.Dimensions,
     container: null,
-    dimensions: [],
+    dimensions: emptyList(),
     token: null,
   };
 }
@@ -3726,7 +3755,7 @@ export function createReferenceItem(): ReferenceItem {
     kind: SyntaxKind.ReferenceItem,
     container: null,
     ref: null,
-    dimensions: [],
+    dimensions: emptyList(),
   };
 }
 export interface ReinitStatement extends AstNode {
@@ -3961,16 +3990,23 @@ export interface Statement extends AstNode {
   value: Unit | null;
   startToken: Token | null;
   endToken: Token | null;
+  /**
+   * Position of this statement in the compilation unit's statement order,
+   * assigned during symbol table generation (see `StatementOrderCache`).
+   * `-1` until assigned.
+   */
+  statementOrder: number;
 }
 export function createStatement(): Statement {
   return {
     kind: SyntaxKind.Statement,
     container: null,
     condition: null,
-    labels: [],
+    labels: emptyList(),
     value: null,
     startToken: null,
     endToken: null,
+    statementOrder: -1,
   };
 }
 export interface StopStatement extends AstNode {
