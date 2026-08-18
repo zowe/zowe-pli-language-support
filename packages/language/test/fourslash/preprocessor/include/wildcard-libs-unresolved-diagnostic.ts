@@ -40,5 +40,8 @@
 //// DECLARE Y FIXED;
 
 verify.expectDiagnosticsAt("bad", {
-  message: code.LSP.PluginConfiguration.UnresolvedEntry.message("**/missing"),
+  message: code.LSP.PluginConfiguration.UnresolvedEntry.message(
+    "**/missing",
+    "Path does not exist.",
+  ),
 });

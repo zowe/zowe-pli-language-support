@@ -58,5 +58,8 @@ preprocessor.expectTokens(`
 // The project `default` group is the active source: its missing `cpy` lib is
 // flagged on proc_grps.json, while `cpyla` resolves.
 verify.expectDiagnosticsAt("missing", {
-  message: code.LSP.PluginConfiguration.UnresolvedEntry.message("cpy"),
+  message: code.LSP.PluginConfiguration.UnresolvedEntry.message(
+    "cpy",
+    "Path does not exist.",
+  ),
 });
