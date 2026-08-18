@@ -12,13 +12,16 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS LIMITS(EXTNAME(80));
+////*PROCESS <|1:COMMON|>;
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Common.ConflictWithExtName.message(80),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  common: true,
+  limits: {
+    extname: 80,
   },
 });

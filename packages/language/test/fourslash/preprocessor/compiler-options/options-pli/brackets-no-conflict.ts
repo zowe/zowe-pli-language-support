@@ -12,13 +12,17 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS NAMES('@?'), NOT('!'), OR('~');
+////*PROCESS BRACKETS('{}');
+
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  brackets: ["{", "}"],
+  names: {
+    extralingChar: "@?",
+    uppExtralingChar: "@?",
   },
+  not: "!",
+  or: "~",
 });

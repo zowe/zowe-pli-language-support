@@ -12,13 +12,15 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS NORENT, LIMITS(EXTNAME(7));
+////*PROCESS COMMON;
+
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  common: true,
+  rent: false,
+  limits: {
+    extname: 7,
   },
 });

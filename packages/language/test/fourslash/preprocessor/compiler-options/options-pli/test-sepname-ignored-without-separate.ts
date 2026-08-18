@@ -12,13 +12,15 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS TEST(<|1:SEPNAME|>);
+
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Test.SepNameIgnoredWithoutSeparate.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  test: {
+    separate: false,
+    sepName: true,
   },
 });

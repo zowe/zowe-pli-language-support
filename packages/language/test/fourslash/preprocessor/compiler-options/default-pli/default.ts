@@ -12,6 +12,7 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
+////*PROCESS CMPAT(LE); // CMPAT(LE) does not conflict with DFT(DESCLIST).
 ////*PROCESS <|0:DEFAULT|>;
 ////*PROCESS <|d1:DEFAULT|>(<|1:)|>;
 ////*PROCESS <|d2:DEFAULT|>(<|2:INVALID|>);

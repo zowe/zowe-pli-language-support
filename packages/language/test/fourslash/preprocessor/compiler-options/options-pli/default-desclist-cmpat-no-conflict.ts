@@ -12,13 +12,14 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
+////*PROCESS CMPAT(LE);
+////*PROCESS DEFAULT(DESCLIST);
+
 verify.noDiagnostics();
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
+  cmpat: constants.CompilerOptions.CMPat.LE,
+  default: {
+    desc: constants.CompilerOptions.DefaultDesc.LIST,
   },
 });

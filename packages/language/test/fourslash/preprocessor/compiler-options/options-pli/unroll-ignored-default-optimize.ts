@@ -12,13 +12,15 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS <|1:UNROLL|>(AUTO);
+
+// OPTIMIZE is never specified here, so its default value of NOOPTIMIZE (0)
+// applies, which still causes UNROLL to be ignored.
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.Unroll.IgnoredWithNoOptimize.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  optimize: 0,
+  unroll: constants.CompilerOptions.Unroll.AUTO,
 });

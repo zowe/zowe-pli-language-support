@@ -12,13 +12,15 @@
 /// <reference path="../../../framework.ts" />
 
 // @wrap: process
-////*PROCESS PP(CICS("EXCI SP SYSEIB"));
-verify.noDiagnostics();
+////*PROCESS <|1:OFFSETSIZE|>(8);
+
+// LP is never specified here, so its default value of LP(32) applies, which
+// still causes OFFSETSIZE to be ignored.
+verify.expectDiagnosticsAt(1, {
+  message: code.CompilerOptions.OffsetSize.IgnoredWithLp32.message(),
+});
 
 verify.expectCompilerOptions({
-  cicsOptions: {
-    exci: true,
-    sp: true,
-    sysEib: true,
-  },
+  LP: constants.CompilerOptions.LP.LP32,
+  offsetSize: 8,
 });
