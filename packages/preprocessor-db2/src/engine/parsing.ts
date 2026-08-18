@@ -86,8 +86,9 @@ export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
   ): void => {
     if (ctx.start && ctx.stop) {
       this.identifiers.push({
-        //remove leading colon
-        image: ctx.getText().slice(1),
+        // Remove leading colon
+        // Also: convert to upper case because linking is case-insensitive
+        image: ctx.getText().slice(1).toUpperCase(),
         startOffset: ctx.start.start + 1,
         endOffset: ctx.stop.stop,
         semanticsKind: SemanticsKind.Identifier,
