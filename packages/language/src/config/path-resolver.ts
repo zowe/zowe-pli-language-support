@@ -21,21 +21,27 @@ import { URI, UriUtils } from "../utils/uri";
  * `scheme` parameter overrides the absolute-path scheme so include
  * resolution can match the entry file's scheme; lib expansion passes the
  * workspace scheme.
+ *
+ * A workspace-relative path cannot be resolved without a workspace
+ * (`workspace === undefined`, i.e. the fallback workspace) and yields
+ * `undefined`.
  */
 export function resolveLibUri(
   lib: string,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme?: string,
-): URI {
+): URI | undefined {
   lib = UriUtils.normalizePath(lib);
   const pathType = UriUtils.computePathType(lib);
   if (pathType === UriUtils.PathType.URI) {
     return UriUtils.parse(lib);
   }
   if (pathType === UriUtils.PathType.Absolute) {
-    return UriUtils.file(lib).with({ scheme: scheme ?? workspace.scheme });
+    const fileUri = UriUtils.file(lib);
+    const targetScheme = scheme ?? workspace?.scheme;
+    return targetScheme ? fileUri.with({ scheme: targetScheme }) : fileUri;
   }
-  return UriUtils.joinPath(workspace, lib);
+  return workspace ? UriUtils.joinPath(workspace, lib) : undefined;
 }
 
 /**
@@ -46,10 +52,13 @@ export function resolveLibUri(
 export function resolveLibFileUri(
   lib: string,
   fileName: string | undefined,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme?: string,
 ): URI | undefined {
   const base = resolveLibUri(lib, workspace, scheme);
+  if (!base) {
+    return undefined;
+  }
   if (fileName) {
     const joined = UriUtils.joinPath(base, fileName);
     if (!UriUtils.contains(base, joined)) {

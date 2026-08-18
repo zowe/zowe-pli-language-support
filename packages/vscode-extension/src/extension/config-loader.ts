@@ -33,9 +33,9 @@ export function registerConfigLoader(
 ): vscode.Disposable {
   return client.onRequest(
     Messages.GetGlobalConfig.method,
-    async (workspaceUri) => {
+    async (workspaceUri: string | null) => {
       return getGlobalConfig(
-        UriUtils.toUri(workspaceUri),
+        workspaceUri === null ? undefined : UriUtils.toUri(workspaceUri),
         deriveUserSettingsUri(context.globalStorageUri),
       );
     },
@@ -56,10 +56,10 @@ export function registerConfigLoader(
  * `.code-workspace` file.
  */
 async function getGlobalConfig(
-  workspaceUri: vscode.Uri,
+  workspaceUri: vscode.Uri | undefined,
   userSettingsUri: vscode.Uri,
 ): Promise<Messages.GlobalConfig> {
-  const workspaceFolder = locateWorkspaceFolder(workspaceUri);
+  const workspaceFolder = workspaceUri && locateWorkspaceFolder(workspaceUri);
   const result: Messages.GlobalConfig = {};
   if (workspaceFolder) {
     const pgmConf = locate("pgm_conf", workspaceFolder, userSettingsUri);

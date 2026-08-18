@@ -74,8 +74,13 @@ export function sendNotification<P>(
 }
 
 export namespace Messages {
+  /**
+   * Request sent to the client to load the VS Code settings backing for the
+   * plugin config. The param is the workspace folder URI, or `null` for the
+   * fallback workspace (no folder; only user-scope settings can apply).
+   */
   export const GetGlobalConfig = createRequestType<
-    string,
+    string | null,
     Messages.GlobalConfig
   >("pli/getGlobalConfig");
 
@@ -189,12 +194,17 @@ export namespace Messages {
 }
 
 export interface GlobalConfigLoader {
-  loadGlobalConfig(workspaceUri: URI): Promise<Messages.GlobalConfig>;
+  /** `workspaceUri` is `undefined` for the fallback workspace. */
+  loadGlobalConfig(
+    workspaceUri: URI | undefined,
+  ): Promise<Messages.GlobalConfig>;
 }
 
 export class TestGlobalConfigLoader implements GlobalConfigLoader {
   constructor(private readonly config: Messages.GlobalConfig) {}
-  loadGlobalConfig(_workspaceUri: URI): Promise<Messages.GlobalConfig> {
+  loadGlobalConfig(
+    _workspaceUri: URI | undefined,
+  ): Promise<Messages.GlobalConfig> {
     return Promise.resolve(this.config);
   }
 }

@@ -132,6 +132,8 @@ describe("Plugin Configuration Tests", () => {
   });
 
   test("Duplicate Lib Entries are filtered from $computed props", async () => {
+    await workspace.config.init(UriUtils.toUri("file:///"));
+
     // ensure that duplicate lib & ddname entries are filtered out from computed props
     const libs = ["lib1/dir1", "lib1/dir1", "lib2/DDNAME", "lib2/DDNAME"];
     const uniqueLibs = Array.from(new Set(libs));

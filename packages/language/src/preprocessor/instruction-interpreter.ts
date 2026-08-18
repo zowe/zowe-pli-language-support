@@ -2164,11 +2164,10 @@ function setFilePath(
   if (!filePath) return;
   item.filePath = filePath;
   if (!context.currentUri) return;
-  const workspace = context.unit.services.workspace.config.getWorkspacePath();
-  item.relativeFilePath = UriUtils.composeRelativePath(
-    workspace.path,
-    filePath,
-  );
+  const workspace = context.unit.services.workspace.config.getWorkspaceUri();
+  item.relativeFilePath = workspace
+    ? UriUtils.composeRelativePath(workspace.path, filePath)
+    : filePath;
 }
 
 async function runInclude(

@@ -31,14 +31,14 @@ let workspace: WorkspaceContext;
 
 function pgmConfigUri(): URI {
   return UriUtils.joinPath(
-    workspace.config.getWorkspacePath(),
+    workspace.config.requireWorkspaceUri(),
     PluginConfiguration.PROGRAM_FILE_PATH,
   );
 }
 
 function processGroupUri(): URI {
   return UriUtils.joinPath(
-    workspace.config.getWorkspacePath(),
+    workspace.config.requireWorkspaceUri(),
     PluginConfiguration.PROCESS_GROUP_FILE_PATH,
   );
 }
