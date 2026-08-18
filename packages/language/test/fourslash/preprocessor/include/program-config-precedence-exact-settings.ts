@@ -9,16 +9,17 @@
  *
  */
 
-// A project `.pliplugin/pgm_conf.json` entry must win over a user-scope
-// `pli.pgm_conf` entry even when the settings entry is an EXACT path match for
-// the file. Here the settings bind `main.pli` (exact) to `DFLT` (no libs),
-// while the project binds `*.pli` (glob) to `default` (has the `cpyla` lib).
+// Because a present `.pliplugin/pgm_conf.json` is selected as the sole pgm_conf
+// source, the settings `pli.pgm_conf` is ignored even when it is an EXACT path
+// match for the file. Here the settings bind `main.pli` (exact) to `DFLT` (no
+// libs), while the project binds `*.pli` (glob) to `default` (has the `cpyla`
+// lib).
 //
 // This is the harder sibling of `program-config-precedence-over-settings.ts`:
-// a plain `Map.get(uri)` direct lookup would return the settings exact-path
-// entry and the include would fail with IBM1848I. `getProgramConfig` instead
-// ranks project matches above settings matches, so the project glob wins and
-// the include resolves.
+// under a per-key merge, a plain `Map.get(uri)` direct lookup could return the
+// settings exact-path entry and the include would fail with IBM1848I. With
+// per-file source selection the settings entry is never loaded at all, so the
+// project glob binds `main.pli` and the include resolves.
 
 /// <reference path="../../framework.ts" />
 

@@ -12,11 +12,12 @@
 /// <reference path="../framework.ts" />
 
 /**
- * Suppression rule: when proc_grps.json declares zero process groups,
- * the set of known names is empty, so every reference is technically
- * unresolved. We deliberately suppress UnknownProcessGroup here rather
- * than flagging every program — the empty proc_grps file is the real,
- * more fundamental problem to fix first.
+ * An unresolved lib in a VS Code settings `pli.proc_grps` is flagged inside the
+ * settings file itself. `.pliplugin/proc_grps.json` is absent, so proc_grps
+ * falls back to the settings source; `.pliplugin/pgm_conf.json` is present only
+ * to anchor the workspace root, and `@noDefaultConfig` (on the last file block)
+ * keeps the harness from materializing a default `.pliplugin/proc_grps.json`
+ * that would block the fallback.
  */
 
 // @filename: .vscode/settings.json
@@ -27,11 +28,9 @@
 // @filename: .pliplugin/pgm_conf.json
 //// { "pgms": [] }
 
-// @filename: .pliplugin/proc_grps.json
-//// { "pgroups": [] }
-
 // @filename: main.pli
 // @wrap: main
+// @noDefaultConfig
 //// DCL A CHAR(8);
 
 verify.expectDiagnosticsAt(
