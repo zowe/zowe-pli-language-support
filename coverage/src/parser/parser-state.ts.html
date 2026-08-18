@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.03% </span>
+                <span class="strong">91.09% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>132/145</span>
+                <span class='fraction'>133/146</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.97% </span>
+                <span class="strong">91.03% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>131/144</span>
+                <span class='fraction'>132/145</span>
             </div>
         
             
@@ -521,7 +521,12 @@
 <a name='L456'></a><a href='#L456'>456</a>
 <a name='L457'></a><a href='#L457'>457</a>
 <a name='L458'></a><a href='#L458'>458</a>
-<a name='L459'></a><a href='#L459'>459</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L459'></a><a href='#L459'>459</a>
+<a name='L460'></a><a href='#L460'>460</a>
+<a name='L461'></a><a href='#L461'>461</a>
+<a name='L462'></a><a href='#L462'>462</a>
+<a name='L463'></a><a href='#L463'>463</a>
+<a name='L464'></a><a href='#L464'>464</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -571,6 +576,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -588,7 +599,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">162615x</span>
+<span class="cline-any cline-yes">154561x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -601,11 +612,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">162615x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">154561x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -640,19 +650,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">490376x</span>
+<span class="cline-any cline-yes">490532x</span>
 <span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">490344x</span>
-<span class="cline-any cline-yes">494527x</span>
-<span class="cline-any cline-yes">494527x</span>
+<span class="cline-any cline-yes">490500x</span>
+<span class="cline-any cline-yes">494683x</span>
+<span class="cline-any cline-yes">494683x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">494527x</span>
+<span class="cline-any cline-yes">494683x</span>
 <span class="cline-any cline-yes">154573x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">335771x</span>
+<span class="cline-any cline-yes">335927x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1029,6 +1039,12 @@ export enum RecoveryResult {
 &nbsp;
 export type RecoveryFunction = () =&gt; RecoveryResult;
 &nbsp;
+const NOOP_LOOP_CONTEXT = {
+  inc: () =&gt; {
+    /* nothing to do */
+  },
+};
+&nbsp;
 export class ParserState {
   readonly tokens: t.Token[];
   readonly diagnostics: Diagnostic[];
@@ -1059,11 +1075,10 @@ export class ParserState {
         },
       };
     }
-    return {
-      inc: () =&gt; {
-        /* nothing to do */
-      },
-    };
+    // Outside of debugging this is a no-op, and createLoopContext is called
+    // several times per parsed statement - return a shared instance instead of
+    // allocating a fresh closure each time.
+    return NOOP_LOOP_CONTEXT;
   }
 &nbsp;
   enterProcedure(): void {
@@ -1444,7 +1459,7 @@ export function generateTokenErrorName(token: t.Token | undefined): string {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-17T12:22:32.796Z
+                at 2026-08-18T07:53:09.762Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

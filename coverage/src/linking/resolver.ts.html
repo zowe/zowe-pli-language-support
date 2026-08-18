@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.73% </span>
+                <span class="strong">92.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>166/179</span>
+                <span class='fraction'>165/178</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.47% </span>
+                <span class="strong">84.25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>101/121</span>
+                <span class='fraction'>107/127</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.61% </span>
+                <span class="strong">92.57% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>163/176</span>
+                <span class='fraction'>162/175</span>
             </div>
         
             
@@ -690,7 +690,10 @@
 <a name='L625'></a><a href='#L625'>625</a>
 <a name='L626'></a><a href='#L626'>626</a>
 <a name='L627'></a><a href='#L627'>627</a>
-<a name='L628'></a><a href='#L628'>628</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L628'></a><a href='#L628'>628</a>
+<a name='L629'></a><a href='#L629'>629</a>
+<a name='L630'></a><a href='#L630'>630</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -761,7 +764,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1594x</span>
-<span class="cline-any cline-yes">1594x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">41444x</span>
@@ -769,10 +771,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">548x</span>
+<span class="cline-any cline-yes">548x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -903,7 +905,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3087x</span>
 <span class="cline-any cline-yes">3087x</span>
-<span class="cline-any cline-yes">3016x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -932,7 +936,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17838x</span>
 <span class="cline-any cline-yes">17838x</span>
-<span class="cline-any cline-yes">17841x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1341,6 +1345,7 @@ import {
   Reference,
   ReferenceItem,
   ReferenceType,
+  Statement,
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
@@ -1362,9 +1367,9 @@ import {
   reiterateSymbols,
 } from "./symbol-table";
 import { DiagnosticCategory } from "../validation/diagnostics-store";
-import { MultiMap } from "../utils/collections";
+import { largePush, MultiMap } from "../utils/collections";
 &nbsp;
-function getParentStatement(node: SyntaxNode): SyntaxNode {
+function getParentStatement(node: SyntaxNode): Statement {
   if (node.container?.kind === SyntaxKind.Statement) {
     return node.container;
   }
@@ -1388,19 +1393,18 @@ function getParentStatement(node: SyntaxNode): SyntaxNode {
  */
 export class StatementOrderCache {
   private id: number = 0;
-  private map = new Map&lt;SyntaxNode, number&gt;();
 &nbsp;
-  add(node: SyntaxNode) {
-    this.map.set(node, this.id++);
+  add(node: Statement) {
+    node.statementOrder = this.id++;
   }
 &nbsp;
-  get(node: SyntaxNode) {
-    return this.map.get(node);
+  get(node: Statement) {
+    const order = node.statementOrder;
+    return order &lt; 0 ? <span class="branch-0 cbranch-no" title="branch not covered" >undefined : o</span>rder;
   }
 &nbsp;
   clear(): void {
     this.id = 0;
-    this.map.clear();
   }
 &nbsp;
   /**
@@ -1449,7 +1453,7 @@ export class ReferencesCache {
   }
 &nbsp;
   addAll(references: Reference[]): void {
-    this.list.push(...references);
+    largePush(this.list, references);
   }
 &nbsp;
   addInverse(reference: Reference): void {
@@ -1529,7 +1533,9 @@ function assignQualifiedReference(
   }
 &nbsp;
   reference.node = resolved.node;
-  if (matchingSymbols) {
+  if (matchingSymbols &amp;&amp; matchingSymbols.length &gt; 1) {
+    // Only allocate the array if there is actually more than one matching symbol.
+    // Otherwise, "node" will be used for all purposes.
     reference.nodes = matchingSymbols.map((symbol) =&gt; symbol.node);
   }
 &nbsp;
@@ -1558,7 +1564,7 @@ function assignReference(
     );
   } else {
     reference.node = resolved.node;
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (matchingSymbols) {
+    if (matchingSymbols &amp;&amp; matchingSymbols.length &gt; 1) {
       reference.nodes = matchingSymbols.map((symbol) =&gt; symbol.node);
     }
   }
@@ -1951,7 +1957,7 @@ function isMemberOfComposite(node: SyntaxNode, rootComposite: DeclaredItem) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-17T12:22:32.796Z
+                at 2026-08-18T07:53:09.762Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

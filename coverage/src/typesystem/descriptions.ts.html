@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.38% </span>
+                <span class="strong">68.37% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>305/446</span>
+                <span class='fraction'>307/449</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.02% </span>
+                <span class="strong">57.97% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>159/274</span>
+                <span class='fraction'>160/276</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.25% </span>
+                <span class="strong">83.46% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>107/127</span>
+                <span class='fraction'>106/127</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.38% </span>
+                <span class="strong">68.37% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>305/446</span>
+                <span class='fraction'>307/449</span>
             </div>
         
             
@@ -2172,7 +2172,28 @@
 <a name='L2107'></a><a href='#L2107'>2107</a>
 <a name='L2108'></a><a href='#L2108'>2108</a>
 <a name='L2109'></a><a href='#L2109'>2109</a>
-<a name='L2110'></a><a href='#L2110'>2110</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L2110'></a><a href='#L2110'>2110</a>
+<a name='L2111'></a><a href='#L2111'>2111</a>
+<a name='L2112'></a><a href='#L2112'>2112</a>
+<a name='L2113'></a><a href='#L2113'>2113</a>
+<a name='L2114'></a><a href='#L2114'>2114</a>
+<a name='L2115'></a><a href='#L2115'>2115</a>
+<a name='L2116'></a><a href='#L2116'>2116</a>
+<a name='L2117'></a><a href='#L2117'>2117</a>
+<a name='L2118'></a><a href='#L2118'>2118</a>
+<a name='L2119'></a><a href='#L2119'>2119</a>
+<a name='L2120'></a><a href='#L2120'>2120</a>
+<a name='L2121'></a><a href='#L2121'>2121</a>
+<a name='L2122'></a><a href='#L2122'>2122</a>
+<a name='L2123'></a><a href='#L2123'>2123</a>
+<a name='L2124'></a><a href='#L2124'>2124</a>
+<a name='L2125'></a><a href='#L2125'>2125</a>
+<a name='L2126'></a><a href='#L2126'>2126</a>
+<a name='L2127'></a><a href='#L2127'>2127</a>
+<a name='L2128'></a><a href='#L2128'>2128</a>
+<a name='L2129'></a><a href='#L2129'>2129</a>
+<a name='L2130'></a><a href='#L2130'>2130</a>
+<a name='L2131'></a><a href='#L2131'>2131</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3199,6 +3220,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3276,7 +3319,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">141x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -5304,6 +5346,28 @@ PARAMETER
 [CALL]]
 */
 &nbsp;
+// Shared frozen defaults: one type description exists per declaration node
+// (hundreds of thousands on large files), so a fresh default object per
+// description adds up to serious memory. These are read-only fallbacks - any
+// non-default value is passed in by the caller as its own object.
+const DEFAULT_UNALIGNED: Alignment = Object.freeze({
+  type: AlignmentType.Unaligned,
+});
+const DEFAULT_ALIGNED: Alignment = Object.freeze({
+  type: AlignmentType.Aligned,
+  alignment: 1,
+} as const); //TODO no documentation of default value for alignment
+const EMPTY_WITNESSES: AttributeWitnesses = Object.freeze({
+  order: Object.freeze([]) as unknown as AttributeKind[],
+  witnesses: Object.freeze({}),
+});
+&nbsp;
+// Mirrors the failure mode of the previous per-object wrapper, which called an
+// absent provider.
+function <span class="fstat-no" title="function not covered" >missingToString(): string {</span>
+<span class="cstat-no" title="statement not covered" >  throw new TypeError("toString is not a function");</span>
+}
+&nbsp;
 function createBaseTypeDescription(
   type: TypeDescriptions.TypeDescriptionType,
   {
@@ -5331,9 +5395,9 @@ function createBaseTypeDescription(
 ): BaseTypeDescriptionProps {
   if (!alignment) {
     if (type === PictureType || type === StringType) {
-      alignment = { type: AlignmentType.Unaligned };
+      alignment = DEFAULT_UNALIGNED;
     } else {
-      alignment = { type: AlignmentType.Aligned, alignment: 1 }; //TODO no documentation of default value for alignment
+      alignment = DEFAULT_ALIGNED;
     }
   }
 &nbsp;
@@ -5383,10 +5447,9 @@ function createBaseTypeDescription(
     variable,
     volatility,
 &nbsp;
-    witnesses: witnesses ?? { order: [], witnesses: {} },
-    toString() {
-      return toString!();
-    },
+    witnesses: witnesses ?? EMPTY_WITNESSES,
+    // The provider function itself, not a per-object wrapper closure around it.
+    toString: toString ?? <span class="branch-1 cbranch-no" title="branch not covered" >missingToString,</span>
   };
 }
 &nbsp;
@@ -6397,7 +6460,7 @@ export interface BuilderDeclareItem {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-17T12:22:32.796Z
+                at 2026-08-18T07:53:09.762Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

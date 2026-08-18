@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.55% </span>
+                <span class="strong">97.43% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>43/45</span>
+                <span class='fraction'>38/39</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.65% </span>
+                <span class="strong">92.59% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>26/29</span>
+                <span class='fraction'>25/27</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.55% </span>
+                <span class="strong">97.43% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>43/45</span>
+                <span class='fraction'>38/39</span>
             </div>
         
             
@@ -230,14 +230,7 @@
 <a name='L165'></a><a href='#L165'>165</a>
 <a name='L166'></a><a href='#L166'>166</a>
 <a name='L167'></a><a href='#L167'>167</a>
-<a name='L168'></a><a href='#L168'>168</a>
-<a name='L169'></a><a href='#L169'>169</a>
-<a name='L170'></a><a href='#L170'>170</a>
-<a name='L171'></a><a href='#L171'>171</a>
-<a name='L172'></a><a href='#L172'>172</a>
-<a name='L173'></a><a href='#L173'>173</a>
-<a name='L174'></a><a href='#L174'>174</a>
-<a name='L175'></a><a href='#L175'>175</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L168'></a><a href='#L168'>168</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -271,8 +264,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">53315x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">53315x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -335,14 +326,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">53208x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">53208x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">53208x</span>
-<span class="cline-any cline-yes">11890x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">53208x</span>
 <span class="cline-any cline-yes">53208x</span>
@@ -351,7 +338,6 @@
 <span class="cline-any cline-yes">56658x</span>
 <span class="cline-any cline-yes">56658x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">53208x</span>
 <span class="cline-any cline-yes">53208x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -448,8 +434,6 @@ export class QualifiedSyntaxNode {
    */
   public isRedeclared: boolean | undefined = undefined;
 &nbsp;
-  private _id: string | null = null;
-&nbsp;
   private constructor(
     public readonly token: Token,
     public readonly node: SyntaxNode,
@@ -507,26 +491,21 @@ export class QualifiedSyntaxNode {
   }
 &nbsp;
   getId(): string {
-    // Computing the ID is somewhat expensive, cache the result
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (this._id !== null) {
-<span class="cstat-no" title="statement not covered" >      return this._id;</span>
-    }
-    const parts: string[] = [];
-    // Ensure that implicit and explicit declarations get different IDs
-    // Some declarations (mainly parameters) are first implicitly declared
-    // and then augmented to be explicit declarations
-    if (this.isImplicit) {
-      parts.push("implicit");
-    }
+    // FYI: We used to cache this ID - but it's actually only used once per node, so caching is not necessary.
+    let id = this.isImplicit
+      ? // Ensure that implicit and explicit declarations get different IDs
+        // Some declarations (mainly parameters) are first implicitly declared
+        // and then augmented to be explicit declarations
+        "implicit"
+      : "";
     let current: QualifiedSyntaxNode | null = this;
     while (current) {
       // The ID of the token uniquely identifies the node in the source code
       // It can sometimes be undefined, still push something to avoid collisions
-      parts.push(current.token.id?.toString() || <span class="branch-1 cbranch-no" title="branch not covered" >"NaN")</span>;
+      id += "_" + (current.token.id ?? <span class="branch-1 cbranch-no" title="branch not covered" >"NaN");</span>
       current = current.parent;
     }
-    this._id = parts.join("_");
-    return this._id;
+    return id;
   }
 &nbsp;
   /**
@@ -592,7 +571,7 @@ export class QualifiedSyntaxNode {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-17T12:22:32.965Z
+                at 2026-08-18T07:53:09.954Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
