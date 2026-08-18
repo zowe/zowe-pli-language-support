@@ -72,6 +72,7 @@ import {
   Label,
   TestDiagnostic,
 } from "./abstract-test-builder";
+import { Messages, TestGlobalConfigLoader } from "../src/utils/messages";
 
 export type { DiagnosticExpectation, Label, TestDiagnostic };
 
@@ -206,7 +207,8 @@ export class TestBuilder extends AbstractTestBuilder {
       const fs = new VirtualFileSystemProvider();
       this.options.fs = fs;
     }
-    setDefaultTestWorkspace(createTestWorkspace(this.options.fs));
+    const loader = new TestGlobalConfigLoader(this.extractGlobalConfig());
+    setDefaultTestWorkspace(createTestWorkspace(this.options.fs, loader));
     for (const [uri, file] of this.files) {
       await this.options.fs.writeFile(UriUtils.toUri(uri), file.output);
     }
@@ -1593,42 +1595,59 @@ Available code actions for label "${label}" and URI "${uri}": ${codeActions.map(
     return `${uriOverride}:${line + lineOffset}:${character + characterOffset}`;
   }
 
-  // private extractGlobalConfig(): Messages.GlobalConfig {
-  //   const pliPgmConf = "pli.pgm_conf";
-  //   const pliProcGrps = "pli.proc_grps";
-  //   let pgmConf: Messages.GlobalConfigEntry | undefined;
-  //   let procGrps: Messages.GlobalConfigEntry | undefined;
-  //   const settingsFile = "/.vscode/settings.json";
-  //   for (const [uri, file] of this.files) {
-  //     if (uri.endsWith(settingsFile)) {
-  //       try {
-  //         const config = JSON.parse(file.textDocument.getText());
-  //         if (config && typeof config === "object") {
-  //           if (pliPgmConf in config) {
-  //             pgmConf = {
-  //               uri,
-  //               configKey: pliPgmConf,
-  //               containerPath: [],
-  //             };
-  //           }
-  //           if (pliProcGrps in config) {
-  //             procGrps = {
-  //               uri,
-  //               configKey: pliProcGrps,
-  //               containerPath: [],
-  //             };
-  //           }
-  //         }
-  //       } catch (e) {
-  //         // Ignore JSON parsing errors
-  //       }
-  //     }
-  //   }
-  //   return {
-  //     pgmConf,
-  //     procGrps,
-  //   };
-  // }
+  /**
+   * Builds the fake {@link Messages.GlobalConfig} from special test files:
+   * `.vscode/settings.json` -> `workspace` scope, `user-settings.json` ->
+   * `user` scope. Both may be present to test workspace-over-user precedence.
+   */
+  private extractGlobalConfig(): Messages.GlobalConfig {
+    const pliPgmConf = "pli.pgm_conf";
+    const pliProcGrps = "pli.proc_grps";
+    const scopeFiles: Array<{
+      suffix: string;
+      scope: Messages.GlobalConfigScope;
+    }> = [
+      { suffix: "/.vscode/settings.json", scope: "workspace" },
+      { suffix: "/user-settings.json", scope: "user" },
+    ];
+    const pgmConf: Messages.GlobalConfigEntry[] = [];
+    const procGrps: Messages.GlobalConfigEntry[] = [];
+    for (const [uri, file] of this.files) {
+      const match = scopeFiles.find(
+        ({ suffix }) => uri.endsWith(suffix) || uri === suffix.slice(1),
+      );
+      if (!match) {
+        continue;
+      }
+      try {
+        const config = JSON.parse(file.textDocument.getText());
+        if (config && typeof config === "object") {
+          if (pliPgmConf in config) {
+            pgmConf.push({
+              uri,
+              configKey: pliPgmConf,
+              containerPath: [],
+              scope: match.scope,
+            });
+          }
+          if (pliProcGrps in config) {
+            procGrps.push({
+              uri,
+              configKey: pliProcGrps,
+              containerPath: [],
+              scope: match.scope,
+            });
+          }
+        }
+      } catch (e) {
+        // Ignore JSON parsing errors
+      }
+    }
+    return {
+      pgmConf: pgmConf.length > 0 ? pgmConf : undefined,
+      procGrps: procGrps.length > 0 ? procGrps : undefined,
+    };
+  }
 }
 
 function formatPosition(position: Position): string {
