@@ -32,7 +32,7 @@
       ]
     },
     {
-      "name": "string.double.single.pli",
+      "name": "string.quoted.double.pli",
       "begin": "\"",
       "end": "\"|$",
       "patterns": [
