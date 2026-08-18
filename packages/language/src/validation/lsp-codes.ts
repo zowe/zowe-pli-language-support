@@ -63,6 +63,12 @@ export const LspCodes = {
     message: (name: string) => `Unknown identifier '${name}'`,
   },
 
+  MissingEnd: {
+    code: "LSPME001",
+    severity: Severity.S,
+    message: () => `Missing END statement for procedure.`,
+  },
+
   BuiltinAttributes: {
     IsForbiddenUsage: {
       code: "LSPTS001",
@@ -76,8 +82,9 @@ export const LspCodes = {
     UnresolvedEntry: {
       code: "COPC01",
       severity: Severity.E,
-      message: (lib: string) =>
-        `Plugin Configuration failed to resolve library entry '${lib}'`,
+      message: (lib: string, reason?: string) =>
+        `Plugin Configuration failed to resolve library entry '${lib}'.` +
+        (reason ? ` ${reason}` : ""),
     },
 
     ParseError: {

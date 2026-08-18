@@ -30,6 +30,7 @@ import {
 import { IBM1213I_unreferenced_procedure } from "./compiler/IBM1213I-unreferenced-procedure";
 import { checkProcedureCallsDimensions } from "./language-server/call-dimensions";
 import { checkLabelPrefixSyntax } from "./language-server/label-prefix-syntax";
+import { checkProcedureEnd } from "./language-server/procedure-end";
 
 /**
  * A function that accepts a diagnostic for PL/I validation
@@ -56,6 +57,7 @@ export function registerPliValidationChecks(): ValidationChecks {
       IBM1388IE_NODESCRIPTOR_attribute_is_invalid_when_any_parameter_has_NONCONNECTED_attribute,
       IBM2412I_IBM2410I_IBM2409I_handle_return_stmt_and_returns_att,
       IBM1213I_unreferenced_procedure,
+      checkProcedureEnd,
     ],
     ReferenceItem: [
       checkImplicitBuiltins,
