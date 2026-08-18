@@ -92,6 +92,15 @@ export namespace Messages {
     "pli/existingFile",
   );
 
+  /** How a file matches `pgm_conf.json` program entries. */
+  export type ProgramConfigMatchKind = "exact" | "glob" | "none";
+
+  /** Backs client-side language identification of configured program entries. */
+  export const MatchesProgramConfig = createRequestType<
+    string,
+    ProgramConfigMatchKind
+  >("pli/matchesProgramConfig");
+
   /**
    * Notification sent to the language client to inform that an operation is in progress.
    * Client should show a progress indicator until the operation is complete.

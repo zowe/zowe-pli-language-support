@@ -478,6 +478,19 @@ export function startLanguageServer(
     return compilationUnit !== undefined;
   });
 
+  onRequest(
+    connection,
+    Messages.MatchesProgramConfig,
+    (uriString: string): Messages.ProgramConfigMatchKind => {
+      const uri = UriUtils.toUri(uriString);
+      const context = compilationUnitHandler.getWorkspaceFolderOf(uri);
+      if (!context) {
+        return "none";
+      }
+      return context.config.classifyProgramMatch(uri);
+    },
+  );
+
   /**
    * Resolves a {@link JsonItemMeta} into a client-facing
    * {@link Messages.PluginConfigEntryLocation}.

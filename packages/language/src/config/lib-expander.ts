@@ -46,7 +46,7 @@ import {
  * diagnostics; the lib-expander itself emits no LSP types.
  */
 
-const DATASET_MEMBER_FILE_REGEX = /^(.+)\((.+)\)(\..+)?$/;
+export const DATASET_MEMBER_FILE_REGEX = /^(.+)\((.+)\)(\..+)?$/;
 
 async function safeStat(
   fs: FileSystemProvider,

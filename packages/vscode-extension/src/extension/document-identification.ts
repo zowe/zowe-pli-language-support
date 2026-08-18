@@ -44,13 +44,16 @@ async function checkFileType(
     // Only attempt to identify PL/I documents that are currently marked as plaintext
     return;
   }
-  if (
-    // Assert that this can even be a PL/I document
-    // (and isn't something else, like a .git file or a listing file)
-    !isNotPliDocument(document) &&
-    // Check that it likely is a PL/I document
-    (await isPossiblePliDocument(document, lc))
-  ) {
+  if (isNotPliDocument(document)) {
+    // Never reclassify obvious non-PL/I files, even if a broad glob matches.
+    return;
+  }
+  const programMatch = await classifyProgramConfig(document, lc);
+  if (programMatch === "exact") {
+    vscode.languages.setTextDocumentLanguage(document, "pli");
+    return;
+  }
+  if (await isPossiblePliDocument(document, lc)) {
     proposePliLanguage(proposedFiles, document);
   }
 }
@@ -85,6 +88,22 @@ function isNotPliDocument(document: vscode.TextDocument): boolean {
     return true;
   }
   return false;
+}
+
+/** Fails safe to "none" so the caller falls back to heuristic detection. */
+async function classifyProgramConfig(
+  document: vscode.TextDocument,
+  lc: BaseLanguageClient,
+): Promise<Messages.ProgramConfigMatchKind> {
+  try {
+    return await sendRequest(
+      lc,
+      Messages.MatchesProgramConfig,
+      document.uri.toString(),
+    );
+  } catch {
+    return "none";
+  }
 }
 
 async function isPossiblePliDocument(
