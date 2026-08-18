@@ -14,7 +14,7 @@
     {
       "name": "string.quoted.single.pli",
       "begin": "'",
-      "end": "'",
+      "end": "'|$",
       "patterns": [
         {
           "include": "#string-character-escape"
@@ -22,9 +22,9 @@
       ]
     },
     {
-      "name": "string.double.single.pli",
+      "name": "string.quoted.double.pli",
       "begin": "\"",
-      "end": "\"",
+      "end": "\"|$",
       "patterns": [
         {
           "include": "#string-character-escape"
