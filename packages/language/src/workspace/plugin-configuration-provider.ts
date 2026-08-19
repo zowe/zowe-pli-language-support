@@ -208,9 +208,13 @@ export class PluginConfigurationProvider {
   private processGroupConfigs: Map<string, GroupRecord>;
 
   /**
-   * The workspace path that we're initialized with.
+   * The workspace path that we're initialized with. `undefined` when this
+   * provider backs the fallback workspace that serves files outside any real
+   * workspace folder (or hasn't been initialized yet). Without a workspace
+   * there is no base to resolve workspace-relative paths against, so such
+   * libs are unresolvable and must not be reported as unresolved.
    */
-  private workspacePath: URI;
+  private workspaceUri: URI | undefined;
 
   /**
    * Per-source snapshots from the most recent postProcessProcessGroups run,
@@ -246,15 +250,6 @@ export class PluginConfigurationProvider {
   private readonly longRunningOperation: LongRunningOperation;
   private readonly globalConfigLoader: GlobalConfigLoader;
 
-  /**
-   * True when this provider backs the fallback workspace (rooted at the
-   * filesystem root) that serves files outside any real workspace folder.
-   * A fallback workspace has no base to resolve workspace-relative library
-   * paths against, so it must not report such libs as unresolved. Set once
-   * via {@link markAsFallbackWorkspace} right after construction.
-   */
-  private isFallbackWorkspace = false;
-
   constructor(
     fs: FileSystemProvider,
     globalConfigLoader: GlobalConfigLoader,
@@ -265,15 +260,6 @@ export class PluginConfigurationProvider {
     this.globalConfigLoader = globalConfigLoader;
     this.programConfigs = new Map<string, ProgramRecord>();
     this.processGroupConfigs = new Map<string, GroupRecord>();
-    this.workspacePath = UriUtils.parse(""); // empty workspace to start with
-  }
-
-  /**
-   * Marks this provider as backing the fallback workspace. See
-   * {@link isFallbackWorkspace}. Must be called before {@link init}.
-   */
-  public markAsFallbackWorkspace(): void {
-    this.isFallbackWorkspace = true;
   }
 
   /**
@@ -323,11 +309,15 @@ export class PluginConfigurationProvider {
   /**
    * Initializes the plugin configuration provider with a workspace path, using any plugin configs present in the workspace.
    *
-   * @param workspacePath The full path to the workspace to load plugin configurations from
+   * @param workspacePath The full path to the workspace to load plugin
+   *   configurations from, or `undefined` for the fallback workspace (config
+   *   then comes from settings sources only).
    * @returns Diagnostics keyed by config URI
    */
-  public async init(workspacePath: URI): Promise<PluginConfigLspDiagnostics> {
-    this.workspacePath = workspacePath;
+  public async init(
+    workspacePath: URI | undefined,
+  ): Promise<PluginConfigLspDiagnostics> {
+    this.workspaceUri = workspacePath;
     return this.loadConfigurations();
   }
 
@@ -337,10 +327,6 @@ export class PluginConfigurationProvider {
    * dirs are not "lib directories" in the file-membership sense).
    */
   private buildLibFileMatchers(): void {
-    let wsPrefix = this.workspacePath.toString(true).toLowerCase();
-    if (wsPrefix && !wsPrefix.endsWith("/")) {
-      wsPrefix += "/";
-    }
     const matchers = new Map<string, Set<string>>();
     for (const processGroup of this.processGroupConfigs.values()) {
       const exts = processGroup.includeExtensions.map((item) =>
@@ -356,8 +342,12 @@ export class PluginConfigurationProvider {
         if (!isLibsDir(lib)) {
           continue;
         }
-        const dir = lib.path.replace(/[\\/]+$/, "").toLowerCase();
-        const prefix = `${wsPrefix}${dir}/`;
+        const dirUri = resolveLibUri(lib.path, this.workspaceUri);
+        if (!dirUri) {
+          continue;
+        }
+        const dir = UriUtils.normalizePath(dirUri.toString(true)).toLowerCase();
+        const prefix = `${dir}/`;
         let set = matchers.get(prefix);
         if (!set) {
           set = new Set<string>();
@@ -431,7 +421,7 @@ export class PluginConfigurationProvider {
    *   LSP clears prior diagnostics on files that are no longer a source.
    */
   private async loadConfigurations(): Promise<PluginConfigLspDiagnostics> {
-    const workspaceUri = UriUtils.toUri(this.workspacePath);
+    const workspaceUri = this.workspaceUri;
     const cancel = this.longRunningOperation.start(
       "Processing plugin configuration...",
     );
@@ -446,17 +436,14 @@ export class PluginConfigurationProvider {
 
     const diagnostics: PluginConfigDiagnostics = [];
 
-    const plipluginDir = UriUtils.joinPath(workspaceUri, ".pliplugin");
-    const plipluginPgmConfUri = UriUtils.joinPath(
-      plipluginDir,
-      "pgm_conf.json",
-    );
-    const plipluginProcGrpsUri = UriUtils.joinPath(
-      plipluginDir,
-      "proc_grps.json",
-    );
+    const plipluginDir =
+      workspaceUri && UriUtils.joinPath(workspaceUri, ".pliplugin");
+    const plipluginPgmConfUri =
+      plipluginDir && UriUtils.joinPath(plipluginDir, "pgm_conf.json");
+    const plipluginProcGrpsUri =
+      plipluginDir && UriUtils.joinPath(plipluginDir, "proc_grps.json");
 
-    const global = await this.fetchGlobalSettings(this.workspacePath);
+    const global = await this.fetchGlobalSettings(this.workspaceUri);
 
     const [pgmSource, procGrpsSource] = await Promise.all([
       this.resolveConfigSource(plipluginPgmConfUri, global?.pgmConf),
@@ -476,11 +463,10 @@ export class PluginConfigurationProvider {
       diagnostics.push(...result.diagnostics);
       if (result.config) {
         for (const config of result.config) {
-          const resolvedUri = this.resolveProgramPath(
+          const key = this.resolveProgramKey(
             config.program.value,
-            this.workspacePath,
+            this.workspaceUri,
           );
-          const key = resolvedUri.toString();
           if (!selectedPrograms.has(key)) {
             selectedPrograms.set(key, config);
           }
@@ -488,7 +474,7 @@ export class PluginConfigurationProvider {
       }
     }
     this.applyProgramConfigs(
-      this.workspacePath,
+      this.workspaceUri,
       Array.from(selectedPrograms.values()),
     );
 
@@ -530,10 +516,13 @@ export class PluginConfigurationProvider {
     this.configDiagnostics = diagnostics;
     const lspDiagnostics = await this.convertDiagnosticsToLsp();
     // Now override which URIs we published diagnostics for this time
-    this.previouslyPublishedUris = new Set([
-      plipluginPgmConfUri.toString(),
-      plipluginProcGrpsUri.toString(),
-    ]);
+    this.previouslyPublishedUris = new Set<string>();
+    if (plipluginPgmConfUri) {
+      this.previouslyPublishedUris.add(plipluginPgmConfUri.toString());
+    }
+    if (plipluginProcGrpsUri) {
+      this.previouslyPublishedUris.add(plipluginProcGrpsUri.toString());
+    }
     for (const diagnostic of diagnostics) {
       const uri = diagnostic.uri?.toString();
       if (uri) {
@@ -580,7 +569,7 @@ export class PluginConfigurationProvider {
    * this round-trips to the client; in tests it's a fixture-backed loader.
    */
   private async fetchGlobalSettings(
-    workspaceUri: URI,
+    workspaceUri: URI | undefined,
   ): Promise<Messages.GlobalConfig | undefined> {
     return this.globalConfigLoader.loadGlobalConfig(workspaceUri);
   }
@@ -645,7 +634,7 @@ export class PluginConfigurationProvider {
    * lazily). Returns `undefined` if no tier provides the file.
    */
   private async resolveConfigSource(
-    pluginUri: URI,
+    pluginUri: URI | undefined,
     entries: Messages.GlobalConfigEntry[] | undefined,
   ): Promise<ConfigSource | undefined> {
     return (
@@ -666,7 +655,7 @@ export class PluginConfigurationProvider {
   public async writeProcessGroupsFile(
     content = PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT,
   ): Promise<void> {
-    const workspaceUri = this.getWorkspacePath();
+    const workspaceUri = this.requireWorkspaceUri();
     try {
       await this.fs.writeFile(
         UriUtils.joinPath(
@@ -704,7 +693,7 @@ export class PluginConfigurationProvider {
   public async writeProgramConfigFile(
     content: PgmsConfig = PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT,
   ): Promise<void> {
-    const workspaceUri = this.getWorkspacePath();
+    const workspaceUri = this.requireWorkspaceUri();
     try {
       await this.fs.writeFile(
         UriUtils.joinPath(workspaceUri, PluginConfiguration.PROGRAM_FILE_PATH),
@@ -717,16 +706,33 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Return the workspace URI that this provider was initialized with
+   * Return the workspace URI that this provider was initialized with, or
+   * `undefined` for the fallback workspace.
    */
-  public getWorkspacePath(): URI {
-    return this.workspacePath;
+  public getWorkspaceUri(): URI | undefined {
+    return this.workspaceUri;
+  }
+
+  /**
+   * The workspace URI for operations that make no sense without one
+   * (config file authoring). Throws on the fallback workspace.
+   */
+  public requireWorkspaceUri(): URI {
+    if (!this.workspaceUri) {
+      throw new Error(
+        "Operation requires a workspace, but this provider has none (fallback workspace).",
+      );
+    }
+    return this.workspaceUri;
   }
 
   public isPgmConfigDocumentUri(uri: URI | string): boolean {
+    if (!this.workspaceUri) {
+      return false;
+    }
     const inputUri = typeof uri === "string" ? UriUtils.toUri(uri) : uri;
     const pgmConfigUri = UriUtils.joinPath(
-      this.getWorkspacePath(),
+      this.workspaceUri,
       ".pliplugin",
       "pgm_conf.json",
     );
@@ -734,9 +740,12 @@ export class PluginConfigurationProvider {
   }
 
   public isProcGrpsDocumentUri(uri: URI | string): boolean {
+    if (!this.workspaceUri) {
+      return false;
+    }
     const inputUri = typeof uri === "string" ? UriUtils.toUri(uri) : uri;
     const procGrpsUri = UriUtils.joinPath(
-      this.getWorkspacePath(),
+      this.workspaceUri,
       ".pliplugin",
       "proc_grps.json",
     );
@@ -780,13 +789,13 @@ export class PluginConfigurationProvider {
 
     // The fallback workspace has no base for workspace-relative paths, so skip
     // "unresolved" diagnostics for them (absolute-path libs are still checked).
-    const isFallback = this.isFallbackWorkspace;
+    const isFallback = this.workspaceUri === undefined;
 
     for (const record of this.processGroupConfigs.values()) {
       const expanded = await expandGroup(
         record.libs,
         this.fs,
-        this.workspacePath,
+        this.workspaceUri,
       );
       record.computedLibs = expanded.libs;
 
@@ -796,11 +805,13 @@ export class PluginConfigurationProvider {
       // is exact and duplicate-safe. Computed once per pgroup and shared by all
       // of its unresolved diagnostics so the "remove all" quick fix can rewrite
       // the array without re-parsing.
-      const unresolvedItems = new Set(expanded.unresolved);
+      const unresolvedItems = new Set(
+        expanded.unresolved.map((item) => item[0]),
+      );
       const survivingLibs = record.libs
         .filter((item) => !unresolvedItems.has(item))
         .map((item) => item.value);
-      for (const libItem of expanded.unresolved) {
+      for (const [libItem, reason] of expanded.unresolved) {
         // Skip relative libs in the fallback workspace (see above).
         if (isFallback && !this.isAbsolutePath(libItem.value)) {
           continue;
@@ -822,6 +833,7 @@ export class PluginConfigurationProvider {
             sourceUri,
             range,
             lib,
+            reason,
           ),
           data,
         };
@@ -886,7 +898,10 @@ export class PluginConfigurationProvider {
         if (!isLibsDir(lib)) {
           continue;
         }
-        const libUri = resolveLibUri(lib.path, this.workspacePath);
+        const libUri = resolveLibUri(lib.path, this.workspaceUri);
+        if (!libUri) {
+          continue;
+        }
         // Dedupe: one warning per program entry overlapping this lib dir,
         // even if many files in the dir match that entry.
         const seenProgramKeys = new Set<string>();
@@ -985,20 +1000,17 @@ export class PluginConfigurationProvider {
    * post-processed so abstract options are built.
    */
   private applyProgramConfigs(
-    workspaceUri: URI,
+    workspaceUri: URI | undefined,
     programConfigs: ProgramConfig[],
   ): void {
     this.programConfigs.clear();
 
     for (const config of programConfigs) {
-      const resolvedUri = this.resolveProgramPath(
-        config.program.value,
-        workspaceUri,
-      );
+      const key = this.resolveProgramKey(config.program.value, workspaceUri);
       // Wrap the loaded config into a ProgramRecord. `abstractOptions` and
       // `issues` are filled in by `postProcessProgramConfigs` once the
       // bound process group is also available.
-      this.programConfigs.set(resolvedUri.path, {
+      this.programConfigs.set(key, {
         ...config,
         abstractOptions: { options: [], tokens: [], issues: [], comments: [] },
         issues: [],
@@ -1008,11 +1020,16 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Resolves a program path to an absolute URI.
-   * Normalizes backslashes to forward slashes, then returns the path as-is if absolute,
-   * or joins it with the workspace URI if relative.
+   * Resolves a program path to the key it's matched under (see
+   * {@link getProgramConfig}). Normalizes backslashes to forward slashes,
+   * then uses the path as-is if absolute, or joins it with the workspace URI
+   * if relative. Without a workspace (the fallback workspace), a relative
+   * path stays as-is and matches unanchored against full file paths.
    */
-  private resolveProgramPath(programPath: string, workspaceUri: URI): URI {
+  private resolveProgramKey(
+    programPath: string,
+    workspaceUri: URI | undefined,
+  ): string {
     let normalizedProgramPath = UriUtils.normalizePath(programPath);
     // A bare "." or "./" means the workspace folder itself, matching its direct
     // (non-recursive) children. Expressed as the "*" glob, since joining "."
@@ -1021,9 +1038,12 @@ export class PluginConfigurationProvider {
       normalizedProgramPath = "*";
     }
     if (this.isAbsolutePath(normalizedProgramPath)) {
-      return UriUtils.toUri(normalizedProgramPath);
+      return UriUtils.toUri(normalizedProgramPath).path;
     }
-    return UriUtils.joinPath(workspaceUri, normalizedProgramPath);
+    if (!workspaceUri) {
+      return normalizedProgramPath;
+    }
+    return UriUtils.joinPath(workspaceUri, normalizedProgramPath).path;
   }
 
   /**
@@ -1063,7 +1083,7 @@ export class PluginConfigurationProvider {
 
   private getConfigUri(fileName: string): string {
     return UriUtils.joinPath(
-      UriUtils.toUri(this.workspacePath),
+      this.requireWorkspaceUri(),
       ".pliplugin",
       fileName,
     ).toString();
@@ -1221,7 +1241,10 @@ export class PluginConfigurationProvider {
     const uris: URI[] = [];
     for (const config of this.processGroupConfigs.values()) {
       for (const lib of config.computedLibs) {
-        const libUri = resolveLibUri(lib.path, this.workspacePath);
+        const libUri = resolveLibUri(lib.path, this.workspaceUri);
+        if (!libUri) {
+          continue;
+        }
         uris.push(isLibsDir(lib) ? libUri : UriUtils.dirname(libUri));
       }
     }

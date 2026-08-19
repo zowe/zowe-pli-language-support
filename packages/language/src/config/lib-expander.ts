@@ -87,6 +87,8 @@ export enum ExpandedLibKind {
  */
 export interface ExpandedLib {
   kind: ExpandedLibKind;
+  /** The reason why a lib might be unresolved. */
+  reason?: string;
   libItem: JsonItem<string>;
   /**
    * Computed entries. Empty for unresolved. May be multiple {@link LibsDirEntry}s
@@ -103,8 +105,11 @@ export interface ExpandedLib {
  */
 export interface ExpandedGroup {
   libs: LibsEntry[];
-  /** Lib items that didn't resolve to anything on disk. */
-  unresolved: JsonItem<string>[];
+  /**
+   * Lib items that didn't resolve to anything on disk.
+   * The second tuple element is the reason why it was unresolved, if any.
+   */
+  unresolved: [JsonItem<string>, string | undefined][];
 }
 
 /**
@@ -134,7 +139,7 @@ function baseDepthOf(base: string): number {
 async function planLibs(
   libItems: readonly JsonItem<string>[],
   fs: FileSystemProvider,
-  workspace: URI,
+  workspace: URI | undefined,
 ): Promise<PlannedLib[]> {
   const planned: PlannedLib[] = [];
   for (let configIndex = 0; configIndex < libItems.length; configIndex++) {
@@ -167,7 +172,7 @@ async function planLibs(
 export async function expandGroup(
   libItems: readonly JsonItem<string>[],
   fs: FileSystemProvider,
-  workspace: URI,
+  workspace: URI | undefined,
 ): Promise<ExpandedGroup> {
   const planned = await planLibs(libItems, fs, workspace);
   const expansions = await Promise.all(
@@ -176,11 +181,11 @@ export async function expandGroup(
 
   const seen = new Set<string>();
   const sortable: SortableLib[] = [];
-  const unresolved: JsonItem<string>[] = [];
+  const unresolved: [JsonItem<string>, string | undefined][] = [];
   for (let i = 0; i < expansions.length; i++) {
     const expansion = expansions[i];
     if (expansion.kind === ExpandedLibKind.Unresolved) {
-      unresolved.push(expansion.libItem);
+      unresolved.push([expansion.libItem, expansion.reason]);
       continue;
     }
     const { configIndex, baseDepth } = planned[i];
@@ -213,9 +218,19 @@ export async function expandGroup(
 export async function expandLib(
   libItem: JsonItem<string>,
   fs: FileSystemProvider,
-  workspace: URI,
+  workspace: URI | undefined,
 ): Promise<ExpandedLib> {
   const libUri = resolveLibUri(libItem.value, workspace);
+  if (!libUri) {
+    // Workspace-relative lib with no workspace to resolve against
+    // (the fallback workspace).
+    return {
+      kind: ExpandedLibKind.Unresolved,
+      reason: "Cannot resolve relative lib without a workspace.",
+      libItem,
+      entries: [],
+    };
+  }
   let statIsDirectory = false;
   let statIsFile = false;
   const stats = await safeStat(fs, libUri);
@@ -231,7 +246,12 @@ export async function expandLib(
   if (statIsFile) {
     // Lib paths must point at a directory or a (notional) data set, not a
     // single file. Treat as unresolved so the user sees a diagnostic.
-    return { kind: ExpandedLibKind.Unresolved, libItem, entries: [] };
+    return {
+      kind: ExpandedLibKind.Unresolved,
+      reason: "Lib path points to a file.",
+      libItem,
+      entries: [],
+    };
   }
 
   // The path itself doesn't exist on disk. Try the data-set convention:
@@ -252,7 +272,19 @@ export async function expandLib(
     const dirEntries = [await expandDirectoryTree(libItem.value, libUri, fs)];
     return { kind: ExpandedLibKind.Directory, libItem, entries: dirEntries };
   }
-  return { kind: ExpandedLibKind.Unresolved, libItem, entries: [] };
+  // At this point, we cannot resolve the lib to anything in the file system
+  // Create a special error message for libs in the Zowe Explorer extension
+  let reason = "Path does not exist.";
+  if (libUri.scheme === "zowe-ds") {
+    reason =
+      "Please make sure that the Zowe Explorer extension is installed and configured correctly.";
+  }
+  return {
+    kind: ExpandedLibKind.Unresolved,
+    reason,
+    libItem,
+    entries: [],
+  };
 }
 
 /**
@@ -325,13 +357,16 @@ function joinBaseRel(base: string, rel: string): string {
 async function expandWildcardLib(
   pattern: string,
   fs: FileSystemProvider,
-  workspace: URI,
+  workspace: URI | undefined,
 ): Promise<string[]> {
   const { base, tail } = splitGlobPattern(pattern);
   if (!tail) {
     return [];
   }
   const root = resolveLibUri(base, workspace);
+  if (!root) {
+    return [];
+  }
   const tailHasGlobstar = tail.includes("**");
   // A bare-globstar tail (i.e. a `.../**` pattern) also matches the base
   // directory itself, which the walk below never reaches as a child.

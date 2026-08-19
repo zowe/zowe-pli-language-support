@@ -76,8 +76,9 @@ export const LspCodes = {
     UnresolvedEntry: {
       code: "COPC01",
       severity: Severity.E,
-      message: (lib: string) =>
-        `Plugin Configuration failed to resolve library entry '${lib}'`,
+      message: (lib: string, reason?: string) =>
+        `Plugin Configuration failed to resolve library entry '${lib}'.` +
+        (reason ? ` ${reason}` : ""),
     },
 
     ParseError: {

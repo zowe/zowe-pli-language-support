@@ -46,5 +46,8 @@ preprocessor.expectTokens(`
 
 // ...and only the unresolvable wildcard is flagged.
 verify.expectDiagnosticsAt("bad", {
-  message: code.LSP.PluginConfiguration.UnresolvedEntry.message("**/missing"),
+  message: code.LSP.PluginConfiguration.UnresolvedEntry.message(
+    "**/missing",
+    "Path does not exist.",
+  ),
 });

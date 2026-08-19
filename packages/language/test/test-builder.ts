@@ -315,16 +315,19 @@ export class TestBuilder extends AbstractTestBuilder {
       }
     }
     this.areProcGrpsSupplied = hasProcGrpsUri;
-    const config = defaultTestWorkspace().config;
     const workspaceUri = pgmConfUri
       ? UriUtils.dirname(UriUtils.dirname(UriUtils.toUri(pgmConfUri)))
-      : config.getWorkspacePath();
+      : UriUtils.toUri("file:///");
 
     // Skip default config creation if noDefaultConfig is set
     if (this.options.noDefaultConfig) {
       await defaultTestWorkspace().config.init(workspaceUri);
       return;
     }
+
+    // Writing the default config files requires an initialized workspace;
+    // the final init below reloads them.
+    await defaultTestWorkspace().config.init(workspaceUri);
 
     if (!pgmConfUri) {
       await defaultTestWorkspace().config.writeProgramConfigFile(

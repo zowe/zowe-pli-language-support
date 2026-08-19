@@ -238,7 +238,7 @@ async function tryLiveFile(
 function buildDatasetMemberUri(
   libPath: string,
   memberFileName: string,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme: string,
 ): URI | undefined {
   const datasetUri = resolveLibFileUri(libPath, undefined, workspace, scheme);
@@ -258,7 +258,7 @@ function buildDatasetMemberUri(
 function tryResolveDatasetMemberInDir(
   lib: LibsDirEntry,
   query: string,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme: string,
 ): URI | undefined {
   if (!MEMBER_NAME_REGEX.test(query)) {
@@ -282,7 +282,7 @@ async function tryResolveFileInDir(
   query: string,
   extensions: readonly string[],
   unit: CompilationUnit,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme: string,
 ): Promise<URI | undefined> {
   const matchedFileName = findIndexedFile(lib.files, query, extensions);
@@ -304,7 +304,7 @@ async function tryResolveFileInDir(
 function tryResolveStandaloneMemberInDDLib(
   lib: LibsDDEntry,
   memberName: string,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme: string,
 ): URI | undefined {
   const memberFileName = lib.members.get(memberName.toLowerCase());
@@ -323,7 +323,7 @@ function tryResolveDDNameMember(
   lib: LibsDDEntry,
   ddname: string,
   memberName: string,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme: string,
 ): URI | undefined {
   // Ensure that we match the whole ddname, not just a suffix of it
@@ -381,7 +381,7 @@ export async function resolveIncludeFileUri(
     return undefined;
   }
 
-  const workspaceUri = workspaceCtx.config.getWorkspacePath();
+  const workspaceUri = workspaceCtx.config.getWorkspaceUri();
   const scheme = context.entryUri.scheme;
   const includeExtensions = pgroup.includeExtensions.map((e) => e.value);
 
