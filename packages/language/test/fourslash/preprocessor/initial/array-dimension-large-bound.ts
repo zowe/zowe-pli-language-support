@@ -11,10 +11,11 @@
 
 /// <reference path="../../framework.ts" />
 
-//// %DCL X(999999999) CHAR;
+//// %DCL <|X|>(999999999) CHAR;
 //// %X1 = X(1);
 //// %ACT X1;
 //// X1
 
 // Array too large, interpreter should still be able to handle it
 preprocessor.expectTokens("");
+verify.expectDiagnosticsAt("X", code.LspCodes.TooLarge);
