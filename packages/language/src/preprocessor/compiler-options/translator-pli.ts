@@ -1325,7 +1325,14 @@ translator.flag("goff", ["GOFF"], ["NOGOFF"]);
 translator.rule(
   ["GONUMBER", "GN"],
   (option, options) => {
-    ensureArguments(option, 1, 1);
+    ensureArguments(option, 0, 1);
+    if (option.values.length === 0) {
+      // If no argument provided, the compiler defaults to GONUMBER(NOSEPARATE)
+      options.goNumber = {
+        separate: false,
+      };
+      return;
+    }
     const value = option.values[0];
     ensureType(value, "plain");
     if (!options.goNumber) {

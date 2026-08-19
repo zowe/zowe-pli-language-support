@@ -19,6 +19,7 @@
 ////*PROCESS <|4:NOGONUMBER|>;
 ////*PROCESS <|5:GN|>(NOSEPARATE);
 ////*PROCESS <|6:NGN|>;
+////*PROCESS <|9:GONUMBER|>;
 ////*PROCESS <|7:GN|>(<|8:separate|>);
 
 verify.expectDiagnosticsAt(1, {
@@ -43,6 +44,8 @@ verify.expectDiagnosticsAt(7, {
   message: code.CompilerOptions.DupeOptionIssue.message("GN"),
 });
 verify.noDiagnostics(8);
+// The compiler defaults to GONUMBER(NOSEPARATE) if no argument is provided, so 0 parameters are fine
+verify.noDiagnostics(9, code.CompilerOptions.InvalidParameterCount);
 verify.expectCompilerOptions({
   goNumber: {
     separate: true,
