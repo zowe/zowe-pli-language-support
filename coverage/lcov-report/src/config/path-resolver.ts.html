@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">94.44% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>17/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">93.75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>15/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">94.44% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>17/18</span>
             </div>
         
             
@@ -126,7 +126,16 @@
 <a name='L61'></a><a href='#L61'>61</a>
 <a name='L62'></a><a href='#L62'>62</a>
 <a name='L63'></a><a href='#L63'>63</a>
-<a name='L64'></a><a href='#L64'>64</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -155,15 +164,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5229x</span>
-<span class="cline-any cline-yes">5229x</span>
-<span class="cline-any cline-yes">5229x</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5226x</span>
-<span class="cline-any cline-yes">54x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5172x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5354x</span>
+<span class="cline-any cline-yes">5354x</span>
+<span class="cline-any cline-yes">5354x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5349x</span>
+<span class="cline-any cline-yes">80x</span>
+<span class="cline-any cline-yes">80x</span>
+<span class="cline-any cline-yes">80x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5269x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,6 +193,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">233x</span>
+<span class="cline-any cline-yes">233x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">233x</span>
 <span class="cline-any cline-yes">229x</span>
 <span class="cline-any cline-yes">229x</span>
@@ -212,21 +230,27 @@ import { URI, UriUtils } from "../utils/uri";
  * `scheme` parameter overrides the absolute-path scheme so include
  * resolution can match the entry file's scheme; lib expansion passes the
  * workspace scheme.
+ *
+ * A workspace-relative path cannot be resolved without a workspace
+ * (`workspace === undefined`, i.e. the fallback workspace) and yields
+ * `undefined`.
  */
 export function resolveLibUri(
   lib: string,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme?: string,
-): URI {
+): URI | undefined {
   lib = UriUtils.normalizePath(lib);
   const pathType = UriUtils.computePathType(lib);
   if (pathType === UriUtils.PathType.URI) {
     return UriUtils.parse(lib);
   }
   if (pathType === UriUtils.PathType.Absolute) {
-    return UriUtils.file(lib).with({ scheme: scheme ?? workspace.scheme });
+    const fileUri = UriUtils.file(lib);
+    const targetScheme = scheme ?? workspace?.scheme;
+    return targetScheme ? fileUri.with({ scheme: targetScheme }) : fileUri;
   }
-  return UriUtils.joinPath(workspace, lib);
+  return workspace ? UriUtils.joinPath(workspace, lib) : undefined;
 }
 &nbsp;
 /**
@@ -237,10 +261,13 @@ export function resolveLibUri(
 export function resolveLibFileUri(
   lib: string,
   fileName: string | undefined,
-  workspace: URI,
+  workspace: URI | undefined,
   scheme?: string,
 ): URI | undefined {
   const base = resolveLibUri(lib, workspace, scheme);
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!base) {
+<span class="cstat-no" title="statement not covered" >    return undefined;</span>
+  }
   if (fileName) {
     const joined = UriUtils.joinPath(base, fileName);
     if (!UriUtils.contains(base, joined)) {
@@ -259,7 +286,7 @@ export function resolveLibFileUri(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-18T13:14:09.436Z
+                at 2026-08-19T08:45:28.729Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

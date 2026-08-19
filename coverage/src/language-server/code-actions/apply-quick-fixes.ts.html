@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.57% </span>
+                <span class="strong">91.16% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>163/178</span>
+                <span class='fraction'>165/181</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">81.9% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>85/102</span>
+                <span class='fraction'>86/105</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.71% </span>
+                <span class="strong">91.27% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>155/169</span>
+                <span class='fraction'>157/172</span>
             </div>
         
             
@@ -572,7 +572,13 @@
 <a name='L507'></a><a href='#L507'>507</a>
 <a name='L508'></a><a href='#L508'>508</a>
 <a name='L509'></a><a href='#L509'>509</a>
-<a name='L510'></a><a href='#L510'>510</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L510'></a><a href='#L510'>510</a>
+<a name='L511'></a><a href='#L511'>511</a>
+<a name='L512'></a><a href='#L512'>512</a>
+<a name='L513'></a><a href='#L513'>513</a>
+<a name='L514'></a><a href='#L514'>514</a>
+<a name='L515'></a><a href='#L515'>515</a>
+<a name='L516'></a><a href='#L516'>516</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -644,6 +650,10 @@
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -975,8 +985,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1152,7 +1164,11 @@ export async function quickFixResolveInclude(
   );
   if (!unresolvedFilePath) return undefined;
 &nbsp;
-  const workspaceFolderUri = workspace.config.getWorkspacePath();
+  const workspaceFolderUri = workspace.config.getWorkspaceUri();
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!workspaceFolderUri) {
+    // Fallback workspace: there is no root to express the lib relative to.
+<span class="cstat-no" title="statement not covered" >    return undefined;</span>
+  }
 &nbsp;
   const parentFolder = UriUtils.computeWorkspaceRelativeParentFolder(
     unresolvedFilePath,
@@ -1215,7 +1231,7 @@ export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
   workspace: WorkspaceContext,
 ): Promise&lt;CodeAction | undefined&gt; {
-  const workspaceUri = workspace.config.getWorkspacePath();
+  const workspaceUri = workspace.config.getWorkspaceUri();
   const entryUri = diagnostic.data.entryUri as string;
   if (!workspaceUri || !entryUri) {
     return;
@@ -1484,12 +1500,14 @@ export function quickFixReplaceUnknownProcGroup(
   workspace: WorkspaceContext,
   documentUri?: string,
 ): CodeAction[] {
+  const workspaceUri = workspace.config.getWorkspaceUri();
   const uri =
     documentUri ??
-<span class="branch-1 cbranch-no" title="branch not covered" >    UriUtils.joinPath(</span>
-      workspace.config.getWorkspacePath(),
-      PluginConfiguration.PROGRAM_FILE_PATH,
-    ).toString();
+    (<span class="branch-1 cbranch-no" title="branch not covered" >workspaceUri &amp;&amp;</span>
+<span class="branch-2 cbranch-no" title="branch not covered" >      UriUtils.joinPath(</span>
+        workspaceUri,
+        PluginConfiguration.PROGRAM_FILE_PATH,
+      ).toString());
   const unknownEntryRange = diagnostic.range;
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!unknownEntryRange || !uri) {
 <span class="cstat-no" title="statement not covered" >    return [];</span>
@@ -1597,7 +1615,7 @@ export async function applyQuickFixes(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-18T13:14:09.239Z
+                at 2026-08-19T08:45:28.604Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
