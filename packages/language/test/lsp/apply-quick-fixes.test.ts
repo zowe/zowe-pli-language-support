@@ -51,7 +51,7 @@ const CODE_UNRESOLVED_LIB = fullCode(
 
 function procGrpsDocumentUri(): string {
   return UriUtils.joinPath(
-    pluginConfig.getWorkspacePath(),
+    pluginConfig.requireWorkspaceUri(),
     ".pliplugin",
     "proc_grps.json",
   ).toString();

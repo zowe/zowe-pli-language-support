@@ -414,17 +414,15 @@ export class CompilationUnitHandler {
 
   /** must be initialized at least once */
   async initializeFallbackFolder() {
-    const uri = UriUtils.toUri(`file://`);
     const workspace = new WorkspaceContext(
       this.fs,
       this.configLoader,
       this.longRunningOperation,
     );
-    // The fallback workspace has no real root; relative library paths from
-    // user-scope settings can't be resolved here and must not be flagged.
-    workspace.config.markAsFallbackWorkspace();
     this.fallbackWorkspace = workspace;
-    const diagnosticsByUri = await workspace.config.init(uri);
+    // The fallback workspace has no root; relative library paths from
+    // user-scope settings can't be resolved here and must not be flagged.
+    const diagnosticsByUri = await workspace.config.init(undefined);
     if (this.connection) {
       publishPluginConfigDiagnostics(this.connection, diagnosticsByUri);
     }

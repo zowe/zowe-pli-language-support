@@ -69,7 +69,11 @@ export async function quickFixResolveInclude(
   );
   if (!unresolvedFilePath) return undefined;
 
-  const workspaceFolderUri = workspace.config.getWorkspacePath();
+  const workspaceFolderUri = workspace.config.getWorkspaceUri();
+  if (!workspaceFolderUri) {
+    // Fallback workspace: there is no root to express the lib relative to.
+    return undefined;
+  }
 
   const parentFolder = UriUtils.computeWorkspaceRelativeParentFolder(
     unresolvedFilePath,
@@ -132,7 +136,7 @@ export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
   workspace: WorkspaceContext,
 ): Promise<CodeAction | undefined> {
-  const workspaceUri = workspace.config.getWorkspacePath();
+  const workspaceUri = workspace.config.getWorkspaceUri();
   const entryUri = diagnostic.data.entryUri as string;
   if (!workspaceUri || !entryUri) {
     return;
@@ -401,12 +405,14 @@ export function quickFixReplaceUnknownProcGroup(
   workspace: WorkspaceContext,
   documentUri?: string,
 ): CodeAction[] {
+  const workspaceUri = workspace.config.getWorkspaceUri();
   const uri =
     documentUri ??
-    UriUtils.joinPath(
-      workspace.config.getWorkspacePath(),
-      PluginConfiguration.PROGRAM_FILE_PATH,
-    ).toString();
+    (workspaceUri &&
+      UriUtils.joinPath(
+        workspaceUri,
+        PluginConfiguration.PROGRAM_FILE_PATH,
+      ).toString());
   const unknownEntryRange = diagnostic.range;
   if (!unknownEntryRange || !uri) {
     return [];

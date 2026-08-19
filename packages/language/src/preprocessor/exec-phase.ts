@@ -687,11 +687,10 @@ function buildIncludeDirective(
   }
   if (attempt.uri) {
     item.filePath = attempt.uri.toString();
-    const workspace = context.unit.services.workspace.config.getWorkspacePath();
-    item.relativeFilePath = UriUtils.composeRelativePath(
-      workspace.path,
-      attempt.uri.toString(),
-    );
+    const workspace = context.unit.services.workspace.config.getWorkspaceUri();
+    item.relativeFilePath = workspace
+      ? UriUtils.composeRelativePath(workspace.path, attempt.uri.toString())
+      : attempt.uri.toString();
   }
   const directive = ast.createIncludeDirective();
   directive.items.push(item);

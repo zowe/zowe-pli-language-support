@@ -29,6 +29,11 @@ export async function updateOrCreateConfig(
   workspace: WorkspaceContext,
 ): Promise<void> {
   const config = workspace.config;
+  const workspaceFolderUri = config.getWorkspaceUri();
+  if (!workspaceFolderUri) {
+    // Fallback workspace: there is no workspace to write config files into.
+    return;
+  }
   const hasExistingConfigs = config.hasRegisteredProgramConfigs();
 
   if (!hasExistingConfigs) {
@@ -44,7 +49,6 @@ export async function updateOrCreateConfig(
     return;
   }
 
-  const workspaceFolderUri = config.getWorkspacePath();
   const configFilePath = UriUtils.joinPath(
     workspaceFolderUri,
     PluginConfiguration.PROGRAM_FILE_PATH,

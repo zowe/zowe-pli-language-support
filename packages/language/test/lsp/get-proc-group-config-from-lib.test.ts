@@ -27,6 +27,7 @@ async function setupConfig(
     new TestGlobalConfigLoader({}),
     LongRunningOperationImpl.Dummy,
   );
+  await pluginConfig.init(UriUtils.toUri("file:///"));
   const processGroup = deserializeProcessGroup({
     name: "default",
     "include-extensions": [".pli"],
