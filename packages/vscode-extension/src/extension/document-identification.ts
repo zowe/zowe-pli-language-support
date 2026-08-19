@@ -48,12 +48,12 @@ async function checkFileType(
     // Never reclassify obvious non-PL/I files, even if a broad glob matches.
     return;
   }
-  const programMatch = await classifyProgramConfig(document, lc);
-  if (programMatch === "exact") {
+  const identity = await identifyFile(document, lc);
+  if (identity.programMatch === "exact") {
     vscode.languages.setTextDocumentLanguage(document, "pli");
     return;
   }
-  if (await isPossiblePliDocument(document, lc)) {
+  if (isPossiblePliDocument(document, identity.existing)) {
     proposePliLanguage(proposedFiles, document);
   }
 }
@@ -90,44 +90,34 @@ function isNotPliDocument(document: vscode.TextDocument): boolean {
   return false;
 }
 
-/** Fails safe to "none" so the caller falls back to heuristic detection. */
-async function classifyProgramConfig(
+async function identifyFile(
   document: vscode.TextDocument,
   lc: BaseLanguageClient,
-): Promise<Messages.ProgramConfigMatchKind> {
+): Promise<Messages.FileIdentification> {
   try {
     return await sendRequest(
       lc,
-      Messages.MatchesProgramConfig,
+      Messages.ExistingFile,
       document.uri.toString(),
     );
   } catch {
-    return "none";
+    return { existing: false, programMatch: "none" };
   }
 }
 
-async function isPossiblePliDocument(
+function isPossiblePliDocument(
   document: vscode.TextDocument,
-  lc: BaseLanguageClient,
-): Promise<boolean> {
+  existing: boolean,
+): boolean {
   // Try to do a simple check based on file extension first.
   const ext = UriUtils.extname(document.uri).toLowerCase();
   const possibleExt = ["pli", "pl1", "pl", "p1"];
   if (ext && possibleExt.includes(ext)) {
     return true;
   }
-  // If the file extension doesn't give it away, ask the language server if it recognizes the file.
-  try {
-    const exists = await sendRequest(
-      lc,
-      Messages.ExistingFile,
-      document.uri.toString(),
-    );
-    if (exists) {
-      return true;
-    }
-  } catch {
-    // Ignore errors, we'll just do a heuristic check below.
+  // Already a known compilation unit.
+  if (existing) {
+    return true;
   }
   // Then, look for PL/I specific constellations in the first 200 lines of the document.
   const text = document.getText(

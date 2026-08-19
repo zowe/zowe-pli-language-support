@@ -447,7 +447,6 @@ export function startLanguageServer(
       );
     });
   });
-
   onNotification(
     connection,
     Messages.OnDidChangePluginConfigSettingsNotification,
@@ -468,26 +467,19 @@ export function startLanguageServer(
   connection.onDidChangeWatchedFiles(async (params) => {
     await compilationUnitHandler.triggerOnFileChange(params, connection);
   });
-  onRequest(connection, Messages.ExistingFile, (uriString: string): boolean => {
-    const uri = UriUtils.toUri(uriString);
-    const context = compilationUnitHandler.getWorkspaceFolderOf(uri);
-    if (!context) {
-      return false;
-    }
-    const compilationUnit = context.getCompilationUnit(uri);
-    return compilationUnit !== undefined;
-  });
-
   onRequest(
     connection,
-    Messages.MatchesProgramConfig,
-    (uriString: string): Messages.ProgramConfigMatchKind => {
+    Messages.ExistingFile,
+    (uriString: string): Messages.FileIdentification => {
       const uri = UriUtils.toUri(uriString);
       const context = compilationUnitHandler.getWorkspaceFolderOf(uri);
       if (!context) {
-        return "none";
+        return { existing: false, programMatch: "none" };
       }
-      return context.config.classifyProgramMatch(uri);
+      return {
+        existing: context.getCompilationUnit(uri) !== undefined,
+        programMatch: context.config.classifyProgramMatch(uri),
+      };
     },
   );
 
