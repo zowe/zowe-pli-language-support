@@ -87,7 +87,7 @@ export interface RuleAwarePostProcessHook<
   ) => void;
 }
 
-type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
+export type TranslationDiagnosticAcceptor = (diagnostic: Diagnostic) => void;
 
 type Translate<T extends CompilerOptionsPP> = (
   option: CompilerOption,
@@ -830,12 +830,18 @@ function stringToNumber(text: string): number {
 
 export function stringTranslate<
   T extends CompilerOptionsPP = CompilerOptionsPP,
->(callback: (options: T, value: CompilerOptionString) => void): Translate<T> {
-  return (option, options) => {
+>(
+  callback: (
+    options: T,
+    value: CompilerOptionString,
+    acceptor: TranslationDiagnosticAcceptor,
+  ) => void,
+): Translate<T> {
+  return (option, options, acceptor) => {
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "string");
-    callback(options, value);
+    callback(options, value, acceptor);
   };
 }
 
@@ -855,12 +861,16 @@ export function isEmptyParameterList(option: CompilerOption): boolean {
 export function plainTranslateEnum<
   T extends CompilerOptionsPP = CompilerOptionsPP,
 >(
-  callback: (options: T, value: CompilerOptionText) => void,
+  callback: (
+    options: T,
+    value: CompilerOptionText,
+    acceptor: TranslationDiagnosticAcceptor,
+  ) => void,
   code: ParametricPLICode,
   enumObject: Record<string, string | number>,
   aliases?: readonly (readonly [string, ...string[]])[],
 ): Translate<T> {
-  return (option, options) => {
+  return (option, options, acceptor) => {
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "plainNotEmpty");
@@ -894,7 +904,7 @@ export function plainTranslateEnum<
       }
     }
 
-    callback(options, value);
+    callback(options, value, acceptor);
   };
 }
 
@@ -903,11 +913,15 @@ export function plainTranslateEnum<
  * Supports both simple lists and aliases mode.
  */
 export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
-  callback: (options: T, value: CompilerOptionText) => void,
+  callback: (
+    options: T,
+    value: CompilerOptionText,
+    acceptor: TranslationDiagnosticAcceptor,
+  ) => void,
   code: ParametricPLICode,
   values: readonly string[] | readonly (readonly [string, ...string[]])[],
 ): Translate<T> {
-  return (option, options) => {
+  return (option, options, acceptor) => {
     ensureArguments(option, 1, 1);
     const value = option.values[0];
     ensureType(value, "plainNotEmpty");
@@ -920,11 +934,11 @@ export function plainTranslate<T extends CompilerOptionsPP = CompilerOptionsPP>(
       const aliasGroups = values as readonly (readonly [string, ...string[]])[];
       const canonicalValue = ensureArgument(value, code, aliasGroups);
       value.value = canonicalValue;
-      callback(options, value);
+      callback(options, value, acceptor);
     } else {
       const stringValues = values as readonly string[];
       ensureArgument(value, code, stringValues);
-      callback(options, value);
+      callback(options, value, acceptor);
     }
   };
 }
