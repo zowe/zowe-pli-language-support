@@ -80,3 +80,54 @@ describe("Check if `getProgramConfig` inside `PluginConfigurationProvider` retri
       expect(config).toBeDefined();
     }));
 });
+
+describe("classifyProgramMatch distinguishes exact from glob matches", () => {
+  test("returns 'exact' for a specifically-named program entry", () => {
+    const cfg = setupConfig([{ program: "KO/main.pli", pgroup: "iba" }]);
+    expect(
+      cfg.classifyProgramMatch(UriUtils.toUri("/workspace/KO/main.pli")),
+    ).toBe("exact");
+  });
+
+  test("returns 'exact' for a specifically-named extensionless entry", () => {
+    const cfg = setupConfig([{ program: "KO/MAINPGM", pgroup: "iba" }]);
+    expect(
+      cfg.classifyProgramMatch(UriUtils.toUri("/workspace/KO/MAINPGM")),
+    ).toBe("exact");
+  });
+
+  test("returns 'exact' for an extensionless stem resolved via an assumed extension", () => {
+    const cfg = setupConfig([{ program: "KO/prog1", pgroup: "iba" }]);
+    expect(
+      cfg.classifyProgramMatch(UriUtils.toUri("/workspace/KO/prog1.pli")),
+    ).toBe("exact");
+  });
+
+  test("returns 'glob' when only a wildcard entry matches", () => {
+    const cfg = setupConfig([
+      { program: ["KO", "**", "*"].join("/"), pgroup: "iba" },
+    ]);
+    expect(
+      cfg.classifyProgramMatch(UriUtils.toUri("/workspace/KO/sub/README")),
+    ).toBe("glob");
+  });
+
+  test("prefers 'exact' when both an exact and a glob entry match", () => {
+    const cfg = setupConfig([
+      { program: ["KO", "**", "*"].join("/"), pgroup: "iba" },
+      { program: "KO/sub/main.pli", pgroup: "iba" },
+    ]);
+    expect(
+      cfg.classifyProgramMatch(UriUtils.toUri("/workspace/KO/sub/main.pli")),
+    ).toBe("exact");
+  });
+
+  test("returns 'none' when nothing matches", () => {
+    const cfg = setupConfig([
+      { program: ["KO", "**", "*"].join("/"), pgroup: "iba" },
+    ]);
+    expect(
+      cfg.classifyProgramMatch(UriUtils.toUri("/workspace/other/x.pli")),
+    ).toBe("none");
+  });
+});

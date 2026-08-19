@@ -90,10 +90,19 @@ export namespace Messages {
   export const OnDidChangePluginConfigSettingsNotification =
     createNotificationType<void>("workspace/didChangePluginConfig");
 
-  /**
-   * Request sent to the LS to check if a file is already present in the workspace (i.e. included in a program)
-   */
-  export const ExistingFile = createRequestType<string, boolean>(
+  /** How a file matches `pgm_conf.json` program entries. */
+  export type ProgramConfigMatchKind = "exact" | "glob" | "none";
+
+  /** How a file relates to the PL/I workspace, for client-side language ID. */
+  export interface FileIdentification {
+    /** Whether the LS already tracks the file as a compilation unit. */
+    existing: boolean;
+    /** How the file matches configured program entries. */
+    programMatch: ProgramConfigMatchKind;
+  }
+
+  /** Identifies whether/how a file relates to the PL/I workspace. */
+  export const ExistingFile = createRequestType<string, FileIdentification>(
     "pli/existingFile",
   );
 
