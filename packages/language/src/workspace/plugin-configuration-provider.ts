@@ -18,7 +18,7 @@ import {
   offsetLengthToRange,
 } from "../language-server/types";
 import { mergeAbstractOptions } from "../config/compiler-options-merge";
-import { expandGroup } from "../config/lib-expander";
+import { DATASET_MEMBER_FILE_REGEX, expandGroup } from "../config/lib-expander";
 import { resolveLibUri } from "../config/path-resolver";
 import {
   ParseEntry,
@@ -179,6 +179,19 @@ const ProgramMatchRank = {
   Exact: 0,
   Glob: 1,
 } as const;
+
+// Fallback source extensions assumed when a program entry omits one.
+const DEFAULT_PROGRAM_EXTENSIONS = [".pli", ".pl1"] as const;
+
+// A dataset member ref or a dotted name already names a concrete target, so no
+// extension is fabricated for it (unlike a bare stem).
+function programBasenameIsConcrete(basename: string): boolean {
+  if (DATASET_MEMBER_FILE_REGEX.test(basename)) {
+    return true;
+  }
+  const dot = basename.lastIndexOf(".");
+  return dot > 0 && dot < basename.length - 1;
+}
 
 /**
  * Plugin configuration provider for loading '.pliplugin/pgm_conf.json' and '.pliplugin/proc_grps.json' (when they exist),
@@ -1147,7 +1160,7 @@ export class PluginConfigurationProvider {
 
     let globMatch: ProgramRecord | undefined;
     for (const [pattern, config] of this.programConfigs.entries()) {
-      const rank = this.programMatchRank(path, pattern);
+      const rank = this.programMatchRank(path, pattern, config);
       if (rank === ProgramMatchRank.Exact) {
         return config;
       }
@@ -1166,21 +1179,88 @@ export class PluginConfigurationProvider {
    * @param path Decoded program path being resolved.
    * @param pattern The program config's key (an exact path or a glob).
    */
-  private programMatchRank(path: string, pattern: string): number | undefined {
-    if (pattern === path) {
-      return ProgramMatchRank.Exact;
+  private programMatchRank(
+    path: string,
+    pattern: string,
+    record: ProgramRecord,
+  ): number | undefined {
+    const kind = this.programMatchKind(path, pattern, record);
+    if (kind === "none") {
+      return;
     }
+    return kind === "exact" ? ProgramMatchRank.Exact : ProgramMatchRank.Glob;
+  }
+
+  /**
+   * Classifies `pattern` against `path` as exact/glob/none, letting an
+   * extensionless entry also bind its on-disk file via an assumed extension.
+   */
+  private programMatchKind(
+    path: string,
+    pattern: string,
+    record: ProgramRecord,
+  ): "exact" | "glob" | "none" {
+    if (pattern === path) {
+      return "exact";
+    }
+    let decoded: string;
     try {
-      if (!minimatch(path, decodeURIComponent(pattern), { nocase: true })) {
-        return undefined;
+      decoded = decodeURIComponent(pattern);
+    } catch (e) {
+      console.error(
+        `Invalid program pattern "${pattern}" for program "${path}": ${e}`,
+      );
+      return "none";
+    }
+
+    const hasWildcard = decoded.includes("*");
+    const basename = decoded.substring(decoded.lastIndexOf("/") + 1);
+    const assumedExts = programBasenameIsConcrete(basename)
+      ? []
+      : this.assumedProgramExtensions(record);
+
+    // A stem that only matches once an extension is assumed is still a
+    // specifically-named entry, so treat it as exact rather than glob.
+    if (!hasWildcard && assumedExts.length > 0) {
+      const lowerPath = path.toLowerCase();
+      for (const ext of assumedExts) {
+        if (lowerPath === (decoded + ext).toLowerCase()) {
+          return "exact";
+        }
+      }
+    }
+
+    try {
+      if (minimatch(path, decoded, { nocase: true })) {
+        return "glob";
+      }
+      for (const ext of assumedExts) {
+        if (minimatch(path, decoded + ext, { nocase: true })) {
+          return "glob";
+        }
       }
     } catch (e) {
       console.error(
         `Invalid glob pattern "${pattern}" for program "${path}": ${e}`,
       );
-      return undefined;
+      return "none";
     }
-    return ProgramMatchRank.Glob;
+    return "none";
+  }
+
+  // Prefer the bound group's include-extensions, but always keep the .pli/.pl1
+  // fallback so an entry still binds when the group declares none.
+  private assumedProgramExtensions(record: ProgramRecord): string[] {
+    const exts = new Set<string>();
+    const pgroup = this.processGroupConfigs.get(record.pgroup.value);
+    for (const item of pgroup?.includeExtensions ?? []) {
+      const value = item.value.toLowerCase();
+      exts.add(value.startsWith(".") ? value : `.${value}`);
+    }
+    for (const ext of DEFAULT_PROGRAM_EXTENSIONS) {
+      exts.add(ext);
+    }
+    return Array.from(exts);
   }
 
   /**
@@ -1188,6 +1268,25 @@ export class PluginConfigurationProvider {
    */
   public hasProgramConfig(program: URI): boolean {
     return this.getProgramConfig(program) !== undefined;
+  }
+
+  /**
+   * Lets the client trust an exact entry outright while still content-checking
+   * a mere glob match before reclassifying a file.
+   */
+  public classifyProgramMatch(program: URI): "exact" | "glob" | "none" {
+    const path = program.path;
+    let sawGlob = false;
+    for (const [pattern, config] of this.programConfigs.entries()) {
+      const kind = this.programMatchKind(path, pattern, config);
+      if (kind === "exact") {
+        return "exact";
+      }
+      if (kind === "glob") {
+        sawGlob = true;
+      }
+    }
+    return sawGlob ? "glob" : "none";
   }
 
   /**
