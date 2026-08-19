@@ -63,6 +63,12 @@ export const LspCodes = {
     message: (name: string) => `Unknown identifier '${name}'`,
   },
 
+  MissingEnd: {
+    code: "LSPME001",
+    severity: Severity.S,
+    message: () => `Missing END statement for procedure.`,
+  },
+
   BuiltinAttributes: {
     IsForbiddenUsage: {
       code: "LSPTS001",
