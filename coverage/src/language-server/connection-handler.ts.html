@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/223</span>
+                <span class='fraction'>0/222</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/217</span>
+                <span class='fraction'>0/216</span>
             </div>
         
             
@@ -670,7 +670,12 @@
 <a name='L605'></a><a href='#L605'>605</a>
 <a name='L606'></a><a href='#L606'>606</a>
 <a name='L607'></a><a href='#L607'>607</a>
-<a name='L608'></a><a href='#L608'>608</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L608'></a><a href='#L608'>608</a>
+<a name='L609'></a><a href='#L609'>609</a>
+<a name='L610'></a><a href='#L610'>610</a>
+<a name='L611'></a><a href='#L611'>611</a>
+<a name='L612'></a><a href='#L612'>612</a>
+<a name='L613'></a><a href='#L613'>613</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1119,7 +1124,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1141,13 +1145,19 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1726,7 +1736,6 @@ export function <span class="fstat-no" title="function not covered" >startLangua
       );
     });
   });
-&nbsp;
 <span class="cstat-no" title="statement not covered" >  onNotification(</span>
     connection,
     Messages.OnDidChangePluginConfigSettingsNotification,
@@ -1747,15 +1756,21 @@ export function <span class="fstat-no" title="function not covered" >startLangua
 <span class="cstat-no" title="statement not covered" >  connection.onDidChangeWatchedFiles(<span class="fstat-no" title="function not covered" >async (p</span>arams) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    await compilationUnitHandler.triggerOnFileChange(params, connection);</span>
   });
-<span class="cstat-no" title="statement not covered" >  onRequest(connection, Messages.<span class="fstat-no" title="function not covered" >ExistingFile, (u</span>riString: string): boolean =&gt; {</span>
-    const uri = <span class="cstat-no" title="statement not covered" >UriUtils.toUri(uriString);</span>
-    const context = <span class="cstat-no" title="statement not covered" >compilationUnitHandler.getWorkspaceFolderOf(uri);</span>
-<span class="cstat-no" title="statement not covered" >    if (!context) {</span>
-<span class="cstat-no" title="statement not covered" >      return false;</span>
-    }
-    const compilationUnit = <span class="cstat-no" title="statement not covered" >context.getCompilationUnit(uri);</span>
-<span class="cstat-no" title="statement not covered" >    return compilationUnit !== undefined;</span>
-  });
+<span class="cstat-no" title="statement not covered" >  onRequest(</span>
+    connection,
+    Messages.<span class="fstat-no" title="function not covered" >ExistingFile,</span>
+    (uriString: string): Messages.FileIdentification =&gt; {
+      const uri = <span class="cstat-no" title="statement not covered" >UriUtils.toUri(uriString);</span>
+      const context = <span class="cstat-no" title="statement not covered" >compilationUnitHandler.getWorkspaceFolderOf(uri);</span>
+<span class="cstat-no" title="statement not covered" >      if (!context) {</span>
+<span class="cstat-no" title="statement not covered" >        return { existing: false, programMatch: "none" };</span>
+      }
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        existing: context.getCompilationUnit(uri) !== undefined,
+        programMatch: context.config.classifyProgramMatch(uri),
+      };
+    },
+  );
 &nbsp;
   /**
    * Resolves a {@link JsonItemMeta} into a client-facing
@@ -1891,7 +1906,7 @@ export function <span class="fstat-no" title="function not covered" >startLangua
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-19T11:14:59.944Z
+                at 2026-08-19T11:39:05.845Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
