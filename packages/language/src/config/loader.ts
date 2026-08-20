@@ -95,13 +95,6 @@ export function parseProgramConfigs(
     !pgmsNode ||
     pgmsNode.type !== "array"
   ) {
-    diagnostics.push(
-      createStructureDiagnostic(
-        document,
-        PGM_FILE,
-        formatExpectation(entry, "pgms array"),
-      ),
-    );
     return { config: undefined, diagnostics };
   }
 
@@ -143,13 +136,6 @@ export function parseProcessGroupConfigs(
     !pgroupsNode ||
     pgroupsNode.type !== "array"
   ) {
-    diagnostics.push(
-      createStructureDiagnostic(
-        document,
-        PROC_GRPS_FILE,
-        formatExpectation(entry, "pgroups array"),
-      ),
-    );
     return { config: undefined, diagnostics };
   }
 
@@ -201,11 +187,6 @@ function entryFullPath(entry: ParseEntry): JSONPath {
     base.push(entry.configKey);
   }
   return base;
-}
-
-function formatExpectation(entry: ParseEntry, suffix: string): string {
-  const prefix = entryFullPath(entry).join(".");
-  return prefix ? `${prefix}.${suffix}` : suffix;
 }
 
 function readProgramConfig(
@@ -412,20 +393,6 @@ function createParseErrorDiagnostics(
       jsoncPrintParseErrorCode(error.error),
     );
   });
-}
-
-function createStructureDiagnostic(
-  document: TextDocument,
-  fileName: string,
-  expected: string,
-): Diagnostic {
-  return diagnosticFromCodeAtRange(
-    LspCodes.PluginConfiguration.InvalidStructure,
-    document.uri,
-    offsetLengthToRange(0, 1),
-    fileName,
-    expected,
-  );
 }
 
 /**
