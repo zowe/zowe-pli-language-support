@@ -69,6 +69,13 @@ export const LspCodes = {
     message: () => `Missing END statement for procedure.`,
   },
 
+  DimensionsTooLarge: {
+    code: "LSPTL001",
+    severity: Severity.W,
+    message: (max: number) =>
+      `Dimensions exceed the maximum allowed size of ${max}.`,
+  },
+
   BuiltinAttributes: {
     IsForbiddenUsage: {
       code: "LSPTS001",
