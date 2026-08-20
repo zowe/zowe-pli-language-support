@@ -101,13 +101,6 @@ export const LspCodes = {
         `Plugin Configuration parse error in ${fileName}: ${parseErrorCode}`,
     },
 
-    InvalidStructure: {
-      code: "COPC03",
-      severity: Severity.E,
-      message: (fileName: string, expected: string) =>
-        `Plugin Configuration expected '${expected}' in ${fileName}.`,
-    },
-
     UnknownProcessGroup: {
       code: "COPC04",
       severity: Severity.E,
