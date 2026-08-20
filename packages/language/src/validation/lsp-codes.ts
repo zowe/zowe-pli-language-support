@@ -69,7 +69,7 @@ export const LspCodes = {
     message: () => `Missing END statement for procedure.`,
   },
 
-  TooLarge: {
+  DimensionsTooLarge: {
     code: "LSPTL001",
     severity: Severity.W,
     message: (max: number) =>

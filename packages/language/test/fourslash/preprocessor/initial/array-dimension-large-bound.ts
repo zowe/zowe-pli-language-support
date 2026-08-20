@@ -18,4 +18,4 @@
 
 // Array too large, interpreter should still be able to handle it
 preprocessor.expectTokens("");
-verify.expectDiagnosticsAt("X", code.LspCodes.TooLarge);
+verify.expectDiagnosticsAt("X", code.LspCodes.DimensionsTooLarge);

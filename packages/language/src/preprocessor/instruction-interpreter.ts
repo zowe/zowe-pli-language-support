@@ -258,7 +258,7 @@ function generateVariableValue(
         ) {
           context.diagnostics.push(
             diagnosticFromCode(
-              LspCodes.TooLarge,
+              LspCodes.DimensionsTooLarge,
               instruction.node.nameToken,
               MAX_ARRAY_COUNT,
             ),
