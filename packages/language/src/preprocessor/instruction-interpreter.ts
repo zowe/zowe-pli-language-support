@@ -252,6 +252,18 @@ function generateVariableValue(
         fullLength *= length;
       }
       if (fullLength > MAX_ARRAY_COUNT) {
+        if (
+          instruction.node?.kind === ast.SyntaxKind.DeclaredVariable &&
+          instruction.node.nameToken
+        ) {
+          context.diagnostics.push(
+            diagnosticFromCode(
+              LspCodes.DimensionsTooLarge,
+              instruction.node.nameToken,
+              MAX_ARRAY_COUNT,
+            ),
+          );
+        }
         // Too many elements, return empty array
         return {
           array: [],
