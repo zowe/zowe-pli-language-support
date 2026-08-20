@@ -15,7 +15,9 @@ export namespace Messages {
   export const ReadDir = createRequestType<string, [string, FileType][]>(
     "fs/readDir",
   );
-  export const ReadFile = createRequestType<string, string>("fs/readFile");
+  export const ReadFile = createRequestType<string, string | undefined>(
+    "fs/readFile",
+  );
   export const WriteFile = createRequestType<[string, string], void>(
     "fs/writeFile",
   );
@@ -25,7 +27,7 @@ export namespace Messages {
       path: string;
       extensions: string[];
     },
-    string
+    string | undefined
   >("fs/findFile");
   export const Stat = createRequestType<string, Stats>("fs/stat");
 }

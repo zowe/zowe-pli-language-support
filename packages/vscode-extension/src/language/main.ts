@@ -9,10 +9,7 @@
  *
  */
 
-import {
-  createConnection,
-  ProposedFeatures,
-} from "vscode-languageserver/node.js";
+import { createConnection, ProposedFeatures } from "vscode-languageserver/node";
 import {
   startLanguageServer,
   URI,

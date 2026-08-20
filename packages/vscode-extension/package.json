@@ -200,12 +200,12 @@
     "@vscode/extension-telemetry": "^1.5.2",
     "glob": "^13.0.6",
     "pli-language": "workspace:*",
-    "vscode-languageclient": "~9.0.1",
-    "vscode-languageserver": "~9.0.1"
+    "vscode-languageclient": "10.1.0",
+    "vscode-languageserver": "10.1.0"
   },
   "devDependencies": {
     "@types/vscode": "1.67.0",
     "@vscode/vsce": "^3.9.2",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.2"
   }
 }

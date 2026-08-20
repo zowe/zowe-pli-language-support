@@ -27,18 +27,14 @@
     "extract-compiler-tests": "tsx ./scripts/extract-compiler-tests.mts"
   },
   "devDependencies": {
-    "@types/node": "^22.19.19",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "glob": "^13.0.6",
-    "prettier": "^3.8.3",
+    "prettier": "^3.9.6",
     "shx": "~0.4.0",
-    "tsx": "^4.22.4",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.8"
-  },
-  "overrides": {
-    "isexe": "3.1.1",
-    "dompurify": "3.4.2"
+    "vitest": "^4.1.11"
   },
   "packageManager": "pnpm@11.8.0"
 }

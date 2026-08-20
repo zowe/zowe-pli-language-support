@@ -8,3 +8,5 @@ minimumReleaseAgeExclude:
   - monaco-languageclient@11.0.0-next.1
   - vite@8.1.5
   - vscode-ws-jsonrpc@4.0.0-next.1
+overrides:
+  dompurify: 3.4.13

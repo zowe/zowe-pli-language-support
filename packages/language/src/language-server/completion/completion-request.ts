@@ -104,17 +104,15 @@ function convertSimpleToItem(
 
   return items
     .filter((item) => fuzzyMatch(query, item.text))
-    .map(
-      (item): CompletionItem => ({
-        label: item.label,
-        kind: item.kind,
-        detail: item.detail,
-        documentation: item.documentation,
-        insertTextFormat: item.insertTextFormat,
-        edit: {
-          range,
-          text: item.text,
-        },
-      }),
-    );
+    .map((item): CompletionItem => ({
+      label: item.label,
+      kind: item.kind,
+      detail: item.detail,
+      documentation: item.documentation,
+      insertTextFormat: item.insertTextFormat,
+      edit: {
+        range,
+        text: item.text,
+      },
+    }));
 }

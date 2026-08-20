@@ -13,7 +13,7 @@ import {
   BrowserMessageReader,
   BrowserMessageWriter,
   createConnection,
-} from "vscode-languageserver/browser.js";
+} from "vscode-languageserver/browser";
 import { startLanguageServer } from "pli-language";
 import { VSCodeFileSystemProvider } from "./file-system";
 import { VscodeGlobalConfigLoader } from "./config-loader";

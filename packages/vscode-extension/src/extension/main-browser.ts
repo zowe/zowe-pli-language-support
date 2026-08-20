@@ -9,9 +9,11 @@
  *
  */
 
-import type { LanguageClientOptions } from "vscode-languageclient/browser.js";
 import * as vscode from "vscode";
-import { LanguageClient } from "vscode-languageclient/browser.js";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+} from "vscode-languageclient/browser";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { registerFileSystemProvider } from "./file-system-provider";
 import { registerProgressReporter } from "./progress";
@@ -60,7 +62,7 @@ async function startLanguageClient(
   };
 
   // Create the language client and start the client.
-  const client = new LanguageClient("pli", "PL/I", clientOptions, worker);
+  const client = new LanguageClient("pli", "PL/I", worker, clientOptions);
   context.subscriptions.push(
     registerProgressReporter(client),
     watchPluginSettings(client),
