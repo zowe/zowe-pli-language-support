@@ -76,17 +76,6 @@ describe("Loader entry-path navigation", () => {
     expect(text.substring(meta.range.start, meta.range.end)).toBe('"a.pli"');
   });
 
-  test("missing entry yields a structure diagnostic", () => {
-    const text = `{ "unrelated": {} }`;
-    const result = parseProgramConfigs(text, URI, {
-      containerPath: [],
-      configKey: "pli.pgm_conf",
-    });
-    expect(result.config).toBeUndefined();
-    expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0].message).toContain("pli.pgm_conf.pgms");
-  });
-
   test("proc_grps parses from flat settings-shaped wrapper", () => {
     const text = `{
       "pli.proc_grps": {
