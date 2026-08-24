@@ -4427,20 +4427,7 @@
 <a name='L4362'></a><a href='#L4362'>4362</a>
 <a name='L4363'></a><a href='#L4363'>4363</a>
 <a name='L4364'></a><a href='#L4364'>4364</a>
-<a name='L4365'></a><a href='#L4365'>4365</a>
-<a name='L4366'></a><a href='#L4366'>4366</a>
-<a name='L4367'></a><a href='#L4367'>4367</a>
-<a name='L4368'></a><a href='#L4368'>4368</a>
-<a name='L4369'></a><a href='#L4369'>4369</a>
-<a name='L4370'></a><a href='#L4370'>4370</a>
-<a name='L4371'></a><a href='#L4371'>4371</a>
-<a name='L4372'></a><a href='#L4372'>4372</a>
-<a name='L4373'></a><a href='#L4373'>4373</a>
-<a name='L4374'></a><a href='#L4374'>4374</a>
-<a name='L4375'></a><a href='#L4375'>4375</a>
-<a name='L4376'></a><a href='#L4376'>4376</a>
-<a name='L4377'></a><a href='#L4377'>4377</a>
-<a name='L4378'></a><a href='#L4378'>4378</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L4365'></a><a href='#L4365'>4365</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -5465,8 +5452,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
@@ -5477,13 +5462,6 @@
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -6047,8 +6025,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11441x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -6167,8 +6143,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">522x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -9813,9 +9787,7 @@ export type AllocateAttribute =
   | InitialCallAttribute
   | InitialToAttribute;
 export type Condition =
-  | FileReferenceCondition
-  | KeywordCondition
-  | NamedCondition;
+  FileReferenceCondition | KeywordCondition | NamedCondition;
 export type DataAttributeType = DefaultAttribute;
 export type CommonDeclarationAttribute =
   | AnyAttribute
@@ -9861,20 +9833,16 @@ export enum DefineOrdinalAttribute {
  * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.
  */
 export type DefaultDeclarationAttribute =
-  | CommonDeclarationAttribute
-  | DefaultValueAttribute;
+  CommonDeclarationAttribute | DefaultValueAttribute;
 /**
  * A list of all the possible attributes that can be used in a declaration.
  * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
  */
 export type DeclarationAttribute =
-  | CommonDeclarationAttribute
-  | ValueAttribute
-  | AnyAttribute;
+  CommonDeclarationAttribute | ValueAttribute | AnyAttribute;
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
-  | EntryParameterDescription
-  | EntryUnionDescription;
+  EntryParameterDescription | EntryUnionDescription;
 export type Expression =
   | BinaryExpression
   | Literal
@@ -9910,10 +9878,7 @@ export type NamedType =
   | DeclaredVariable;
 export type NamedElement = NamedVariable | NamedType;
 export type OptionsItem =
-  | CMPATOptionsItem
-  | LinkageOptionsItem
-  | NoMapOptionsItem
-  | SimpleOptionsItem;
+  CMPATOptionsItem | LinkageOptionsItem | NoMapOptionsItem | SimpleOptionsItem;
 export type OrdinalType = DefineOrdinalStatement;
 export type PutStatement = PutFileStatement | PutStringStatement;
 export type Unit =
@@ -10391,9 +10356,7 @@ export interface CompilerOptions extends AstNode {
 }
 &nbsp;
 export type CompilerOptionValue =
-  | CompilerOption
-  | CompilerOptionString
-  | CompilerOptionText;
+  CompilerOption | CompilerOptionString | CompilerOptionText;
 &nbsp;
 export interface CompilerOption extends AstNode {
   kind: SyntaxKind.CompilerOption;
@@ -10550,9 +10513,7 @@ export function createWildcardItem(): WildcardItem {
   };
 }
 export type DeclaredItemElement =
-  | DeclaredVariable
-  | DeclaredItem
-  | WildcardItem;
+  DeclaredVariable | DeclaredItem | WildcardItem;
 export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: number | null;
@@ -13201,7 +13162,7 @@ export function createCicsResponseStatement(): CicsResponseStatement {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-20T10:18:14.531Z
+                at 2026-08-24T08:19:26.527Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
