@@ -787,14 +787,13 @@ NOTMORETHANCHAR: '^>' | '|>';
 MORETHANOREQUAL : '>=';
 NOTEQUALCHAR : '<>' | '^=' | '|=';
 PLUSCHAR : '+';
-SEMICOLON_FS : ';' EOF?;
 SINGLEQUOTE : '\'';
 RPARENCHAR : ')';
 SLASHCHAR : '/';
 SQLLINECOMMENTCHAR: '--';
 UNDERSCORECHAR : '_';
-// special separator tokens for embedded langauages
-SEMICOLONSEPARATORSQL : '; ' ;
+SEMICOLON_FS : ';' EOF;
+SEMICOLONSEPARATORSQL : ';' ;
 COMMASEPARATORDB2 : ', ' ;
 
 // Constructors symbols

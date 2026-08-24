@@ -228,7 +228,7 @@ dbs_alter_table_generated_options_always_subclause: dbs_generated_opts
                                     ;
 dbs_generated_opts: common_as_identity_clause | as_row_change_timestamp_clause;
 common_as_identity_clause: AS IDENTITY (LPARENCHAR dbs_alter_table_asid_loop (dbs_comma_separator? dbs_alter_table_asid_loop)* RPARENCHAR)?;
-dbs_alter_table_asid_loop: (START WITH INTEGERLITERAL | INCREMENT BY INTEGERLITERAL | NO MINVALUE | MINVALUE INTEGERLITERAL | NO? CYCLE | NO CACHE | CACHE INTEGERLITERAL | NO? ORDER);
+dbs_alter_table_asid_loop: (START WITH INTEGERLITERAL | INCREMENT BY INTEGERLITERAL | NO MINVALUE | MINVALUE INTEGERLITERAL | NO MAXVALUE | MAXVALUE INTEGERLITERAL | NO? CYCLE | NO CACHE | CACHE INTEGERLITERAL | NO? ORDER);
 dbs_alter_table_partitioning: RANGE? partitioning_clause_arguments;
 dbs_alter_table_partition: PARTITION INTEGERLITERAL ENDING AT? LPARENCHAR (dbs_constant | MAXVALUE | MINVALUE) (dbs_comma_separator (dbs_constant | MAXVALUE | MINVALUE))* RPARENCHAR INCLUSIVE?;
 dbs_alter_table_mq: LPARENCHAR dbs_fullselect RPARENCHAR refreshable_table_options;
@@ -309,7 +309,7 @@ dbs_close: CLOSE dbs_cursor_name;
 dbs_comment: COMMENT ON (dbs_comment_multiple_column_list | (dbs_comment_alias_designator | dbs_comment_column |
              dbs_comment_function | dbs_comment_index | dbs_comment_package | dbs_comment_plan | dbs_comment_procedure |
              dbs_comment_role | dbs_comment_sequence | dbs_comment_table | dbs_comment_trigger | dbs_comment_trusted |
-             dbs_comment_type | dbs_comment_mask | dbs_comment_permission | dbs_comment_variable) IS dbs_string_constant);
+             dbs_comment_type | dbs_comment_mask | dbs_comment_permission | dbs_comment_variable) IS (dbs_string_constant|CHAR_STRING_LITERAL_SINGLE_QUOTE));
 dbs_comment_multiple_column_list: dbs_alias_name LPARENCHAR dbs_column_name_without_alias IS
                                   dbs_string_constant_column_list (dbs_comma_separator dbs_column_name_without_alias IS dbs_string_constant_column_list)* RPARENCHAR;
 dbs_string_constant_column_list: CHAR_STRING_LITERAL_DOUBLE_QUOTE | HEXSTRING | BXSTRING | GRAPHIC_CONSTANT;
@@ -329,7 +329,7 @@ dbs_comment_role: ROLE dbs_role_name;
 dbs_comment_sequence: SEQUENCE dbs_sequence_name;
 dbs_comment_table: TABLE dbs_alias_name;
 dbs_comment_trigger: TRIGGER dbs_trigger_name (ACTIVE VERSION | VERSION dbs_routine_version_id)?;
-dbs_comment_trusted: TRUSTED CONTEXT dbs_context_name dbs_sql_identifier;
+dbs_comment_trusted: TRUSTED CONTEXT dbs_context_name;
 dbs_comment_type: TYPE dbs_object_name;
 dbs_comment_mask: MASK dbs_mask_name;
 dbs_comment_permission: PERMISSION dbs_permission_name;
@@ -566,7 +566,7 @@ trigger_granularity: (FOR EACH (STATEMENT | ROW))?;
 
 //CREATE TRIGGER BASIC
 dbs_create_trigger_basic: TRIGGER dbs_trigger_name (trigger_definition_basic | WRAPPED dbs_obfuscated_statement_text);
-trigger_definition_basic: trigger_activation_time trigger_event ON dbs_alias_name referencing_opts?  trigger_granularity MODE DB2SQL ( NOT? SECURED)? triggered_action_basic;
+trigger_definition_basic: trigger_activation_time trigger_event ON dbs_alias_name referencing_opts?  trigger_granularity ( NOT? SECURED)? triggered_action_basic;
 triggered_action_basic: (WHEN dbs_search_condition)? sql_trigger_body_basic;
 sql_trigger_body_basic:  (dbs_triggered_sql_statement_basic | BEGIN ATOMIC (dbs_triggered_sql_statement_basic dbs_semicolon_end)+ END);
 
