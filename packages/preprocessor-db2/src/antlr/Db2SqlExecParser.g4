@@ -108,8 +108,8 @@ dbs_alter_database: DATABASE dbs_database_name (BUFFERPOOL dbs_bp_name | INDEXBP
 
 /*ALTER FUNCTION */
 dbs_alter_function: (dbs_alter_function_external | dbs_alter_function_compiled | dbs_alter_function_inline | dbs_alter_function_sqlTable);
-dbs_alter_function_sqlTable : SPECIFIC FUNCTION dbs_specific_name | FUNCTION dbs_function_name (LPARENCHAR ((common_built_in_type_source |
-                              dbs_distinct_type_name) (dbs_comma_separator (common_built_in_type_source | dbs_distinct_type_name))*)? RPARENCHAR)?
+dbs_alter_function_sqlTable : (SPECIFIC FUNCTION dbs_specific_name | FUNCTION dbs_function_name (LPARENCHAR ((common_built_in_type_source |
+                              dbs_comma_separator (common_built_in_type_source | dbs_distinct_type_name))*)? RPARENCHAR)?) 
                               RESTRICT dbs_alter_function_inlineopts;
 dbs_alter_function_external: (SPECIFIC FUNCTION dbs_specific_name | FUNCTION dbs_function_name (LPARENCHAR (ext_data_type (AS LOCATOR)? (dbs_comma_separator ext_data_type (AS LOCATOR)?)*)? RPARENCHAR)?) (EXTERNAL NAME dbs_external_program_name | dbs_options_list_ext_common_in_create_alter)+;
 dbs_alter_function_inline: (SPECIFIC FUNCTION dbs_specific_name | FUNCTION dbs_function_name (LPARENCHAR ((common_built_in_type_source | XML | dbs_distinct_type_name) (dbs_comma_separator (common_built_in_type_source |
@@ -131,7 +131,10 @@ dbs_alter_function_compopts: (NOT? DETERMINISTIC | NO? EXTERNAL ACTION | ((READS
                              QUERY ACCELERATION (NONE|ELIGIBLE|ALL|ENABLE (WITH FAILBACK)?) | GET_ACCEL_ARCHIVE (YES|NO) | ACCELERATION WAITFORDATA dbs_nnnn_m | ACCELERATOR dbs_accelerator_name | REOPT (NONE|ALWAYS|ONCE) |
                              VALIDATE (RUN|BIND) | ROUNDING (DEC_ROUND_CEILING|DEC_ROUND_DOWN|DEC_ROUND_FLOOR|DEC_ROUND_HALF_DOWN|DEC_ROUND_HALF_EVEN|DEC_ROUND_HALF_UP|DEC_ROUND_UP) | DATE FORMAT (ISO|EUR|USA|JIS|LOCAL) |
                              NOT? SECURED | BUSINESS_TIME SENSITIVE (YES|NO) | SYSTEM_TIME SENSITIVE (YES|NO) | ARCHIVE SENSITIVE (YES|NO) | APPLCOMPAT dbs_applcompat_value | (OFF | CONCENTRATE STATEMENTS (WITH LITERALS)?))+; /*random ordering req*/
-dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{4}\\.\\d$", "a DECIMAL(5,1) numeric-constant is only allowed");};
+dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{4}\\.\\d$", "a DECIMAL(5,1) numeric-constant is only allowed");}
+          //just to unify the error output
+          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{4}\\.\\d$", "a DECIMAL(5,1) numeric-constant is only allowed");}
+          ;
 /*ALTER INDEX */
 dbs_alter_index: INDEX dbs_index_name (REGENERATE (USING (APPLICATION COMPATIBILITY | APPLCOMPAT) dbs_applcompat_value)? /*included as a separate piped option due to nb 2 in IBM doc*/ |
                  ( dbs_index_create_alter_opts_common | dbs_alter_index_add)+ dbs_alter_index_alter?);
@@ -435,7 +438,7 @@ dbs_index_create_alter_opts_common: BUFFERPOOL dbs_bp_name
 partition_using_specification: partition_element (using_specification | free_specification | gbpcache_specification | DSSIZE dbs_dsize_parameter)*;
 using_specification: USING (VCAT dbs_catalog_name | STOGROUP dbs_stogroup_name (PRIQTY (INTEGERLITERAL | dbs_minus_one) | SECQTY (INTEGERLITERAL | dbs_minus_one) | ERASE yes_or_no)*);
 free_specification: FREEPAGE INTEGERLITERAL |  PCTFREE INTEGERLITERAL;
-gbpcache_specification: GBPCACHE (CHANGED | ALL) | NONE;
+gbpcache_specification: GBPCACHE (CHANGED | ALL | NONE);
 partition_element: PARTITION INTEGERLITERAL (ENDING AT? partition_element_loop INCLUSIVE?)?;
 partition_element_loop:  LPARENCHAR const_options (dbs_comma_separator const_options)*  RPARENCHAR;
 const_options: dbs_string_constant | MAXVALUE | MINVALUE | INTEGERLITERAL;
@@ -1083,7 +1086,8 @@ dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR? (NONE | ENABL
 
 //SET CURRENT QUERY ACCELARATION WAITFORDATA
 dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR?
-                               (NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "\\d{1,4}.\\d\\b", "db2SqlParser.currentQueryAcceleration");}
+                               (NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "\\d{1,4}\\.\\d\\b", "db2SqlParser.currentQueryAcceleration");}
+                               | INTEGERLITERAL
                                | dbs_host_variable);
 
 //SET CURRENT REFRESH AGE
