@@ -792,7 +792,7 @@ dbs_grant_schema: (ALTERIN|CREATEIN|DROPIN) (dbs_comma_separator (ALTERIN|CREATE
                     (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_sequence: (ALTER|USAGE|SELECT) (dbs_comma_separator (ALTER|USAGE|SELECT))* ON SEQUENCE dbs_sequence_name (dbs_comma_separator dbs_sequence_name)* TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_system: db2sql_system_privileges (dbs_comma_separator db2sql_system_privileges)* (ON SYSTEM)? TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
-dbs_grant_table: (ALL PRIVILEGES? | db2sql_table_view_privileges (dbs_comma_separator db2sql_table_view_privileges)*) ON TABLE? (dbs_host_variable | dbs_alias_name)
+dbs_grant_table: (ALL PRIVILEGES? | db2sql_table_view_privileges_grant (dbs_comma_separator db2sql_table_view_privileges_grant)*) ON TABLE? (dbs_host_variable | dbs_alias_name)
                     (dbs_comma_separator (dbs_host_variable | dbs_alias_name))* TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_type: USAGE ON (TYPE dbs_object_name (dbs_comma_separator dbs_object_name)* | JAR dbs_host_identifier (dbs_comma_separator dbs_host_identifier)*) TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_variable: (ALL PRIVILEGES? | (READ|WRITE) (dbs_comma_separator (READ|WRITE))*) ON VARIABLE dbs_object_name TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
@@ -931,7 +931,7 @@ seq_name_loop: dbs_sequence_name (dbs_comma_separator dbs_sequence_name)*;
 //REVOKE SYSTEM PRIVILEGES
 dbs_revoke_system_prvg: db2sql_system_privileges (dbs_comma_separator db2sql_system_privileges)*  (ON SYSTEM)? FROM auth_name_loop_pub  auth_name_loop_all? dependent_privileges?;
 //REVOKE TABLE OR VIEW PRIVILEGES
-dbs_revoke_table_or_view_prvg: (ALL PRIVILEGES? | db2sql_table_view_privileges (dbs_comma_separator db2sql_table_view_privileges)*)  ON TABLE? table_or_view_name_loop
+dbs_revoke_table_or_view_prvg: (ALL PRIVILEGES? | db2sql_table_view_privileges_revoke (dbs_comma_separator db2sql_table_view_privileges_revoke)*)  ON TABLE? table_or_view_name_loop
                                 FROM auth_name_loop_pub  auth_name_loop_all? dependent_privileges?;
 table_or_view_name_loop: dbs_alias_name (dbs_comma_separator dbs_alias_name)*;
 
@@ -1373,7 +1373,10 @@ db2sql_db_privileges: DBADM | DBCTRL | DBMAINT | CREATETAB | CREATETS | DISPLAYD
 db2sql_system_privileges: ACCESSCTRL | ARCHIVE | BINDADD | BINDAGENT | BSDS | CREATEALIAS | CREATEDBA | CREATEDBC | CREATESG | CREATETMTAB | CREATE_SECURE_OBJECT |
                          DATAACCESS | DBADM ((WITH | WITHOUT) ACCESSCTRL )? ((WITH | WITHOUT) DATAACCESS)? | DEBUGSESSION | DISPLAY | EXPLAIN | MONITOR1 | MONITOR2 | RECOVER | SQLADM | STOPALL | STOSPACE | SYSADM | SYSCTRL | SYSOPR | TRACE;
 
-db2sql_table_view_privileges: ALTER | DELETE | INDEX | INSERT | REFERENCES | SELECT | TRIGGER | UPDATE;
+db2sql_table_view_privileges_revoke: ALTER | DELETE | INDEX | INSERT | REFERENCES | SELECT | TRIGGER | UPDATE | UNLOAD;
+
+dbs_column_names: LPARENCHAR dbs_column_name (dbs_comma_separator dbs_column_name)* RPARENCHAR;
+db2sql_table_view_privileges_grant: ALTER | DELETE | INDEX | INSERT | REFERENCES dbs_column_names? | SELECT | TRIGGER | UPDATE dbs_column_names? | UNLOAD;
 
 dbs_inbuild_functions : ASCII  | AVG | BLOB | BIGINT | BINARY | CARDINALITY | CHAR | CHARACTER_LENGTH | CAST
                         | CHAR_LENGTH | CLOB | COALESCE | CONCAT | CONTAINS | CORR | CORRELATION | COUNT | COUNT_BIG
