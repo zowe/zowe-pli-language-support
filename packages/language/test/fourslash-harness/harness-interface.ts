@@ -63,8 +63,7 @@ import {
 
 export type SemanticTokenTypesValues = keyof typeof SemanticTokenTypes;
 export type SemanticTokenModifiersValues =
-  | keyof typeof SemanticTokenModifiers
-  | "none";
+  keyof typeof SemanticTokenModifiers | "none";
 
 export type CompilerOptions = PliCompilerOptions & {
   macroOptions: MacroCompilerOptions;

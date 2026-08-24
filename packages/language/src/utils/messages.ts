@@ -10,7 +10,7 @@
  */
 
 import { URI } from "./uri";
-import type { Connection } from "vscode-languageserver";
+import type { Connection, HandlerResult } from "vscode-languageserver";
 
 export type RequestType<P, R> = {
   method: string;
@@ -44,7 +44,7 @@ export function createNotificationType<P>(method: string): NotificationType<P> {
 export function onRequest<P, R>(
   connection: Connection,
   type: RequestType<P, R>,
-  handler: (params: P) => R | Promise<R>,
+  handler: (params: P) => HandlerResult<R, unknown>,
 ): void {
   connection.onRequest(type.method, handler);
 }

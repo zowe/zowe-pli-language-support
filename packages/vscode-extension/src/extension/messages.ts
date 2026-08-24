@@ -9,13 +9,13 @@
  *
  */
 
-import { BaseLanguageClient } from "vscode-languageclient";
+import { BaseLanguageClient, HandlerResult } from "vscode-languageclient";
 import { NotificationType, RequestType } from "pli-language";
 
 export function onRequest<P, R>(
   client: BaseLanguageClient,
   request: RequestType<P, R>,
-  handler: (params: P) => R | Promise<R>,
+  handler: (params: P) => HandlerResult<R, unknown>,
 ) {
   client.onRequest(request.method, handler);
 }

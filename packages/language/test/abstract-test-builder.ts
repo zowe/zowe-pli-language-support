@@ -36,10 +36,7 @@ export type TestDiagnostic = Omit<Partial<Diagnostic>, "message"> & {
  * Accepts TestDiagnostic (with optional RegExp message), PLICode, or arrays of either.
  */
 export type DiagnosticExpectation =
-  | TestDiagnostic
-  | TestDiagnostic[]
-  | PLICode
-  | PLICode[];
+  TestDiagnostic | TestDiagnostic[] | PLICode | PLICode[];
 
 /**
  * Structural shape that both `Diagnostic` (language-server) and listing diagnostics
