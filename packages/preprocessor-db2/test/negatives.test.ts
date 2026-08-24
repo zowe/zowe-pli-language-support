@@ -33,4 +33,5 @@ describe("DB2 SQL negatives", async () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toBe("a DECIMAL(5,1) numeric-constant is only allowed");
   });
+  
 });

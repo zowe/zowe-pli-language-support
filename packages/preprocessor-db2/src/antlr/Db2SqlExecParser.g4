@@ -603,8 +603,12 @@ tbl_expr_loop: WITH dbs_select_statement_common_table_expression (dbs_comma_sepa
 /*DECLARE (all) */
 dbs_declare: DECLARE dbs_declare_global;
 
-dbs_declare_cursor: DECLARE dbs_cursor_name ((NO|ASENSITIVE|INSENSITIVE|SENSITIVE (DYNAMIC|STATIC)?) SCROLL)? CURSOR ((WITH|WITHOUT) HOLD |
-                    (WITHOUT RETURN|WITH RETURN TO (CALLER|CLIENT)) | (WITH|WITHOUT) ROWSET POSITIONING)* /*random ordering req*/
+dbs_declare_cursor: DECLARE dbs_cursor_name ((NO|ASENSITIVE|INSENSITIVE|SENSITIVE (DYNAMIC|STATIC)?) SCROLL)? CURSOR
+                    (
+                        (WITH|WITHOUT) HOLD |
+                        (WITHOUT RETURN | WITH RETURN (TO (CALLER|CLIENT))?) | 
+                        (WITH|WITHOUT) ROWSET POSITIONING
+                    )* /*random ordering req*/
                     FOR (dbs_select | dbs_sql_identifier);
 
 dbs_declare_global: GLOBAL TEMPORARY TABLE dbs_table_name (LPARENCHAR dbs_declare_global_coldef (dbs_comma_separator dbs_declare_global_coldef)* RPARENCHAR |
@@ -727,7 +731,7 @@ dbs_explain_plan: (PLAN | ALL) (SET QUERYNO EQUALCHAR INTEGERLITERAL)? FOR dbs_e
 dbs_explain_stmtcache: STMTCACHE (ALL | STMTID (NUMERICLITERAL | dbs_integer_constant) | STMTTOKEN (dbs_token_host_variable | dbs_string_constant));
 dbs_token_host_variable: dbs_sql_variable_reference | INTEGERLITERAL;
 dbs_explain_package: PACKAGE COLLECTION dbs_collection_name PACKAGE dbs_package_name (VERSION dbs_version_name)? (COPY dbs_copy_id)?;
-dbs_explain_stabilized: STABILIZED DYNAMIC QUERY STMTID (NUMERICLITERAL | dbs_integer_constant) (COPY SINGLEQUOTE (CURRENT | INVALID) SINGLEQUOTE)?;
+dbs_explain_stabilized: STABILIZED DYNAMIC QUERY STMTID (NUMERICLITERAL | dbs_integer_constant) (COPY (SINGLEQUOTED_CURRENT | SINGLEQUOTED_INVALID))?;
 
 
 /*FETCH */
@@ -1484,7 +1488,7 @@ dbs_special_name: ABSOLUTE | ACCELERATION | ACCELERATOR | ACCESS | ACCESSCTRL | 
                 | VERSIONING | VERSIONS | VIEW | VOLATILE | VOLUMES | WAIT | WAITFORDATA | WHENEVER | WITH
                 | WITHOUT | WLM | WORK | WORKFILE | WRAPPED | WRITE | WRKSTNNAME | XML | XMLCAST | XMLPATTERN | XMLQUERY
                 | XMLSCHEMA | YEARS | YES | ZONE;
-dbs_copy_id: CURRENT | PREVIOUS | ORIGINAL;
+dbs_copy_id: SINGLEQUOTED_CURRENT | SINGLEQUOTED_PREVIOUS | SINGLEQUOTED_ORIGINAL;
 dbs_diagnostic_string_expression: dbs_expressions;
 dbs_distinct_type: db2sql_data_types+;
 // Note: The DPSEGSZ subsystem parameter is not directly specified in a CREATE TABLESPACE statement.
