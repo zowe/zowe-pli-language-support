@@ -175,14 +175,12 @@ export class ParserState {
       // Cast the args and token parameters to fit with the parametric code signature
       const args = tokenOrArgs as Parameters<ParametricPLICode["message"]>;
       const finalToken = (token || this.token || this.last) as
-        | t.Token
-        | undefined;
+        t.Token | undefined;
       this.diagnostics.push(diagnosticFromCode(message, finalToken, ...args));
     } else if (isSimplePLICode(message)) {
       // Cast the token parameter to fit with the simple code signature
       const finalToken = (tokenOrArgs || this.token || this.last) as
-        | t.Token
-        | undefined;
+        t.Token | undefined;
       this.diagnostics.push(diagnosticFromCode(message, finalToken));
     }
   }
@@ -212,8 +210,7 @@ export class ParserState {
     // Handle custom string messages (or default error when no message)
     if (!message || typeof message === "string") {
       const token = (tokenOrArgs || this.token || this.last) as
-        | t.Token
-        | undefined;
+        t.Token | undefined;
       const severity = (tokenOrSeverity || Severity.S) as Severity;
       const msg =
         message ??

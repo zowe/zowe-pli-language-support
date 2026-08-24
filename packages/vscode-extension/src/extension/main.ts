@@ -9,14 +9,15 @@
  *
  */
 
-import type {
-  LanguageClientOptions,
-  ServerOptions,
-} from "vscode-languageclient/node.js";
 import * as vscode from "vscode";
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { LanguageClient, TransportKind } from "vscode-languageclient/node.js";
+import {
+  LanguageClient,
+  TransportKind,
+  LanguageClientOptions,
+  ServerOptions,
+} from "vscode-languageclient/node";
 import { BuiltinFileSystemProvider } from "./builtin-files";
 import { Settings } from "./settings";
 import { registerCustomDecorators } from "./decorators";

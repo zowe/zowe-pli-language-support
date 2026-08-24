@@ -36,9 +36,11 @@ export type ValidationFunction<T extends SyntaxNode> = (
 ) => void;
 
 export type ValidationChecks = Partial<{
-  [K in keyof typeof SyntaxKind as (typeof SyntaxKind)[K] extends SyntaxNode["kind"]
-    ? K
-    : never]: ValidationFunction<
+  [
+    K in keyof typeof SyntaxKind as (typeof SyntaxKind)[K] extends SyntaxNode["kind"]
+      ? K
+      : never
+  ]: ValidationFunction<
     Extract<SyntaxNode, { kind: (typeof SyntaxKind)[K] }>
   >[];
 }>;

@@ -994,9 +994,7 @@ export type AllocateAttribute =
   | InitialCallAttribute
   | InitialToAttribute;
 export type Condition =
-  | FileReferenceCondition
-  | KeywordCondition
-  | NamedCondition;
+  FileReferenceCondition | KeywordCondition | NamedCondition;
 export type DataAttributeType = DefaultAttribute;
 export type CommonDeclarationAttribute =
   | AnyAttribute
@@ -1042,20 +1040,16 @@ export enum DefineOrdinalAttribute {
  * This is essentially a list of all attributes that can be used in a common declaration + the DEFAULT VALUE attribute.
  */
 export type DefaultDeclarationAttribute =
-  | CommonDeclarationAttribute
-  | DefaultValueAttribute;
+  CommonDeclarationAttribute | DefaultValueAttribute;
 /**
  * A list of all the possible attributes that can be used in a declaration.
  * This is essentially a list of all attributes that can be used in a common declaration + the VALUE attribute.
  */
 export type DeclarationAttribute =
-  | CommonDeclarationAttribute
-  | ValueAttribute
-  | AnyAttribute;
+  CommonDeclarationAttribute | ValueAttribute | AnyAttribute;
 export type DoType2 = DoUntil | DoWhile;
 export type EntryDescription =
-  | EntryParameterDescription
-  | EntryUnionDescription;
+  EntryParameterDescription | EntryUnionDescription;
 export type Expression =
   | BinaryExpression
   | Literal
@@ -1091,10 +1085,7 @@ export type NamedType =
   | DeclaredVariable;
 export type NamedElement = NamedVariable | NamedType;
 export type OptionsItem =
-  | CMPATOptionsItem
-  | LinkageOptionsItem
-  | NoMapOptionsItem
-  | SimpleOptionsItem;
+  CMPATOptionsItem | LinkageOptionsItem | NoMapOptionsItem | SimpleOptionsItem;
 export type OrdinalType = DefineOrdinalStatement;
 export type PutStatement = PutFileStatement | PutStringStatement;
 export type Unit =
@@ -1572,9 +1563,7 @@ export interface CompilerOptions extends AstNode {
 }
 
 export type CompilerOptionValue =
-  | CompilerOption
-  | CompilerOptionString
-  | CompilerOptionText;
+  CompilerOption | CompilerOptionString | CompilerOptionText;
 
 export interface CompilerOption extends AstNode {
   kind: SyntaxKind.CompilerOption;
@@ -1731,9 +1720,7 @@ export function createWildcardItem(): WildcardItem {
   };
 }
 export type DeclaredItemElement =
-  | DeclaredVariable
-  | DeclaredItem
-  | WildcardItem;
+  DeclaredVariable | DeclaredItem | WildcardItem;
 export interface DeclaredItem extends AstNode {
   kind: SyntaxKind.DeclaredItem;
   level: number | null;

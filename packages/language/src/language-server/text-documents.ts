@@ -178,8 +178,7 @@ export class NormalizedTextDocuments<
   private readonly _onDidSave: Emitter<TextDocumentEvent<T>>;
   private readonly _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
   private _willSaveWaitUntil:
-    | RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>
-    | undefined;
+    RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
 
   private readonly _fs: FileSystemProvider;
 
