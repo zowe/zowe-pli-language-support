@@ -794,13 +794,14 @@ dbs_grant_sequence: (ALTER|USAGE|SELECT) (dbs_comma_separator (ALTER|USAGE|SELEC
 dbs_grant_system: db2sql_system_privileges (dbs_comma_separator db2sql_system_privileges)* (ON SYSTEM)? TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_table: (ALL PRIVILEGES? | db2sql_table_view_privileges_grant (dbs_comma_separator db2sql_table_view_privileges_grant)*) ON TABLE? (dbs_host_variable | dbs_alias_name)
                     (dbs_comma_separator (dbs_host_variable | dbs_alias_name))* TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
-dbs_grant_type: USAGE ON (TYPE dbs_object_name (dbs_comma_separator dbs_object_name)* | JAR dbs_host_identifier (dbs_comma_separator dbs_host_identifier)*) TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
+dbs_grant_type: USAGE ON (TYPE dbs_object_names | JAR dbs_object_names) TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_variable: (ALL PRIVILEGES? | (READ|WRITE) (dbs_comma_separator (READ|WRITE))*) ON VARIABLE dbs_object_name TO dbs_grant_authloop (dbs_comma_separator dbs_grant_authloop)* (WITH GRANT OPTION)?;
 dbs_grant_use: USE OF (BUFFERPOOL dbs_bp_name  (dbs_comma_separator dbs_bp_name)* | ALL BUFFERPOOLS | STOGROUP dbs_stogroup_name (dbs_comma_separator dbs_stogroup_name)* |
                 TABLESPACE (dbs_database_name DOT_FS)? dbs_table_space_name (dbs_comma_separator (dbs_database_name DOT_FS)? dbs_table_space_name)*)
                 TO (dbs_authorization_name | ROLE dbs_role_name | PUBLIC) (dbs_comma_separator (dbs_authorization_name | ROLE dbs_role_name | PUBLIC))*
                 (WITH GRANT OPTION)?;
 
+dbs_object_names: dbs_object_name (dbs_comma_separator dbs_object_name)*;
 
 /*HOLD LOCATOR */
 dbs_hold: HOLD LOCATOR dbs_host_variable (dbs_comma_separator dbs_host_variable)*;
@@ -860,10 +861,8 @@ dbs_open: OPEN dbs_cursor_name (USING (DESCRIPTOR dbs_descriptor_name) | (dbs_ho
         LSQUAREBRACKET INTEGERLITERAL RSQUAREBRACKET) (dbs_comma_separator (dbs_host_variable | dbs_array_variable LSQUAREBRACKET INTEGERLITERAL RSQUAREBRACKET))*)?;
 
 /*PREPARE */
-// removing dbs_string_expression as per doc https://www.ibm.com/docs/en/db2-for-zos/13?topic=statements-prepare
-// string-expression is only supported for PLI.
 dbs_prepare: PREPARE dbs_statement_name (INTO dbs_descriptor_name (USING (NAMES | LABELS | ANY | BOTH))?)?
-            (ATTRIBUTES dbs_attr_host_variable)? FROM dbs_host_variable;
+            (ATTRIBUTES dbs_attr_host_variable)? FROM (dbs_host_variable | dbs_string_constant);
 
 
 /*REFRESH TABLE */
@@ -936,13 +935,11 @@ dbs_revoke_table_or_view_prvg: (ALL PRIVILEGES? | db2sql_table_view_privileges_r
 table_or_view_name_loop: dbs_alias_name (dbs_comma_separator dbs_alias_name)*;
 
 //REVOKE TYPE OR JAR PRIVILEGES
-dbs_revoke_type_or_jar_prvg: USAGE ON (TYPE type_name_loop | JAR jar_name_loop)  FROM auth_name_loop_pub  auth_name_loop_all? dependent_privileges? RESTRICT?;
-type_name_loop: dbs_object_name  (dbs_comma_separator dbs_object_name)*;
-jar_name_loop: dbs_host_identifier (dbs_comma_separator dbs_host_identifier)*;
+dbs_revoke_type_or_jar_prvg: USAGE ON (TYPE dbs_object_names | JAR dbs_object_names) FROM auth_name_loop_pub auth_name_loop_all? dependent_privileges? RESTRICT?;
 
 //REVOKE VARIABLE PRIVILEGES
-dbs_revoke_var_prvg: (ALL PRIVILEGES? | read_write_loop) ON VARIABLE FROM auth_name_loop_pub  auth_name_loop_all? dependent_privileges?;
-read_write_loop: READ WRITE (dbs_comma_separator READ WRITE)*;
+dbs_revoke_var_prvg: (ALL PRIVILEGES? | read_write_loop) ON VARIABLE dbs_sql_variable_reference FROM auth_name_loop_pub auth_name_loop_all? dependent_privileges?;
+read_write_loop: (READ|WRITE) (dbs_comma_separator (READ|WRITE))*;
 
 //REVOKE USE PRIVILEGES
 dbs_revoke_use_prvg: USE OF (BUFFERPOOL bpname_loop | ALL BUFFERPOOLS | STOGROUP stogroup_name_loop | TABLESPACE tblspace_name_loop) FROM auth_name_loop_pub  auth_name_loop_all? dependent_privileges?;
