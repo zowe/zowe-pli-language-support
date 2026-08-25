@@ -1085,7 +1085,7 @@ dbs_set_current_pckg_set: CURRENT PACKAGESET EQUALCHAR ((SESSION_USER | USER) | 
 dbs_set_current_precision:  CURRENT PRECISION EQUALCHAR (dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT QUERY ACCELERATION
-dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR (NONE | ENABLE | ENABLE WITH FAILBACK | ELIGIBLE | ALL | dbs_host_variable);
+dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR? (NONE | ENABLE | ENABLE WITH FAILBACK | ELIGIBLE | ALL | dbs_host_variable);
 
 //SET CURRENT QUERY ACCELARATION WAITFORDATA
 dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR?
@@ -1123,7 +1123,7 @@ set_path_opts_loop: set_path_opts (dbs_comma_separator set_path_opts)*;
 dbs_set_schema: (CURRENT? SCHEMA | CURRENT_SCHEMA) EQUALCHAR? (dbs_schema_name | (SESSION_USER | USER) | dbs_host_variable | dbs_string_constant | DEFAULT);
 
 //SET SESSION TIME ZONE
-dbs_set_session_tz : SESSION? TIME ZONE EQUALCHAR? (dbs_string_constant | dbs_host_variable);
+dbs_set_session_tz : SESSION? (TIME ZONE | TIMEZONE) EQUALCHAR (dbs_string_constant | dbs_host_variable);
 
 /*SIGNAL - this is a statement and is referenced in other rules*/
 dbs_signal: dbs_label? SIGNAL
