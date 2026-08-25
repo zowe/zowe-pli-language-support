@@ -35,8 +35,9 @@ export abstract class MessageServiceParser extends Parser {
     param1: string,
     param2?: string,
   ): string {
-    const message = "";
-    //TODO find templates in the COBOL DB2 implementation and format message with parameters
+    const message = template
+      .replace("{0}", param1)
+      .replace("{1}", param2 ?? "");
     super.notifyErrorListeners(message, this.getCurrentToken(), null);
     return message;
   }
