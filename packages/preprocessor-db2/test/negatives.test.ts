@@ -21,7 +21,9 @@ describe("DB2 SQL negatives", async () => {
         ACCELERATION WAITFORDATA 1234
     `);
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe("a DECIMAL(5,1) numeric-constant is only allowed");
+    expect(diagnostics[0].message).toBe(
+      "a DECIMAL(5,1) numeric-constant is only allowed",
+    );
   });
 
   test("Put n.d instead of nnnn.d number", async () => {
@@ -31,7 +33,9 @@ describe("DB2 SQL negatives", async () => {
         ACCELERATION WAITFORDATA 1.5
     `);
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe("a DECIMAL(5,1) numeric-constant is only allowed");
+    expect(diagnostics[0].message).toBe(
+      "a DECIMAL(5,1) numeric-constant is only allowed",
+    );
   });
 
   test("SET OPTIMIZATION HINT requires EQUAL", async () => {
