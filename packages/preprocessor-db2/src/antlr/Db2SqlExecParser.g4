@@ -131,9 +131,9 @@ dbs_alter_function_compopts: (NOT? DETERMINISTIC | NO? EXTERNAL ACTION | ((READS
                              QUERY ACCELERATION (NONE|ELIGIBLE|ALL|ENABLE (WITH FAILBACK)?) | GET_ACCEL_ARCHIVE (YES|NO) | ACCELERATION WAITFORDATA dbs_nnnn_m | ACCELERATOR dbs_accelerator_name | REOPT (NONE|ALWAYS|ONCE) |
                              VALIDATE (RUN|BIND) | ROUNDING (DEC_ROUND_CEILING|DEC_ROUND_DOWN|DEC_ROUND_FLOOR|DEC_ROUND_HALF_DOWN|DEC_ROUND_HALF_EVEN|DEC_ROUND_HALF_UP|DEC_ROUND_UP) | DATE FORMAT (ISO|EUR|USA|JIS|LOCAL) |
                              NOT? SECURED | BUSINESS_TIME SENSITIVE (YES|NO) | SYSTEM_TIME SENSITIVE (YES|NO) | ARCHIVE SENSITIVE (YES|NO) | APPLCOMPAT dbs_applcompat_value | (OFF | CONCENTRATE STATEMENTS (WITH LITERALS)?))+; /*random ordering req*/
-dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{4}\\.\\d$", "a DECIMAL(5,1) numeric-constant is only allowed");}
+dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
           //just to unify the error output
-          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{4}\\.\\d$", "a DECIMAL(5,1) numeric-constant is only allowed");}
+          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
           ;
 /*ALTER INDEX */
 dbs_alter_index: INDEX dbs_index_name (REGENERATE (USING (APPLICATION COMPATIBILITY | APPLCOMPAT) dbs_applcompat_value)? /*included as a separate piped option due to nb 2 in IBM doc*/ |
@@ -1502,7 +1502,7 @@ dbs_function_name: (dbs_sql_identifier DOT_FS)? dbs_sql_identifier; //must not b
 //dbs_imptkmod_param: YES | NO;
 dbs_include_data_type: dbs_alter_procedure_bit_int | dbs_alter_procedure_bit_decimal | dbs_alter_procedure_bit_float | dbs_alter_procedure_bit_decfloat | dbs_alter_procedure_bit_char | dbs_alter_procedure_bit_graphic | dbs_alter_procedure_bit_varchar | DATE | TIME | dbs_alter_procedure_bit_timestamp;
 dbs_jobname_value: dbs_string_constant;
-dbs_create_algorithm_level: INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^0*[0-2]$", "level 0, 1 and 2 are only allowed");};
+dbs_create_algorithm_level: INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^0*[0-2]$", "Only level 0, 1 and 2 are allowed here.");};
 dbs_non_deterministic_expression: DATA CHANGE OPERATION | dbs_special_register | dbs_session_variable;
 dbs_session_variable : SYSIBM DOT_FS PACKAGE_NAME | SYSIBM DOT_FS PACKAGE_SCHEMA | SYSIBM DOT_FS PACKAGE_VERSION;
 dbs_obfuscated_statement_text: dbs_constant+ ;
