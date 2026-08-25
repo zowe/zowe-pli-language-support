@@ -1055,7 +1055,7 @@ dbs_set_decfloat_round_mode: CURRENT DECFLOAT ROUNDING MODE EQUALCHAR? (dbs_roun
 dbs_rounding_mode: ROUND_CEILING | ROUND_DOWN | ROUND_FLOOR | ROUND_HALF_DOWN | ROUND_HALF_EVEN | ROUND_HALF_UP | ROUND_UP;
 
 //SET CURRENT DEGREE
-dbs_set_current_degree: CURRENT DEGREE EQUALCHAR? (dbs_string_constant | dbs_host_variable);
+dbs_set_current_degree: CURRENT DEGREE EQUALCHAR (dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT EXPLAIN MODE
 dbs_set_current_explain_mode: CURRENT EXPLAIN MODE EQUALCHAR? dbs_mod_opts;
@@ -1071,7 +1071,7 @@ dbs_set_current_local_ctype: (CURRENT LOCALE? LC_CTYPE | CURRENT_LC_CTYPE) EQUAL
 dbs_set_current_maintained_table_type_optmz: CURRENT MAINTAINED TABLE? TYPES (FOR OPTIMIZATION)? EQUALCHAR? (ALL | NONE | SYSTEM | USER | dbs_host_variable);
 
 //SET CURRENT OPTIMIZATION HINT
-dbs_set_current_optmz_hint: CURRENT OPTIMIZATION HINT EQUALCHAR? (dbs_string_constant | dbs_host_variable);
+dbs_set_current_optmz_hint: CURRENT OPTIMIZATION HINT EQUALCHAR (dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT PACKAGE PATH
 dbs_set_current_pckg_path: CURRENT PACKAGE PATH EQUALCHAR? pckg_path_opts_loop;
@@ -1079,13 +1079,13 @@ pckg_path_opts: (dbs_collection_id | (SESSION_USER | USER) | CURRENT PACKAGE PAT
 pckg_path_opts_loop: pckg_path_opts (dbs_comma_separator pckg_path_opts)*;
 
 //SET CURRENT PACKAGE SET
-dbs_set_current_pckg_set: CURRENT PACKAGESET EQUALCHAR? ((SESSION_USER | USER) | dbs_string_constant | dbs_host_variable);
+dbs_set_current_pckg_set: CURRENT PACKAGESET EQUALCHAR ((SESSION_USER | USER) | dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT PRECISION
-dbs_set_current_precision:  CURRENT PRECISION EQUALCHAR? (dbs_string_constant | dbs_host_variable);
+dbs_set_current_precision:  CURRENT PRECISION EQUALCHAR (dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT QUERY ACCELERATION
-dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR? (NONE | ENABLE | ENABLE WITH FAILBACK | ELIGIBLE | ALL | dbs_host_variable);
+dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR (NONE | ENABLE | ENABLE WITH FAILBACK | ELIGIBLE | ALL | dbs_host_variable);
 
 //SET CURRENT QUERY ACCELARATION WAITFORDATA
 dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR?
@@ -1100,10 +1100,10 @@ dbs_set_current_refresh_age: CURRENT REFRESH AGE EQUALCHAR? (INTEGERLITERAL | AN
 dbs_set_current_routine_version: CURRENT ROUTINE VERSION EQUALCHAR? (dbs_routine_version_id | dbs_host_variable | dbs_string_constant);
 
 //SET CURRENT RULES
-dbs_set_current_rules: CURRENT RULES EQUALCHAR? (dbs_string_constant | dbs_host_variable);
+dbs_set_current_rules: CURRENT RULES EQUALCHAR (dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT SQLID
-dbs_set_current_sqlid: CURRENT SQLID EQUALCHAR? (SESSION_USER | USER | dbs_string_constant | dbs_host_variable);
+dbs_set_current_sqlid: CURRENT SQLID EQUALCHAR (SESSION_USER | USER | dbs_string_constant | dbs_host_variable);
 
 //SET CURRENT TEMPORAL BUSINESS_TIME
 dbs_set_current_temp_business_time: CURRENT TEMPORAL BUSINESS_TIME EQUALCHAR? (NULL | dbs_expressions);
@@ -1112,7 +1112,7 @@ dbs_set_current_temp_business_time: CURRENT TEMPORAL BUSINESS_TIME EQUALCHAR? (N
 dbs_set_current_temp_system_time: CURRENT TEMPORAL SYSTEM_TIME EQUALCHAR? (NULL | dbs_expression);
 
 //SET CURRENT ENCRIPTION PASSWORD
-dbs_set_current_enc_pwd: ENCRYPTION PASSWORD EQUALCHAR? (dbs_sql_variable_reference | dbs_constant) (WITH HINT EQUALCHAR? (dbs_host_variable | dbs_sql_identifier))?;
+dbs_set_current_enc_pwd: ENCRYPTION PASSWORD EQUALCHAR (dbs_sql_variable_reference | dbs_constant) (WITH HINT EQUALCHAR? (dbs_host_variable | dbs_sql_identifier))?;
 
 //SET PATH
 dbs_set_path: (CURRENT)? PATH EQUALCHAR? set_path_opts_loop;
