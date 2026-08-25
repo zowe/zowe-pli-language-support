@@ -1019,9 +1019,11 @@ dbs_set_connection: CONNECTION (dbs_location_name | dbs_host_variable);
 
 //SET ASSIGNMENT STATEMENT
 dbs_set_assign: (dbs_sql_variable_reference EQUALCHAR CURRENT (PACKAGESET | PACKAGE PATH |  SERVER) | dbs_array_type_name
-                LSQUAREBRACKET dbs_array_type_name RSQUAREBRACKET EQUALCHAR (dbs_expression | NULL) | target_variable_loop); // TODO [array-index] adjust array-index , could be a query-expr arith-expr, sub-query etc
+                LSQUAREBRACKET dbs_array_index RSQUAREBRACKET EQUALCHAR (dbs_expression | NULL) | target_variable_loop); // TODO [array-index] adjust array-index , could be a query-expr arith-expr, sub-query etc
+dbs_array_index: dbs_array_type_name | dbs_host_variable | dbs_expression;
 //target_variable: (dbs_global_variable_name | dbs_host_variable | dbs_sql_parameter_name | dbs_sql_variable_reference | dbs_object_name);
-target_variable_eq_opt:  (dbs_expressions | NULL | DEFAULT);
+target_variable_eq_opt: (dbs_expressions | NULL | DEFAULT);
+
 target_variable_eq_opt_loop:  target_variable_eq_opt (dbs_comma_separator target_variable_eq_opt)*;
 target_variable_val_loop: LPARENCHAR dbs_sql_variable_reference (dbs_comma_separator dbs_sql_variable_reference)*  RPARENCHAR;
 target_variable_vals_loop:
