@@ -26,7 +26,7 @@ import {
   createMacroHandlers,
   MacroPreprocessorPhase,
 } from "../../src/preprocessor/macro-phase";
-import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
+import { MarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { SourceMap } from "../../src/preprocessor/source-map";
 import { annotateTokens } from "../../src/preprocessor/token-annotator";
 import { serializeTokens } from "../../src/preprocessor/token-serializer";
@@ -57,19 +57,15 @@ for (const targetLines of [10_000, 100_000]) {
   // Reproduce PliLexer.tokenize's setup steps once, so each bench gets the exact
   // intermediate input it would see in the real pipeline.
   const optionsProcessor = new CompilerOptionsProcessor();
-  const marginsProcessor = new PliMarginsProcessor();
+  const marginsProcessor = new MarginsProcessor();
   const optionsResult = optionsProcessor.extractCompilerOptions(
     text,
     uri,
-    unit.services.workspace,
+    unit,
   );
   const opts = optionsResult.result?.options ?? getDefaultCompilerOptions();
   updatePliTokenizer(opts);
-  const marginText = marginsProcessor.processMargins(
-    optionsResult,
-    uri,
-    unit.services.workspace,
-  );
+  const marginText = marginsProcessor.processMargins(optionsResult, uri, unit);
   const strippedText = stripComments(marginText).text;
   const lexed = tokenize(strippedText, uri);
   const macroPhase = new MacroPreprocessorPhase(
@@ -103,22 +99,14 @@ for (const targetLines of [10_000, 100_000]) {
     bench(
       "compiler options scan",
       () => {
-        optionsProcessor.extractCompilerOptions(
-          text,
-          uri,
-          unit.services.workspace,
-        );
+        optionsProcessor.extractCompilerOptions(text, uri, unit);
       },
       BENCH_OPTIONS,
     );
     bench(
       "margins",
       () => {
-        marginsProcessor.processMargins(
-          optionsResult,
-          uri,
-          unit.services.workspace,
-        );
+        marginsProcessor.processMargins(optionsResult, uri, unit);
       },
       BENCH_OPTIONS,
     );

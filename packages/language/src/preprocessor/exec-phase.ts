@@ -820,7 +820,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
             recompileFingerprint: "",
           },
           includeUri,
-          unit.services.workspace,
+          unit,
         );
         const stripped = stripComments(textWithoutMargins);
         includeComments.set(

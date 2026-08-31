@@ -10,7 +10,7 @@
  */
 
 import { CompilerOptionsCodes } from "../../../src/preprocessor/compiler-options/codes";
-import { PliMarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
+import { MarginsProcessor } from "../../../src/preprocessor/pli-margins-processor";
 import { Severity } from "../../../src/language-server/types";
 import {
   InternalCodes,
@@ -29,8 +29,8 @@ export const HarnessCodes: HarnessTesterInterface["code"] = {
   LspCodes: LspCodes,
   Lexer: {
     Margins: {
-      ErrorLeft: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT,
-      ErrorRight: PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
+      ErrorLeft: MarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT,
+      ErrorRight: MarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
     },
   },
   LSP: LspCodes,
