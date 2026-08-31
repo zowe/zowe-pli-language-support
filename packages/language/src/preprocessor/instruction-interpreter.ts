@@ -2264,7 +2264,7 @@ async function runInclude(
               recompileFingerprint: "", // Not used in this context
             },
             uri,
-            context.unit.services.workspace,
+            context.unit,
           );
         const tokenizeResult = tokenize(processedContent, uri);
         const subState = new ParserState(

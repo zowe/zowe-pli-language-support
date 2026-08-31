@@ -17,8 +17,8 @@ import { createTokenInstance, Token } from "../parser/tokens";
 import { PROCESS as PROCESS_TOKEN } from "../parser/tokens";
 import { CstNodeKind } from "../syntax-tree/cst";
 import { URI } from "../utils/uri";
-import { WorkspaceContext } from "../workspace/workspace-context";
 import { CompilerOptionSource } from "./compiler-options/translator";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 export interface CompilerOptionsProcessorResult {
   result: CompilerOptionResult | undefined;
@@ -42,7 +42,7 @@ export class CompilerOptionsProcessor {
   extractCompilerOptions(
     text: string,
     uri: URI,
-    workspace: WorkspaceContext,
+    unit: CompilationUnit,
   ): CompilerOptionsProcessorResult {
     const ranges = this.getCompilerOptionsRange(text, uri);
     const sourceCompilerOptions: string[] = [];
@@ -76,7 +76,7 @@ export class CompilerOptionsProcessor {
     // We run the translation of the plugin configuration first, so that
     // duplicate or mutual exclusive options are recognized when translating
     // the current source file.
-    const programConfig = workspace.config.getProgramConfig(uri);
+    const programConfig = unit.programConfig;
 
     if (programConfig) {
       if (ranges.length > 0) {

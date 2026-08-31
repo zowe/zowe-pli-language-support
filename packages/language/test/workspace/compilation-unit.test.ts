@@ -248,4 +248,131 @@ describe("Compilation Unit Tests", () => {
     );
     expect(libUnit).toBeUndefined();
   });
+
+  describe("Process group inference from lib path", () => {
+    async function setupWorkspace() {
+      const testFs = new VirtualFileSystemProvider();
+      // The lib directory must exist on disk, otherwise the lib expander
+      // drops it from the process group's `computedLibs`.
+      await testFs.writeFile(UriUtils.toUri("file:///cpy/inc.inc"), "");
+      const workspace = createTestWorkspace(testFs);
+      const wsUri = UriUtils.toUri("file:///");
+      await workspace.config.init(wsUri);
+      await workspace.config.setProcessGroupConfigs([
+        makeProcessGroup({
+          name: "default",
+          libs: ["cpy"],
+          includeExtensions: [".inc"],
+        }),
+        makeProcessGroup({
+          name: "configured",
+          libs: [],
+          includeExtensions: [".inc"],
+        }),
+      ]);
+      return { workspace, wsUri };
+    }
+
+    test("infers the process group from the lib directory without a program config", async () => {
+      const { workspace } = await setupWorkspace();
+      // `.cpy` is not a registered include extension, so the file gets its own
+      // compilation unit despite living in a lib directory.
+      const unit = await workspace.getOrCreateCompilationUnit(
+        UriUtils.toUri("file:///cpy/b.cpy"),
+      );
+      expect(unit).toBeDefined();
+      expect(unit!.programConfig).toBeUndefined();
+      expect(unit!.processGroup?.name.value).toBe("default");
+    });
+
+    test("program config takes precedence over lib path inference", async () => {
+      const { workspace, wsUri } = await setupWorkspace();
+      workspace.config.setProgramConfigs(wsUri, [
+        makeProgramConfig({ program: "cpy/a.pli", pgroup: "configured" }),
+      ]);
+      const unit = await workspace.getOrCreateCompilationUnit(
+        UriUtils.toUri("file:///cpy/a.pli"),
+      );
+      expect(unit).toBeDefined();
+      // The file lives in the "default" group's lib dir, but its program
+      // config binds it to "configured".
+      expect(unit!.processGroup?.name.value).toBe("configured");
+    });
+
+    test("has no process group for files outside of lib directories", async () => {
+      const { workspace } = await setupWorkspace();
+      const unit = await workspace.getOrCreateCompilationUnit(
+        UriUtils.toUri("file:///src/plain.pli"),
+      );
+      expect(unit).toBeDefined();
+      expect(unit!.processGroup).toBeUndefined();
+    });
+
+    test("resolves includes in a standalone lib file via the inferred process group", async () => {
+      const testFs = new VirtualFileSystemProvider();
+      const workspace = createTestWorkspace(testFs);
+      const wsUri = UriUtils.toUri("file:///");
+
+      const copybookUri = UriUtils.toUri("file:///cpy/main.cpy");
+      await testFs.writeFile(copybookUri, " DCL B CHAR;\n %INCLUDE inc;\n");
+      await testFs.writeFile(
+        UriUtils.toUri("file:///cpy/inc.inc"),
+        " DCL A CHAR;\n",
+      );
+
+      await workspace.config.init(wsUri);
+      await workspace.config.setProcessGroupConfigs([
+        makeProcessGroup({
+          name: "default",
+          libs: ["cpy"],
+          includeExtensions: [".inc"],
+        }),
+      ]);
+
+      // The copybook has no program config, but its location inside the lib
+      // directory associates it with the "default" process group, which in
+      // turn resolves its include.
+      const unit = await workspace.getOrCreateCompilationUnit(copybookUri);
+      expect(unit).toBeDefined();
+      expect(unit!.processGroup?.name.value).toBe("default");
+
+      const doc = await TextDocuments.get(copybookUri);
+      await lifecycle.lifecycle(unit!, doc!, CancellationToken.None);
+      const tokens = unit!.tokens.map((t) => t.image);
+      expect(tokens).toContain("B");
+      expect(tokens).toContain("A");
+    });
+
+    test("applies process group compiler options to a standalone lib file", async () => {
+      const testFs = new VirtualFileSystemProvider();
+      const copybookUri = UriUtils.toUri("file:///cpy/b.cpy");
+      await testFs.writeFile(copybookUri, " DCL A CHAR;\n");
+      const workspace = createTestWorkspace(testFs);
+      const wsUri = UriUtils.toUri("file:///");
+      await workspace.config.init(wsUri);
+
+      // The copybook is not listed in the program config, but the "default"
+      // process group is inferred from its lib directory, pulling in both a
+      // program config of that group and the group's compiler options.
+      workspace.config.setProgramConfigs(wsUri, [
+        makeProgramConfig({ program: "src/main.pli", pgroup: "default" }),
+      ]);
+      await workspace.config.setProcessGroupConfigs([
+        makeProcessGroup({
+          name: "default",
+          libs: ["cpy"],
+          includeExtensions: [".inc"],
+          compilerOptions: ["OR('|!')"],
+        }),
+      ]);
+
+      const unit = await workspace.getOrCreateCompilationUnit(copybookUri);
+      expect(unit).toBeDefined();
+      expect(unit!.programConfig?.program.value).toBe("src/main.pli");
+
+      const doc = await TextDocuments.get(copybookUri);
+      await lifecycle.lifecycle(unit!, doc!, CancellationToken.None);
+      expect(unit!.compilerOptions.or).toBe("|!");
+    });
+  });
 });

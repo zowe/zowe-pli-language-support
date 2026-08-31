@@ -18,26 +18,17 @@ import {
 import { CompilerOptionsProcessorResult } from "./compiler-options-processor";
 import { URI } from "../utils/uri";
 import { Warning } from "../validation/pli-codes";
-import { WorkspaceContext } from "../workspace/workspace-context";
+import { CompilationUnit } from "../workspace/compilation-unit";
 
 const NEWLINE = "\n".charCodeAt(0);
 const SPACE = " ".charCodeAt(0);
 const PREFIX_PATTERN = /^[0-9\+\- \r\t]+$/;
 const SEQUENCE_PATTERN = /^\s*[A-Z0-9]*\r?\n?$/;
 
-export interface MarginsProcessor {
-  issues: Diagnostic[];
-  processMargins(
-    input: CompilerOptionsProcessorResult,
-    uri: URI,
-    workspace: WorkspaceContext,
-  ): string;
-}
-
 /**
  * Helper class to replace text margins with space characters (characters 2-72 are normal program text)
  */
-export class PliMarginsProcessor implements MarginsProcessor {
+export class MarginsProcessor {
   static readonly MARGIN_ERROR_MESSAGE_LEFT = (m: number, n: number) => {
     if (m === 2) {
       return `PL/I statements must start from column 2.`;
@@ -53,19 +44,11 @@ export class PliMarginsProcessor implements MarginsProcessor {
   processMargins(
     input: CompilerOptionsProcessorResult,
     uri: URI,
-    workspace: WorkspaceContext,
+    unit: CompilationUnit,
   ): string {
     this.issues = [];
-
-    const programConfig = workspace.config.getProgramConfig(uri);
-    if (programConfig) {
-      const processGroup = workspace.config.getProcessGroupConfig(
-        programConfig.pgroup.value,
-      );
-      if (processGroup) {
-        this.checkMargins = processGroup.lspOptions.checkMargins.value;
-      }
-    }
+    this.checkMargins =
+      unit.processGroup?.lspOptions.checkMargins.value ?? false;
 
     let margins: Range = {
       start: 2,
@@ -101,11 +84,11 @@ export class PliMarginsProcessor implements MarginsProcessor {
         diagnostic(
           Severity.W,
           side === "left"
-            ? PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT(
+            ? MarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT(
                 margins.start,
                 margins.end,
               )
-            : PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
+            : MarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT,
           { start, end },
           uri.toString(),
         ),

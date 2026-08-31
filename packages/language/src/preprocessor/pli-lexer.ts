@@ -9,7 +9,7 @@
  *
  */
 
-import { MarginsProcessor, PliMarginsProcessor } from "./pli-margins-processor";
+import { MarginsProcessor } from "./pli-margins-processor";
 import { URI } from "../utils/uri";
 import { largePush } from "../utils/collections";
 import {
@@ -68,7 +68,7 @@ export class PliLexer {
 
   constructor() {
     this.compilerOptionsPreprocessor = new CompilerOptionsProcessor();
-    this.marginsProcessor = new PliMarginsProcessor();
+    this.marginsProcessor = new MarginsProcessor();
   }
 
   async tokenize(
@@ -83,7 +83,7 @@ export class PliLexer {
       this.compilerOptionsPreprocessor.extractCompilerOptions(
         inputText,
         uri,
-        unit.services.workspace,
+        unit,
       );
     const opts =
       compilerOptionsResult.result?.options ?? getDefaultCompilerOptions();
@@ -164,7 +164,7 @@ export class PliLexer {
     const textWithoutMargins = this.marginsProcessor.processMargins(
       compilerOptionsResult,
       uri,
-      unit.services.workspace,
+      unit,
     );
     const marginIssues = [...this.marginsProcessor.issues];
     const { text, comments } = stripComments(textWithoutMargins);
