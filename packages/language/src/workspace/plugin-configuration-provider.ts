@@ -1306,6 +1306,19 @@ export class PluginConfigurationProvider {
     return this.processGroupConfigs.get(pgroup);
   }
 
+  public getProgramConfigFromLib(libUri: URI): ProgramRecord | undefined {
+    const processGroup = this.getProcessGroupConfigFromLib(libUri);
+    if (!processGroup) {
+      return undefined;
+    }
+    for (const program of this.programConfigs.values()) {
+      if (program.pgroup.value === processGroup.name.value) {
+        return program;
+      }
+    }
+    return undefined;
+  }
+
   /**
    * Returns the process group config for the given URI. This is used to find the
    * process group associated with a library file. It is rather fuzzy and might not be 100% accurate.

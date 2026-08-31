@@ -16,7 +16,7 @@ import { CompilerOptions as PliCompilerOptions } from "../../src/preprocessor/co
 import { CompilerOptions as MacroCompilerOptions } from "../../src/preprocessor/compiler-options/options-macro";
 import { CompilerOptions as SQLCompilerOptions } from "../../src/preprocessor/compiler-options/options-sql";
 import { CompilerOptions as CICSCompilerOptions } from "../../src/preprocessor/compiler-options/options-cics";
-import { PliMarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
+import { MarginsProcessor } from "../../src/preprocessor/pli-margins-processor";
 import { DefaultAttribute, SyntaxKind } from "../../src/syntax-tree/ast";
 import {
   AccessMode,
@@ -434,8 +434,8 @@ export interface HarnessTesterInterface {
     LspCodes: typeof LspCodes;
     Lexer: {
       Margins: {
-        ErrorLeft: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT;
-        ErrorRight: typeof PliMarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT;
+        ErrorLeft: typeof MarginsProcessor.MARGIN_ERROR_MESSAGE_LEFT;
+        ErrorRight: typeof MarginsProcessor.MARGIN_ERROR_MESSAGE_RIGHT;
       };
     };
     LSP: typeof LspCodes;

@@ -206,7 +206,9 @@ export async function createCompilationUnit(
       if (cachedProgramConfig !== null) {
         return cachedProgramConfig;
       }
-      cachedProgramConfig = workspace.config.getProgramConfig(uri);
+      cachedProgramConfig =
+        workspace.config.getProgramConfig(uri) ??
+        workspace.config.getProgramConfigFromLib(uri);
       return cachedProgramConfig;
     },
     get processGroup() {
@@ -214,12 +216,15 @@ export async function createCompilationUnit(
         return cachedProcessGroup;
       }
       if (this.programConfig) {
+        // If the current compilation unit has a program config
+        // Load the process group for that config
         cachedProcessGroup = workspace.config.getProcessGroupConfig(
           this.programConfig.pgroup.value,
         );
-      } else {
-        cachedProcessGroup = undefined;
       }
+      // Otherwise, try to infer the process group from the path of the current file
+      // It might be a library file, in which case we can associate a process group with it
+      cachedProcessGroup ??= workspace.config.getProcessGroupConfigFromLib(uri);
       return cachedProcessGroup;
     },
     mutex: createMutex(),

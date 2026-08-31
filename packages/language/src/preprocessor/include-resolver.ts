@@ -369,9 +369,7 @@ export async function resolveIncludeFileUri(
     return undefined;
   }
   const workspaceCtx = context.unit.services.workspace;
-  const pgroup =
-    context.unit.processGroup ??
-    workspaceCtx.config.getProcessGroupConfigFromLib(context.currentUri);
+  const pgroup = context.unit.processGroup;
   if (!pgroup) {
     return undefined;
   }
