@@ -745,12 +745,13 @@ dbs_fetch: FETCH (
                                                    )
                                                 )
                 );
-dbs_fetch_rowpos: (NEXT | PRIOR | FIRST | LAST | CURRENT CONTINUE? | (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant));
+dbs_fetch_rowpos: (NEXT | PRIOR | FIRST | LAST | CURRENT CONTINUE? | (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant_with_unary));
 dbs_fetch_singlerow: into_or_using (DESCRIPTOR dbs_descriptor_name | dbs_array_variable LSQUAREBRACKET INTEGERLITERAL RSQUAREBRACKET |
                     dbs_sql_variable_reference (dbs_comma_separator dbs_sql_variable_reference)*);
 dbs_fetch_multirow: (FOR (dbs_host_variable | dbs_integer_constant) ROWS)? (into_or_using (DESCRIPTOR dbs_descriptor_name | dbs_sql_variable_reference (dbs_comma_separator dbs_sql_variable_reference)*))?;
-dbs_fetch_rowsetpos: (ROWSET STARTING AT (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant) | (NEXT | PRIOR |
+dbs_fetch_rowsetpos: (ROWSET STARTING AT (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant_with_unary) | (NEXT | PRIOR |
                     FIRST | LAST | CURRENT) ROWSET);
+dbs_integer_constant_with_unary: (MINUSCHAR|PLUSCHAR)? dbs_integer_constant;
 into_or_using: INTO | USING;
 
 /*FREE LOCATOR */
