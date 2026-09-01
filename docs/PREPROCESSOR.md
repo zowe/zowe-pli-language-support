@@ -65,13 +65,14 @@ It replaces each directive span with equal-length whitespace so positions are pr
 ### Translation and dialects
 
 The abstract options are turned into a typed [`CompilerOptions`](../packages/language/src/preprocessor/compiler-options/options.ts) object by the translator in [translate.ts](../packages/language/src/preprocessor/compiler-options/translate.ts).
-There are three dialects, each with its own option shape, defaults, and rule table:
+There are four dialects, each with its own option shape, defaults, and rule table:
 
 - **PLI** ([options-pli.ts](../packages/language/src/preprocessor/compiler-options/options-pli.ts), [translator-pli.ts](../packages/language/src/preprocessor/compiler-options/translator-pli.ts)) - the main option set: `MARGINS`, `MARGINI`, `INCAFTER`, the `PP(...)` preprocessor list and its `PPINCLUDE` value, `SYSPARM`, `SYSTEM`, `CMPAT`, `LP`, etc.
 - **MACRO** ([options-macro.ts](../packages/language/src/preprocessor/compiler-options/options-macro.ts), [translator-macro.ts](../packages/language/src/preprocessor/compiler-options/translator-macro.ts)) - macro-preprocessor tuning: `CASE`, `RESCAN`, `FIXED`, `DBCS`, `NAMEPREFIX`, `DEPRECATE`. `RESCAN(ASIS)`, for example, controls whether re-scanned macro output is upper-cased.
 - **SQL** ([options-sql.ts](../packages/language/src/preprocessor/compiler-options/options-sql.ts), [translator-sql.ts](../packages/language/src/preprocessor/compiler-options/translator-sql.ts)) - DB2/SQL preprocessor options (`CCSID0`, `CODEPAGE`, `HOSTCOPY`, `LINE`, ...).
+- **CICS** ([options-cics.ts](../packages/language/src/preprocessor/compiler-options/options-cics.ts), [translator-cics.ts](../packages/language/src/preprocessor/compiler-options/translator-cics.ts)) - CICS preprocessor options (`DEBUG`, `DLI`, `EDF`, `FLAG`, `GRAPHIC`, ...).
 
-The nested `PP(MACRO ...)` / `PP(SQL ...)` option strings are re-parsed and routed to the macro/SQL sub-translators.
+The nested `PP(MACRO ...)` / `PP(SQL ...)` / `PP(CICS ...)` option strings are re-parsed and routed to their sub-translators.
 Plugin-config options are translated *first* so that duplicate / mutually-exclusive options in the source file can be detected against them.
 
 The [`Translator`](../packages/language/src/preprocessor/compiler-options/translator.ts) base class records each applied rule and reports **duplicate** and **mutually-exclusive** usages, plus **unknown option** (`IBM1159I`, promoted to error).
@@ -86,7 +87,7 @@ A stable fingerprint is built from those applied rules and their concrete argume
 ## The phase pipeline
 
 [`buildPhases`](../packages/language/src/preprocessor/pli-lexer.ts) maps the `PP(...)` option to an ordered phase list: each `MACRO` item is its own [`MacroPreprocessorPhase`](../packages/language/src/preprocessor/macro-phase.ts) pass (so `PP(MACRO MACRO)` runs the macro preprocessor twice, allowing the second pass to expand macro code the first generated), `INCLUDE` reuses the macro phase, and `SQL`/`CICS` become [`ExecSqlPreprocessorPhase`/`ExecCicsPreprocessorPhase`](../packages/language/src/preprocessor/exec-phase.ts).
-Without a `PP` option, only the macro phase runs - `EXEC SQL`/`EXEC CICS` statements require the corresponding preprocessor to be configured explicitly.
+When nothing is configured at all, the default compiler options apply - `PP(MACRO SQL CICS)` - so all three preprocessors run; only when the configured options end up without any `PP` items does the pipeline fall back to just the macro phase.
 An [`UnresolvedExecPhase`](../packages/language/src/preprocessor/exec-phase.ts) always runs last: any `EXEC CICS`/`EXEC SQL` statement still present at that point means the corresponding preprocessor was not configured, so it reports a compiler-options diagnostic on the statement and substitutes `DO; END;` to keep the final parse quiet.
 
 Every phase implements [`PreprocessorPhase`](../packages/language/src/preprocessor/pp-phase.ts).
@@ -163,7 +164,7 @@ A `true` entry means that case was taken; `undefined` means the condition could 
 The interpreter is a Turing-complete macro language, so it is bounded against runaway loops and recursion.
 `runInstructions` computes an instruction-counter limit from the process group's `instruction-counter-limit` LSP option, clamped between `1` and `MAX_INSTRUCTION_LIMIT` (`50000`) and defaulting to `DEFAULT_INSTRUCTION_LIMIT` (`5000`).
 The runner counts visits per node and aborts once a node exceeds the limit.
-Additional guards: circular `next`-chain detection, a `MAX_COPY_SIZE` (100 000) cap on `COPY`/`REPEAT` output, the `COUNTER` builtin wrapping at 99999, and a workaround for V8's spread-argument limit when emitting very large token arrays.
+Additional guards: circular `next`-chain detection, a `MAX_ARRAY_COUNT` (100 000) cap on array sizes and `COPY`/`REPEAT` output, the `COUNTER` builtin wrapping at 99999, and a workaround for V8's spread-argument limit when emitting very large token arrays.
 
 ## The SQL and CICS phases
 
