@@ -241,7 +241,8 @@ dbs_alter_table_drop: DROP (COLUMN? dbs_column_name_without_alias RESTRICT | PRI
 dbs_alter_table_rotate: ROTATE PARTITION (FIRST | INTEGERLITERAL) TO LAST ENDING AT? LPARENCHAR (dbs_constant | MAXVALUE | MINVALUE) (dbs_comma_separator (dbs_constant | MAXVALUE | MINVALUE))* RPARENCHAR INCLUSIVE? RESET;
 
 /*ALTER TABLESPACE */
-dbs_alter_tablespace: TABLESPACE (dbs_database_name DOT_FS)? dbs_table_space_name (dbs_alter_tablespace_unique_options |  dbs_alter_tablespace_mul_opts);
+//TODO dbs_alter_tablespace_unique_options must appear at most once, but the grammar does not enforce this
+dbs_alter_tablespace: TABLESPACE (dbs_database_name DOT_FS)? dbs_table_space_name (dbs_alter_tablespace_unique_options |  dbs_alter_tablespace_mul_opts)+;
 dbs_alter_tablespace_unique_options: DROP PENDING CHANGES | DSSIZE dbs_dsize_parameter | SEGSIZE INTEGERLITERAL | PAGENUM RELATIVE | dbs_alter_tablespace_move;
 dbs_alter_tablespace_mul_opts: (
                                  dbs_create_alter_tablespace_opts_common
