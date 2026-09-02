@@ -38,6 +38,7 @@ import {
   rebaseToken,
   scanExecFragments,
   SemanticsKind,
+  Severity,
   Token,
 } from "preprocessor-api";
 import { CollectingSemanticErrorVisitor } from "./collect-semantic-errors";
@@ -89,7 +90,7 @@ export class CICSPreprocessor implements Preprocessor {
       "CICS",
       CICS_DELIMITERS,
     )) {
-      const { diagnostics, tokens } = this.parse(fragment.bodyText);
+      const { diagnostics, tokens } = this.tryParse(fragment.bodyText);
       for (const diagnostic of diagnostics) {
         context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
       }
@@ -105,6 +106,18 @@ export class CICSPreprocessor implements Preprocessor {
         continue;
       }
       context.replace(fragment.range, buildExecReplacement(tokens), rebased);
+    }
+  }
+
+  private tryParse(text: string): PreprocessorResult {
+    try {
+      return this.parse(text);
+    } catch {
+      return {
+        tokens: [],
+        diagnostics: [],
+        replacement: null,
+      };
     }
   }
 
