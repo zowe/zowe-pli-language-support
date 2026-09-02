@@ -42,6 +42,7 @@ import {
   SemanticsKind,
   Token,
   PreprocessorResult,
+  Severity,
 } from "preprocessor-api";
 
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
@@ -76,7 +77,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
       "SQL",
       DB2_DELIMITERS,
     )) {
-      const { diagnostics, tokens, replacement } = this.parse(
+      const { diagnostics, tokens, replacement } = this.tryParse(
         fragment.bodyText,
       );
       for (const diagnostic of diagnostics) {
@@ -106,6 +107,18 @@ export class Db2SqlPreprocessor implements Preprocessor {
         continue;
       }
       context.replace(fragment.range, buildExecReplacement(tokens), rebased);
+    }
+  }
+
+  private tryParse(text: string): PreprocessorResult {
+    try {
+      return this.parse(text);
+    } catch {
+      return {
+        tokens: [],
+        diagnostics: [],
+        replacement: null,
+      };
     }
   }
 
