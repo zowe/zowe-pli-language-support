@@ -12,10 +12,12 @@ import { Diagnostic, Severity } from "preprocessor-api";
 import { CICSLexer } from "../generated/CICSLexer";
 import {
   Cics_acquire_processContext,
+  Cics_acquireContext,
   CICSParser,
 } from "../generated/CICSParser";
 import { CICSCheckUtilityParameters, CICSOptionsCheckerBase } from "./base";
 import { ParserRuleContext } from "antlr4ng";
+import { assertType } from "./utils";
 
 export class AcquireOptionsChecker extends CICSOptionsCheckerBase {
   static readonly RULE_INDEX = CICSParser.RULE_cics_acquire;
@@ -42,6 +44,18 @@ export class AcquireOptionsChecker extends CICSOptionsCheckerBase {
       this.checkAcquireProcess(ctx as unknown as Cics_acquire_processContext);
     }
     this.checkDuplicates(ctx);
+  }
+
+  override checkRootRule<E extends ParserRuleContext>(ctx: E): void {
+    if (ctx.ruleIndex === CICSParser.RULE_cics_acquire) {
+      assertType<Cics_acquireContext>(ctx);
+      if (
+        !ctx.cics_acquire_activityId() &&
+        !ctx.cics_acquire_process()
+      ) {
+        this.checkHasAtLeastOneOption("ACTIVITYID, PROCESS, PROCESSTYPE", ctx);
+      }
+    }
   }
 
   private checkAcquireProcess(ctx: Cics_acquire_processContext) {

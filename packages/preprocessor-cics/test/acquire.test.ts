@@ -42,6 +42,17 @@ describe("CICS ACQUIRE", () => {
     );
   });
 
+  test("ACQUIRE only", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
+      "ACQUIRE",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: ACTIVITYID, PROCESS, PROCESSTYPE/,
+    );
+  });
+
   test("Duplicated PROCESSTYPE", () => {
     const { diagnostics } = cicsPreprocessor.parse(
       "ACQUIRE PROCESS(ABC) PROCESSTYPE(XYZ) PROCESSTYPE(DEF)",

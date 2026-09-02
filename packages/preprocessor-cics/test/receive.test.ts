@@ -63,4 +63,13 @@ describe("CICS RECEIVE", () => {
       /Excessive options provided for: INTO/,
     );
   });
+
+  test("SET and INTO", () => {
+    const { diagnostics } = cicsPreprocessor.parse("RECEIVE MAP('') MAPPINGDEV('') FROM('') SET('') INTO('')");
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Excessive options provided for: INTO/,
+    );
+  });
 });
