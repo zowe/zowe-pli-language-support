@@ -1091,7 +1091,7 @@ dbs_set_current_precision:  CURRENT PRECISION EQUALCHAR (dbs_string_constant | d
 dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR? (NONE | ENABLE | ENABLE WITH FAILBACK | ELIGIBLE | ALL | dbs_host_variable);
 
 //SET CURRENT QUERY ACCELARATION WAITFORDATA
-dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR?
+dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR
                                (NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "\\d{1,4}\\.\\d\\b", "db2SqlParser.currentQueryAcceleration");}
                                | INTEGERLITERAL
                                | dbs_host_variable);

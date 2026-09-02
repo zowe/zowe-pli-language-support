@@ -50,4 +50,12 @@ describe("DB2 SQL negatives", async () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].message).toBe("missing '=' at ':'");
   });
+
+  test("SET CURRENT QUERY ACCELERATION requires EQUAL", async () => {
+    const { diagnostics } = preprocessor.parse(`
+        SET CURRENT QUERY ACCELERATION WAITFORDATA :HVL
+    `);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toBe("missing '=' at ':'");
+  });
 });
