@@ -32,10 +32,7 @@ describe("DB2 SQL negatives", async () => {
         GET_ACCEL_ARCHIVE YES
         ACCELERATION WAITFORDATA 1.5
     `);
-    expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].message).toBe(
-      "Only a DECIMAL(5,1) numeric-constant is allowed here.",
-    );
+    expect(diagnostics).toHaveLength(0);
   });
 
   test("SET OPTIMIZATION HINT requires EQUAL", async () => {

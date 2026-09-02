@@ -131,9 +131,9 @@ dbs_alter_function_compopts: (NOT? DETERMINISTIC | NO? EXTERNAL ACTION | ((READS
                              QUERY ACCELERATION (NONE|ELIGIBLE|ALL|ENABLE (WITH FAILBACK)?) | GET_ACCEL_ARCHIVE (YES|NO) | ACCELERATION WAITFORDATA dbs_nnnn_m | ACCELERATOR dbs_accelerator_name | REOPT (NONE|ALWAYS|ONCE) |
                              VALIDATE (RUN|BIND) | ROUNDING (DEC_ROUND_CEILING|DEC_ROUND_DOWN|DEC_ROUND_FLOOR|DEC_ROUND_HALF_DOWN|DEC_ROUND_HALF_EVEN|DEC_ROUND_HALF_UP|DEC_ROUND_UP) | DATE FORMAT (ISO|EUR|USA|JIS|LOCAL) |
                              NOT? SECURED | BUSINESS_TIME SENSITIVE (YES|NO) | SYSTEM_TIME SENSITIVE (YES|NO) | ARCHIVE SENSITIVE (YES|NO) | APPLCOMPAT dbs_applcompat_value | (OFF | CONCENTRATE STATEMENTS (WITH LITERALS)?))+; /*random ordering req*/
-dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
+dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{1,4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
           //just to unify the error output
-          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
+          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{1,4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
           ;
 /*ALTER INDEX */
 dbs_alter_index: INDEX dbs_index_name (REGENERATE (USING (APPLICATION COMPATIBILITY | APPLCOMPAT) dbs_applcompat_value)? /*included as a separate piped option due to nb 2 in IBM doc*/ |
