@@ -73,4 +73,11 @@ export class Settings {
       vscode.ConfigurationTarget.Global,
     );
   }
+
+  public get playgroundUrl(): string {
+    return this.getConfiguration().get(
+      "playgroundUrl",
+      "https://zowe.github.io/zowe-pli-language-support/main/",
+    );
+  }
 }
