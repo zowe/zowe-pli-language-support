@@ -124,6 +124,15 @@ describe("CICS ISSUE", () => {
     );
     expect(diagnostics).toHaveLength(1);
   });
+  test("ISSUE REPLACE without KEYLENGTH and RRN", () => {
+    const { diagnostics } = cicsPreprocessor.parse(
+      "ISSUE REPLACE DESTID('') RIDFLD('') FROM('')",
+    );
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].message).toBe(
+      "Must include one or more of the following: KEYLENGTH or RRN",
+    );
+  });
   test("ERROR", () => {
     const { diagnostics } = cicsPreprocessor.parse("ISSUE ERROR");
     expect(diagnostics).toHaveLength(0);
