@@ -26,7 +26,7 @@ describe("CICS ALLOCATE", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Exactly one option required, none provided: SESSION, SYSID, PARTNER/,
+      /Exactly one option required, none provided: SYSID or SESSION or PARTNER/,
     );
   });
 
@@ -41,12 +41,13 @@ describe("CICS ALLOCATE", () => {
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  // checkAppcPartner -> checkHasMandatoryOptions(PARTNER)
   test("Missing PARTNER", () => {
     const { diagnostics } = cicsPreprocessor.parse("ALLOCATE NOQUEUE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: PARTNER/);
+    expect(diagnostics[0].message).toMatch(
+      /Exactly one option required, none provided: SYSID or SESSION or PARTNER/,
+    );
   });
 
   // checkDuplicates

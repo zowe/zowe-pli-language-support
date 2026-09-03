@@ -127,14 +127,10 @@ cics_address_standard: ((ACEE | COMMAREA | CWA | EIB | TCTUA | TWA) cics_ref | c
 cics_address_set: (SET (cics_data_area | cics_ref) | USING (cics_ref | cics_data_area) | cics_handle_response)*;
 
 /** ALLOCATE (all of them) */
-//Attention! The question mark is a trick to make the parser build an AST
-//despite the decision can not be fully made whether SYSID or SESSION or PARTNER
-//will continue. The case "ALLOCATE;" can now display a proper error instead
-//of an non-viable alternative diagnostic.
-cics_allocate: ALLOCATE (cics_allocate_appc_partner | cics_allocate_appc_mro_lut61_sysid | cics_allocate_lut61_session)?;
-cics_allocate_appc_mro_lut61_sysid:  (SYSID cics_data_area | PROFILE cics_name | NOQUEUE | STATE cics_cvda | cics_handle_response)+;
-cics_allocate_lut61_session: (SESSION  cics_name | PROFILE cics_name | NOQUEUE | cics_handle_response)+;
-cics_allocate_appc_partner: (PARTNER cics_name | NOQUEUE | STATE cics_cvda | cics_handle_response)+;
+//Attention! * will also allow 0 cics_allocate_next following, for which we have a validation against
+cics_allocate: ALLOCATE cics_allocate_next;
+cics_allocate_next:  (SYSID cics_data_area | PROFILE cics_name | NOQUEUE | STATE cics_cvda | cics_handle_response 
+                                   | SESSION  cics_name | PARTNER cics_name)*;
 
 /** ASKTIME */
 cics_asktime:ASKTIME cics_asktime_abstime;
