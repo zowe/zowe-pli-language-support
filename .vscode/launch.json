@@ -126,5 +126,12 @@
             "configurations": ["Run Extension", "Attach to Language Server"],
             "stopAll": true
         }
+    ],
+    "compounds": [
+        {
+            "name": "Extension + Language Server",
+            "configurations": ["Run Extension", "Attach to Language Server"],
+            "stopAll": true
+        }
     ]
 }
