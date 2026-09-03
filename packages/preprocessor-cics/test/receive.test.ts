@@ -71,7 +71,7 @@ describe("CICS RECEIVE", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Excessive options provided for: INTO/,
+      /Options \"INTO or SET\" are mutually exclusive./,
     );
   });
 });
