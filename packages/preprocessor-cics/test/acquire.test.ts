@@ -43,13 +43,11 @@ describe("CICS ACQUIRE", () => {
   });
 
   test("ACQUIRE only", () => {
-    const { diagnostics } = cicsPreprocessor.parse(
-      "ACQUIRE",
-    );
+    const { diagnostics } = cicsPreprocessor.parse("ACQUIRE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Excessive options provided for: ACTIVITYID, PROCESS, PROCESSTYPE/,
+      /Exactly one option required, none provided: ACTIVITYID, PROCESS, PROCESSTYPE/,
     );
   });
 

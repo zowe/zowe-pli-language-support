@@ -103,7 +103,11 @@ cics_maxlength: ((MAXLENGTH | MAXFLENGTH) cics_data_value);
 cics_abend: ABEND cics_abend_opts;
 cics_abend_opts:(ABCODE cics_name | CANCEL | NODUMP| cics_handle_response)*;
 /** ACQUIRE */
-cics_acquire:ACQUIRE (cics_acquire_process | cics_acquire_activityId ) ;
+//Attention! The question mark is a trick to make the parser build an AST
+//despite the decision can not be fully made whether PROCESS or ACTIVITYID
+//will continue. The case "ACQUIRE;" can now display a proper error instead
+//of an non-viable alternative diagnostic.
+cics_acquire:ACQUIRE (cics_acquire_process | cics_acquire_activityId )?;
 
 cics_acquire_process: ((PROCESS | PROCESSTYPE) cics_data_value | cics_handle_response)+;
 

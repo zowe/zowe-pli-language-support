@@ -49,11 +49,8 @@ export class AcquireOptionsChecker extends CICSOptionsCheckerBase {
   override checkRootRule<E extends ParserRuleContext>(ctx: E): void {
     if (ctx.ruleIndex === CICSParser.RULE_cics_acquire) {
       assertType<Cics_acquireContext>(ctx);
-      if (
-        !ctx.cics_acquire_activityId() &&
-        !ctx.cics_acquire_process()
-      ) {
-        this.checkHasAtLeastOneOption("ACTIVITYID, PROCESS, PROCESSTYPE", ctx);
+      if (!ctx.cics_acquire_activityId() && !ctx.cics_acquire_process()) {
+        this.checkHasExactlyOneOption("ACTIVITYID, PROCESS, PROCESSTYPE", ctx);
       }
     }
   }
