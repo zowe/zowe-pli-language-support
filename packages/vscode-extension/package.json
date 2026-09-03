@@ -49,6 +49,11 @@
         "command": "pli.shareAsPlaygroundLink",
         "title": "Share as Playground Link",
         "category": "PL/I"
+      },
+      {
+        "command": "pli.importPlaygroundLink",
+        "title": "Import Playground Link",
+        "category": "PL/I"
       }
     ],
     "menus": {
