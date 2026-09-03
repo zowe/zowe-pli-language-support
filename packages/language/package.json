@@ -20,6 +20,10 @@
     "./builtins": {
       "types": "./out/workspace/builtins.d.ts",
       "default": "./out/workspace/builtins.js"
+    },
+    "./playground-link": {
+      "types": "./out/workspace/playground-link.d.ts",
+      "default": "./out/workspace/playground-link.js"
     }
   },
   "typesVersions": {
@@ -29,6 +33,9 @@
       ],
       "./builtins": [
         "out/workspace/builtins"
+      ],
+      "./playground-link": [
+        "out/workspace/playground-link"
       ]
     }
   },
@@ -43,6 +50,7 @@
     "jsonc-parser": "4.0.0-next.1",
     "lodash-es": "^4.18.1",
     "lru-cache": "^11.5.2",
+    "lz-string": "^1.5.0",
     "minimatch": "10.2.4",
     "preprocessor-api": "workspace:*",
     "preprocessor-cics": "workspace:*",

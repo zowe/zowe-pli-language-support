@@ -44,6 +44,11 @@
         "title": "Show Preprocessed Text",
         "category": "PL/I",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "pli.shareAsPlaygroundLink",
+        "title": "Share as Playground Link",
+        "category": "PL/I"
       }
     ],
     "menus": {
@@ -64,6 +69,18 @@
           "command": "pli.goToProcessGroup",
           "when": "resourceLangId == pli",
           "group": "navigation@11"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "pli.shareAsPlaygroundLink",
+          "group": "6_copypath"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "pli.shareAsPlaygroundLink",
+          "when": "false"
         }
       ]
     },
@@ -177,6 +194,11 @@
           "default": {
             "pgroups": []
           }
+        },
+        "pli.playgroundUrl": {
+          "type": "string",
+          "default": "https://zowe.github.io/zowe-pli-language-support/main/",
+          "description": "Base URL of the PL/I playground used by the \"Share as Playground Link\" command."
         }
       }
     }
