@@ -51,7 +51,7 @@ export class AllocateOptionsChecker extends CICSOptionsCheckerBase {
         !ctx.cics_allocate_appc_mro_lut61_sysid() &&
         !ctx.cics_allocate_lut61_session()
       ) {
-        this.checkHasAtLeastOneOption("SESSION, SYSID, PARTNER", ctx);
+        this.checkHasExactlyOneOption("SESSION, SYSID, PARTNER", ctx);
       }
     }
   }
