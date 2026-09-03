@@ -50,7 +50,7 @@ describe("CICS DEFINE", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Missing required option: DAYOFMONTH or MONTH/,
+      /Missing required option: DAYOFYEAR or MONTH/,
     );
   });
 
