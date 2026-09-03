@@ -138,9 +138,24 @@ export async function quickFixCreateConfig(
 ): Promise<CodeAction | undefined> {
   const workspaceUri = workspace.config.getWorkspaceUri();
   const entryUri = diagnostic.data.entryUri as string;
-  if (!workspaceUri || !entryUri) {
+  if (!entryUri) {
     return;
   }
+
+  if (!workspaceUri) {
+    // No `.pliplugin` without a workspace folder; the client stores this in user settings.
+    return {
+      title: `Create a startup configuration for this file.`,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      command: {
+        title: "Create a startup configuration",
+        command: Commands.ENSURE_USER_CONFIG,
+        arguments: [entryUri],
+      },
+    };
+  }
+
   const programPath = UriUtils.workspaceRelativeEntryPath(
     workspaceUri,
     entryUri,
