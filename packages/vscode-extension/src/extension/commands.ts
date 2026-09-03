@@ -12,6 +12,11 @@
 import { Commands, Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
+import {
+  ensureUserPluginConfig,
+  programKeyForDocument,
+} from "../common/user-plugin-config";
+import { notifyUserConfigAppended, openUserSettings } from "./user-settings";
 
 /**
  * Opens (or focuses) the config entry described by `configLocation` and
@@ -86,6 +91,26 @@ export function registerCommands(
           } catch {
             // ignore error
           }
+        }
+      },
+    ),
+
+    // No `.pliplugin` without a workspace folder; write the entry to user settings.
+    vscode.commands.registerCommand(
+      Commands.ENSURE_USER_CONFIG,
+      async (uriString: string) => {
+        const uri = vscode.Uri.parse(uriString);
+        try {
+          const result = await ensureUserPluginConfig(uri);
+          if (result === "created") {
+            await openUserSettings(context);
+          } else if (result === "appended") {
+            await notifyUserConfigAppended(programKeyForDocument(uri), context);
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(
+            `Failed to update the PL/I user settings: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       },
     ),

@@ -47,6 +47,14 @@ export namespace Commands {
    */
 
   export const SAVE_FILES = "pli.saveFiles";
+
+  /**
+   * Client-side command (registered in the VS Code extension, NOT in the
+   * server's `executeCommandProvider`). User-scope plugin config for files
+   * with no workspace folder to write a `.pliplugin` into.
+   */
+  export const ENSURE_USER_CONFIG = "pli.ensureUserPluginConfig";
+
   /**
    * Client-side command to navigate from a .pli file to its program
    * configuration entry in pgm_conf.json or VS Code settings.

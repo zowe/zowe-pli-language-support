@@ -1050,6 +1050,16 @@ export class PluginConfigurationProvider {
     if (normalizedProgramPath === "." || normalizedProgramPath === "./") {
       normalizedProgramPath = "*";
     }
+    // Key URI-scheme entries by path so they match the document. Skip
+    // single-letter schemes: `C:foo` is a drive-relative path, not a URI.
+    if (
+      UriUtils.computePathType(normalizedProgramPath) === UriUtils.PathType.URI
+    ) {
+      const programUri = UriUtils.toUri(normalizedProgramPath);
+      if (programUri.scheme.length > 1) {
+        return programUri.path;
+      }
+    }
     if (this.isAbsolutePath(normalizedProgramPath)) {
       return UriUtils.toUri(normalizedProgramPath).path;
     }

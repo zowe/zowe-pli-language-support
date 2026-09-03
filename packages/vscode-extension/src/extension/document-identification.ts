@@ -90,7 +90,8 @@ function isNotPliDocument(document: vscode.TextDocument): boolean {
   return false;
 }
 
-async function identifyFile(
+/** Server-side program match (globs, assumed extensions). */
+export async function identifyFile(
   document: vscode.TextDocument,
   lc: BaseLanguageClient,
 ): Promise<Messages.FileIdentification> {
