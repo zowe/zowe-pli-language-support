@@ -66,4 +66,10 @@ export namespace Commands {
    * compilation unit containing the active .pli file in a read-only editor.
    */
   export const SHOW_PREPROCESSED_TEXT = "pli.showPreprocessedText";
+
+  /**
+   * Client-side command to encode the selected workspace files into a
+   * playground share link and copy it to the clipboard.
+   */
+  export const SHARE_PLAYGROUND_LINK = "pli.shareAsPlaygroundLink";
 }
