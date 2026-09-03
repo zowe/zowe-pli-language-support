@@ -277,7 +277,7 @@ export async function expandLib(
   let reason = "Path does not exist.";
   if (libUri.scheme === "zowe-ds") {
     reason =
-      "Please make sure that the Zowe Explorer extension is installed and configured correctly.";
+      "Please make sure that the Zowe Explorer extension is installed and configured correctly or respective dataset exists.";
   }
   return {
     kind: ExpandedLibKind.Unresolved,
