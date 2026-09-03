@@ -69,3 +69,25 @@ export function decodePlaygroundWorkspace(
   }
   return undefined;
 }
+
+/**
+ * Decode a string produced by the playground's single-file "Share Current"
+ * link (the `content` query parameter), which is the raw file text
+ * compressed directly, without the JSON envelope {@link SharedWorkspace}
+ * uses.
+ */
+export function decodePlaygroundContent(encoded: string): string {
+  return decompressFromEncodedURIComponent(encoded);
+}
+
+/**
+ * Sanitize a user-supplied `filename` query parameter (from a single-file
+ * share link) into a bare file name: strips path separators and leading
+ * dots so it can't escape the directory it's written into, falling back to
+ * `example.pli` when absent.
+ */
+export function sanitizeSharedFilename(
+  filename: string | null | undefined,
+): string {
+  return filename?.replace(/[\\/]/g, "").replace(/^\.+/g, "") || "example.pli";
+}

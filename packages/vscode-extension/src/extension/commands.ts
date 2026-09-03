@@ -12,7 +12,10 @@
 import { Commands, Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
-import { registerShareAsPlaygroundLinkCommand } from "./playground-link";
+import {
+  registerImportPlaygroundLinkCommand,
+  registerShareAsPlaygroundLinkCommand,
+} from "./playground-link";
 
 /**
  * Opens (or focuses) the config entry described by `configLocation` and
@@ -104,5 +107,6 @@ export function registerCommands(
     ),
 
     registerShareAsPlaygroundLinkCommand(),
+    registerImportPlaygroundLinkCommand(),
   );
 }

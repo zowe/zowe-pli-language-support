@@ -10,17 +10,16 @@
  */
 
 import * as vscode from "vscode";
-import {
-  compressToEncodedURIComponent,
-  decompressFromEncodedURIComponent,
-} from "lz-string";
+import { compressToEncodedURIComponent } from "lz-string";
 import {
   IFileWriteOptions,
   InMemoryFileSystemProvider,
 } from "@codingame/monaco-vscode-files-service-override";
 import {
+  decodePlaygroundContent,
   decodePlaygroundWorkspace,
   encodePlaygroundWorkspace,
+  sanitizeSharedFilename,
   SharedWorkspace,
   WorkspaceFile,
 } from "pli-language/playground-link";
@@ -114,12 +113,8 @@ export async function handleSharedWorkspace(
   // but a different name can be set by the user.
   const encodedContent = url.searchParams.get("content");
   if (encodedContent) {
-    const filename =
-      url.searchParams
-        .get("filename")
-        ?.replace(/[\\\/]/g, "")
-        .replace(/^\.+/g, "") ?? "example.pli";
-    const content = decompressFromEncodedURIComponent(encodedContent);
+    const filename = sanitizeSharedFilename(url.searchParams.get("filename"));
+    const content = decodePlaygroundContent(encodedContent);
     const uri = vscode.Uri.file(`/workspace/${filename}`);
     await fileSystemProvider.writeFile(
       uri,
