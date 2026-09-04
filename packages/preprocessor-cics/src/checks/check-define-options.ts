@@ -191,6 +191,8 @@ export class DefineOptionsChecker extends CICSOptionsCheckerBase {
           );
           if (ctx.MONTH().length !== 0) {
             this.checkHasMandatoryOptions(ctx.DAYOFMONTH(), ctx, "DAYOFMONTH");
+          } else if (ctx.DAYOFMONTH().length !== 0) {
+            this.checkHasMandatoryOptions(ctx.MONTH(), ctx, "MONTH");
           }
         }
       } else {

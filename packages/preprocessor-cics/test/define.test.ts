@@ -116,4 +116,21 @@ describe("CICS DEFINE", () => {
       /Missing required option: DAYOFMONTH/,
     );
   });
+
+  test("MONTH without DAYOFYEAR", () => {
+    const { diagnostics } = cicsPreprocessor.parse(`
+      define timer('')
+        at
+        hours('')
+        minutes('')
+        seconds('')
+        on
+        dayofmonth('')
+        dayofyear('')
+        year('')
+    `);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(/Missing required option: MONTH/);
+  });
 });
