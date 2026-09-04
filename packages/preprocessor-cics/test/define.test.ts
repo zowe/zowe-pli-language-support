@@ -93,4 +93,27 @@ describe("CICS DEFINE", () => {
       /Excessive options provided for: TRANSID/,
     );
   });
+
+  test("MONTH without DAYOFYEAR", () => {
+    const { diagnostics } = cicsPreprocessor.parse(`
+      define timer('')
+        at
+        hours('')
+        minutes('')
+        seconds('')
+        on
+        month('')
+        dayofyear('')
+        year('')
+    `);
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options "MONTH or DAYOFYEAR" are mutually exclusive./,
+    );
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(
+      /Missing required option: DAYOFMONTH/,
+    );
+  });
 });
