@@ -177,6 +177,13 @@ export class DefineOptionsChecker extends CICSOptionsCheckerBase {
             "DAYOFMONTH without YEAR",
           );
         } else {
+          this.checkHasAtLeastOneOption(
+            "MONTH or DAYOFYEAR",
+            ctx,
+            ctx.MONTH(),
+            ctx.DAYOFYEAR(),
+          );
+          //this.checkHasExactlyOneOption("MONTH or DAYOFYEAR", ctx, ctx.MONTH(), ctx.DAYOFYEAR());
           this.checkMutuallyExclusiveOptions(
             "MONTH or DAYOFYEAR",
             ctx.MONTH(),

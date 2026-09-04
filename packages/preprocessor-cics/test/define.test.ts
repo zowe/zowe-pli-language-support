@@ -50,7 +50,7 @@ describe("CICS DEFINE", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Missing required option: DAYOFYEAR or MONTH/,
+      /Must include one or more of the following: MONTH or DAYOFYEAR/,
     );
   });
 
@@ -109,7 +109,7 @@ describe("CICS DEFINE", () => {
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Options "MONTH or DAYOFYEAR" are mutually exclusive./,
+      /Options \"MONTH or DAYOFYEAR\" are mutually exclusive./,
     );
     expect(diagnostics[1].severity).toBe(Severity.Error);
     expect(diagnostics[1].message).toMatch(
