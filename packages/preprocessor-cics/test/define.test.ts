@@ -50,7 +50,7 @@ describe("CICS DEFINE", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     expect(diagnostics[0].message).toMatch(
-      /Missing required option: DAYOFMONTH or MONTH/,
+      /Must include one or more of the following: MONTH or DAYOFYEAR/,
     );
   });
 
@@ -92,5 +92,45 @@ describe("CICS DEFINE", () => {
     expect(diagnostics[0].message).toMatch(
       /Excessive options provided for: TRANSID/,
     );
+  });
+
+  test("MONTH without DAYOFYEAR", () => {
+    const { diagnostics } = cicsPreprocessor.parse(`
+      define timer('')
+        at
+        hours('')
+        minutes('')
+        seconds('')
+        on
+        month('')
+        dayofyear('')
+        year('')
+    `);
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(
+      /Options \"MONTH or DAYOFYEAR\" are mutually exclusive./,
+    );
+    expect(diagnostics[1].severity).toBe(Severity.Error);
+    expect(diagnostics[1].message).toMatch(
+      /Missing required option: DAYOFMONTH/,
+    );
+  });
+
+  test("MONTH without DAYOFYEAR", () => {
+    const { diagnostics } = cicsPreprocessor.parse(`
+      define timer('')
+        at
+        hours('')
+        minutes('')
+        seconds('')
+        on
+        dayofmonth('')
+        dayofyear('')
+        year('')
+    `);
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe(Severity.Error);
+    expect(diagnostics[0].message).toMatch(/Missing required option: MONTH/);
   });
 });
