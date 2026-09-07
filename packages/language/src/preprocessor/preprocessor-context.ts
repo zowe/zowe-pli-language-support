@@ -245,10 +245,15 @@ export class PreprocessorContext implements api.PreprocessorContext {
     if (!tokens?.length) {
       return { start, end, text };
     }
-    const mapped = tokens.filter(
-      (token): token is MappedToken => !isApiToken(token),
-    );
-    const apiTokens = tokens.filter(isApiToken);
+    const mapped: MappedToken[] = [];
+    const apiTokens: api.Token[] = [];
+    for (const token of tokens) {
+      if (isApiToken(token)) {
+        apiTokens.push(token);
+      } else {
+        mapped.push(token);
+      }
+    }
     let anchor: PliToken | undefined;
     if (apiTokens.length > 0 && /^DO\b/i.test(text)) {
       anchor = createTokenInstance("DO", "DO", DO, start, end - 1, this.file);
