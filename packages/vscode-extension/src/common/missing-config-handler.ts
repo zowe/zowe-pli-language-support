@@ -25,12 +25,6 @@ import {
 
 let shouldShowInfoMessage = true;
 
-/**
- * In-flight guard: identify, prompt, and write are async, so the same
- * document can re-enter (e.g. tab switch) before the entry is visible.
- */
-const handledUserConfigUris = new Set<string>();
-
 const options = {
   DONT_SHOW_AGAIN: "Don't show again",
   YES: "Yes",
@@ -132,38 +126,28 @@ async function handleConfigOutsideWorkspace(
   document: vscode.TextDocument,
   client: BaseLanguageClient,
 ): Promise<void> {
-  const uriKey = document.uri.toString();
-  if (handledUserConfigUris.has(uriKey)) {
+  // Only the server knows if a glob already covers this file.
+  const identity = await identifyFile(document, client);
+  if (!identity || identity.programMatch !== "none") {
     return;
   }
 
-  handledUserConfigUris.add(uriKey);
-  try {
-    // Only the server knows if a glob already covers this file.
-    const identity = await identifyFile(document, client);
-    if (!identity || identity.programMatch !== "none") {
-      return;
-    }
-
-    // Exact entries in settings.json: skip even if the server has not loaded them yet.
-    if (userPluginConfigHasProgram(document.uri)) {
-      return;
-    }
-
-    if (!shouldShowInfoMessage) {
-      return;
-    }
-
-    const program = programKeyForDocument(document.uri);
-    const hasUserConfig = userPluginConfigExists();
-    if (!(await askToCreateConfig(program, hasUserConfig))) {
-      return;
-    }
-
-    await applyUserPluginConfig(document.uri);
-  } finally {
-    handledUserConfigUris.delete(uriKey);
+  // Exact entries in settings.json: skip even if the server has not loaded them yet.
+  if (userPluginConfigHasProgram(document.uri)) {
+    return;
   }
+
+  if (!shouldShowInfoMessage) {
+    return;
+  }
+
+  const program = programKeyForDocument(document.uri);
+  const hasUserConfig = userPluginConfigExists();
+  if (!(await askToCreateConfig(program, hasUserConfig))) {
+    return;
+  }
+
+  await applyUserPluginConfig(document.uri);
 }
 
 /** "Don't show again" suppresses further prompts for this session (create or append). */
