@@ -30,6 +30,24 @@ export interface TypeInferer {
   ): boolean;
 }
 
+function findMemberChain(
+  composite: TypeDescriptions.Composite,
+  target: ast.DeclaredVariable,
+): ast.DeclaredVariable[] | undefined {
+  if (composite.members.has(target)) {
+    return [target];
+  }
+  for (const [memberVar, memberType] of composite.members) {
+    if (TypeDescriptions.isComposite(memberType)) {
+      const sub = findMemberChain(memberType, target);
+      if (sub) {
+        return [memberVar, ...sub];
+      }
+    }
+  }
+  return undefined;
+}
+
 const expressionKinds = new Set<ast.SyntaxKind>([
   ast.SyntaxKind.BinaryExpression,
   ast.SyntaxKind.UnaryExpression,
@@ -145,20 +163,29 @@ export class DefaultTypeInferer implements TypeInferer {
           if (member.kind !== ast.SyntaxKind.DeclaredVariable) {
             return TypeDescriptions.Unknown();
           }
-          const memberType = currentComposite.members.get(member);
-          if (!memberType) {
+          const steps = findMemberChain(currentComposite, member);
+          if (!steps) {
             return TypeDescriptions.Unknown();
           }
-          const metadata = currentComposite.membersMetadata.get(member)!;
-          levelIsGenerated ||= metadata.attributes.some(
-            (attr) =>
-              attr.kind === ast.SyntaxKind.LikeAttribute ||
-              attr.kind === ast.SyntaxKind.TypeAttribute,
-          );
-          const level = levelIsGenerated ? lastLevel + 1 : metadata.level!;
-          outerTypes.unshift([member, memberType, level]);
-          currentComposite = memberType;
-          lastLevel = level;
+          for (const step of steps) {
+            if (!TypeDescriptions.isComposite(currentComposite)) {
+              return TypeDescriptions.Unknown();
+            }
+            const memberType = currentComposite.members.get(step);
+            if (!memberType) {
+              return TypeDescriptions.Unknown();
+            }
+            const metadata = currentComposite.membersMetadata.get(step)!;
+            levelIsGenerated ||= metadata.attributes.some(
+              (attr) =>
+                attr.kind === ast.SyntaxKind.LikeAttribute ||
+                attr.kind === ast.SyntaxKind.TypeAttribute,
+            );
+            const level = levelIsGenerated ? lastLevel + 1 : metadata.level!;
+            outerTypes.unshift([step, memberType, level]);
+            currentComposite = memberType;
+            lastLevel = level;
+          }
         }
         if (
           !expression.element?.ref?.node ||

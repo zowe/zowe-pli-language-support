@@ -22,5 +22,5 @@
 linker.expectLinks();
 hover.expectMarkdownAt(
   "resourceName1",
-  hover.codeBlock("DCL RESOURCENAME1 CHARACTER(8) INITIAL(...);"),
+  hover.codeBlock("DCL RESOURCENAME1 CHARACTER(8) INITIAL('A');"),
 );
