@@ -34,7 +34,7 @@ interface ProcGrps {
 }
 
 /** Distinguishes first-time create (reveal settings) from a later append (toast). */
-export type UserPluginConfigResult = "created" | "appended" | "unchanged";
+type UserPluginConfigResult = "created" | "appended" | "unchanged";
 
 /**
  * `program` we write for this document. Local: `/a/b/c/hello.pli` (not
@@ -105,7 +105,7 @@ function hasProgramEntry(pgmConf: PgmConf, program: string): boolean {
  * reloads. Does not apply glob matching — callers must have already asked
  * the language server.
  */
-export async function ensureUserPluginConfig(
+async function ensureUserPluginConfig(
   uri: vscode.Uri,
 ): Promise<UserPluginConfigResult> {
   const config = vscode.workspace.getConfiguration("pli");
