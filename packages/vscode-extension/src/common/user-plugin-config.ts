@@ -11,9 +11,15 @@
 
 import * as vscode from "vscode";
 import { PluginConfiguration, UriUtils } from "pli-language";
+import {
+  notifyUserConfigAppended,
+  openUserSettings,
+} from "../extension/user-settings";
 
-const DEFAULT_PGROUP = "default";
+const DEFAULT_PGROUP =
+  PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0].pgroup;
 
+/** Same shape as `ProgramEntry` / `PgmsConfig` in the language schema (not on the public export). */
 interface ProgramEntry {
   program: string;
   pgroup: string;
@@ -52,6 +58,17 @@ export function userPluginConfigExists(): boolean {
   );
 }
 
+/**
+ * True when user-scope `pgm_conf` already lists this file. Exact key only
+ * (not globs); used so a first-open prompt is not shown before the server
+ * has loaded settings.
+ */
+export function userPluginConfigHasProgram(uri: vscode.Uri): boolean {
+  const program = programKeyForDocument(uri);
+  const pgmConf = readPgmConf(vscode.workspace.getConfiguration("pli"));
+  return hasProgramEntry(pgmConf, program);
+}
+
 function readPgmConf(config: vscode.WorkspaceConfiguration): PgmConf {
   const value = config.inspect<Partial<PgmConf>>("pgm_conf")?.globalValue;
   const pgms = (Array.isArray(value?.pgms) ? value.pgms : []).filter(
@@ -78,6 +95,10 @@ function isSameProgram(a: string, b: string): boolean {
   );
 }
 
+function hasProgramEntry(pgmConf: PgmConf, program: string): boolean {
+  return pgmConf.pgms.some((entry) => isSameProgram(entry.program, program));
+}
+
 /**
  * Writes `uri` into the user-scope plugin settings, creating them from plugin
  * defaults if needed. Uses `update()` so comments survive and the server
@@ -92,24 +113,55 @@ export async function ensureUserPluginConfig(
   const program = programKeyForDocument(uri);
 
   const pgmConf = readPgmConf(config);
-  if (pgmConf.pgms.some((entry) => isSameProgram(entry.program, program))) {
+  if (hasProgramEntry(pgmConf, program)) {
     return "unchanged";
   }
-  pgmConf.pgms.push({ program, pgroup: DEFAULT_PGROUP });
 
   const procGrps = readProcGrps(config);
   if (!procGrps.pgroups.some((group) => group.name === DEFAULT_PGROUP)) {
     // Same stub as `.pliplugin`, but drop `cpy`/`inc`: those are workspace-
-    // relative and cannot resolve from user settings.
+    // relative and cannot resolve from user settings. Write this first so a
+    // later pgm_conf failure can still retry without a missing `default` group.
     procGrps.pgroups.push(
       ...PluginConfiguration.DEFAULT_PROCESS_GROUP_FILE_CONTENT.pgroups.map(
         (group) => ({ ...group, libs: [] }),
       ),
     );
+    await config.update(
+      "proc_grps",
+      procGrps,
+      vscode.ConfigurationTarget.Global,
+    );
   }
 
+  pgmConf.pgms.push({ program, pgroup: DEFAULT_PGROUP });
   await config.update("pgm_conf", pgmConf, vscode.ConfigurationTarget.Global);
-  await config.update("proc_grps", procGrps, vscode.ConfigurationTarget.Global);
 
   return existedBefore ? "appended" : "created";
+}
+
+/**
+ * Writes the user-scope plugin config for `uri` and runs the follow-up UI.
+ * Pass `notifyOnAppend` on the quick-fix path (no prior prompt). The editor
+ * prompt path should omit it so the user is not toasted after already saying
+ * Yes. Returns `undefined` if the write failed (error already shown).
+ */
+export async function applyUserPluginConfig(
+  uri: vscode.Uri,
+  options?: { notifyOnAppend?: boolean },
+): Promise<UserPluginConfigResult | undefined> {
+  try {
+    const result = await ensureUserPluginConfig(uri);
+    if (result === "created") {
+      await openUserSettings();
+    } else if (result === "appended" && options?.notifyOnAppend) {
+      await notifyUserConfigAppended(programKeyForDocument(uri));
+    }
+    return result;
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `Failed to update the PL/I user settings: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return undefined;
+  }
 }

@@ -54,7 +54,12 @@ export async function activate(
   context.subscriptions.push(
     registerOnDidChangeActiveTextEditor(client),
     registerOnDidOpenTextDocListener(telemetryReporter),
-    registerPliDocumentIdentifier(client),
+    registerPliDocumentIdentifier(client, (document) => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor?.document.uri.toString() === document.uri.toString()) {
+        void handleMissingConfig(editor, client);
+      }
+    }),
     watchPluginSettings(client),
     registerPreprocessedText(client),
   );

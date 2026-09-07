@@ -17,20 +17,17 @@ import { isVirtualFile, PluginConfiguration, UriUtils } from "pli-language";
 import { locateWorkspaceFolder } from "../extension/config-loader";
 import { identifyFile } from "../extension/document-identification";
 import {
-  ensureUserPluginConfig,
+  applyUserPluginConfig,
   programKeyForDocument,
   userPluginConfigExists,
+  userPluginConfigHasProgram,
 } from "./user-plugin-config";
-import {
-  notifyUserConfigAppended,
-  openUserSettings,
-} from "../extension/user-settings";
 
 let shouldShowInfoMessage = true;
 
 /**
- * Session guard against duplicate appends: prompt, write, and config reload
- * are all async, so the same document can re-enter before its entry is visible.
+ * In-flight guard: identify, prompt, and write are async, so the same
+ * document can re-enter (e.g. tab switch) before the entry is visible.
  */
 const handledUserConfigUris = new Set<string>();
 
@@ -127,8 +124,9 @@ async function promptForWorkspaceConfig(
 }
 
 /**
- * First create also reveals settings.json so the user can add copybook `libs`
- * (user defaults ship with none). Later files are appended without a prompt.
+ * Ask before writing user settings. First create also reveals settings.json
+ * so copybook `libs` can be added (user defaults ship with none). Append
+ * does not toast: the user already confirmed in this prompt.
  */
 async function handleConfigOutsideWorkspace(
   document: vscode.TextDocument,
@@ -139,42 +137,45 @@ async function handleConfigOutsideWorkspace(
     return;
   }
 
-  // Only the server knows if a glob already covers this file.
-  const { programMatch } = await identifyFile(document, client);
-  if (programMatch !== "none") {
-    return;
-  }
+  handledUserConfigUris.add(uriKey);
+  try {
+    // Only the server knows if a glob already covers this file.
+    const identity = await identifyFile(document, client);
+    if (!identity || identity.programMatch !== "none") {
+      return;
+    }
 
-  const hasUserConfig = userPluginConfigExists();
-  if (!hasUserConfig) {
+    // Exact entries in settings.json: skip even if the server has not loaded them yet.
+    if (userPluginConfigHasProgram(document.uri)) {
+      return;
+    }
+
     if (!shouldShowInfoMessage) {
       return;
     }
-    if (!(await askToCreateConfig(programKeyForDocument(document.uri)))) {
+
+    const program = programKeyForDocument(document.uri);
+    const hasUserConfig = userPluginConfigExists();
+    if (!(await askToCreateConfig(program, hasUserConfig))) {
       return;
     }
-  }
 
-  handledUserConfigUris.add(uriKey);
-  try {
-    const result = await ensureUserPluginConfig(document.uri);
-    if (result === "created") {
-      await openUserSettings();
-    } else if (result === "appended") {
-      await notifyUserConfigAppended(programKeyForDocument(document.uri));
-    }
-  } catch (error) {
+    await applyUserPluginConfig(document.uri);
+  } finally {
     handledUserConfigUris.delete(uriKey);
-    vscode.window.showErrorMessage(
-      `Failed to update the PL/I user settings: ${error instanceof Error ? error.message : String(error)}`,
-    );
   }
 }
 
-/** "Don't show again" only suppresses this prompt, not silent appends once a config exists. */
-async function askToCreateConfig(entryPoint: string): Promise<boolean> {
+/** "Don't show again" suppresses further prompts for this session (create or append). */
+async function askToCreateConfig(
+  entryPoint: string,
+  appending = false,
+): Promise<boolean> {
+  const message = appending
+    ? `Would you like to add '${entryPoint}' as an entry point to your user settings?`
+    : `No startup configuration was found. Would you like to create one using '${entryPoint}' as the entry point?`;
   const userResponse = await vscode.window.showInformationMessage(
-    `No startup configuration was found. Would you like to create one using '${entryPoint}' as the entry point?`,
+    message,
     options.YES,
     options.NO,
     options.DONT_SHOW_AGAIN,

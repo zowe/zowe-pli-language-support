@@ -12,11 +12,7 @@
 import { Commands, Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
-import {
-  ensureUserPluginConfig,
-  programKeyForDocument,
-} from "../common/user-plugin-config";
-import { notifyUserConfigAppended, openUserSettings } from "./user-settings";
+import { applyUserPluginConfig } from "../common/user-plugin-config";
 
 /**
  * Opens (or focuses) the config entry described by `configLocation` and
@@ -99,19 +95,9 @@ export function registerCommands(
     vscode.commands.registerCommand(
       Commands.ENSURE_USER_CONFIG,
       async (uriString: string) => {
-        const uri = vscode.Uri.parse(uriString);
-        try {
-          const result = await ensureUserPluginConfig(uri);
-          if (result === "created") {
-            await openUserSettings();
-          } else if (result === "appended") {
-            await notifyUserConfigAppended(programKeyForDocument(uri));
-          }
-        } catch (error) {
-          vscode.window.showErrorMessage(
-            `Failed to update the PL/I user settings: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
+        await applyUserPluginConfig(vscode.Uri.parse(uriString), {
+          notifyOnAppend: true,
+        });
       },
     ),
 
