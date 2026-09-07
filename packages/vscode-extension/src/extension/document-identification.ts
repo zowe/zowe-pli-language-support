@@ -53,11 +53,14 @@ async function checkFileType(
     return;
   }
   const identity = await identifyFile(document, lc);
-  if (identity.programMatch === "exact") {
-    vscode.languages.setTextDocumentLanguage(document, "pli");
-    return;
-  }
-  if (isPossiblePliDocument(document, identity.existing)) {
+  if (
+    // Program config matches this file
+    identity.programMatch !== "none" ||
+    // File is part of a compilation unit
+    identity.existing ||
+    // Heuristic to identify PL/I file content
+    isPossiblePliDocument(document)
+  ) {
     proposePliLanguage(proposedFiles, document, onBecamePli);
   }
 }
@@ -112,18 +115,11 @@ export async function identifyFile(
   }
 }
 
-function isPossiblePliDocument(
-  document: vscode.TextDocument,
-  existing: boolean,
-): boolean {
+function isPossiblePliDocument(document: vscode.TextDocument): boolean {
   // Try to do a simple check based on file extension first.
   const ext = UriUtils.extname(document.uri).toLowerCase();
   const possibleExt = ["pli", "pl1", "pl", "p1"];
   if (ext && possibleExt.includes(ext)) {
-    return true;
-  }
-  // Already a known compilation unit.
-  if (existing) {
     return true;
   }
   // Then, look for PL/I specific constellations in the first 200 lines of the document.
