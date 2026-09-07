@@ -333,6 +333,47 @@ export function isAttributeValidForPreprocessor<K extends AttributeKind>(
   return validator ? validator(value) : false;
 }
 
+function stringifyExpressionForHover(
+  expr: ast.Expression | ast.MemberCall | null | undefined,
+): string | undefined {
+  if (!expr) {
+    return undefined;
+  }
+  switch (expr.kind) {
+    case ast.SyntaxKind.NumberLiteral:
+      return expr.value ?? undefined;
+    case ast.SyntaxKind.StringLiteral:
+      return expr.value ?? undefined;
+    case ast.SyntaxKind.WildcardItem:
+      return "*";
+    case ast.SyntaxKind.MemberCall: {
+      const parts: string[] = [];
+      let current: ast.MemberCall | null = expr;
+      while (current) {
+        const text = current.element?.ref?.text;
+        if (!text) {
+          return undefined;
+        }
+        parts.unshift(text);
+        current = current.previous;
+      }
+      return parts.join(".");
+    }
+    case ast.SyntaxKind.LocatorCall: {
+      const member = stringifyExpressionForHover(expr.element);
+      if (!member) {
+        return undefined;
+      }
+      const prev = expr.previous
+        ? stringifyExpressionForHover(expr.previous)
+        : undefined;
+      return prev ? `${prev}->${member}` : member;
+    }
+    default:
+      return undefined;
+  }
+}
+
 export type AttributeStringifier<K extends AttributeKind> = (
   value: AttributeTypes[K],
   witnesses: AttributeWitnesses,
@@ -435,28 +476,18 @@ export const AttributeStringifiers: {
     if (!value) {
       return undefined;
     }
-    return `DIMENSION(*)`;
-    /*
-    ${value
-      .map((bound) => {
-        if (bound.upperBound.value !== undefined) {
-          if (bound.lowerBound.value !== undefined) {
-            return `${bound.lowerBound.value}:${bound.upperBound.value}`;
-          } else {
-            throw new Error(
-              "Cannot stringify dimension bound with no lower bound value",
-            );
-          }
-        } else {
-          if (bound.lowerBound.value !== undefined) {
-            return `${bound.lowerBound.value}`;
-          } else {
-            throw new Error("Cannot stringify dimension bound with no values");
-          }
-        }
-      })
-      .join(", ")}
-    */
+    const bounds = value.map((bound) => {
+      const upper =
+        bound.upperBound.value !== undefined
+          ? String(bound.upperBound.value)
+          : (stringifyExpressionForHover(bound.upperBound.expression) ?? "*");
+      const lower =
+        bound.lowerBound.value !== undefined
+          ? String(bound.lowerBound.value)
+          : stringifyExpressionForHover(bound.lowerBound.expression);
+      return lower !== undefined && lower !== "1" ? `${lower}:${upper}` : upper;
+    });
+    return `DIMENSION(${bounds.join(", ")})`;
   },
   [AttributeKind.Endianess]: function (value: Endianess): string {
     switch (value) {
@@ -543,8 +574,13 @@ export const AttributeStringifiers: {
     if (!value) {
       return "";
     }
-    // TODO: Implement stringification of InitialAttribute
-    return "INITIAL(...)";
+    if (value.expressions.length === 0) {
+      return "INITIAL(...)";
+    }
+    const parts = value.expressions.map(
+      (expr) => stringifyExpressionForHover(expr) ?? "...",
+    );
+    return `INITIAL(${parts.join(", ")})`;
   },
   [AttributeKind.InitialTo]: function (
     value: ast.InitialToAttribute | undefined,
@@ -699,15 +735,29 @@ export const AttributeStringifiers: {
         assertUnreachable(value);
     }
   },
-  [AttributeKind.Storage]: function (value: StorageClass): string {
+  [AttributeKind.Storage]: function (
+    value: StorageClass,
+    witnesses: AttributeWitnesses,
+  ): string {
     switch (value) {
       case StorageClass.Automatic:
         return "AUTOMATIC";
       case StorageClass.Static:
         return "STATIC";
-      case StorageClass.Based:
-        /* TODO add locator reference */
-        return "BASED(...)";
+      case StorageClass.Based: {
+        const attr = witnesses.witnesses[AttributeKind.Storage]?.witness;
+        if (
+          attr?.kind === ast.SyntaxKind.ComputationDataAttribute &&
+          attr.dimensions &&
+          attr.dimensions.dimensions.length > 0
+        ) {
+          const locator = stringifyExpressionForHover(
+            attr.dimensions.dimensions[0].upper?.expression,
+          );
+          return locator ? `BASED(${locator})` : "BASED(...)";
+        }
+        return "BASED";
+      }
       case StorageClass.Controlled:
         return "CONTROLLED";
       default:

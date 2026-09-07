@@ -11,13 +11,20 @@
 
 /// <reference path="../../framework.ts" />
 
-// @wrap: main
-//// EXEC SQL INCLUDE SQLDA;
-//// SQLDA.SQLVAR.<|1>SQLIND = 1;
+//// DCL 1 A, 2 B, 3 C, 4 D FIXED;
+//// PUT(A.<|1>D);
+//// PUT(B.<|2>D);
 
 hover.expectMarkdownAt(
   1,
-  hover.codeBlock(`DCL 1 SQLDA BASED(SQLDAPTR),
-      2 SQLVAR DIMENSION(SQLSIZE),
-        3 SQLIND POINTER;`),
+  hover.codeBlock(`DCL 1 A,
+      2 B,
+        3 C,
+          4 D FIXED;`),
+);
+hover.expectMarkdownAt(
+  2,
+  hover.codeBlock(`DCL 1 B,
+      3 C,
+        4 D FIXED;`),
 );
