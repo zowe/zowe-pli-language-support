@@ -12,51 +12,70 @@
 import * as vscode from "vscode";
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { PluginConfiguration, UriUtils } from "pli-language";
+import { BaseLanguageClient } from "vscode-languageclient";
+import { isVirtualFile, PluginConfiguration, UriUtils } from "pli-language";
 import { locateWorkspaceFolder } from "../extension/config-loader";
+import { identifyFile } from "../extension/document-identification";
+import {
+  applyUserPluginConfig,
+  programKeyForDocument,
+  userPluginConfigExists,
+  userPluginConfigHasProgram,
+} from "./user-plugin-config";
 
 let shouldShowInfoMessage = true;
 
+const options = {
+  DONT_SHOW_AGAIN: "Don't show again",
+  YES: "Yes",
+  NO: "No",
+} as const;
+
+/** Prompt for a missing startup config: `.pliplugin` in a workspace folder, user settings otherwise. */
 export async function handleMissingConfig(
   textEditor: vscode.TextEditor | undefined,
+  client: BaseLanguageClient,
 ) {
-  if (!textEditor || !shouldShowInfoMessage) {
+  if (!textEditor || textEditor.document.languageId !== "pli") {
+    return;
+  }
+  const document = textEditor.document;
+  if (isVirtualFile(document.uri.toString())) {
+    // No meaningful entry-point path (untitled, git diffs, generated views).
     return;
   }
 
-  const workspaceFolderUri = locateWorkspaceFolder(textEditor.document.uri);
-  if (!workspaceFolderUri) {
+  const workspaceFolderUri = locateWorkspaceFolder(document.uri);
+  if (workspaceFolderUri) {
+    await promptForWorkspaceConfig(document, workspaceFolderUri);
+    return;
+  }
+  await handleConfigOutsideWorkspace(document, client);
+}
+
+async function promptForWorkspaceConfig(
+  document: vscode.TextDocument,
+  workspaceFolderUri: vscode.Uri,
+): Promise<void> {
+  if (!shouldShowInfoMessage) {
     return;
   }
   const workspaceFolder = workspaceFolderUri.fsPath;
-
-  // check if we can create a .pliplugin folder
-  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
-  const isPliDocument = textEditor.document.languageId === "pli";
-  if (!isPliDocument || fs.existsSync(plipluginPath)) {
+  const plipluginUri = vscode.Uri.joinPath(workspaceFolderUri, ".pliplugin");
+  try {
+    await vscode.workspace.fs.stat(plipluginUri);
     return;
+  } catch {
+    // `.pliplugin` is not present.
   }
+  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
 
   const currentFileRelativePath = UriUtils.workspaceRelativeEntryPath(
     workspaceFolder,
-    textEditor.document.fileName,
+    document.fileName,
   );
 
-  const options = {
-    DONT_SHOW_AGAIN: "Don't show again",
-    YES: "Yes",
-    NO: "No",
-  } as const;
-
-  const userResponse = await vscode.window.showInformationMessage(
-    `No startup configuration was found. Would you like to create one using '${currentFileRelativePath}' as the entry point?`,
-    options.YES,
-    options.NO,
-    options.DONT_SHOW_AGAIN,
-  );
-
-  if (userResponse !== options.YES) {
-    shouldShowInfoMessage = userResponse !== options.DONT_SHOW_AGAIN;
+  if (!(await askToCreateConfig(currentFileRelativePath))) {
     return;
   }
 
@@ -96,4 +115,59 @@ export async function handleMissingConfig(
       `Failed to create '.pliplugin' folder: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+/**
+ * Ask before writing user settings. After a write, the shared helper offers
+ * to open settings.json so copybook `libs` can be added (user defaults ship
+ * with none).
+ */
+async function handleConfigOutsideWorkspace(
+  document: vscode.TextDocument,
+  client: BaseLanguageClient,
+): Promise<void> {
+  // Only the server knows if a glob already covers this file.
+  const identity = await identifyFile(document, client);
+  if (!identity || identity.programMatch !== "none") {
+    return;
+  }
+
+  // Exact entries in settings.json: skip even if the server has not loaded them yet.
+  if (userPluginConfigHasProgram(document.uri)) {
+    return;
+  }
+
+  if (!shouldShowInfoMessage) {
+    return;
+  }
+
+  const program = programKeyForDocument(document.uri);
+  const hasUserConfig = userPluginConfigExists();
+  if (!(await askToCreateConfig(program, hasUserConfig))) {
+    return;
+  }
+
+  await applyUserPluginConfig(document.uri);
+}
+
+/** "Don't show again" suppresses further prompts for this session (create or append). */
+async function askToCreateConfig(
+  entryPoint: string,
+  appending = false,
+): Promise<boolean> {
+  const message = appending
+    ? `Would you like to add '${entryPoint}' as an entry point to your user settings?`
+    : `No startup configuration was found. Would you like to create one using '${entryPoint}' as the entry point?`;
+  const userResponse = await vscode.window.showInformationMessage(
+    message,
+    options.YES,
+    options.NO,
+    options.DONT_SHOW_AGAIN,
+  );
+
+  if (userResponse !== options.YES) {
+    shouldShowInfoMessage = userResponse !== options.DONT_SHOW_AGAIN;
+    return false;
+  }
+  return true;
 }

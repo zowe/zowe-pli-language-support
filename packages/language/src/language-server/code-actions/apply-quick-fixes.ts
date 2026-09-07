@@ -132,32 +132,52 @@ export async function quickFixResolveInclude(
   return action;
 }
 
+function createStartupConfigAction(
+  diagnostic: Diagnostic,
+  command: string,
+  argument: string,
+): CodeAction {
+  return {
+    title: `Create a startup configuration for this file.`,
+    kind: CodeActionKind.QuickFix,
+    diagnostics: [diagnostic],
+    command: {
+      title: "Create a startup configuration",
+      command,
+      arguments: [argument],
+    },
+  };
+}
+
 export async function quickFixCreateConfig(
   diagnostic: Diagnostic,
   workspace: WorkspaceContext,
 ): Promise<CodeAction | undefined> {
   const workspaceUri = workspace.config.getWorkspaceUri();
   const entryUri = diagnostic.data.entryUri as string;
-  if (!workspaceUri || !entryUri) {
+  if (!entryUri) {
     return;
   }
+
+  if (!workspaceUri) {
+    // No `.pliplugin` without a workspace folder; the client stores this in user settings.
+    return createStartupConfigAction(
+      diagnostic,
+      Commands.ENSURE_USER_CONFIG,
+      entryUri,
+    );
+  }
+
   const programPath = UriUtils.workspaceRelativeEntryPath(
     workspaceUri,
     entryUri,
   );
 
-  const action: CodeAction = {
-    title: `Create a startup configuration for this file.`,
-    kind: CodeActionKind.QuickFix,
-    diagnostics: [diagnostic],
-    command: {
-      title: "Create a startup configuration",
-      command: Commands.CREATE_CONFIG,
-      arguments: [programPath],
-    },
-  };
-
-  return action;
+  return createStartupConfigAction(
+    diagnostic,
+    Commands.CREATE_CONFIG,
+    programPath,
+  );
 }
 
 export function quickFixUppercaseText(

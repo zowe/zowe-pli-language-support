@@ -1033,10 +1033,11 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Resolves a program path to the key it's matched under (see
-   * {@link getProgramConfig}). Normalizes backslashes to forward slashes,
-   * then uses the path as-is if absolute, or joins it with the workspace URI
-   * if relative. Without a workspace (the fallback workspace), a relative
+   * Resolves a `program` value to the key it's matched under (see
+   * {@link getProgramConfig}). Normalizes backslashes to forward slashes.
+   * URI-scheme values (e.g. `zowe-ds:`) are keyed by URI path so they match
+   * the document. Absolute paths stay as-is; relative paths are joined with
+   * the workspace. Without a workspace (the fallback workspace), a relative
    * path stays as-is and matches unanchored against full file paths.
    */
   private resolveProgramKey(
@@ -1050,7 +1051,12 @@ export class PluginConfigurationProvider {
     if (normalizedProgramPath === "." || normalizedProgramPath === "./") {
       normalizedProgramPath = "*";
     }
-    if (this.isAbsolutePath(normalizedProgramPath)) {
+    // URI-scheme (e.g. zowe-ds:) and absolute paths are both keyed by URI path.
+    if (
+      UriUtils.computePathType(normalizedProgramPath) ===
+        UriUtils.PathType.URI ||
+      this.isAbsolutePath(normalizedProgramPath)
+    ) {
       return UriUtils.toUri(normalizedProgramPath).path;
     }
     if (!workspaceUri) {

@@ -434,6 +434,34 @@ describe("quickFixCreateConfig", () => {
     expect(result!.command!.arguments![0]).toBe("/Users/mockUser/foo.pli");
     expect(result!.command!.command).toBe(Commands.CREATE_CONFIG);
   });
+
+  test("delegates to the user-settings command without a workspace folder", async () => {
+    // Fourslash always has a workspace URI, and expectCodeActionAt only covers
+    // text edits. This branch is init(undefined) plus a command-only action.
+    const fallbackWorkspace = new WorkspaceContext(
+      vfs,
+      new TestGlobalConfigLoader({}),
+    );
+    await fallbackWorkspace.config.init(undefined);
+
+    const diagnostic = {
+      data: { entryUri: "file:///Users/mockUser/outside/foo.pli" },
+    } as Diagnostic;
+    const result = await applyQuickFixes.quickFixCreateConfig(
+      diagnostic,
+      fallbackWorkspace,
+    );
+
+    expect(result).toBeDefined();
+    expect(result!.title).toContain("Create a startup configuration");
+    expect(result!.kind).toBe("quickfix");
+    expect(result!.command!.command).toBe(Commands.ENSURE_USER_CONFIG);
+    // The client needs the URI itself, since there is no workspace to make the
+    // path relative to.
+    expect(result!.command!.arguments![0]).toBe(
+      "file:///Users/mockUser/outside/foo.pli",
+    );
+  });
 });
 
 //

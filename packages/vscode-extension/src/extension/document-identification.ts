@@ -15,14 +15,17 @@ import { BaseLanguageClient } from "vscode-languageclient";
 import { Messages, UriUtils } from "pli-language";
 import { sendRequest } from "./messages";
 
-export function registerPliDocumentIdentifier(lc: BaseLanguageClient) {
+export function registerPliDocumentIdentifier(
+  lc: BaseLanguageClient,
+  onBecamePli?: (document: vscode.TextDocument) => void,
+) {
   const proposedFiles = new Set<string>();
   // Some files might be opened before the extension starts up
   for (const document of vscode.workspace.textDocuments) {
-    checkFileType(proposedFiles, document, lc);
+    checkFileType(proposedFiles, document, lc, onBecamePli);
   }
   return vscode.workspace.onDidOpenTextDocument(async (document) => {
-    checkFileType(proposedFiles, document, lc);
+    checkFileType(proposedFiles, document, lc, onBecamePli);
   });
 }
 
@@ -30,6 +33,7 @@ async function checkFileType(
   proposedFiles: Set<string>,
   document: vscode.TextDocument,
   lc: BaseLanguageClient,
+  onBecamePli?: (document: vscode.TextDocument) => void,
 ): Promise<void> {
   if (!Settings.getInstance().autoDetect) {
     // Auto-detection is disabled, so do not propose to set language for any file.
@@ -49,12 +53,15 @@ async function checkFileType(
     return;
   }
   const identity = await identifyFile(document, lc);
+  if (!identity) {
+    return;
+  }
   if (identity.programMatch === "exact") {
     vscode.languages.setTextDocumentLanguage(document, "pli");
     return;
   }
   if (isPossiblePliDocument(document, identity.existing)) {
-    proposePliLanguage(proposedFiles, document);
+    proposePliLanguage(proposedFiles, document, onBecamePli);
   }
 }
 
@@ -90,10 +97,11 @@ function isNotPliDocument(document: vscode.TextDocument): boolean {
   return false;
 }
 
-async function identifyFile(
+/** Server-side program match (globs, assumed extensions). `undefined` if the LS is not ready. */
+export async function identifyFile(
   document: vscode.TextDocument,
   lc: BaseLanguageClient,
-): Promise<Messages.FileIdentification> {
+): Promise<Messages.FileIdentification | undefined> {
   try {
     return await sendRequest(
       lc,
@@ -101,7 +109,7 @@ async function identifyFile(
       document.uri.toString(),
     );
   } catch {
-    return { existing: false, programMatch: "none" };
+    return undefined;
   }
 }
 
@@ -134,6 +142,7 @@ function isPossiblePliDocument(
 async function proposePliLanguage(
   proposedFiles: Set<string>,
   document: vscode.TextDocument,
+  onBecamePli?: (document: vscode.TextDocument) => void,
 ) {
   console.log(
     `Proposing to set language of ${document.uri.toString(true)} to PL/I`,
@@ -146,9 +155,14 @@ async function proposePliLanguage(
     "Never",
   );
   switch (selection) {
-    case "Yes":
-      vscode.languages.setTextDocumentLanguage(document, "pli");
+    case "Yes": {
+      const pliDocument = await vscode.languages.setTextDocumentLanguage(
+        document,
+        "pli",
+      );
+      onBecamePli?.(pliDocument);
       break;
+    }
     case "No":
       proposedFiles.add(document.uri.toString());
       break;

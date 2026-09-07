@@ -12,6 +12,7 @@
 import { Commands, Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
+import { applyUserPluginConfig } from "../common/user-plugin-config";
 
 /**
  * Opens (or focuses) the config entry described by `configLocation` and
@@ -87,6 +88,14 @@ export function registerCommands(
             // ignore error
           }
         }
+      },
+    ),
+
+    // No `.pliplugin` without a workspace folder; write the entry to user settings.
+    vscode.commands.registerCommand(
+      Commands.ENSURE_USER_CONFIG,
+      async (uriString: string) => {
+        await applyUserPluginConfig(vscode.Uri.parse(uriString));
       },
     ),
 
