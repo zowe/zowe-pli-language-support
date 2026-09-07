@@ -53,9 +53,6 @@ async function checkFileType(
     return;
   }
   const identity = await identifyFile(document, lc);
-  if (!identity) {
-    return;
-  }
   if (identity.programMatch === "exact") {
     vscode.languages.setTextDocumentLanguage(document, "pli");
     return;
@@ -97,11 +94,10 @@ function isNotPliDocument(document: vscode.TextDocument): boolean {
   return false;
 }
 
-/** Server-side program match (globs, assumed extensions). `undefined` if the LS is not ready. */
 export async function identifyFile(
   document: vscode.TextDocument,
   lc: BaseLanguageClient,
-): Promise<Messages.FileIdentification | undefined> {
+): Promise<Messages.FileIdentification> {
   try {
     return await sendRequest(
       lc,
@@ -109,7 +105,10 @@ export async function identifyFile(
       document.uri.toString(),
     );
   } catch {
-    return undefined;
+    return {
+      existing: false,
+      programMatch: "none",
+    };
   }
 }
 
