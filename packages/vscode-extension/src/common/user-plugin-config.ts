@@ -31,8 +31,8 @@ interface ProcGrps {
 export type UserPluginConfigResult = "created" | "appended" | "unchanged";
 
 /**
- * Filesystem path for `file:`; full URI otherwise — `fsPath` is meaningless
- * for remote schemes such as Zowe Explorer.
+ * `program` we write for this document. Local: `/a/b/c/hello.pli` (not
+ * `file:///...`). Remote (e.g. Zowe): the full URI.
  */
 export function programKeyForDocument(uri: vscode.Uri): string {
   return uri.scheme === "file"

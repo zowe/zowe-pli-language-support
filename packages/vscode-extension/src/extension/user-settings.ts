@@ -10,43 +10,30 @@
  */
 
 import * as vscode from "vscode";
-import { deriveUserSettingsUri } from "./config-loader";
 
 const OPEN_SETTINGS = "Open Settings";
 
 /**
- * Reveal user `settings.json` so copybook `libs` can be added (user defaults
- * ship with none). Falls back to VS Code's command when the derived path
- * isn't a document (remote/web).
+ * Opens user `settings.json` at `pli.pgm_conf` so copybook `libs` can be added
+ * (user defaults ship with none).
  */
-export async function openUserSettings(
-  context: vscode.ExtensionContext,
-): Promise<void> {
-  try {
-    const settingsUri = deriveUserSettingsUri(context.globalStorageUri);
-    const document = await vscode.workspace.openTextDocument(settingsUri);
-    await vscode.window.showTextDocument(document, { preview: false });
-  } catch {
-    await vscode.commands.executeCommand(
-      "workbench.action.openSettingsJson",
-      "pli.pgm_conf",
-    );
-  }
+export async function openUserSettings(): Promise<void> {
+  await vscode.commands.executeCommand(
+    "workbench.action.openSettingsJson",
+    "pli.pgm_conf",
+  );
 }
 
 /**
  * Toast after appending a program entry. The message body is not clickable
  * (VS Code API); the action opens the same `settings.json` as first create.
  */
-export async function notifyUserConfigAppended(
-  program: string,
-  context: vscode.ExtensionContext,
-): Promise<void> {
+export async function notifyUserConfigAppended(program: string): Promise<void> {
   const selection = await vscode.window.showInformationMessage(
     `Added '${program}' as an entry point to your user settings.`,
     OPEN_SETTINGS,
   );
   if (selection === OPEN_SETTINGS) {
-    await openUserSettings(context);
+    await openUserSettings();
   }
 }

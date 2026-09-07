@@ -103,9 +103,9 @@ export function registerCommands(
         try {
           const result = await ensureUserPluginConfig(uri);
           if (result === "created") {
-            await openUserSettings(context);
+            await openUserSettings();
           } else if (result === "appended") {
-            await notifyUserConfigAppended(programKeyForDocument(uri), context);
+            await notifyUserConfigAppended(programKeyForDocument(uri));
           }
         } catch (error) {
           vscode.window.showErrorMessage(

@@ -43,7 +43,6 @@ const options = {
 /** Prompt for a missing startup config: `.pliplugin` in a workspace folder, user settings otherwise. */
 export async function handleMissingConfig(
   textEditor: vscode.TextEditor | undefined,
-  context: vscode.ExtensionContext,
   client: BaseLanguageClient,
 ) {
   if (!textEditor || textEditor.document.languageId !== "pli") {
@@ -60,7 +59,7 @@ export async function handleMissingConfig(
     await promptForWorkspaceConfig(document, workspaceFolderUri);
     return;
   }
-  await handleConfigOutsideWorkspace(document, context, client);
+  await handleConfigOutsideWorkspace(document, client);
 }
 
 async function promptForWorkspaceConfig(
@@ -71,10 +70,14 @@ async function promptForWorkspaceConfig(
     return;
   }
   const workspaceFolder = workspaceFolderUri.fsPath;
-  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
-  if (fs.existsSync(plipluginPath)) {
+  const plipluginUri = vscode.Uri.joinPath(workspaceFolderUri, ".pliplugin");
+  try {
+    await vscode.workspace.fs.stat(plipluginUri);
     return;
+  } catch {
+    // `.pliplugin` is not present.
   }
+  const plipluginPath = path.join(workspaceFolder, ".pliplugin");
 
   const currentFileRelativePath = UriUtils.workspaceRelativeEntryPath(
     workspaceFolder,
@@ -129,7 +132,6 @@ async function promptForWorkspaceConfig(
  */
 async function handleConfigOutsideWorkspace(
   document: vscode.TextDocument,
-  context: vscode.ExtensionContext,
   client: BaseLanguageClient,
 ): Promise<void> {
   const uriKey = document.uri.toString();
@@ -157,12 +159,9 @@ async function handleConfigOutsideWorkspace(
   try {
     const result = await ensureUserPluginConfig(document.uri);
     if (result === "created") {
-      await openUserSettings(context);
+      await openUserSettings();
     } else if (result === "appended") {
-      await notifyUserConfigAppended(
-        programKeyForDocument(document.uri),
-        context,
-      );
+      await notifyUserConfigAppended(programKeyForDocument(document.uri));
     }
   } catch (error) {
     handledUserConfigUris.delete(uriKey);
