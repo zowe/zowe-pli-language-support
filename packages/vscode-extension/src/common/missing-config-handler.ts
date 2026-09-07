@@ -118,9 +118,9 @@ async function promptForWorkspaceConfig(
 }
 
 /**
- * Ask before writing user settings. First create also reveals settings.json
- * so copybook `libs` can be added (user defaults ship with none). Append
- * does not toast: the user already confirmed in this prompt.
+ * Ask before writing user settings. After a write, the shared helper offers
+ * to open settings.json so copybook `libs` can be added (user defaults ship
+ * with none).
  */
 async function handleConfigOutsideWorkspace(
   document: vscode.TextDocument,

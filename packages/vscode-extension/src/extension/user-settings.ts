@@ -17,16 +17,16 @@ const OPEN_SETTINGS = "Open Settings";
  * Opens user `settings.json` at `pli.pgm_conf` so copybook `libs` can be added
  * (user defaults ship with none).
  */
-export async function openUserSettings(): Promise<void> {
-  await vscode.commands.executeCommand(
-    "workbench.action.openSettingsJson",
-    "pli.pgm_conf",
-  );
+async function openUserSettings(): Promise<void> {
+  await vscode.commands.executeCommand("workbench.action.openSettingsJson", {
+    revealSetting: { key: "pli.pgm_conf" },
+  });
 }
 
 /**
- * Toast after appending a program entry. The message body is not clickable
- * (VS Code API); the action opens the same `settings.json` as first create.
+ * After a write, offer to open `settings.json` so copybook `libs` can be
+ * added (user defaults ship with none). The message body is not clickable
+ * (VS Code API); the action opens the file.
  */
 export async function notifyUserConfigAppended(program: string): Promise<void> {
   const selection = await vscode.window.showInformationMessage(

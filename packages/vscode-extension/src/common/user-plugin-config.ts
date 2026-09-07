@@ -11,10 +11,7 @@
 
 import * as vscode from "vscode";
 import { PluginConfiguration, UriUtils } from "pli-language";
-import {
-  notifyUserConfigAppended,
-  openUserSettings,
-} from "../extension/user-settings";
+import { notifyUserConfigAppended } from "../extension/user-settings";
 
 const DEFAULT_PGROUP =
   PluginConfiguration.DEFAULT_PROGRAM_FILE_CONTENT.pgms[0].pgroup;
@@ -141,20 +138,16 @@ async function ensureUserPluginConfig(
 }
 
 /**
- * Writes the user-scope plugin config for `uri` and runs the follow-up UI.
- * Pass `notifyOnAppend` on the quick-fix path (no prior prompt). The editor
- * prompt path should omit it so the user is not toasted after already saying
- * Yes. Returns `undefined` if the write failed (error already shown).
+ * Writes the user-scope plugin config for `uri` and offers to open settings
+ * (copybook `libs` are empty in the user-scope stub). Returns `undefined`
+ * if the write failed (error already shown).
  */
 export async function applyUserPluginConfig(
   uri: vscode.Uri,
-  options?: { notifyOnAppend?: boolean },
 ): Promise<UserPluginConfigResult | undefined> {
   try {
     const result = await ensureUserPluginConfig(uri);
-    if (result === "created") {
-      await openUserSettings();
-    } else if (result === "appended" && options?.notifyOnAppend) {
+    if (result === "created" || result === "appended") {
       await notifyUserConfigAppended(programKeyForDocument(uri));
     }
     return result;

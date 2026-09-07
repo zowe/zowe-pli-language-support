@@ -95,9 +95,7 @@ export function registerCommands(
     vscode.commands.registerCommand(
       Commands.ENSURE_USER_CONFIG,
       async (uriString: string) => {
-        await applyUserPluginConfig(vscode.Uri.parse(uriString), {
-          notifyOnAppend: true,
-        });
+        await applyUserPluginConfig(vscode.Uri.parse(uriString));
       },
     ),
 
