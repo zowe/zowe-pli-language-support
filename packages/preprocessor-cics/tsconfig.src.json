@@ -6,5 +6,6 @@
     //current solution to ignore generated file linting errors
     "noUnusedLocals": false
   },
+  "references": [{ "path": "../preprocessor-api/tsconfig.src.json" }],
   "include": ["src/**/*.ts"]
 }

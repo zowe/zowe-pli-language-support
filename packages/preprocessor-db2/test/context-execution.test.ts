@@ -41,7 +41,7 @@ describe("DB2 execute(context)", () => {
     );
     // Host coordinates: the token points at `HV1` after the colon in the source text.
     expect(hostVariable?.image).toBe("HV1");
-    expect(hostVariable?.startOffset).toBe(text.indexOf(":HV1") + 1);
+    expect(hostVariable?.start).toBe(text.indexOf(":HV1") + 1);
   });
 
   test("an EXEC SQL INCLUDE resolves through the context and records the member token", async () => {
@@ -50,9 +50,15 @@ describe("DB2 execute(context)", () => {
     await preprocessor.execute(context);
 
     // The recorder reports every include as unresolved; the attempt is still recorded
-    // with the statement's range, which is how the host links the AST node.
+    // with the statement's range (how the host links the AST node) and the member's
+    // (where the host anchors the unresolved-include diagnostic).
+    const nameStart = text.indexOf("COPY1");
     expect(context.includes).toEqual([
-      { name: "COPY1", range: { start: 0, end: text.length } },
+      {
+        name: "COPY1",
+        statementRange: { start: 0, end: text.length },
+        nameRange: { start: nameStart, end: nameStart + 5 },
+      },
     ]);
     expect(context.edits).toHaveLength(1);
     const [edit] = context.edits;
@@ -61,7 +67,7 @@ describe("DB2 execute(context)", () => {
       (t) => t.semanticsKind === SemanticsKind.Identifier,
     );
     expect(member?.image).toBe("COPY1");
-    expect(member?.startOffset).toBe(text.indexOf("COPY1"));
+    expect(member?.start).toBe(nameStart);
   });
 
   test("an unterminated statement is parsed and diagnosed but not replaced - only annotated", async () => {

@@ -456,8 +456,8 @@ function toPliToken(token: ApiToken, uri: URI): t.Token {
     token.image,
     token.image,
     t.ID,
-    token.startOffset,
-    token.endOffset,
+    token.start,
+    token.end - 1,
     uri,
   );
 }
@@ -474,13 +474,13 @@ function toPliTokens(token: ApiToken, uri: URI, hostText: string): t.Token[] {
     token.image.includes(".")
   ) {
     const result: t.Token[] = [];
-    let cursor = token.startOffset;
+    let cursor = token.start;
     for (const part of token.image.split(".")) {
       if (part.length === 0) {
         continue;
       }
       const index = hostText.indexOf(part, cursor);
-      if (index === -1 || index + part.length - 1 > token.endOffset) {
+      if (index === -1 || index + part.length > token.end) {
         return [toPliToken(token, uri)];
       }
       result.push(

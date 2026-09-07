@@ -21,8 +21,8 @@ export function rebaseDiagnostic(
 ): Diagnostic {
   return {
     ...diagnostic,
-    startOffset: diagnostic.startOffset + fragment.bodyOffset,
-    endOffset: diagnostic.endOffset + fragment.bodyOffset,
+    start: diagnostic.start + fragment.bodyOffset,
+    end: diagnostic.end + fragment.bodyOffset,
   };
 }
 
@@ -36,8 +36,8 @@ export function rebaseDiagnostic(
 export function rebaseToken(token: Token, fragment: ExecFragment): Token {
   return {
     ...token,
-    startOffset: token.startOffset + fragment.bodyOffset,
-    endOffset: token.endOffset + fragment.bodyOffset,
+    start: token.start + fragment.bodyOffset,
+    end: token.end + fragment.bodyOffset,
   };
 }
 

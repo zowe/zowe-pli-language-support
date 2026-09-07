@@ -18,26 +18,17 @@ export enum SemanticsKind {
 }
 
 /**
- * An offset span in ANTLR's convention: `endOffset` is *inclusive* (the last covered
- * character, i.e. a token's `stop`).
- */
-export interface WithRange {
-  startOffset: number;
-  endOffset: number;
-}
-
-/**
- * An offset range using the language package's own `{start, end}` naming (as opposed to
- * {@link WithRange}'s `{startOffset, endOffset}`, used by `Token`/`Diagnostic`) - so
- * `PreprocessorContext.replace`/`ExecFragment.range` match the language `Range` type
- * directly, with no field-renaming conversion at the boundary.
+ * An offset range into the enclosing text: `start` inclusive, `end` exclusive - the one
+ * convention every offset in this API uses (tokens, diagnostics, fragments, edits), and the
+ * same as the language package's own `Range`. ANTLR's inclusive `stop` becomes `stop + 1` at
+ * the engine boundary.
  */
 export interface Range {
   start: number;
   end: number;
 }
 
-export interface Token extends WithRange {
+export interface Token extends Range {
   image: string;
   semanticsKind: SemanticsKind;
 }
@@ -48,7 +39,7 @@ export enum Severity {
   Info,
 }
 
-export interface Diagnostic extends WithRange {
+export interface Diagnostic extends Range {
   severity: Severity;
   message: string;
   code: string;
@@ -58,7 +49,7 @@ export interface Diagnostic extends WithRange {
  * The include statement a single-fragment parse recognized (`EXEC SQL INCLUDE member`):
  * `filePath` is the raw member *name*, `token` the member's token. Part of the engines'
  * {@link PreprocessorResult}, not of the {@link Preprocessor} contract - on the context
- * path the engine acts on it itself, via `PreprocessorContext.resolveInclude`.
+ * path the engine acts on it itself, via `PreprocessorContext.include`.
  */
 export type PreprocessorReplacement = {
   type: "include";
@@ -107,6 +98,13 @@ export interface ExecFragment {
  */
 export interface PreprocessorContext {
   readonly text: string;
+  /**
+   * The uri of the document `text` came from - the entry file, or an included file's own
+   * uri for a context created by {@link include}.
+   */
+  readonly documentUri: string;
+  /** The uri of the compilation unit's entry file - the same for every nested context. */
+  readonly unitUri: string;
   pushDiagnostic(diagnostic: Diagnostic): void;
   /**
    * Replaces `range` (offsets into `text`) with `text`, recording `tokens` as the replaced
@@ -121,24 +119,20 @@ export interface PreprocessorContext {
    */
   replace(range: Range, text: string, tokens?: Token[]): void;
   /**
-   * `range` is the include statement's span in `context.text` - used to anchor the
-   * "include could not be resolved" diagnostic (without it the diagnostic has no position
-   * and is dropped) and to locate the include site's enclosing scope.
+   * Resolves the include statement at `statementRange` (`EXEC SQL INCLUDE member`): looks
+   * `name` up, runs the host's own processing over the included file (recursively - its
+   * `EXEC` statements go through the same preprocessor), and replaces the statement with
+   * the result, keeping the included file's real positions. `tokens` is the statement's
+   * classified token list, exactly as for {@link replace}. An unresolvable `name` produces
+   * a diagnostic at `nameRange` (the member token's span) and still blanks the statement,
+   * so the raw `EXEC` text never reaches the host parser.
    */
-  resolveInclude(
+  include(
     name: string,
-    range?: Range,
-  ): Promise<PreprocessorContext | undefined>;
-  /**
-   * Splices `nested` (a context previously returned by `resolveInclude`, with its own edits
-   * already applied) in at `offset`, preserving its own real positions instead of collapsing
-   * it into one opaque block - see the language package's `Segment.foreign`.
-   *
-   * `nested` MUST be a context obtained from this host's `resolveInclude` - the host relies
-   * on its own concrete implementation to build the spliced result. Passing any other
-   * `PreprocessorContext` implementation throws.
-   */
-  insertContext(offset: number, nested: PreprocessorContext): void;
+    statementRange: Range,
+    nameRange: Range,
+    tokens?: Token[],
+  ): Promise<void>;
 }
 
 export interface Preprocessor {

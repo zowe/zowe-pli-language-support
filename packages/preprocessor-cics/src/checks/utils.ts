@@ -9,23 +9,17 @@
  *
  */
 import { ParserRuleContext, ParseTree, TerminalNode } from "antlr4ng";
-import { WithRange } from "preprocessor-api";
+import { Range } from "preprocessor-api";
 
 export const VisitorUtility = {
-  /** Returns the node's span with an *inclusive* `endOffset` (ANTLR `stop`), per {@link WithRange}. */
-  constructLocality(ctx: ParseTree): WithRange {
+  /** Returns the node's span as an api {@link Range} (exclusive `end`, i.e. ANTLR `stop + 1`). */
+  constructLocality(ctx: ParseTree): Range {
     if (ctx instanceof TerminalNode) {
-      return {
-        startOffset: ctx.symbol.start,
-        endOffset: ctx.symbol.stop,
-      };
+      return { start: ctx.symbol.start, end: ctx.symbol.stop + 1 };
     }
     assertType<ParserRuleContext>(ctx);
-    const startOffset = ctx.start ? ctx.start.start : 0;
-    return {
-      startOffset,
-      endOffset: ctx.stop ? ctx.stop.stop : startOffset,
-    };
+    const start = ctx.start ? ctx.start.start : 0;
+    return { start, end: ctx.stop ? ctx.stop.stop + 1 : start + 1 };
   },
 };
 

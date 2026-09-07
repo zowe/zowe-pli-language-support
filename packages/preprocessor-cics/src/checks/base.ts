@@ -8,7 +8,7 @@
  * Copyright Contributors to the Zowe Project.
  *
  */
-import { Diagnostic, Severity, WithRange } from "preprocessor-api";
+import { Diagnostic, Range, Severity } from "preprocessor-api";
 import { CICSLexer } from "../generated/CICSLexer";
 import {
   Cics_browse_start_endContext,
@@ -98,7 +98,7 @@ export abstract class CICSOptionsCheckerBase {
 
   protected throwException(
     errorSeverity: Severity,
-    range: WithRange,
+    range: Range,
     msg: string,
     wrongToken: string,
   ): void {

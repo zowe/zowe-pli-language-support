@@ -114,7 +114,7 @@ export class SourceMap {
 
   /**
    * The map's own segments, in `genStart` order. Exposed for
-   * `PreprocessorContext.insertContext`'s splicing.
+   * `PreprocessorContext.include`'s splicing.
    */
   getSegments(): readonly Segment[] {
     return this.segments;

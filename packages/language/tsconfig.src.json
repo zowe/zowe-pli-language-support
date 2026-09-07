@@ -4,5 +4,10 @@
     "rootDir": "src",
     "outDir": "out"
   },
+  "references": [
+    { "path": "../preprocessor-api/tsconfig.src.json" },
+    { "path": "../preprocessor-cics/tsconfig.src.json" },
+    { "path": "../preprocessor-db2/tsconfig.src.json" }
+  ],
   "include": ["src/**/*.ts"]
 }

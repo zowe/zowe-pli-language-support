@@ -41,8 +41,8 @@ describe("CICS execute(context)", () => {
     // Full classification, not just identifiers - offsets absolute into `context.text`.
     const abend = edit.tokens.find((t) => t.image === "ABEND");
     expect(abend?.semanticsKind).toBe(SemanticsKind.Keyword);
-    expect(abend?.startOffset).toBe(text.indexOf("ABEND"));
-    expect(text.slice(abend!.startOffset, abend!.endOffset + 1)).toBe("ABEND");
+    expect(abend?.start).toBe(text.indexOf("ABEND"));
+    expect(text.slice(abend!.start, abend!.end)).toBe("ABEND");
   });
 
   test("rebases diagnostics into host coordinates", async () => {
@@ -52,7 +52,7 @@ describe("CICS execute(context)", () => {
 
     expect(context.diagnostics).toHaveLength(1);
     expect(context.diagnostics[0].severity).toBe(Severity.Error);
-    expect(context.diagnostics[0].startOffset).toBe(text.indexOf("BLA"));
+    expect(context.diagnostics[0].start).toBe(text.indexOf("BLA"));
   });
 
   test("an unterminated statement is parsed and diagnosed but not replaced - only annotated", async () => {

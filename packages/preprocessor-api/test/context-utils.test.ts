@@ -206,8 +206,8 @@ describe("rebaseDiagnostic", () => {
         severity: Severity.Error,
         message: "bad",
         code: "X1",
-        startOffset: 3,
-        endOffset: 7,
+        start: 3,
+        end: 7,
       },
       fragment,
     );
@@ -215,8 +215,8 @@ describe("rebaseDiagnostic", () => {
       severity: Severity.Error,
       message: "bad",
       code: "X1",
-      startOffset: 22,
-      endOffset: 26,
+      start: 22,
+      end: 26,
     });
   });
 });
@@ -233,16 +233,16 @@ describe("rebaseToken", () => {
       {
         image: "HV",
         semanticsKind: SemanticsKind.Identifier,
-        startOffset: 8,
-        endOffset: 9,
+        start: 8,
+        end: 10,
       },
       fragment,
     );
     expect(rebased).toEqual({
       image: "HV",
       semanticsKind: SemanticsKind.Identifier,
-      startOffset: 27,
-      endOffset: 28,
+      start: 27,
+      end: 29,
     });
   });
 });
@@ -251,12 +251,12 @@ describe("buildExecReplacement", () => {
   const token = (
     image: string,
     semanticsKind: SemanticsKind,
-    startOffset: number,
+    start: number,
   ): Token => ({
     image,
     semanticsKind,
-    startOffset,
-    endOffset: startOffset + image.length - 1,
+    start,
+    end: start + image.length,
   });
 
   test("re-embeds only identifier tokens, space-separated, before DO; END;", () => {

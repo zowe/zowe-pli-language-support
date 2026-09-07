@@ -35,8 +35,8 @@ class PLIHostLanguage implements HostLanguage {
       diagnostics.push({
         code: "invalid.cobol.comment",
         message: "COBOL comment in PL/I context detected.",
-        startOffset: token.start,
-        endOffset: token.stop,
+        start: token.start,
+        end: token.stop + 1,
         severity: Severity.Error,
       });
     }
@@ -52,8 +52,8 @@ class COBOLHostLanguage implements HostLanguage {
       diagnostics.push({
         code: "invalid.pli.comment",
         message: "PL/I comment in COBOL context detected.",
-        startOffset: token.start,
-        endOffset: token.stop,
+        start: token.start,
+        end: token.stop + 1,
         severity: Severity.Error,
       });
     }

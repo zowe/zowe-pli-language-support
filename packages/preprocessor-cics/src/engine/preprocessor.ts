@@ -156,7 +156,7 @@ export class CICSPreprocessor implements Preprocessor {
         this.hostLanguage.visitToken(token, lexerErrors.errors);
         if (
           idIndex < identifierTokens.length &&
-          token.start === identifierTokens[idIndex].startOffset
+          token.start === identifierTokens[idIndex].start
         ) {
           return identifierTokens[idIndex++];
         } else if (token.channel === COMMENTS) {
@@ -172,8 +172,8 @@ export class CICSPreprocessor implements Preprocessor {
         }
         return <Token>{
           image: token.text!,
-          startOffset: token.start,
-          endOffset: token.stop,
+          start: token.start,
+          end: token.stop + 1,
           semanticsKind,
         };
       })
