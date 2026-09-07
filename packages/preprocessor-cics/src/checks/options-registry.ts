@@ -570,9 +570,9 @@ export class OptionsRegistry {
       if (this.utilityParameters.spEnabled) spOptions.checkOptions(ctx);
       else spOptions.throwIfMissingTranslatorOption(ctx, '"SP"');
     }
-    const rootUtiltiy = this.optionsMap.get(ctx.ruleIndex);
-    if (rootUtiltiy != null) {
-      rootUtiltiy.checkRootRule(ctx);
+    const rootUtility = this.optionsMap.get(ctx.ruleIndex);
+    if (rootUtility != null) {
+      rootUtility.checkRootRule(ctx);
     }
   }
 }

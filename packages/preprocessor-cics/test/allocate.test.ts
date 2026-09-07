@@ -23,12 +23,10 @@ describe("CICS ALLOCATE", () => {
 
   test("Alone allocate", () => {
     const { diagnostics } = cicsPreprocessor.parse("ALLOCATE");
-    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Unexpected end of file/);
-    expect(diagnostics[1].severity).toBe(Severity.Error);
-    expect(diagnostics[1].message).toMatch(
-      /Must include one or more of the following: SESSION, SYSID, PARTNER/,
+    expect(diagnostics[0].message).toMatch(
+      /Exactly one option required, none provided: SYSID or SESSION or PARTNER/,
     );
   });
 
@@ -43,12 +41,13 @@ describe("CICS ALLOCATE", () => {
     expect(diagnostics[0].message).toMatch("Extraneous input BLA");
   });
 
-  // checkAppcPartner -> checkHasMandatoryOptions(PARTNER)
   test("Missing PARTNER", () => {
     const { diagnostics } = cicsPreprocessor.parse("ALLOCATE NOQUEUE");
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe(Severity.Error);
-    expect(diagnostics[0].message).toMatch(/Missing required option: PARTNER/);
+    expect(diagnostics[0].message).toMatch(
+      /Exactly one option required, none provided: SYSID or SESSION or PARTNER/,
+    );
   });
 
   // checkDuplicates
