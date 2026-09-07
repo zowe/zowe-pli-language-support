@@ -2,7 +2,12 @@
 
 All notable changes to PL/I Language Support are documented in this file.
 
-## 1.1.0 (TBA)
+## 1.1.1 (2026-09-08)
+
+#### Fixed
+- Miscellaneous bug fixes and security updates
+
+## 1.1.0 (2026-02-27)
 
 #### Added
 - Quick Fix for unresolved include files
