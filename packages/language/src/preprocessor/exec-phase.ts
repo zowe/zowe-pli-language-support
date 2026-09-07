@@ -456,8 +456,8 @@ function toPliToken(token: ApiToken, uri: URI): t.Token {
     token.image,
     token.image,
     t.ID,
-    token.start,
-    token.end - 1,
+    token.range.start,
+    token.range.end - 1,
     uri,
   );
 }
@@ -474,13 +474,13 @@ function toPliTokens(token: ApiToken, uri: URI, hostText: string): t.Token[] {
     token.image.includes(".")
   ) {
     const result: t.Token[] = [];
-    let cursor = token.start;
+    let cursor = token.range.start;
     for (const part of token.image.split(".")) {
       if (part.length === 0) {
         continue;
       }
       const index = hostText.indexOf(part, cursor);
-      if (index === -1 || index + part.length > token.end) {
+      if (index === -1 || index + part.length > token.range.end) {
         return [toPliToken(token, uri)];
       }
       result.push(
@@ -794,7 +794,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
     ): Promise<void> => {
       const tokenization = tokenize(context.text, context.file);
       for (const diagnostic of tokenization.diagnostics) {
-        context.pushDiagnostic(diagnostic);
+        context.pushHostDiagnostic(diagnostic);
       }
       const state = new ParserState(tokenization.tokens, opts);
       const frame: Frame = {
@@ -825,7 +825,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
       );
       largePush(allStatements, statements);
       for (const diagnostic of diagnostics) {
-        context.pushDiagnostic(diagnostic);
+        context.pushHostDiagnostic(diagnostic);
       }
       // The `EXEC` statements' own replacement: the preprocessor finds its own
       // `EXEC <keyword> ...;` occurrences in `context.text` in one whole-text pass.
@@ -973,7 +973,7 @@ export class UnresolvedExecPhase implements PreprocessorPhase {
         continue;
       }
 
-      context.pushDiagnostic(diagnosticFromCode(code, execToken));
+      context.pushHostDiagnostic(diagnosticFromCode(code, execToken));
 
       // Replace EXEC/ExecFragment(/Semicolon) with a harmless DO; END; so the final
       // grammar parse doesn't also raise its own diagnostic for the same statement.

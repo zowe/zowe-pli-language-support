@@ -205,7 +205,7 @@ describe("PreprocessorContext.build - insert", () => {
 describe("PreprocessorContext.pushDiagnostic", () => {
   test("diagnostics pushed before build() surface in the result", async () => {
     const context = await createContext("EXEC SQL X;");
-    context.pushDiagnostic({
+    context.pushHostDiagnostic({
       severity: Severity.E,
       message: "test diagnostic",
     });
@@ -220,8 +220,7 @@ describe("PreprocessorContext.pushDiagnostic", () => {
       severity: api.Severity.Error,
       message: "api diagnostic",
       code: "X1",
-      start: 9,
-      end: 10,
+      range: { start: 9, end: 10 },
     });
     const { diagnostics } = context.build();
     // Without a uri and a non-empty range, DiagnosticsStore would silently drop it.
@@ -373,7 +372,10 @@ describe("PreprocessorContext.include", () => {
       "/workspace/cpy/lib.pli": "DCL X;",
     });
     const onProcess = async (nested: PreprocessorContext) => {
-      nested.pushDiagnostic({ severity: Severity.W, message: "nested diag" });
+      nested.pushHostDiagnostic({
+        severity: Severity.W,
+        message: "nested diag",
+      });
     };
     const main = new PreprocessorContext(mainUri, "AB", unit, onProcess);
     await main.include("lib", { start: 1, end: 1 }, { start: 1, end: 1 });
@@ -392,15 +394,11 @@ describe("PreprocessorContext.include", () => {
     const member: api.Token = {
       image: "MISSING",
       semanticsKind: api.SemanticsKind.Identifier,
-      start: 17,
-      end: 24,
+      range: { start: 17, end: 24 },
     };
-    await context.include(
-      "MISSING",
-      { start: 0, end: 25 },
-      { start: member.start, end: member.end },
-      [member],
-    );
+    await context.include("MISSING", { start: 0, end: 25 }, member.range, [
+      member,
+    ]);
     const { text, diagnostics } = context.build();
     expect(text).toBe(" X");
     expect(diagnostics[0].range).toEqual({ start: 17, end: 24 });

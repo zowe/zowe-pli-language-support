@@ -58,15 +58,13 @@ describe("CICS ACQUIRE TERMINAL", () => {
     expect(diagnostics).toHaveLength(2);
     expect(diagnostics[0].severity).toBe(Severity.Error);
     // `end` is exclusive: "NOQUEUE" spans exactly offsets 22-28.
-    expect(diagnostics[0].start).toBe(22);
-    expect(diagnostics[0].end).toBe(29);
+    expect(diagnostics[0].range).toEqual({ start: 22, end: 29 });
     expect(diagnostics[0].message).toMatch(
       /Exactly one option required, options are mutually exclusive: NOQUEUE or QALL or QNOTENAB or QSESSLIM/,
     );
     expect(diagnostics[1].severity).toBe(Severity.Error);
     // "QNOTENAB" spans exactly offsets 30-37.
-    expect(diagnostics[1].start).toBe(30);
-    expect(diagnostics[1].end).toBe(38);
+    expect(diagnostics[1].range).toEqual({ start: 30, end: 38 });
     expect(diagnostics[1].message).toMatch(
       /Exactly one option required, options are mutually exclusive: NOQUEUE or QALL or QNOTENAB or QSESSLIM/,
     );

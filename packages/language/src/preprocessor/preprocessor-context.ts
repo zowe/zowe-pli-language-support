@@ -64,7 +64,7 @@ function fromApiDiagnostic(
     code: diagnostic.code,
     source,
     uri: uri.toString(),
-    range: { start: diagnostic.start, end: diagnostic.end },
+    range: diagnostic.range,
   };
 }
 
@@ -201,13 +201,15 @@ export class PreprocessorContext implements api.PreprocessorContext {
     return this.includeAttempts;
   }
 
-  pushDiagnostic(diagnostic: Diagnostic | api.Diagnostic): void {
-    // Only the api shape carries `start`.
+  pushDiagnostic(diagnostic: api.Diagnostic): void {
     this.diagnosticsList.push(
-      "start" in diagnostic
-        ? fromApiDiagnostic(diagnostic, this.file, this.diagnosticSource)
-        : diagnostic,
+      fromApiDiagnostic(diagnostic, this.file, this.diagnosticSource),
     );
+  }
+
+  /** The language package's own diagnostics (tokenizer/parser output, include resolution). */
+  pushHostDiagnostic(diagnostic: Diagnostic): void {
+    this.diagnosticsList.push(diagnostic);
   }
 
   /** Replaces `range` (offsets into this context's input text) with `text`. */
@@ -379,7 +381,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
       entryUri: this.unit.uri.toString(),
     };
     this.unit.includeError = true;
-    this.pushDiagnostic(diagnostic);
+    this.pushHostDiagnostic(diagnostic);
   }
 
   /**

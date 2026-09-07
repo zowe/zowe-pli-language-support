@@ -155,12 +155,12 @@ export class CICSPreprocessor implements Preprocessor {
         this.hostLanguage.visitToken(token, lexerErrors.errors);
         if (
           idIndex < identifierTokens.length &&
-          token.start === identifierTokens[idIndex].start
+          token.start === identifierTokens[idIndex].range.start
         ) {
           return identifierTokens[idIndex++];
         } else if (
           idIndex > 0 &&
-          token.stop < identifierTokens[idIndex - 1].end
+          token.stop < identifierTokens[idIndex - 1].range.end
         ) {
           // Inside the identifier just returned (`:A.B` lexes as several tokens).
           return undefined;
@@ -177,8 +177,7 @@ export class CICSPreprocessor implements Preprocessor {
         }
         return <Token>{
           image: token.text!,
-          start: token.start,
-          end: token.stop + 1,
+          range: { start: token.start, end: token.stop + 1 },
           semanticsKind,
         };
       })

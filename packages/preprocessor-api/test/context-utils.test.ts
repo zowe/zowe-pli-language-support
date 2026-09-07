@@ -205,8 +205,7 @@ describe("rebaseDiagnostic", () => {
         severity: Severity.Error,
         message: "bad",
         code: "X1",
-        start: 3,
-        end: 7,
+        range: { start: 3, end: 7 },
       },
       fragment,
     );
@@ -214,8 +213,7 @@ describe("rebaseDiagnostic", () => {
       severity: Severity.Error,
       message: "bad",
       code: "X1",
-      start: 22,
-      end: 26,
+      range: { start: 22, end: 26 },
     });
   });
 });
@@ -232,16 +230,14 @@ describe("rebaseToken", () => {
       {
         image: "HV",
         semanticsKind: SemanticsKind.Identifier,
-        start: 8,
-        end: 10,
+        range: { start: 8, end: 10 },
       },
       fragment,
     );
     expect(rebased).toEqual({
       image: "HV",
       semanticsKind: SemanticsKind.Identifier,
-      start: 27,
-      end: 29,
+      range: { start: 27, end: 29 },
     });
   });
 });

@@ -28,8 +28,9 @@ export interface Range {
   end: number;
 }
 
-export interface Token extends Range {
+export interface Token {
   image: string;
+  range: Range;
   semanticsKind: SemanticsKind;
 }
 
@@ -39,9 +40,10 @@ export enum Severity {
   Info,
 }
 
-export interface Diagnostic extends Range {
+export interface Diagnostic {
   severity: Severity;
   message: string;
+  range: Range;
   code: string;
 }
 

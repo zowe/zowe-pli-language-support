@@ -95,11 +95,10 @@ export class Db2SqlPreprocessor implements Preprocessor {
         continue;
       }
       if (replacement?.type === "include") {
-        const member = rebaseToken(replacement.token, fragment);
         await context.include(
           replacement.filePath,
           fragment.range,
-          { start: member.start, end: member.end },
+          rebaseToken(replacement.token, fragment).range,
           rebased,
         );
         continue;
@@ -155,18 +154,18 @@ export class Db2SqlPreprocessor implements Preprocessor {
         let semanticsKind: SemanticsKind;
         if (
           idIndex < identifierTokens.length &&
-          token.start === identifierTokens[idIndex].start
+          token.start === identifierTokens[idIndex].range.start
         ) {
           return identifierTokens[idIndex++];
         } else if (
           idIndex > 0 &&
-          token.stop < identifierTokens[idIndex - 1].end
+          token.stop < identifierTokens[idIndex - 1].range.end
         ) {
           // Inside the identifier just returned (`:A.B` lexes as several tokens).
           return undefined;
         } else if (
           replacement?.type === "include" &&
-          token.start === replacement.token.start
+          token.start === replacement.token.range.start
         ) {
           semanticsKind = SemanticsKind.Identifier;
         } else if (token.channel === COMMENTS) {
@@ -187,8 +186,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
         }
         return <Token>{
           image: token.text!,
-          start: token.start,
-          end: token.stop + 1,
+          range: { start: token.start, end: token.stop + 1 },
           semanticsKind,
         };
       })

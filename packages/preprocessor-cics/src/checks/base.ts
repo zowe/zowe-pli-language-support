@@ -103,7 +103,7 @@ export abstract class CICSOptionsCheckerBase {
     wrongToken: string,
   ): void {
     const error: AggregatableDiagnostic = {
-      ...range,
+      range,
       severity: errorSeverity,
       message: msg + wrongToken,
       code: "cics.invalid.options",

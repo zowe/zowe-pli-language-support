@@ -34,8 +34,7 @@ export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
     this.identifiers.push({
       //because linking is case-insensitive
       image: image.toUpperCase(),
-      start,
-      end: stop + 1,
+      range: { start, end: stop + 1 },
       semanticsKind: SemanticsKind.Identifier,
     });
   };

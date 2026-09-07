@@ -38,7 +38,7 @@ describe("DB2 execute(context)", () => {
     );
     // Host coordinates: the token points at `HV1` after the colon in the source text.
     expect(hostVariable?.image).toBe("HV1");
-    expect(hostVariable?.start).toBe(text.indexOf(":HV1") + 1);
+    expect(hostVariable?.range.start).toBe(text.indexOf(":HV1") + 1);
   });
 
   test("an EXEC SQL INCLUDE resolves through the context and records the member token", async () => {
@@ -64,7 +64,7 @@ describe("DB2 execute(context)", () => {
       (t) => t.semanticsKind === SemanticsKind.Identifier,
     );
     expect(member?.image).toBe("COPY1");
-    expect(member?.start).toBe(nameStart);
+    expect(member?.range.start).toBe(nameStart);
   });
 
   test("an unterminated statement is parsed and diagnosed but not replaced - only annotated", async () => {
