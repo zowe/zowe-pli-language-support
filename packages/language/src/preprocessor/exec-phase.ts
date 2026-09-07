@@ -516,6 +516,43 @@ interface ExecMetadata {
   directiveTokens: t.Token[];
   /** One `IncludeDirective` statement per `EXEC SQL INCLUDE`, destined for `preprocessorAst`. */
   statements: ast.Statement[];
+  /** One linkable reference per host-variable name part, for `PhaseResult.references`. */
+  references: ast.Reference[];
+}
+
+/**
+ * One `ReferenceItem` per name part of a host variable (`A.B` -> `A`, `B`), chained as
+ * member calls like the parser does. The chain has no AST parent: `anchor` lets the
+ * linker adopt the generated statement (see `Reference.anchor`).
+ */
+function buildExecReferences(
+  parts: t.Token[],
+  anchor: t.Token | undefined,
+): ast.Reference[] {
+  const references: ast.Reference[] = [];
+  let call: ast.MemberCall | null = null;
+  for (const part of parts) {
+    const item = ast.createReferenceItem();
+    const ref = ast.createReference<ast.NamedElement>(
+      item,
+      part,
+      ast.ReferenceType.Variable,
+    );
+    ref.anchor = anchor;
+    item.ref = ref;
+    part.kind = CstNodeKind.ReferenceItem_Ref;
+    part.element = item;
+    const next = ast.createMemberCall();
+    next.element = item;
+    next.previous = call;
+    item.container = next;
+    if (call) {
+      call.container = next;
+    }
+    call = next;
+    references.push(ref);
+  }
+  return references;
 }
 
 /**
@@ -526,8 +563,7 @@ interface ExecMetadata {
  * - one plain token per classified sub-token (semantic highlighting via
  *   `Token.ppSemanticType`, position-based cursor resolution), plus `string`-typed tokens
  *   for `EXEC` and the leading `SQL`/`CICS` word the engine's classification doesn't see,
- * - each re-embedded identifier's `MappedToken.sourceToken`, so resolved references land
- *   on tokens with real source offsets (see `MappedToken.sourceToken`),
+ * - one linkable `Reference` per host-variable name part (see `buildExecReferences`),
  * - a regular `IncludeDirective` statement per `EXEC SQL INCLUDE`, riding the same
  *   hover/definition/validation paths as `%INCLUDE`.
  *
@@ -540,12 +576,32 @@ function collectExecMetadata(
   textDocument: TextDocument,
   sourceMap: SourceMap,
 ): ExecMetadata {
-  const collected: t.Token[] = [];
+  const directiveTokens: t.Token[] = [];
+  const references: ast.Reference[] = [];
   const statements: ast.Statement[] = [];
   const edits = context.getEdits().filter((edit) => edit.apiTokens?.length);
   if (edits.length === 0) {
-    return { directiveTokens: [], statements };
+    return { directiveTokens, references, statements };
   }
+  // Unmapped (macro-generated) tokens keep their phase offsets and stay unregistered.
+  const remap = (token: t.Token): boolean => {
+    const start = sourceMap.mapToOriginal(token.startOffset);
+    const end = sourceMap.mapToOriginal(token.endOffset);
+    if (!start || !end) {
+      return false;
+    }
+    token.startOffset = start.offset;
+    token.endOffset = end.offset;
+    token.uri = start.uri;
+    return true;
+  };
+  const register = (token: t.Token): boolean => {
+    if (!remap(token)) {
+      return false;
+    }
+    directiveTokens.push(token);
+    return true;
+  };
   const attempts = context.getIncludeAttempts();
   const uri = URI.parse(textDocument.uri);
   for (let i = 0; i < tokens.length; i++) {
@@ -565,7 +621,7 @@ function collectExecMetadata(
 
     if (isExec) {
       execToken.ppSemanticType = SemanticTokenTypes.string;
-      collected.push(execToken);
+      register(execToken);
     }
     const prefixMatch = /^(\w+)/i.exec(token.image);
     if (prefixMatch) {
@@ -578,33 +634,32 @@ function collectExecMetadata(
         uri,
       );
       prefixToken.ppSemanticType = SemanticTokenTypes.string;
-      collected.push(prefixToken);
+      register(prefixToken);
     }
 
-    const pliTokens = new Map<ApiToken, t.Token[]>();
-    for (const apiToken of edit.apiTokens) {
-      const parts = toPliTokens(apiToken, uri, context.text);
-      for (const part of parts) {
-        part.ppSemanticType = semanticTypes[apiToken.semanticsKind];
-        collected.push(part);
-      }
-      pliTokens.set(apiToken, parts);
-    }
-    // `identifierPairs` lists one entry per name part, in part order (see `createEdit`) -
-    // zip them against the per-part tokens built above.
-    const pairCursor = new Map<ApiToken, number>();
-    for (const pair of edit.identifierPairs ?? []) {
-      const parts = pliTokens.get(pair.apiToken);
-      const index = pairCursor.get(pair.apiToken) ?? 0;
-      pairCursor.set(pair.apiToken, index + 1);
-      const sourceToken = parts?.[index];
-      if (sourceToken) {
-        pair.mapped.sourceToken = sourceToken;
-      }
-    }
     const attempt = attempts.find(
       (a) => a.range?.start === edit.start && a.range?.end === edit.end,
     );
+    if (edit.anchor) {
+      remap(edit.anchor);
+    }
+    const pliTokens = new Map<ApiToken, t.Token[]>();
+    for (const apiToken of edit.apiTokens) {
+      const parts = toPliTokens(apiToken, uri, context.text);
+      let mapped = true;
+      for (const part of parts) {
+        part.ppSemanticType = semanticTypes[apiToken.semanticsKind];
+        mapped = register(part) && mapped;
+      }
+      pliTokens.set(apiToken, parts);
+      if (
+        mapped &&
+        !attempt &&
+        apiToken.semanticsKind === SemanticsKind.Identifier
+      ) {
+        largePush(references, buildExecReferences(parts, edit.anchor));
+      }
+    }
     if (attempt) {
       const statement = ast.createStatement();
       statement.value = buildIncludeDirective(
@@ -617,18 +672,7 @@ function collectExecMetadata(
       statements.push(statement);
     }
   }
-  const directiveTokens: t.Token[] = [];
-  for (const token of collected) {
-    const start = sourceMap.mapToOriginal(token.startOffset);
-    const end = sourceMap.mapToOriginal(token.endOffset);
-    if (start && end) {
-      token.startOffset = start.offset;
-      token.endOffset = end.offset;
-      token.uri = start.uri;
-      directiveTokens.push(token);
-    }
-  }
-  return { directiveTokens, statements };
+  return { directiveTokens, references, statements };
 }
 
 /**
@@ -737,6 +781,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
     const opts = this.compilerOptionsResult?.options;
     const allStatements: ast.Statement[] = [];
     const allDirectiveTokens: t.Token[] = [];
+    const allReferences: ast.Reference[] = [];
     const frames = new Map<PreprocessorContext, Frame>();
     // Comment tokens per `resolveInclude`d file, captured by the `prepareText` hook below
     // (the only place the pre-strip text still exists).
@@ -796,6 +841,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
         sourceMapForDirectives,
       );
       largePush(allStatements, execMetadata.statements);
+      largePush(allReferences, execMetadata.references);
       largePush(allDirectiveTokens, execMetadata.directiveTokens);
       largePush(
         allDirectiveTokens,
@@ -807,7 +853,6 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
       uri,
       input.text,
       unit,
-      uri,
       (nested, info) =>
         process(nested, SourceMap.identity(nested.text, nested.file), info),
       // Included files get the same length-preserving margins-blanking +
@@ -843,7 +888,7 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
       sourceMap: built.sourceMap,
       statements: allStatements,
       diagnostics: built.diagnostics,
-      references: [],
+      references: allReferences,
       directiveTokens: allDirectiveTokens,
     };
   }
@@ -904,12 +949,7 @@ export class UnresolvedExecPhase implements PreprocessorPhase {
       return passthroughPhaseResult(input);
     }
 
-    const context = new PreprocessorContext(
-      input.uri,
-      input.text,
-      input.unit,
-      input.uri,
-    );
+    const context = new PreprocessorContext(input.uri, input.text, input.unit);
     const { tokens } = tokenize(input.text, input.uri);
 
     for (let i = 0; i < tokens.length; i++) {

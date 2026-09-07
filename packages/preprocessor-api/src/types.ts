@@ -58,10 +58,8 @@ export type PreprocessorReplacement = {
 };
 
 /**
- * What an engine's single-fragment `parse` produces (offsets local to the parsed body).
- * Not part of the {@link Preprocessor} contract - the host only sees what `execute(context)`
- * records on the context. Kept here so both engine packages share one shape (their public
- * `parse` backs the per-command unit tests).
+ * Internal preprocessor parser result. Used within implementations, but not part of the
+ * Preprocessor API contract.
  */
 export interface PreprocessorResult {
   diagnostics: Diagnostic[];
@@ -80,23 +78,17 @@ export interface ExecFragment {
   range: Range;
   bodyText: string;
   bodyOffset: number;
-  /**
-   * `false` when no terminating `;` exists before EOF (then `range`/`bodyText` run to the
-   * end of the text; only ever the scan's last fragment). The statement is broken source -
-   * a preprocessor should still parse and diagnose it, but must not replace its text (the
-   * host parser's own missing-terminator error has to keep pointing at the raw statement);
-   * it records the classified tokens with a zero-width, empty-text `replace` at
-   * `range.start` instead.
-   */
   terminated: boolean;
 }
 
 /**
- * The shared text-editing API a {@link Preprocessor} uses to perform its own `EXEC`
- * replacement. Implemented by the language package;
- * preprocessors only ever consume it through this interface.
+ * The shared text-editing API a {@link Preprocessor} uses to perform its replacements.
  */
 export interface PreprocessorContext {
+  /**
+   * The input text into the preprocessor. Contains the full text of the current
+   * compilation unit.
+   */
   readonly text: string;
   /**
    * The uri of the document `text` came from - the entry file, or an included file's own
@@ -109,23 +101,18 @@ export interface PreprocessorContext {
   /**
    * Replaces `range` (offsets into `text`) with `text`, recording `tokens` as the replaced
    * statement's full classified token list - the host's only source for the statement's
-   * semantic highlighting/hover and include-member metadata. Token offsets are *host*
-   * coordinates (offsets into `context.text`, see `rebaseToken`); the host locates each
-   * `SemanticsKind.Identifier` image inside the replacement text itself (they appear
-   * verbatim, in token order - see `buildExecReplacement`) to keep those references
-   * resolvable. A zero-width, empty-text replace is a pure annotation: it changes nothing
-   * in the generated text but still records the tokens (used for unterminated statements,
-   * see `ExecFragment.terminated`).
+   * semantic highlighting/hover, include-member metadata, and host-variable references
+   * (every `SemanticsKind.Identifier` token becomes a linkable variable reference). Token
+   * offsets are *host* coordinates (offsets into `context.text`, see `rebaseToken`).
    */
   replace(range: Range, text: string, tokens?: Token[]): void;
   /**
-   * Resolves the include statement at `statementRange` (`EXEC SQL INCLUDE member`): looks
-   * `name` up, runs the host's own processing over the included file (recursively - its
-   * `EXEC` statements go through the same preprocessor), and replaces the statement with
+   * Resolves the include statement at `statementRange`: looks `name` up, runs the host's
+   * own processing over the included file (recursively), and replaces the statement with
    * the result, keeping the included file's real positions. `tokens` is the statement's
    * classified token list, exactly as for {@link replace}. An unresolvable `name` produces
    * a diagnostic at `nameRange` (the member token's span) and still blanks the statement,
-   * so the raw `EXEC` text never reaches the host parser.
+   * so the raw text never reaches the host parser.
    */
   include(
     name: string,
@@ -137,14 +124,5 @@ export interface PreprocessorContext {
 
 export interface Preprocessor {
   get name(): string;
-  /**
-   * The single entry point: finds every `EXEC <this preprocessor's keyword>` statement in
-   * `context.text` itself (see `scanExecFragments`) and records everything on the context -
-   * text replacements (with each statement's full classified token list, see
-   * {@link PreprocessorContext.replace}), diagnostics, and include resolutions. There is
-   * deliberately no per-statement "parse this snippet" call: a preprocessor may eventually
-   * run as an external process, where "here is the full text, record your edits" is the
-   * only contract that survives the boundary.
-   */
   execute(context: PreprocessorContext): Promise<void>;
 }

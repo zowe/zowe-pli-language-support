@@ -31,7 +31,6 @@ import {
   CollectingIncludeVisitor,
 } from "./parsing";
 import {
-  buildExecReplacement,
   Delimiters,
   Diagnostic,
   Preprocessor,
@@ -65,8 +64,8 @@ export class Db2SqlPreprocessor implements Preprocessor {
   /**
    * Finds every `EXEC SQL ...;` statement in `context.text` itself (see `scanExecFragments`)
    * and replaces each directly: an `EXEC SQL INCLUDE` becomes the included file's own
-   * (recursively processed) text via `context.include`; any other statement becomes `DO; END;`, with its
-   * host-variable references re-embedded so they stay resolvable (see `buildExecReplacement`).
+   * (recursively processed) text via `context.include`; any other statement becomes
+   * `DO; END;`, its host-variable references travelling as the recorded tokens.
    * Each `replace` carries the fragment's full classified token list in host coordinates -
    * the host's only source for `EXEC` semantic highlighting/hover and the include member
    * token.
@@ -105,7 +104,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
         );
         continue;
       }
-      context.replace(fragment.range, buildExecReplacement(tokens), rebased);
+      context.replace(fragment.range, "DO; END;", rebased);
     }
   }
 
@@ -159,6 +158,12 @@ export class Db2SqlPreprocessor implements Preprocessor {
           token.start === identifierTokens[idIndex].start
         ) {
           return identifierTokens[idIndex++];
+        } else if (
+          idIndex > 0 &&
+          token.stop < identifierTokens[idIndex - 1].end
+        ) {
+          // Inside the identifier just returned (`:A.B` lexes as several tokens).
+          return undefined;
         } else if (
           replacement?.type === "include" &&
           token.start === replacement.token.start

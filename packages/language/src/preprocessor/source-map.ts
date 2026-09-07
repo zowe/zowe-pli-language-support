@@ -21,9 +21,8 @@ import { URI } from "../utils/uri";
  */
 export interface MappedToken {
   /**
-   * The identifier name this span represents, if any (e.g. an `EXEC CICS LINK(name)`
-   * argument). Only set on `execHostVariable` spans - matched against the engine's
-   * classified sub-tokens (see `preprocessor-context.ts`'s `createEdit`).
+   * The token image this span represents, if any (e.g. the `DO` anchor of an `EXEC`
+   * replacement - see `preprocessor-context.ts`'s `createEdit`).
    */
   name?: string;
   /** Offset within the generated text this segment produces. */
@@ -45,7 +44,7 @@ export interface MappedToken {
   refKind?: CstNodeKind;
   /**
    * The already-positioned token object this span was serialized from, when one exists
-   * (an included file's registered token, or an `execHostVariable` sub-token). The
+   * (an included file's registered token, or an `EXEC` statement's `DO` anchor). The
    * annotate pass emits this exact object instead of the re-lexed token, so the parser
    * annotates the same object other registrations hold - which is what position-based
    * go-to-definition, find-references, and semantic tokens need.

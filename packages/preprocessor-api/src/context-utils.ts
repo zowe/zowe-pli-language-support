@@ -9,7 +9,7 @@
  *
  */
 
-import { Diagnostic, ExecFragment, SemanticsKind, Token } from "./types";
+import { Diagnostic, ExecFragment, Token } from "./types";
 
 /**
  * Rebases a diagnostic collected against `fragment.bodyText` (0-based offsets) into
@@ -178,21 +178,4 @@ export function scanExecFragments(
     i++;
   }
   return fragments;
-}
-
-/**
- * Builds the text a `Preprocessor` replaces an `EXEC` statement with: a single
- * `DO; ... END;` with PUT statements that contain the values of every identifier used in the statement.
- * Allows the host to see identifiers, link them and then provide LSP support later on.
- */
-export function buildExecReplacement(tokens: Token[]): string {
-  const named = tokens.filter(
-    (token) => token.semanticsKind === SemanticsKind.Identifier,
-  );
-  let text = "DO;\n";
-  for (const token of named) {
-    text += "PUT(" + token.image + ");\n";
-  }
-  text += "END;";
-  return text;
 }

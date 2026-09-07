@@ -32,10 +32,7 @@ describe("DB2 execute(context)", () => {
     expect(text.slice(edit.range.start, edit.range.end)).toBe(
       "EXEC SQL SELECT 1 INTO :HV1 FROM T;",
     );
-    // The host variable appears verbatim in the replacement, in token order - the contract
-    // the host's embedded-image search relies on.
-    expect(edit.text).toContain("HV1");
-    expect(edit.text.endsWith("END;")).toBe(true);
+    expect(edit.text).toBe("DO; END;");
     const hostVariable = edit.tokens.find(
       (t) => t.semanticsKind === SemanticsKind.Identifier,
     );

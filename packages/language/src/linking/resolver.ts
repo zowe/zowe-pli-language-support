@@ -397,7 +397,17 @@ function resolveReference(
     return;
   }
 
-  const scope = unit.scopeCaches.get(reference.owner);
+  let scope = unit.scopeCaches.get(reference.owner);
+  if (!scope && reference.anchor?.element) {
+    // A preprocessor-emitted reference has no AST parent: adopt the statement parsed
+    // from the generated text, so scope and statement order come from it.
+    let root: SyntaxNode = reference.owner;
+    while (root.container) {
+      root = root.container;
+    }
+    root.container = reference.anchor.element;
+    scope = unit.scopeCaches.get(reference.owner);
+  }
   if (!scope) {
     return;
   }

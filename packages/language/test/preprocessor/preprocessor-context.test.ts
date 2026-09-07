@@ -34,7 +34,7 @@ const uri = UriUtils.toUri("memory:///context-test.pli");
 /** Builds a context backed by a real (but library-less) CompilationUnit. */
 async function createContext(text: string): Promise<PreprocessorContext> {
   const unit = await createCompilationUnit(uri, defaultTestWorkspace());
-  return new PreprocessorContext(uri, text, unit, uri);
+  return new PreprocessorContext(uri, text, unit);
 }
 
 const workspaceUri = UriUtils.toUri("/workspace");
@@ -278,7 +278,6 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
       mainUri,
       "EXEC SQL INCLUDE self;",
       unit,
-      mainUri,
       onProcess,
     );
     const included = await context.resolveInclude("self", {
@@ -303,12 +302,7 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
       "/workspace/cpy/a.pli": "EXEC SQL INCLUDE b;",
       "/workspace/cpy/b.pli": "EXEC SQL INCLUDE a;",
     });
-    const main = new PreprocessorContext(
-      mainUri,
-      "EXEC SQL INCLUDE a;",
-      unit,
-      mainUri,
-    );
+    const main = new PreprocessorContext(mainUri, "EXEC SQL INCLUDE a;", unit);
     const a = await main.resolveInclude("a", { start: 0, end: 19 });
     expect(a).toBeDefined();
     const b = await a!.resolveInclude("b", { start: 0, end: 19 });
@@ -328,7 +322,6 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
       mainUri,
       "EXEC SQL INCLUDE lib;\nEXEC SQL INCLUDE lib;",
       unit,
-      mainUri,
     );
     const first = await main.resolveInclude("lib", { start: 0, end: 21 });
     const second = await main.resolveInclude("lib", { start: 22, end: 43 });
@@ -358,7 +351,6 @@ describe("PreprocessorContext.resolveInclude - success path", () => {
       mainUri,
       "EXEC SQL INCLUDE lib;",
       unit,
-      mainUri,
       onProcess,
       prepareText,
     );
@@ -383,13 +375,7 @@ describe("PreprocessorContext.include", () => {
     const onProcess = async (nested: PreprocessorContext) => {
       nested.pushDiagnostic({ severity: Severity.W, message: "nested diag" });
     };
-    const main = new PreprocessorContext(
-      mainUri,
-      "AB",
-      unit,
-      mainUri,
-      onProcess,
-    );
+    const main = new PreprocessorContext(mainUri, "AB", unit, onProcess);
     await main.include("lib", { start: 1, end: 1 }, { start: 1, end: 1 });
     const { text, diagnostics, sourceMap } = main.build();
     // A zero-width statement range: no original character of "AB" is consumed.
@@ -419,41 +405,5 @@ describe("PreprocessorContext.include", () => {
     expect(text).toBe(" X");
     expect(diagnostics[0].range).toEqual({ start: 17, end: 24 });
     expect(context.getEdits()[0].apiTokens).toEqual([member]);
-  });
-});
-
-describe("findEmbeddedImage - PL/I identifier boundaries", () => {
-  function apiIdentifier(image: string): api.Token {
-    return {
-      image,
-      semanticsKind: api.SemanticsKind.Identifier,
-      start: 0,
-      end: image.length,
-    };
-  }
-
-  test("image VAR does not match inside VAR#X / VAR@Y / VAR$Z", async () => {
-    // `#`, `@` and `$` are PL/I identifier characters - `VAR` inside `VAR#X` is a
-    // different identifier, not an embedded occurrence of `VAR`.
-    for (const text of ["SET A = VAR#X", "SET A = VAR@Y", "SET A = VAR$Z"]) {
-      const context = await createContext("EXEC SQL X;");
-      context.replace({ start: 0, end: 11 }, text, [apiIdentifier("VAR")]);
-      expect(context.getEdits()[0].identifierPairs).toBeUndefined();
-    }
-  });
-
-  test("image VAR matches when delimited by space, semicolon, or end of text", async () => {
-    const cases: [string, number][] = [
-      ["VAR#X VAR ;", 6], // skips the VAR#X prefix, lands on the standalone VAR
-      ["X VAR;", 2],
-      ["X VAR", 2], // end of text is a boundary
-    ];
-    for (const [text, expectedOffset] of cases) {
-      const context = await createContext("EXEC SQL X;");
-      context.replace({ start: 0, end: 11 }, text, [apiIdentifier("VAR")]);
-      const pairs = context.getEdits()[0].identifierPairs;
-      expect(pairs, text).toHaveLength(1);
-      expect(pairs![0].mapped.startOffset, text).toBe(expectedOffset);
-    }
   });
 });

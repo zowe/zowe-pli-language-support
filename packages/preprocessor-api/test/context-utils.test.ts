@@ -11,13 +11,12 @@
 
 import { describe, expect, test } from "vitest";
 import {
-  buildExecReplacement,
   Delimiters,
   rebaseDiagnostic,
   rebaseToken,
   scanExecFragments,
 } from "../src/context-utils";
-import { ExecFragment, Severity, Token, SemanticsKind } from "../src/types";
+import { ExecFragment, Severity, SemanticsKind } from "../src/types";
 
 const SQL: Delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
 const CICS: Delimiters = {
@@ -244,34 +243,5 @@ describe("rebaseToken", () => {
       start: 27,
       end: 29,
     });
-  });
-});
-
-describe("buildExecReplacement", () => {
-  const token = (
-    image: string,
-    semanticsKind: SemanticsKind,
-    start: number,
-  ): Token => ({
-    image,
-    semanticsKind,
-    start,
-    end: start + image.length,
-  });
-
-  test("re-embeds only identifier tokens, space-separated, before DO; END;", () => {
-    const text = buildExecReplacement([
-      token("VAR1", SemanticsKind.Identifier, 5),
-      token("SELECT", SemanticsKind.Keyword, 12),
-      token("VAR2", SemanticsKind.Identifier, 20),
-    ]);
-    expect(text).toBe("DO;\nPUT(VAR1);\nPUT(VAR2);\nEND;");
-  });
-
-  test("no identifier tokens yields just DO; END;", () => {
-    const text = buildExecReplacement([
-      token("SELECT", SemanticsKind.Keyword, 0),
-    ]);
-    expect(text).toBe("DO;\nEND;");
   });
 });
