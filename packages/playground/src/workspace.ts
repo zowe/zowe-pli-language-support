@@ -10,14 +10,19 @@
  */
 
 import * as vscode from "vscode";
-import {
-  compressToEncodedURIComponent,
-  decompressFromEncodedURIComponent,
-} from "lz-string";
+import { compressToEncodedURIComponent } from "lz-string";
 import {
   IFileWriteOptions,
   InMemoryFileSystemProvider,
 } from "@codingame/monaco-vscode-files-service-override";
+import {
+  decodePlaygroundContent,
+  decodePlaygroundWorkspace,
+  encodePlaygroundWorkspace,
+  sanitizeSharedFilename,
+  SharedWorkspace,
+  WorkspaceFile,
+} from "pli-language/playground-link";
 
 // Raw default workspace file contents
 import helloWorld from "../workspace/hello-world.pli?raw";
@@ -35,37 +40,6 @@ export const fileOptions: IFileWriteOptions = {
   create: true,
   overwrite: true,
 };
-
-export interface SharedWorkspace {
-  focused?: string;
-  files: WorkspaceFile[];
-}
-
-function parseSharedWorkspace(
-  encodedWorkspace: string,
-): SharedWorkspace | undefined {
-  try {
-    const workspace = JSON.parse(
-      decompressFromEncodedURIComponent(encodedWorkspace),
-    );
-    if (
-      workspace &&
-      typeof workspace === "object" &&
-      "files" in workspace &&
-      Array.isArray(workspace.files)
-    ) {
-      return workspace as SharedWorkspace;
-    }
-  } catch {
-    // fall through, return undefined
-  }
-  return undefined;
-}
-
-export interface WorkspaceFile {
-  uri: string;
-  content: string;
-}
 
 export function registerButtons() {
   const resetButton = document.getElementById("reset-button");
@@ -110,10 +84,7 @@ async function share(content: string | SharedWorkspace): Promise<void> {
   if (typeof content === "string") {
     url.searchParams.set("content", compressToEncodedURIComponent(content));
   } else {
-    url.searchParams.set(
-      "workspace",
-      compressToEncodedURIComponent(JSON.stringify(content)),
-    );
+    url.searchParams.set("workspace", encodePlaygroundWorkspace(content));
   }
   await navigator.clipboard.writeText(url.toString());
   const shareInfo = document.getElementById("share-info");
@@ -142,12 +113,8 @@ export async function handleSharedWorkspace(
   // but a different name can be set by the user.
   const encodedContent = url.searchParams.get("content");
   if (encodedContent) {
-    const filename =
-      url.searchParams
-        .get("filename")
-        ?.replace(/[\\\/]/g, "")
-        .replace(/^\.+/g, "") ?? "example.pli";
-    const content = decompressFromEncodedURIComponent(encodedContent);
+    const filename = sanitizeSharedFilename(url.searchParams.get("filename"));
+    const content = decodePlaygroundContent(encodedContent);
     const uri = vscode.Uri.file(`/workspace/${filename}`);
     await fileSystemProvider.writeFile(
       uri,
@@ -160,7 +127,7 @@ export async function handleSharedWorkspace(
   // Load the workspace files.
   const encodedWorkspace = url.searchParams.get("workspace");
   if (encodedWorkspace) {
-    const workspaceFiles = parseSharedWorkspace(encodedWorkspace);
+    const workspaceFiles = decodePlaygroundWorkspace(encodedWorkspace);
     // Failed to parse, load default workspace
     if (!workspaceFiles) {
       return undefined;

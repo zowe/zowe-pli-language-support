@@ -29,6 +29,7 @@
     "@codingame/monaco-vscode-views-service-override": "^35.0.3",
     "lz-string": "^1.5.0",
     "monaco-languageclient": "11.0.0-next.1",
+    "pli-language": "workspace:*",
     "vscode": "npm:@codingame/monaco-vscode-extension-api@^35.0.3",
     "vscode-json-languageservice": "^5.7.2"
   },
