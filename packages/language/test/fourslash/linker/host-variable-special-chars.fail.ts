@@ -13,11 +13,9 @@
 
 /**
  * Go-to-definition on an `EXEC SQL` host-variable whose name contains the PL/I extra
- * identifier characters (`#`) resolves to its `DCL` - the embedded-image lookup must
- * treat `#`/`@`/`$` as identifier characters, not word boundaries.
+ * identifier characters (`#`) resolves to its `DCL`.
  *
- * TODO: Marked `.fail.`: the host-side embedded-image lookup (`findEmbeddedImage`) handles
- * `#`/`@`/`$` correctly, but the db2 engine's lexer (`Db2SqlExecLexer.g4`, `IDENTIFIER`
+ * TODO: Marked `.fail.`: the db2 engine's lexer (`Db2SqlExecLexer.g4`, `IDENTIFIER`
  * rule) does not include `#`/`@`/`$` in its identifier character set, so `DEPT#X` never
  * reaches the host as a single Identifier token. Extend the engine lexer's identifier
  * character set to the PL/I extra identifier characters, then remove the `.fail.` marker.

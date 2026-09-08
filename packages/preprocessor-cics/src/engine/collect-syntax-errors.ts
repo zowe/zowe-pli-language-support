@@ -43,8 +43,10 @@ export class CollectingSyntaxErrorListener extends BaseErrorListener {
   ): void {
     this.errors.push({
       message: msg,
-      startOffset: offendingSymbol?.start || 0,
-      endOffset: offendingSymbol?.stop || 0,
+      range: {
+        start: offendingSymbol?.start || 0,
+        end: (offendingSymbol?.stop || 0) + 1,
+      },
       severity: Severity.Error,
       code: "cics.syntax.error",
     });

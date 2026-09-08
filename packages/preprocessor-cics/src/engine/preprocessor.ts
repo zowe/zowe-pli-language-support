@@ -28,7 +28,6 @@ import { CICSParser } from "../generated/CICSParser";
 import { CollectingSyntaxErrorListener } from "./collect-syntax-errors";
 import { CollectingIdentifierVisitor } from "./collect-identifiers";
 import {
-  buildExecReplacement,
   Delimiters,
   Diagnostic,
   Preprocessor,
@@ -78,8 +77,8 @@ export class CICSPreprocessor implements Preprocessor {
 
   /**
    * Finds every `EXEC CICS ...;` statement in `context.text` itself (see `scanExecFragments`)
-   * and replaces each with `DO; END;`, re-embedding any reference tokens (e.g. an
-   * `EXEC CICS LINK(name)` argument) so they stay resolvable - see `buildExecReplacement`.
+   * and replaces each with `DO; END;`; any reference tokens (e.g. an `EXEC CICS LINK(name)`
+   * argument) travel as the recorded tokens.
    * Each `replace` carries the fragment's full classified token list in host coordinates -
    * the host's only source for `EXEC` semantic highlighting/hover.
    * CICS never produces an `EXEC ... INCLUDE`-style replacement.
@@ -105,7 +104,7 @@ export class CICSPreprocessor implements Preprocessor {
         );
         continue;
       }
-      context.replace(fragment.range, buildExecReplacement(tokens), rebased);
+      context.replace(fragment.range, "DO; END;", rebased);
     }
   }
 
@@ -156,9 +155,15 @@ export class CICSPreprocessor implements Preprocessor {
         this.hostLanguage.visitToken(token, lexerErrors.errors);
         if (
           idIndex < identifierTokens.length &&
-          token.start === identifierTokens[idIndex].startOffset
+          token.start === identifierTokens[idIndex].range.start
         ) {
           return identifierTokens[idIndex++];
+        } else if (
+          idIndex > 0 &&
+          token.stop < identifierTokens[idIndex - 1].range.end
+        ) {
+          // Inside the identifier just returned (`:A.B` lexes as several tokens).
+          return undefined;
         } else if (token.channel === COMMENTS) {
           semanticsKind = SemanticsKind.Comment;
         } else if (token.type === CICSLexer.NONNUMERICLITERAL) {
@@ -172,8 +177,7 @@ export class CICSPreprocessor implements Preprocessor {
         }
         return <Token>{
           image: token.text!,
-          startOffset: token.start,
-          endOffset: token.stop,
+          range: { start: token.start, end: token.stop + 1 },
           semanticsKind,
         };
       })

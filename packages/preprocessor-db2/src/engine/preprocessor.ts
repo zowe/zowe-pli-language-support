@@ -31,7 +31,6 @@ import {
   CollectingIncludeVisitor,
 } from "./parsing";
 import {
-  buildExecReplacement,
   Delimiters,
   Diagnostic,
   Preprocessor,
@@ -64,9 +63,9 @@ export class Db2SqlPreprocessor implements Preprocessor {
 
   /**
    * Finds every `EXEC SQL ...;` statement in `context.text` itself (see `scanExecFragments`)
-   * and replaces each directly: an `EXEC SQL INCLUDE` resolves and splices in the included
-   * file's own (recursively processed) text; any other statement becomes `DO; END;`, with its
-   * host-variable references re-embedded so they stay resolvable (see `buildExecReplacement`).
+   * and replaces each directly: an `EXEC SQL INCLUDE` becomes the included file's own
+   * (recursively processed) text via `context.include`; any other statement becomes
+   * `DO; END;`, its host-variable references travelling as the recorded tokens.
    * Each `replace` carries the fragment's full classified token list in host coordinates -
    * the host's only source for `EXEC` semantic highlighting/hover and the include member
    * token.
@@ -96,17 +95,15 @@ export class Db2SqlPreprocessor implements Preprocessor {
         continue;
       }
       if (replacement?.type === "include") {
-        const included = await context.resolveInclude(
+        await context.include(
           replacement.filePath,
           fragment.range,
+          rebaseToken(replacement.token, fragment).range,
+          rebased,
         );
-        if (included) {
-          context.insertContext(fragment.range.start, included);
-        }
-        context.replace(fragment.range, "", rebased);
         continue;
       }
-      context.replace(fragment.range, buildExecReplacement(tokens), rebased);
+      context.replace(fragment.range, "DO; END;", rebased);
     }
   }
 
@@ -157,12 +154,18 @@ export class Db2SqlPreprocessor implements Preprocessor {
         let semanticsKind: SemanticsKind;
         if (
           idIndex < identifierTokens.length &&
-          token.start === identifierTokens[idIndex].startOffset
+          token.start === identifierTokens[idIndex].range.start
         ) {
           return identifierTokens[idIndex++];
         } else if (
+          idIndex > 0 &&
+          token.stop < identifierTokens[idIndex - 1].range.end
+        ) {
+          // Inside the identifier just returned (`:A.B` lexes as several tokens).
+          return undefined;
+        } else if (
           replacement?.type === "include" &&
-          token.start === replacement.token.startOffset
+          token.start === replacement.token.range.start
         ) {
           semanticsKind = SemanticsKind.Identifier;
         } else if (token.channel === COMMENTS) {
@@ -183,8 +186,7 @@ export class Db2SqlPreprocessor implements Preprocessor {
         }
         return <Token>{
           image: token.text!,
-          startOffset: token.start,
-          endOffset: token.stop,
+          range: { start: token.start, end: token.stop + 1 },
           semanticsKind,
         };
       })

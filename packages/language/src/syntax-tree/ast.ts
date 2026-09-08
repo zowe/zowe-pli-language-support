@@ -720,6 +720,11 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
    */
   nodes: T[];
   type: ReferenceType;
+  /**
+   * For references a preprocessor phase emits without an AST parent (`EXEC` host
+   * variables): the generated token whose parsed statement adopts them at link time.
+   */
+  anchor?: Token;
 }
 
 export function createReference<T extends SyntaxNode>(

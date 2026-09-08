@@ -11,13 +11,12 @@
 
 import { describe, expect, test } from "vitest";
 import {
-  buildExecReplacement,
   Delimiters,
   rebaseDiagnostic,
   rebaseToken,
   scanExecFragments,
 } from "../src/context-utils";
-import { ExecFragment, Severity, Token, SemanticsKind } from "../src/types";
+import { ExecFragment, Severity, SemanticsKind } from "../src/types";
 
 const SQL: Delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
 const CICS: Delimiters = {
@@ -206,8 +205,7 @@ describe("rebaseDiagnostic", () => {
         severity: Severity.Error,
         message: "bad",
         code: "X1",
-        startOffset: 3,
-        endOffset: 7,
+        range: { start: 3, end: 7 },
       },
       fragment,
     );
@@ -215,8 +213,7 @@ describe("rebaseDiagnostic", () => {
       severity: Severity.Error,
       message: "bad",
       code: "X1",
-      startOffset: 22,
-      endOffset: 26,
+      range: { start: 22, end: 26 },
     });
   });
 });
@@ -233,45 +230,14 @@ describe("rebaseToken", () => {
       {
         image: "HV",
         semanticsKind: SemanticsKind.Identifier,
-        startOffset: 8,
-        endOffset: 9,
+        range: { start: 8, end: 10 },
       },
       fragment,
     );
     expect(rebased).toEqual({
       image: "HV",
       semanticsKind: SemanticsKind.Identifier,
-      startOffset: 27,
-      endOffset: 28,
+      range: { start: 27, end: 29 },
     });
-  });
-});
-
-describe("buildExecReplacement", () => {
-  const token = (
-    image: string,
-    semanticsKind: SemanticsKind,
-    startOffset: number,
-  ): Token => ({
-    image,
-    semanticsKind,
-    startOffset,
-    endOffset: startOffset + image.length - 1,
-  });
-
-  test("re-embeds only identifier tokens, space-separated, before DO; END;", () => {
-    const text = buildExecReplacement([
-      token("VAR1", SemanticsKind.Identifier, 5),
-      token("SELECT", SemanticsKind.Keyword, 12),
-      token("VAR2", SemanticsKind.Identifier, 20),
-    ]);
-    expect(text).toBe("DO;\nPUT(VAR1);\nPUT(VAR2);\nEND;");
-  });
-
-  test("no identifier tokens yields just DO; END;", () => {
-    const text = buildExecReplacement([
-      token("SELECT", SemanticsKind.Keyword, 0),
-    ]);
-    expect(text).toBe("DO;\nEND;");
   });
 });
