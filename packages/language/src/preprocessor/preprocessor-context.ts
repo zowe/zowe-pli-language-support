@@ -35,6 +35,7 @@ import {
   translateLocalTokens,
 } from "./source-map";
 import * as api from "preprocessor-api";
+import { createTokenInstance, DO, Token as PliToken } from "../parser/tokens";
 
 /** Converts an api-shaped `Severity` to the language package's own enum. */
 function fromApiSeverity(severity: api.Severity): Severity {
@@ -49,9 +50,8 @@ function fromApiSeverity(severity: api.Severity): Severity {
 }
 
 /**
- * Converts an api-shaped `Diagnostic` to the language one. Api `endOffset`s are
- * ANTLR-style *inclusive*, the language `Range.end` is exclusive - hence the `+ 1`.
- * `source` is the invoking preprocessor's name (attribution is host-side).
+ * Converts an api-shaped `Diagnostic` to the language one (both use exclusive `end`
+ * offsets). `source` is the invoking preprocessor's name (attribution is host-side).
  */
 function fromApiDiagnostic(
   diagnostic: api.Diagnostic,
@@ -64,58 +64,12 @@ function fromApiDiagnostic(
     code: diagnostic.code,
     source,
     uri: uri.toString(),
-    range: { start: diagnostic.startOffset, end: diagnostic.endOffset + 1 },
+    range: diagnostic.range,
   };
 }
 
 function isApiToken(token: MappedToken | api.Token): token is api.Token {
   return "semanticsKind" in token;
-}
-
-/**
- * Locates `image` as a whole word in `text`, starting at `from` - how the host finds a
- * re-embedded identifier inside a replacement text (the preprocessor contract is that
- * identifiers appear verbatim, in token-list order - see `buildExecReplacement`).
- */
-function findEmbeddedImage(text: string, image: string, from: number): number {
-  // PL/I identifiers allow `#`, `@` and `$` in addition to `\w` - a plain `\w` boundary
-  // check would let image `VAR` match inside `VAR#X`.
-  const identifierChar = /[A-Za-z0-9_#@$]/;
-  let index = text.indexOf(image, from);
-  while (index !== -1) {
-    const before = text[index - 1];
-    const after = text[index + image.length];
-    if (
-      (!before || !identifierChar.test(before)) &&
-      (!after || !identifierChar.test(after))
-    ) {
-      return index;
-    }
-    index = text.indexOf(image, index + 1);
-  }
-  return -1;
-}
-
-/**
- * The name parts of a (possibly qualified) host-variable image: `A.B` yields `A` and `B`
- * with their offsets inside the image. The final lex splits a qualified name at each `.`,
- * so every part needs its own `MappedToken` for exact-span matching to fire.
- */
-function splitQualifiedImage(
-  image: string,
-): { image: string; offset: number }[] {
-  if (!image.includes(".")) {
-    return [{ image, offset: 0 }];
-  }
-  const parts: { image: string; offset: number }[] = [];
-  let offset = 0;
-  for (const part of image.split(".")) {
-    if (part.length > 0) {
-      parts.push({ image: part, offset });
-    }
-    offset += part.length + 1;
-  }
-  return parts;
 }
 
 /**
@@ -135,15 +89,10 @@ interface Edit {
    * builds the statement's LSP-facing tokens and the include AST from.
    */
   apiTokens?: api.Token[];
+  /** The generated `DO` keyword token, when `apiTokens` are present - see `createEdit`. */
+  anchor?: PliToken;
   /**
-   * Which `MappedToken` each re-embedded `apiTokens` identifier became.
-   * `collectExecMetadata` sets each pair's `mapped.sourceToken` from the PL/I token it
-   * builds for the same api token, so host-variable go-to-definition lands on real
-   * source positions.
-   */
-  identifierPairs?: { apiToken: api.Token; mapped: MappedToken }[];
-  /**
-   * Set by `insertContext` instead of `text`/`tokens`: splices a nested context's
+   * Set by `include` instead of `text`/`tokens`: splices a nested context's
    * already-built result in as `foreign` spans. Always a zero-width edit.
    */
   subResult?: PreprocessorContextResult;
@@ -193,7 +142,6 @@ export class PreprocessorContext implements api.PreprocessorContext {
     readonly file: URI,
     private readonly inputText: string,
     readonly unit: CompilationUnit,
-    readonly entryUri: URI,
     /**
      * Runs against every context `resolveInclude` produces (including nested ones), so an
      * included file's own `EXEC`/directive statements are turned into edits *before* the
@@ -229,15 +177,22 @@ export class PreprocessorContext implements api.PreprocessorContext {
     return this.inputText;
   }
 
+  /** The uri of the document `text` came from (an included file's own for a nested context). */
+  get documentUri(): string {
+    return this.file.toString();
+  }
+
+  /** The uri of the compilation unit's entry file. */
+  get unitUri(): string {
+    return this.unit.uri.toString();
+  }
+
   /**
    * The `replace`/`insert` edits recorded so far (offsets into this context's input
    * text). `collectExecMetadata` builds each `EXEC` statement's LSP-facing metadata from
    * their recorded api tokens.
    */
-  getEdits(): readonly Pick<
-    Edit,
-    "start" | "end" | "apiTokens" | "identifierPairs"
-  >[] {
+  getEdits(): readonly Pick<Edit, "start" | "end" | "apiTokens" | "anchor">[] {
     return this.edits;
   }
 
@@ -246,13 +201,15 @@ export class PreprocessorContext implements api.PreprocessorContext {
     return this.includeAttempts;
   }
 
-  pushDiagnostic(diagnostic: Diagnostic | api.Diagnostic): void {
-    // Only the api shape carries `startOffset`.
+  pushDiagnostic(diagnostic: api.Diagnostic): void {
     this.diagnosticsList.push(
-      "startOffset" in diagnostic
-        ? fromApiDiagnostic(diagnostic, this.file, this.diagnosticSource)
-        : diagnostic,
+      fromApiDiagnostic(diagnostic, this.file, this.diagnosticSource),
     );
+  }
+
+  /** The language package's own diagnostics (tokenizer/parser output, include resolution). */
+  pushHostDiagnostic(diagnostic: Diagnostic): void {
+    this.diagnosticsList.push(diagnostic);
   }
 
   /** Replaces `range` (offsets into this context's input text) with `text`. */
@@ -274,9 +231,10 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * Records one edit. Api tokens are kept as-is, and each Identifier among them that was
-   * re-embedded in `text` additionally becomes a `MappedToken` local to `text`; plain
-   * `MappedToken` inputs pass through unchanged.
+   * Records one edit. With api tokens and a `DO; END;` replacement, a synthetic `DO`
+   * token is spliced in as the group's keyword: the parser attaches the generated
+   * statement to it, and the statement's references adopt that at link time (see
+   * `Reference.anchor`).
    */
   private createEdit(
     start: number,
@@ -289,34 +247,24 @@ export class PreprocessorContext implements api.PreprocessorContext {
     }
     const mapped: MappedToken[] = [];
     const apiTokens: api.Token[] = [];
-    const identifierPairs: { apiToken: api.Token; mapped: MappedToken }[] = [];
-    let cursor = 0;
     for (const token of tokens) {
-      if (!isApiToken(token)) {
+      if (isApiToken(token)) {
+        apiTokens.push(token);
+      } else {
         mapped.push(token);
-        continue;
       }
-      apiTokens.push(token);
-      if (token.semanticsKind !== api.SemanticsKind.Identifier) {
-        continue;
-      }
-      const local = findEmbeddedImage(text, token.image, cursor);
-      if (local === -1) {
-        continue;
-      }
-      cursor = local + token.image.length;
-      // One MappedToken (and pair) per name part, in part order - `collectExecMetadata`
-      // zips them against its per-part tokens.
-      for (const part of splitQualifiedImage(token.image)) {
-        const mappedToken: MappedToken = {
-          name: part.image,
-          startOffset: local + part.offset,
-          endOffset: local + part.offset + part.image.length - 1,
-          originalImage: part.image,
-        };
-        mapped.push(mappedToken);
-        identifierPairs.push({ apiToken: token, mapped: mappedToken });
-      }
+    }
+    let anchor: PliToken | undefined;
+    if (apiTokens.length > 0 && /^DO\b/i.test(text)) {
+      anchor = createTokenInstance("DO", "DO", DO, start, end - 1, this.file);
+      anchor.synthetic = true;
+      mapped.push({
+        name: "DO",
+        startOffset: 0,
+        endOffset: 1,
+        originalImage: "DO",
+        sourceToken: anchor,
+      });
     }
     return {
       start,
@@ -324,42 +272,49 @@ export class PreprocessorContext implements api.PreprocessorContext {
       text,
       tokens: mapped.length > 0 ? mapped : undefined,
       apiTokens: apiTokens.length > 0 ? apiTokens : undefined,
-      identifierPairs: identifierPairs.length > 0 ? identifierPairs : undefined,
+      anchor,
     };
   }
 
   /**
-   * Splices another context's already-built result in at `offset` (a zero-width edit),
-   * preserving that context's own positions as `foreign` segments rather than collapsing
-   * it to a single opaque block. Its diagnostics are merged into this context's own,
-   * keeping their ranges in the nested file's own coordinate space.
+   * Resolves `name` (see {@link resolveInclude}) and splices the nested context's built
+   * result in at `statementRange.start` as a zero-width edit, preserving the included
+   * file's own positions as `foreign` segments rather than collapsing it to one opaque
+   * block; its diagnostics are merged into this context's own, in the nested file's own
+   * coordinates. The include statement itself is blanked (with `tokens`, like `replace`)
+   * whether or not resolution succeeded.
    */
-  insertContext(offset: number, nested: api.PreprocessorContext): void {
-    // `resolveInclude` - the only source of nested contexts - always returns this
-    // concrete class; guard explicitly instead of blindly casting.
-    if (!(nested instanceof PreprocessorContext)) {
-      throw new Error(
-        "insertContext only accepts contexts returned by resolveInclude",
-      );
+  async include(
+    name: string,
+    statementRange: Range,
+    nameRange: Range,
+    tokens?: (MappedToken | api.Token)[],
+  ): Promise<void> {
+    const nested = await this.resolveInclude(name, statementRange, nameRange);
+    if (nested) {
+      this.edits.push({
+        start: statementRange.start,
+        end: statementRange.start,
+        text: "",
+        subResult: nested.build(),
+      });
     }
-    const result = nested.build();
-    this.edits.push({
-      start: offset,
-      end: offset,
-      text: "",
-      subResult: result,
-    });
+    this.replace(statementRange, "", tokens);
   }
 
   /**
    * Resolves an include name via the shared include resolver and returns a fresh context
    * seeded with the resolved file's text (already run through `onProcess`), or
    * `undefined` if resolution failed. Resolution diagnostics land in this context's own
-   * sink either way.
+   * sink either way. `statementRange` is the include statement's span (recorded as the
+   * attempt's `range` and used as the nested frame's include site); `nameRange` (the
+   * member token) anchors the unresolved-include diagnostic, falling back to
+   * `statementRange`.
    */
   async resolveInclude(
     name: string,
-    range?: Range,
+    statementRange?: Range,
+    nameRange?: Range,
   ): Promise<PreprocessorContext | undefined> {
     const item: FileIncludeItem = {
       fileName: name,
@@ -370,7 +325,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
     const resolverContext: IncludeResolverContext = {
       unit: this.unit,
       currentUri: this.file,
-      entryUri: this.entryUri,
+      entryUri: this.unit.uri,
       diagnostics: this.diagnosticsList,
     };
     const uri = await resolveIncludeFileUri(item, resolverContext);
@@ -380,9 +335,13 @@ export class PreprocessorContext implements api.PreprocessorContext {
     const chain = [...this.includeChain, this.file.toString()];
     const recursive = uri !== undefined && chain.includes(uri.toString());
     const resolvedUri = recursive ? undefined : uri;
-    this.includeAttempts.push({ name, range, uri: resolvedUri });
+    this.includeAttempts.push({
+      name,
+      range: statementRange,
+      uri: resolvedUri,
+    });
     if (!resolvedUri) {
-      this.pushUnresolvedIncludeDiagnostic(name, range);
+      this.pushUnresolvedIncludeDiagnostic(name, nameRange ?? statementRange);
       return undefined;
     }
     const document = await TextDocuments.get(resolvedUri);
@@ -391,7 +350,6 @@ export class PreprocessorContext implements api.PreprocessorContext {
       resolvedUri,
       this.prepareText ? this.prepareText(rawText, resolvedUri) : rawText,
       this.unit,
-      this.entryUri,
       this.onProcess,
       this.prepareText,
       this.diagnosticSource,
@@ -399,7 +357,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
     );
     await this.onProcess?.(nested, {
       parent: this,
-      includeRange: range,
+      includeRange: statementRange,
       document,
     });
     return nested;
@@ -425,10 +383,10 @@ export class PreprocessorContext implements api.PreprocessorContext {
     }
     diagnostic.data = {
       unresolvedFile: name,
-      entryUri: this.entryUri.toString(),
+      entryUri: this.unit.uri.toString(),
     };
     this.unit.includeError = true;
-    this.pushDiagnostic(diagnostic);
+    this.pushHostDiagnostic(diagnostic);
   }
 
   /**

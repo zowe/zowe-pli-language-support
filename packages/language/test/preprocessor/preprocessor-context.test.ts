@@ -34,7 +34,7 @@ const uri = UriUtils.toUri("memory:///context-test.pli");
 /** Builds a context backed by a real (but library-less) CompilationUnit. */
 async function createContext(text: string): Promise<PreprocessorContext> {
   const unit = await createCompilationUnit(uri, defaultTestWorkspace());
-  return new PreprocessorContext(uri, text, unit, uri);
+  return new PreprocessorContext(uri, text, unit);
 }
 
 const workspaceUri = UriUtils.toUri("/workspace");
@@ -205,7 +205,7 @@ describe("PreprocessorContext.build - insert", () => {
 describe("PreprocessorContext.pushDiagnostic", () => {
   test("diagnostics pushed before build() surface in the result", async () => {
     const context = await createContext("EXEC SQL X;");
-    context.pushDiagnostic({
+    context.pushHostDiagnostic({
       severity: Severity.E,
       message: "test diagnostic",
     });
@@ -214,14 +214,13 @@ describe("PreprocessorContext.pushDiagnostic", () => {
     expect(diagnostics[0].message).toBe("test diagnostic");
   });
 
-  test("an api-shaped diagnostic gets this context's uri and an exclusive end offset", async () => {
+  test("an api-shaped diagnostic gets this context's uri and keeps its range", async () => {
     const context = await createContext("EXEC SQL X;");
     context.pushDiagnostic({
       severity: api.Severity.Error,
       message: "api diagnostic",
       code: "X1",
-      startOffset: 9,
-      endOffset: 9, // ANTLR-style inclusive `stop` - a single-character token
+      range: { start: 9, end: 10 },
     });
     const { diagnostics } = context.build();
     // Without a uri and a non-empty range, DiagnosticsStore would silently drop it.
@@ -240,19 +239,20 @@ describe("PreprocessorContext.resolveInclude", () => {
     expect(diagnostics.length).toBeGreaterThan(0);
   });
 
-  test("the unresolved-include diagnostic is anchored to the include statement when a range is given", async () => {
+  test("the unresolved-include diagnostic is anchored to the member name when ranges are given", async () => {
     const context = await createContext("EXEC SQL INCLUDE MISSING;");
-    const included = await context.resolveInclude("MISSING", {
-      start: 0,
-      end: 25,
-    });
+    const included = await context.resolveInclude(
+      "MISSING",
+      { start: 0, end: 25 },
+      { start: 17, end: 24 },
+    );
     expect(included).toBeUndefined();
 
     const { diagnostics } = context.build();
     // Without uri + range, DiagnosticsStore drops the diagnostic and the user never
     // sees the failed include.
     expect(diagnostics[0].uri).toBe(uri.toString());
-    expect(diagnostics[0].range).toEqual({ start: 0, end: 25 });
+    expect(diagnostics[0].range).toEqual({ start: 17, end: 24 });
   });
 });
 
@@ -263,23 +263,20 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
     });
     // Mimics what exec-phase's onProcess does: re-scan every nested context and act on
     // its own include statements. Without the ancestor-chain guard this recurses
-    // without bound (nested context -> onProcess -> resolveInclude -> ...).
+    // without bound (nested context -> onProcess -> include -> ...).
     let processCount = 0;
     const onProcess = async (ctx: PreprocessorContext) => {
       processCount++;
-      const inner = await ctx.resolveInclude("self", {
-        start: 0,
-        end: ctx.text.length,
-      });
-      if (inner) {
-        ctx.insertContext(0, inner);
-      }
+      await ctx.include(
+        "self",
+        { start: 0, end: ctx.text.length },
+        { start: 17, end: 21 },
+      );
     };
     const context = new PreprocessorContext(
       mainUri,
       "EXEC SQL INCLUDE self;",
       unit,
-      mainUri,
       onProcess,
     );
     const included = await context.resolveInclude("self", {
@@ -304,12 +301,7 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
       "/workspace/cpy/a.pli": "EXEC SQL INCLUDE b;",
       "/workspace/cpy/b.pli": "EXEC SQL INCLUDE a;",
     });
-    const main = new PreprocessorContext(
-      mainUri,
-      "EXEC SQL INCLUDE a;",
-      unit,
-      mainUri,
-    );
+    const main = new PreprocessorContext(mainUri, "EXEC SQL INCLUDE a;", unit);
     const a = await main.resolveInclude("a", { start: 0, end: 19 });
     expect(a).toBeDefined();
     const b = await a!.resolveInclude("b", { start: 0, end: 19 });
@@ -329,7 +321,6 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
       mainUri,
       "EXEC SQL INCLUDE lib;\nEXEC SQL INCLUDE lib;",
       unit,
-      mainUri,
     );
     const first = await main.resolveInclude("lib", { start: 0, end: 21 });
     const second = await main.resolveInclude("lib", { start: 22, end: 43 });
@@ -359,7 +350,6 @@ describe("PreprocessorContext.resolveInclude - success path", () => {
       mainUri,
       "EXEC SQL INCLUDE lib;",
       unit,
-      mainUri,
       onProcess,
       prepareText,
     );
@@ -376,34 +366,21 @@ describe("PreprocessorContext.resolveInclude - success path", () => {
   });
 });
 
-describe("PreprocessorContext.insertContext", () => {
-  test("rejects api contexts that were not returned by resolveInclude", async () => {
-    const context = await createContext("AB");
-    const foreign: api.PreprocessorContext = {
-      text: "",
-      pushDiagnostic() {},
-      replace() {},
-      async resolveInclude() {
-        return undefined;
-      },
-      insertContext() {},
-    };
-    expect(() => context.insertContext(0, foreign)).toThrow(
-      /insertContext only accepts contexts returned by resolveInclude/,
-    );
-  });
-
-  test("splices the nested build result in as a zero-width edit and surfaces its diagnostics", async () => {
+describe("PreprocessorContext.include", () => {
+  test("splices the included file's build result in for the statement and surfaces its diagnostics", async () => {
     const unit = await setupIncludeWorkspace({
       "/workspace/cpy/lib.pli": "DCL X;",
     });
-    const main = new PreprocessorContext(mainUri, "AB", unit, mainUri);
-    const included = await main.resolveInclude("lib");
-    expect(included).toBeDefined();
-    included!.pushDiagnostic({ severity: Severity.W, message: "nested diag" });
-    main.insertContext(1, included!);
+    const onProcess = async (nested: PreprocessorContext) => {
+      nested.pushHostDiagnostic({
+        severity: Severity.W,
+        message: "nested diag",
+      });
+    };
+    const main = new PreprocessorContext(mainUri, "AB", unit, onProcess);
+    await main.include("lib", { start: 1, end: 1 }, { start: 1, end: 1 });
     const { text, diagnostics, sourceMap } = main.build();
-    // Zero-width: no original character of "AB" is consumed.
+    // A zero-width statement range: no original character of "AB" is consumed.
     expect(text).toBe("ADCL X;B");
     expect(diagnostics.some((d) => d.message === "nested diag")).toBe(true);
     // The spliced span keeps the *included* file's own positions (foreign segment).
@@ -411,40 +388,20 @@ describe("PreprocessorContext.insertContext", () => {
     expect(mapped?.uri?.toString()).toContain("lib.pli");
     expect(mapped?.offset).toBe(0);
   });
-});
 
-describe("findEmbeddedImage - PL/I identifier boundaries", () => {
-  function apiIdentifier(image: string): api.Token {
-    return {
-      image,
+  test("an unresolvable include still blanks the statement and records its tokens", async () => {
+    const context = await createContext("EXEC SQL INCLUDE MISSING; X");
+    const member: api.Token = {
+      image: "MISSING",
       semanticsKind: api.SemanticsKind.Identifier,
-      startOffset: 0,
-      endOffset: image.length - 1,
+      range: { start: 17, end: 24 },
     };
-  }
-
-  test("image VAR does not match inside VAR#X / VAR@Y / VAR$Z", async () => {
-    // `#`, `@` and `$` are PL/I identifier characters - `VAR` inside `VAR#X` is a
-    // different identifier, not an embedded occurrence of `VAR`.
-    for (const text of ["SET A = VAR#X", "SET A = VAR@Y", "SET A = VAR$Z"]) {
-      const context = await createContext("EXEC SQL X;");
-      context.replace({ start: 0, end: 11 }, text, [apiIdentifier("VAR")]);
-      expect(context.getEdits()[0].identifierPairs).toBeUndefined();
-    }
-  });
-
-  test("image VAR matches when delimited by space, semicolon, or end of text", async () => {
-    const cases: [string, number][] = [
-      ["VAR#X VAR ;", 6], // skips the VAR#X prefix, lands on the standalone VAR
-      ["X VAR;", 2],
-      ["X VAR", 2], // end of text is a boundary
-    ];
-    for (const [text, expectedOffset] of cases) {
-      const context = await createContext("EXEC SQL X;");
-      context.replace({ start: 0, end: 11 }, text, [apiIdentifier("VAR")]);
-      const pairs = context.getEdits()[0].identifierPairs;
-      expect(pairs, text).toHaveLength(1);
-      expect(pairs![0].mapped.startOffset, text).toBe(expectedOffset);
-    }
+    await context.include("MISSING", { start: 0, end: 25 }, member.range, [
+      member,
+    ]);
+    const { text, diagnostics } = context.build();
+    expect(text).toBe(" X");
+    expect(diagnostics[0].range).toEqual({ start: 17, end: 24 });
+    expect(context.getEdits()[0].apiTokens).toEqual([member]);
   });
 });

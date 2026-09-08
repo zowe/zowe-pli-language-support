@@ -28,14 +28,13 @@ export class CollectingIdentifierVisitor extends CICSParserVisitor<void> {
   identifiers: Token[] = [];
   private pushIdentifier = (
     image: string,
-    startOffset: number,
-    endOffset: number,
+    start: number,
+    stop: number,
   ): void => {
     this.identifiers.push({
       //because linking is case-insensitive
       image: image.toUpperCase(),
-      startOffset,
-      endOffset,
+      range: { start, end: stop + 1 },
       semanticsKind: SemanticsKind.Identifier,
     });
   };

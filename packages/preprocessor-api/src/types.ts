@@ -18,27 +18,19 @@ export enum SemanticsKind {
 }
 
 /**
- * An offset span in ANTLR's convention: `endOffset` is *inclusive* (the last covered
- * character, i.e. a token's `stop`).
- */
-export interface WithRange {
-  startOffset: number;
-  endOffset: number;
-}
-
-/**
- * An offset range using the language package's own `{start, end}` naming (as opposed to
- * {@link WithRange}'s `{startOffset, endOffset}`, used by `Token`/`Diagnostic`) - so
- * `PreprocessorContext.replace`/`ExecFragment.range` match the language `Range` type
- * directly, with no field-renaming conversion at the boundary.
+ * An offset range into the enclosing text: `start` inclusive, `end` exclusive - the one
+ * convention every offset in this API uses (tokens, diagnostics, fragments, edits), and the
+ * same as the language package's own `Range`. ANTLR's inclusive `stop` becomes `stop + 1` at
+ * the engine boundary.
  */
 export interface Range {
   start: number;
   end: number;
 }
 
-export interface Token extends WithRange {
+export interface Token {
   image: string;
+  range: Range;
   semanticsKind: SemanticsKind;
 }
 
@@ -48,9 +40,10 @@ export enum Severity {
   Info,
 }
 
-export interface Diagnostic extends WithRange {
+export interface Diagnostic {
   severity: Severity;
   message: string;
+  range: Range;
   code: string;
 }
 
@@ -58,7 +51,7 @@ export interface Diagnostic extends WithRange {
  * The include statement a single-fragment parse recognized (`EXEC SQL INCLUDE member`):
  * `filePath` is the raw member *name*, `token` the member's token. Part of the engines'
  * {@link PreprocessorResult}, not of the {@link Preprocessor} contract - on the context
- * path the engine acts on it itself, via `PreprocessorContext.resolveInclude`.
+ * path the engine acts on it itself, via `PreprocessorContext.include`.
  */
 export type PreprocessorReplacement = {
   type: "include";
@@ -67,10 +60,8 @@ export type PreprocessorReplacement = {
 };
 
 /**
- * What an engine's single-fragment `parse` produces (offsets local to the parsed body).
- * Not part of the {@link Preprocessor} contract - the host only sees what `execute(context)`
- * records on the context. Kept here so both engine packages share one shape (their public
- * `parse` backs the per-command unit tests).
+ * Internal preprocessor parser result. Used within implementations, but not part of the
+ * Preprocessor API contract.
  */
 export interface PreprocessorResult {
   diagnostics: Diagnostic[];
@@ -89,68 +80,51 @@ export interface ExecFragment {
   range: Range;
   bodyText: string;
   bodyOffset: number;
-  /**
-   * `false` when no terminating `;` exists before EOF (then `range`/`bodyText` run to the
-   * end of the text; only ever the scan's last fragment). The statement is broken source -
-   * a preprocessor should still parse and diagnose it, but must not replace its text (the
-   * host parser's own missing-terminator error has to keep pointing at the raw statement);
-   * it records the classified tokens with a zero-width, empty-text `replace` at
-   * `range.start` instead.
-   */
   terminated: boolean;
 }
 
 /**
- * The shared text-editing API a {@link Preprocessor} uses to perform its own `EXEC`
- * replacement. Implemented by the language package;
- * preprocessors only ever consume it through this interface.
+ * The shared text-editing API a {@link Preprocessor} uses to perform its replacements.
  */
 export interface PreprocessorContext {
+  /**
+   * The input text into the preprocessor. Contains the full text of the current
+   * compilation unit.
+   */
   readonly text: string;
+  /**
+   * The uri of the document `text` came from - the entry file, or an included file's own
+   * uri for a context created by {@link include}.
+   */
+  readonly documentUri: string;
+  /** The uri of the compilation unit's entry file - the same for every nested context. */
+  readonly unitUri: string;
   pushDiagnostic(diagnostic: Diagnostic): void;
   /**
    * Replaces `range` (offsets into `text`) with `text`, recording `tokens` as the replaced
    * statement's full classified token list - the host's only source for the statement's
-   * semantic highlighting/hover and include-member metadata. Token offsets are *host*
-   * coordinates (offsets into `context.text`, see `rebaseToken`); the host locates each
-   * `SemanticsKind.Identifier` image inside the replacement text itself (they appear
-   * verbatim, in token order - see `buildExecReplacement`) to keep those references
-   * resolvable. A zero-width, empty-text replace is a pure annotation: it changes nothing
-   * in the generated text but still records the tokens (used for unterminated statements,
-   * see `ExecFragment.terminated`).
+   * semantic highlighting/hover, include-member metadata, and host-variable references
+   * (every `SemanticsKind.Identifier` token becomes a linkable variable reference). Token
+   * offsets are *host* coordinates (offsets into `context.text`, see `rebaseToken`).
    */
   replace(range: Range, text: string, tokens?: Token[]): void;
   /**
-   * `range` is the include statement's span in `context.text` - used to anchor the
-   * "include could not be resolved" diagnostic (without it the diagnostic has no position
-   * and is dropped) and to locate the include site's enclosing scope.
+   * Resolves the include statement at `statementRange`: looks `name` up, runs the host's
+   * own processing over the included file (recursively), and replaces the statement with
+   * the result, keeping the included file's real positions. `tokens` is the statement's
+   * classified token list, exactly as for {@link replace}. An unresolvable `name` produces
+   * a diagnostic at `nameRange` (the member token's span) and still blanks the statement,
+   * so the raw text never reaches the host parser.
    */
-  resolveInclude(
+  include(
     name: string,
-    range?: Range,
-  ): Promise<PreprocessorContext | undefined>;
-  /**
-   * Splices `nested` (a context previously returned by `resolveInclude`, with its own edits
-   * already applied) in at `offset`, preserving its own real positions instead of collapsing
-   * it into one opaque block - see the language package's `Segment.foreign`.
-   *
-   * `nested` MUST be a context obtained from this host's `resolveInclude` - the host relies
-   * on its own concrete implementation to build the spliced result. Passing any other
-   * `PreprocessorContext` implementation throws.
-   */
-  insertContext(offset: number, nested: PreprocessorContext): void;
+    statementRange: Range,
+    nameRange: Range,
+    tokens?: Token[],
+  ): Promise<void>;
 }
 
 export interface Preprocessor {
   get name(): string;
-  /**
-   * The single entry point: finds every `EXEC <this preprocessor's keyword>` statement in
-   * `context.text` itself (see `scanExecFragments`) and records everything on the context -
-   * text replacements (with each statement's full classified token list, see
-   * {@link PreprocessorContext.replace}), diagnostics, and include resolutions. There is
-   * deliberately no per-statement "parse this snippet" call: a preprocessor may eventually
-   * run as an external process, where "here is the full text, record your edits" is the
-   * only contract that survives the boundary.
-   */
   execute(context: PreprocessorContext): Promise<void>;
 }

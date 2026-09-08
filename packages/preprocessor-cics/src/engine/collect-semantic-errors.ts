@@ -52,7 +52,7 @@ export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
     const groups = Object.groupBy(
       aggregatableErrors,
       (error) =>
-        `${error.startOffset}-${error.endOffset}:${error.code}:${error.commonMessage}`,
+        `${error.range.start}-${error.range.end}:${error.code}:${error.commonMessage}`,
     );
     for (const group of Object.values(groups)) {
       if (group && group.length > 0) {
@@ -61,8 +61,7 @@ export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
           code: group[0].code,
           message: group[0].commonMessage + orify([...deduplicated].sort()),
           severity: group[0].severity,
-          startOffset: group[0].startOffset,
-          endOffset: group[0].endOffset,
+          range: group[0].range,
         });
       }
     }

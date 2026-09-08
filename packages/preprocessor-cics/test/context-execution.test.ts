@@ -37,12 +37,12 @@ describe("CICS execute(context)", () => {
     expect(text.slice(edit.range.start, edit.range.end)).toBe(
       "EXEC CICS ABEND ABCODE(12);",
     );
-    expect(edit.text.endsWith("DO;\nEND;")).toBe(true);
+    expect(edit.text).toBe("DO; END;");
     // Full classification, not just identifiers - offsets absolute into `context.text`.
     const abend = edit.tokens.find((t) => t.image === "ABEND");
     expect(abend?.semanticsKind).toBe(SemanticsKind.Keyword);
-    expect(abend?.startOffset).toBe(text.indexOf("ABEND"));
-    expect(text.slice(abend!.startOffset, abend!.endOffset + 1)).toBe("ABEND");
+    expect(abend?.range.start).toBe(text.indexOf("ABEND"));
+    expect(text.slice(abend!.range.start, abend!.range.end)).toBe("ABEND");
   });
 
   test("rebases diagnostics into host coordinates", async () => {
@@ -52,7 +52,7 @@ describe("CICS execute(context)", () => {
 
     expect(context.diagnostics).toHaveLength(1);
     expect(context.diagnostics[0].severity).toBe(Severity.Error);
-    expect(context.diagnostics[0].startOffset).toBe(text.indexOf("BLA"));
+    expect(context.diagnostics[0].range.start).toBe(text.indexOf("BLA"));
   });
 
   test("an unterminated statement is parsed and diagnosed but not replaced - only annotated", async () => {
