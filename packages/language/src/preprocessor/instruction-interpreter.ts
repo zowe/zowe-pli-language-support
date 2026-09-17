@@ -87,6 +87,17 @@ interface ArrayValue {
 // dimensions/repetition counts (e.g. %DCL X(999999999) or (999999999)(expr)).
 const MAX_ARRAY_COUNT = 100_000;
 
+// Same safeguard for scalar values: `||` is the only operator whose result can grow
+// without bound, so `%S = %S || %S;` inside a loop doubles the value on every
+// iteration and exhausts the heap long before the instruction limit is reached.
+const MAX_VALUE_LENGTH = 100_000;
+
+// Cumulative bound on the tokens a single preprocessing run may emit via %ANSWER.
+// Each %ANSWER re-lexes its (length-capped) value into the shared output stream, so
+// without this the token array still grows by up to `instructionCounterLimit` times
+// the per-value cap.
+const MAX_ANSWER_TOKENS = 1_000_000;
+
 /**
  * Creates a simple array value with the given elements and default lower bound of 1.
  * (PL/I arrays are 1-based by default)
@@ -339,6 +350,25 @@ interface SymbolTable {
   parent: SymbolTable | null;
 }
 
+/**
+ * Mutable state that must be shared by every context of a single preprocessing run.
+ * {@link createLocalContext} copies the plain fields of {@link InterpreterContext} when a
+ * preprocessor procedure is called, so counters and flags that have to survive (and be
+ * observed) across those calls live behind this shared reference instead.
+ */
+interface RunState {
+  /** Number of tokens emitted into the output stream by `%ANSWER` so far. */
+  answerTokens: number;
+  /**
+   * Set when an instruction failed in a way that makes continuing pointless (e.g. a
+   * `RangeError` from an allocation that exceeded an engine limit). Stops all instruction
+   * loops, including the ones of enclosing procedure calls.
+   */
+  aborted: boolean;
+  /** Tokens already reported via {@link LspCodes.ValueTooLarge}, to avoid flooding a loop's worth of duplicates. */
+  reportedValueTooLarge: Set<Token>;
+}
+
 interface InterpreterContext {
   unit: CompilationUnit;
   currentUri: URI;
@@ -375,6 +405,8 @@ interface InterpreterContext {
    */
   macname: string;
   instructionCounterLimit: number;
+  /** See {@link RunState}. */
+  state: RunState;
 }
 
 interface DoType3Context {
@@ -452,6 +484,11 @@ export async function runInstructions(
     counterValue: 1,
     macname: "",
     instructionCounterLimit: instructionLimit,
+    state: {
+      answerTokens: 0,
+      aborted: false,
+      reportedValueTooLarge: new Set(),
+    },
   };
   for (const [key, value] of instruction.procedures.entries()) {
     context.procedures.set(key, value);
@@ -473,7 +510,7 @@ async function doRunInstructions(
   start: inst.InstructionNode,
 ): Promise<void> {
   let currentNode: inst.InstructionNode | undefined = start;
-  while (currentNode) {
+  while (currentNode && !context.state.aborted) {
     const value = context.counter.get(currentNode) || 0;
     // Prevent infinite loops by limiting the number of iterations
     if (value > context.instructionCounterLimit) {
@@ -497,7 +534,9 @@ async function runInstructionNode(
       result = instructionResult;
     }
   } catch (err) {
-    handleInstructionError(err, context);
+    if (handleInstructionError(err, context)) {
+      return undefined; // Stop execution
+    }
   }
   if (node.instruction.kind === inst.InstructionKind.Halt) {
     return undefined; // Stop execution
@@ -510,7 +549,7 @@ function doRunInstructionsSync(
   start: inst.InstructionNode,
 ): void {
   let currentNode: inst.InstructionNode | undefined = start;
-  while (currentNode) {
+  while (currentNode && !context.state.aborted) {
     const value = context.counter.get(currentNode) || 0;
     // Prevent infinite loops by limiting the number of iterations
     if (value > context.instructionCounterLimit) {
@@ -534,7 +573,9 @@ function runInstructionNodeSync(
       result = instructionResult;
     }
   } catch (err) {
-    handleInstructionError(err, context);
+    if (handleInstructionError(err, context)) {
+      return undefined; // Stop execution
+    }
   }
   if (node.instruction.kind === inst.InstructionKind.Halt) {
     return undefined; // Stop execution
@@ -542,8 +583,24 @@ function runInstructionNodeSync(
   return result;
 }
 
-function handleInstructionError(err: any, context: InterpreterContext): void {
+/**
+ * Logs an error raised by an instruction.
+ *
+ * @returns `true` if the error is fatal and the instruction loops must stop. A `RangeError`
+ * means an allocation hit an engine limit (e.g. the maximum string length): the heap is
+ * already near exhaustion at that point, so continuing would simply hit it again on every
+ * remaining iteration until the process is killed.
+ */
+function handleInstructionError(
+  err: any,
+  context: InterpreterContext,
+): boolean {
   console.error("Unhandled error in instruction interpreter:", err);
+  if (err instanceof RangeError) {
+    context.state.aborted = true;
+    return true;
+  }
+  return false;
 }
 
 async function runInstruction(
@@ -652,17 +709,19 @@ function runAnswerInstruction(
     if (instruction.scanMode !== ast.ScanMode.NOSCAN) {
       tokens = replaceTokensInText(tokens, context);
     }
-    if (breakCount > 0) {
-      // SKIP starts a new output line, so the previous emission's trailing token no
-      // longer immediately precedes anything - without this, the serializer would join
-      // the two emissions without a separator and re-lexing would merge them.
-      const previousLast = context.tokens[context.tokens.length - 1];
-      if (previousLast) {
-        previousLast.immediateFollow = false;
+    if (acceptAnswerTokens(tokens.length, context)) {
+      if (breakCount > 0) {
+        // SKIP starts a new output line, so the previous emission's trailing token no
+        // longer immediately precedes anything - without this, the serializer would join
+        // the two emissions without a separator and re-lexing would merge them.
+        const previousLast = context.tokens[context.tokens.length - 1];
+        if (previousLast) {
+          previousLast.immediateFollow = false;
+        }
+        largePush(context.tokens, tokens);
+      } else {
+        mergePush(context.tokens, tokens, true);
       }
-      largePush(context.tokens, tokens);
-    } else {
-      mergePush(context.tokens, tokens, true);
     }
   }
   if (instruction.column) {
@@ -679,6 +738,33 @@ function runAnswerInstruction(
       tryValueToNumber(context, instruction.marginsToken, rightValue);
     }
   }
+}
+
+/**
+ * Accounts `count` tokens against the run's {@link MAX_ANSWER_TOKENS} budget.
+ *
+ * A single `%ANSWER` value is length-capped, but the aggregated output is not: a loop
+ * emitting capped values would still grow the shared token stream on every iteration.
+ *
+ * @returns `true` if the tokens fit into the budget and may be emitted.
+ */
+function acceptAnswerTokens(
+  count: number,
+  context: InterpreterContext,
+): boolean {
+  const state = context.state;
+  if (state.answerTokens + count > MAX_ANSWER_TOKENS) {
+    if (state.answerTokens <= MAX_ANSWER_TOKENS) {
+      // Only log the first time the budget is exceeded
+      state.answerTokens = MAX_ANSWER_TOKENS + 1;
+      console.log(
+        `Preprocessor tried to emit more than ${MAX_ANSWER_TOKENS} tokens. Dropping further output.`,
+      );
+    }
+    return false;
+  }
+  state.answerTokens += count;
+  return true;
 }
 
 function tryValueToNumber(
@@ -1068,7 +1154,13 @@ function runAssignmentInstruction(
         // Update the value by applying the binary operator
         const currentValue = variable.value;
         if (isScalarValue(currentValue) && isScalarValue(value)) {
-          value = applyBinaryOperation(currentValue, value, operator);
+          value = applyBinaryOperation(
+            currentValue,
+            value,
+            operator,
+            context,
+            ref.reference?.token,
+          );
         }
       }
       evaluateValueAccess(variable, ref.args, context).setter(value);
@@ -1267,14 +1359,6 @@ function intBoolOperation(
   };
 }
 
-function stringOperation(
-  callback: (left: string, right: string) => string,
-): ValueOperation {
-  return (left: ScalarValue, right: ScalarValue) => {
-    return stringToValue(callback(left.value, right.value));
-  };
-}
-
 function stringBoolOperation(
   callback: (left: string, right: string) => boolean,
 ): ValueOperation {
@@ -1288,7 +1372,6 @@ const minus = intOperation((left, right) => left - right);
 const multiply = intOperation((left, right) => left * right);
 const divide = intOperation((left, right) => left / right);
 const exponentiate = intOperation((left, right) => left ** right);
-const concat = stringOperation((left, right) => left + right);
 const lessThan = intBoolOperation((left, right) => left < right);
 const greaterThan = intBoolOperation((left, right) => left > right);
 const equals = stringBoolOperation((left, right) => left === right);
@@ -1301,6 +1384,40 @@ const xor = intOperation((left, right) => left ^ right);
 const notGreaterThan = lessThanEquals;
 const notLessThan = greaterThanEquals;
 
+/**
+ * `||` is the only preprocessor operator whose result can grow without bound, so - like
+ * array dimensions and repetitions - it is capped at {@link MAX_VALUE_LENGTH}. An
+ * oversized result is rejected (an empty value is emitted instead of a truncated one, so
+ * that no bogus half-value gets rescanned into the output stream) and reported.
+ */
+function concat(
+  left: ScalarValue,
+  right: ScalarValue,
+  context: InterpreterContext,
+  token: Token | undefined,
+): ScalarValue {
+  if (left.value.length + right.value.length > MAX_VALUE_LENGTH) {
+    reportValueTooLarge(context, token);
+    return defaultEmptyValue;
+  }
+  return stringToValue(left.value + right.value);
+}
+
+function reportValueTooLarge(
+  context: InterpreterContext,
+  token: Token | undefined,
+): void {
+  // The cap is typically hit inside a loop, which would otherwise report the very same
+  // diagnostic once per iteration.
+  if (!token || context.state.reportedValueTooLarge.has(token)) {
+    return;
+  }
+  context.state.reportedValueTooLarge.add(token);
+  context.diagnostics.push(
+    diagnosticFromCode(LspCodes.ValueTooLarge, token, MAX_VALUE_LENGTH),
+  );
+}
+
 function evaluateBinaryExpression(
   expression: inst.BinaryExpressionInstruction,
   context: InterpreterContext,
@@ -1310,13 +1427,22 @@ function evaluateBinaryExpression(
   if (!isScalarValue(left) || !isScalarValue(right)) {
     return defaultEmptyValue;
   }
-  return applyBinaryOperation(left, right, expression.operator);
+  return applyBinaryOperation(
+    left,
+    right,
+    expression.operator,
+    context,
+    expression.operatorToken,
+  );
 }
 
 function applyBinaryOperation(
   left: ScalarValue,
   right: ScalarValue,
   operator: ast.BinaryOperator | null,
+  context: InterpreterContext,
+  /** Anchor for diagnostics reported by the operation, if the source has one. */
+  token: Token | undefined,
 ): ScalarValue {
   switch (operator) {
     case ast.BinaryOperator.Plus:
@@ -1330,7 +1456,7 @@ function applyBinaryOperation(
     case ast.BinaryOperator.StarStar:
       return exponentiate(left, right);
     case ast.BinaryOperator.PipePipe:
-      return concat(left, right);
+      return concat(left, right, context, token);
     case ast.BinaryOperator.LessThan:
       return lessThan(left, right);
     case ast.BinaryOperator.LessThanEquals:
@@ -1623,7 +1749,9 @@ function runCompoundInstruction(
         );
       }
     } catch (err) {
-      handleInstructionError(err, context);
+      if (handleInstructionError(err, context)) {
+        return; // Stop execution
+      }
     }
   }
 }
@@ -2362,7 +2490,7 @@ function copy(
     repeatCount <= 0 ||
     // Safeguard against large outputs
     // Could cause long processing times
-    value.value.length * repeatCount > MAX_ARRAY_COUNT
+    value.value.length * repeatCount > MAX_VALUE_LENGTH
   ) {
     return defaultEmptyValue;
   }

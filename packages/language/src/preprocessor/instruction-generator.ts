@@ -914,6 +914,7 @@ function generateBinaryExpressionInstruction(
     left,
     right,
     operator: node.op,
+    operatorToken: node.opToken ?? undefined,
   };
 }
 

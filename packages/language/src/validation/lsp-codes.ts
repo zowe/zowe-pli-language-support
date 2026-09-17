@@ -76,6 +76,13 @@ export const LspCodes = {
       `Dimensions exceed the maximum allowed size of ${max}.`,
   },
 
+  ValueTooLarge: {
+    code: "LSPTL002",
+    severity: Severity.W,
+    message: (max: number) =>
+      `Value exceeds the maximum allowed length of ${max} characters.`,
+  },
+
   BuiltinAttributes: {
     IsForbiddenUsage: {
       code: "LSPTS001",
