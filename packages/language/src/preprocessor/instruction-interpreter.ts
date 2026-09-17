@@ -11,6 +11,7 @@
 
 import { tokenMatcher } from "chevrotain";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { CancellationToken } from "vscode-languageserver";
 import { TextDocuments } from "../language-server/text-documents";
 import { Diagnostic, diagnosticFromCode } from "../language-server/types";
 import { preprocessorParse, StatementParser } from "../parser/parser-entry";
@@ -94,7 +95,7 @@ const MAX_VALUE_LENGTH = 100_000;
 
 // Cumulative bound on the tokens a single preprocessing run may emit via %ANSWER.
 // Each %ANSWER re-lexes its (length-capped) value into the shared output stream, so
-// without this the token array still grows by up to `instructionCounterLimit` times
+// without this the token array still grows by the run's whole instruction budget times
 // the per-value cap.
 const MAX_ANSWER_TOKENS = 1_000_000;
 
@@ -367,6 +368,28 @@ interface RunState {
   aborted: boolean;
   /** Tokens already reported via {@link LspCodes.ValueTooLarge}, to avoid flooding a loop's worth of duplicates. */
   reportedValueTooLarge: Set<Token>;
+  /** Instructions dispatched so far, used to space out the cancellation polls. */
+  dispatchedInstructions: number;
+  /**
+   * Instruction nodes that have already been dispatched once. Their first execution is
+   * free, so an arbitrarily large program is always interpreted end to end.
+   */
+  executedNodes: Set<inst.InstructionNode>;
+  /**
+   * Re-executions (loop iterations, `%GOTO` cycles, repeated procedure calls, repeated
+   * `%INCLUDE`s) performed so far by the whole run - the entry file, its included files
+   * and its preprocessor procedures all draw from this one counter.
+   */
+  repeatedInstructions: number;
+  /**
+   * Base allowance for {@link repeatedInstructions}. The instructions seen so far are
+   * added on top, so that a program which is genuinely large (for instance one that
+   * `%INCLUDE`s the same member once per loop iteration) is granted repeats in proportion
+   * to its own size. Total work therefore stays linear in the size of the program.
+   */
+  repeatBudget: number;
+  /** Whether the budget-exhausted message was already logged for this run. */
+  budgetExhaustedReported: boolean;
 }
 
 interface InterpreterContext {
@@ -384,7 +407,6 @@ interface InterpreterContext {
   diagnostics: Diagnostic[];
   procedures: Map<string, inst.ProcedureInstructionContainer>;
   activeProcedures: Set<string>;
-  counter: Map<inst.InstructionNode, number>;
   references: ast.Reference[];
   /**
    * Reference tokens synthesized for macro variables substituted inside `ExecFragment`
@@ -404,7 +426,6 @@ interface InterpreterContext {
    * It is invalid to invoke MACNAME outside of a preprocessor procedure.
    */
   macname: string;
-  instructionCounterLimit: number;
   /** See {@link RunState}. */
   state: RunState;
 }
@@ -434,10 +455,31 @@ export interface InterpreterOptions {
    * that is currently running, keeping the preprocessors independent of one another.
    */
   createParseHandlers: (textDocument: TextDocument) => StatementParser[];
+  /**
+   * Cancellation of the build that started this run. Polled inside the instruction loops
+   * (see {@link CANCELLATION_CHECK_INTERVAL}), so a run whose result is already obsolete
+   * does not keep the process busy.
+   */
+  cancellation?: CancellationToken;
 }
 
 export const DEFAULT_INSTRUCTION_LIMIT = 5000;
 export const MAX_INSTRUCTION_LIMIT = 50000;
+
+/**
+ * A single loop iteration dispatches several instructions (the loop test, the body, the jump
+ * back - about four for a `%DO ... %END` with two statements in it), so the configured
+ * `instruction-counter-limit` is multiplied to obtain the run's instruction budget. This
+ * keeps the setting's meaning close to "iterations a runaway loop may perform" now that the
+ * budget is shared by the whole run instead of being handed out per instruction node.
+ */
+const GLOBAL_INSTRUCTION_FACTOR = 6;
+
+/**
+ * Instructions between two cancellation polls. Reading a cancellation token is cheap but not
+ * free, and the interpreter dispatches millions of instructions on large files.
+ */
+const CANCELLATION_CHECK_INTERVAL = 1000;
 
 export async function runInstructions(
   unit: CompilationUnit,
@@ -479,15 +521,18 @@ export async function runInstructions(
     },
     tokens: [],
     options,
-    counter: new Map(),
     returnValue: defaultEmptyValue,
     counterValue: 1,
     macname: "",
-    instructionCounterLimit: instructionLimit,
     state: {
       answerTokens: 0,
       aborted: false,
       reportedValueTooLarge: new Set(),
+      dispatchedInstructions: 0,
+      executedNodes: new Set(),
+      repeatedInstructions: 0,
+      repeatBudget: instructionLimit * GLOBAL_INSTRUCTION_FACTOR,
+      budgetExhaustedReported: false,
     },
   };
   for (const [key, value] of instruction.procedures.entries()) {
@@ -505,19 +550,68 @@ export async function runInstructions(
   };
 }
 
+/**
+ * The runaway guard, charged once per dispatched instruction.
+ *
+ * The first execution of an instruction is always allowed: a program - however large, and
+ * including everything it pulls in via `%INCLUDE` - must be interpreted from beginning to
+ * end, and the source text following an exhausted loop still has to reach the parser.
+ * Every *re-execution* (a further loop iteration, `%GOTO` cycle, procedure call or repeated
+ * include) is charged against one budget shared by the whole run - `repeatBudget` plus the
+ * number of instructions seen so far. Keeping that budget global is what bounds the total
+ * work: while the counter was kept per instruction node, a file holding M loops was free to
+ * execute M x `instructionCounterLimit` instructions, so a crafted file with tens of
+ * thousands of loops could keep the language server busy for hours. Now the run performs at
+ * most `2 * instructions + repeatBudget` dispatches, which is linear in the program's size.
+ *
+ * Every {@link CANCELLATION_CHECK_INTERVAL} instructions the build's cancellation token is
+ * polled as well, so a run whose result is already obsolete stops promptly instead of only
+ * being noticed once the whole preprocessor pipeline has finished.
+ *
+ * @returns `false` if the current instruction loop must stop.
+ */
+function chargeInstruction(
+  context: InterpreterContext,
+  node: inst.InstructionNode,
+): boolean {
+  const state = context.state;
+  state.dispatchedInstructions++;
+  if (
+    state.dispatchedInstructions % CANCELLATION_CHECK_INTERVAL === 0 &&
+    context.options.cancellation?.isCancellationRequested
+  ) {
+    // The document changed or the request was withdrawn, so this run's output is already
+    // obsolete - the caller discards it at its next cancellation check.
+    state.aborted = true;
+    return false;
+  }
+  if (state.executedNodes.has(node)) {
+    if (
+      state.repeatedInstructions >=
+      state.repeatBudget + state.executedNodes.size
+    ) {
+      if (!state.budgetExhaustedReported) {
+        state.budgetExhaustedReported = true;
+        console.log("Long running preprocessor code detected. Stopping.");
+      }
+      return false;
+    }
+    state.repeatedInstructions++;
+  } else {
+    state.executedNodes.add(node);
+  }
+  return true;
+}
+
 async function doRunInstructions(
   context: InterpreterContext,
   start: inst.InstructionNode,
 ): Promise<void> {
   let currentNode: inst.InstructionNode | undefined = start;
   while (currentNode && !context.state.aborted) {
-    const value = context.counter.get(currentNode) || 0;
-    // Prevent infinite loops by limiting the number of iterations
-    if (value > context.instructionCounterLimit) {
-      console.log("Long running preprocessor code detected. Stopping.");
+    if (!chargeInstruction(context, currentNode)) {
       return;
     }
-    context.counter.set(currentNode, value + 1);
     currentNode = await runInstructionNode(currentNode, context);
   }
 }
@@ -550,13 +644,9 @@ function doRunInstructionsSync(
 ): void {
   let currentNode: inst.InstructionNode | undefined = start;
   while (currentNode && !context.state.aborted) {
-    const value = context.counter.get(currentNode) || 0;
-    // Prevent infinite loops by limiting the number of iterations
-    if (value > context.instructionCounterLimit) {
-      console.log("Long running preprocessor code detected. Stopping.");
+    if (!chargeInstruction(context, currentNode)) {
       return;
     }
-    context.counter.set(currentNode, value + 1);
     currentNode = runInstructionNodeSync(currentNode, context);
   }
 }

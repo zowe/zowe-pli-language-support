@@ -15,6 +15,7 @@ import { Reference, Statement } from "../syntax-tree/ast";
 import { Diagnostic } from "../language-server/types";
 import { Token } from "../parser/tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { CancellationToken } from "vscode-languageserver";
 import { EvaluationResults } from "./instruction-interpreter";
 import { SourceMap } from "./source-map";
 
@@ -24,6 +25,13 @@ export interface PhaseInput {
   unit: CompilationUnit;
   uri: URI;
   textDocument: TextDocument;
+  /**
+   * Cancellation of the build that started this pipeline. A phase that can run long
+   * (the macro interpreter) polls it, so an in-flight run is given up when the document
+   * changes or the request is withdrawn - the pipeline is only cancellable *between*
+   * phases otherwise.
+   */
+  cancellation?: CancellationToken;
 }
 
 export interface PhaseResult {

@@ -163,8 +163,10 @@ A `true` entry means that case was taken; `undefined` means the condition could 
 
 The interpreter is a Turing-complete macro language, so it is bounded against runaway loops and recursion.
 `runInstructions` computes an instruction-counter limit from the process group's `instruction-counter-limit` LSP option, clamped between `1` and `MAX_INSTRUCTION_LIMIT` (`50000`) and defaulting to `DEFAULT_INSTRUCTION_LIMIT` (`5000`).
-The runner counts visits per node and aborts once a node exceeds the limit.
-Additional guards: circular `next`-chain detection, a `MAX_ARRAY_COUNT` (100 000) cap on array sizes and `COPY`/`REPEAT` output, the `COUNTER` builtin wrapping at 99999, and a workaround for V8's spread-argument limit when emitting very large token arrays.
+`chargeInstruction` then guards every dispatched instruction: the *first* execution of an instruction node is always allowed (a program, including everything it `%INCLUDE`s, must be interpreted end to end, and text following an exhausted loop still has to reach the parser), while every *re-execution* - a further loop iteration, `%GOTO` cycle, procedure call or repeated include - is charged against one budget shared by the whole run (`limit * GLOBAL_INSTRUCTION_FACTOR`).
+The budget is deliberately global: while it was counted per instruction node, a file holding M loops could execute M × limit instructions, so total interpreted work grew with the size of the file.
+The same function polls the build's `CancellationToken` every `CANCELLATION_CHECK_INTERVAL` (`1000`) instructions, so an in-flight run is given up when the document changes or the request is withdrawn - the pipeline is only cancellable between phases otherwise.
+Additional guards: circular `next`-chain detection, a `MAX_ARRAY_COUNT` (100 000) cap on array sizes, a `MAX_VALUE_LENGTH` (100 000) cap on `||` concatenation results and `COPY`/`REPEAT` output, a `MAX_ANSWER_TOKENS` (1 000 000) cap on the tokens a run may emit via `%ANSWER`, aborting the instruction loops on `RangeError`, the `COUNTER` builtin wrapping at 99999, and a workaround for V8's spread-argument limit when emitting very large token arrays.
 
 ## The SQL and CICS phases
 

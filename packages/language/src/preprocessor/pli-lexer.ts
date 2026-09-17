@@ -22,6 +22,7 @@ import { Token } from "../parser/tokens";
 import { EvaluationResults } from "./instruction-interpreter";
 import { tokenize } from "../parser/tokenizer";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { CancellationToken } from "vscode-languageserver";
 import {
   CompilerOptionResult,
   CompilerOptions,
@@ -75,6 +76,7 @@ export class PliLexer {
     unit: CompilationUnit,
     document: TextDocument,
     uri: URI,
+    cancellation?: CancellationToken,
   ): Promise<LexerResult> {
     const inputText = document.getText();
 
@@ -109,6 +111,7 @@ export class PliLexer {
       unit,
       uri,
       textDocument: document,
+      cancellation,
     });
 
     // Lex the pipeline's final composed text exactly once, then recover original
