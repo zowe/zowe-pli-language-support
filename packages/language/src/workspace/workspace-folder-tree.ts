@@ -57,6 +57,35 @@ export class WorkspaceFolderTree<TData> {
     this.dataByUri.set(folderUri.toString(), folder);
   }
 
+  /**
+   * Removes the folder registered at exactly `folderUri`.
+   * Nested folders registered below it are kept.
+   * @returns the removed data, or `undefined` if no folder was registered there
+   */
+  public removeWorkspaceFolder(folderUri: string | URI): TData | undefined {
+    let node: WorkspaceFolderNode<TData> = this.root;
+    for (const part of this.prepareUriParts(folderUri)) {
+      const child = node.children[part];
+      if (child === undefined) {
+        return undefined;
+      }
+      node = child;
+    }
+    const data = node.data;
+    node.data = undefined;
+    this.dataByUri.delete(folderUri.toString());
+    // Prune now-empty path nodes so they don't linger forever.
+    while (
+      node.parent &&
+      node.data === undefined &&
+      Object.keys(node.children).length === 0
+    ) {
+      delete node.parent.children[node.part];
+      node = node.parent;
+    }
+    return data;
+  }
+
   private prepareUriParts(uri: string | URI) {
     const normalized = UriUtils.normalizePath(
       typeof uri === "string" ? uri : uri.toString(),

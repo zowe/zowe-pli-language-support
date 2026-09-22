@@ -40,6 +40,30 @@ describe("Workspace Folder Tree", () => {
       tree.getWorkspaceFolderOf("file:///home/user/project/some/nested"),
     ).toBe(1);
   });
+  test("remove workspace folder", async () => {
+    const tree = new WorkspaceFolderTree<number>(false);
+    tree.addWorkspaceFolder("file:///home/user/project", 1);
+    tree.addWorkspaceFolder("file:///home/user/project/nested", 2);
+    expect(tree.removeWorkspaceFolder("file:///home/user/other")).toBe(
+      undefined,
+    );
+    // Removing the parent keeps the nested folder resolvable.
+    expect(tree.removeWorkspaceFolder("file:///home/user/project")).toBe(1);
+    expect(tree.getAllWorkspaceFolders()).toEqual([2]);
+    expect(tree.getWorkspaceFolderOf("file:///home/user/project/sub")).toBe(
+      undefined,
+    );
+    expect(
+      tree.getWorkspaceFolderOf("file:///home/user/project/nested/sub"),
+    ).toBe(2);
+    expect(tree.removeWorkspaceFolder("file:///home/user/project/nested")).toBe(
+      2,
+    );
+    expect(tree.getAllWorkspaceFolders()).toEqual([]);
+    expect(
+      tree.getWorkspaceFolderOf("file:///home/user/project/nested/sub"),
+    ).toBe(undefined);
+  });
   test("windows schema", async () => {
     const tree = new WorkspaceFolderTree<number>(true);
     tree.addWorkspaceFolder("C:\\Users\\User\\Project", 1);
