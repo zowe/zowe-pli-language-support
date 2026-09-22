@@ -76,6 +76,41 @@ export const LspCodes = {
       `Dimensions exceed the maximum allowed size of ${max}.`,
   },
 
+  ValueTooLarge: {
+    code: "LSPTL002",
+    severity: Severity.W,
+    message: (max: number) =>
+      `Value exceeds the maximum allowed length of ${max} characters.`,
+  },
+
+  StorageTooLarge: {
+    code: "LSPTL003",
+    severity: Severity.W,
+    message: (max: number) =>
+      `Preprocessor variables exceed the total storage limit of ${max} characters. The assigned value was dropped.`,
+  },
+
+  OutputTruncated: {
+    code: "LSPTL004",
+    severity: Severity.W,
+    message: (max: number) =>
+      `The preprocessor generated more than ${max} tokens. Further generated output was dropped.`,
+  },
+
+  BudgetExhausted: {
+    code: "LSPTL005",
+    severity: Severity.W,
+    message:
+      "Long-running preprocessor code detected. Execution was stopped and the preprocessed output is incomplete.",
+  },
+
+  PreprocessorAborted: {
+    code: "LSPTL006",
+    severity: Severity.E,
+    message:
+      "An internal limit was exceeded while running the preprocessor. Preprocessing was aborted and its output is incomplete.",
+  },
+
   BuiltinAttributes: {
     IsForbiddenUsage: {
       code: "LSPTS001",

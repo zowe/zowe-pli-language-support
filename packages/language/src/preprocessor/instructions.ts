@@ -250,6 +250,8 @@ export interface BinaryExpressionInstruction {
   left: ExpressionInstruction;
   right: ExpressionInstruction;
   operator: ast.BinaryExpression["op"];
+  /** Anchor for diagnostics reported while applying the operation. */
+  operatorToken?: Token;
 }
 
 export interface UnaryExpressionInstruction {

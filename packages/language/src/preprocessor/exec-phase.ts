@@ -41,6 +41,7 @@ import { rightmostIndexLE } from "../utils/search";
 import { PreprocessorTokens } from "./pli-preprocessor-tokens";
 import { MarginsProcessor } from "./pli-margins-processor";
 import { commentRangesToTokens, stripComments } from "./comment-stripper";
+import { interruptAndCheck } from "../utils/promises";
 import {
   passthroughPhaseResult,
   PhaseInput,
@@ -792,6 +793,11 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
       sourceMapForDirectives: SourceMap,
       nestedInfo?: NestedContextInfo,
     ): Promise<void> => {
+      if (input.cancellation) {
+        // Processing a file is uninterruptible once entered, so give up a superseded
+        // build at least at file granularity.
+        await interruptAndCheck(input.cancellation);
+      }
       const tokenization = tokenize(context.text, context.file);
       for (const diagnostic of tokenization.diagnostics) {
         context.pushHostDiagnostic(diagnostic);

@@ -70,7 +70,7 @@ Recognized fields (parsed in [loader.ts](../packages/language/src/config/loader.
   See [include-resolver.ts](../packages/language/src/preprocessor/include-resolver.ts).
 - `lsp-options` - a nested object of language-server-only toggles:
   - `check-margins` (`boolean`, default `false`) - enables margin diagnostics in [pli-margins-processor.ts](../packages/language/src/preprocessor/pli-margins-processor.ts).
-  - `instruction-counter-limit` (`number`, default `DEFAULT_INSTRUCTION_LIMIT`) - caps preprocessor instruction execution to guard against runaway macros ([instruction-interpreter.ts](../packages/language/src/preprocessor/instruction-interpreter.ts)).
+  - `instruction-counter-limit` (`number`, default `DEFAULT_INSTRUCTION_LIMIT`) - sizes the run-wide budget for re-executed preprocessor instructions (loop iterations, `%GOTO` cycles, procedure calls), guarding against runaway macros ([instruction-interpreter.ts](../packages/language/src/preprocessor/instruction-interpreter.ts)).
   - `case-upper-validation` (`boolean`, default `true`) - drives uppercase-text validation.
 
 ## Loading and parsing
