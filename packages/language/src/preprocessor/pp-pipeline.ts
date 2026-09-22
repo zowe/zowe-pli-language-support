@@ -17,6 +17,7 @@ import { EvaluationResults } from "./instruction-interpreter";
 import { PhaseInput, PhaseResult, PreprocessorPhase } from "./pp-phase";
 import { SourceMap } from "./source-map";
 import { largePush } from "../utils/collections";
+import { interruptAndCheck } from "../utils/promises";
 
 export interface PipelineResult {
   text: string;
@@ -51,6 +52,9 @@ export async function runPipeline(
   };
 
   for (const phase of phases) {
+    if (input.cancellation) {
+      await interruptAndCheck(input.cancellation);
+    }
     const inputMap = sourceMap;
     const result: PhaseResult = await phase.execute({
       ...input,

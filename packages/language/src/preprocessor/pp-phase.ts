@@ -26,10 +26,9 @@ export interface PhaseInput {
   uri: URI;
   textDocument: TextDocument;
   /**
-   * Cancellation of the build that started this pipeline. A phase that can run long
-   * (the macro interpreter) polls it, so an in-flight run is given up when the document
-   * changes or the request is withdrawn - the pipeline is only cancellable *between*
-   * phases otherwise.
+   * Cancellation of the build that started this pipeline. Checked between phases,
+   * inside the macro interpreter's instruction loops, and per processed file in the
+   * EXEC phases; a requested cancellation throws `OperationCancelled`.
    */
   cancellation?: CancellationToken;
 }
