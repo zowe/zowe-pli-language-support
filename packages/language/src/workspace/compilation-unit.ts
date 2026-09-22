@@ -449,34 +449,20 @@ export class CompilationUnitHandler {
   ): Promise<void> {
     await this.ready;
     const roots = [...event.added, ...event.removed].map((folder) =>
-      UriUtils.toUri(folder.uri),
+      UriUtils.parse(folder.uri),
     );
     const affected = await this.globalMutex.run(async () => {
       for (const folder of event.removed) {
-        const context = this.workspaceFolderTree.removeWorkspaceFolder(
-          folder.uri,
-        );
-        if (!context) {
-          continue;
-        }
-        const uris = new Set<string>(context.config.publishedDiagnosticUris);
-        for (const unit of context.getAllCompilationUnits()) {
-          for (const file of unit.services.files.keys()) {
-            uris.add(file);
-          }
-        }
-        for (const uri of uris) {
-          this.connection?.sendDiagnostics({ uri, diagnostics: [] });
-        }
+        this.removeWorkspaceFolder(UriUtils.parse(folder.uri));
       }
       for (const folder of event.added) {
-        await this.initializeWorkspaceFolder(folder.uri);
+        await this.initializeWorkspaceFolder(UriUtils.parse(folder.uri));
       }
       // Open documents under a changed root now belong to a different
       // context: drop their stale unit wherever it lives and rebuild below.
       const affected: URI[] = [];
       for (const key of EditorDocuments.keys()) {
-        const uri = UriUtils.toUri(key);
+        const uri = UriUtils.parse(key);
         if (!roots.some((root) => UriUtils.contains(root, uri))) {
           continue;
         }
@@ -493,6 +479,24 @@ export class CompilationUnitHandler {
     }
     if (affected.length > 0) {
       this.connection?.languages.semanticTokens.refresh();
+    }
+  }
+
+  removeWorkspaceFolder(uri: URI | string): void {
+    const context = this.workspaceFolderTree.removeWorkspaceFolder(uri);
+    if (!context) {
+      // No context existed for this URI, ignore the rest
+      return;
+    }
+    const uris = new Set<string>(context.config.publishedDiagnosticUris);
+    for (const unit of context.getAllCompilationUnits()) {
+      for (const file of unit.services.files.keys()) {
+        uris.add(file);
+      }
+    }
+    for (const uri of uris) {
+      // Reset all diagnostics for removed files
+      this.connection?.sendDiagnostics({ uri, diagnostics: [] });
     }
   }
 
