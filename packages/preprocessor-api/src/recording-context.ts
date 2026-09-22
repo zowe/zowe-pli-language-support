@@ -23,6 +23,8 @@ export interface RecordedInclude {
   name: string;
   statementRange: Range;
   nameRange: Range;
+  /** The nested recorder handed back to the preprocessor, when `name` had a text. */
+  context?: RecordingPreprocessorContext;
 }
 
 /**
@@ -31,8 +33,10 @@ export interface RecordedInclude {
  * (edits with their classified token lists, diagnostics, include resolutions), so running
  * `execute` against this recorder and asserting on what was recorded is a full conformance
  * check of a preprocessor implementation - including a future external one talking over a
- * serialized boundary. `include` records the attempt, resolves nothing, and - like the
- * host - still blanks the statement as an edit carrying its tokens.
+ * serialized boundary. `include` records the attempt and - like the host - blanks the
+ * statement as an edit carrying its tokens; a name listed in `includeTexts` resolves to a
+ * nested recorder over that text (reachable via the recorded include), any other name is
+ * reported unresolved.
  */
 export class RecordingPreprocessorContext implements PreprocessorContext {
   readonly diagnostics: Diagnostic[] = [];
@@ -44,6 +48,7 @@ export class RecordingPreprocessorContext implements PreprocessorContext {
     readonly text: string,
     readonly documentUri: string = "file:///main.pli",
     readonly unitUri: string = documentUri,
+    private readonly includeTexts: Readonly<Record<string, string>> = {},
   ) {}
 
   pushDiagnostic(diagnostic: Diagnostic): void {
@@ -59,8 +64,19 @@ export class RecordingPreprocessorContext implements PreprocessorContext {
     statementRange: Range,
     nameRange: Range,
     tokens?: Token[],
-  ): Promise<void> {
-    this.includes.push({ name, statementRange, nameRange });
+  ): Promise<PreprocessorContext | undefined> {
+    const included = this.includeTexts[name];
+    const context =
+      included === undefined
+        ? undefined
+        : new RecordingPreprocessorContext(
+            included,
+            `file:///${name}.inc`,
+            this.unitUri,
+            this.includeTexts,
+          );
+    this.includes.push({ name, statementRange, nameRange, context });
     this.replace(statementRange, "", tokens);
+    return context;
   }
 }

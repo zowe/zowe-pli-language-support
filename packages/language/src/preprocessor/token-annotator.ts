@@ -98,7 +98,7 @@ export function annotateTokens(
 
 /**
  * Picks out a phase's own consumed-directive tokens - the ones its internal parse attached
- * `.kind`/`.element` to (`%IF`/`%DCL`/`EXEC`/`DFHRESP`/... keyword and name tokens) - and
+ * `.kind`/`.element` to (`%IF`/`%DCL`/... keyword and name tokens) - and
  * remaps their positions from this phase's input-text space to the original source, via
  * this phase's own `PhaseInput.sourceMap`. See `PhaseResult.directiveTokens`.
  */

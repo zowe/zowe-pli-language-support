@@ -12,9 +12,11 @@
 import { describe, expect, test } from "vitest";
 import {
   Delimiters,
+  findEnclosingProcedureEnd,
   rebaseDiagnostic,
   rebaseToken,
   scanExecFragments,
+  scanHostText,
 } from "../src/context-utils";
 import { ExecFragment, Severity, SemanticsKind } from "../src/types";
 
@@ -189,6 +191,129 @@ describe("scanExecFragments", () => {
     expect(fragments[0].bodyText).toBe(
       "INSERT INTO T VALUES(';EXEC SQL DROP TABLE T;')",
     );
+  });
+
+  test("EXEC glued to a PL/I identifier character is an identifier, not a statement", () => {
+    // `$`, `#` and `@` are identifier characters in PL/I - the host tokenizer lexes
+    // `$EXEC` as one identifier, so the scan must not see a statement there either.
+    expect(scanExecFragments("$EXEC SQL X; #EXEC SQL Y;", "SQL", SQL)).toEqual(
+      [],
+    );
+  });
+
+  test("an own-prefix statement inside another preprocessor's statement is not a fragment", () => {
+    // The host tokenizer consumes any `EXEC <word> ...;` as one opaque token.
+    const text = "EXEC CICS X EXEC SQL Y; EXEC SQL Z;";
+    expect(scanExecFragments(text, "SQL", SQL).map((f) => f.bodyText)).toEqual([
+      "Z",
+    ]);
+  });
+});
+
+describe("scanHostText", () => {
+  const anchor = /DFHRESP\s*\(\s*(\w+)\s*\)/;
+
+  test("records secondary anchors between statements, never inside any EXEC statement", () => {
+    const text =
+      "X = DFHRESP(NORMAL); EXEC CICS Y FROM(DFHRESP(NORMAL)); EXEC SQL Z DFHRESP(NOTFND); DFHRESP(NOTFND);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([
+      text.indexOf("DFHRESP(NORMAL)"),
+      text.lastIndexOf("DFHRESP(NOTFND)"),
+    ]);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual([
+      "Y FROM(DFHRESP(NORMAL))",
+    ]);
+  });
+
+  test("anchors inside host string literals are ignored", () => {
+    const text = "S = 'DFHRESP(NORMAL)'; X = DFHRESP(NORMAL);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([text.lastIndexOf("DFHRESP")]);
+  });
+
+  test("anchors are matched case-insensitively and at identifier boundaries only", () => {
+    const text = "X = dfhresp(normal); Y = MYDFHRESP(NORMAL);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([text.indexOf("dfhresp")]);
+  });
+
+  test("a walk without an anchor still yields fragments and procedures", () => {
+    const text = "A: PROC; EXEC SQL X; END;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.anchors).toEqual([]);
+    expect(scan.procedures).toEqual([3]);
+    expect(scan.fragments).toHaveLength(1);
+  });
+
+  test("indexes every PROC keyword spelling outside strings and EXEC statements", () => {
+    const text =
+      "A: PROC; B: PROCEDURE; C: XPROC; D: XPROCEDURE; S = 'PROC'; EXEC SQL CREATE PROCEDURE P; PROC_X = 1;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.procedures).toEqual([
+      text.indexOf("PROC;"),
+      text.indexOf("PROCEDURE;"),
+      text.indexOf("XPROC;"),
+      text.indexOf("XPROCEDURE;"),
+    ]);
+  });
+
+  test("a foreign unterminated statement swallows the rest of the text", () => {
+    const text = "EXEC CICS X EXEC SQL Y;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments).toEqual([]);
+  });
+});
+
+describe("findEnclosingProcedureEnd", () => {
+  test("returns the offset right after the enclosing procedure statement's semicolon", () => {
+    const text = "A: PROC OPTIONS(MAIN);\n  DCL X;\n  EXEC SQL Y;\nEND;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf(";") + 1);
+  });
+
+  test("picks the nearest procedure before the offset", () => {
+    const text = "A: PROC; B: PROC; EXEC SQL Y; END; END;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf("B: PROC;") + "B: PROC;".length);
+  });
+
+  test("a semicolon inside a string does not end the procedure statement", () => {
+    const text = "A: PROC OPTIONS(';'); EXEC SQL Y;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf("EXEC") - 1);
+  });
+
+  test("no procedure before the offset yields undefined", () => {
+    const text = "EXEC SQL Y; A: PROC; END;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    expect(findEnclosingProcedureEnd(text, procedures, 0, SQL)).toBeUndefined();
+  });
+
+  test("a procedure statement that never closes yields 'unterminated'", () => {
+    const text = "A: PROC\n  EXEC SQL Y";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    expect(
+      findEnclosingProcedureEnd(text, procedures, text.indexOf("EXEC"), SQL),
+    ).toBe("unterminated");
   });
 });
 

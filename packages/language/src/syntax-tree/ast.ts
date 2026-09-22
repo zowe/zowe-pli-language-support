@@ -224,14 +224,6 @@ export enum SyntaxKind {
   Statement,
   StopStatement,
   StringLiteral,
-  SqlAttributeStatement,
-  SqlAttributeBinary,
-  SqlAttributeLob,
-  SqlAttributeLobLocator,
-  SqlAttributeLobFile,
-  SqlAttributeRowId,
-  SqlAttributeTableLocator,
-  SqlAttributeResultSetLocator,
   TypeAttribute,
   UnaryExpression,
   ValueAttribute,
@@ -244,8 +236,6 @@ export enum SyntaxKind {
   WriteStatement,
   WriteStatementOption,
   XFormatItem,
-
-  CicsResponseStatement,
 }
 
 export enum KeywordConditions {
@@ -492,18 +482,6 @@ export enum LocateType {
   KEYFROM,
   FILE,
   SET,
-}
-
-export enum LOB {
-  BLOB,
-  CLOB,
-  DBCLOB,
-}
-
-export enum LOBLocator {
-  BLOB_LOCATOR,
-  CLOB_LOCATOR,
-  DBCLOB_LOCATOR,
 }
 
 export enum VX {
@@ -784,15 +762,6 @@ export type SyntaxNode =
   | AnswerStatement
   | DeactivateStatement
   | TokenStatement
-  | CicsResponseStatement
-  | SqlAttributeStatement
-  | SqlAttributeBinary
-  | SqlAttributeLob
-  | SqlAttributeLobLocator
-  | SqlAttributeLobFile
-  | SqlAttributeRowId
-  | SqlAttributeTableLocator
-  | SqlAttributeResultSetLocator
 
   // Normal nodes
   | AFormatItem
@@ -1161,9 +1130,7 @@ export type Unit =
   | PopDirective
   | PrintDirective
   | NoPrintDirective
-  | SkipDirective
-  | SqlAttributeStatement
-  | CicsResponseStatement;
+  | SkipDirective;
 
 // Preprocessor AST
 
@@ -4183,187 +4150,10 @@ export interface XFormatItem extends AstNode {
   width: Expression | null;
 }
 
-export enum SqlAttributeBinaryType {
-  BINARY,
-  VARBINARY,
-}
-
-export interface SqlAttributeBinary extends AstNode {
-  kind: SyntaxKind.SqlAttributeBinary;
-  type: SqlAttributeBinaryType | null;
-  length: number | null;
-  size: SQLAttributeLobSize | null;
-}
-
-export function createSqlAttributeBinary(): SqlAttributeBinary {
-  return {
-    kind: SyntaxKind.SqlAttributeBinary,
-    container: null,
-    type: null,
-    length: null,
-    size: null,
-  };
-}
-
 export function createXFormatItem(): XFormatItem {
   return {
     kind: SyntaxKind.XFormatItem,
     container: null,
     width: null,
-  };
-}
-
-export enum SQLAttributeLobType {
-  BLOB,
-  CLOB,
-  DBCLOB,
-}
-
-export enum SQLAttributeLobSize {
-  K,
-  M,
-  G,
-}
-
-export interface SqlAttributeLob extends AstNode {
-  kind: SyntaxKind.SqlAttributeLob;
-  type: SQLAttributeLobType | null;
-  length: number | null;
-  size: SQLAttributeLobSize | null;
-}
-
-export function createSqlAttributeLob(): SqlAttributeLob {
-  return {
-    kind: SyntaxKind.SqlAttributeLob,
-    container: null,
-    type: null,
-    length: null,
-    size: null,
-  };
-}
-
-export interface SqlAttributeLobLocator extends AstNode {
-  kind: SyntaxKind.SqlAttributeLobLocator;
-  type: SQLAttributeLobType | null;
-}
-
-export function createSqlAttributeLobLocator(): SqlAttributeLobLocator {
-  return {
-    kind: SyntaxKind.SqlAttributeLobLocator,
-    container: null,
-    type: null,
-  };
-}
-
-export interface SqlAttributeLobFile extends AstNode {
-  kind: SyntaxKind.SqlAttributeLobFile;
-  type: SQLAttributeLobType | null;
-}
-
-export function createSqlAttributeLobFile(): SqlAttributeLobFile {
-  return {
-    kind: SyntaxKind.SqlAttributeLobFile,
-    container: null,
-    type: null,
-  };
-}
-
-export interface SqlAttributeRowId extends AstNode {
-  kind: SyntaxKind.SqlAttributeRowId;
-}
-
-export function createSqlAttributeRowId(): SqlAttributeRowId {
-  return {
-    kind: SyntaxKind.SqlAttributeRowId,
-    container: null,
-  };
-}
-
-export interface SqlAttributeTableLocator extends AstNode {
-  kind: SyntaxKind.SqlAttributeTableLocator;
-  name: string | null;
-  nameToken: Token | null;
-}
-
-export function createSqlAttributeTableLocator(): SqlAttributeTableLocator {
-  return {
-    kind: SyntaxKind.SqlAttributeTableLocator,
-    container: null,
-    name: null,
-    nameToken: null,
-  };
-}
-
-export interface SqlAttributeResultSetLocator extends AstNode {
-  kind: SyntaxKind.SqlAttributeResultSetLocator;
-}
-
-export function createSqlAttributeResultSetLocator(): SqlAttributeResultSetLocator {
-  return {
-    kind: SyntaxKind.SqlAttributeResultSetLocator,
-    container: null,
-  };
-}
-
-export type SqlAttributeType =
-  | SqlAttributeBinary
-  | SqlAttributeLob
-  | SqlAttributeLobLocator
-  | SqlAttributeLobFile
-  | SqlAttributeRowId
-  | SqlAttributeTableLocator
-  | SqlAttributeResultSetLocator;
-
-export interface SqlAttributeStatement extends AstNode {
-  kind: SyntaxKind.SqlAttributeStatement;
-  isXml: boolean;
-  body: SqlAttributeType | null;
-}
-
-export function createSQLAttributeStatement(): SqlAttributeStatement {
-  return {
-    kind: SyntaxKind.SqlAttributeStatement,
-    container: null,
-    isXml: false,
-    body: null,
-  };
-}
-
-// Values sourced from:
-// https://www.ibmmainframer.com/cics-tutorial/cics-response-option/
-export enum CicsResponseCode {
-  NORMAL = 0,
-  NOTFND = 13,
-  DUPREC = 14,
-  INVREQ = 16,
-  NOSPACE = 18,
-  NOTOPEN = 19,
-  ENDFILE = 20,
-  LENGERR = 22,
-  QZERO = 23,
-  QBUSY = 25,
-  ITEMERR = 26,
-  PGMIDERR = 27,
-  ENDDATA = 29,
-  MAPFAIL = 36,
-  QIDERR = 44,
-  ENQBUSY = 55,
-  DISABLED = 84,
-}
-
-export interface CicsResponseStatement extends AstNode {
-  kind: SyntaxKind.CicsResponseStatement;
-  token: Token | null;
-  code: CicsResponseCode | null;
-  codeToken: Token | null;
-}
-
-export function createCicsResponseStatement(): CicsResponseStatement {
-  return {
-    kind: SyntaxKind.CicsResponseStatement,
-    container: null,
-    token: null,
-    code: null,
-    codeToken: null,
   };
 }

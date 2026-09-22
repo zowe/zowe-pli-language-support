@@ -10,6 +10,7 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { CancellationToken } from "vscode-languageserver";
 import {
   FileIncludeItem,
   IncludeResolverContext,
@@ -26,6 +27,7 @@ import {
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { URI } from "../utils/uri";
 import { largePush } from "../utils/collections";
+import { interruptAndCheck } from "../utils/promises";
 import { LspCodes } from "../validation/lsp-codes";
 import { PLICodes } from "../validation/pli-codes";
 import {
@@ -46,6 +48,8 @@ function fromApiSeverity(severity: api.Severity): Severity {
       return Severity.W;
     case api.Severity.Info:
       return Severity.I;
+    case api.Severity.Severe:
+      return Severity.S;
   }
 }
 
@@ -92,36 +96,32 @@ interface Edit {
   /** The generated `DO` keyword token, when `apiTokens` are present - see `createEdit`. */
   anchor?: PliToken;
   /**
-   * Set by `include` instead of `text`/`tokens`: splices a nested context's
-   * already-built result in as `foreign` spans. Always a zero-width edit.
+   * Set by `include` instead of `text`/`tokens`: splices the nested context's result in
+   * as `foreign` spans. The nested context is built only when this context is, so the
+   * preprocessor can still record its edits after `include` returned. Always a
+   * zero-width edit.
    */
-  subResult?: PreprocessorContextResult;
+  nested?: PreprocessorContext;
 }
 
 /**
- * One recorded `resolveInclude` call: `uri` is present iff resolution succeeded.
- * `exec-phase.ts` builds the `EXEC SQL INCLUDE` AST node from this (matched by `range`).
+ * One recorded `resolveInclude` call: `uri` is present iff resolution succeeded, and then
+ * `context` is the nested context seeded with the file's (prepared) text and `document`
+ * the file's raw text document. `exec-phase.ts` builds the `EXEC SQL INCLUDE` AST node
+ * from this (matched by `range`) and walks `context` for the nested file's own metadata.
  */
 export interface IncludeAttempt {
   name: string;
   range?: Range;
   uri?: URI;
+  context?: PreprocessorContext;
+  document?: TextDocument;
 }
 
 export interface PreprocessorContextResult {
   text: string;
   sourceMap: SourceMap;
   diagnostics: Diagnostic[];
-}
-
-/** Passed to a context's `onProcess` callback when the context was created by `resolveInclude`. */
-export interface NestedContextInfo {
-  /** The context whose `resolveInclude` created this one. */
-  parent: PreprocessorContext;
-  /** The include statement's range in `parent`'s text, when the caller provided one. */
-  includeRange?: Range;
-  /** The included file's own text document. */
-  document?: TextDocument;
 }
 
 /**
@@ -143,16 +143,6 @@ export class PreprocessorContext implements api.PreprocessorContext {
     private readonly inputText: string,
     readonly unit: CompilationUnit,
     /**
-     * Runs against every context `resolveInclude` produces (including nested ones), so an
-     * included file's own `EXEC`/directive statements are turned into edits *before* the
-     * caller splices its result in via `insertContext`. Supplied by the phase (see
-     * `exec-phase.ts`) - this class itself has no notion of statements or phases.
-     */
-    private readonly onProcess?: (
-      context: PreprocessorContext,
-      nested?: NestedContextInfo,
-    ) => Promise<void>,
-    /**
      * Prepares an included file's raw text before it seeds a nested context - the same
      * length-preserving margins-blanking + comment-stripping the pipeline applies to the
      * entry file. Without it, a copybook's sequence-number columns and comments would
@@ -164,6 +154,11 @@ export class PreprocessorContext implements api.PreprocessorContext {
      * diagnostic pushed into this context.
      */
     private readonly diagnosticSource?: string,
+    /**
+     * Checked before every include resolution: processing a file is uninterruptible
+     * once entered, so a superseded build is given up at least at file granularity.
+     */
+    private readonly cancellation?: CancellationToken,
     /**
      * The uris of the *ancestor* contexts this one was created from via `resolveInclude`.
      * Used to refuse recursive includes without forbidding legal repeated *sibling*
@@ -277,37 +272,39 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * Resolves `name` (see {@link resolveInclude}) and splices the nested context's built
-   * result in at `statementRange.start` as a zero-width edit, preserving the included
-   * file's own positions as `foreign` segments rather than collapsing it to one opaque
-   * block; its diagnostics are merged into this context's own, in the nested file's own
-   * coordinates. The include statement itself is blanked (with `tokens`, like `replace`)
-   * whether or not resolution succeeded.
+   * Resolves `name` (see {@link resolveInclude}) and splices the nested context's result
+   * in at `statementRange.start` as a zero-width edit, preserving the included file's own
+   * positions as `foreign` segments rather than collapsing it to one opaque block; its
+   * diagnostics are merged into this context's own, in the nested file's own coordinates.
+   * The include statement itself is blanked (with `tokens`, like `replace`) whether or
+   * not resolution succeeded. The returned context is unprocessed and built lazily - the
+   * preprocessor records the included file's own edits on it before this context is
+   * built (see `Edit.nested`).
    */
   async include(
     name: string,
     statementRange: Range,
     nameRange: Range,
     tokens?: (MappedToken | api.Token)[],
-  ): Promise<void> {
+  ): Promise<PreprocessorContext | undefined> {
     const nested = await this.resolveInclude(name, statementRange, nameRange);
     if (nested) {
       this.edits.push({
         start: statementRange.start,
         end: statementRange.start,
         text: "",
-        subResult: nested.build(),
+        nested,
       });
     }
     this.replace(statementRange, "", tokens);
+    return nested;
   }
 
   /**
    * Resolves an include name via the shared include resolver and returns a fresh context
-   * seeded with the resolved file's text (already run through `onProcess`), or
-   * `undefined` if resolution failed. Resolution diagnostics land in this context's own
-   * sink either way. `statementRange` is the include statement's span (recorded as the
-   * attempt's `range` and used as the nested frame's include site); `nameRange` (the
+   * seeded with the resolved file's prepared text, or `undefined` if resolution failed.
+   * Resolution diagnostics land in this context's own sink either way. `statementRange`
+   * is the include statement's span (recorded as the attempt's `range`); `nameRange` (the
    * member token) anchors the unresolved-include diagnostic, falling back to
    * `statementRange`.
    */
@@ -316,6 +313,9 @@ export class PreprocessorContext implements api.PreprocessorContext {
     statementRange?: Range,
     nameRange?: Range,
   ): Promise<PreprocessorContext | undefined> {
+    if (this.cancellation) {
+      await interruptAndCheck(this.cancellation);
+    }
     const item: FileIncludeItem = {
       fileName: name,
       token: null,
@@ -335,11 +335,12 @@ export class PreprocessorContext implements api.PreprocessorContext {
     const chain = [...this.includeChain, this.file.toString()];
     const recursive = uri !== undefined && chain.includes(uri.toString());
     const resolvedUri = recursive ? undefined : uri;
-    this.includeAttempts.push({
+    const attempt: IncludeAttempt = {
       name,
       range: statementRange,
       uri: resolvedUri,
-    });
+    };
+    this.includeAttempts.push(attempt);
     if (!resolvedUri) {
       this.pushUnresolvedIncludeDiagnostic(name, nameRange ?? statementRange);
       return undefined;
@@ -350,16 +351,13 @@ export class PreprocessorContext implements api.PreprocessorContext {
       resolvedUri,
       this.prepareText ? this.prepareText(rawText, resolvedUri) : rawText,
       this.unit,
-      this.onProcess,
       this.prepareText,
       this.diagnosticSource,
+      this.cancellation,
       chain,
     );
-    await this.onProcess?.(nested, {
-      parent: this,
-      includeRange: statementRange,
-      document,
-    });
+    attempt.context = nested;
+    attempt.document = document;
     return nested;
   }
 
@@ -391,7 +389,8 @@ export class PreprocessorContext implements api.PreprocessorContext {
 
   /**
    * Applies the recorded edits and produces the generated text plus a `SourceMap` back to
-   * this context's input. Single linear pass over the (sorted) edits.
+   * this context's input. Single linear pass over the (sorted) edits; nested contexts
+   * are built here, on the way.
    */
   build(): PreprocessorContextResult {
     const sortedEdits = [...this.edits].sort(
@@ -437,10 +436,11 @@ export class PreprocessorContext implements api.PreprocessorContext {
         genCursor += gapLength;
       }
 
-      if (edit.subResult) {
+      if (edit.nested) {
+        const subResult = edit.nested.build();
         // Splice the nested context's own segments in as-is, shifted and forced
         // `foreign` - they carry real positions in a different file.
-        for (const nestedSegment of edit.subResult.sourceMap.getSegments()) {
+        for (const nestedSegment of subResult.sourceMap.getSegments()) {
           segments.push({
             ...nestedSegment,
             genStart: genCursor + nestedSegment.genStart,
@@ -450,9 +450,9 @@ export class PreprocessorContext implements api.PreprocessorContext {
         }
         // Nested diagnostics keep their ranges: offsets into the included file's own
         // text, which is the space they should be reported in.
-        largePush(nestedDiagnostics, edit.subResult.diagnostics);
-        chunks.push(edit.subResult.text);
-        genCursor += edit.subResult.text.length;
+        largePush(nestedDiagnostics, subResult.diagnostics);
+        chunks.push(subResult.text);
+        genCursor += subResult.text.length;
       } else {
         chunks.push(edit.text);
         segments.push({

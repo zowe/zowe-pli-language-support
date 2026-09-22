@@ -38,6 +38,8 @@ export enum Severity {
   Error,
   Warning,
   Info,
+  /** A severe (unrecoverable) error - the PL/I compiler's `S` level. */
+  Severe,
 }
 
 export interface Diagnostic {
@@ -106,25 +108,38 @@ export interface PreprocessorContext {
    * semantic highlighting/hover, include-member metadata, and host-variable references
    * (every `SemanticsKind.Identifier` token becomes a linkable variable reference). Token
    * offsets are *host* coordinates (offsets into `context.text`, see `rebaseToken`).
+   * A zero-width `range` inserts `text` at that offset (e.g. generated declarations);
+   * a zero-width, empty-text replace is a pure annotation that only records `tokens`.
    */
   replace(range: Range, text: string, tokens?: Token[]): void;
   /**
-   * Resolves the include statement at `statementRange`: looks `name` up, runs the host's
-   * own processing over the included file (recursively), and replaces the statement with
-   * the result, keeping the included file's real positions. `tokens` is the statement's
-   * classified token list, exactly as for {@link replace}. An unresolvable `name` produces
-   * a diagnostic at `nameRange` (the member token's span) and still blanks the statement,
-   * so the raw text never reaches the host parser.
+   * Resolves the include statement at `statementRange`: looks `name` up, splices the
+   * included file's text in place of the statement (keeping the included file's real
+   * positions), blanks the statement itself, and returns a fresh context over the included
+   * file's text. That context is **unprocessed**: the preprocessor must run its own
+   * processing over it (recursively) before `execute` returns - the host applies the
+   * nested context's edits only when it builds the including context. `tokens` is the
+   * statement's classified token list, exactly as for {@link replace}. An unresolvable
+   * `name` produces a diagnostic at `nameRange` (the member token's span), still blanks the
+   * statement so the raw text never reaches the host parser, and returns `undefined`.
    */
   include(
     name: string,
     statementRange: Range,
     nameRange: Range,
     tokens?: Token[],
-  ): Promise<void>;
+  ): Promise<PreprocessorContext | undefined>;
 }
 
 export interface Preprocessor {
   get name(): string;
+  /**
+   * The single entry point: finds every construct this preprocessor owns in
+   * `context.text` itself - its `EXEC <keyword> ...;` statements as well as its host-side
+   * built-ins (e.g. `SQL TYPE IS ...` attributes, `DFHRESP(...)`/`DFHVALUE(...)`, the
+   * per-procedure runtime declarations) - and records everything on the context: text
+   * replacements with their classified token lists, diagnostics, and include resolutions
+   * (processing every context {@link PreprocessorContext.include} returns the same way).
+   */
   execute(context: PreprocessorContext): Promise<void>;
 }

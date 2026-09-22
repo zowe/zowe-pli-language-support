@@ -41,9 +41,10 @@ export interface PhaseResult {
   references: Reference[];
   evaluationResults?: EvaluationResults;
   /**
-   * Tokens from this phase's *own* internal parse (e.g. the `%IF`/`%DCL`/`EXEC`/`DFHRESP`
-   * keyword and name tokens) that carry `.kind`/`.element` CST attachments but are entirely
-   * consumed by the directive they belong to - they never reach this phase's `text` output,
+   * Tokens from this phase's *own* internal parse (e.g. the `%IF`/`%DCL` keyword and name
+   * tokens, or an `EXEC` statement's classified body tokens) that carry `.kind`/`.element`
+   * CST attachments or a `ppSemanticType` but are entirely consumed by the directive they
+   * belong to - they never reach this phase's `text` output,
    * so they would otherwise be unreachable via `unit.services.files.getTokens(uri)` (which
    * only sees the pipeline's final, post-substitution tokens). LSP features that inspect a
    * directive itself rather than its expansion (`pli/skippedCode`, hovering a `%DCL`'d

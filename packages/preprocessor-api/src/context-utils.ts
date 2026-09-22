@@ -119,24 +119,52 @@ function findTerminator(
   return undefined;
 }
 
+/** A character that can be part of a PL/I identifier (`#`, `@` and `$` on top of `\w`). */
+const IDENTIFIER_CHAR = "[A-Za-z0-9_#@$]";
+
+/** What one {@link scanHostText} walk found. */
+export interface HostScanResult {
+  /** The scanned prefix's own `EXEC` statements, in text order. */
+  fragments: ExecFragment[];
+  /**
+   * Start offsets of every match of the caller's secondary anchor (outside strings and
+   * outside *every* `EXEC` statement, whatever its prefix), in text order.
+   */
+  anchors: number[];
+  /**
+   * Start offsets of every `PROC`/`PROCEDURE` (and `XPROC`/`XPROCEDURE`) keyword outside
+   * strings and `EXEC` statements, ascending - see {@link findEnclosingProcedureEnd}.
+   */
+  procedures: number[];
+}
+
 /**
- * Scans `text` for every `EXEC <prefix> ...;` statement (case-insensitive) - the entry
- * point a {@link Preprocessor} uses to find its own fragments instead of being handed
- * them. Delimited constructs are skipped before the anchor is tried, so `EXEC` inside a
- * host string literal never matches.
+ * One linear, quote-aware walk over host text - the entry point a {@link Preprocessor}
+ * uses to find everything it owns instead of being handed pre-cut fragments:
  *
- * `delimiters` describes the *embedded* language and applies only between the anchor and
- * the terminating `;`. Outside fragments only the quote characters carry over: the
- * embedded language's comment markers are ordinary host code there (`X = A--B;` is PL/I
- * subtraction, not a DB2 `--` comment), and host comments were already blanked by the
- * pipeline's comment-strip pre-pass.
+ * - every `EXEC <prefix> ...;` statement (case-insensitive) becomes an {@link ExecFragment};
+ * - every `EXEC <other> ...;` statement is skipped as opaque text, so nothing inside another
+ *   preprocessor's statement is ever matched (the host tokenizer treats any `EXEC` statement
+ *   as one token, so this keeps both views of the text aligned);
+ * - between statements, `anchor` (an engine's own host-side construct such as `SQL TYPE IS`
+ *   or `DFHRESP(...)`; embedded case-insensitively, its own flags are ignored) and the
+ *   `PROC` keywords are recorded by offset.
+ *
+ * Delimited constructs are skipped before any anchor is tried, so `EXEC` inside a host
+ * string literal never matches. `delimiters` describes the *embedded* language and applies
+ * only inside the prefix's own statements; everywhere else only the quote characters carry
+ * over (the embedded language's comment markers are ordinary host code there - `X = A--B;`
+ * is PL/I subtraction, not a DB2 `--` comment - and host comments were already blanked by
+ * the pipeline's comment-strip pre-pass). An `EXEC` statement that never closes runs to
+ * EOF (see `ExecFragment.terminated`) and ends the walk.
  */
-export function scanExecFragments(
+export function scanHostText(
   text: string,
   prefix: string,
   delimiters: Delimiters,
-): ExecFragment[] {
-  const fragments: ExecFragment[] = [];
+  anchor?: RegExp,
+): HostScanResult {
+  const result: HostScanResult = { fragments: [], anchors: [], procedures: [] };
   const upperPrefix = prefix.toUpperCase();
   const hostDelimiters: Delimiters = {
     quotes: delimiters.quotes,
@@ -146,7 +174,12 @@ export function scanExecFragments(
   // `EXEC SQL` at EOF) is still a fragment - the host tokenizer consumes it as one, so
   // skipping it here would leak the raw statement to the final parse. The inner `\s+`
   // is what prevents matching inside identifiers like `EXECUTE`.
-  const execAnchor = /\bEXEC\s+(\w+)\s*/iy;
+  const pattern = new RegExp(
+    String.raw`(?<!${IDENTIFIER_CHAR})(?:(EXEC)\s+(\w+)\s*|(X?PROC(?:EDURE)?)(?!${IDENTIFIER_CHAR})` +
+      (anchor ? `|(${anchor.source})` : "") +
+      ")",
+    "iy",
+  );
   let i = 0;
   while (i < text.length) {
     const skipTo = skipDelimited(text, i, hostDelimiters);
@@ -154,32 +187,98 @@ export function scanExecFragments(
       i = skipTo;
       continue;
     }
-    execAnchor.lastIndex = i;
-    const anchor = execAnchor.exec(text);
-    if (anchor && anchor[1].toUpperCase() === upperPrefix) {
-      const bodyStart = i + anchor[0].length;
-      const semicolon = findTerminator(text, bodyStart, delimiters);
-      if (semicolon !== undefined) {
-        fragments.push({
-          range: { start: i, end: semicolon + 1 },
-          bodyText: text.slice(bodyStart, semicolon),
-          bodyOffset: bodyStart,
-          terminated: true,
-        });
-        i = semicolon + 1;
-        continue;
-      }
-      // No `;` before EOF: emit the rest as an unterminated fragment so the statement
-      // still gets parsed/diagnosed - see `ExecFragment.terminated`.
-      fragments.push({
-        range: { start: i, end: text.length },
-        bodyText: text.slice(bodyStart),
-        bodyOffset: bodyStart,
-        terminated: false,
-      });
-      break;
+    pattern.lastIndex = i;
+    const match = pattern.exec(text);
+    if (!match) {
+      i++;
+      continue;
     }
-    i++;
+    if (match[1]) {
+      const own = match[2].toUpperCase() === upperPrefix;
+      const bodyStart = i + match[0].length;
+      const semicolon = findTerminator(
+        text,
+        bodyStart,
+        own ? delimiters : hostDelimiters,
+      );
+      if (own) {
+        result.fragments.push(
+          semicolon !== undefined
+            ? {
+                range: { start: i, end: semicolon + 1 },
+                bodyText: text.slice(bodyStart, semicolon),
+                bodyOffset: bodyStart,
+                terminated: true,
+              }
+            : {
+                range: { start: i, end: text.length },
+                bodyText: text.slice(bodyStart),
+                bodyOffset: bodyStart,
+                terminated: false,
+              },
+        );
+      }
+      if (semicolon === undefined) {
+        break;
+      }
+      i = semicolon + 1;
+      continue;
+    }
+    if (match[3]) {
+      result.procedures.push(i);
+    } else {
+      result.anchors.push(i);
+    }
+    i += Math.max(1, match[0].length);
   }
-  return fragments;
+  return result;
+}
+
+/**
+ * Scans `text` for every `EXEC <prefix> ...;` statement - {@link scanHostText} reduced to
+ * its fragments.
+ */
+export function scanExecFragments(
+  text: string,
+  prefix: string,
+  delimiters: Delimiters,
+): ExecFragment[] {
+  return scanHostText(text, prefix, delimiters).fragments;
+}
+
+/**
+ * The offset right after the terminating `;` of the procedure statement enclosing
+ * `offset` - where a preprocessor inserts the declarations a procedure needs once. The
+ * enclosing procedure is the nearest `PROC` keyword before `offset` (from a
+ * {@link scanHostText} `procedures` index); its `;` is found quote-aware. Returns
+ * `"unterminated"` when that keyword's statement never closes (broken source: callers
+ * must not fall back to an enclosing file's procedure), and `undefined` when there is no
+ * procedure before `offset` at all.
+ */
+export function findEnclosingProcedureEnd(
+  text: string,
+  procedures: readonly number[],
+  offset: number,
+  delimiters: Delimiters,
+): number | "unterminated" | undefined {
+  let low = 0;
+  let high = procedures.length - 1;
+  let found = -1;
+  while (low <= high) {
+    const mid = (low + high) >>> 1;
+    if (procedures[mid] < offset) {
+      found = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  if (found === -1) {
+    return undefined;
+  }
+  const semicolon = findTerminator(text, procedures[found], {
+    quotes: delimiters.quotes,
+    lineComments: [],
+  });
+  return semicolon === undefined ? "unterminated" : semicolon + 1;
 }

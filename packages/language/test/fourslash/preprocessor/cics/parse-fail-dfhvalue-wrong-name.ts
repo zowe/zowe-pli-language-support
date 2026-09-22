@@ -9,9 +9,12 @@
  *
  */
 
-/// <reference path="../framework.ts" />
+/// <reference path="../../framework.ts" />
 
-//// DCL MyVar FIXED;
-//// MyVar = <|1>DFHRESP(DUPREC);
+//// DFHVALUE(<|BOGUS|>)
 
-hover.expectMarkdownAt(1, hover.codeBlock("DFHRESP(DUPREC) = 14"));
+// Expect no output tokens for an unknown CICS value name
+preprocessor.expectTokens("");
+verify.expectDiagnosticsAt("BOGUS", {
+  severity: constants.Severity.S,
+});

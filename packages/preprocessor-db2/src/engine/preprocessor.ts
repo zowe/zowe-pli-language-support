@@ -33,16 +33,23 @@ import {
 import {
   Delimiters,
   Diagnostic,
+  ExecFragment,
+  findEnclosingProcedureEnd,
   Preprocessor,
   PreprocessorContext,
   rebaseDiagnostic,
   rebaseToken,
-  scanExecFragments,
+  scanHostText,
   SemanticsKind,
   Token,
   PreprocessorResult,
-  Severity,
 } from "preprocessor-api";
+import {
+  parseSqlTypeClause,
+  SQL_LOB_FILE_DECLS,
+  SQL_TYPE_ANCHOR,
+  sqlLobDecls,
+} from "./sql-type";
 
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
 
@@ -55,6 +62,36 @@ const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
  */
 const DB2_DELIMITERS: Delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
 
+/** What `SQL TYPE IS ...` clauses become - see `sql-type.ts` for the bodies. */
+const LOCATOR_TYPE = "FIXED BIN(31)";
+const ROWID_TYPE = "CHAR(40) VARYING";
+const LOB_FILE_TYPE = "LIKE SQL_LOB_FILE";
+const LOB_TYPE = (length: number) => `LIKE SQL_LOB${length}`;
+
+/**
+ * The declaration blocks queued for one procedure (keyed by the offset right after its
+ * `;`): each LOB size and the LOB FILE block at most once. `texts` is flushed *reversed*,
+ * matching the real preprocessor's output order.
+ */
+interface DeclBlocks {
+  lobFile: boolean;
+  lobSizes: Set<number>;
+  texts: string[];
+}
+
+/**
+ * One context's processing state. A nested (`EXEC SQL INCLUDE`d) context usually has no
+ * `PROCEDURE` of its own (DCLGEN-style copybooks), so the enclosing procedure is searched
+ * at each parent's include site - and its declarations are then queued against *that*
+ * frame's context.
+ */
+interface Frame {
+  context: PreprocessorContext;
+  procedures: readonly number[];
+  parent?: { frame: Frame; includeOffset: number };
+  blocks: Map<number, DeclBlocks>;
+}
+
 export class Db2SqlPreprocessor implements Preprocessor {
   static Name = "DB2 SQL Preprocessor";
   get name() {
@@ -62,48 +99,185 @@ export class Db2SqlPreprocessor implements Preprocessor {
   }
 
   /**
-   * Finds every `EXEC SQL ...;` statement in `context.text` itself (see `scanExecFragments`)
-   * and replaces each directly: an `EXEC SQL INCLUDE` becomes the included file's own
-   * (recursively processed) text via `context.include`; any other statement becomes
-   * `DO; END;`, its host-variable references travelling as the recorded tokens.
-   * Each `replace` carries the fragment's full classified token list in host coordinates -
-   * the host's only source for `EXEC` semantic highlighting/hover and the include member
+   * Finds everything the DB2 precompiler owns in `context.text` itself, in one walk (see
+   * `scanHostText`), and records each replacement directly:
+   *
+   * - `EXEC SQL INCLUDE` becomes the included file's own text via `context.include`, the
+   *   returned context processed recursively right here; any other `EXEC SQL` statement
+   *   becomes `DO; END;`, its host-variable references travelling as the recorded tokens;
+   * - `SQL TYPE IS ...` declaration attributes become the PL/I attribute the precompiler
+   *   substitutes, and the `SQL_LOB*` declarations they rely on are inserted once per
+   *   enclosing procedure.
+   *
+   * Every `replace` carries the construct's full classified token list in host
+   * coordinates - the host's only source for semantic highlighting and the include member
    * token.
    */
   public async execute(context: PreprocessorContext): Promise<void> {
-    for (const fragment of scanExecFragments(
+    await this.process(context);
+  }
+
+  private async process(
+    context: PreprocessorContext,
+    parent?: Frame["parent"],
+  ): Promise<void> {
+    const scan = scanHostText(
       context.text,
       "SQL",
       DB2_DELIMITERS,
-    )) {
-      const { diagnostics, tokens, replacement } = this.tryParse(
-        fragment.bodyText,
+      SQL_TYPE_ANCHOR,
+    );
+    const frame: Frame = {
+      context,
+      procedures: scan.procedures,
+      parent,
+      blocks: new Map(),
+    };
+    // Strict text order across both kinds of constructs, so a copybook's declaration
+    // blocks queue against the including procedure in encounter order.
+    let anchorIndex = 0;
+    for (const fragment of scan.fragments) {
+      while (
+        anchorIndex < scan.anchors.length &&
+        scan.anchors[anchorIndex] < fragment.range.start
+      ) {
+        this.processSqlType(frame, scan.anchors[anchorIndex++]);
+      }
+      await this.processFragment(frame, fragment);
+    }
+    while (anchorIndex < scan.anchors.length) {
+      this.processSqlType(frame, scan.anchors[anchorIndex++]);
+    }
+    // Flushed only now: nested contexts processed above may have queued declarations
+    // against this frame when the enclosing procedure lives in this file.
+    for (const [offset, blocks] of frame.blocks) {
+      context.replace(
+        { start: offset, end: offset },
+        blocks.texts.slice().reverse().join(""),
       );
-      for (const diagnostic of diagnostics) {
-        context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
+    }
+  }
+
+  private async processFragment(
+    frame: Frame,
+    fragment: ExecFragment,
+  ): Promise<void> {
+    const { context } = frame;
+    const { diagnostics, tokens, replacement } = this.tryParse(
+      fragment.bodyText,
+    );
+    for (const diagnostic of diagnostics) {
+      context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
+    }
+    const rebased = tokens.map((token) => rebaseToken(token, fragment));
+    if (!fragment.terminated) {
+      // Broken statement (no `;` before EOF): record the classified tokens without
+      // touching the text - see `ExecFragment.terminated`. No include splicing either -
+      // the raw statement must stay in place for the host parser to diagnose.
+      context.replace(
+        { start: fragment.range.start, end: fragment.range.start },
+        "",
+        rebased,
+      );
+      return;
+    }
+    if (replacement?.type === "include") {
+      const nested = await context.include(
+        replacement.filePath,
+        fragment.range,
+        rebaseToken(replacement.token, fragment).range,
+        rebased,
+      );
+      if (nested) {
+        await this.process(nested, {
+          frame,
+          includeOffset: fragment.range.start,
+        });
       }
-      const rebased = tokens.map((token) => rebaseToken(token, fragment));
-      if (!fragment.terminated) {
-        // Broken statement (no `;` before EOF): record the classified tokens without
-        // touching the text - see `ExecFragment.terminated`. No include splicing either -
-        // the raw statement must stay in place for the host parser to diagnose.
-        context.replace(
-          { start: fragment.range.start, end: fragment.range.start },
-          "",
-          rebased,
-        );
-        continue;
+      return;
+    }
+    context.replace(fragment.range, "DO; END;", rebased);
+  }
+
+  /**
+   * Replaces one `SQL TYPE IS ...` clause with its PL/I attribute. A LOB/LOB FILE clause
+   * outside any procedure has nowhere to put its declarations, so it is dropped instead
+   * of left dangling as a `LIKE`-reference to a type that is never declared; an
+   * unrecognized clause (already diagnosed) is blanked as far as it was consumed, so the
+   * host parser never sees text the precompiler would have swallowed.
+   */
+  private processSqlType(frame: Frame, offset: number): void {
+    const { context } = frame;
+    const clause = parseSqlTypeClause(context.text, offset);
+    for (const diagnostic of clause.diagnostics) {
+      context.pushDiagnostic(diagnostic);
+    }
+    const range = { start: offset, end: clause.end };
+    const body = clause.body;
+    let replacement = "";
+    if (body?.kind === "locator") {
+      replacement = LOCATOR_TYPE;
+    } else if (body?.kind === "rowid") {
+      replacement = ROWID_TYPE;
+    } else if (body?.kind === "binary") {
+      replacement = `CHAR(${body.length}) ${body.varying ? "VARYING" : "NONVARYING"}`;
+    } else if (body?.kind === "lobFile") {
+      const blocks = this.enclosingProcedureBlocks(frame, offset);
+      if (blocks) {
+        if (!blocks.lobFile) {
+          blocks.lobFile = true;
+          blocks.texts.push(SQL_LOB_FILE_DECLS);
+        }
+        replacement = LOB_FILE_TYPE;
       }
-      if (replacement?.type === "include") {
-        await context.include(
-          replacement.filePath,
-          fragment.range,
-          rebaseToken(replacement.token, fragment).range,
-          rebased,
-        );
-        continue;
+    } else if (body?.kind === "lob") {
+      const blocks = this.enclosingProcedureBlocks(frame, offset);
+      if (blocks) {
+        if (!blocks.lobSizes.has(body.length)) {
+          blocks.lobSizes.add(body.length);
+          blocks.texts.push(sqlLobDecls(body.length));
+        }
+        replacement = LOB_TYPE(body.length);
       }
-      context.replace(fragment.range, "DO; END;", rebased);
+    }
+    context.replace(range, replacement, clause.tokens);
+  }
+
+  /**
+   * The declaration blocks of the procedure enclosing `offset` in `frame` - walking up to
+   * the including file's procedure at the include site when this file has none. A
+   * procedure whose header never closes (broken source) yields nothing: continuing at
+   * the parent would insert this file's declarations into an *ancestor* file.
+   */
+  private enclosingProcedureBlocks(
+    frame: Frame,
+    offset: number,
+  ): DeclBlocks | undefined {
+    let current = frame;
+    let position = offset;
+    for (;;) {
+      const end = findEnclosingProcedureEnd(
+        current.context.text,
+        current.procedures,
+        position,
+        DB2_DELIMITERS,
+      );
+      if (end === "unterminated") {
+        return undefined;
+      }
+      if (end !== undefined) {
+        let blocks = current.blocks.get(end);
+        if (!blocks) {
+          blocks = { lobFile: false, lobSizes: new Set(), texts: [] };
+          current.blocks.set(end, blocks);
+        }
+        return blocks;
+      }
+      if (!current.parent) {
+        return undefined;
+      }
+      position = current.parent.includeOffset;
+      current = current.parent.frame;
     }
   }
 
