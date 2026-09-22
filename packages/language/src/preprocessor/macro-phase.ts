@@ -154,6 +154,7 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
       marginsProcessor: this.marginsProcessor,
       createParseHandlers: (includeDocument) =>
         createMacroHandlers(opts, includeDocument),
+      cancellation: input.cancellation,
     });
 
     const serialized = serializeTokens(output.all, uri, text);
