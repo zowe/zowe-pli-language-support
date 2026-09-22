@@ -111,6 +111,7 @@ export function startLanguageServer(
         workspace: {
           workspaceFolders: {
             supported: true,
+            changeNotifications: true,
           },
           fileOperations: {},
         },
@@ -154,6 +155,15 @@ export function startLanguageServer(
     };
   });
   connection.onInitialized(async () => {
+    try {
+      // Note this is only valid after the initialization is done
+      // Otherwise, this throws (since this requires a client side registration)
+      connection.workspace.onDidChangeWorkspaceFolders((e) =>
+        compilationUnitHandler.changeWorkspaceFolders(e),
+      );
+    } catch {
+      // Some clients don't support this at all. This is fine.
+    }
     connection.client.register(DidChangeWatchedFilesNotification.type, {
       watchers: [
         {

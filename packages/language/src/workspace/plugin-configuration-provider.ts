@@ -576,6 +576,11 @@ export class PluginConfigurationProvider {
    */
   private previouslyPublishedUris: Set<string> = new Set();
 
+  /** URIs that currently carry plugin-config diagnostics published by this provider. */
+  get publishedDiagnosticUris(): ReadonlySet<string> {
+    return this.previouslyPublishedUris;
+  }
+
   /**
    * Asks the {@link GlobalConfigLoader} for the VS Code settings backing for
    * `pli.pgm_conf` and `pli.proc_grps` for the given workspace. In production
