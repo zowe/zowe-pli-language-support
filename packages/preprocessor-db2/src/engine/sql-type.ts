@@ -39,9 +39,8 @@ export const SQL_LOB_FILE_DECLS = `
   `;
 
 /**
- * Declarations `SQL TYPE IS ... LOB(n)` needs once per procedure and LOB size. Neither
- * block is documented anywhere - both were extracted from PL/I code after running it
- * through the real SQL preprocessor.
+ * Declarations `SQL TYPE IS ... LOB(n)` needs once per procedure and LOB size. Extracted by running
+ * PL/I code through the real SQL preprocessor.
  */
 export const sqlLobDecls = (length: number) => `
     DCL
@@ -77,9 +76,7 @@ interface ClauseToken {
 }
 
 /**
- * The IBM messages the real precompiler raises for a malformed clause. `code` carries the
- * severity suffix the language package appends to its own codes (`IBM3754IS`), so the
- * host reports both identically.
+ * The IBM messages the real precompiler raises for a malformed clause.
  */
 const MESSAGES = {
   IBM3754I: (typename: string) =>
@@ -125,10 +122,7 @@ const NUMBER = /\d+/y;
 
 /**
  * Parses the `SQL TYPE IS ...` clause starting at `offset` (which must be where the
- * anchor matched). Mirrors the PL/I parser's recovery: after a diagnosed token, parsing
- * silently continues with the next token that *does* fit, and only the tokens actually
- * consumed make up the clause's extent - anything unrecognized is left for the host
- * parser to see and diagnose.
+ * anchor matched).
  */
 export function parseSqlTypeClause(
   text: string,
@@ -271,9 +265,8 @@ class ClauseParser {
   }
 
   /**
-   * Consumes the next token when `predicate` accepts it (clearing any error state), or
-   * diagnoses it - once: like the PL/I parser, further mismatches stay silent until a
-   * token is accepted again.
+   * Consumes the next token when `predicate` accepts it, or diagnoses it once, like the PL/I
+   * parser.
    */
   private expect(
     predicate: (token: ClauseToken) => boolean,

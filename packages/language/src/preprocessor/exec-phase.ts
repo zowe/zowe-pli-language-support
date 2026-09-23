@@ -52,10 +52,8 @@ function toPliToken(token: ApiToken, uri: URI): t.Token {
 }
 
 /**
- * Builds the PL/I tokens for a classified api token (host coordinates). A qualified
- * host-variable identifier (`A.B`) yields one token per name part, located in the host
- * text (which may carry whitespace around the `.` that the engine's image lacks);
- * everything else yields one token covering the whole span.
+ * Builds the PL/I tokens for a classified api token (host coordinates). A qualified host-variable
+ * identifier (`A.B`) yields one token per name part.
  */
 function toPliTokens(token: ApiToken, uri: URI, hostText: string): t.Token[] {
   if (
@@ -110,9 +108,8 @@ interface ExecMetadata {
 }
 
 /**
- * One `ReferenceItem` per name part of a host variable (`A.B` -> `A`, `B`), chained as
- * member calls like the parser does. The chain has no AST parent: `anchor` lets the
- * linker adopt the generated statement (see `Reference.anchor`).
+ * One `ReferenceItem` per name part of a host variable (`A.B` -> `A`, `B`), chained as member calls
+ * like the parser does.
  */
 function buildExecReferences(
   parts: t.Token[],
@@ -145,27 +142,14 @@ function buildExecReferences(
 }
 
 /**
- * The two leading words of an `EXEC` statement, which the engines' classification does
- * not cover (they only see the body). Anchored at an edit's start: the engines record
- * their statement edits at the `EXEC` keyword (see `scanHostText`).
+ * The two leading words of an `EXEC` statement, which the engines' classification does not cover.
  */
 const EXEC_PREFIX = /(EXEC)\s+(\w+)/iy;
 
 /**
- * Turns what `preprocessor.execute(context)` recorded on one context into the LSP-facing
- * artifacts of the constructs it replaced - the language server itself has no notion of
- * an `EXEC` statement, a `SQL TYPE IS` attribute or a `DFHRESP(...)` reference. Per edit
- * carrying classified tokens this produces:
- *
- * - one plain token per classified sub-token (semantic highlighting via
- *   `Token.ppSemanticType`, position-based cursor resolution), plus `string`-typed tokens
- *   for `EXEC` and the leading `SQL`/`CICS` word of an `EXEC` statement,
- * - one linkable `Reference` per host-variable name part (see `buildExecReferences`),
- * - a regular `IncludeDirective` statement per `EXEC SQL INCLUDE`, riding the same
- *   hover/definition/validation paths as `%INCLUDE`.
- *
- * Must run after `preprocessor.execute`. The returned tokens are already remapped to
- * original-source space through `sourceMap` (this context's input-to-original map).
+ * Turns what `preprocessor.execute(context)` recorded on one context into the LSP-facing tokens,
+ * references and include directives of the constructs it replaced. Must run after
+ * `preprocessor.execute`.
  */
 function collectExecMetadata(
   context: PreprocessorContext,
@@ -266,10 +250,8 @@ function collectExecMetadata(
 }
 
 /**
- * Builds the `IncludeDirective`/`IncludeItemFile` node for an `EXEC SQL INCLUDE`
- * statement. The member token is reused from `pliTokens` (the same object the
- * position-based lookups find); an unresolved include yields a node without `filePath`,
- * exactly like the `%INCLUDE` handling.
+ * Builds the `IncludeDirective`/`IncludeItemFile` node for an `EXEC SQL INCLUDE` statement. An
+ * unresolved include yields a node without `filePath`, like `%INCLUDE`.
  */
 function buildIncludeDirective(
   context: PreprocessorContext,
@@ -304,11 +286,7 @@ function buildIncludeDirective(
 
 /**
  * Base class for the EXEC-based preprocessor phases (SQL and CICS). Builds one
- * `PreprocessorContext` over the phase's whole input text and hands it to the external
- * preprocessor, which finds and replaces everything it owns (its `EXEC` statements, its
- * host-side built-ins, the declarations it generates) in one text walk of its own - the
- * phase never tokenizes. What remains host-side is turning the recorded edits into LSP
- * metadata and registering `EXEC SQL INCLUDE`d files.
+ * `PreprocessorContext` over the phase's input text and hands it to the external preprocessor.
  */
 abstract class ExecPreprocessorPhase implements PreprocessorPhase {
   constructor(
@@ -317,16 +295,13 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
   ) {}
 
   /**
-   * Cheap pre-scan trigger: no match in the input text means none of the phase's
-   * constructs can occur, so the whole pass is skipped as a guaranteed identity
-   * transform. False positives merely run the phase.
+   * Cheap pre-scan trigger: no match in the input text means the whole pass can be skipped.
    */
   protected abstract readonly triggerPattern: RegExp;
 
   /**
-   * The external preprocessor that finds and replaces its own constructs directly
-   * against a `PreprocessorContext` - one instance per phase; it processes every context
-   * its `include` calls return itself.
+   * The external preprocessor that finds and replaces its own constructs against a
+   * `PreprocessorContext`.
    */
   protected abstract readonly preprocessor: Preprocessor;
 
@@ -391,12 +366,8 @@ abstract class ExecPreprocessorPhase implements PreprocessorPhase {
         if (!nested) {
           continue;
         }
-        // Register the included file for position-based LSP lookups, mirroring the
-        // MACRO phase's `runInclude`. First registration wins: a file the MACRO phase
-        // already `%INCLUDE`d keeps its (annotated) registration. The registration
-        // starts token-less - `PliLexer.mergeForeignTokens` fills in every final-stream
-        // token attributed to the file once the pipeline is done. The entry file is
-        // registered later, by `registerFileTokens`.
+        // Register the included file for position-based LSP lookups. First registration wins.
+        // Tokens are filled in by `PliLexer.mergeForeignTokens` once the pipeline is done.
         if (attempt.document && !unit.services.files.get(nested.file)) {
           unit.services.files.set({
             textDocument: attempt.document,
@@ -438,10 +409,8 @@ export class ExecCicsPreprocessorPhase extends ExecPreprocessorPhase {
 const HOST_DELIMITERS = { quotes: ["'", '"'], lineComments: [] };
 
 /**
- * Runs unconditionally, after every configured PP() phase: an `EXEC CICS`/`EXEC SQL`
- * statement still present at this point means the corresponding preprocessor was never
- * configured via `PP(CICS)`/`PP(SQL)`. Replaces the statement with `DO; END;` so the
- * final grammar parse doesn't also raise its own generic error for it.
+ * Runs after every configured PP() phase: an `EXEC CICS`/`EXEC SQL` statement still present means
+ * the corresponding preprocessor was never configured. Replaces it with `DO; END;`.
  */
 export class UnresolvedExecPhase implements PreprocessorPhase {
   constructor(

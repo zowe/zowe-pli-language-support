@@ -23,20 +23,12 @@ export interface RecordedInclude {
   name: string;
   statementRange: Range;
   nameRange: Range;
-  /** The nested recorder handed back to the preprocessor, when `name` had a text. */
   context?: RecordingPreprocessorContext;
 }
 
 /**
  * A minimal in-memory {@link PreprocessorContext} that records every call it receives.
- * A `Preprocessor`'s complete observable output flows through the interface's members
- * (edits with their classified token lists, diagnostics, include resolutions), so running
- * `execute` against this recorder and asserting on what was recorded is a full conformance
- * check of a preprocessor implementation - including a future external one talking over a
- * serialized boundary. `include` records the attempt and - like the host - blanks the
- * statement as an edit carrying its tokens; a name listed in `includeTexts` resolves to a
- * nested recorder over that text (reachable via the recorded include), any other name is
- * reported unresolved.
+ * Used for testing certain preprocessor features.
  */
 export class RecordingPreprocessorContext implements PreprocessorContext {
   readonly diagnostics: Diagnostic[] = [];

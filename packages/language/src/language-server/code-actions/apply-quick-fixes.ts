@@ -34,9 +34,7 @@ const JSONC_FORMAT = {
 } as const;
 
 /**
- * Client-side command that saves the given files after the action's `edit` has
- * been applied. The plugin-config reload only triggers on save, so quick fixes
- * that edit a config file must save it to take effect.
+ * Client-side command that saves the given files after the action's `edit` has been applied.
  */
 function saveFilesCommand(uris: string[]) {
   return {

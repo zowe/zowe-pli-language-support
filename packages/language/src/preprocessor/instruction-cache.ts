@@ -64,12 +64,8 @@ export interface FileInstructionResult {
 export class InstructionCache extends TextKeyedCache<FileInstructionResult> {}
 
 /**
- * Margins + comment-strip applied - `text` is what seeds the preprocessor phase pipeline.
- * `comments` (converted from `stripComments`' ranges) are registered for LSP services
- * (semantic highlighting, hover-on-comment, ...) - see `PliLexer.prepareSource`. Real
- * tokens are *not* cached here: `unit.services.files` must register the exact token
- * objects the real parser mutates with `.kind`/`.element` (`LexerResult.all`), not a
- * separately re-tokenized array - see `PliLexer.registerFileTokens`.
+ * Margins + comment-strip applied - `text` is what seeds the preprocessor phase pipeline. Real
+ * tokens are not cached here.
  */
 export interface PreparedSource {
   text: string;

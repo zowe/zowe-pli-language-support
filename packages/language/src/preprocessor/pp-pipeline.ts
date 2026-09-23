@@ -31,11 +31,8 @@ export interface PipelineResult {
 }
 
 /**
- * Runs the ordered `PP()` phases as `{text, sourceMap} -> {text, sourceMap}` transforms,
- * composing each phase's own map into a single map from the pipeline's original input text
- * all the way to the final phase's output text. The
- * caller (`PliLexer`) lexes that final text exactly once and uses the composed map to
- * recover original positions and cross-reference metadata.
+ * Runs the ordered `PP()` phases as `{text, sourceMap} -> {text, sourceMap}` transforms, composing
+ * each phase's map into a single map from the original input text to the final output text.
  */
 export async function runPipeline(
   phases: PreprocessorPhase[],
@@ -91,12 +88,8 @@ export async function runPipeline(
 }
 
 /**
- * A phase reports its diagnostics with offsets into its own *input* text (its tokenizer and
- * statement parsers run over that text), which only equals real document offsets while no
- * earlier phase has rewritten the text. Resolves each such range back through the map that
- * produced the phase's input, so reported positions always land in the original source.
- * Diagnostics for other files (e.g. raised inside an `EXEC SQL INCLUDE`d file, whose offsets
- * are already that file's own) and diagnostics without a range or uri pass through unchanged.
+ * Resolves a phase's diagnostic ranges (offsets into its own input text) back to the original
+ * source. Diagnostics for other files or without a range pass through unchanged.
  */
 function remapPhaseDiagnostics(
   diagnostics: Diagnostic[],

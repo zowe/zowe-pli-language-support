@@ -10,8 +10,7 @@
  */
 
 /**
- * Values the CICS translator substitutes for `DFHRESP(name)` - EXEC CICS
- * condition (EIBRESP/RESP) codes.
+ * Values the CICS translator substitutes for `DFHRESP(name)`.
  * Source: https://www.ibm.com/docs/en/cics-ts/6.x?topic=reference-eib-fields
  * (EIBRESP field), fetched 2026-09-22.
  */
@@ -214,7 +213,7 @@ export const CVDA_VALUES: Readonly<Record<string, number>> = {
   AUXSTOP: 314,
   AVAILABLE: 95,
   // The alphabetic table on the source page lists AWARE and NOTAWARE both as 1257;
-  // the numeric table has AWARE as 1256, which is the only consistent reading.
+  // TODO: Is this correct?
   AWARE: 1256,
   BACKOUT: 192,
   BACKTRANS: 397,

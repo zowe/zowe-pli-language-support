@@ -607,11 +607,8 @@ export interface AstNode {
 }
 
 /**
- * Shared frozen empty array used as the initial value of high-volume AST list
- * fields (statement labels, reference nodes, dimensions, ...). These fields
- * stay empty on the vast majority of nodes, and a fresh `[]` per node costs
- * 32+ bytes times millions of nodes on large files. Reading is transparent;
- * writers must swap in a real array first - see {@link appendList}.
+ * Shared frozen empty array used as the initial value of high-volume AST list fields. Writers must
+ * swap in a real array first - see {@link appendList}.
  */
 const EMPTY_LIST: readonly unknown[] = Object.freeze([]);
 
@@ -621,11 +618,8 @@ export function emptyList<T>(): T[] {
 }
 
 /**
- * Appends `item` to a lazily-allocated list field and returns the list to
- * store back: `node.field = appendList(node.field, item)`. The first append
- * replaces the shared frozen {@link emptyList} with a capacity-1 array literal
- * (a pushed-into empty array grows straight to capacity 16, wasting ~120 bytes
- * on the overwhelmingly common single-element case).
+ * Appends `item` to a lazily-allocated list field and returns the list to store back:
+ * `node.field = appendList(node.field, item)`.
  */
 export function appendList<T>(list: T[], item: T): T[] {
   if ((list as readonly unknown[]) === EMPTY_LIST) {

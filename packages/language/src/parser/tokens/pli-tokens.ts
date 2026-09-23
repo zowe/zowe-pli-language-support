@@ -116,16 +116,9 @@ export const WS = createToken({
   group: Lexer.SKIPPED,
 });
 /**
- * Finds the end of an `EXEC SQL`/`EXEC CICS` statement body starting at `from`: the index
- * of the terminating `;` (or `text.length` if none follows). Skips PL/I-style quoted
- * strings - `'...'` and `"..."`, each escaped by doubling its own quote (`''`/`""`) and
- * never spanning a line break - so a `;` inside a string literal doesn't end the statement.
- * This mirrors the quote handling of the authoritative `scanExecFragments`/`findTerminator`
- * scan in `preprocessor-api` (both the CICS and DB2 delimiter configs use exactly these
- * quotes), keeping the token extent the tokenizer produces in sync with the range the
- * preprocessor later replaces. The embedded language's *comment* syntax (`--`, `*>`, ...)
- * is language-specific and not knowable at the tokenizer level, so a `;` inside such a
- * comment still (wrongly) ends the fragment here - an accepted residual mismatch.
+ * Finds the end of an `EXEC SQL`/`EXEC CICS` statement body starting at `from`: the index of the
+ * terminating `;` (or `text.length` if none follows). Skips quoted strings, so a `;` inside a
+ * string literal doesn't end the statement.
  */
 export function findExecFragmentEnd(text: string, from: number): number {
   let i = from;
@@ -161,10 +154,7 @@ export const ExecFragment = createToken({
   line_breaks: true,
   start_chars_hint: ["C", "c", "S", "s"],
   pattern: (text, offset) => {
-    // Prefix word after `EXEC`, then everything up to the terminating `;` - via
-    // `findExecFragmentEnd`, so a `;` inside a quoted string doesn't end the statement
-    // and an empty statement body (`EXEC SQL;`) still yields a fragment. Kept in sync
-    // with the hand-written scan in `tokenizer/shared.ts` (`tokenizeIdentifier`).
+    // Prefix word after `EXEC`, then everything up to the terminating `;`.
     const regex = /(?<=EXEC\s*)[a-z]+/iy;
     regex.lastIndex = offset;
     const match = regex.exec(text);

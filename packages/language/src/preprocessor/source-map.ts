@@ -16,26 +16,21 @@ import { rightmostIndexLE } from "../utils/search";
 import { URI } from "../utils/uri";
 
 /**
- * Metadata attached to a span of *generated* text produced by a `replace`/`insert` edit
- * (see {@link Segment}). Carries only offsets - no line/column, see the module doc.
+ * Metadata attached to a span of generated text produced by a `replace`/`insert` edit.
  */
 export interface MappedToken {
   /**
-   * The token image this span represents, if any (e.g. the `DO` anchor of an `EXEC`
-   * replacement - see `preprocessor-context.ts`'s `createEdit`).
+   * The token image this span represents, if any.
    */
   name?: string;
   /** Offset within the generated text this segment produces. */
   startOffset: number;
   /**
-   * INCLUSIVE end offset (the last covered character), matching the lexer's
-   * `Token.endOffset` convention - unlike `Segment`'s exclusive `origEnd`/`genEnd`.
+   * INCLUSIVE end offset (the last covered character), matching `Token.endOffset`.
    */
   endOffset: number;
   /**
-   * The exact text this span was synthesized with - restored onto the final re-lexed
-   * token, since a span's casing may already have been decided (e.g. `RESCAN(ASIS)`)
-   * while the final lex applies one `caseUpper` setting to the whole file.
+   * The exact text this span was synthesized with, restored onto the final re-lexed token.
    */
   originalImage: string;
   /** Resolved cross-reference target, if this span should link somewhere (e.g. a `DCL`). */
@@ -43,26 +38,15 @@ export interface MappedToken {
   /** `Token.kind` to restore alongside `refTarget` - `getReferenceTarget`-style lookups key off both. */
   refKind?: CstNodeKind;
   /**
-   * The already-positioned token object this span was serialized from, when one exists
-   * (an included file's registered token, or an `EXEC` statement's `DO` anchor). The
-   * annotate pass emits this exact object instead of the re-lexed token, so the parser
-   * annotates the same object other registrations hold - which is what position-based
-   * go-to-definition, find-references, and semantic tokens need.
+   * The already-positioned token object this span was serialized from, when one exists. The
+   * annotate pass emits this exact object instead of the re-lexed token.
    */
   sourceToken?: Token;
 }
 
 /**
- * One contiguous span of a `SourceMap`. Spans are non-overlapping, cover the whole
- * generated text, and are sorted ascending by `genStart` (enabling binary search).
- *
- * - `verbatim`: a straight copy of the input, mapped `origStart + (offset - genStart)`.
- * - Non-verbatim: a `replace`/`insert` edit; the whole span maps back to the directive's
- *   range as one block, optionally with `tokens` describing sub-spans of interest.
- * - `foreign`: `origStart`/`origEnd` are real offsets into a *different* file (an
- *   `%INCLUDE`d file's tokens or a spliced-in nested context). `compose` must never
- *   subdivide or re-anchor a foreign segment through `first` - its offsets have no
- *   relationship to `first`'s generated space.
+ * One contiguous span of a `SourceMap`. Spans are non-overlapping, cover the whole generated text,
+ * and are sorted ascending by `genStart`. `foreign` spans carry offsets into a different file.
  */
 export interface Segment {
   origStart: number;
@@ -83,8 +67,8 @@ export interface OriginalPosition {
 }
 
 /**
- * Translates `tokens`' offsets from local (0-based within their generated span) to their
- * final position in the generated text. Shared by every producer of `Segment.tokens`.
+ * Translates `tokens`' offsets from local (0-based within their generated span) to their final
+ * position in the generated text.
  */
 export function translateLocalTokens(
   tokens: MappedToken[] | undefined,
@@ -103,25 +87,21 @@ export function translateLocalTokens(
 const segmentGenStart = (segment: Segment) => segment.genStart;
 
 /**
- * A bidirectional, offset-based map between an original source text and the text produced
- * by a preprocessor phase (or the composition of several phases). Backs `PreprocessorContext`
- * and the final annotate-pass in `PliLexer`. Sits on the tokenize hot path, so all lookups
- * are binary search - never linear in segment or token count.
+ * A bidirectional, offset-based map between an original source text and the text produced by a
+ * preprocessor phase. All lookups are binary search.
  */
 export class SourceMap {
   private constructor(private readonly segments: readonly Segment[]) {}
 
   /**
-   * The map's own segments, in `genStart` order. Exposed for
-   * `PreprocessorContext.include`'s splicing.
+   * The map's own segments, in `genStart` order.
    */
   getSegments(): readonly Segment[] {
     return this.segments;
   }
 
   /**
-   * A map for text that has not been touched by any preprocessor: every offset maps to
-   * itself. Used to seed the pipeline before the first phase runs.
+   * A map for text that has not been touched by any preprocessor: every offset maps to itself.
    */
   static identity(text: string, uri?: URI): SourceMap {
     const length = text.length;
@@ -138,8 +118,7 @@ export class SourceMap {
   }
 
   /**
-   * Builds a map from already-assembled segments (e.g. from `PreprocessorContext.build()`).
-   * Callers must supply segments sorted and contiguous per the {@link Segment} invariant.
+   * Builds a map from already-assembled segments, which must be sorted and contiguous.
    */
   static fromSegments(segments: Segment[]): SourceMap {
     return new SourceMap(segments);
@@ -162,9 +141,8 @@ export class SourceMap {
   }
 
   /**
-   * Maps an offset in the generated text back to its original source position.
-   * For non-verbatim segments this resolves to the start of the original directive's
-   * range (the whole replacement is one block - there is no finer-grained mapping).
+   * Maps an offset in the generated text back to its original source position. Non-verbatim
+   * segments resolve to the start of the original directive's range.
    */
   mapToOriginal(genOffset: number): OriginalPosition | undefined {
     const segment = this.segmentAt(genOffset);
@@ -178,10 +156,8 @@ export class SourceMap {
   }
 
   /**
-   * Maps an EXCLUSIVE end offset (as diagnostic ranges use) back to the original source.
-   * Mapping it with {@link mapToOriginal} directly would resolve an end landing exactly on
-   * a segment boundary through the *next* segment - possibly one in a different file - so
-   * this maps the last covered character (`end - 1`) and re-adds the 1.
+   * Maps an EXCLUSIVE end offset back to the original source by mapping the last covered character
+   * (`end - 1`) and re-adding the 1.
    */
   mapExclusiveEnd(start: number, end: number): OriginalPosition | undefined {
     if (end <= start) {
@@ -192,12 +168,8 @@ export class SourceMap {
   }
 
   /**
-   * Composes two maps: `first` maps `text -> A`, `second` maps `A -> B`; the result maps
-   * `text -> B`. This is how per-phase maps accumulate into one map from the original
-   * document to the final preprocessed text. Verbatim spans are subdivided against
-   * `first`'s segment boundaries so untouched source keeps offset-accurate positions
-   * across any number of phases; non-verbatim spans stay atomic blocks, with only their
-   * anchor resolved through `first`.
+   * Composes two maps: `first` maps `text -> A`, `second` maps `A -> B`;
+   * the result maps `text -> B`.
    */
   static compose(first: SourceMap, second: SourceMap): SourceMap {
     const composed: Segment[] = [];
@@ -218,10 +190,8 @@ export class SourceMap {
       // Cursor through the `second` segment's original span - offsets in `first`'s
       // generated space.
       let origOffset = secondSegment.origStart;
-      // Position into `first` by binary search per `second` segment, NOT with a monotonic
-      // cursor across segments: `serializeTokens` legitimately emits verbatim segments
-      // whose `origStart` rewinds (a `%DO` loop re-emits the same source tokens once per
-      // iteration), which a forward-only cursor would resolve through the wrong segment.
+      // Position into `first` by binary search per `second` segment: `serializeTokens` legitimately
+      // emits verbatim segments whose `origStart` rewinds.
       let firstIndex = rightmostIndexLE(
         firstSegments,
         origOffset,
@@ -292,10 +262,8 @@ export class SourceMap {
 const mappedTokenStartOffset = (token: MappedToken) => token.startOffset;
 
 /**
- * Returns the `tokens` whose span lies within `[start, end)`, shifted by `delta` into the
- * composed map's generated space. Tokens straddling either edge are dropped (split
- * metadata could never be re-attached). Located by binary search - a foreign segment can
- * carry one `MappedToken` per token of an entire included file.
+ * Returns the `tokens` whose span lies within `[start, end)`, shifted by `delta`. Tokens straddling
+ * either edge are dropped.
  */
 function sliceMappedTokens(
   tokens: MappedToken[] | undefined,

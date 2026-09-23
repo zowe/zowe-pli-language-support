@@ -78,38 +78,18 @@ function isApiToken(token: MappedToken | api.Token): token is api.Token {
 
 /**
  * A single `replace`/`insert` edit, recorded against the context's input text and applied
- * when {@link PreprocessorContext.build} runs. `tokens`, if given, are *local* to `text`
- * (0-based offsets into the replacement string) - `build()` translates them into their
- * final position in the generated text.
+ * when {@link PreprocessorContext.build} runs.
  */
 interface Edit {
   start: number;
   end: number;
   text: string;
   tokens?: MappedToken[];
-  /**
-   * The full classified api token list recorded with this edit (host coordinates), when
-   * the caller was a preprocessor - the metadata `collectExecMetadata` (exec-phase.ts)
-   * builds the statement's LSP-facing tokens and the include AST from.
-   */
   apiTokens?: api.Token[];
-  /** The generated `DO` keyword token, when `apiTokens` are present - see `createEdit`. */
   anchor?: PliToken;
-  /**
-   * Set by `include` instead of `text`/`tokens`: splices the nested context's result in
-   * as `foreign` spans. The nested context is built only when this context is, so the
-   * preprocessor can still record its edits after `include` returned. Always a
-   * zero-width edit.
-   */
   nested?: PreprocessorContext;
 }
 
-/**
- * One recorded `resolveInclude` call: `uri` is present iff resolution succeeded, and then
- * `context` is the nested context seeded with the file's (prepared) text and `document`
- * the file's raw text document. `exec-phase.ts` builds the `EXEC SQL INCLUDE` AST node
- * from this (matched by `range`) and walks `context` for the nested file's own metadata.
- */
 export interface IncludeAttempt {
   name: string;
   range?: Range;
@@ -126,12 +106,8 @@ export interface PreprocessorContextResult {
 
 /**
  * The shared text-editing API preprocessors (other than MACRO, which keeps its own
- * token-based API) use to turn their input text into
- * output text plus a `SourceMap` back to the original source.
- *
- * Usage: call `replace`/`insert` any number of times (in any order - they are sorted by
- * offset in `build()`), then call `build()` once to get the generated text and source map.
- * A context is single-use: create a new one per phase invocation.
+ * token-based API) use to turn their input text into output text plus a `SourceMap`
+ * back to the original source.
  */
 export class PreprocessorContext implements api.PreprocessorContext {
   private readonly edits: Edit[] = [];
@@ -143,10 +119,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
     private readonly inputText: string,
     readonly unit: CompilationUnit,
     /**
-     * Prepares an included file's raw text before it seeds a nested context - the same
-     * length-preserving margins-blanking + comment-stripping the pipeline applies to the
-     * entry file. Without it, a copybook's sequence-number columns and comments would
-     * reach the raw-text `EXEC` scan verbatim.
+     * Prepares an included file's raw text before it seeds a nested context.
      */
     private readonly prepareText?: (text: string, uri: URI) => string,
     /**
@@ -161,8 +134,6 @@ export class PreprocessorContext implements api.PreprocessorContext {
     private readonly cancellation?: CancellationToken,
     /**
      * The uris of the *ancestor* contexts this one was created from via `resolveInclude`.
-     * Used to refuse recursive includes without forbidding legal repeated *sibling*
-     * includes of the same file.
      */
     private readonly includeChain: readonly string[] = [],
   ) {}
@@ -183,9 +154,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * The `replace`/`insert` edits recorded so far (offsets into this context's input
-   * text). `collectExecMetadata` builds each `EXEC` statement's LSP-facing metadata from
-   * their recorded api tokens.
+   * The `replace`/`insert` edits recorded so far (offsets into this context's input text).
    */
   getEdits(): readonly Pick<Edit, "start" | "end" | "apiTokens" | "anchor">[] {
     return this.edits;
@@ -226,10 +195,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * Records one edit. With api tokens and a `DO; END;` replacement, a synthetic `DO`
-   * token is spliced in as the group's keyword: the parser attaches the generated
-   * statement to it, and the statement's references adopt that at link time (see
-   * `Reference.anchor`).
+   * Records one edit.
    */
   private createEdit(
     start: number,
@@ -272,14 +238,9 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * Resolves `name` (see {@link resolveInclude}) and splices the nested context's result
-   * in at `statementRange.start` as a zero-width edit, preserving the included file's own
-   * positions as `foreign` segments rather than collapsing it to one opaque block; its
-   * diagnostics are merged into this context's own, in the nested file's own coordinates.
-   * The include statement itself is blanked (with `tokens`, like `replace`) whether or
-   * not resolution succeeded. The returned context is unprocessed and built lazily - the
-   * preprocessor records the included file's own edits on it before this context is
-   * built (see `Edit.nested`).
+   * Resolves `name` and splices the nested context's result in at `statementRange.start` as a
+   * zero-width edit. The include statement itself is blanked whether or not resolution succeeded.
+   * The returned context is unprocessed and built lazily.
    */
   async include(
     name: string,
@@ -301,12 +262,8 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * Resolves an include name via the shared include resolver and returns a fresh context
-   * seeded with the resolved file's prepared text, or `undefined` if resolution failed.
-   * Resolution diagnostics land in this context's own sink either way. `statementRange`
-   * is the include statement's span (recorded as the attempt's `range`); `nameRange` (the
-   * member token) anchors the unresolved-include diagnostic, falling back to
-   * `statementRange`.
+   * Resolves an include name via the shared include resolver and returns a fresh context seeded
+   * with the resolved file's prepared text, or `undefined` if resolution failed.
    */
   async resolveInclude(
     name: string,
@@ -388,9 +345,8 @@ export class PreprocessorContext implements api.PreprocessorContext {
   }
 
   /**
-   * Applies the recorded edits and produces the generated text plus a `SourceMap` back to
-   * this context's input. Single linear pass over the (sorted) edits; nested contexts
-   * are built here, on the way.
+   * Applies the recorded edits and produces the generated text plus a `SourceMap` back to this
+   * context's input.
    */
   build(): PreprocessorContextResult {
     const sortedEdits = [...this.edits].sort(

@@ -53,18 +53,8 @@ function editItem(
 }
 
 /**
- * Provides completion items when the cursor is in a compiler-options context:
- *
- * - **Case A** - cursor is inside a `*PROCESS` / `%PROCESS` directive and NOT inside a
- *   parameter list: returns the canonical PLI option names filtered by fuzzy match.
- *   Parameter completion is not yet implemented.
- *
- * - **Case B** - cursor is on a fresh line whose only content so far is `*` or `%`
- *   (optionally followed by a partial `PROCESS`): returns `PROCESS` as a single
- *   keyword completion.
- *
- * Returns `[]` when neither case applies, signalling that the caller should fall
- * through to the normal PLI completion handler.
+ * Provides completion items when the cursor is in a compiler-options context. Returns `[]` when not
+ * applicable, so the caller falls through to the normal PLI completion handler.
  */
 export function compilerOptionsCompletionRequest(
   unit: CompilationUnit,
@@ -232,9 +222,8 @@ function getNextStepItems(
 }
 
 /**
- * Offers completion for the value inside an option's parentheses when that
- * option only has a fixed set of literal alternatives (e.g. `AGGREGATE(<|>)`
- * offers `DECIMAL` / `HEXADEC`). Returns `[]` when the cursor is not inside such a parameter list.
+ * Offers completion for the value inside an option's parentheses when that option only has a fixed
+ * set of literal alternatives. Returns `[]` otherwise.
  */
 function getParamAlternativeCompletions(
   doc: TextDocument,
@@ -291,13 +280,9 @@ function getParamAlternativeCompletions(
 }
 
 /**
- * Scans `text` character by character, skipping over string literals
- * and comments, and invoking `onChar` for every other character.
- * A `\n` that closes a line comment is reported too, since it still acts
- * as a token separator.
- *
- * Returns `true` if the scan ended inside an unterminated string, line
- * comment, or block comment.
+ * Scans `text` character by character, skipping string literals and comments, and invokes `onChar`
+ * for every other character. Returns `true` if the scan ended inside an unterminated string or
+ * comment.
  */
 function scanCode(
   text: string,
@@ -404,19 +389,8 @@ const IS_WHITESPACE = new Set([" ", "\t", "\n", "\r"]);
 const IS_DELIMITER = new Set([",", ")", ...IS_WHITESPACE]); // Characters that terminate the partial option name being typed.
 
 /**
- * Analyses the directive text (from after `*PROCESS` up to the cursor) to
- * determine the completion context.
- *
- * Returns `null` when option-name completion is not applicable, i.e. when the
- * cursor is inside an open parameter list (paren depth > 0), inside a block
- * or line comment, or inside a string literal.
- *
- * Otherwise returns:
- *  - `query`        - the partial option name being typed at the cursor
- *  - `immediateChar`- the character sitting directly before the query (used to
- *                     detect a cursor that is flush against a closing `)`)
- *  - `prevNonWs`    - the last non-whitespace character before the query (used
- *                     to suppress a `;` offer after a dangling `,`)
+ * Analyses the directive text (from after `*PROCESS` up to the cursor) to determine the completion
+ * context. Returns `null` when option-name completion is not applicable.
  */
 function analyzeDirectiveText(text: string): {
   query: string;

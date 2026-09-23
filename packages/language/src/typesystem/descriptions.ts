@@ -1021,10 +1021,8 @@ PARAMETER
 [CALL]]
 */
 
-// Shared frozen defaults: one type description exists per declaration node
-// (hundreds of thousands on large files), so a fresh default object per
-// description adds up to serious memory. These are read-only fallbacks - any
-// non-default value is passed in by the caller as its own object.
+// Shared frozen defaults: one type description exists per declaration node, so a fresh default
+// object per description adds up.
 const DEFAULT_UNALIGNED: Alignment = Object.freeze({
   type: AlignmentType.Unaligned,
 });

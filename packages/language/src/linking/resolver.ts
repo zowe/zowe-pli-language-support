@@ -511,8 +511,8 @@ export function getReferenceLocations(
 }
 
 /**
- * The reference locations of an already-resolved element - for callers that resolved the
- * token/element themselves (e.g. `renameRequest`) and should not repeat the lookup.
+ * The reference locations of an already-resolved element, for callers that resolved the element
+ * themselves.
  */
 export function getElementReferenceLocations(
   unit: CompilationUnit,

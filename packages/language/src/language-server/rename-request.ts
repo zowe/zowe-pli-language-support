@@ -41,10 +41,8 @@ export function renameRequest(
   if (!element) {
     return { kind: "none" };
   }
-  // A symbol whose declaration only exists in preprocessor-generated text (e.g. the CICS
-  // `DFH*` declarations) cannot be renamed: the declaration is regenerated on every run,
-  // so the rename can never take effect - refuse instead of silently renaming only the
-  // real-source usages.
+  // A symbol declared only in preprocessor-generated text (e.g. the CICS `DFH*` declarations)
+  // cannot be renamed.
   const nameToken = getNameToken(element);
   if (nameToken?.synthetic) {
     return { kind: "generated", name: nameToken.image };

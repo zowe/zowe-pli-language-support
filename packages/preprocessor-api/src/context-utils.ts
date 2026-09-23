@@ -30,10 +30,7 @@ export function rebaseDiagnostic(
 
 /**
  * Rebases a token collected against `fragment.bodyText` (0-based offsets) into `fragment`'s
- * host document, by adding `fragment.bodyOffset` - the token counterpart of
- * {@link rebaseDiagnostic}. Tokens handed to `PreprocessorContext.replace` must be in host
- * coordinates (see the `Preprocessor` docs), so every parse-local token goes through this
- * once.
+ * host document, by adding `fragment.bodyOffset`.
  */
 export function rebaseToken(token: Token, fragment: ExecFragment): Token {
   return {
@@ -47,10 +44,7 @@ export function rebaseToken(token: Token, fragment: ExecFragment): Token {
 
 /**
  * Describes the comment/string syntax a host language uses, so {@link scanExecFragments}
- * can skip over them - a `;` inside a string or comment doesn't end the statement, and
- * `EXEC <prefix>` text inside either doesn't start one. Confirmed against
- * `Db2SqlExecLexer.g4`/`CICSLexer.g4`: strings escape by doubling their own quote and
- * never span a line break; only CICS's `/* *\/` block comment can.
+ * can skip over them.
  */
 export interface Delimiters {
   /** Each entry is both the start and end delimiter (e.g. `'` or `"`). */
@@ -63,9 +57,7 @@ export interface Delimiters {
 
 /**
  * If a quoted string, line comment, or block comment starts exactly at `text[from]`, returns
- * the offset right after it ends; otherwise `undefined`. An unterminated quote or block comment
- * runs to the next line break (or EOF) - the same recovery both grammars themselves fall back
- * to, rather than consuming the rest of the file.
+ * the offset right after it ends; otherwise `undefined`. If unterminated, runs until the end of the line.
  */
 function skipDelimited(
   text: string,
@@ -139,24 +131,8 @@ export interface HostScanResult {
 }
 
 /**
- * One linear, quote-aware walk over host text - the entry point a {@link Preprocessor}
- * uses to find everything it owns instead of being handed pre-cut fragments:
- *
- * - every `EXEC <prefix> ...;` statement (case-insensitive) becomes an {@link ExecFragment};
- * - every `EXEC <other> ...;` statement is skipped as opaque text, so nothing inside another
- *   preprocessor's statement is ever matched (the host tokenizer treats any `EXEC` statement
- *   as one token, so this keeps both views of the text aligned);
- * - between statements, `anchor` (an engine's own host-side construct such as `SQL TYPE IS`
- *   or `DFHRESP(...)`; embedded case-insensitively, its own flags are ignored) and the
- *   `PROC` keywords are recorded by offset.
- *
- * Delimited constructs are skipped before any anchor is tried, so `EXEC` inside a host
- * string literal never matches. `delimiters` describes the *embedded* language and applies
- * only inside the prefix's own statements; everywhere else only the quote characters carry
- * over (the embedded language's comment markers are ordinary host code there - `X = A--B;`
- * is PL/I subtraction, not a DB2 `--` comment - and host comments were already blanked by
- * the pipeline's comment-strip pre-pass). An `EXEC` statement that never closes runs to
- * EOF (see `ExecFragment.terminated`) and ends the walk.
+ * One linear, quote-aware walk over host text to find pieces of preprocessor text within the text.
+ * Circumvents the need for a full lexing of the input text by looking for specific anchors.
  */
 export function scanHostText(
   text: string,
@@ -170,10 +146,6 @@ export function scanHostText(
     quotes: delimiters.quotes,
     lineComments: [],
   };
-  // `\s*` (not `\s+`) after the prefix: an empty statement body (`EXEC SQL;` or
-  // `EXEC SQL` at EOF) is still a fragment - the host tokenizer consumes it as one, so
-  // skipping it here would leak the raw statement to the final parse. The inner `\s+`
-  // is what prevents matching inside identifiers like `EXECUTE`.
   const pattern = new RegExp(
     String.raw`(?<!${IDENTIFIER_CHAR})(?:(EXEC)\s+(\w+)\s*|(X?PROC(?:EDURE)?)(?!${IDENTIFIER_CHAR})` +
       (anchor ? `|(${anchor.source})` : "") +
@@ -235,8 +207,7 @@ export function scanHostText(
 }
 
 /**
- * Scans `text` for every `EXEC <prefix> ...;` statement - {@link scanHostText} reduced to
- * its fragments.
+ * Scans `text` for every `EXEC <prefix> ...;` statement. Used by tests.
  */
 export function scanExecFragments(
   text: string,
@@ -247,13 +218,8 @@ export function scanExecFragments(
 }
 
 /**
- * The offset right after the terminating `;` of the procedure statement enclosing
- * `offset` - where a preprocessor inserts the declarations a procedure needs once. The
- * enclosing procedure is the nearest `PROC` keyword before `offset` (from a
- * {@link scanHostText} `procedures` index); its `;` is found quote-aware. Returns
- * `"unterminated"` when that keyword's statement never closes (broken source: callers
- * must not fall back to an enclosing file's procedure), and `undefined` when there is no
- * procedure before `offset` at all.
+ * Searches for the start of the current PL/I procedure. Allows the preprocessors
+ * to place code at the start of a given procedure (both SQL and CICS do this).
  */
 export function findEnclosingProcedureEnd(
   text: string,
