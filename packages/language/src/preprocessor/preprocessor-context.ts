@@ -37,7 +37,6 @@ import {
   translateLocalTokens,
 } from "./source-map";
 import * as api from "preprocessor-api";
-import { createTokenInstance, DO, Token as PliToken } from "../parser/tokens";
 
 /** Converts an api-shaped `Severity` to the language package's own enum. */
 function fromApiSeverity(severity: api.Severity): Severity {
@@ -86,7 +85,6 @@ interface Edit {
   text: string;
   tokens?: MappedToken[];
   apiTokens?: api.Token[];
-  anchor?: PliToken;
   nested?: PreprocessorContext;
 }
 
@@ -156,7 +154,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
   /**
    * The `replace`/`insert` edits recorded so far (offsets into this context's input text).
    */
-  getEdits(): readonly Pick<Edit, "start" | "end" | "apiTokens" | "anchor">[] {
+  getEdits(): readonly Pick<Edit, "start" | "end" | "apiTokens">[] {
     return this.edits;
   }
 
@@ -215,25 +213,12 @@ export class PreprocessorContext implements api.PreprocessorContext {
         mapped.push(token);
       }
     }
-    let anchor: PliToken | undefined;
-    if (apiTokens.length > 0 && /^DO\b/i.test(text)) {
-      anchor = createTokenInstance("DO", "DO", DO, start, end - 1, this.file);
-      anchor.synthetic = true;
-      mapped.push({
-        name: "DO",
-        startOffset: 0,
-        endOffset: 1,
-        originalImage: "DO",
-        sourceToken: anchor,
-      });
-    }
     return {
       start,
       end,
       text,
       tokens: mapped.length > 0 ? mapped : undefined,
       apiTokens: apiTokens.length > 0 ? apiTokens : undefined,
-      anchor,
     };
   }
 

@@ -57,8 +57,9 @@ export interface RuleSettings {
 }
 
 /**
- * A cross-option post-processing check colocated with the rule it belongs to. Runs once, after all
- * directives have been translated.
+ * A cross-option, whole-pipeline post-processing check colocated with the rule
+ * it belongs to. Runs once, after all directives/configuration have been
+ * translated (see {@link Translator.postProcess}).
  */
 export interface PostProcessHook<
   T extends CompilerOptionsPP = CompilerOptionsPP,
@@ -71,8 +72,10 @@ export interface PostProcessHook<
 }
 
 /**
- * A {@link PostProcessHook} registered via {@link RuleBuilder.postProcess}. `run` additionally
- * receives a `getOwnToken` accessor for the option's most recent occurrence.
+ * A {@link PostProcessHook} registered via {@link RuleBuilder.postProcess},
+ * colocated with the specific rule it belongs to. Its `run` function
+ * receives an additional `getOwnToken` accessor that returns
+ * the token of the option's most recent occurrence.
  */
 export interface RuleAwarePostProcessHook<
   T extends CompilerOptionsPP = CompilerOptionsPP,
@@ -113,8 +116,18 @@ type AppliedRuleRecord = {
 };
 
 /**
- * Fluent handle returned by {@link Translator.rule} for attaching the negative form, settings, and
- * post-process hooks via chaining.
+ * Fluent handle returned by {@link Translator.rule}, allowing the negative
+ * form, settings, and post-process hooks to be attached via chaining instead
+ * of a large positional argument list or a config object.
+ *
+ * @example
+ * ```ts
+ * translator
+ *   .rule(["PP"], (option, options) => { ... })
+ *   .negative(["NOPP"], (option, options) => { ... })
+ *   .settings({ allowDuplicates: true, recompile: true })
+ *   .postProcess({ id: "pp.limits", run: (options, acceptor) => { ... } });
+ * ```
  */
 export class RuleBuilder<T extends CompilerOptionsPP = CompilerOptionsPP> {
   constructor(
@@ -170,14 +183,20 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   private rules: TranslatorRule<T>[] = [];
 
   /**
-   * A cross-option post-processing check colocated with the rule it belongs to. Runs once, after
-   * all directives have been translated.
+   * A cross-option, whole-pipeline post-processing check colocated with the rule
+   * it belongs to. Runs once, after all directives/configuration have been
+   * translated (see {@link Translator.postProcess}).
    */
   private postProcessHooks: PostProcessHook<T>[] = [];
 
   /**
-   * Registers a rule. Returns a {@link RuleBuilder} so the negative form, settings, and
-   * post-process hooks can be attached via chaining.
+   * Registers a rule. Returns a {@link RuleBuilder} so the negative form,
+   * settings, and post-process hooks can optionally be attached via
+   * chaining, e.g. `.negative(...).settings(...).postProcess(...)`.
+   *
+   * The positional `negative`/`negativeTranslate`/`settings` parameters are
+   * still accepted directly for simple rules/call sites that don't need
+   * chaining.
    */
   rule(
     positive: string[],
@@ -208,8 +227,9 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   }
 
   /**
-   * Returns the token of the option occurrence that most recently applied the given rule, or
-   * `undefined`.
+   * Returns the token of the option occurrence that most recently,
+   * explicitly applied the given rule, or `undefined` if it was never
+   * explicitly applied.
    */
   getRuleToken(rule: TranslatorRule<T>): CompilerOption["token"] | undefined {
     if (this.isRuleApplied(rule)) {
@@ -299,8 +319,15 @@ export class Translator<T extends CompilerOptionsPP = CompilerOptionsPP> {
   }
 
   /**
-   * Runs all registered {@link PostProcessHook}s once, in topological order of their `dependsOn`
-   * hooks. A hook that depends on itself is skipped and logged.
+   * Runs all registered {@link PostProcessHook}s once, each after its
+   * `dependsOn` hooks have run. Hooks are visited in registration order;
+   * whenever a hook has unvisited dependencies, those are visited first, so
+   * the overall order matches a topological sort. Implemented as an
+   * iterative (stack-based) DFS rather than recursion.
+   *
+   * If a hook depends (directly or transitively) on itself, that hook is
+   * skipped and logged via `console.error` rather than aborting the whole
+   * call; all other, non-cyclic hooks still run.
    */
   postProcess(): void {
     if (this.postProcessHooks.length === 0) {

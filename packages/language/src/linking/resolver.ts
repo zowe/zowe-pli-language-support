@@ -26,7 +26,7 @@ import {
   SyntaxKind,
   SyntaxNode,
 } from "../syntax-tree/ast";
-import { binaryTokenSearch } from "../utils/search";
+import { binaryTokenIndexSearch, binaryTokenSearch } from "../utils/search";
 import {
   getNameToken,
   getReference,
@@ -388,6 +388,127 @@ function getRelevantSymbol(
   return nodes[0];
 }
 
+/** The nearest `Statement` wrapper above `node`, if the node sits in a statement at all. */
+function findParentStatement(node: SyntaxNode): Statement | undefined {
+  let current: SyntaxNode | null = node;
+  while (current) {
+    if (current.kind === SyntaxKind.Statement) {
+      return current;
+    }
+    current = current.container;
+  }
+  return undefined;
+}
+
+/**
+ * The block whose `END` statement `node` belongs to, if any - walking up no further than
+ * the statement `node` sits in. Blocks register their `END` with the *enclosing* scope,
+ * so a reference positioned right before it must not adopt it directly.
+ */
+function findBlockEndedBy(node: SyntaxNode): SyntaxNode | undefined {
+  let current: SyntaxNode = node;
+  while (current.container && current.kind !== SyntaxKind.Statement) {
+    const parent = current.container;
+    if ("end" in parent && parent.end === current) {
+      return parent;
+    }
+    current = parent;
+  }
+  return undefined;
+}
+
+/**
+ * The top-level statement inside `block` that `node` belongs to, or `undefined` when
+ * `node` is not inside `block` (e.g. it is the block's own header).
+ */
+function findStatementWithin(
+  node: SyntaxNode,
+  block: SyntaxNode,
+): Statement | undefined {
+  let statement: Statement | undefined;
+  let current: SyntaxNode | null = node;
+  while (current && current !== block) {
+    if (current.kind === SyntaxKind.Statement) {
+      statement = current;
+    }
+    current = current.container;
+  }
+  return current === block ? statement : undefined;
+}
+
+/**
+ * Gives a reference a preprocessor phase emitted without an AST parent (an `EXEC`
+ * statement's host variable) a place in the tree by adopting a parsed statement next to
+ * its source position. Returns `false` when the file has no statement to adopt.
+ */
+function adoptSurroundingStatement(
+  unit: CompilationUnit,
+  reference: Reference,
+): boolean {
+  // The reference's own token is registered in its file, so the file's token list is
+  // the map from its position to the parsed statements around it.
+  const token = reference.token;
+  const tokens = token.uri && unit.services.files.getTokens(token.uri);
+  if (!tokens?.length) {
+    return false;
+  }
+  let root: SyntaxNode = reference.owner;
+  while (root.container) {
+    root = root.container;
+  }
+  // Adoption is only kept when it actually yields a scope - a token whose element lives
+  // in the preprocessor AST (a `%` directive) is skipped this way.
+  const adopt = (parent: SyntaxNode): boolean => {
+    root.container = parent;
+    if (unit.scopeCaches.regular.get(reference.owner)) {
+      return true;
+    }
+    root.container = null;
+    return false;
+  };
+  const index = Math.max(0, binaryTokenIndexSearch(tokens, token.startOffset));
+  // Prefer the statement that follows: the reference then counts as being before it in
+  // statement order, which is what the unset-variable check needs.
+  for (let i = index; i < tokens.length; i++) {
+    const element = tokens[i].element;
+    if (!element || tokens[i].startOffset < token.startOffset) {
+      continue;
+    }
+    const block = findBlockEndedBy(element);
+    if (block) {
+      // The following statement is the block's `END`, which is registered with the
+      // *enclosing* scope. The reference is the block's last statement, so adopt the
+      // statement before it inside the block instead ...
+      for (let j = i - 1; j >= 0; j--) {
+        const previous = tokens[j].element;
+        const statement = previous && findStatementWithin(previous, block);
+        if (statement) {
+          return adopt(statement);
+        }
+      }
+      // ... or the block itself when the reference is its only statement.
+      if (adopt(block)) {
+        return true;
+      }
+      continue;
+    }
+    const statement = findParentStatement(element);
+    if (statement && adopt(statement)) {
+      return true;
+    }
+  }
+  // Nothing follows in this file (the `EXEC` statement ends a copybook): fall back to
+  // the statement before it.
+  for (let i = Math.min(index, tokens.length - 1); i >= 0; i--) {
+    const element = tokens[i].element;
+    const statement = element && findParentStatement(element);
+    if (statement && adopt(statement)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function resolveReference(
   unit: CompilationUnit,
   reference: Reference,
@@ -398,14 +519,7 @@ function resolveReference(
   }
 
   let scope = unit.scopeCaches.get(reference.owner);
-  if (!scope && reference.anchor?.element) {
-    // A preprocessor-emitted reference has no AST parent: adopt the statement parsed
-    // from the generated text, so scope and statement order come from it.
-    let root: SyntaxNode = reference.owner;
-    while (root.container) {
-      root = root.container;
-    }
-    root.container = reference.anchor.element;
+  if (!scope && adoptSurroundingStatement(unit, reference)) {
     scope = unit.scopeCaches.get(reference.owner);
   }
   if (!scope) {
