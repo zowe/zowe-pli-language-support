@@ -74,4 +74,24 @@ export namespace Commands {
    * compilation unit containing the active .pli file in a read-only editor.
    */
   export const SHOW_PREPROCESSED_TEXT = "pli.showPreprocessedText";
+
+  /**
+   * Client-side command to encode the selected workspace files into a
+   * playground share link and copy it to the clipboard.
+   */
+  export const SHARE_PLAYGROUND_LINK = "pli.shareAsPlaygroundLink";
+
+  /**
+   * Client-side command to decode a playground share link and write its
+   * files into a new subfolder of the current workspace.
+   */
+  export const IMPORT_PLAYGROUND_LINK = "pli.importPlaygroundLink";
+
+  /**
+   * Client-side command to decode a playground share link, write its files
+   * into a fresh directory outside any open workspace, and open that
+   * directory as a new window.
+   */
+  export const IMPORT_PLAYGROUND_LINK_NEW_WINDOW =
+    "pli.importPlaygroundLinkToNewWindow";
 }

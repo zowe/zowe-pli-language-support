@@ -44,6 +44,21 @@
         "title": "Show Preprocessed Text",
         "category": "PL/I",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "pli.shareAsPlaygroundLink",
+        "title": "Share as Playground Link",
+        "category": "PL/I"
+      },
+      {
+        "command": "pli.importPlaygroundLink",
+        "title": "Import Playground Link to Current Workspace",
+        "category": "PL/I"
+      },
+      {
+        "command": "pli.importPlaygroundLinkToNewWindow",
+        "title": "Import Playground Link to New Window",
+        "category": "PL/I"
       }
     ],
     "menus": {
@@ -64,6 +79,18 @@
           "command": "pli.goToProcessGroup",
           "when": "resourceLangId == pli",
           "group": "navigation@11"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "pli.shareAsPlaygroundLink",
+          "group": "6_copypath"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "pli.shareAsPlaygroundLink",
+          "when": "false"
         }
       ]
     },
@@ -177,6 +204,16 @@
           "default": {
             "pgroups": []
           }
+        },
+        "pli.playgroundUrl": {
+          "type": "string",
+          "default": "https://zowe.github.io/zowe-pli-language-support/main/",
+          "description": "Base URL of the PL/I playground used by the \"Share as Playground Link\" command."
+        },
+        "pli.playgroundImportDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Base directory used by the \"Import Playground Link to New Window\" command, as a file URI (e.g. \"file:///home/me/pli-playgrounds\"). Leave empty to use the extension's private storage directory."
         }
       }
     }

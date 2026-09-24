@@ -13,6 +13,11 @@ import { Commands, Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
 import { applyUserPluginConfig } from "../common/user-plugin-config";
+import {
+  registerImportPlaygroundLinkCommand,
+  registerImportPlaygroundLinkToNewWindowCommand,
+  registerShareAsPlaygroundLinkCommand,
+} from "./playground-link";
 
 /**
  * Opens (or focuses) the config entry described by `configLocation` and
@@ -110,5 +115,9 @@ export function registerCommands(
       "pli/getProcessGroupLocation",
       client,
     ),
+
+    registerShareAsPlaygroundLinkCommand(),
+    registerImportPlaygroundLinkCommand(),
+    registerImportPlaygroundLinkToNewWindowCommand(context),
   );
 }
