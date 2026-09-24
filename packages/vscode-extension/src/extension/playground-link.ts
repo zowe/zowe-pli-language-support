@@ -197,10 +197,34 @@ export function registerImportPlaygroundLinkCommand(): vscode.Disposable {
   );
 }
 
-async function importPlaygroundLink(): Promise<void> {
+export function registerImportPlaygroundLinkToNewWindowCommand(
+  context: vscode.ExtensionContext,
+): vscode.Disposable {
+  return vscode.commands.registerCommand(
+    Commands.IMPORT_PLAYGROUND_LINK_NEW_WINDOW,
+    async () => {
+      try {
+        await importPlaygroundLinkToNewWindow(context);
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `Failed to import playground link: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    },
+  );
+}
+
+/**
+ * Prompts for a playground link and decodes it, showing the appropriate
+ * error/warning message and returning `undefined` if the link is missing,
+ * unreadable, or empty.
+ */
+async function promptAndParseSharedWorkspace(): Promise<
+  SharedWorkspace | undefined
+> {
   const link = await promptForPlaygroundLink();
   if (!link) {
-    return;
+    return undefined;
   }
 
   const sharedWorkspace = parseSharedWorkspaceFromLink(link);
@@ -208,22 +232,26 @@ async function importPlaygroundLink(): Promise<void> {
     vscode.window.showErrorMessage(
       "This link's workspace data could not be read.",
     );
-    return;
+    return undefined;
   }
   if (sharedWorkspace.files.length === 0) {
     vscode.window.showWarningMessage(
       "This playground link doesn't contain any files.",
     );
-    return;
+    return undefined;
   }
+  return sharedWorkspace;
+}
 
-  const workspaceFolder = await resolveTargetWorkspaceFolder();
-  if (!workspaceFolder) {
-    return;
-  }
-
-  const destinationRoot = await createImportSubfolder(workspaceFolder.uri);
-
+/**
+ * Writes every file of `sharedWorkspace` under `destinationRoot`, skipping
+ * (rather than throwing on) any file whose virtual path doesn't map to a
+ * safe, contained location.
+ */
+async function writeSharedWorkspaceFiles(
+  sharedWorkspace: SharedWorkspace,
+  destinationRoot: vscode.Uri,
+): Promise<{ written: Map<string, vscode.Uri>; skipped: string[] }> {
   const written = new Map<string, vscode.Uri>();
   const skipped: string[] = [];
   for (const file of sharedWorkspace.files) {
@@ -241,6 +269,36 @@ async function importPlaygroundLink(): Promise<void> {
     );
     written.set(file.uri, targetUri);
   }
+  return { written, skipped };
+}
+
+function warnAboutSkippedFiles(skipped: string[]): void {
+  if (skipped.length === 0) {
+    return;
+  }
+  const shown = skipped.slice(0, 3).join(", ");
+  const more = skipped.length > 3 ? ` and ${skipped.length - 3} more` : "";
+  vscode.window.showWarningMessage(
+    `Skipped ${skipped.length} file${skipped.length === 1 ? "" : "s"} with an unsafe or unexpected path: ${shown}${more}.`,
+  );
+}
+
+async function importPlaygroundLink(): Promise<void> {
+  const sharedWorkspace = await promptAndParseSharedWorkspace();
+  if (!sharedWorkspace) {
+    return;
+  }
+
+  const workspaceFolder = await resolveTargetWorkspaceFolder();
+  if (!workspaceFolder) {
+    return;
+  }
+
+  const destinationRoot = await createImportSubfolder(workspaceFolder.uri);
+  const { written, skipped } = await writeSharedWorkspaceFiles(
+    sharedWorkspace,
+    destinationRoot,
+  );
 
   if (written.size === 0) {
     vscode.window.showErrorMessage(
@@ -267,13 +325,59 @@ async function importPlaygroundLink(): Promise<void> {
     await vscode.commands.executeCommand("revealInExplorer", destinationRoot);
   }
 
-  if (skipped.length > 0) {
-    const shown = skipped.slice(0, 3).join(", ");
-    const more = skipped.length > 3 ? ` and ${skipped.length - 3} more` : "";
-    vscode.window.showWarningMessage(
-      `Skipped ${skipped.length} file${skipped.length === 1 ? "" : "s"} with an unsafe or unexpected path: ${shown}${more}.`,
-    );
+  warnAboutSkippedFiles(skipped);
+}
+
+async function importPlaygroundLinkToNewWindow(
+  context: vscode.ExtensionContext,
+): Promise<void> {
+  const sharedWorkspace = await promptAndParseSharedWorkspace();
+  if (!sharedWorkspace) {
+    return;
   }
+
+  const baseRoot = await resolveNewWindowBaseRoot(context);
+  const destinationRoot = await createImportSubfolder(baseRoot);
+  const { written, skipped } = await writeSharedWorkspaceFiles(
+    sharedWorkspace,
+    destinationRoot,
+  );
+
+  if (written.size === 0) {
+    vscode.window.showErrorMessage(
+      "None of the files in this playground link could be imported safely.",
+    );
+    return;
+  }
+
+  // The window is about to reload into `destinationRoot`, so this is the
+  // last chance to warn about skipped files - there's no "Reveal in
+  // Explorer" follow-up like the current-workspace import has, since the
+  // window (and its explorer) won't exist until after the reload.
+  warnAboutSkippedFiles(skipped);
+
+  await vscode.commands.executeCommand("vscode.openFolder", destinationRoot, {
+    forceNewWindow: true,
+  });
+}
+
+/**
+ * Resolves the base directory new-window imports are written under: the
+ * user-configured `pli.playgroundImportDirectory`, if set, otherwise the
+ * extension's private storage directory. Unlike a real workspace folder,
+ * this doesn't require any folder to already be open, and unlike an OS temp
+ * directory, it's writable through `vscode.workspace.fs` in both the
+ * desktop and web extension hosts.
+ */
+async function resolveNewWindowBaseRoot(
+  context: vscode.ExtensionContext,
+): Promise<vscode.Uri> {
+  const configured = Settings.getInstance().playgroundImportDirectory.trim();
+  const root = configured
+    ? vscode.Uri.parse(configured)
+    : context.globalStorageUri;
+  await vscode.workspace.fs.createDirectory(root);
+  return root;
 }
 
 async function promptForPlaygroundLink(): Promise<string | undefined> {

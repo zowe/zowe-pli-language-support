@@ -12,8 +12,10 @@
 import { Commands, Messages } from "pli-language";
 import * as vscode from "vscode";
 import { BaseLanguageClient } from "vscode-languageclient";
+import { applyUserPluginConfig } from "../common/user-plugin-config";
 import {
   registerImportPlaygroundLinkCommand,
+  registerImportPlaygroundLinkToNewWindowCommand,
   registerShareAsPlaygroundLinkCommand,
 } from "./playground-link";
 
@@ -116,5 +118,6 @@ export function registerCommands(
 
     registerShareAsPlaygroundLinkCommand(),
     registerImportPlaygroundLinkCommand(),
+    registerImportPlaygroundLinkToNewWindowCommand(context),
   );
 }

@@ -80,4 +80,8 @@ export class Settings {
       "https://zowe.github.io/zowe-pli-language-support/main/",
     );
   }
+
+  public get playgroundImportDirectory(): string {
+    return this.getConfiguration().get("playgroundImportDirectory", "");
+  }
 }
