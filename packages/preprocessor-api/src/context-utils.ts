@@ -53,6 +53,13 @@ export interface Delimiters {
   lineComments: string[];
   /** Start/end pair; may span multiple lines. */
   blockComments?: { start: string; end: string }[];
+  /**
+   * Strings may span lines, use `\` escapes, and an unterminated one covers the rest of
+   * its opening line - the PL/I host lexer's string semantics (`STRING_TERM`). Set on the
+   * delimiters used for walks over *host* text; an engine's own `Delimiters` describe the
+   * embedded language, whose strings all end at a line break.
+   */
+  multilineStrings?: boolean;
 }
 
 /**
@@ -67,17 +74,32 @@ function skipDelimited(
   const ch = text[from];
   if (delimiters.quotes.includes(ch)) {
     let i = from + 1;
-    while (i < text.length && text[i] !== "\n" && text[i] !== "\r") {
-      if (text[i] === ch) {
+    while (i < text.length) {
+      const current = text[i];
+      if (current === ch) {
         if (text[i + 1] === ch) {
           i += 2; // doubled-quote escape (`''`/`""`) - still inside the string
           continue;
         }
         return i + 1; // closing quote
       }
+      if (delimiters.multilineStrings) {
+        if (current === "\\") {
+          i += 2; // backslash escape, like the host lexer's `STRING_TERM`
+          continue;
+        }
+      } else if (current === "\n" || current === "\r") {
+        return i; // unterminated - stop at the line break, matching the embedded grammars
+      }
       i++;
     }
-    return i; // unterminated - stop at the line break (or EOF), matching the grammars
+    if (delimiters.multilineStrings) {
+      // No closing quote before EOF: the host treats the rest of the opening line as the
+      // string (see the language package's `stripComments`), so resume on the next line.
+      const lineEnd = text.indexOf("\n", from);
+      return lineEnd === -1 ? text.length : lineEnd;
+    }
+    return i; // unterminated - stop at EOF
   }
   for (const marker of delimiters.lineComments) {
     if (text.startsWith(marker, from)) {
@@ -114,6 +136,20 @@ function findTerminator(
 /** A character that can be part of a PL/I identifier (`#`, `@` and `$` on top of `\w`). */
 const IDENTIFIER_CHAR = "[A-Za-z0-9_#@$]";
 
+/**
+ * One point where the innermost enclosing procedure changes: a `PROC` keyword, or a
+ * block-closing `END` that closed one or more procedures.
+ */
+export interface ProcedureCheckpoint {
+  /** Text offset the checkpoint takes effect at. */
+  offset: number;
+  /**
+   * Start offset of the `PROC` keyword of the procedure enclosing text at and after
+   * `offset` (until the next checkpoint), or `undefined` outside any procedure.
+   */
+  procedure?: number;
+}
+
 /** What one {@link scanHostText} walk found. */
 export interface HostScanResult {
   /** The scanned prefix's own `EXEC` statements, in text order. */
@@ -124,10 +160,58 @@ export interface HostScanResult {
    */
   anchors: number[];
   /**
-   * Start offsets of every `PROC`/`PROCEDURE` (and `XPROC`/`XPROCEDURE`) keyword outside
-   * strings and `EXEC` statements, ascending - see {@link findEnclosingProcedureEnd}.
+   * The enclosing-procedure checkpoints, ascending by offset - built by tracking
+   * `PROC`/`PROCEDURE` (and `XPROC`/`XPROCEDURE`), `DO`, `BEGIN`, `SELECT` and `END`
+   * outside strings and `EXEC` statements, including labeled `END`s that close several
+   * blocks at once (`RULES(MULTICLOSE)`). See {@link findEnclosingProcedureEnd}.
    */
-  procedures: number[];
+  procedures: ProcedureCheckpoint[];
+}
+
+const WHITESPACE = /\s/;
+const IDENTIFIER_CHAR_PATTERN = new RegExp(IDENTIFIER_CHAR);
+
+/** The `label:` names immediately preceding `at` (e.g. both of `A: B: PROC`), uppercased. */
+function labelsBefore(text: string, at: number): string[] {
+  const labels: string[] = [];
+  let i = at - 1;
+  for (;;) {
+    while (i >= 0 && WHITESPACE.test(text[i])) {
+      i--;
+    }
+    if (i < 0 || text[i] !== ":") {
+      break;
+    }
+    i--;
+    while (i >= 0 && WHITESPACE.test(text[i])) {
+      i--;
+    }
+    const end = i;
+    while (i >= 0 && IDENTIFIER_CHAR_PATTERN.test(text[i])) {
+      i--;
+    }
+    if (i === end) {
+      // A `:` not preceded by an identifier (e.g. a `(condition):` prefix's `)`).
+      break;
+    }
+    labels.push(text.slice(i + 1, end + 1).toUpperCase());
+  }
+  return labels;
+}
+
+/** A block-closing `END` statement's tail: an optional closing label, then the `;`. */
+const END_STATEMENT = new RegExp(
+  String.raw`\s*(${IDENTIFIER_CHAR}+)?\s*;`,
+  "y",
+);
+/** An `=` right after the keyword means it is an assignment target, not a block. */
+const ASSIGNMENT_AHEAD = /\s*=/y;
+
+/** One open block on the {@link scanHostText} walk's stack. */
+interface OpenBlock {
+  offset: number;
+  isProcedure: boolean;
+  labels: string[];
 }
 
 /**
@@ -145,13 +229,26 @@ export function scanHostText(
   const hostDelimiters: Delimiters = {
     quotes: delimiters.quotes,
     lineComments: [],
+    multilineStrings: true,
   };
   const pattern = new RegExp(
-    String.raw`(?<!${IDENTIFIER_CHAR})(?:(EXEC)\s+(\w+)\s*|(X?PROC(?:EDURE)?)(?!${IDENTIFIER_CHAR})` +
+    String.raw`(?<!${IDENTIFIER_CHAR})(?:(EXEC)\s+(\w+)\s*|(X?PROC(?:EDURE)?|DO|BEGIN|SELECT|END)(?!${IDENTIFIER_CHAR})` +
       (anchor ? `|(${anchor.source})` : "") +
       ")",
     "iy",
   );
+  // The open PROC/DO/BEGIN/SELECT blocks around the current position. A keyword scan
+  // cannot see everything a parser would (e.g. an array named `SELECT`), so this tracks
+  // the block structure heuristically - the same exposure the `PROC` scan always had.
+  const openBlocks: OpenBlock[] = [];
+  const innermostProcedure = (): number | undefined => {
+    for (let index = openBlocks.length - 1; index >= 0; index--) {
+      if (openBlocks[index].isProcedure) {
+        return openBlocks[index].offset;
+      }
+    }
+    return undefined;
+  };
   let i = 0;
   while (i < text.length) {
     const skipTo = skipDelimited(text, i, hostDelimiters);
@@ -197,7 +294,53 @@ export function scanHostText(
       continue;
     }
     if (match[3]) {
-      result.procedures.push(i);
+      const keyword = match[3].toUpperCase();
+      if (keyword === "END") {
+        // Only the statement forms `END;`/`END label;` close a block - anything else
+        // (e.g. a variable named END) is ordinary host text.
+        END_STATEMENT.lastIndex = i + match[3].length;
+        const endMatch = END_STATEMENT.exec(text);
+        if (endMatch && openBlocks.length > 0) {
+          const label = endMatch[1]?.toUpperCase();
+          // An unlabeled END closes the innermost block; `END label;` closes every block
+          // up to and including the one carrying that label (RULES(MULTICLOSE)). An
+          // unmatched label (broken source, or a label on a construct the scan does not
+          // track) closes one block, like the parser's recovery.
+          let popCount = 1;
+          if (label) {
+            for (let index = openBlocks.length - 1; index >= 0; index--) {
+              if (openBlocks[index].labels.includes(label)) {
+                popCount = openBlocks.length - index;
+                break;
+              }
+            }
+          }
+          const closed = openBlocks.splice(
+            openBlocks.length - popCount,
+            popCount,
+          );
+          if (closed.some((block) => block.isProcedure)) {
+            result.procedures.push({
+              offset: i,
+              procedure: innermostProcedure(),
+            });
+          }
+        }
+      } else {
+        ASSIGNMENT_AHEAD.lastIndex = i + match[3].length;
+        if (!ASSIGNMENT_AHEAD.test(text)) {
+          const isProcedure =
+            keyword !== "DO" && keyword !== "BEGIN" && keyword !== "SELECT";
+          openBlocks.push({
+            offset: i,
+            isProcedure,
+            labels: labelsBefore(text, i),
+          });
+          if (isProcedure) {
+            result.procedures.push({ offset: i, procedure: i });
+          }
+        }
+      }
     } else {
       result.anchors.push(i);
     }
@@ -223,7 +366,7 @@ export function scanExecFragments(
  */
 export function findEnclosingProcedureEnd(
   text: string,
-  procedures: readonly number[],
+  procedures: readonly ProcedureCheckpoint[],
   offset: number,
   delimiters: Delimiters,
 ): number | "unterminated" | undefined {
@@ -232,19 +375,21 @@ export function findEnclosingProcedureEnd(
   let found = -1;
   while (low <= high) {
     const mid = (low + high) >>> 1;
-    if (procedures[mid] < offset) {
+    if (procedures[mid].offset < offset) {
       found = mid;
       low = mid + 1;
     } else {
       high = mid - 1;
     }
   }
-  if (found === -1) {
+  const procedure = found === -1 ? undefined : procedures[found].procedure;
+  if (procedure === undefined) {
     return undefined;
   }
-  const semicolon = findTerminator(text, procedures[found], {
+  const semicolon = findTerminator(text, procedure, {
     quotes: delimiters.quotes,
     lineComments: [],
+    multilineStrings: true,
   });
   return semicolon === undefined ? "unterminated" : semicolon + 1;
 }

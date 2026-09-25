@@ -438,20 +438,18 @@ function findStatementWithin(
 
 /**
  * Gives a reference a preprocessor phase emitted without an AST parent (an `EXEC`
- * statement's host variable) a place in the tree by adopting a parsed statement next to
- * its source position. Returns `false` when the file has no statement to adopt.
+ * statement's host variable) a place in the tree. Preferred is the reference's `anchor`:
+ * the element parsed from the generating edit's own replacement text, which sits at the
+ * exact splice site in the final token stream - so it is correct per inclusion of a
+ * copybook, across include boundaries, and under `RULES(MULTICLOSE)`. Without an anchor
+ * (the edit's replacement text was empty or lexed to nothing), a parsed statement next
+ * to the reference's source position is adopted instead. Returns `false` when neither
+ * yields a scope.
  */
 function adoptSurroundingStatement(
   unit: CompilationUnit,
   reference: Reference,
 ): boolean {
-  // The reference's own token is registered in its file, so the file's token list is
-  // the map from its position to the parsed statements around it.
-  const token = reference.token;
-  const tokens = token.uri && unit.services.files.getTokens(token.uri);
-  if (!tokens?.length) {
-    return false;
-  }
   let root: SyntaxNode = reference.owner;
   while (root.container) {
     root = root.container;
@@ -466,6 +464,19 @@ function adoptSurroundingStatement(
     root.container = null;
     return false;
   };
+  const anchorElement = reference.anchor?.token?.element;
+  if (anchorElement && adopt(anchorElement)) {
+    return true;
+  }
+  // Positional fallback: the reference's own token is registered in its file, so the
+  // file's token list is the map from its position to the parsed statements around it.
+  // Repeated inclusions of one copybook share these positions, so this can pick the
+  // wrong inclusion's statement - the anchor path above does not.
+  const token = reference.token;
+  const tokens = token.uri && unit.services.files.getTokens(token.uri);
+  if (!tokens?.length) {
+    return false;
+  }
   const index = Math.max(0, binaryTokenIndexSearch(tokens, token.startOffset));
   // Prefer the statement that follows: the reference then counts as being before it in
   // statement order, which is what the unset-variable check needs.

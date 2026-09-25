@@ -37,6 +37,7 @@ import {
   findEnclosingProcedureEnd,
   Preprocessor,
   PreprocessorContext,
+  ProcedureCheckpoint,
   rebaseDiagnostic,
   rebaseToken,
   scanHostText,
@@ -87,7 +88,7 @@ interface DeclBlocks {
  */
 interface Frame {
   context: PreprocessorContext;
-  procedures: readonly number[];
+  procedures: readonly ProcedureCheckpoint[];
   parent?: { frame: Frame; includeOffset: number };
   blocks: Map<number, DeclBlocks>;
 }

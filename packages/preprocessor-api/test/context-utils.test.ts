@@ -242,7 +242,10 @@ describe("scanHostText", () => {
     const text = "A: PROC; EXEC SQL X; END;";
     const scan = scanHostText(text, "SQL", SQL);
     expect(scan.anchors).toEqual([]);
-    expect(scan.procedures).toEqual([3]);
+    expect(scan.procedures).toEqual([
+      { offset: 3, procedure: 3 },
+      { offset: text.indexOf("END"), procedure: undefined },
+    ]);
     expect(scan.fragments).toHaveLength(1);
   });
 
@@ -250,12 +253,40 @@ describe("scanHostText", () => {
     const text =
       "A: PROC; B: PROCEDURE; C: XPROC; D: XPROCEDURE; S = 'PROC'; EXEC SQL CREATE PROCEDURE P; PROC_X = 1;";
     const scan = scanHostText(text, "SQL", SQL);
-    expect(scan.procedures).toEqual([
+    expect(scan.procedures.map((checkpoint) => checkpoint.offset)).toEqual([
       text.indexOf("PROC;"),
       text.indexOf("PROCEDURE;"),
       text.indexOf("XPROC;"),
       text.indexOf("XPROCEDURE;"),
     ]);
+  });
+
+  test("an EXEC mention inside a multi-line host string is not a statement", () => {
+    // The host lexer's strings span lines - only the embedded grammars end them at a
+    // line break.
+    const text = "X = 'a\nEXEC SQL NOPE;\nb'; EXEC SQL COMMIT;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual(["COMMIT"]);
+  });
+
+  test("anchors inside multi-line host strings are ignored", () => {
+    const text = "S = 'a\nDFHRESP(NORMAL)\nb'; X = DFHRESP(NORMAL);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([text.lastIndexOf("DFHRESP")]);
+  });
+
+  test("a host string never closed covers the rest of its opening line only", () => {
+    // Like the host lexer, which refuses to lex an unterminated string and continues on
+    // the next line - the statement below must still be found.
+    const text = "X = 'oops;\nEXEC SQL COMMIT;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual(["COMMIT"]);
+  });
+
+  test("a backslash escape does not end a multi-line host string", () => {
+    const text = "X = 'a\\'b\nc'; EXEC SQL COMMIT;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual(["COMMIT"]);
   });
 
   test("a foreign unterminated statement swallows the rest of the text", () => {
@@ -314,6 +345,78 @@ describe("findEnclosingProcedureEnd", () => {
     expect(
       findEnclosingProcedureEnd(text, procedures, text.indexOf("EXEC"), SQL),
     ).toBe("unterminated");
+  });
+
+  test("a closed nested procedure is not the enclosing one", () => {
+    // The DB2 shape: the `SQL TYPE IS` declaration sits in OUTER, after INNER closed -
+    // its declaration block must go to OUTER, not INNER.
+    const text =
+      "OUTER: PROC; INNER: PROC; END INNER; DCL X SQL TYPE IS BLOB(10); END OUTER;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("DCL"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf("OUTER: PROC;") + "OUTER: PROC;".length);
+  });
+
+  test("a closed nested procedure with an unlabeled END is not the enclosing one", () => {
+    const text = "P: PROC; Q: PROC; END; EXEC CICS RETURN; END;";
+    const { procedures } = scanHostText(text, "CICS", CICS);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      CICS,
+    );
+    expect(end).toBe(text.indexOf("P: PROC;") + "P: PROC;".length);
+  });
+
+  test("DO, BEGIN and SELECT groups consume their own ENDs", () => {
+    const text = "P: PROC; DO; END; BEGIN; END; SELECT; END; EXEC SQL Y; END;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf("P: PROC;") + "P: PROC;".length);
+  });
+
+  test("a labeled END closes every block up to its label (RULES(MULTICLOSE))", () => {
+    const text = "OUTER: PROC; INNER: PROC; DO; END OUTER; EXEC SQL Y; END;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    // `END OUTER;` closed the DO group, INNER and OUTER at once.
+    expect(
+      findEnclosingProcedureEnd(text, procedures, text.indexOf("EXEC"), SQL),
+    ).toBeUndefined();
+  });
+
+  test("inside a still-open nested procedure, that procedure is the enclosing one", () => {
+    const text = "OUTER: PROC; INNER: PROC; EXEC SQL Y; END; END;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf("INNER: PROC;") + "INNER: PROC;".length);
+  });
+
+  test("an END assigned to (a variable named END) does not close a block", () => {
+    const text = "P: PROC; END = 1; EXEC SQL Y; END;";
+    const { procedures } = scanHostText(text, "SQL", SQL);
+    const end = findEnclosingProcedureEnd(
+      text,
+      procedures,
+      text.indexOf("EXEC"),
+      SQL,
+    );
+    expect(end).toBe(text.indexOf("P: PROC;") + "P: PROC;".length);
   });
 });
 

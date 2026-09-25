@@ -109,10 +109,14 @@ interface ExecMetadata {
 
 /**
  * One `ReferenceItem` per name part of a host variable (`A.B` -> `A`, `B`), chained as member calls
- * like the parser does. The chain has no AST parent: the linker adopts the statement surrounding
+ * like the parser does. The chain has no AST parent: at link time it adopts the statement parsed
+ * from the edit's replacement text (`anchor`), or - without an anchor - the statement surrounding
  * the reference's source position (see `resolveReference`).
  */
-function buildExecReferences(parts: t.Token[]): ast.Reference[] {
+function buildExecReferences(
+  parts: t.Token[],
+  anchor: ast.ReferenceAnchor | undefined,
+): ast.Reference[] {
   const references: ast.Reference[] = [];
   let call: ast.MemberCall | null = null;
   for (const part of parts) {
@@ -122,6 +126,7 @@ function buildExecReferences(parts: t.Token[]): ast.Reference[] {
       part,
       ast.ReferenceType.Variable,
     );
+    ref.anchor = anchor;
     item.ref = ref;
     part.kind = CstNodeKind.ReferenceItem_Ref;
     part.element = item;
@@ -225,7 +230,7 @@ function collectExecMetadata(
         !attempt &&
         apiToken.semanticsKind === SemanticsKind.Identifier
       ) {
-        largePush(references, buildExecReferences(parts));
+        largePush(references, buildExecReferences(parts, edit.anchor));
       }
     }
     if (attempt) {

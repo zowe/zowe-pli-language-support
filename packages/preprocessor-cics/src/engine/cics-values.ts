@@ -28,6 +28,7 @@ export const RESP_VALUES: Readonly<Record<string, number>> = {
   CONTAINERERR: 110,
   CSDERR: 119,
   DISABLED: 84,
+  DSIDERR: 12,
   DSNNOTFOUND: 93,
   DSSTAT: 46,
   DUPKEY: 15,

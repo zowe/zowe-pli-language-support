@@ -70,6 +70,12 @@ export function annotateTokens(
 
     const mapped = findMappedToken(segment, genOffset);
     if (mapped) {
+      if (mapped.anchor && !mapped.anchor.token) {
+        // First token lexed from a preprocessor edit's replacement text: hand it to the
+        // edit's references as their adoption anchor (see `Reference.anchor`). The
+        // parser assigns this token's `element` later, like any stream token's.
+        mapped.anchor.token = token;
+      }
       // Span comparisons only hold when this re-lexed token exactly matches the recorded
       // one - if `immediateFollow` merged it with a neighbor during re-lexing, neither the
       // original image nor the original token object still applies.

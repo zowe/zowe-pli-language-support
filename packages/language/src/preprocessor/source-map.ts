@@ -42,6 +42,13 @@ export interface MappedToken {
    * annotate pass emits this exact object instead of the re-lexed token.
    */
   sourceToken?: Token;
+  /**
+   * Filled by the annotate pass with the first re-lexed token inside this span - the
+   * rendezvous the linker uses to adopt the edit's references (see `Reference.anchor`).
+   * The handle keeps its identity through map composition (spans are cloned, the handle
+   * is not).
+   */
+  anchor?: ast.ReferenceAnchor;
 }
 
 /**

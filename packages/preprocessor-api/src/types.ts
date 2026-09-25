@@ -101,7 +101,16 @@ export interface PreprocessorContext {
    * Resolves the include statement at `statementRange`: looks `name` up, splices the
    * included file's text in place of the statement (keeping the included file's real
    * positions), blanks the statement itself, and returns a fresh context over the included
-   * file's text. Use the new context to run the preprocessor recusively.
+   * file's text.
+   *
+   * The returned context is *unprocessed*: the engine MUST run its own processing against
+   * it (recursively, like the host called `execute` on it), or the included file's text is
+   * spliced in raw and its own `EXEC` statements reach the host parser unchanged.
+   * `undefined` means the include did not resolve (already diagnosed by the host).
+   *
+   * May reject with the host's cancellation error when the build was superseded. Never
+   * swallow errors from this call - rethrow anything that is not handled specifically,
+   * or cancellation stops working.
    */
   include(
     name: string,

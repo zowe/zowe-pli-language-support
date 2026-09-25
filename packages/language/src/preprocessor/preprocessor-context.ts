@@ -37,6 +37,7 @@ import {
   translateLocalTokens,
 } from "./source-map";
 import * as api from "preprocessor-api";
+import { ReferenceAnchor } from "../syntax-tree/ast";
 
 /** Converts an api-shaped `Severity` to the language package's own enum. */
 function fromApiSeverity(severity: api.Severity): Severity {
@@ -85,6 +86,12 @@ interface Edit {
   text: string;
   tokens?: MappedToken[];
   apiTokens?: api.Token[];
+  /**
+   * The edit's rendezvous with the final token stream: the annotate pass fills it with
+   * the first token lexed from the replacement text, whose parsed element adopts the
+   * edit's host-variable references at link time (see `Reference.anchor`).
+   */
+  anchor?: ReferenceAnchor;
   nested?: PreprocessorContext;
 }
 
@@ -154,7 +161,7 @@ export class PreprocessorContext implements api.PreprocessorContext {
   /**
    * The `replace`/`insert` edits recorded so far (offsets into this context's input text).
    */
-  getEdits(): readonly Pick<Edit, "start" | "end" | "apiTokens">[] {
+  getEdits(): readonly Pick<Edit, "start" | "end" | "apiTokens" | "anchor">[] {
     return this.edits;
   }
 
@@ -213,12 +220,29 @@ export class PreprocessorContext implements api.PreprocessorContext {
         mapped.push(token);
       }
     }
+    // The linker must know which parsed statement replaced this construct, to give the
+    // edit's host-variable references a scope (see `Reference.anchor`). Mark the whole
+    // replacement span: the annotate pass captures the first token lexed from it -
+    // whatever text the engine chose, in whatever host language. An empty replacement
+    // (or one lexing to nothing) gets no anchor; its references fall back to a
+    // positional search, which cannot tell repeated inclusions of one copybook apart.
+    let anchor: ReferenceAnchor | undefined;
+    if (apiTokens.length > 0 && mapped.length === 0 && text.length > 0) {
+      anchor = {};
+      mapped.push({
+        startOffset: 0,
+        endOffset: text.length - 1,
+        originalImage: text,
+        anchor,
+      });
+    }
     return {
       start,
       end,
       text,
       tokens: mapped.length > 0 ? mapped : undefined,
       apiTokens: apiTokens.length > 0 ? apiTokens : undefined,
+      anchor,
     };
   }
 
@@ -331,7 +355,8 @@ export class PreprocessorContext implements api.PreprocessorContext {
 
   /**
    * Applies the recorded edits and produces the generated text plus a `SourceMap` back to this
-   * context's input.
+   * context's input. Single-use: a second call duplicates the overlap diagnostics (they are
+   * pushed into the persistent list) and rebuilds every nested context.
    */
   build(): PreprocessorContextResult {
     const sortedEdits = [...this.edits].sort(
@@ -379,14 +404,16 @@ export class PreprocessorContext implements api.PreprocessorContext {
 
       if (edit.nested) {
         const subResult = edit.nested.build();
-        // Splice the nested context's own segments in as-is, shifted and forced
-        // `foreign` - they carry real positions in a different file.
+        // Splice the nested context's own segments in, shifted and forced `foreign` -
+        // they carry real positions in a different file. Their mapped tokens are shifted
+        // along, out of the nested context's generated space into this one's.
         for (const nestedSegment of subResult.sourceMap.getSegments()) {
           segments.push({
             ...nestedSegment,
             genStart: genCursor + nestedSegment.genStart,
             genEnd: genCursor + nestedSegment.genEnd,
             foreign: true,
+            tokens: translateLocalTokens(nestedSegment.tokens, genCursor),
           });
         }
         // Nested diagnostics keep their ranges: offsets into the included file's own

@@ -692,6 +692,24 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
    */
   nodes: T[];
   type: ReferenceType;
+  /**
+   * For references a preprocessor phase emits without an AST parent (`EXEC` host
+   * variables): the edit's rendezvous with the final token stream, whose parsed element
+   * adopts them at link time. References without one (or whose edit's replacement text
+   * lexed to nothing) fall back to a positional search (see `resolveReference`).
+   */
+  anchor?: ReferenceAnchor;
+}
+
+/**
+ * Rendezvous between a preprocessor edit and the final token stream: the annotate pass
+ * fills `token` with the first token lexed from the edit's replacement text - whatever
+ * that text is, in whatever host language. Shared by the edit and every reference it
+ * emitted; identity is what ties a reference to its own splice when the same included
+ * file (with identical offsets) is spliced in more than once.
+ */
+export interface ReferenceAnchor {
+  token?: Token;
 }
 
 export function createReference<T extends SyntaxNode>(
