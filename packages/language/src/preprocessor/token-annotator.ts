@@ -35,10 +35,8 @@ export function annotateTokens(
   const diagnostics = finalDiagnostics.map((d) =>
     remapDiagnostic(d, sourceMap, entryUri),
   );
-  // Tokens of the same file must share the exact same `URI` object - some consumers
-  // (e.g. `stringify.ts#extractDeclaration`) compare by reference. Segments assign `.uri`
-  // independently per span, so without interning two tokens from the same included file
-  // could carry different (if string-equal) `URI` objects.
+  // Tokens of the same file must share the exact same `URI` object, since some consumers compare by
+  // reference.
   const uriCache = new Map<string, URI>();
   const internUri = (uri: URI | undefined): URI => {
     const target = uri ?? entryUri;
@@ -72,6 +70,12 @@ export function annotateTokens(
 
     const mapped = findMappedToken(segment, genOffset);
     if (mapped) {
+      if (mapped.anchor && !mapped.anchor.token) {
+        // First token lexed from a preprocessor edit's replacement text: hand it to the
+        // edit's references as their adoption anchor (see `Reference.anchor`). The
+        // parser assigns this token's `element` later, like any stream token's.
+        mapped.anchor.token = token;
+      }
       // Span comparisons only hold when this re-lexed token exactly matches the recorded
       // one - if `immediateFollow` merged it with a neighbor during re-lexing, neither the
       // original image nor the original token object still applies.
@@ -97,10 +101,8 @@ export function annotateTokens(
 }
 
 /**
- * Picks out a phase's own consumed-directive tokens - the ones its internal parse attached
- * `.kind`/`.element` to (`%IF`/`%DCL`/`EXEC`/`DFHRESP`/... keyword and name tokens) - and
- * remaps their positions from this phase's input-text space to the original source, via
- * this phase's own `PhaseInput.sourceMap`. See `PhaseResult.directiveTokens`.
+ * Picks out a phase's own consumed-directive tokens and remaps their positions from this phase's
+ * input-text space to the original source.
  */
 export function extractDirectiveTokens(
   tokens: Token[],
@@ -165,9 +167,7 @@ function mapOffsetWithinSegment(segment: Segment, genOffset: number): number {
 const mappedTokenStart = (token: MappedToken) => token.startOffset;
 
 /**
- * Finds the `MappedToken` (generated-text-global offsets) covering `genOffset`. Binary
- * search - a foreign segment can carry one `MappedToken` per token of a whole included
- * file.
+ * Finds the `MappedToken` (generated-text-global offsets) covering `genOffset`.
  */
 function findMappedToken(
   segment: Segment,

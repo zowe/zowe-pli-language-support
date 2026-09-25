@@ -50,9 +50,7 @@ import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
   /**
-   * Lazily allocated: type symbols (`DEFINE ALIAS`/`STRUCTURE`/`ORDINAL`) are
-   * rare, and one scope exists per procedure - eagerly allocating an always
-   * empty map per scope wastes memory on large files.
+   * Lazily allocated, since type symbols are rare and one scope exists per procedure.
    */
   private _typeSymbols?: MultiMap<string, QualifiedSyntaxNode>;
   existingNodes = new Set<string>();
@@ -270,9 +268,7 @@ export class SymbolTable {
   }
 
   /**
-   * This sits on the reference-resolution hot path and misses are the common
-   * case (every lookup walks the scope chain to the root) - so the miss path
-   * and the "nothing filtered out" path are kept allocation-free.
+   * Hot path: the miss path and the "nothing filtered out" path are kept allocation-free.
    */
   private getSymbolsByKind(
     qualifiedName: readonly string[],

@@ -291,13 +291,6 @@ function getNodeRepresentation(
       return getIncludeItemRepresentation(unit, node, type);
     case SyntaxKind.InscanDirective:
       return getIncludeItemRepresentation(unit, node, "%INSCAN");
-    case SyntaxKind.CicsResponseStatement:
-      const codeValue = node.code;
-      const codeImage = node.codeToken?.image;
-      if (codeValue !== null && codeImage) {
-        return formatPliCodeBlock(`DFHRESP(${codeImage}) = ${codeValue}`);
-      }
-      return null;
     default:
       return null;
   }
@@ -374,16 +367,6 @@ const generateIncludeItemTokenMarkup: MarkupGenerator = ({ unit, token }) => {
   return null;
 };
 
-const generateDfhResponseMarkup: MarkupGenerator = ({ unit, token }) => {
-  if (
-    token.element &&
-    token.element.kind === SyntaxKind.CicsResponseStatement
-  ) {
-    return getNodeRepresentation(unit, token.element);
-  }
-  return null;
-};
-
 /**
  * Generates markup from a name token
  * @returns Markup or null if not applicable
@@ -434,7 +417,6 @@ export function hoverRequest(
     generateReferenceTokenMarkup,
     generateIncludeItemTokenMarkup,
     generateNameTokenMarkup,
-    generateDfhResponseMarkup,
   ];
   const context: MarkupGeneratorContext = { unit, token };
 

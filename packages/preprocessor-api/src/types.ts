@@ -18,10 +18,7 @@ export enum SemanticsKind {
 }
 
 /**
- * An offset range into the enclosing text: `start` inclusive, `end` exclusive - the one
- * convention every offset in this API uses (tokens, diagnostics, fragments, edits), and the
- * same as the language package's own `Range`. ANTLR's inclusive `stop` becomes `stop + 1` at
- * the engine boundary.
+ * An offset range into the enclosing text: `start` inclusive, `end` exclusive.
  */
 export interface Range {
   start: number;
@@ -38,6 +35,8 @@ export enum Severity {
   Error,
   Warning,
   Info,
+  /** Used for PL/I compatibility */
+  Severe,
 }
 
 export interface Diagnostic {
@@ -48,10 +47,7 @@ export interface Diagnostic {
 }
 
 /**
- * The include statement a single-fragment parse recognized (`EXEC SQL INCLUDE member`):
- * `filePath` is the raw member *name*, `token` the member's token. Part of the engines'
- * {@link PreprocessorResult}, not of the {@link Preprocessor} contract - on the context
- * path the engine acts on it itself, via `PreprocessorContext.include`.
+ * Include statements like `EXEC SQL INCLUDE SOMETHING;` can use this.
  */
 export type PreprocessorReplacement = {
   type: "include";
@@ -70,11 +66,7 @@ export interface PreprocessorResult {
 }
 
 /**
- * The `EXEC SQL`/`EXEC CICS` fragment a {@link Preprocessor} is asked to replace: `range` is
- * the whole `EXEC ... ;` statement's span in the host document, `bodyText` is the fragment's
- * text with the `SQL`/`CICS` prefix already stripped (what the preprocessor's own grammar
- * parses), and `bodyOffset` is that body's start offset within the host document - added to
- * any offset `bodyText`'s own parse produces, to rebase it into `range`'s coordinate space.
+ * The `EXEC SQL`/`EXEC CICS` fragment a {@link Preprocessor} is asked to replace.
  */
 export interface ExecFragment {
   range: Range;
@@ -102,26 +94,30 @@ export interface PreprocessorContext {
   pushDiagnostic(diagnostic: Diagnostic): void;
   /**
    * Replaces `range` (offsets into `text`) with `text`, recording `tokens` as the replaced
-   * statement's full classified token list - the host's only source for the statement's
-   * semantic highlighting/hover, include-member metadata, and host-variable references
-   * (every `SemanticsKind.Identifier` token becomes a linkable variable reference). Token
-   * offsets are *host* coordinates (offsets into `context.text`, see `rebaseToken`).
+   * statement's full classified token list.
    */
   replace(range: Range, text: string, tokens?: Token[]): void;
   /**
-   * Resolves the include statement at `statementRange`: looks `name` up, runs the host's
-   * own processing over the included file (recursively), and replaces the statement with
-   * the result, keeping the included file's real positions. `tokens` is the statement's
-   * classified token list, exactly as for {@link replace}. An unresolvable `name` produces
-   * a diagnostic at `nameRange` (the member token's span) and still blanks the statement,
-   * so the raw text never reaches the host parser.
+   * Resolves the include statement at `statementRange`: looks `name` up, splices the
+   * included file's text in place of the statement (keeping the included file's real
+   * positions), blanks the statement itself, and returns a fresh context over the included
+   * file's text.
+   *
+   * The returned context is *unprocessed*: the engine MUST run its own processing against
+   * it (recursively, like the host called `execute` on it), or the included file's text is
+   * spliced in raw and its own `EXEC` statements reach the host parser unchanged.
+   * `undefined` means the include did not resolve (already diagnosed by the host).
+   *
+   * May reject with the host's cancellation error when the build was superseded. Never
+   * swallow errors from this call - rethrow anything that is not handled specifically,
+   * or cancellation stops working.
    */
   include(
     name: string,
     statementRange: Range,
     nameRange: Range,
     tokens?: Token[],
-  ): Promise<void>;
+  ): Promise<PreprocessorContext | undefined>;
 }
 
 export interface Preprocessor {

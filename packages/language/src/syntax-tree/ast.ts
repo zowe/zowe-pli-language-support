@@ -224,14 +224,6 @@ export enum SyntaxKind {
   Statement,
   StopStatement,
   StringLiteral,
-  SqlAttributeStatement,
-  SqlAttributeBinary,
-  SqlAttributeLob,
-  SqlAttributeLobLocator,
-  SqlAttributeLobFile,
-  SqlAttributeRowId,
-  SqlAttributeTableLocator,
-  SqlAttributeResultSetLocator,
   TypeAttribute,
   UnaryExpression,
   ValueAttribute,
@@ -244,8 +236,6 @@ export enum SyntaxKind {
   WriteStatement,
   WriteStatementOption,
   XFormatItem,
-
-  CicsResponseStatement,
 }
 
 export enum KeywordConditions {
@@ -494,18 +484,6 @@ export enum LocateType {
   SET,
 }
 
-export enum LOB {
-  BLOB,
-  CLOB,
-  DBCLOB,
-}
-
-export enum LOBLocator {
-  BLOB_LOCATOR,
-  CLOB_LOCATOR,
-  DBCLOB_LOCATOR,
-}
-
 export enum VX {
   V1,
   V2,
@@ -629,11 +607,8 @@ export interface AstNode {
 }
 
 /**
- * Shared frozen empty array used as the initial value of high-volume AST list
- * fields (statement labels, reference nodes, dimensions, ...). These fields
- * stay empty on the vast majority of nodes, and a fresh `[]` per node costs
- * 32+ bytes times millions of nodes on large files. Reading is transparent;
- * writers must swap in a real array first - see {@link appendList}.
+ * Shared frozen empty array used as the initial value of high-volume AST list fields. Writers must
+ * swap in a real array first - see {@link appendList}.
  */
 const EMPTY_LIST: readonly unknown[] = Object.freeze([]);
 
@@ -643,11 +618,8 @@ export function emptyList<T>(): T[] {
 }
 
 /**
- * Appends `item` to a lazily-allocated list field and returns the list to
- * store back: `node.field = appendList(node.field, item)`. The first append
- * replaces the shared frozen {@link emptyList} with a capacity-1 array literal
- * (a pushed-into empty array grows straight to capacity 16, wasting ~120 bytes
- * on the overwhelmingly common single-element case).
+ * Appends `item` to a lazily-allocated list field and returns the list to store back:
+ * `node.field = appendList(node.field, item)`.
  */
 export function appendList<T>(list: T[], item: T): T[] {
   if ((list as readonly unknown[]) === EMPTY_LIST) {
@@ -722,9 +694,22 @@ export interface Reference<T extends SyntaxNode = SyntaxNode> {
   type: ReferenceType;
   /**
    * For references a preprocessor phase emits without an AST parent (`EXEC` host
-   * variables): the generated token whose parsed statement adopts them at link time.
+   * variables): the edit's rendezvous with the final token stream, whose parsed element
+   * adopts them at link time. References without one (or whose edit's replacement text
+   * lexed to nothing) fall back to a positional search (see `resolveReference`).
    */
-  anchor?: Token;
+  anchor?: ReferenceAnchor;
+}
+
+/**
+ * Rendezvous between a preprocessor edit and the final token stream: the annotate pass
+ * fills `token` with the first token lexed from the edit's replacement text - whatever
+ * that text is, in whatever host language. Shared by the edit and every reference it
+ * emitted; identity is what ties a reference to its own splice when the same included
+ * file (with identical offsets) is spliced in more than once.
+ */
+export interface ReferenceAnchor {
+  token?: Token;
 }
 
 export function createReference<T extends SyntaxNode>(
@@ -784,15 +769,6 @@ export type SyntaxNode =
   | AnswerStatement
   | DeactivateStatement
   | TokenStatement
-  | CicsResponseStatement
-  | SqlAttributeStatement
-  | SqlAttributeBinary
-  | SqlAttributeLob
-  | SqlAttributeLobLocator
-  | SqlAttributeLobFile
-  | SqlAttributeRowId
-  | SqlAttributeTableLocator
-  | SqlAttributeResultSetLocator
 
   // Normal nodes
   | AFormatItem
@@ -1161,9 +1137,7 @@ export type Unit =
   | PopDirective
   | PrintDirective
   | NoPrintDirective
-  | SkipDirective
-  | SqlAttributeStatement
-  | CicsResponseStatement;
+  | SkipDirective;
 
 // Preprocessor AST
 
@@ -4183,187 +4157,10 @@ export interface XFormatItem extends AstNode {
   width: Expression | null;
 }
 
-export enum SqlAttributeBinaryType {
-  BINARY,
-  VARBINARY,
-}
-
-export interface SqlAttributeBinary extends AstNode {
-  kind: SyntaxKind.SqlAttributeBinary;
-  type: SqlAttributeBinaryType | null;
-  length: number | null;
-  size: SQLAttributeLobSize | null;
-}
-
-export function createSqlAttributeBinary(): SqlAttributeBinary {
-  return {
-    kind: SyntaxKind.SqlAttributeBinary,
-    container: null,
-    type: null,
-    length: null,
-    size: null,
-  };
-}
-
 export function createXFormatItem(): XFormatItem {
   return {
     kind: SyntaxKind.XFormatItem,
     container: null,
     width: null,
-  };
-}
-
-export enum SQLAttributeLobType {
-  BLOB,
-  CLOB,
-  DBCLOB,
-}
-
-export enum SQLAttributeLobSize {
-  K,
-  M,
-  G,
-}
-
-export interface SqlAttributeLob extends AstNode {
-  kind: SyntaxKind.SqlAttributeLob;
-  type: SQLAttributeLobType | null;
-  length: number | null;
-  size: SQLAttributeLobSize | null;
-}
-
-export function createSqlAttributeLob(): SqlAttributeLob {
-  return {
-    kind: SyntaxKind.SqlAttributeLob,
-    container: null,
-    type: null,
-    length: null,
-    size: null,
-  };
-}
-
-export interface SqlAttributeLobLocator extends AstNode {
-  kind: SyntaxKind.SqlAttributeLobLocator;
-  type: SQLAttributeLobType | null;
-}
-
-export function createSqlAttributeLobLocator(): SqlAttributeLobLocator {
-  return {
-    kind: SyntaxKind.SqlAttributeLobLocator,
-    container: null,
-    type: null,
-  };
-}
-
-export interface SqlAttributeLobFile extends AstNode {
-  kind: SyntaxKind.SqlAttributeLobFile;
-  type: SQLAttributeLobType | null;
-}
-
-export function createSqlAttributeLobFile(): SqlAttributeLobFile {
-  return {
-    kind: SyntaxKind.SqlAttributeLobFile,
-    container: null,
-    type: null,
-  };
-}
-
-export interface SqlAttributeRowId extends AstNode {
-  kind: SyntaxKind.SqlAttributeRowId;
-}
-
-export function createSqlAttributeRowId(): SqlAttributeRowId {
-  return {
-    kind: SyntaxKind.SqlAttributeRowId,
-    container: null,
-  };
-}
-
-export interface SqlAttributeTableLocator extends AstNode {
-  kind: SyntaxKind.SqlAttributeTableLocator;
-  name: string | null;
-  nameToken: Token | null;
-}
-
-export function createSqlAttributeTableLocator(): SqlAttributeTableLocator {
-  return {
-    kind: SyntaxKind.SqlAttributeTableLocator,
-    container: null,
-    name: null,
-    nameToken: null,
-  };
-}
-
-export interface SqlAttributeResultSetLocator extends AstNode {
-  kind: SyntaxKind.SqlAttributeResultSetLocator;
-}
-
-export function createSqlAttributeResultSetLocator(): SqlAttributeResultSetLocator {
-  return {
-    kind: SyntaxKind.SqlAttributeResultSetLocator,
-    container: null,
-  };
-}
-
-export type SqlAttributeType =
-  | SqlAttributeBinary
-  | SqlAttributeLob
-  | SqlAttributeLobLocator
-  | SqlAttributeLobFile
-  | SqlAttributeRowId
-  | SqlAttributeTableLocator
-  | SqlAttributeResultSetLocator;
-
-export interface SqlAttributeStatement extends AstNode {
-  kind: SyntaxKind.SqlAttributeStatement;
-  isXml: boolean;
-  body: SqlAttributeType | null;
-}
-
-export function createSQLAttributeStatement(): SqlAttributeStatement {
-  return {
-    kind: SyntaxKind.SqlAttributeStatement,
-    container: null,
-    isXml: false,
-    body: null,
-  };
-}
-
-// Values sourced from:
-// https://www.ibmmainframer.com/cics-tutorial/cics-response-option/
-export enum CicsResponseCode {
-  NORMAL = 0,
-  NOTFND = 13,
-  DUPREC = 14,
-  INVREQ = 16,
-  NOSPACE = 18,
-  NOTOPEN = 19,
-  ENDFILE = 20,
-  LENGERR = 22,
-  QZERO = 23,
-  QBUSY = 25,
-  ITEMERR = 26,
-  PGMIDERR = 27,
-  ENDDATA = 29,
-  MAPFAIL = 36,
-  QIDERR = 44,
-  ENQBUSY = 55,
-  DISABLED = 84,
-}
-
-export interface CicsResponseStatement extends AstNode {
-  kind: SyntaxKind.CicsResponseStatement;
-  token: Token | null;
-  code: CicsResponseCode | null;
-  codeToken: Token | null;
-}
-
-export function createCicsResponseStatement(): CicsResponseStatement {
-  return {
-    kind: SyntaxKind.CicsResponseStatement,
-    container: null,
-    token: null,
-    code: null,
-    codeToken: null,
   };
 }

@@ -30,12 +30,13 @@ import { CollectingIdentifierVisitor } from "./collect-identifiers";
 import {
   Delimiters,
   Diagnostic,
+  findEnclosingProcedureEnd,
   Preprocessor,
   PreprocessorContext,
   PreprocessorResult,
   rebaseDiagnostic,
   rebaseToken,
-  scanExecFragments,
+  scanHostText,
   SemanticsKind,
   Severity,
   Token,
@@ -48,6 +49,7 @@ import {
   HostLanguageFactories,
   HostLanguageType,
 } from "./host-languages";
+import { CVDA_VALUES, RESP_VALUES } from "./cics-values";
 
 const COMMENTS = CICSLexer.channelNames.indexOf("COMMENTS");
 
@@ -64,6 +66,69 @@ const CICS_DELIMITERS: Delimiters = {
   blockComments: [{ start: "/*", end: "*/" }],
 };
 
+/**
+ * The translator's built-in functions: `DFHRESP(condition)` and `DFHVALUE(cvda)` each
+ * become their numeric value. Only the complete form is a match - a bare `DFHRESP` or an
+ * unclosed `DFHRESP(NORMAL` is ordinary host text. The `scanHostText` walk adds the
+ * leading identifier boundary; `y` lets the same expression re-run at a recorded anchor.
+ */
+const BUILTIN_ANCHOR = /(DFHRESP|DFHVALUE)\s*\(\s*([A-Za-z0-9_#@$]+)\s*\)/iy;
+
+/**
+ * The `DFH*` runtime declarations every `EXEC CICS`-using procedure needs - extracted from
+ * PL/I code after running it through the real CICS preprocessor, except that `DFHEI0`'s
+ * `OPTIONS(...)` is moved directly after `ENTRY VARIABLE` (attribute order is free in PL/I,
+ * and the PL/I parser only understands the `OPTIONS` attribute in that position).
+ */
+export const CICS_EXEC_DECLS = `
+      DCL
+        1 DFHCNSTS STATIC,
+          2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
+          2 DFHEIB0 FIXED BIN(15) INIT(0),
+          2 DFHEID0 FIXED DEC(7) INIT(0),
+          2 DFHEICB CHAR(8) INIT('        ');
+      DCL DFHEPI ENTRY, DFHEIPTR PTR;
+      DCL
+        1 DFHEIBLK BASED (DFHEIPTR),
+          2 EIBTIME  FIXED DEC(7),
+          2 EIBDATE  FIXED DEC(7),
+          2 EIBTRNID CHAR(4),
+          2 EIBTASKN FIXED DEC(7),
+          2 EIBTRMID CHAR(4),
+          2 EIBFIL01 FIXED BIN(15),
+          2 EIBCPOSN FIXED BIN(15),
+          2 EIBCALEN FIXED BIN(15),
+          2 EIBAID   CHAR(1),
+          2 EIBFN    CHAR(2),
+          2 EIBRCODE CHAR(6),
+          2 EIBDS    CHAR(8),
+          2 EIBREQID CHAR(8),
+          2 EIBRSRCE CHAR(8),
+          2 EIBSYNC  CHAR(1),
+          2 EIBFREE  CHAR(1),
+          2 EIBRECV  CHAR(1),
+          2 EIBFIL02 CHAR(1),
+          2 EIBATT   CHAR(1),
+          2 EIBEOC   CHAR(1),
+          2 EIBFMH   CHAR(1),
+          2 EIBCOMPL CHAR(1),
+          2 EIBSIG   CHAR(1),
+          2 EIBCONF  CHAR(1),
+          2 EIBERR   CHAR(1),
+          2 EIBERRCD CHAR(4),
+          2 EIBSYNRB CHAR(1),
+          2 EIBNODAT CHAR(1),
+          2 EIBRESP  FIXED BIN(31),
+          2 EIBRESP2 FIXED BIN(31),
+          2 EIBRLDBK CHAR(1);
+      DCL
+        1 DFHCNTBS  STATIC,
+          2  DFHLDTBS CHAR(22) INIT('LD TABLE DFHEITBS 730.');
+      DCL DFHDUMMY STATIC FIXED BIN(15) INIT(0);
+      DCL DFHEI0 ENTRY VARIABLE OPTIONS(INTER ASSEMBLER) INIT(DFHEI01) AUTO;
+      DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
+`;
+
 export class CICSPreprocessor implements Preprocessor {
   static Name = "CICS Preprocessor";
   private readonly hostLanguage: HostLanguage;
@@ -76,19 +141,27 @@ export class CICSPreprocessor implements Preprocessor {
   }
 
   /**
-   * Finds every `EXEC CICS ...;` statement in `context.text` itself (see `scanExecFragments`)
-   * and replaces each with `DO; END;`; any reference tokens (e.g. an `EXEC CICS LINK(name)`
-   * argument) travel as the recorded tokens.
-   * Each `replace` carries the fragment's full classified token list in host coordinates -
-   * the host's only source for `EXEC` semantic highlighting/hover.
-   * CICS never produces an `EXEC ... INCLUDE`-style replacement.
+   * Finds everything the CICS translator owns in `context.text` itself, in one walk (see
+   * `scanHostText`), and records each replacement directly:
+   *
+   * - every `EXEC CICS ...;` statement becomes `DO; END;`, its reference tokens (e.g. an
+   *   `EXEC CICS LINK(name)` argument) travelling as the recorded tokens, and the `DFH*`
+   *   runtime declarations are inserted once per enclosing procedure;
+   * - `DFHRESP(...)`/`DFHVALUE(...)` become their numeric value.
+   *
+   * Every `replace` carries the construct's full classified token list in host
+   * coordinates - the host's only source for semantic highlighting. CICS has no include
+   * statement, so no nested context ever needs processing.
    */
   public async execute(context: PreprocessorContext): Promise<void> {
-    for (const fragment of scanExecFragments(
+    const scan = scanHostText(
       context.text,
       "CICS",
       CICS_DELIMITERS,
-    )) {
+      BUILTIN_ANCHOR,
+    );
+    const declaredProcedures = new Set<number>();
+    for (const fragment of scan.fragments) {
       const { diagnostics, tokens } = this.tryParse(fragment.bodyText);
       for (const diagnostic of diagnostics) {
         context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
@@ -102,10 +175,74 @@ export class CICSPreprocessor implements Preprocessor {
           "",
           rebased,
         );
-        continue;
+      } else {
+        context.replace(fragment.range, "DO; END;", rebased);
       }
-      context.replace(fragment.range, "DO; END;", rebased);
+      // Every `EXEC CICS`-using procedure needs the `DFH*` runtime declarations once,
+      // right after the procedure's own `;`. Outside any procedure there is nowhere to
+      // put them. A procedure header that never closes (broken source) gets none either.
+      const procedureEnd = findEnclosingProcedureEnd(
+        context.text,
+        scan.procedures,
+        fragment.range.start,
+        CICS_DELIMITERS,
+      );
+      if (typeof procedureEnd === "number") {
+        declaredProcedures.add(procedureEnd);
+      }
     }
+    for (const offset of scan.anchors) {
+      this.replaceBuiltin(context, offset);
+    }
+    for (const offset of declaredProcedures) {
+      context.replace({ start: offset, end: offset }, CICS_EXEC_DECLS);
+    }
+  }
+
+  /**
+   * Replaces the `DFHRESP(...)`/`DFHVALUE(...)` at `offset` with its numeric value. An
+   * unknown name is diagnosed and the whole clause removed - it must not leak through to
+   * the host parser as a function call.
+   */
+  private replaceBuiltin(context: PreprocessorContext, offset: number): void {
+    BUILTIN_ANCHOR.lastIndex = offset;
+    const match = BUILTIN_ANCHOR.exec(context.text);
+    if (!match) {
+      return;
+    }
+    const keyword = match[1].toUpperCase();
+    const name = match[2];
+    const nameStart = offset + match[0].lastIndexOf(name);
+    const range = { start: offset, end: offset + match[0].length };
+    const tokens: Token[] = [
+      {
+        image: match[1],
+        range: { start: offset, end: offset + match[1].length },
+        semanticsKind: SemanticsKind.Keyword,
+      },
+      {
+        image: name,
+        range: { start: nameStart, end: nameStart + name.length },
+        semanticsKind: SemanticsKind.Keyword,
+      },
+    ];
+    const table = keyword === "DFHRESP" ? RESP_VALUES : CVDA_VALUES;
+    const value = table[name.toUpperCase()];
+    if (value === undefined) {
+      context.pushDiagnostic({
+        message:
+          keyword === "DFHRESP"
+            ? `'${name}' is not a CICS response condition.`
+            : `'${name}' is not a CICS value (CVDA).`,
+        code:
+          keyword === "DFHRESP" ? "unknown.response.condition" : "unknown.cvda",
+        severity: Severity.Severe,
+        range: tokens[1].range,
+      });
+      context.replace(range, "", tokens);
+      return;
+    }
+    context.replace(range, value.toString(), tokens);
   }
 
   private tryParse(text: string): PreprocessorResult {

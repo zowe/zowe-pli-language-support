@@ -2563,10 +2563,8 @@ translator
     },
   })
   .postProcess({
-    // Validates pp.items array against the documented PP invocation limits:
-    // a maximum of 31 preprocessor steps in total, the CICS preprocessor invoked at most once,
-    // and the SQL preprocessor invoked no more than twice (and only twice if the first SQL
-    // invocation specifies INCONLY as its option).
+    // Validates pp.items against the documented PP invocation limits: at most 31 steps, CICS at
+    // most once, SQL at most twice.
     id: "pp.limits",
     dependsOn: ["pp.macroImplicit"],
     run: (options, acceptor) => {

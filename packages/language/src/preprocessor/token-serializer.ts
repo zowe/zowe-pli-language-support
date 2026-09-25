@@ -26,26 +26,9 @@ export interface SerializedTokens {
 const WHITESPACE_ONLY = /^\s*$/;
 
 /**
- * Converts a preprocessor phase's final `Token[]` (the MACRO interpreter's internal,
- * deliberately token-based representation) into the `{text, sourceMap}` shape the rest of
- * the pipeline passes between phases. Tokens fall into three categories:
- *
- * - **Same-file verbatim** (`token.uri` matches `phaseUri`): consecutive tokens are
- *   sliced directly out of `phaseText` as one segment - but only while the gap between
- *   them is whitespace-only (a statement that expanded to nothing leaves a non-whitespace
- *   gap that must not be re-included).
- * - **Foreign** (`token.uri` set but different, e.g. `%INCLUDE`d): real positions in
- *   another file, so there's no `phaseText` to slice. Runs are reconstructed from
- *   `token.image` with exact-length space padding for gaps, preserving the file's offset
- *   stride, and become `foreign` verbatim segments.
- * - **Generated** (`token.uri` undefined, e.g. macro-substituted values): no real
- *   position at all; the run is resynthesized from `token.image` and anchored to the
- *   nearest preceding same-file position.
- *
- * Segment boundaries get a single separating space (or newline, per `startsNewLine`)
- * unless `immediateFollow` says there was no gap - so re-lexing the joined text can never
- * merge two distinct tokens. Foreign and generated spans carry one `MappedToken` per
- * contributing token, so cross-references and exact casing survive the final re-lex.
+ * Converts a preprocessor phase's final `Token[]` into the `{text, sourceMap}` shape the rest of
+ * the pipeline passes between phases. Same-file tokens are sliced verbatim from `phaseText`;
+ * foreign and generated tokens are rebuilt from `token.image` and carry one `MappedToken` each.
  */
 export function serializeTokens(
   tokens: Token[],
@@ -230,9 +213,8 @@ function isWhitespaceGap(text: string, start: number, end: number): boolean {
 }
 
 /**
- * Rebuilds a run of tokens from a single foreign file, padding gaps with exactly as many
- * characters as that file's own text had there (spaces - only the offsets matter
- * downstream; a leading newline when `startsNewLine` is set keeps rough line structure).
+ * Rebuilds a run of tokens from a single foreign file, padding gaps with exactly as many characters
+ * as that file's own text had there.
  */
 function synthesizeForeignRun(
   tokens: Token[],

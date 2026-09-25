@@ -109,12 +109,8 @@ export function createMacroHandlers(
 }
 
 /**
- * Macro preprocessor phase. A `{text, sourceMap} -> {text, sourceMap}` transform: tokenizes
- * its own input text (the interpreter's internals stay token-based), parses `%` statements
- * and includes, runs the macro
- * instructions (variable expansion, `%IF`/`%DO`, `%INCLUDE`, `REPLACE`, ...), and serializes
- * the resulting tokens back to text plus a map to this phase's input (`serializeTokens`).
- * EXEC SQL/CICS text passes through with macro variables expanded.
+ * Macro preprocessor phase. Tokenizes its input text, runs the macro instructions, and serializes
+ * the resulting tokens back to text plus a source map.
  */
 export class MacroPreprocessorPhase implements PreprocessorPhase {
   constructor(
@@ -201,12 +197,8 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
 }
 
 /**
- * Cheap pre-scan deciding whether the macro phase can be skipped as a guaranteed identity
- * transform. Every construct the phase acts on requires one of: a `%` character (all `%`
- * statements), the effective alternate-include keyword (`++INCLUDE`-style, only active with
- * `PP(INCLUDE)`), or an `INCAFTER(PROCESS(...))` option. False positives (e.g. a `%` inside
- * a string literal) merely run the phase; only false negatives would be unsafe, and each
- * trigger below is a strict textual prerequisite of the corresponding construct's token.
+ * Cheap pre-scan deciding whether the macro phase can be skipped. False positives merely run the
+ * phase.
  */
 function mayContainMacroStatements(
   text: string,

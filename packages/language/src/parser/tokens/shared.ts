@@ -54,20 +54,13 @@ export interface Token {
    */
   synthetic?: boolean;
   /**
-   * Semantic token type assigned by a preprocessor phase for tokens inside
-   * preprocessor-owned text (e.g. the body of an `EXEC SQL`/`EXEC CICS` statement, whose
-   * classification comes from the external preprocessor engine rather than the PL/I
-   * grammar). Rendered with the `preprocessor` modifier by semantic highlighting.
+   * Semantic token type assigned by a preprocessor phase for tokens inside preprocessor-owned text
+   * (e.g. the body of an `EXEC SQL`/`EXEC CICS` statement).
    */
   ppSemanticType?: SemanticTokenTypes;
 }
-// Token instances exist by the millions on large files, so every in-object
-// field is ~8 bytes per token times the token count. The four booleans and the
-// small `ppSemanticType` enum are therefore packed into a single `flags` number
-// behind prototype accessors. This also keeps the hidden class stable when
-// `synthetic`/`ppSemanticType` are assigned after construction - as own fields
-// added late they would force every such token into an out-of-object property
-// store.
+// Token instances exist by the millions on large files, so the booleans and `ppSemanticType` are
+// packed into a single `flags` number behind prototype accessors.
 const FLAG_INSERTED_IN_RECOVERY = 1 << 0;
 const FLAG_IMMEDIATE_FOLLOW = 1 << 1;
 const FLAG_STARTS_NEW_LINE = 1 << 2;

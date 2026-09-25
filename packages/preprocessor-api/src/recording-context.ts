@@ -23,16 +23,12 @@ export interface RecordedInclude {
   name: string;
   statementRange: Range;
   nameRange: Range;
+  context?: RecordingPreprocessorContext;
 }
 
 /**
  * A minimal in-memory {@link PreprocessorContext} that records every call it receives.
- * A `Preprocessor`'s complete observable output flows through the interface's members
- * (edits with their classified token lists, diagnostics, include resolutions), so running
- * `execute` against this recorder and asserting on what was recorded is a full conformance
- * check of a preprocessor implementation - including a future external one talking over a
- * serialized boundary. `include` records the attempt, resolves nothing, and - like the
- * host - still blanks the statement as an edit carrying its tokens.
+ * Used for testing certain preprocessor features.
  */
 export class RecordingPreprocessorContext implements PreprocessorContext {
   readonly diagnostics: Diagnostic[] = [];
@@ -44,6 +40,7 @@ export class RecordingPreprocessorContext implements PreprocessorContext {
     readonly text: string,
     readonly documentUri: string = "file:///main.pli",
     readonly unitUri: string = documentUri,
+    private readonly includeTexts: Readonly<Record<string, string>> = {},
   ) {}
 
   pushDiagnostic(diagnostic: Diagnostic): void {
@@ -59,8 +56,19 @@ export class RecordingPreprocessorContext implements PreprocessorContext {
     statementRange: Range,
     nameRange: Range,
     tokens?: Token[],
-  ): Promise<void> {
-    this.includes.push({ name, statementRange, nameRange });
+  ): Promise<PreprocessorContext | undefined> {
+    const included = this.includeTexts[name];
+    const context =
+      included === undefined
+        ? undefined
+        : new RecordingPreprocessorContext(
+            included,
+            `file:///${name}.inc`,
+            this.unitUri,
+            this.includeTexts,
+          );
+    this.includes.push({ name, statementRange, nameRange, context });
     this.replace(statementRange, "", tokens);
+    return context;
   }
 }

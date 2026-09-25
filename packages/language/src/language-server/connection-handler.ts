@@ -512,16 +512,8 @@ export function startLanguageServer(
   }
 
   /**
-   * Resolves the {@link ProgramRecord} that applies to `uri`.
-   *
-   * `uri` may be an included file rather than a compilation unit's entry
-   * point (e.g. a `%INCLUDE`d copybook opened directly in the editor).
-   * `pgm_conf.json` only lists entry points, so looking up `uri` itself
-   * would fail to find a match in that case. Instead, resolve the owning
-   * compilation unit first (`compilationUnitHandler` already maps every
-   * file that's part of a processed unit back to that unit - see
-   * `CompilationUnitHandler.process`) and use its cached `programConfig`,
-   * which was already resolved from the unit's actual entry-point URI.
+   * Resolves the {@link ProgramRecord} that applies to `uri`. Looks up the owning compilation unit
+   * first, since `uri` may be an included file rather than an entry point.
    */
   function resolveProgramConfig(
     uri: URI,
