@@ -308,15 +308,7 @@
 <a name='L243'></a><a href='#L243'>243</a>
 <a name='L244'></a><a href='#L244'>244</a>
 <a name='L245'></a><a href='#L245'>245</a>
-<a name='L246'></a><a href='#L246'>246</a>
-<a name='L247'></a><a href='#L247'>247</a>
-<a name='L248'></a><a href='#L248'>248</a>
-<a name='L249'></a><a href='#L249'>249</a>
-<a name='L250'></a><a href='#L250'>250</a>
-<a name='L251'></a><a href='#L251'>251</a>
-<a name='L252'></a><a href='#L252'>252</a>
-<a name='L253'></a><a href='#L253'>253</a>
-<a name='L254'></a><a href='#L254'>254</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L246'></a><a href='#L246'>246</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -432,20 +424,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1679x</span>
+<span class="cline-any cline-yes">1679x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1677x</span>
+<span class="cline-any cline-yes">1677x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1669x</span>
-<span class="cline-any cline-yes">1669x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1667x</span>
-<span class="cline-any cline-yes">1667x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1667x</span>
-<span class="cline-any cline-yes">1216x</span>
+<span class="cline-any cline-yes">1677x</span>
+<span class="cline-any cline-yes">1226x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">451x</span>
@@ -460,7 +448,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">451x</span>
-<span class="cline-any cline-yes">1667x</span>
+<span class="cline-any cline-yes">1677x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -526,25 +514,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1667x</span>
+<span class="cline-any cline-yes">1677x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1663x</span>
+<span class="cline-any cline-yes">1673x</span>
 <span class="cline-any cline-yes">440x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1223x</span>
-<span class="cline-any cline-yes">1667x</span>
+<span class="cline-any cline-yes">1233x</span>
+<span class="cline-any cline-yes">1677x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1212x</span>
+<span class="cline-any cline-yes">1222x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -680,12 +664,8 @@ export function createMacroHandlers(
 }
 &nbsp;
 /**
- * Macro preprocessor phase. A `{text, sourceMap} -&gt; {text, sourceMap}` transform: tokenizes
- * its own input text (the interpreter's internals stay token-based), parses `%` statements
- * and includes, runs the macro
- * instructions (variable expansion, `%IF`/`%DO`, `%INCLUDE`, `REPLACE`, ...), and serializes
- * the resulting tokens back to text plus a map to this phase's input (`serializeTokens`).
- * EXEC SQL/CICS text passes through with macro variables expanded.
+ * Macro preprocessor phase. Tokenizes its input text, runs the macro instructions, and serializes
+ * the resulting tokens back to text plus a source map.
  */
 export class MacroPreprocessorPhase implements PreprocessorPhase {
   constructor(
@@ -772,12 +752,8 @@ export class MacroPreprocessorPhase implements PreprocessorPhase {
 }
 &nbsp;
 /**
- * Cheap pre-scan deciding whether the macro phase can be skipped as a guaranteed identity
- * transform. Every construct the phase acts on requires one of: a `%` character (all `%`
- * statements), the effective alternate-include keyword (`++INCLUDE`-style, only active with
- * `PP(INCLUDE)`), or an `INCAFTER(PROCESS(...))` option. False positives (e.g. a `%` inside
- * a string literal) merely run the phase; only false negatives would be unsafe, and each
- * trigger below is a strict textual prerequisite of the corresponding construct's token.
+ * Cheap pre-scan deciding whether the macro phase can be skipped. False positives merely run the
+ * phase.
  */
 function mayContainMacroStatements(
   text: string,
@@ -829,7 +805,7 @@ function generateIncAfterInstruction(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T12:55:21.258Z
+                at 2026-09-28T10:16:17.169Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
