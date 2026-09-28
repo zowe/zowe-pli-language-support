@@ -12,8 +12,8 @@
 /// <reference path="../../framework.ts" />
 
 // The declaration sits in OUTER, after a nested procedure already closed - the SQL_LOB10
-// block must be inserted into OUTER (whose scope holds the `LIKE`), not into INNER,
-// which merely happens to be the nearest preceding PROC keyword.
+// block is inserted at the top of the file, where it is visible to OUTER (holding the
+// `LIKE`), regardless of the closed INNER in between.
 
 //// OUTER: PROC;
 ////   INNER: PROC;
@@ -22,12 +22,12 @@
 //// END OUTER;
 
 preprocessor.expectTokens(`
-OUTER: PROC;
-  DCL
-    1 SQL_LOB10 BASED,
-      2 SQL_LOB_LEN FIXED BIN(31),
-      2 SQL_LOB_BUF(10) CHAR(1);
+DCL
+  1 SQL_LOB10 BASED,
+    2 SQL_LOB_LEN FIXED BIN(31),
+    2 SQL_LOB_BUF(10) CHAR(1);
 
+OUTER: PROC;
   INNER: PROC;
   END INNER;
   DCL TEST_SQL LIKE SQL_LOB10;

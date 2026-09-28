@@ -11,20 +11,13 @@
 
 /// <reference path="../../framework.ts" />
 
+// The SQL_LOB* block is inserted at offset 0 of the SQL phase's input - a file starting
+// with a *PROCESS directive (consumed before the phases run) must not be disturbed by it.
+
+////*PROCESS PP(SQL);
 //// TEST: PROC;
-////   DCL TEST_SQL1 SQL TYPE IS BLOB(10);
-////   DCL TEST_SQL2 SQL TYPE IS BLOB(10);
+////   DCL TEST_SQL SQL TYPE IS BLOB(10);
 //// END;
 
-// Expects that the additional SQL_LOB10 declaration is only generated ONCE
-preprocessor.expectTokens(`
-DCL
-  1 SQL_LOB10 BASED,
-    2 SQL_LOB_LEN FIXED BIN(31),
-    2 SQL_LOB_BUF(10) CHAR(1);
-
-TEST: PROC;
-  DCL TEST_SQL1 LIKE SQL_LOB10;
-  DCL TEST_SQL2 LIKE SQL_LOB10;
-END;
-  `);
+verify.noDiagnostics();
+preprocessor.containsTokens(["SQL_LOB10", "BASED", "LIKE"]);

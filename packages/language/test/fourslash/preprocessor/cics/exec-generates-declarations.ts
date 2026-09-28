@@ -17,10 +17,9 @@
 ////   EXEC CICS SOMETHING2;
 //// END;
 
-// The EXEC CICS statement should generate a few declarations after the PROC semicolon ONCE
+// The EXEC CICS statements should generate the declarations at the top of the file ONCE
 preprocessor.expectTokens(`
-TEST: PROC;
-    DCL 
+    DCL
       1 DFHCNSTS STATIC,
         2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
         2 DFHEIB0 FIXED BIN(15) INIT(0),
@@ -67,6 +66,7 @@ TEST: PROC;
     DCL DFHEI0 ENTRY VARIABLE OPTIONS(INTER ASSEMBLER) INIT(DFHEI01) AUTO;
     DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
 
+TEST: PROC;
     DCL VAR1 FIXED BIN(31);
     DO; END;
     DO; END;

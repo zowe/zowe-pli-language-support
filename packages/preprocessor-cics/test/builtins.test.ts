@@ -21,8 +21,8 @@ import { CVDA_VALUES, RESP_VALUES } from "../src/engine/cics-values";
 
 /**
  * The translator's host-side work beyond `EXEC CICS` statements: `DFHRESP`/`DFHVALUE`
- * substitution and the per-procedure `DFH*` runtime declarations, through
- * `execute(context)` against the recording context.
+ * substitution and the `DFH*` runtime declarations (inserted once at the top of the
+ * file), through `execute(context)` against the recording context.
  */
 describe("CICS built-ins", () => {
   const preprocessor = new CICSPreprocessor(HostLanguageType.PLI);
@@ -104,31 +104,28 @@ describe("CICS built-ins", () => {
       "EXEC SQL SELECT DFHVALUE(ENABLED) FROM T;\n" +
       "S = 'DFHRESP(NORMAL)';";
     const context = await run(text);
-    expect(context.edits.map((e) => e.text)).toEqual(["DO; END;"]);
+    // The one replaced statement, plus the top-of-file DFH* declarations it triggers.
+    expect(context.edits.map((e) => e.text)).toEqual([
+      "DO; END;",
+      expect.stringContaining("DFHEIBLK"),
+    ]);
     expect(context.edits[0].range.end).toBe(text.indexOf("\n"));
   });
 
-  test("the DFH* declarations are inserted once per procedure using EXEC CICS", async () => {
+  test("the DFH* declarations are inserted once at the top of the file", async () => {
     const text =
       "A: PROC;\n  EXEC CICS ABEND;\n  EXEC CICS RETURN;\n  B: PROC;\n    EXEC CICS RETURN;\n  END;\nEND;";
     const context = await run(text);
-    expect(declarations(context)).toEqual([
-      text.indexOf("A: PROC;") + "A: PROC;".length,
-      text.indexOf("B: PROC;") + "B: PROC;".length,
-    ]);
+    expect(declarations(context)).toEqual([0]);
     const block = context.edits.find((e) => e.text.includes("DFHEIBLK"))!;
     expect(block.text).toContain("EIBRESP  FIXED BIN(31)");
     expect(block.tokens).toEqual([]);
   });
 
-  test("DFHRESP alone does not declare anything, and neither does EXEC CICS outside a procedure", async () => {
-    const context = await run("X = DFHRESP(NORMAL);\nEXEC CICS RETURN;");
+  test("DFHRESP alone does not declare anything; any EXEC CICS statement does", async () => {
+    const context = await run("X = DFHRESP(NORMAL);");
     expect(declarations(context)).toEqual([]);
-  });
-
-  test("a procedure header that never closes gets no declarations", async () => {
-    const context = await run("A: PROC\n  EXEC CICS RETURN");
-    expect(context.edits.map((e) => e.text)).toEqual([""]);
-    expect(declarations(context)).toEqual([]);
+    const withExec = await run("X = DFHRESP(NORMAL);\nEXEC CICS RETURN;");
+    expect(declarations(withExec)).toEqual([0]);
   });
 });

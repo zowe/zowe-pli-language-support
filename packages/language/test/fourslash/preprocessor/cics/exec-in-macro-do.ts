@@ -18,10 +18,10 @@
 //// END;
 
 // EXEC CICS inside a %DO block passes through the macro phase as plain text and is then
-// processed by the CICS phase, generating the declarations and the DO; END; replacement.
+// processed by the CICS phase, generating the top-of-file declarations and the DO; END;
+// replacement.
 preprocessor.expectTokens(`
-TEST: PROC;
-    DCL 
+    DCL
       1 DFHCNSTS STATIC,
         2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
         2 DFHEIB0 FIXED BIN(15) INIT(0),
@@ -68,6 +68,7 @@ TEST: PROC;
     DCL DFHEI0 ENTRY VARIABLE OPTIONS(INTER ASSEMBLER) INIT(DFHEI01) AUTO;
     DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
 
+TEST: PROC;
     DO; END;
 END;
 `);

@@ -30,7 +30,6 @@ import { CollectingIdentifierVisitor } from "./collect-identifiers";
 import {
   Delimiters,
   Diagnostic,
-  findEnclosingProcedureEnd,
   Preprocessor,
   PreprocessorContext,
   PreprocessorResult,
@@ -75,7 +74,7 @@ const CICS_DELIMITERS: Delimiters = {
 const BUILTIN_ANCHOR = /(DFHRESP|DFHVALUE)\s*\(\s*([A-Za-z0-9_#@$]+)\s*\)/iy;
 
 /**
- * The `DFH*` runtime declarations every `EXEC CICS`-using procedure needs - extracted from
+ * The `DFH*` runtime declarations every `EXEC CICS`-using program needs - extracted from
  * PL/I code after running it through the real CICS preprocessor, except that `DFHEI0`'s
  * `OPTIONS(...)` is moved directly after `ENTRY VARIABLE` (attribute order is free in PL/I,
  * and the PL/I parser only understands the `OPTIONS` attribute in that position).
@@ -146,7 +145,9 @@ export class CICSPreprocessor implements Preprocessor {
    *
    * - every `EXEC CICS ...;` statement becomes `DO; END;`, its reference tokens (e.g. an
    *   `EXEC CICS LINK(name)` argument) travelling as the recorded tokens, and the `DFH*`
-   *   runtime declarations are inserted once per enclosing procedure;
+   *   runtime declarations are inserted once at the top of the file, where top-level
+   *   declarations are visible to every procedure (a deliberate deviation from the real
+   *   translator, which declares per enclosing procedure);
    * - `DFHRESP(...)`/`DFHVALUE(...)` become their numeric value.
    *
    * Every `replace` carries the construct's full classified token list in host
@@ -160,7 +161,6 @@ export class CICSPreprocessor implements Preprocessor {
       CICS_DELIMITERS,
       BUILTIN_ANCHOR,
     );
-    const declaredProcedures = new Set<number>();
     for (const fragment of scan.fragments) {
       const { diagnostics, tokens } = this.tryParse(fragment.bodyText);
       for (const diagnostic of diagnostics) {
@@ -178,24 +178,12 @@ export class CICSPreprocessor implements Preprocessor {
       } else {
         context.replace(fragment.range, "DO; END;", rebased);
       }
-      // Every `EXEC CICS`-using procedure needs the `DFH*` runtime declarations once,
-      // right after the procedure's own `;`. Outside any procedure there is nowhere to
-      // put them. A procedure header that never closes (broken source) gets none either.
-      const procedureEnd = findEnclosingProcedureEnd(
-        context.text,
-        scan.procedures,
-        fragment.range.start,
-        CICS_DELIMITERS,
-      );
-      if (typeof procedureEnd === "number") {
-        declaredProcedures.add(procedureEnd);
-      }
     }
     for (const offset of scan.anchors) {
       this.replaceBuiltin(context, offset);
     }
-    for (const offset of declaredProcedures) {
-      context.replace({ start: offset, end: offset }, CICS_EXEC_DECLS);
+    if (scan.fragments.length > 0) {
+      context.replace({ start: 0, end: 0 }, CICS_EXEC_DECLS);
     }
   }
 

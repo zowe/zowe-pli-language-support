@@ -19,8 +19,9 @@ import {
 import { Db2SqlPreprocessor } from "../src/engine/preprocessor";
 
 /**
- * `SQL TYPE IS ...` attribute rewriting and the per-procedure `SQL_LOB*` declaration
- * blocks, through `execute(context)` against the recording context.
+ * `SQL TYPE IS ...` attribute rewriting and the `SQL_LOB*` declaration blocks (inserted
+ * once at the top of the entry file), through `execute(context)` against the recording
+ * context.
  */
 describe("DB2 SQL TYPE IS", () => {
   const preprocessor = new Db2SqlPreprocessor();
@@ -98,16 +99,16 @@ describe("DB2 SQL TYPE IS", () => {
     expect(edit.tokens[3].range.start).toBe(context.text.indexOf("CLOB"));
   });
 
-  test("inserts the LOB declaration block once per size right after the procedure's semicolon", async () => {
+  test("inserts the LOB declaration block once per size at the top of the file", async () => {
     const text =
       "TEST: PROC;\n  DCL A SQL TYPE IS BLOB(10);\n  DCL B SQL TYPE IS CLOB(10);\n  DCL C SQL TYPE IS CLOB(1K);\nEND;";
     const context = await run(text);
     const [block] = insertions(context);
     expect(insertions(context)).toHaveLength(1);
-    expect(block.offset).toBe(text.indexOf(";") + 1);
-    // One block per distinct size, in reverse encounter order.
-    expect(block.text.indexOf("SQL_LOB1024 BASED")).toBeLessThan(
-      block.text.indexOf("SQL_LOB10 BASED"),
+    expect(block.offset).toBe(0);
+    // One block per distinct size, in encounter order.
+    expect(block.text.indexOf("SQL_LOB10 BASED")).toBeLessThan(
+      block.text.indexOf("SQL_LOB1024 BASED"),
     );
     expect(block.text.match(/SQL_LOB10 BASED/g)).toHaveLength(1);
   });
@@ -122,29 +123,25 @@ describe("DB2 SQL TYPE IS", () => {
     expect(blocks[0].text).toContain("SQL_FILE_APPEND");
   });
 
-  test("a LOB clause outside any procedure is dropped and declares nothing", async () => {
+  test("a LOB clause outside any procedure still resolves via the top-of-file block", async () => {
     const context = await run("DCL A SQL TYPE IS BLOB(10);");
-    expect(clauseEdit(context, "SQL TYPE IS BLOB(10)").text).toBe("");
-    expect(insertions(context)).toEqual([]);
+    expect(clauseEdit(context, "SQL TYPE IS BLOB(10)").text).toBe(
+      "LIKE SQL_LOB10",
+    );
+    expect(insertions(context).map((i) => i.offset)).toEqual([0]);
   });
 
-  test("a procedure whose header never closes gets no declarations", async () => {
-    const context = await run("TEST: PROC\n  DCL A SQL TYPE IS BLOB(10)");
-    expect(clauseEdit(context, "SQL TYPE IS BLOB(10)").text).toBe("");
-    expect(insertions(context)).toEqual([]);
-  });
-
-  test("nested procedures get their own blocks", async () => {
+  test("nested procedures share the single top-of-file block", async () => {
     const text =
       "A: PROC;\n  DCL X SQL TYPE IS BLOB(1);\n  B: PROC;\n    DCL Y SQL TYPE IS BLOB(2);\n  END;\nEND;";
     const context = await run(text);
-    expect(insertions(context).map((i) => i.offset)).toEqual([
-      text.indexOf("A: PROC;") + "A: PROC;".length,
-      text.indexOf("B: PROC;") + "B: PROC;".length,
-    ]);
+    const blocks = insertions(context);
+    expect(blocks.map((i) => i.offset)).toEqual([0]);
+    expect(blocks[0].text).toContain("SQL_LOB1 BASED");
+    expect(blocks[0].text).toContain("SQL_LOB2 BASED");
   });
 
-  test("a copybook's LOB clause declares against the including file's procedure", async () => {
+  test("a copybook's LOB clause declares at the top of the including file", async () => {
     const copybook = "DCL C SQL TYPE IS CLOB(2K);";
     const text = "TEST: PROC;\n  EXEC SQL INCLUDE DCLEMP;\nEND;";
     const context = await run(text, { DCLEMP: copybook });
@@ -152,7 +149,7 @@ describe("DB2 SQL TYPE IS", () => {
     expect(nested.edits.map((e) => e.text)).toEqual(["LIKE SQL_LOB2048"]);
     expect(insertions(nested)).toEqual([]);
     const [block] = insertions(context);
-    expect(block.offset).toBe(text.indexOf(";") + 1);
+    expect(block.offset).toBe(0);
     expect(block.text).toContain("SQL_LOB2048 BASED");
   });
 
