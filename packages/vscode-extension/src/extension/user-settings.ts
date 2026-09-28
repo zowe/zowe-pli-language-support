@@ -24,9 +24,7 @@ async function openUserSettings(): Promise<void> {
 }
 
 /**
- * After a write, offer to open `settings.json` so copybook `libs` can be
- * added (user defaults ship with none). The message body is not clickable
- * (VS Code API); the action opens the file.
+ * After a write, offer to open `settings.json` so copybook `libs` can be added.
  */
 export async function notifyUserConfigAppended(program: string): Promise<void> {
   const selection = await vscode.window.showInformationMessage(

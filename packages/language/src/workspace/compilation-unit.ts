@@ -100,9 +100,8 @@ export interface CompilationUnit {
   preprocessorEvaluationResults: EvaluationResults;
   tokens: Token[];
   /**
-   * The text produced by the last preprocessing phase — exactly the text that was
-   * lexed to produce {@link tokens}. Positions in it map back to the original
-   * sources only via the pipeline's composed source map (already baked into the tokens).
+   * The text produced by the last preprocessing phase - exactly the text that was lexed to produce
+   * {@link tokens}.
    */
   preprocessedText: string;
   referencesCache: ReferencesCache;
@@ -237,10 +236,8 @@ export async function createCompilationUnit(
       unit.scopeCaches.clear();
       unit.includeError = false;
       unit.diagnostics.clear();
-      // Release the previous run's AST, tokens and preprocessed text. reset()
-      // runs at the start of every lifecycle - without this, the old and the
-      // new structures are both reachable while the new ones are built,
-      // doubling the peak heap on every edit of a large file.
+      // Release the previous run's AST, tokens and preprocessed text, so old and new structures
+      // aren't both reachable while the new ones are built.
       unit.ast = {
         kind: SyntaxKind.Program,
         container: null,
@@ -371,10 +368,8 @@ export class CompilationUnitHandler {
     textDocuments.onDidChangeContent((event) => {
       const uri = UriUtils.toUri(event.document.uri);
       if (uri.scheme === PreprocessedTextUriSchema) {
-        // A preprocessed-text view is a read-only rendering of generated text: its
-        // offsets don't exist in any real source file, so running the LS pipeline on
-        // it would only produce duplicate compilation units and mispositioned
-        // diagnostics. It gets TextMate highlighting only - no language support.
+        // A preprocessed-text view is a read-only rendering of generated text and gets TextMate
+        // highlighting only - no language support.
         return;
       }
       this.updateUri(uri);
@@ -803,11 +798,8 @@ export async function pluginConfigChanged(
   connection.languages.semanticTokens.refresh();
 }
 
-// A structural change to a lib folder (a file/dir created or deleted
-// inside a lib, or a directory removed that is or contains a lib)
-// invalidates the computed lib index, so the libs must be re-expanded.
-// Note: Simple file edits are not considered structural changes,
-// so they don't trigger a reindex.
+// A structural change to a lib folder (a file/dir created or deleted inside a lib) invalidates the
+// computed lib index. Simple file edits don't.
 function changeAffectsLibs(
   workspace: WorkspaceContext,
   changes: readonly FileEvent[],

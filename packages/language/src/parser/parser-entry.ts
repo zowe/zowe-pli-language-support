@@ -37,12 +37,8 @@ export type StatementParser = (
 ) => Promise<ast.Statement | null | undefined>;
 
 /**
- * Parse a token stream into preprocessor statements using an explicit, ordered list
- * of statement handlers.
- *
- * Each preprocessor phase composes its own handler list.
- * Falls back to a plain token statement when none of them recognize the current token.
- * Tokens that are not consumed by any handler simply pass through to the next phase.
+ * Parse a token stream into preprocessor statements using an explicit, ordered list of statement
+ * handlers. Falls back to a plain token statement when none of them recognize the current token.
  */
 export async function preprocessorParse(
   state: ParserState,

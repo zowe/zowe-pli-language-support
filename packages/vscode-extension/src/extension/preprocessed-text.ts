@@ -15,10 +15,7 @@ import { Commands, Messages, PreprocessedTextUriSchema } from "pli-language";
 import { onNotification, sendRequest } from "./messages";
 
 /**
- * Registers the read-only virtual document provider and the
- * "Show Preprocessed Text" command. The virtual document shows the fully
- * preprocessed text of the compilation unit containing a .pli file and
- * refreshes whenever the language server re-processes a unit.
+ * Registers the read-only virtual document provider and the "Show Preprocessed Text" command.
  */
 export function registerPreprocessedText(
   client: BaseLanguageClient,

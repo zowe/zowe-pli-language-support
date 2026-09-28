@@ -32,8 +32,11 @@ describe("CICS execute(context)", () => {
     await preprocessor.execute(context);
 
     expect(context.diagnostics).toHaveLength(0);
-    expect(context.edits).toHaveLength(1);
-    const [edit] = context.edits;
+    // The statement's replacement plus the top-of-file DFH* declarations.
+    expect(context.edits).toHaveLength(2);
+    const [edit, declarations] = context.edits;
+    expect(declarations.range).toEqual({ start: 0, end: 0 });
+    expect(declarations.text).toContain("DFHEIBLK");
     expect(text.slice(edit.range.start, edit.range.end)).toBe(
       "EXEC CICS ABEND ABCODE(12);",
     );
@@ -61,7 +64,8 @@ describe("CICS execute(context)", () => {
     await preprocessor.execute(context);
 
     expect(context.diagnostics.length).toBeGreaterThan(0);
-    expect(context.edits).toHaveLength(1);
+    // The annotation edit plus the top-of-file DFH* declarations.
+    expect(context.edits).toHaveLength(2);
     const [edit] = context.edits;
     // Zero-width, empty-text annotation edit: the raw statement stays in the text.
     expect(edit.range).toEqual({ start: 0, end: 0 });

@@ -154,10 +154,8 @@ export class PliLexer {
   }
 
   /**
-   * Applies margins, then strips comments (see `stripComments`), producing the text that
-   * seeds the phase pipeline plus the comment tokens for LSP services. Margin diagnostics
-   * are folded into the (cached) result so they stay correct on cache hits - the shared
-   * margins processor would otherwise overwrite `marginsProcessor.issues`.
+   * Applies margins, then strips comments, producing the text that seeds the phase pipeline plus
+   * the comment tokens for LSP services.
    */
   private prepareSource(
     unit: CompilationUnit,
@@ -204,12 +202,7 @@ export class PliLexer {
   }
 
   /**
-   * Registers the file's tokens with the file store - the exact objects the real parser
-   * will annotate with `.kind`/`.element`, so LSP services see those attachments too
-   * (a separately re-tokenized array would silently desync). Also merges in this file's
-   * own `directiveTokens`: `%IF`/`%DCL`/`EXEC`/... tokens consumed by a directive and
-   * otherwise unreachable, needed by features that inspect a directive rather than its
-   * expansion.
+   * Registers the file's tokens with the file store, merging in this file's own `directiveTokens`.
    */
   private registerFileTokens(
     unit: CompilationUnit,
@@ -226,14 +219,8 @@ export class PliLexer {
     const ownDirectiveTokens = directiveTokens.filter(
       (t) => t.uri?.toString() === uriString,
     );
-    // Only this file's own tokens: foreign-file tokens carry offsets in *that* file's
-    // numbering and would collide with this file's tokens at the same numeric offset
-    // (they're merged into the foreign file's registration below). `synthetic` tokens
-    // are excluded - see `Token.synthetic`.
-    // Identity-dedupe: an `EXEC` host-variable sub-token shows up both as a directive
-    // token and as an annotate-emitted `sourceToken`. Only the option/directive side is
-    // ever duplicated and it is tiny, so dedupe against that instead of pushing the
-    // full file's tokens (millions on large files) through a Set.
+    // Only this file's own, non-synthetic tokens. Dedupe against the small directive-token side,
+    // not the full file's tokens.
     const smallSide = new Set([...optionTokens, ...ownDirectiveTokens]);
     const tokens: Token[] = [...smallSide];
     for (const token of annotated.tokens) {
@@ -271,12 +258,8 @@ export class PliLexer {
   }
 
   /**
-   * Merges final-stream tokens that belong to a *foreign* file into that file's own
-   * registration. Included content re-surfaces in the composed text with the include's
-   * own uri/offsets and carries (or will receive from the real parse) `.kind`/`.element`/
-   * `ppSemanticType` - while the include's base registration only holds the raw,
-   * unannotated tokenization. Replaces the raw tokens the incoming ones cover, keeping
-   * the array sorted and overlap-free.
+   * Merges final-stream tokens that belong to a foreign file into that file's own registration,
+   * replacing the raw tokens the incoming ones cover.
    */
   private mergeForeignTokens(
     unit: CompilationUnit,
@@ -323,10 +306,8 @@ export class PliLexer {
 }
 
 /**
- * Build the preprocessor phase list from the PP() compiler option.
- * The PP option contains an ordered list of preprocessor items
- * (MACRO, SQL, CICS, INCLUDE), and each maps to a PreprocessorPhase.
- * The phases run sequentially: {text,sourceMap} -> Phase1 -> {text,sourceMap} -> Phase2 -> ...
+ * Build the preprocessor phase list from the PP() compiler option. The phases run sequentially:
+ * {text,sourceMap} -> Phase1 -> {text,sourceMap} -> Phase2 -> ...
  */
 function buildPhases(
   opts: CompilerOptions,

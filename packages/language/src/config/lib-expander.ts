@@ -113,11 +113,8 @@ export interface ExpandedGroup {
 }
 
 /**
- * A concrete lib to expand, tagged with the provenance needed to order the
- * results later: which `libs[]` entry it came from (`configIndex`) and the
- * segment count of that entry's static base (`baseDepth`), so an entry's depth
- * can be measured *relative to its own base* rather than from the filesystem
- * root.
+ * A concrete lib to expand, tagged with the `libs[]` entry it came from and the segment count of
+ * that entry's static base.
  */
 interface PlannedLib {
   item: JsonItem<string>;
@@ -131,10 +128,8 @@ function baseDepthOf(base: string): number {
 }
 
 /**
- * Turns configured lib entries into the flat list of concrete libs to expand,
- * resolving wildcards along the way. Each concrete lib keeps its originating
- * config index and base depth (see {@link PlannedLib}). An unresolvable
- * wildcard is kept verbatim so it later surfaces as an unresolved diagnostic.
+ * Turns configured lib entries into the flat list of concrete libs to expand, resolving wildcards
+ * along the way.
  */
 async function planLibs(
   libItems: readonly JsonItem<string>[],
@@ -326,11 +321,8 @@ export function splitGlobPattern(pattern: string): {
 }
 
 /**
- * Rejoins a static `base` with a base-relative match into a single lib string,
- * preserving the base's shape so a later {@link resolveLibUri} classifies it the
- * same way (absolute stays absolute, relative stays workspace-relative). An
- * empty base yields the workspace-relative match verbatim; an empty match (the
- * base directory itself) yields the base verbatim.
+ * Rejoins a static `base` with a base-relative match into a single lib string, preserving the
+ * base's shape.
  */
 function joinBaseRel(base: string, rel: string): string {
   if (!base) {
@@ -343,16 +335,8 @@ function joinBaseRel(base: string, rel: string): string {
 }
 
 /**
- * Expands a glob `pattern` (containing `*` and/or `**`) into the concrete
- * directory paths it matches. The pattern is split into a static base and a
- * glob tail (see {@link splitGlobPattern}); the walk is rooted at the resolved
- * base — so absolute patterns like `C:/copybooks/**` search under that base and
- * relative patterns search under the workspace — and each candidate directory is
- * matched against the tail. `*` matches a single path segment; `**` matches any
- * depth. A bare-globstar tail (from a `.../**` pattern) also yields the base
- * directory itself, which the walk never visits as a child. Matching is
- * case-insensitive. Returned paths preserve the base's shape (absolute stays
- * absolute) and are later indexed by {@link expandLib}.
+ * Expands a glob `pattern` (containing `*` and/or `**`) into the concrete directory paths it
+ * matches. Matching is case-insensitive.
  */
 async function expandWildcardLib(
   pattern: string,

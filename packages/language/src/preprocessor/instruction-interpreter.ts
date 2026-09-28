@@ -395,16 +395,13 @@ interface RunState {
    */
   executedNodes: Set<inst.InstructionNode>;
   /**
-   * Re-executions (loop iterations, `%GOTO` cycles, repeated procedure calls, repeated
-   * `%INCLUDE`s) performed so far by the whole run - the entry file, its included files
-   * and its preprocessor procedures all draw from this one counter.
+   * Re-executions (loop iterations, `%GOTO` cycles, repeated procedure calls, repeated `%INCLUDE`s)
+   * performed so far by the whole run.
    */
   repeatedInstructions: number;
   /**
-   * Base allowance for {@link repeatedInstructions}. The instructions seen so far are
-   * added on top, so that a program which is genuinely large (for instance one that
-   * `%INCLUDE`s the same member once per loop iteration) is granted repeats in proportion
-   * to its own size. Total work therefore stays linear in the size of the program.
+   * Base allowance for {@link repeatedInstructions}. The instructions seen so far are added on top,
+   * so total work stays linear in the size of the program.
    */
   repeatBudget: number;
   /** Whether the budget-exhausted message was already logged for this run. */
@@ -428,10 +425,8 @@ interface InterpreterContext {
   activeProcedures: Set<string>;
   references: ast.Reference[];
   /**
-   * Reference tokens synthesized for macro variables substituted inside `ExecFragment`
-   * images (`EXEC SQL`/`EXEC CICS` bodies). The fragment is a single opaque token, so these
-   * occurrences have no token of their own in the phase's input stream; they are surfaced
-   * via `PhaseResult.directiveTokens` to make go-to-definition/highlighting work.
+   * Reference tokens synthesized for macro variables substituted inside `ExecFragment` images.
+   * Surfaced via `PhaseResult.directiveTokens`.
    */
   execTokens: Token[];
   evaluations: EvaluationResults;
@@ -475,9 +470,7 @@ export interface InterpreterOptions {
    */
   createParseHandlers: (textDocument: TextDocument) => StatementParser[];
   /**
-   * Cancellation of the build that started this run. Polled inside the instruction loops
-   * (see {@link CANCELLATION_CHECK_INTERVAL}), so a run whose result is already obsolete
-   * does not keep the process busy.
+   * Cancellation of the build that started this run. Polled inside the instruction loops.
    */
   cancellation?: CancellationToken;
 }
@@ -486,17 +479,13 @@ export const DEFAULT_INSTRUCTION_LIMIT = 5000;
 export const MAX_INSTRUCTION_LIMIT = 50000;
 
 /**
- * A single loop iteration dispatches several instructions (the loop test, the body, the jump
- * back - about four for a `%DO ... %END` with two statements in it), so the configured
- * `instruction-counter-limit` is multiplied to obtain the run's instruction budget. This
- * keeps the setting's meaning close to "iterations a runaway loop may perform" now that the
- * budget is shared by the whole run instead of being handed out per instruction node.
+ * A single loop iteration dispatches several instructions, so the configured
+ * `instruction-counter-limit` is multiplied to obtain the run's instruction budget.
  */
 const GLOBAL_INSTRUCTION_FACTOR = 6;
 
 /**
- * Instructions between two cancellation polls. Reading a cancellation token is cheap but not
- * free, and the interpreter dispatches millions of instructions on large files.
+ * Instructions between two cancellation polls.
  */
 const CANCELLATION_CHECK_INTERVAL = 1000;
 
@@ -573,12 +562,8 @@ export async function runInstructions(
 }
 
 /**
- * Keeps track of repeated instructions - instructions can only be repeated a certain amount of times.
- * Afterwards, the budget is eventually exhausted (likely an endless loop in the program) and the
+ * Keeps track of repeated instructions. Once the budget is exhausted (likely an endless loop), the
  * preprocessor exits.
- *
- * Normal programs shouldn't run out of budget, this is mostly a guard for malformed preprocessor
- * inputs, which would otherwise hang the language server.
  */
 function chargeInstruction(
   context: InterpreterContext,
@@ -703,12 +688,8 @@ function runInstructionNodeSync(
 /**
  * Logs an error raised by an instruction.
  *
- * @returns `true` if the error is fatal and the instruction loops must stop. A `RangeError`
- * means an allocation hit an engine limit (e.g. the maximum string length): the heap is
- * already near exhaustion at that point, so continuing would simply hit it again on every
- * remaining iteration until the process is killed. A stack overflow is also a `RangeError`
- * but is *not* fatal: the stack has already unwound, and aborting would drop all
- * remaining source text over a localized, deep-but-finite recursion.
+ * @returns `true` if the error is fatal (an allocation `RangeError`, but not a stack overflow) and
+ * the instruction loops must stop.
  */
 function handleInstructionError(
   err: any,
@@ -876,8 +857,6 @@ function runAnswerInstruction(
 
 /**
  * Accounts `count` generated tokens against the run's {@link MAX_EMITTED_TOKENS} budget.
- * The first over-budget emission permanently saturates the budget and reports it as a
- * diagnostic - the truncation otherwise surfaces only as cascading parser errors.
  *
  * @returns `true` if the tokens fit into the budget and may be emitted.
  */
@@ -1538,10 +1517,8 @@ const notGreaterThan = lessThanEquals;
 const notLessThan = greaterThanEquals;
 
 /**
- * `||` is the only preprocessor operator whose result can grow without bound, so - like
- * array dimensions and repetitions - it is capped at {@link MAX_VALUE_LENGTH}. An
- * oversized result is rejected (an empty value is emitted instead of a truncated one, so
- * that no bogus half-value gets rescanned into the output stream) and reported.
+ * `||` is the only preprocessor operator whose result can grow without bound, so it is capped at
+ * {@link MAX_VALUE_LENGTH}. An oversized result is rejected and reported.
  */
 function concat(
   left: ScalarValue,
@@ -1570,8 +1547,6 @@ function valueSize(value: Value): number {
 
 /**
  * Accounts storing `newValue` over `oldValue` against {@link MAX_TOTAL_VALUE_LENGTH}.
- * Shrinking stores give their difference back; a growing store that would exceed the
- * budget is rejected (reported once per run), keeping the old value in place.
  *
  * @returns `true` if the store fits into the budget and may be performed.
  */
@@ -2019,12 +1994,8 @@ function runTokenInstruction(
 }
 
 /**
- * Expand macro variables in an `ExecFragment` token's image by replacing identifiers that
- * match active macro variable names with their current values. The fragment is one opaque
- * token whose image is a verbatim slice of the phase text, so each substituted occurrence
- * additionally gets a synthetic reference token (offsets computed from the match position)
- * pushed to `context.execTokens` - the fragment's counterpart to what `performTokenScan`
- * does in-place for regular tokens.
+ * Expands macro variables in an `ExecFragment` token's image. Each substituted occurrence gets a
+ * synthetic reference token pushed to `context.execTokens`.
  */
 function expandVariablesInText(
   fragment: Token,

@@ -23,12 +23,8 @@ import { orify } from "../checks/utils";
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   ParseTree[] | null
 > {
-  // Reused across parses: the constructor builds an OptionsRegistry with ~100
-  // checker instances (each copying option maps), which dominates the profile
-  // when done once per EXEC statement. The checkers keep a reference to
-  // `errors`, so `collect` drains the shared array instead of replacing it.
-  // Sharing is safe because `collect` is fully synchronous - reset, traversal,
-  // and drain can never interleave with another call.
+  // Reused across parses: constructing the OptionsRegistry dominates the profile when done once per
+  // EXEC statement. Safe because `collect` is fully synchronous.
   private static readonly instance = new CollectingSemanticErrorVisitor();
   static collect(tree: ParseTree): Diagnostic[] {
     const visitor = CollectingSemanticErrorVisitor.instance;

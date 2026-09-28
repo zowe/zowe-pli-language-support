@@ -17,14 +17,14 @@
 //// END;
 
 // Expects that the additional SQL_LOB10 declaration for the LOB attribute has been added
-// BEFORE the TEST_SOME declaration
+// at the top of the file, as a top-level declaration visible to every procedure
 preprocessor.expectTokens(`
-TEST: PROC;
-  DCL
-    1 SQL_LOB10 BASED,
-      2 SQL_LOB_LEN FIXED BIN(31),
-      2 SQL_LOB_BUF(10) CHAR(1);
+DCL
+  1 SQL_LOB10 BASED,
+    2 SQL_LOB_LEN FIXED BIN(31),
+    2 SQL_LOB_BUF(10) CHAR(1);
 
+TEST: PROC;
   DCL TEST_SOME FIXED BIN(31);
   DCL TEST_SQL LIKE SQL_LOB10;
 END;
