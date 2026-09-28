@@ -944,28 +944,14 @@ export function forEachNode(
         action(node.width);
       }
       break;
-    case SyntaxKind.SqlAttributeStatement:
-      if (node.body) {
-        action(node.body);
-      }
-      break;
     case SyntaxKind.EnvironmentOptionValue:
       if (node.value) {
         action(node.value);
       }
       break;
-    case SyntaxKind.CicsResponseStatement:
-      break;
     case SyntaxKind.EnvironmentOptionSymbol:
     case SyntaxKind.EnvironmentOptionOrganization:
     case SyntaxKind.EnvironmentOptionRecordFormat:
-    case SyntaxKind.SqlAttributeBinary:
-    case SyntaxKind.SqlAttributeLob:
-    case SyntaxKind.SqlAttributeLobFile:
-    case SyntaxKind.SqlAttributeLobLocator:
-    case SyntaxKind.SqlAttributeRowId:
-    case SyntaxKind.SqlAttributeTableLocator:
-    case SyntaxKind.SqlAttributeResultSetLocator:
     case SyntaxKind.AnyAttribute:
       break;
     default:

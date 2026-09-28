@@ -33,16 +33,22 @@ import {
 import {
   Delimiters,
   Diagnostic,
+  ExecFragment,
   Preprocessor,
   PreprocessorContext,
   rebaseDiagnostic,
   rebaseToken,
-  scanExecFragments,
+  scanHostText,
   SemanticsKind,
   Token,
   PreprocessorResult,
-  Severity,
 } from "preprocessor-api";
+import {
+  parseSqlTypeClause,
+  SQL_LOB_FILE_DECLS,
+  SQL_TYPE_ANCHOR,
+  sqlLobDecls,
+} from "./sql-type";
 
 const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
 
@@ -55,6 +61,24 @@ const COMMENTS = Db2SqlExecLexer.channelNames.indexOf("COMMENTS");
  */
 const DB2_DELIMITERS: Delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
 
+/** What `SQL TYPE IS ...` clauses become - see `sql-type.ts` for the bodies. */
+const LOCATOR_TYPE = "FIXED BIN(31)";
+const ROWID_TYPE = "CHAR(40) VARYING";
+const LOB_FILE_TYPE = "LIKE SQL_LOB_FILE";
+const LOB_TYPE = (length: number) => `LIKE SQL_LOB${length}`;
+
+/**
+ * The declaration blocks queued for one compilation unit: each LOB size and the LOB FILE
+ * block at most once, in encounter order. Flushed once at the top of the entry file,
+ * where top-level declarations are visible to every procedure - a deliberate deviation
+ * from the real precompiler, which declares per enclosing procedure.
+ */
+interface DeclBlocks {
+  lobFile: boolean;
+  lobSizes: Set<number>;
+  texts: string[];
+}
+
 export class Db2SqlPreprocessor implements Preprocessor {
   static Name = "DB2 SQL Preprocessor";
   get name() {
@@ -62,49 +86,137 @@ export class Db2SqlPreprocessor implements Preprocessor {
   }
 
   /**
-   * Finds every `EXEC SQL ...;` statement in `context.text` itself (see `scanExecFragments`)
-   * and replaces each directly: an `EXEC SQL INCLUDE` becomes the included file's own
-   * (recursively processed) text via `context.include`; any other statement becomes
-   * `DO; END;`, its host-variable references travelling as the recorded tokens.
-   * Each `replace` carries the fragment's full classified token list in host coordinates -
-   * the host's only source for `EXEC` semantic highlighting/hover and the include member
+   * Finds everything the DB2 precompiler owns in `context.text` itself, in one walk (see
+   * `scanHostText`), and records each replacement directly:
+   *
+   * - `EXEC SQL INCLUDE` becomes the included file's own text via `context.include`, the
+   *   returned context processed recursively right here; any other `EXEC SQL` statement
+   *   becomes `DO; END;`, its host-variable references travelling as the recorded tokens;
+   * - `SQL TYPE IS ...` declaration attributes become the PL/I attribute the precompiler
+   *   substitutes, and the `SQL_LOB*` declarations they rely on are inserted once at the
+   *   top of the entry file, where top-level declarations are visible to every procedure
+   *   (a deliberate deviation from the real precompiler - see {@link DeclBlocks}).
+   *
+   * Every `replace` carries the construct's full classified token list in host
+   * coordinates - the host's only source for semantic highlighting and the include member
    * token.
    */
   public async execute(context: PreprocessorContext): Promise<void> {
-    for (const fragment of scanExecFragments(
+    const blocks: DeclBlocks = {
+      lobFile: false,
+      lobSizes: new Set(),
+      texts: [],
+    };
+    await this.process(context, blocks);
+    if (blocks.texts.length > 0) {
+      context.replace({ start: 0, end: 0 }, blocks.texts.join(""));
+    }
+  }
+
+  private async process(
+    context: PreprocessorContext,
+    blocks: DeclBlocks,
+  ): Promise<void> {
+    const scan = scanHostText(
       context.text,
       "SQL",
       DB2_DELIMITERS,
-    )) {
-      const { diagnostics, tokens, replacement } = this.tryParse(
-        fragment.bodyText,
-      );
-      for (const diagnostic of diagnostics) {
-        context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
+      SQL_TYPE_ANCHOR,
+    );
+    // Strict text order across both kinds of constructs, so the declaration blocks
+    // (including a copybook's) queue in encounter order.
+    let anchorIndex = 0;
+    for (const fragment of scan.fragments) {
+      while (
+        anchorIndex < scan.anchors.length &&
+        scan.anchors[anchorIndex] < fragment.range.start
+      ) {
+        this.processSqlType(context, blocks, scan.anchors[anchorIndex++]);
       }
-      const rebased = tokens.map((token) => rebaseToken(token, fragment));
-      if (!fragment.terminated) {
-        // Broken statement (no `;` before EOF): record the classified tokens without
-        // touching the text - see `ExecFragment.terminated`. No include splicing either -
-        // the raw statement must stay in place for the host parser to diagnose.
-        context.replace(
-          { start: fragment.range.start, end: fragment.range.start },
-          "",
-          rebased,
-        );
-        continue;
-      }
-      if (replacement?.type === "include") {
-        await context.include(
-          replacement.filePath,
-          fragment.range,
-          rebaseToken(replacement.token, fragment).range,
-          rebased,
-        );
-        continue;
-      }
-      context.replace(fragment.range, "DO; END;", rebased);
+      await this.processFragment(context, blocks, fragment);
     }
+    while (anchorIndex < scan.anchors.length) {
+      this.processSqlType(context, blocks, scan.anchors[anchorIndex++]);
+    }
+  }
+
+  private async processFragment(
+    context: PreprocessorContext,
+    blocks: DeclBlocks,
+    fragment: ExecFragment,
+  ): Promise<void> {
+    const { diagnostics, tokens, replacement } = this.tryParse(
+      fragment.bodyText,
+    );
+    for (const diagnostic of diagnostics) {
+      context.pushDiagnostic(rebaseDiagnostic(diagnostic, fragment));
+    }
+    const rebased = tokens.map((token) => rebaseToken(token, fragment));
+    if (!fragment.terminated) {
+      // Broken statement (no `;` before EOF): record the classified tokens without
+      // touching the text - see `ExecFragment.terminated`. No include splicing either -
+      // the raw statement must stay in place for the host parser to diagnose.
+      context.replace(
+        { start: fragment.range.start, end: fragment.range.start },
+        "",
+        rebased,
+      );
+      return;
+    }
+    if (replacement?.type === "include") {
+      const nested = await context.include(
+        replacement.filePath,
+        fragment.range,
+        rebaseToken(replacement.token, fragment).range,
+        rebased,
+      );
+      if (nested) {
+        await this.process(nested, blocks);
+      }
+      return;
+    }
+    context.replace(fragment.range, "DO; END;", rebased);
+  }
+
+  /**
+   * Replaces one `SQL TYPE IS ...` clause with its PL/I attribute and queues the
+   * `SQL_LOB*` declaration block it relies on (deduplicated unit-wide - see
+   * {@link DeclBlocks}); an unrecognized clause (already diagnosed) is blanked as far as
+   * it was consumed, so the host parser never sees text the precompiler would have
+   * swallowed.
+   */
+  private processSqlType(
+    context: PreprocessorContext,
+    blocks: DeclBlocks,
+    offset: number,
+  ): void {
+    const clause = parseSqlTypeClause(context.text, offset);
+    for (const diagnostic of clause.diagnostics) {
+      context.pushDiagnostic(diagnostic);
+    }
+    const range = { start: offset, end: clause.end };
+    const body = clause.body;
+    let replacement = "";
+    if (body?.kind === "locator") {
+      replacement = LOCATOR_TYPE;
+    } else if (body?.kind === "rowid") {
+      replacement = ROWID_TYPE;
+    } else if (body?.kind === "binary") {
+      replacement = `CHAR(${body.length}) ${body.varying ? "VARYING" : "NONVARYING"}`;
+    } else if (body?.kind === "lobFile") {
+      if (!blocks.lobFile) {
+        blocks.lobFile = true;
+        blocks.texts.push(SQL_LOB_FILE_DECLS);
+      }
+      replacement = LOB_FILE_TYPE;
+    } else if (body?.kind === "lob") {
+      if (!blocks.lobSizes.has(body.length)) {
+        blocks.lobSizes.add(body.length);
+        blocks.texts.push(sqlLobDecls(body.length));
+      }
+      replacement = LOB_TYPE(body.length);
+    }
+    context.replace(range, replacement, clause.tokens);
   }
 
   private tryParse(text: string): PreprocessorResult {

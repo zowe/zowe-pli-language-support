@@ -11,10 +11,10 @@
 
 /// <reference path="../../framework.ts" />
 
-// Declaration-block stacking: within one procedure, the SQL phase queues one block per
-// LOB FILE/LOB size (in *reverse* encounter order, matching the real preprocessor), and
-// the CICS phase - running after SQL - inserts its DFH* runtime declarations at the same
-// procedure semicolon, ending up before the SQL blocks.
+// Declaration-block stacking: the SQL phase queues one block per LOB FILE/LOB size (in
+// encounter order) and inserts them once at the top of the file, and the CICS phase -
+// running after SQL - inserts its DFH* runtime declarations at the top of *its* input,
+// ending up before the SQL blocks.
 
 //// TEST: PROC;
 ////   DCL TEST_SQL1 SQL TYPE IS BLOB_FILE;
@@ -24,7 +24,6 @@
 //// END;
 
 preprocessor.expectTokens(`
-TEST: PROC;
   DCL
     1 DFHCNSTS STATIC,
       2 DFHLDVER CHAR(22) INIT('LD TABLE DFHEITAB 730.'),
@@ -73,16 +72,6 @@ TEST: PROC;
   DCL DFHEI01 ENTRY OPTIONS(INTER ASSEMBLER);
 
   DCL
-    1 SQL_LOB1024 BASED,
-      2 SQL_LOB_LEN FIXED BIN(31),
-      2 SQL_LOB_BUF(10) CHAR(1);
-
-  DCL
-    1 SQL_LOB10 BASED,
-      2 SQL_LOB_LEN FIXED BIN(31),
-      2 SQL_LOB_BUF(10) CHAR(1);
-
-  DCL
     1 SQL_LOB_FILE BASED,
       2 SQL_LOB_FILE_NAME_LEN FIXED BIN(31),
       2 SQL_LOB_FILE_DATA_LEN FIXED BIN(31),
@@ -94,6 +83,17 @@ TEST: PROC;
   DCL SQL_FILE_OVERWRITE FIXED BIN(31) VALUE(16);
   DCL SQL_FILE_APPEND    FIXED BIN(31) VALUE(32);
 
+  DCL
+    1 SQL_LOB10 BASED,
+      2 SQL_LOB_LEN FIXED BIN(31),
+      2 SQL_LOB_BUF(10) CHAR(1);
+
+  DCL
+    1 SQL_LOB1024 BASED,
+      2 SQL_LOB_LEN FIXED BIN(31),
+      2 SQL_LOB_BUF(10) CHAR(1);
+
+TEST: PROC;
   DCL TEST_SQL1 LIKE SQL_LOB_FILE;
   DCL TEST_SQL2 LIKE SQL_LOB10;
   DCL TEST_SQL3 LIKE SQL_LOB1024;

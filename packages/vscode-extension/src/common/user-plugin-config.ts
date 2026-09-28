@@ -56,9 +56,7 @@ export function userPluginConfigExists(): boolean {
 }
 
 /**
- * True when user-scope `pgm_conf` already lists this file. Exact key only
- * (not globs); used so a first-open prompt is not shown before the server
- * has loaded settings.
+ * True when user-scope `pgm_conf` already lists this file (exact key only, not globs).
  */
 export function userPluginConfigHasProgram(uri: vscode.Uri): boolean {
   const program = programKeyForDocument(uri);
@@ -97,10 +95,8 @@ function hasProgramEntry(pgmConf: PgmConf, program: string): boolean {
 }
 
 /**
- * Writes `uri` into the user-scope plugin settings, creating them from plugin
- * defaults if needed. Uses `update()` so comments survive and the server
- * reloads. Does not apply glob matching — callers must have already asked
- * the language server.
+ * Writes `uri` into the user-scope plugin settings, creating them from plugin defaults if needed.
+ * Does not apply glob matching.
  */
 async function ensureUserPluginConfig(
   uri: vscode.Uri,
@@ -138,9 +134,8 @@ async function ensureUserPluginConfig(
 }
 
 /**
- * Writes the user-scope plugin config for `uri` and offers to open settings
- * (copybook `libs` are empty in the user-scope stub). Returns `undefined`
- * if the write failed (error already shown).
+ * Writes the user-scope plugin config for `uri` and offers to open settings. Returns `undefined` if
+ * the write failed.
  */
 export async function applyUserPluginConfig(
   uri: vscode.Uri,

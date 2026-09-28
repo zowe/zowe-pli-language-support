@@ -26,9 +26,8 @@ export interface PhaseInput {
   uri: URI;
   textDocument: TextDocument;
   /**
-   * Cancellation of the build that started this pipeline. Checked between phases,
-   * inside the macro interpreter's instruction loops, and per processed file in the
-   * EXEC phases; a requested cancellation throws `OperationCancelled`.
+   * Cancellation of the build that started this pipeline. A requested cancellation throws
+   * `OperationCancelled`.
    */
   cancellation?: CancellationToken;
 }
@@ -41,14 +40,8 @@ export interface PhaseResult {
   references: Reference[];
   evaluationResults?: EvaluationResults;
   /**
-   * Tokens from this phase's *own* internal parse (e.g. the `%IF`/`%DCL`/`EXEC`/`DFHRESP`
-   * keyword and name tokens) that carry `.kind`/`.element` CST attachments but are entirely
-   * consumed by the directive they belong to - they never reach this phase's `text` output,
-   * so they would otherwise be unreachable via `unit.services.files.getTokens(uri)` (which
-   * only sees the pipeline's final, post-substitution tokens). LSP features that inspect a
-   * directive itself rather than its expansion (`pli/skippedCode`, hovering a `%DCL`'d
-   * variable, semantic-highlighting a macro variable reference, ...) need these. Already
-   * remapped to original-source positions via this phase's own `PhaseInput.sourceMap`.
+   * Tokens from this phase's own internal parse that are consumed by the directive they belong to
+   * and never reach the `text` output. Already remapped to original-source positions.
    */
   directiveTokens: Token[];
 }
@@ -58,11 +51,8 @@ export interface PreprocessorPhase {
 }
 
 /**
- * The no-op result of a phase that short-circuited: text passes through untouched under an
- * identity map (which `SourceMap.compose` collapses, so downstream mapping is unaffected).
- * Phases use this when a cheap pre-scan proves their constructs cannot occur in the input -
- * skipping the phase's own full tokenize/parse pass, which otherwise dominates pipeline
- * time on files that don't use the preprocessor (see `test/benchmarks/phases.bench.ts`).
+ * The no-op result of a phase that short-circuited: text passes through untouched under an identity
+ * map.
  */
 export function passthroughPhaseResult(input: PhaseInput): PhaseResult {
   return {

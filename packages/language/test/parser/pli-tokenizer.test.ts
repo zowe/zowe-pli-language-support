@@ -156,10 +156,10 @@ describe("ExecFragment extent", () => {
   });
 
   test("the tokenizer extent matches the authoritative scanExecFragments extent", () => {
-    // `exec-phase`'s `findFragmentEdit` matches the preprocessor's replacement edit
-    // (computed by `scanExecFragments`) against the ExecFragment token's offsets, so
-    // the two scans must agree on the statement extent - in particular for bodies
-    // containing quoted semicolons or unterminated strings.
+    // The engines replace what `scanExecFragments` finds, while the macro phase and
+    // `UnresolvedExecPhase` see the tokenizer's ExecFragment, so the two scans must agree
+    // on the statement extent - in particular for bodies containing quoted semicolons or
+    // unterminated strings.
     const delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
     const cases = [
       "EXEC SQL SELECT ';' FROM T;",
@@ -183,6 +183,20 @@ describe("ExecFragment extent", () => {
       // ends right before it (the `;` is its own token on the tokenizer side).
       expect(fragment.endOffset + 1, text).toBe(scanned[0].range.end - 1);
       expect(text[fragment.endOffset + 1], text).toBe(";");
+    }
+  });
+
+  test("EXEC glued to a PL/I identifier character is an identifier for both scans", () => {
+    const delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
+    for (const text of ["$EXEC SQL X;", "#EXEC SQL X;", "@EXEC SQL X;"]) {
+      const result = tokenize(text, undefined);
+      expect(
+        result.tokens.some(
+          (t) => t.tokenTypeIdx === tokens.ExecFragment.tokenTypeIdx,
+        ),
+        text,
+      ).toBe(false);
+      expect(scanExecFragments(text, "SQL", delimiters), text).toEqual([]);
     }
   });
 });

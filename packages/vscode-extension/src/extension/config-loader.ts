@@ -17,15 +17,9 @@ import { sendNotification } from "./messages";
 type ConfigKey = "pgm_conf" | "proc_grps";
 
 /**
- * Registers the LS-side handler for {@link Messages.GetGlobalConfig}.
- * Called once per language client (desktop + browser) so the LS can
- * fall back to VS Code settings when no `.pliplugin/` directory exists.
- *
- * The user-scope `settings.json` URI is derived from
- * {@link vscode.ExtensionContext.globalStorageUri} (via
- * {@link deriveUserSettingsUri}), which is the only documented way to reach
- * the user data directory without platform-specific path math.
- * (`vscode-userdata:/` is unreliable on desktop and is NOT used here.)
+ * Registers the LS-side handler for {@link Messages.GetGlobalConfig}, so the LS can fall back to VS
+ * Code settings when no `.pliplugin/` directory exists. The user-scope `settings.json` URI is
+ * derived from {@link vscode.ExtensionContext.globalStorageUri}.
  */
 export function registerConfigLoader(
   client: BaseLanguageClient,
@@ -90,9 +84,7 @@ async function getGlobalConfig(
 }
 
 /**
- * Returns one entry per settings scope that defines a value (user and/or
- * workspace). Unlike VS Code's `get()`, scopes are not collapsed — the LS
- * treats each as its own source. `*LanguageValue` variants are ignored.
+ * Returns one entry per settings scope that defines a value (user and/or workspace).
  */
 function locate(
   key: ConfigKey,
@@ -180,9 +172,8 @@ export function watchPluginSettings(
 }
 
 /**
- * Finds the workspace folder that contains the given file URI. When folders
- * are nested, the most specific (longest matching) folder wins. Returns
- * `undefined` when no workspace folder contains the file.
+ * Finds the workspace folder that contains the given file URI. When folders are nested, the most
+ * specific folder wins.
  */
 export function locateWorkspaceFolder(
   textEditorUri: vscode.Uri,

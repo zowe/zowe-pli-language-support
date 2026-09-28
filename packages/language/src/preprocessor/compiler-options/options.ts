@@ -28,10 +28,8 @@ export interface CompilerOptions extends Pli.CompilerOptions {
   sqlOptions: SQL.CompilerOptions;
   cicsOptions: CICS.CompilerOptions;
   /**
-   * The source ranges of the PROCESS directives from which these compiler
-   * options were parsed. Since the ranges are no longer needed for the
-   * options themselves after parsing, they are kept primarily for LSP
-   * requests (e.g. compiler-option completion).
+   * The source ranges of the PROCESS directives these compiler options were parsed from. Kept for
+   * LSP requests (e.g. compiler-option completion).
    */
   ranges: Range[];
 }

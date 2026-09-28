@@ -75,14 +75,6 @@ export const OpenOptionType =
 export const VX = registerCombination<ast.VX>("VX");
 export const TypeOrOrdinal =
   registerCombination<ast.TypeOrOrdinal>("TypeOrOrdinal");
-export const BinaryType =
-  registerCombination<ast.SqlAttributeBinaryType>("BinaryType");
-export const LOB = registerCombination<ast.LOB>("LOB");
-export const LOBLocator = registerCombination<ast.LOBLocator>("LOBLocator");
-export const LOBFile = registerCombination<ast.SQLAttributeLobType>("LOBFile");
-export const LOBSize = registerCombination<ast.SQLAttributeLobSize>("LOBSize");
-export const CicsResponseCode =
-  registerCombination<ast.CicsResponseCode>("CicsResponseCode");
 export const RecordFormat =
   registerCombination<ast.RecordFormat>("RecordFormat");
 export const EnvironmentOptionSymbolName =
@@ -124,16 +116,9 @@ export const WS = createToken({
   group: Lexer.SKIPPED,
 });
 /**
- * Finds the end of an `EXEC SQL`/`EXEC CICS` statement body starting at `from`: the index
- * of the terminating `;` (or `text.length` if none follows). Skips PL/I-style quoted
- * strings - `'...'` and `"..."`, each escaped by doubling its own quote (`''`/`""`) and
- * never spanning a line break - so a `;` inside a string literal doesn't end the statement.
- * This mirrors the quote handling of the authoritative `scanExecFragments`/`findTerminator`
- * scan in `preprocessor-api` (both the CICS and DB2 delimiter configs use exactly these
- * quotes), keeping the token extent the tokenizer produces in sync with the range the
- * preprocessor later replaces. The embedded language's *comment* syntax (`--`, `*>`, ...)
- * is language-specific and not knowable at the tokenizer level, so a `;` inside such a
- * comment still (wrongly) ends the fragment here - an accepted residual mismatch.
+ * Finds the end of an `EXEC SQL`/`EXEC CICS` statement body starting at `from`: the index of the
+ * terminating `;` (or `text.length` if none follows). Skips quoted strings, so a `;` inside a
+ * string literal doesn't end the statement.
  */
 export function findExecFragmentEnd(text: string, from: number): number {
   let i = from;
@@ -169,10 +154,7 @@ export const ExecFragment = createToken({
   line_breaks: true,
   start_chars_hint: ["C", "c", "S", "s"],
   pattern: (text, offset) => {
-    // Prefix word after `EXEC`, then everything up to the terminating `;` - via
-    // `findExecFragmentEnd`, so a `;` inside a quoted string doesn't end the statement
-    // and an empty statement body (`EXEC SQL;`) still yields a fragment. Kept in sync
-    // with the hand-written scan in `tokenizer/shared.ts` (`tokenizeIdentifier`).
+    // Prefix word after `EXEC`, then everything up to the terminating `;`.
     const regex = /(?<=EXEC\s*)[a-z]+/iy;
     regex.lastIndex = offset;
     const match = regex.exec(text);
@@ -947,10 +929,7 @@ export const STORAGE = registerKeyword({
 });
 export const ENDFILE = registerKeyword({
   name: "ENDFILE",
-  categories: [
-    [FileReferenceConditions, ast.FileReferenceConditions.ENDFILE],
-    [CicsResponseCode, ast.CicsResponseCode.ENDFILE],
-  ],
+  categories: [[FileReferenceConditions, ast.FileReferenceConditions.ENDFILE]],
 });
 export const ENDPAGE = registerKeyword({
   name: "ENDPAGE",
@@ -1026,14 +1005,7 @@ export const CANCEL = registerKeyword({
 });
 export const BINARY = registerKeyword({
   name: ["BINARY", "BIN"],
-  categories: [
-    [DefaultAttribute, ast.DefaultAttribute.BINARY],
-    [BinaryType, ast.SqlAttributeBinaryType.BINARY],
-  ],
-});
-export const VARBINARY = registerKeyword({
-  name: "VARBINARY",
-  categories: [[BinaryType, ast.SqlAttributeBinaryType.VARBINARY]],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.BINARY]],
 });
 export const FORMAT = registerKeyword({
   name: "FORMAT",
@@ -1063,10 +1035,7 @@ export const NATIVE = registerKeyword({
 });
 export const NORMAL = registerKeyword({
   name: "NORMAL",
-  categories: [
-    [DefaultAttribute, ast.DefaultAttribute.NORMAL],
-    [CicsResponseCode, ast.CicsResponseCode.NORMAL],
-  ],
+  categories: [[DefaultAttribute, ast.DefaultAttribute.NORMAL]],
 });
 export const OFFSET = registerKeyword({
   name: "OFFSET",
@@ -1777,15 +1746,12 @@ export const E = registerKeyword({
 });
 export const G = registerKeyword({
   name: "G",
-  categories: [[LOBSize, ast.SQLAttributeLobSize.G]],
 });
 export const K = registerKeyword({
   name: "K",
-  categories: [[LOBSize, ast.SQLAttributeLobSize.K]],
 });
 export const M = registerKeyword({
   name: "M",
-  categories: [[LOBSize, ast.SQLAttributeLobSize.M]],
 });
 export const P = registerKeyword({
   name: "P",
@@ -1856,141 +1822,7 @@ export const Percent = createToken({
   name: "%",
   pattern: Lexer.NA,
 });
-// "SQL TYPE IS" attribute tokens
-// https://www.ibm.com/docs/en/db2-for-zos/12.0.0?topic=pli-host-variable-arrays-in
-
-export const SQL = registerKeyword({
-  name: "SQL",
-});
-export const IS = registerKeyword({
-  name: "IS",
-});
-export const XML = registerKeyword({
-  name: "XML",
-});
-export const AS = registerKeyword({
-  name: "AS",
-});
-export const LARGE = registerKeyword({
-  name: "LARGE",
-});
-export const OBJECT = registerKeyword({
-  name: "OBJECT",
-});
-export const BLOB = registerKeyword({
-  name: "BLOB",
-  categories: [[LOB, ast.LOB.BLOB]],
-});
-export const CLOB = registerKeyword({
-  name: "CLOB",
-  categories: [[LOB, ast.LOB.CLOB]],
-});
-export const DBCLOB = registerKeyword({
-  name: "DBCLOB",
-  categories: [[LOB, ast.LOB.DBCLOB]],
-});
-export const BLOB_LOCATOR = registerKeyword({
-  name: "BLOB_LOCATOR",
-  categories: [[LOBLocator, ast.LOBLocator.BLOB_LOCATOR]],
-});
-export const CLOB_LOCATOR = registerKeyword({
-  name: "CLOB_LOCATOR",
-  categories: [[LOBLocator, ast.LOBLocator.CLOB_LOCATOR]],
-});
-export const DBCLOB_LOCATOR = registerKeyword({
-  name: "DBCLOB_LOCATOR",
-  categories: [[LOBLocator, ast.LOBLocator.DBCLOB_LOCATOR]],
-});
-export const BLOB_FILE = registerKeyword({
-  name: "BLOB_FILE",
-  categories: [[LOBFile, ast.SQLAttributeLobType.BLOB]],
-});
-export const CLOB_FILE = registerKeyword({
-  name: "CLOB_FILE",
-  categories: [[LOBFile, ast.SQLAttributeLobType.CLOB]],
-});
-export const DBCLOB_FILE = registerKeyword({
-  name: "DBCLOB_FILE",
-  categories: [[LOBFile, ast.SQLAttributeLobType.DBCLOB]],
-});
-export const ROWID = registerKeyword({
-  name: "ROWID",
-});
-export const TABLE = registerKeyword({
-  name: "TABLE",
-});
 export const LOCATOR = registerKeyword({
   name: "LOCATOR",
   categories: [[DataTypes, ast.DataType.Locator]],
-});
-export const RESULT_SET_LOCATOR = registerKeyword({
-  name: "RESULT_SET_LOCATOR",
-});
-
-// CICS Keywords
-export const CICS = registerKeyword({
-  name: "CICS",
-});
-export const DFHRESP = registerKeyword({
-  name: "DFHRESP",
-});
-export const NOTFND = registerKeyword({
-  name: "NOTFND",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.NOTFND]],
-});
-export const DUPREC = registerKeyword({
-  name: "DUPREC",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.DUPREC]],
-});
-export const INVREQ = registerKeyword({
-  name: "INVREQ",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.INVREQ]],
-});
-export const NOSPACE = registerKeyword({
-  name: "NOSPACE",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.NOSPACE]],
-});
-export const NOTOPEN = registerKeyword({
-  name: "NOTOPEN",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.NOTOPEN]],
-});
-export const LENGERR = registerKeyword({
-  name: "LENGERR",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.LENGERR]],
-});
-export const QZERO = registerKeyword({
-  name: "QZERO",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.QZERO]],
-});
-export const QBUSY = registerKeyword({
-  name: "QBUSY",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.QBUSY]],
-});
-export const ITEMERR = registerKeyword({
-  name: "ITEMERR",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.ITEMERR]],
-});
-export const PGMIDERR = registerKeyword({
-  name: "PGMIDERR",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.PGMIDERR]],
-});
-export const ENDDATA = registerKeyword({
-  name: "ENDDATA",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.ENDDATA]],
-});
-export const MAPFAIL = registerKeyword({
-  name: "MAPFAIL",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.MAPFAIL]],
-});
-export const QIDERR = registerKeyword({
-  name: "QIDERR",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.QIDERR]],
-});
-export const ENQBUSY = registerKeyword({
-  name: "ENQBUSY",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.ENQBUSY]],
-});
-export const DISABLED = registerKeyword({
-  name: "DISABLED",
-  categories: [[CicsResponseCode, ast.CicsResponseCode.DISABLED]],
 });

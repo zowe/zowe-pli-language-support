@@ -36,10 +36,7 @@ const DOUBLE_QUOTE = '"'.charCodeAt(0);
 const CARRIAGE_RETURN = "\r".charCodeAt(0);
 const LINE_FEED = "\n".charCodeAt(0);
 
-// Clone the lexer's pattern instead of aliasing it: sticky regexes carry mutable
-// `lastIndex` state, and sharing one instance with the tokenizer would let the two
-// corrupt each other's scans. The algorithm below depends on the sticky flag (an
-// `exec` may only match exactly at `lastIndex`, never later), so assert it.
+// Clone the lexer's pattern instead of aliasing it: sticky regexes carry mutable `lastIndex` state.
 const lexerStringPattern = STRING_TERM.PATTERN as RegExp;
 if (!lexerStringPattern.sticky) {
   throw new Error("STRING_TERM pattern is expected to be sticky (y flag)");
@@ -50,19 +47,8 @@ const stringRegex = new RegExp(
 );
 
 /**
- * Blanks every `/ *  ... * /`-style block comment and `//...` line comment in `text` to
- * whitespace, preserving every other character's offset - mirrors `PliMarginsProcessor`'s
- * length-preserving blanking, so the result can still be sliced/indexed with the original
- * offsets everywhere downstream.
- *
- * This exists so external SQL/CICS preprocessors - which scan the *full text* of an `EXEC`
- * fragment rather than tokens - never see comment characters embedded in `EXEC` code (a
- * comment could contain unbalanced quotes or a stray `EXEC SQL`-looking substring). It runs
- * once, on the margin-stripped *original* source text, before any preprocessor phase runs.
- *
- * String literals are skipped whole (reusing the real tokenizer's own `STRING_TERM` pattern)
- * so a comment-looking sequence inside a string is never mistaken for a real comment.
- * Single left-to-right pass, linear in the length of `text` (tokenize hot path).
+ * Blanks every block comment and `//` line comment in `text` to whitespace, preserving every other
+ * character's offset. String literals are skipped whole.
  */
 export function stripComments(text: string): StripCommentsResult {
   const comments: CommentRange[] = [];
@@ -115,9 +101,8 @@ export function stripComments(text: string): StripCommentsResult {
 }
 
 /**
- * Converts `stripComments`' plain ranges into `Token`s for LSP registration purposes
- * (`files.set`'s `comments`). `text` must be the *pre-strip* text - the stripped text has
- * every comment already blanked to whitespace.
+ * Converts `stripComments`' plain ranges into `Token`s for LSP registration purposes. `text` must
+ * be the pre-strip text.
  */
 export function commentRangesToTokens(
   ranges: CommentRange[],

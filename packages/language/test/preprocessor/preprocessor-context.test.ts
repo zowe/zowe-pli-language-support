@@ -11,10 +11,7 @@
 
 import { afterEach, describe, expect, test } from "vitest";
 import * as api from "preprocessor-api";
-import {
-  NestedContextInfo,
-  PreprocessorContext,
-} from "../../src/preprocessor/preprocessor-context";
+import { PreprocessorContext } from "../../src/preprocessor/preprocessor-context";
 import {
   CompilationUnit,
   createCompilationUnit,
@@ -261,23 +258,13 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
     const unit = await setupIncludeWorkspace({
       "/workspace/cpy/self.pli": "EXEC SQL INCLUDE self;",
     });
-    // Mimics what exec-phase's onProcess does: re-scan every nested context and act on
-    // its own include statements. Without the ancestor-chain guard this recurses
-    // without bound (nested context -> onProcess -> include -> ...).
-    let processCount = 0;
-    const onProcess = async (ctx: PreprocessorContext) => {
-      processCount++;
-      await ctx.include(
-        "self",
-        { start: 0, end: ctx.text.length },
-        { start: 17, end: 21 },
-      );
-    };
+    // Mimics what an engine does: process every nested context `include` returns and
+    // act on its own include statements. Without the ancestor-chain guard this would
+    // recurse without bound (nested context -> include -> nested context -> ...).
     const context = new PreprocessorContext(
       mainUri,
       "EXEC SQL INCLUDE self;",
       unit,
-      onProcess,
     );
     const included = await context.resolveInclude("self", {
       start: 0,
@@ -286,7 +273,12 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
     // The first include of the file is legal - only the file's include of *itself*
     // (an ancestor) is blocked.
     expect(included).toBeDefined();
-    expect(processCount).toBe(1);
+    const again = await included!.include(
+      "self",
+      { start: 0, end: included!.text.length },
+      { start: 17, end: 21 },
+    );
+    expect(again).toBeUndefined();
     const { diagnostics } = included!.build();
     // Mirrors the macro %INCLUDE path: a recursive include raises the same
     // diagnostic as an unresolvable one.
@@ -332,37 +324,27 @@ describe("PreprocessorContext.resolveInclude - include cycles", () => {
 });
 
 describe("PreprocessorContext.resolveInclude - success path", () => {
-  test("onProcess receives the nested context info and prepareText is applied", async () => {
+  test("returns an unprocessed context with prepareText applied and records the attempt", async () => {
     const unit = await setupIncludeWorkspace({
       "/workspace/cpy/lib.pli": "dcl x;",
     });
-    let processedContext: PreprocessorContext | undefined;
-    let nestedInfo: NestedContextInfo | undefined;
-    const onProcess = async (
-      ctx: PreprocessorContext,
-      nested?: NestedContextInfo,
-    ) => {
-      processedContext = ctx;
-      nestedInfo = nested;
-    };
     const prepareText = (text: string) => text.toUpperCase();
     const main = new PreprocessorContext(
       mainUri,
       "EXEC SQL INCLUDE lib;",
       unit,
-      onProcess,
       prepareText,
     );
     const included = await main.resolveInclude("lib", { start: 0, end: 21 });
     expect(included).toBeDefined();
-    expect(processedContext).toBe(included);
-    expect(nestedInfo?.parent).toBe(main);
-    expect(nestedInfo?.includeRange).toEqual({ start: 0, end: 21 });
-    // The document is the *raw* file; the context text went through prepareText.
-    expect(nestedInfo?.document?.getText()).toBe("dcl x;");
     expect(included!.text).toBe("DCL X;");
-    // Attempt recorded with the resolved uri.
-    expect(main.getIncludeAttempts()[0].uri?.toString()).toContain("lib.pli");
+    expect(included!.getEdits()).toHaveLength(0);
+    // Attempt recorded with the resolved uri, the nested context and the *raw* document.
+    const [attempt] = main.getIncludeAttempts();
+    expect(attempt.uri?.toString()).toContain("lib.pli");
+    expect(attempt.range).toEqual({ start: 0, end: 21 });
+    expect(attempt.context).toBe(included);
+    expect(attempt.document?.getText()).toBe("dcl x;");
   });
 });
 
@@ -371,14 +353,17 @@ describe("PreprocessorContext.include", () => {
     const unit = await setupIncludeWorkspace({
       "/workspace/cpy/lib.pli": "DCL X;",
     });
-    const onProcess = async (nested: PreprocessorContext) => {
-      nested.pushHostDiagnostic({
-        severity: Severity.W,
-        message: "nested diag",
-      });
-    };
-    const main = new PreprocessorContext(mainUri, "AB", unit, onProcess);
-    await main.include("lib", { start: 1, end: 1 }, { start: 1, end: 1 });
+    const main = new PreprocessorContext(mainUri, "AB", unit);
+    const nested = await main.include(
+      "lib",
+      { start: 1, end: 1 },
+      { start: 1, end: 1 },
+    );
+    expect(nested).toBeDefined();
+    nested!.pushHostDiagnostic({
+      severity: Severity.W,
+      message: "nested diag",
+    });
     const { text, diagnostics, sourceMap } = main.build();
     // A zero-width statement range: no original character of "AB" is consumed.
     expect(text).toBe("ADCL X;B");
@@ -387,6 +372,21 @@ describe("PreprocessorContext.include", () => {
     const mapped = sourceMap.mapToOriginal(1);
     expect(mapped?.uri?.toString()).toContain("lib.pli");
     expect(mapped?.offset).toBe(0);
+  });
+
+  test("edits recorded on the nested context after include() returned are applied (lazy build)", async () => {
+    const unit = await setupIncludeWorkspace({
+      "/workspace/cpy/lib.pli": "DCL X;",
+    });
+    const main = new PreprocessorContext(mainUri, "AB", unit);
+    const nested = await main.include(
+      "lib",
+      { start: 1, end: 1 },
+      { start: 1, end: 1 },
+    );
+    // What an engine does: process the included text once it has the context.
+    nested!.replace({ start: 4, end: 5 }, "Y");
+    expect(main.build().text).toBe("ADCL Y;B");
   });
 
   test("an unresolvable include still blanks the statement and records its tokens", async () => {

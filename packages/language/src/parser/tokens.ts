@@ -20,13 +20,7 @@ export * from "./tokens/pli-tokens";
  * Characters which start a preprocessor directive.
  * Used as start/stop points for the token statement
  */
-export const PPSignifier = [
-  pli.Percent,
-  pli.INCLUDE_ALT,
-  pli.SQL,
-  pli.DFHRESP,
-  pli.EXEC,
-];
+export const PPSignifier = [pli.Percent, pli.INCLUDE_ALT, pli.EXEC];
 
 export const terminals = [
   pli.WS,

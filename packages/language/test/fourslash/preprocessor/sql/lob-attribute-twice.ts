@@ -18,12 +18,12 @@
 
 // Expects that the additional SQL_LOB10 declaration is only generated ONCE
 preprocessor.expectTokens(`
-TEST: PROC;
-  DCL
-    1 SQL_LOB10 BASED,
-      2 SQL_LOB_LEN FIXED BIN(31),
-      2 SQL_LOB_BUF(10) CHAR(1);
+DCL
+  1 SQL_LOB10 BASED,
+    2 SQL_LOB_LEN FIXED BIN(31),
+    2 SQL_LOB_BUF(10) CHAR(1);
 
+TEST: PROC;
   DCL TEST_SQL1 LIKE SQL_LOB10;
   DCL TEST_SQL2 LIKE SQL_LOB10;
 END;

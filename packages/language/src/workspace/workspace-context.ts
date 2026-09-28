@@ -82,11 +82,9 @@ export class WorkspaceContext {
       this.config.hasProgramConfig(uri) ||
       !this.config.isLibFileCandidate(uri)
     ) {
-      // A registered program entry point always heads its own compilation
-      // unit, even when its directory is also configured as a lib — program
-      // status takes precedence over lib membership. Ordinary (non-lib) files
-      // get a unit too. Only files that are lib members *and* not entry points
-      // are treated as standalone library files (handled by the else branch).
+      // A registered program entry point always heads its own compilation unit, even when its
+      // directory is also a lib. Only lib members that are not entry points are standalone library
+      // files.
       const unit = await this.createAndStoreCompilationUnit(uri);
       return unit;
     } else {
@@ -121,8 +119,8 @@ export class WorkspaceContext {
 }
 
 /**
- * JSON under `.pliplugin/` is not PL/I source. The client attaches the LS there for code actions;
- * we skip compilation so only plugin-config diagnostics (e.g. COPC*) from the plugin loader show.
+ * JSON under `.pliplugin/` is not PL/I source, so compilation is skipped and only plugin-config
+ * diagnostics show.
  */
 function isPluginConfigurationUri(uri: URI): boolean {
   const baseName = UriUtils.basename(uri);

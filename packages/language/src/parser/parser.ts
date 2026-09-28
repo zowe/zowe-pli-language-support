@@ -6266,10 +6266,7 @@ const expression = rule(
     // Parse first primary expression
     const lhs = primaryExpression.rule(state, params);
     if (!state.canConsume(tokens.BinaryOperator)) {
-      // Fast path for the overwhelmingly common single-primary expression:
-      // no operator follows, so skip the IntermediateBinaryExpression
-      // scaffolding entirely (matches constructBinaryExpression's unwrapping
-      // of empty/one-item inputs).
+      // Fast path for the common single-primary expression: no operator follows.
       return lhs;
     }
 

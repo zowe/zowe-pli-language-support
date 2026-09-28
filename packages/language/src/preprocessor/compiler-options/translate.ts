@@ -163,10 +163,7 @@ export class CompilerOptionTranslator {
   }
 
   /**
-   * Perform a compiler option post-processing for tasks that involve all compiler options
-   * instead of the options grouped by a single process directives.
-   * Runs every registered {@link PostProcessHook} (colocated with the rule it belongs to,
-   * e.g. in translator-pli.ts) once per compilation, in dependency order.
+   * Runs every registered {@link PostProcessHook} once per compilation, in dependency order.
    */
   postProcessCompilerOptions(): void {
     this.translator.postProcess();

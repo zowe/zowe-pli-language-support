@@ -15,11 +15,7 @@ import { BaseLanguageClient } from "vscode-languageclient";
 import { applyUserPluginConfig } from "../common/user-plugin-config";
 
 /**
- * Opens (or focuses) the config entry described by `configLocation` and
- * positions the cursor at it. This works uniformly whether the entry is
- * sourced from a `.pliplugin/` file or from VS Code settings: `uri`/`range`
- * always point at the real, openable document (e.g. `settings.json`) that
- * the LS parsed the entry from.
+ * Opens (or focuses) the config entry described by `configLocation` and positions the cursor at it.
  */
 async function navigateToConfigEntry(
   configLocation: Messages.PluginConfigEntryLocation | null,

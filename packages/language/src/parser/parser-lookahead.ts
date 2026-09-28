@@ -93,10 +93,8 @@ export function performAssignmentLookahead(state: ParserState): boolean {
 }
 
 /**
- * Checks whether the tokens starting at lookahead position `index` form a
- * label prefix: `ID [ ( ...balanced... ) ]* :`
- * Dimensions are allowed since labels can reference declared label arrays,
- * e.g. `DCL L(2) LABEL; L(1): PUT("HELLO");`
+ * Checks whether the tokens starting at lookahead position `index` form a label prefix:
+ * `ID [ ( ...balanced... ) ]* :`. Dimensions are allowed for label arrays.
  *
  * @returns the lookahead index directly after the colon, or undefined if no label prefix is present
  */

@@ -111,11 +111,8 @@ export function binaryTokenIndexRightMost(
 const tokenStartOffset = (token: { startOffset: number }) => token.startOffset;
 
 /**
- * Rightmost index whose `start(item)` is `<= value`, in an array sorted ascending by that
- * key - or `-1` if every key is greater. The shared binary-search primitive behind every
- * offset-based token/segment lookup ({@link binaryTokenIndexRightMost},
- * `SourceMap.segmentAt`, `token-annotator`'s mapped-token lookup, ...). The dual "first
- * index at or after `value`" is `rightmostIndexLE(items, value - 1, start) + 1`.
+ * Rightmost index whose `start(item)` is `<= value`, in an array sorted ascending by that key - or
+ * `-1` if every key is greater.
  */
 export function rightmostIndexLE<T>(
   items: readonly T[],

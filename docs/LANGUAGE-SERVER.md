@@ -98,7 +98,6 @@ Generators cover:
 * **include item tokens** - show the include directive plus a preview of the
   included file's first ~100 lines (`getFileContentPreview`).
 * **name tokens** - render the declaration the name introduces.
-* **`DFHRESP` (CICS)** - show the numeric response code.
 
 `getJSDocCommentBeforeLabelPrefix` finds the JSDoc comment that precedes a label,
 skipping intervening preprocessor `%` directives and alias label chains.
