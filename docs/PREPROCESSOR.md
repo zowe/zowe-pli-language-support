@@ -55,7 +55,7 @@ The stripped comment ranges are converted into comment tokens for LSP services (
 
 ## Compiler options
 
-We provide grammar and validation support for all compile-time options described in [spec]([../packages/language/src/preprocessor/compiler-options/translate.ts](https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-compile-time-option-descriptions)). 
+We provide grammar and validation support for all compile-time options described in [spec](https://www.ibm.com/docs/en/epfz/6.1.0?topic=facilities-compile-time-option-descriptions). 
 
 `*PROCESS`/`%PROCESS` directives (and the equivalent options from the plugin `pgm_conf.json` configuration) are parsed and translated before anything else, because options such as `MARGINS`, `OR`, `NOT`, `CASE`, 
 `LP`, `MACRO(RESCAN|DEPRECATE|INCONLY|NAMEPREFIX)`, `PPMACRO`, `SYSPARM`, `SYSTEM`, `RULES(LAXDCL)` and `GRAPHIC` change how the rest of the file must be tokenized. These highlighted options are fully supported to replicate real compiler behavior.  
