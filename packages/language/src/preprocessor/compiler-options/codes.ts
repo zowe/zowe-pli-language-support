@@ -1468,7 +1468,7 @@ export const CompilerOptionsCodes = {
         code: "COPPSQL19",
         severity: Severity.E,
         message: (value: string) =>
-          `Expected "ASM", "C", "CPP", "IBMCOB", "PLI", "FORTRAN", "SQL", or "SQLPL", but received '${value}'.`,
+          `Expected "ASM", "C", "CPP", "IBMCOB", "PLI", "PL1", "FORTRAN", "SQL", or "SQLPL", but received '${value}'.`,
       },
 
       ExpectedPLI: {
