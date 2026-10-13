@@ -113,6 +113,7 @@ export namespace CompilerOptions {
     FORTRAN,
     SQL,
     SQLPL,
+    PL1,
   }
 
   export interface Host {
