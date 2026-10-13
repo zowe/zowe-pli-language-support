@@ -4002,6 +4002,11 @@ export interface TypeAttribute extends AstNode {
   kind: SyntaxKind.TypeAttribute;
   type: Reference<NamedType> | null;
   /**
+   * Qualify block labels preceding the type name, outermost first.
+   * E.g. `PAINT` in `TYPE PAINT.COLOR`.
+   */
+  qualifiers: Reference[];
+  /**
    * To differentiate whether "TYPE" or "ORDINAL" was used
    *
    * "ORDINAL" is only valid for references to ordinal types.
@@ -4014,6 +4019,7 @@ export function createTypeAttribute(): TypeAttribute {
     kind: SyntaxKind.TypeAttribute,
     container: null,
     type: null,
+    qualifiers: [],
     typeToken: null,
   };
 }

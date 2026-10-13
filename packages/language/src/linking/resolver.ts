@@ -25,6 +25,7 @@ import {
   Statement,
   SyntaxKind,
   SyntaxNode,
+  TypeAttribute,
 } from "../syntax-tree/ast";
 import { binaryTokenIndexSearch, binaryTokenSearch } from "../utils/search";
 import {
@@ -161,8 +162,29 @@ export class ReferencesCache {
   }
 }
 
+/**
+ * Whether the reference is the (possibly qualified) type name of a `TYPE` attribute,
+ * e.g. `COLOR` in `TYPE PAINT.COLOR`. The qualifiers of the attribute are not matched.
+ */
+function isTypeAttributeNameReference(
+  reference: Reference,
+): reference is Reference & { owner: TypeAttribute } {
+  return (
+    reference.owner.kind === SyntaxKind.TypeAttribute &&
+    reference.owner.type === reference
+  );
+}
+
 // Returns the qualified name in reverse order, e.g. "A.B.C" -> ["C", "B", "A"]
 export function getQualifiedName(reference: Reference): string[] {
+  if (isTypeAttributeNameReference(reference)) {
+    // E.g. `TYPE PAINT.DEPTH.INTENSITY` -> ["INTENSITY", "DEPTH", "PAINT"]
+    const names = [reference.text];
+    for (let i = reference.owner.qualifiers.length - 1; i >= 0; i--) {
+      names.push(reference.owner.qualifiers[i].text);
+    }
+    return names;
+  }
   if (reference.owner.container?.kind === SyntaxKind.MemberCall) {
     const memberCall = reference.owner.container;
     if (memberCall.previous?.element?.ref) {
@@ -244,6 +266,56 @@ function assignReference(
     if (matchingSymbols && matchingSymbols.length > 1) {
       reference.nodes = matchingSymbols.map((symbol) => symbol.node);
     }
+    if (isTypeAttributeNameReference(reference)) {
+      assignTypeQualifiers(unit, reference.owner.qualifiers, resolved);
+    }
+  }
+}
+
+/**
+ * We've resolved the type name of a `TYPE` attribute, now qualify the entire chain of qualifier references.
+ * Unlike expressions, a `TYPE` attribute has no `MemberCall` chain to follow,
+ * so the qualifiers are stored on the attribute itself (outermost first) and matched against the parents of the resolved symbol.
+ * Note: This function assumes that the resolved symbol is correct,
+ * it does not validate the qualified name in any way. This is done in the `SymbolTable` step.
+ *
+ * Example:
+ *
+ * ```
+ * PAINT: QUALIFY;
+ *   DEPTH: QUALIFY;
+ *     DEFINE ORDINAL INTENSITY (HIGH, LOW);
+ *   END DEPTH;
+ * END PAINT;
+ * DCL A TYPE PAINT.DEPTH.INTENSITY; // `DEPTH` links to line 2, `PAINT` links to line 1
+ * DCL B TYPE PAINT.INTENSITY;       // Partial qualification: `PAINT` still links to line 1
+ * ```
+ */
+function assignTypeQualifiers(
+  unit: CompilationUnit,
+  qualifiers: readonly Reference[],
+  resolved: QualifiedSyntaxNode,
+) {
+  // The parents of the resolved type are its qualify blocks, innermost first.
+  // Therefore, we match the qualifiers from the last to the first.
+  let parent = resolved.parent;
+  for (let i = qualifiers.length - 1; i >= 0; i--) {
+    const qualifier = qualifiers[i];
+    // The names are not matching, this is a partial qualification.
+    // Skip the qualify blocks that were not written in the type name.
+    while (parent && parent.name !== qualifier.text) {
+      parent = parent.parent;
+    }
+    if (!parent) {
+      // No qualify block with this name is left in the chain.
+      qualifier.node = null;
+      continue;
+    }
+    qualifier.node = parent.node;
+    // Add the qualifier to the reverse map so we can use it for LSP services
+    unit.referencesCache.addInverse(qualifier);
+    // Continue up the chain with the next outer qualifier.
+    parent = parent.parent;
   }
 }
 
@@ -604,7 +676,7 @@ export function findTokenElementReference(
 
   if (isReferenceToken(token.kind) && token.element) {
     // Find the reference belonging to the token
-    const ref = getReference(token.element);
+    const ref = getReference(token.element, token);
     if (ref?.node) {
       element = ref.node;
     } else {
