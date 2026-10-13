@@ -41,7 +41,7 @@ export function definitionRequest(
       },
     });
   } else if (isReferenceToken(token.kind) && token.element) {
-    const ref = getReference(token.element);
+    const ref = getReference(token.element, token);
     if (!ref || !ref.node) {
       return locations;
     }

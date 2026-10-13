@@ -47,6 +47,46 @@ import { getFirstStructureVariable } from "../syntax-tree/ast-utils";
  * - Ambiguous: A symbol that is declared with the same name in different branches of nested scopes.
  */
 
+/**
+ * Returns the qualifier chain introduced by the `QUALIFY` blocks enclosing the given node,
+ * innermost qualify block first. Returns `null` when the node is not inside a qualify block.
+ *
+ * ```pli
+ * paint: qualify;
+ *   depth: qualify;
+ *     define ordinal intensity (high, medium, low);
+ *   end depth;
+ * end paint;
+ * ```
+ * The chain for `intensity` is `depth -> paint`, so it can be referenced as `paint.depth.intensity`.
+ */
+export function getQualifier(node: SyntaxNode): QualifiedSyntaxNode | null {
+  const qualify = getContainer(node, SyntaxKind.QualifyStatement);
+  if (!qualify) {
+    return null;
+  }
+  const statement = qualify.container;
+  if (statement?.kind !== SyntaxKind.Statement) {
+    return null;
+  }
+  const outer = getQualifier(statement);
+  const label = statement.labels[0];
+  const token = label?.item?.ref?.token;
+  if (!label || !token) {
+    // A qualify block without a (valid) label does not qualify anything.
+    return outer;
+  }
+  return QualifiedSyntaxNode.createExplicit(token, label, outer);
+}
+
+function isQualifier(node: QualifiedSyntaxNode | null): boolean {
+  return (
+    node?.node.kind === SyntaxKind.LabelPrefix &&
+    node.node.container?.kind === SyntaxKind.Statement &&
+    node.node.container.value?.kind === SyntaxKind.QualifyStatement
+  );
+}
+
 export class SymbolTable {
   symbols: MultiMap<string, QualifiedSyntaxNode> = new MultiMap();
   /**
@@ -82,7 +122,11 @@ export class SymbolTable {
     declaration: DeclareStatement,
     reporter: LinkerErrorReporter,
   ): void {
-    const parsedEntries = DeclaredItemParser.parse(declaration.items, reporter);
+    const parsedEntries = DeclaredItemParser.parse(
+      declaration.items,
+      reporter,
+      getQualifier(declaration),
+    );
     for (const [name, node] of parsedEntries.entries()) {
       this.addSymbolDeclaration(name, node);
     }
@@ -116,7 +160,7 @@ export class SymbolTable {
 
     this.addSymbolDeclaration(
       name,
-      QualifiedSyntaxNode.createExplicit(nameToken, node),
+      QualifiedSyntaxNode.createExplicit(nameToken, node, getQualifier(node)),
     );
   }
 
@@ -130,7 +174,11 @@ export class SymbolTable {
     }
     this.addTypeDeclaration(
       firstItem.name,
-      QualifiedSyntaxNode.createExplicit(firstItem.nameToken, firstItem),
+      QualifiedSyntaxNode.createExplicit(
+        firstItem.nameToken,
+        firstItem,
+        getQualifier(node),
+      ),
     );
   }
 
@@ -143,7 +191,11 @@ export class SymbolTable {
     }
     this.addTypeDeclaration(
       node.name,
-      QualifiedSyntaxNode.createExplicit(node.nameToken, node),
+      QualifiedSyntaxNode.createExplicit(
+        node.nameToken,
+        node,
+        getQualifier(node),
+      ),
     );
   }
 
@@ -152,10 +204,11 @@ export class SymbolTable {
     reporter: LinkerErrorReporter,
   ) {
     const { name, nameToken } = node;
+    const qualifier = getQualifier(node);
     if (name && nameToken) {
       this.addTypeDeclaration(
         name,
-        QualifiedSyntaxNode.createExplicit(nameToken, node),
+        QualifiedSyntaxNode.createExplicit(nameToken, node, qualifier),
       );
     }
     if (node.ordinalValues) {
@@ -164,7 +217,11 @@ export class SymbolTable {
         if (ovName && ovNameToken) {
           this.addSymbolDeclaration(
             ovName,
-            QualifiedSyntaxNode.createExplicit(ovNameToken, ordinalValue),
+            QualifiedSyntaxNode.createExplicit(
+              ovNameToken,
+              ordinalValue,
+              qualifier,
+            ),
           );
         }
       }
@@ -333,37 +390,55 @@ function redeclarationPriority(kind: SyntaxKind): number {
  */
 function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   for (const scope of scopeCache.values()) {
-    for (const [, symbols] of scope.symbolTable.symbols.entriesGroupedByKey()) {
-      const filteredSymbols = symbols.filter(
-        (symbol) =>
-          !symbol.isImplicit && // We don't want to check implicit declarations for redeclarations.
-          symbol.level === 1 && // Get the symbols that are at the first level of scope.
-          symbol.node.kind !== SyntaxKind.WildcardItem, // Wildcard items are not checked for redeclarations.
-      );
-
-      const isColliding = checkRedeclaration(filteredSymbols);
-      for (const symbol of filteredSymbols) {
-        symbol.isRedeclared = isColliding;
-      }
-
-      // During a collision, we determine which symbols should be
-      // marked as redeclared. In the case of a colliding label prefix
-      // and variable declaration, the label prefix should always
-      // take precedence (i.e, be marked as not redeclared).
-      if (isColliding) {
-        let item = filteredSymbols[0];
-        let itemPrio = redeclarationPriority(item.node.kind);
-        for (let i = 1; i < filteredSymbols.length; i++) {
-          const symbol = filteredSymbols[i];
-          const prio = redeclarationPriority(symbol.node.kind);
-          if (prio > itemPrio) {
-            item = symbol;
-            itemPrio = prio;
-          }
+    for (const [ , allSymbols] of scope.symbolTable.symbols.entriesGroupedByKey()) {
+      // Names only need to be unique within their own qualify block,
+      // so symbols of different qualify blocks never collide.
+      const byQualifier = new Map<string, QualifiedSyntaxNode[]>();
+      for (const symbol of allSymbols) {
+        const key = isQualifier(symbol.parent) ? symbol.parent!.getId() : "";
+        const group = byQualifier.get(key);
+        if (group) {
+          group.push(symbol);
+        } else {
+          byQualifier.set(key, [symbol]);
         }
-        item.isRedeclared = false;
+      }
+      for (const symbols of byQualifier.values()) {
+        assignRedeclaredGroup(symbols);
       }
     }
+  }
+}
+
+function assignRedeclaredGroup(symbols: QualifiedSyntaxNode[]) {
+  const filteredSymbols = symbols.filter(
+    (symbol) =>
+      !symbol.isImplicit && // We don't want to check implicit declarations for redeclarations.
+      symbol.level === 1 && // Get the symbols that are at the first level of scope.
+      symbol.node.kind !== SyntaxKind.WildcardItem, // Wildcard items are not checked for redeclarations.
+  );
+
+  const isColliding = checkRedeclaration(filteredSymbols);
+  for (const symbol of filteredSymbols) {
+    symbol.isRedeclared = isColliding;
+  }
+
+  // During a collision, we determine which symbols should be
+  // marked as redeclared. In the case of a colliding label prefix
+  // and variable declaration, the label prefix should always
+  // take precedence (i.e, be marked as not redeclared).
+  if (isColliding) {
+    let item = filteredSymbols[0];
+    let itemPrio = redeclarationPriority(item.node.kind);
+    for (let i = 1; i < filteredSymbols.length; i++) {
+      const symbol = filteredSymbols[i];
+      const prio = redeclarationPriority(symbol.node.kind);
+      if (prio > itemPrio) {
+        item = symbol;
+        itemPrio = prio;
+      }
+    }
+    item.isRedeclared = false;
   }
 }
 
