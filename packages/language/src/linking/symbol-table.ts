@@ -390,7 +390,10 @@ function redeclarationPriority(kind: SyntaxKind): number {
  */
 function assignRedeclaredSymbols(scopeCache: ScopeCache) {
   for (const scope of scopeCache.values()) {
-    for (const [ , allSymbols] of scope.symbolTable.symbols.entriesGroupedByKey()) {
+    for (const [
+      ,
+      allSymbols,
+    ] of scope.symbolTable.symbols.entriesGroupedByKey()) {
       // Names only need to be unique within their own qualify block,
       // so symbols of different qualify blocks never collide.
       const byQualifier = new Map<string, QualifiedSyntaxNode[]>();
