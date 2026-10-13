@@ -34,7 +34,7 @@ export async function lifecycle(
 ): Promise<void> {
   compilationUnit.reset();
   await interruptAndCheck(cancellation);
-  await tokenize(compilationUnit, document);
+  await tokenize(compilationUnit, document, cancellation);
   await interruptAndCheck(cancellation);
   parse(compilationUnit);
   await interruptAndCheck(cancellation);
@@ -53,11 +53,13 @@ const lexer = new PliLexer();
 export async function tokenize(
   compilationUnit: CompilationUnit,
   document: TextDocument,
+  cancellation?: CancellationToken,
 ): Promise<LexerResult> {
   const result = await lexer.tokenize(
     compilationUnit,
     document,
     compilationUnit.uri,
+    cancellation,
   );
   compilationUnit.tokens = result.all;
   compilationUnit.preprocessedText = result.preprocessedText;

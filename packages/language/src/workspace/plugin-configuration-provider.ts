@@ -73,9 +73,8 @@ export type PluginConfigUnresolvedLibData = {
   /** Root-relative path to this lib entry, e.g. `["pgroups", 0, "libs", 2]`. */
   path?: JSONPath;
   /**
-   * The lib values that should remain in this pgroup's `libs` array once every
-   * unresolved entry is removed. Lets the "remove all" quick fix rewrite the
-   * array as a whole without re-parsing the source.
+   * The lib values that remain in this pgroup's `libs` array once every unresolved entry is
+   * removed. Used by the "remove all" quick fix.
    */
   survivingLibs?: string[];
 };
@@ -171,9 +170,6 @@ interface ConfigSource {
 
 /**
  * Precedence of a program-config match against a file, **lowest value wins**.
- * Used by {@link PluginConfigurationProvider.getProgramConfig} to prefer an
- * exact path match over a glob match. `Exact` is the best rank, so matching it
- * stops the lookup early.
  */
 const ProgramMatchRank = {
   Exact: 0,
@@ -576,6 +572,11 @@ export class PluginConfigurationProvider {
    */
   private previouslyPublishedUris: Set<string> = new Set();
 
+  /** URIs that currently carry plugin-config diagnostics published by this provider. */
+  get publishedDiagnosticUris(): ReadonlySet<string> {
+    return this.previouslyPublishedUris;
+  }
+
   /**
    * Asks the {@link GlobalConfigLoader} for the VS Code settings backing for
    * `pli.pgm_conf` and `pli.proc_grps` for the given workspace. In production
@@ -624,9 +625,8 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Returns the highest-priority settings source for one config key —
-   * workspace scope before user scope — or `undefined` if neither resolves
-   * to a document. A file that exists wins its tier even if empty/invalid.
+   * Returns the highest-priority settings source for one config key (workspace before user), or
+   * `undefined` if neither resolves to a document.
    */
   private async readPreferredGlobalConfigSource(
     entries: Messages.GlobalConfigEntry[] | undefined,
@@ -642,9 +642,8 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Resolves the winning {@link ConfigSource} for one config file by precedence:
-   * project (`.pliplugin/`) first, then settings (workspace before user, read
-   * lazily). Returns `undefined` if no tier provides the file.
+   * Resolves the winning {@link ConfigSource} for one config file: project (`.pliplugin/`) first,
+   * then settings (workspace before user).
    */
   private async resolveConfigSource(
     pluginUri: URI | undefined,
@@ -813,11 +812,8 @@ export class PluginConfigurationProvider {
       record.computedLibs = expanded.libs;
 
       const pgroupName = record.name.value;
-      // The libs that stay once every unresolved entry is dropped. `unresolved`
-      // holds the original `record.libs` items (by reference), so set membership
-      // is exact and duplicate-safe. Computed once per pgroup and shared by all
-      // of its unresolved diagnostics so the "remove all" quick fix can rewrite
-      // the array without re-parsing.
+      // The libs that stay once every unresolved entry is dropped. Computed once per pgroup and
+      // shared by all of its unresolved diagnostics.
       const unresolvedItems = new Set(
         expanded.unresolved.map((item) => item[0]),
       );
@@ -869,9 +865,7 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Validates the merged plugin configuration and returns the accumulated
-   * diagnostics. Single entry point for the config-level checks, called from
-   * {@link loadConfigurations} *after* the configs are post-processed.
+   * Validates the merged plugin configuration and returns the accumulated diagnostics.
    */
   private validatePluginConfig(): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
@@ -886,10 +880,8 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Warns when a directory is both a configured lib and a program-entry
-   * location for one of the lib's include extensions, since such files are
-   * ambiguously both compiled standalone and offered as includes. Emits at
-   * most one diagnostic per (program entry, lib directory) pair.
+   * Warns when a directory is both a configured lib and a program-entry location for one of the
+   * lib's include extensions.
    */
   private validateProgramLibOverlap(): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
@@ -1008,9 +1000,7 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Rebuilds the program-config map from the given configs. Program paths are
-   * normalized and resolved relative to the workspace (unless absolute), then
-   * post-processed so abstract options are built.
+   * Rebuilds the program-config map from the given configs.
    */
   private applyProgramConfigs(
     workspaceUri: URI | undefined,
@@ -1033,10 +1023,11 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Resolves a program path to the key it's matched under (see
-   * {@link getProgramConfig}). Normalizes backslashes to forward slashes,
-   * then uses the path as-is if absolute, or joins it with the workspace URI
-   * if relative. Without a workspace (the fallback workspace), a relative
+   * Resolves a `program` value to the key it's matched under (see
+   * {@link getProgramConfig}). Normalizes backslashes to forward slashes.
+   * URI-scheme values (e.g. `zowe-ds:`) are keyed by URI path so they match
+   * the document. Absolute paths stay as-is; relative paths are joined with
+   * the workspace. Without a workspace (the fallback workspace), a relative
    * path stays as-is and matches unanchored against full file paths.
    */
   private resolveProgramKey(
@@ -1050,7 +1041,12 @@ export class PluginConfigurationProvider {
     if (normalizedProgramPath === "." || normalizedProgramPath === "./") {
       normalizedProgramPath = "*";
     }
-    if (this.isAbsolutePath(normalizedProgramPath)) {
+    // URI-scheme (e.g. zowe-ds:) and absolute paths are both keyed by URI path.
+    if (
+      UriUtils.computePathType(normalizedProgramPath) ===
+        UriUtils.PathType.URI ||
+      this.isAbsolutePath(normalizedProgramPath)
+    ) {
       return UriUtils.toUri(normalizedProgramPath).path;
     }
     if (!workspaceUri) {
@@ -1172,12 +1168,11 @@ export class PluginConfigurationProvider {
   }
 
   /**
-   * Precedence of a single program-config entry as a match for `path`, or
-   * `undefined` when its pattern does not match the file. Lower ranks win;
-   * see {@link ProgramMatchRank}.
+   * Precedence of a single program-config entry as a match for `path`, or `undefined` when its
+   * pattern does not match the file. Lower ranks win.
    *
-   * @param path Decoded program path being resolved.
-   * @param pattern The program config's key (an exact path or a glob).
+   * @param path Decoded program path being resolved. @param pattern The program config's key (an
+   * exact path or a glob).
    */
   private programMatchRank(
     path: string,

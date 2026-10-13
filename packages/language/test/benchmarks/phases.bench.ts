@@ -41,8 +41,9 @@ import { generatePlainFixture } from "./fixtures";
  * pipeline time actually goes. Every piece receives the same input `PliLexer` would hand
  * it at that point of the pipeline. Run with `pnpm vitest bench`.
  *
- * Note the whole-phase benches (macro/sql/cics) each internally re-tokenize their input,
- * so the standalone `tokenize` number is a component of each of them.
+ * Note the macro phase bench internally re-tokenizes its input, so the standalone
+ * `tokenize` number is a component of it; the sql/cics phases only walk the text (and,
+ * over this fixture, short-circuit on their trigger pre-scan).
  */
 
 const BENCH_OPTIONS = { warmupIterations: 1, iterations: 3, time: 0 };

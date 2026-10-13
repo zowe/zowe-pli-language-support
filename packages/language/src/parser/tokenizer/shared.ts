@@ -30,8 +30,7 @@ export class TokenizerContext {
 
   private storedIndex: number = 0;
   /**
-   * Whether a line break has been seen since the last token (or comment) was created -
-   * replaces per-token line/column tracking, see `Token.startsNewLine`.
+   * Whether a line break has been seen since the last token (or comment) was created.
    */
   public sawNewlineSinceLastToken: boolean = false;
 
@@ -203,10 +202,7 @@ export interface KeywordToken {
   kind: TokenType;
 }
 
-// 32-bit FNV-1a. Deliberately not the 64-bit variant: this runs in the tokenizer's
-// hottest loop and BigInt arithmetic heap-allocates per operation (~half the tokenizer's
-// time in profiles). Collisions are safe: `generateKeywords` throws on any within the
-// keyword set, and `tokenizeIdentifier` re-compares the `image`.
+// 32-bit FNV-1a. Not the 64-bit variant, since BigInt arithmetic heap-allocates per operation.
 export const FNV_OFFSET_BASIS = 0x811c9dc5;
 export const FNV_PRIME = 0x01000193;
 
@@ -241,13 +237,8 @@ export function tokenizeSlashWithComment(
     if (nextChar === "*") {
       let i = context.index + 2;
       let crossedNewline = false;
-      // `startsNewLine` describes line breaks between *tokens* - a comment must not
-      // consume the pending flag, or a real token after a line-leading comment would
-      // wrongly report `startsNewLine === false` (which would break `performRecovery`'s
-      // line-boundary detection on the comment-preserving `%INCLUDE` tokenize path).
-      // The comment token itself still takes the pre-comment flag value (via
-      // `createTokenInstance`, which resets it); restored below, with any newline
-      // *inside* the comment carrying forward to the next token as well.
+      // A comment must not consume the pending `startsNewLine` flag. It is restored below, with any
+      // newline inside the comment carrying forward to the next token.
       const pendingNewline = context.sawNewlineSinceLastToken;
       while (i < context.length) {
         if (context.input[i] === "*" && context.input[i + 1] === "/") {
@@ -359,15 +350,10 @@ export function tokenizeIdentifier(
     const previousToken = context.tokens[context.tokens.length - 1];
     // Specific handling for EXEC (likely EXEC SQL or EXEC CICS)
     if (previousToken?.tokenTypeIdx === tokens.EXEC.tokenTypeIdx) {
-      // Scan to the terminating `;`, skipping quoted strings - see
-      // `findExecFragmentEnd` for how this stays in sync with the authoritative
-      // `scanExecFragments` extent in preprocessor-api (and for the accepted
-      // residual mismatch on embedded-language comments).
+      // Scan to the terminating `;`, skipping quoted strings.
       i = tokens.findExecFragmentEnd(context.input, i);
-      // Advance without newline tracking: the fragment's own `startsNewLine` must
-      // come from the pending pre-fragment flag (consumed by `createTokenInstance`
-      // below), and line breaks *inside* the fragment image must not leak to the
-      // token that follows it.
+      // Advance without newline tracking: line breaks inside the fragment must not leak to the
+      // following token.
       context.advance(i - start, false);
       return context.createTokenInstance(tokens.ExecFragment);
     }

@@ -48,7 +48,7 @@
               },
               "instruction-counter-limit": {
                 "type": "number",
-                "description": "Maximum number of times to run an instructions during preprocessing. The default is 5000."
+                "description": "Sizes the budget for re-executed preprocessor instructions (loop iterations, procedure calls) of a single preprocessing run. The default is 5000."
               },
               "case-upper-validation": {
                 "type": "boolean",

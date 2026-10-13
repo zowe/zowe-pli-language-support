@@ -176,18 +176,24 @@ export class DefineOptionsChecker extends CICSOptionsCheckerBase {
             ctx.DAYOFMONTH(),
             "DAYOFMONTH without YEAR",
           );
-        } else if (ctx.DAYOFYEAR().length !== 0) {
-          // DAYOFYEAR
-          this.checkHasIllegalOptions(ctx.MONTH(), "MONTH without DAYOFYEAR");
-          this.checkHasIllegalOptions(
-            ctx.DAYOFMONTH(),
-            "DAYOFMONTH without DAYOFYEAR",
-          );
         } else {
-          // MONTH and DAYOFMONTH
-          this.checkHasIllegalOptions(ctx.DAYOFYEAR(), "DAYOFYEAR with MONTH");
-          this.checkHasMandatoryOptions(ctx.MONTH(), ctx, "MONTH");
-          this.checkHasMandatoryOptions(ctx.DAYOFMONTH(), ctx, "DAYOFMONTH");
+          this.checkHasAtLeastOneOption(
+            "MONTH or DAYOFYEAR",
+            ctx,
+            ctx.MONTH(),
+            ctx.DAYOFYEAR(),
+          );
+          //this.checkHasExactlyOneOption("MONTH or DAYOFYEAR", ctx, ctx.MONTH(), ctx.DAYOFYEAR());
+          this.checkMutuallyExclusiveOptions(
+            "MONTH or DAYOFYEAR",
+            ctx.MONTH(),
+            ctx.DAYOFYEAR(),
+          );
+          if (ctx.MONTH().length !== 0) {
+            this.checkHasMandatoryOptions(ctx.DAYOFMONTH(), ctx, "DAYOFMONTH");
+          } else if (ctx.DAYOFMONTH().length !== 0) {
+            this.checkHasMandatoryOptions(ctx.MONTH(), ctx, "MONTH");
+          }
         }
       } else {
         // Neither AT nor AND

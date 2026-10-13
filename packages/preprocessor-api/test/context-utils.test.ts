@@ -11,13 +11,13 @@
 
 import { describe, expect, test } from "vitest";
 import {
-  buildExecReplacement,
   Delimiters,
   rebaseDiagnostic,
   rebaseToken,
   scanExecFragments,
+  scanHostText,
 } from "../src/context-utils";
-import { ExecFragment, Severity, Token, SemanticsKind } from "../src/types";
+import { ExecFragment, Severity, SemanticsKind } from "../src/types";
 
 const SQL: Delimiters = { quotes: ["'", '"'], lineComments: ["--"] };
 const CICS: Delimiters = {
@@ -191,6 +191,92 @@ describe("scanExecFragments", () => {
       "INSERT INTO T VALUES(';EXEC SQL DROP TABLE T;')",
     );
   });
+
+  test("EXEC glued to a PL/I identifier character is an identifier, not a statement", () => {
+    // `$`, `#` and `@` are identifier characters in PL/I - the host tokenizer lexes
+    // `$EXEC` as one identifier, so the scan must not see a statement there either.
+    expect(scanExecFragments("$EXEC SQL X; #EXEC SQL Y;", "SQL", SQL)).toEqual(
+      [],
+    );
+  });
+
+  test("an own-prefix statement inside another preprocessor's statement is not a fragment", () => {
+    // The host tokenizer consumes any `EXEC <word> ...;` as one opaque token.
+    const text = "EXEC CICS X EXEC SQL Y; EXEC SQL Z;";
+    expect(scanExecFragments(text, "SQL", SQL).map((f) => f.bodyText)).toEqual([
+      "Z",
+    ]);
+  });
+});
+
+describe("scanHostText", () => {
+  const anchor = /DFHRESP\s*\(\s*(\w+)\s*\)/;
+
+  test("records secondary anchors between statements, never inside any EXEC statement", () => {
+    const text =
+      "X = DFHRESP(NORMAL); EXEC CICS Y FROM(DFHRESP(NORMAL)); EXEC SQL Z DFHRESP(NOTFND); DFHRESP(NOTFND);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([
+      text.indexOf("DFHRESP(NORMAL)"),
+      text.lastIndexOf("DFHRESP(NOTFND)"),
+    ]);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual([
+      "Y FROM(DFHRESP(NORMAL))",
+    ]);
+  });
+
+  test("anchors inside host string literals are ignored", () => {
+    const text = "S = 'DFHRESP(NORMAL)'; X = DFHRESP(NORMAL);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([text.lastIndexOf("DFHRESP")]);
+  });
+
+  test("anchors are matched case-insensitively and at identifier boundaries only", () => {
+    const text = "X = dfhresp(normal); Y = MYDFHRESP(NORMAL);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([text.indexOf("dfhresp")]);
+  });
+
+  test("a walk without an anchor still yields fragments", () => {
+    const text = "A: PROC; EXEC SQL X; END;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.anchors).toEqual([]);
+    expect(scan.fragments).toHaveLength(1);
+  });
+
+  test("an EXEC mention inside a multi-line host string is not a statement", () => {
+    // The host lexer's strings span lines - only the embedded grammars end them at a
+    // line break.
+    const text = "X = 'a\nEXEC SQL NOPE;\nb'; EXEC SQL COMMIT;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual(["COMMIT"]);
+  });
+
+  test("anchors inside multi-line host strings are ignored", () => {
+    const text = "S = 'a\nDFHRESP(NORMAL)\nb'; X = DFHRESP(NORMAL);";
+    const scan = scanHostText(text, "CICS", CICS, anchor);
+    expect(scan.anchors).toEqual([text.lastIndexOf("DFHRESP")]);
+  });
+
+  test("a host string never closed covers the rest of its opening line only", () => {
+    // Like the host lexer, which refuses to lex an unterminated string and continues on
+    // the next line - the statement below must still be found.
+    const text = "X = 'oops;\nEXEC SQL COMMIT;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual(["COMMIT"]);
+  });
+
+  test("a backslash escape does not end a multi-line host string", () => {
+    const text = "X = 'a\\'b\nc'; EXEC SQL COMMIT;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments.map((f) => f.bodyText)).toEqual(["COMMIT"]);
+  });
+
+  test("a foreign unterminated statement swallows the rest of the text", () => {
+    const text = "EXEC CICS X EXEC SQL Y;";
+    const scan = scanHostText(text, "SQL", SQL);
+    expect(scan.fragments).toEqual([]);
+  });
 });
 
 describe("rebaseDiagnostic", () => {
@@ -206,8 +292,7 @@ describe("rebaseDiagnostic", () => {
         severity: Severity.Error,
         message: "bad",
         code: "X1",
-        startOffset: 3,
-        endOffset: 7,
+        range: { start: 3, end: 7 },
       },
       fragment,
     );
@@ -215,8 +300,7 @@ describe("rebaseDiagnostic", () => {
       severity: Severity.Error,
       message: "bad",
       code: "X1",
-      startOffset: 22,
-      endOffset: 26,
+      range: { start: 22, end: 26 },
     });
   });
 });
@@ -233,45 +317,14 @@ describe("rebaseToken", () => {
       {
         image: "HV",
         semanticsKind: SemanticsKind.Identifier,
-        startOffset: 8,
-        endOffset: 9,
+        range: { start: 8, end: 10 },
       },
       fragment,
     );
     expect(rebased).toEqual({
       image: "HV",
       semanticsKind: SemanticsKind.Identifier,
-      startOffset: 27,
-      endOffset: 28,
+      range: { start: 27, end: 29 },
     });
-  });
-});
-
-describe("buildExecReplacement", () => {
-  const token = (
-    image: string,
-    semanticsKind: SemanticsKind,
-    startOffset: number,
-  ): Token => ({
-    image,
-    semanticsKind,
-    startOffset,
-    endOffset: startOffset + image.length - 1,
-  });
-
-  test("re-embeds only identifier tokens, space-separated, before DO; END;", () => {
-    const text = buildExecReplacement([
-      token("VAR1", SemanticsKind.Identifier, 5),
-      token("SELECT", SemanticsKind.Keyword, 12),
-      token("VAR2", SemanticsKind.Identifier, 20),
-    ]);
-    expect(text).toBe("DO;\nPUT(VAR1);\nPUT(VAR2);\nEND;");
-  });
-
-  test("no identifier tokens yields just DO; END;", () => {
-    const text = buildExecReplacement([
-      token("SELECT", SemanticsKind.Keyword, 0),
-    ]);
-    expect(text).toBe("DO;\nEND;");
   });
 });

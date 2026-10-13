@@ -1,10 +1,5 @@
-// this file is required for VSCode to work properly
+// solution-style config so VS Code picks up tsconfig.src.json / tsconfig.test.json
 {
-  "extends": "./tsconfig.src.json",
-  "compilerOptions": {
-    "noEmit": true,
-    "rootDir": ".",
-    "moduleDetection": "force"
-  },
-  "include": ["src/**/*", "test/**/*"]
+  "files": [],
+  "references": [{ "path": "./tsconfig.src.json" }, { "path": "./tsconfig.test.json" }]
 }

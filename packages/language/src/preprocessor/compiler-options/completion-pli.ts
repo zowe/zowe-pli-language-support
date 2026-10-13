@@ -10,12 +10,8 @@
  */
 
 /**
- * Completion metadata for PLI compiler options
- *
- * This file is intentionally kept separate from translator-pli.ts so that
- * completion behaviour can be declared without touching the translation logic.
- * A future refactoring could derive these entries automatically from the
- * translator rule definitions.
+ * Completion metadata for PLI compiler options. Kept separate from translator-pli.ts so completion
+ * behaviour can be declared without touching the translation logic.
  */
 export interface CompilerOptionCompletion {
   /** Canonical option name (uppercase). */
@@ -27,15 +23,8 @@ export interface CompilerOptionCompletion {
    */
   mandatoryParams: number;
   /**
-   * Candidate value(s) for the (typically single) parameter:
-   * - One entry: used as the snippet tab-stop default, e.g. `["2, 72"]` is
-   *   inserted as `MARGINS(${1:2, 72})`. May contain a single `<|>`
-   *   marker to indicate where the cursor should land after completion.
-   * - Multiple entries: rendered as an LSP snippet "choice", e.g.
-   *   `["DECIMAL", "HEXADEC"]` inserted as `AGGREGATE(${1|DECIMAL,HEXADEC|})`,
-   *   letting the user tab into the parentheses and cycle through the
-   *   offered values. These are also offered as completions when typing
-   *   inside the parentheses directly.
+   * Candidate value(s) for the parameter. One entry becomes the snippet tab-stop default (may
+   * contain a `<|>` cursor marker); multiple entries become an LSP snippet choice.
    */
   params?: readonly string[];
 }

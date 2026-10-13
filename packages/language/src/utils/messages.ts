@@ -144,11 +144,8 @@ export namespace Messages {
   }
 
   /**
-   * Location information for a plugin configuration entry (either a
-   * program entry in pgm_conf.json or a process group entry in
-   * proc_grps.json). Used by the "Go to Program Configuration" and
-   * "Go to Process Group" commands to navigate to the entry that
-   * applies to a given .pli file.
+   * Location information for a plugin configuration entry (pgm_conf.json program entry or
+   * proc_grps.json process group entry).
    */
   export interface PluginConfigEntryLocation {
     /** URI of the config file (or settings.json / .code-workspace file) */
@@ -171,11 +168,8 @@ export namespace Messages {
   >("pli/getProgramConfigLocation");
 
   /**
-   * Request sent to the LS to get the source location of the process
-   * group configuration bound to the program configuration that applies
-   * to a given file URI.
-   * Returns null if no configuration matches the file, or the matching
-   * program configuration has no resolvable process group.
+   * Request sent to the LS to get the source location of the process group bound to the program
+   * configuration that applies to a given file URI. Returns null if nothing matches.
    */
   export const GetProcessGroupLocation = createRequestType<
     string,
@@ -192,10 +186,8 @@ export namespace Messages {
   );
 
   /**
-   * Notification sent to the language client when the preprocessed text of a
-   * compilation unit has changed. Carries the URIs of all files belonging to
-   * the unit, so the client only refreshes preprocessed text views showing
-   * that unit.
+   * Notification sent to the language client when the preprocessed text of a compilation unit has
+   * changed. Carries the URIs of all files belonging to the unit.
    */
   export const PreprocessedTextChanged = createNotificationType<{
     uris: string[];

@@ -40,13 +40,16 @@ export namespace Commands {
   export const CREATE_CONFIG = "pli.applyQuickFixCreateConfig";
 
   /**
-   * Client-side command (registered in the VS Code extension, NOT in the
-   * server's `executeCommandProvider`). Attached to quick fixes that edit a
-   * plugin config file so the file is saved after the edit is applied — the
-   * config reload only fires on save.
+   * Client-side command that saves a plugin config file after a quick fix edited it.
    */
 
   export const SAVE_FILES = "pli.saveFiles";
+
+  /**
+   * Client-side command that writes a user-scope plugin config for files with no workspace folder.
+   */
+  export const ENSURE_USER_CONFIG = "pli.ensureUserPluginConfig";
+
   /**
    * Client-side command to navigate from a .pli file to its program
    * configuration entry in pgm_conf.json or VS Code settings.

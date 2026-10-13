@@ -52,25 +52,30 @@ export async function activate(
     getTelemetryReporter(context);
   telemetryReporter?.sendTelemetryEvent("pli.language.support.activated");
   context.subscriptions.push(
-    registerOnDidChangeActiveTextEditor(),
+    registerOnDidChangeActiveTextEditor(client),
     registerOnDidOpenTextDocListener(telemetryReporter),
-    registerPliDocumentIdentifier(client),
+    registerPliDocumentIdentifier(client, (document) => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor?.document.uri.toString() === document.uri.toString()) {
+        void handleMissingConfig(editor, client);
+      }
+    }),
     watchPluginSettings(client),
     registerPreprocessedText(client),
   );
 
   registerCommands(context, client);
 
-  void handleMissingConfig(vscode.window.activeTextEditor);
+  void handleMissingConfig(vscode.window.activeTextEditor, client);
 }
 
 /**
- * Listen for changes on file activation, and prompt if we can create a .pliplugin folder
+ * Prompt for a missing startup config when the active editor changes.
  * @returns Disposable listener
  */
-function registerOnDidChangeActiveTextEditor() {
+function registerOnDidChangeActiveTextEditor(client: LanguageClient) {
   const listener = async (editor: vscode.TextEditor | undefined) => {
-    await handleMissingConfig(editor);
+    await handleMissingConfig(editor, client);
   };
   return vscode.window.onDidChangeActiveTextEditor(listener);
 }

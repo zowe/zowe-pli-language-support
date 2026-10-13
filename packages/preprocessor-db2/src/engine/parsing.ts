@@ -60,8 +60,10 @@ export class CollectingErrorListener extends BaseErrorListener {
   ): void {
     this.errors.push({
       message: msg,
-      startOffset: offendingSymbol?.start ?? 0,
-      endOffset: offendingSymbol?.stop ?? 0,
+      range: {
+        start: offendingSymbol?.start ?? 0,
+        end: (offendingSymbol?.stop ?? 0) + 1,
+      },
       code: "syntax",
       severity: Severity.Error,
     });
@@ -69,10 +71,8 @@ export class CollectingErrorListener extends BaseErrorListener {
 }
 
 export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
-  // Reused across parses: constructing a generated visitor initializes one
-  // per-instance field per grammar rule, which dominates the profile when done
-  // once per EXEC statement. Sharing is safe because `collect` is fully
-  // synchronous - reset and traversal can never interleave with another call.
+  // Reused across parses: constructing a generated visitor dominates the profile when done once per
+  // EXEC statement. Safe because `collect` is fully synchronous.
   private static readonly instance = new CollectingIdentifierVisitor();
   static collect(tree: ParseTree): Token[] {
     const visitor = CollectingIdentifierVisitor.instance;
@@ -89,8 +89,7 @@ export class CollectingIdentifierVisitor extends Db2SqlExecParserVisitor<void> {
         // Remove leading colon
         // Also: convert to upper case because linking is case-insensitive
         image: ctx.getText().slice(1).toUpperCase(),
-        startOffset: ctx.start.start + 1,
-        endOffset: ctx.stop.stop,
+        range: { start: ctx.start.start + 1, end: ctx.stop.stop + 1 },
         semanticsKind: SemanticsKind.Identifier,
       });
     }
@@ -131,15 +130,16 @@ export class CollectingIncludeVisitor extends Db2SqlExecParserVisitor<void> {
     if (path instanceof TerminalNode) {
       this.includePath = {
         image: path.getText(),
-        startOffset: path.symbol.start,
-        endOffset: path.symbol.stop,
+        range: { start: path.symbol.start, end: path.symbol.stop + 1 },
         semanticsKind: SemanticsKind.Identifier,
       };
     } else {
       this.includePath = {
         image: path.getText(),
-        startOffset: path.start?.start ?? 0,
-        endOffset: path.stop?.stop ?? 0,
+        range: {
+          start: path.start?.start ?? 0,
+          end: (path.stop?.stop ?? 0) + 1,
+        },
         semanticsKind: SemanticsKind.Identifier,
       };
     }

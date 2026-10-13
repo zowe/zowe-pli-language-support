@@ -353,7 +353,9 @@ export class IssueOptionsChecker extends CICSOptionsCheckerBase {
     this.checkHasMandatoryOptions(ctx.RIDFLD(), ctx, "RIDFLD");
     this.checkHasMandatoryOptions(ctx.FROM(), ctx, "FROM");
 
-    if (ctx.KEYLENGTH().length === 0) {
+    if (ctx.KEYLENGTH().length === 0 && ctx.RRN().length === 0) {
+      this.checkHasAtLeastOneOption("KEYLENGTH or RRN", ctx);
+    } else if (ctx.KEYLENGTH().length === 0) {
       this.checkHasIllegalOptions(
         ctx.KEYNUMBER(),
         "KEYNUMBER without KEYLENGTTH",

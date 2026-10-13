@@ -139,6 +139,7 @@ export class ReceiveOptionsChecker extends CICSOptionsCheckerBase {
 
   private checkMapMappingDev(ctx: Cics_receive_map_mappingdevContext) {
     this.checkHasMandatoryOptions(ctx.FROM(), ctx, "FROM");
+    this.checkMutuallyExclusiveOptions("INTO or SET", ctx.INTO(), ctx.SET());
     if (!this.checkMapHasLiteral(ctx)) {
       this.checkHasExactlyOneOption(
         "INTO or SET when specifying MAP param without literal",

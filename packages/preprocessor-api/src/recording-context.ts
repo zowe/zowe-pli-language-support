@@ -18,33 +18,30 @@ export interface RecordedEdit {
   tokens: Token[];
 }
 
-/** One recorded `resolveInclude` call - see {@link RecordingPreprocessorContext}. */
+/** One recorded `include` call - see {@link RecordingPreprocessorContext}. */
 export interface RecordedInclude {
   name: string;
-  range?: Range;
+  statementRange: Range;
+  nameRange: Range;
+  context?: RecordingPreprocessorContext;
 }
 
 /**
  * A minimal in-memory {@link PreprocessorContext} that records every call it receives.
- * A `Preprocessor`'s complete observable output flows through the interface's members
- * (edits with their classified token lists, diagnostics, include resolutions), so running
- * `execute` against this recorder and asserting on what was recorded is a full conformance
- * check of a preprocessor implementation - including a future external one talking over a
- * serialized boundary. `resolveInclude` records the attempt and reports it unresolved
- * (returns `undefined`); `insertContext` records the call.
+ * Used for testing certain preprocessor features.
  */
 export class RecordingPreprocessorContext implements PreprocessorContext {
   readonly diagnostics: Diagnostic[] = [];
   /** Recorded `replace` calls - how a preprocessor rewrites `EXEC` fragments in place. */
   readonly edits: RecordedEdit[] = [];
   readonly includes: RecordedInclude[] = [];
-  /**
-   * Recorded `insertContext` calls - how a preprocessor splices a resolved include's own
-   * (recursively processed) context into the text, as opposed to a flat `replace`.
-   */
-  readonly insertions: { offset: number; context: PreprocessorContext }[] = [];
 
-  constructor(readonly text: string) {}
+  constructor(
+    readonly text: string,
+    readonly documentUri: string = "file:///main.pli",
+    readonly unitUri: string = documentUri,
+    private readonly includeTexts: Readonly<Record<string, string>> = {},
+  ) {}
 
   pushDiagnostic(diagnostic: Diagnostic): void {
     this.diagnostics.push(diagnostic);
@@ -54,15 +51,24 @@ export class RecordingPreprocessorContext implements PreprocessorContext {
     this.edits.push({ range, text, tokens: tokens ?? [] });
   }
 
-  async resolveInclude(
+  async include(
     name: string,
-    range?: Range,
+    statementRange: Range,
+    nameRange: Range,
+    tokens?: Token[],
   ): Promise<PreprocessorContext | undefined> {
-    this.includes.push({ name, range });
-    return undefined;
-  }
-
-  insertContext(offset: number, nested: PreprocessorContext): void {
-    this.insertions.push({ offset, context: nested });
+    const included = this.includeTexts[name];
+    const context =
+      included === undefined
+        ? undefined
+        : new RecordingPreprocessorContext(
+            included,
+            `file:///${name}.inc`,
+            this.unitUri,
+            this.includeTexts,
+          );
+    this.includes.push({ name, statementRange, nameRange, context });
+    this.replace(statementRange, "", tokens);
+    return context;
   }
 }

@@ -47,6 +47,12 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "lcov"],
       include: ["packages/language/src/**/*.ts"],
+      thresholds: {
+        lines: 83,
+        statements: 83,
+        branches: 75,
+        functions: 65,
+      },
     },
   },
 });

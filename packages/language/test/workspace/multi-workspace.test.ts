@@ -244,6 +244,50 @@ describe("Multi Workspace Tests", () => {
     ).toBeTruthy();
   });
 
+  test("Workspace folders can be removed and added at runtime", async () => {
+    const fs = new VirtualFileSystemProvider();
+    resetDocumentProviders(fs);
+    const ch = new CompilationUnitHandler(
+      fs,
+      new TestGlobalConfigLoader({}),
+      LongRunningOperationImpl.Dummy,
+    );
+    const folder = UriUtils.toUri("file:///second");
+    const program = UriUtils.toUri("file:///second/test2.pli");
+    await fs.writeFile(
+      UriUtils.toUri("file:///second/.pliplugin/pgm_conf.json"),
+      JSON.stringify({ pgms: [{ program: "*.pli", pgroup: "yyy" }] }),
+    );
+    await fs.writeFile(
+      UriUtils.toUri("file:///second/.pliplugin/proc_grps.json"),
+      JSON.stringify({ pgroups: [{ name: "yyy", "compiler-options": [] }] }),
+    );
+    await fs.writeFile(program, "/* test2 */");
+
+    const fallback = await ch.initializeFallbackFolder();
+    const original = await ch.initializeWorkspaceFolder(folder);
+    await original.createAndStoreCompilationUnit(program);
+    ch.markReady();
+    expect(ch.getWorkspaceFolderOf(program)).toBe(original);
+
+    await ch.changeWorkspaceFolders({
+      added: [],
+      removed: [{ uri: folder.toString(), name: "second" }],
+    });
+    expect(ch.getAllWorkspaceFolders()).toEqual([fallback]);
+    expect(ch.getWorkspaceFolderOf(program)).toBe(fallback);
+    expect(ch.getCompilationUnit(program)).toBeUndefined();
+
+    await ch.changeWorkspaceFolders({
+      added: [{ uri: folder.toString(), name: "second" }],
+      removed: [],
+    });
+    const readded = ch.getWorkspaceFolderOf(program)!;
+    expect(readded).not.toBe(fallback);
+    expect(readded).not.toBe(original);
+    expect(readded.config.hasProgramConfig(program)).toBeTruthy();
+  });
+
   test("For files outside the specified folders", async () => {
     const fs = new VirtualFileSystemProvider();
     resetDocumentProviders(fs);

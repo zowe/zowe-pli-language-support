@@ -23,12 +23,8 @@ import { orify } from "../checks/utils";
 export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
   ParseTree[] | null
 > {
-  // Reused across parses: the constructor builds an OptionsRegistry with ~100
-  // checker instances (each copying option maps), which dominates the profile
-  // when done once per EXEC statement. The checkers keep a reference to
-  // `errors`, so `collect` drains the shared array instead of replacing it.
-  // Sharing is safe because `collect` is fully synchronous - reset, traversal,
-  // and drain can never interleave with another call.
+  // Reused across parses: constructing the OptionsRegistry dominates the profile when done once per
+  // EXEC statement. Safe because `collect` is fully synchronous.
   private static readonly instance = new CollectingSemanticErrorVisitor();
   static collect(tree: ParseTree): Diagnostic[] {
     const visitor = CollectingSemanticErrorVisitor.instance;
@@ -52,7 +48,7 @@ export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
     const groups = Object.groupBy(
       aggregatableErrors,
       (error) =>
-        `${error.startOffset}-${error.endOffset}:${error.code}:${error.commonMessage}`,
+        `${error.range.start}-${error.range.end}:${error.code}:${error.commonMessage}`,
     );
     for (const group of Object.values(groups)) {
       if (group && group.length > 0) {
@@ -61,8 +57,7 @@ export class CollectingSemanticErrorVisitor extends CICSParserVisitor<
           code: group[0].code,
           message: group[0].commonMessage + orify([...deduplicated].sort()),
           severity: group[0].severity,
-          startOffset: group[0].startOffset,
-          endOffset: group[0].endOffset,
+          range: group[0].range,
         });
       }
     }

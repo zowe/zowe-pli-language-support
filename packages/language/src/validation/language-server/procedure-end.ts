@@ -24,11 +24,8 @@ export function checkProcedureEnd(
     // TODO: Find a way to also support the multi-close option here
     !compilationUnit.compilerOptions.rules?.multiClose
   ) {
-    // If the procedure has no end, and multi-close is not enabled,
-    // we provide an additional diagnostic (in addition to the parser error)
-    // to indicate that the procedure is missing an END statement.
-    // This should help users identify the problem more easily.
-    // Note: This shows the diagnostic on the PROC token, not a procedure label
+    // If the procedure has no end and multi-close is not enabled, add a diagnostic on the PROC
+    // token in addition to the parser error.
     acceptor(diagnosticFromCode(LspCodes.MissingEnd, node.procToken));
   }
 }

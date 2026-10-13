@@ -131,9 +131,9 @@ dbs_alter_function_compopts: (NOT? DETERMINISTIC | NO? EXTERNAL ACTION | ((READS
                              QUERY ACCELERATION (NONE|ELIGIBLE|ALL|ENABLE (WITH FAILBACK)?) | GET_ACCEL_ARCHIVE (YES|NO) | ACCELERATION WAITFORDATA dbs_nnnn_m | ACCELERATOR dbs_accelerator_name | REOPT (NONE|ALWAYS|ONCE) |
                              VALIDATE (RUN|BIND) | ROUNDING (DEC_ROUND_CEILING|DEC_ROUND_DOWN|DEC_ROUND_FLOOR|DEC_ROUND_HALF_DOWN|DEC_ROUND_HALF_EVEN|DEC_ROUND_HALF_UP|DEC_ROUND_UP) | DATE FORMAT (ISO|EUR|USA|JIS|LOCAL) |
                              NOT? SECURED | BUSINESS_TIME SENSITIVE (YES|NO) | SYSTEM_TIME SENSITIVE (YES|NO) | ARCHIVE SENSITIVE (YES|NO) | APPLCOMPAT dbs_applcompat_value | (OFF | CONCENTRATE STATEMENTS (WITH LITERALS)?))+; /*random ordering req*/
-dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
+dbs_nnnn_m: NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "^\\d{1,4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
           //just to unify the error output
-          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
+          | INTEGERLITERAL {this.validateTokenWithRegex($INTEGERLITERAL.text, "^\\d{1,4}\\.\\d$", "Only a DECIMAL(5,1) numeric-constant is allowed here.");}
           ;
 /*ALTER INDEX */
 dbs_alter_index: INDEX dbs_index_name (REGENERATE (USING (APPLICATION COMPATIBILITY | APPLCOMPAT) dbs_applcompat_value)? /*included as a separate piped option due to nb 2 in IBM doc*/ |
@@ -241,7 +241,8 @@ dbs_alter_table_drop: DROP (COLUMN? dbs_column_name_without_alias RESTRICT | PRI
 dbs_alter_table_rotate: ROTATE PARTITION (FIRST | INTEGERLITERAL) TO LAST ENDING AT? LPARENCHAR (dbs_constant | MAXVALUE | MINVALUE) (dbs_comma_separator (dbs_constant | MAXVALUE | MINVALUE))* RPARENCHAR INCLUSIVE? RESET;
 
 /*ALTER TABLESPACE */
-dbs_alter_tablespace: TABLESPACE (dbs_database_name DOT_FS)? dbs_table_space_name (dbs_alter_tablespace_unique_options |  dbs_alter_tablespace_mul_opts);
+//TODO dbs_alter_tablespace_unique_options must appear at most once, but the grammar does not enforce this
+dbs_alter_tablespace: TABLESPACE (dbs_database_name DOT_FS)? dbs_table_space_name (dbs_alter_tablespace_unique_options |  dbs_alter_tablespace_mul_opts)+;
 dbs_alter_tablespace_unique_options: DROP PENDING CHANGES | DSSIZE dbs_dsize_parameter | SEGSIZE INTEGERLITERAL | PAGENUM RELATIVE | dbs_alter_tablespace_move;
 dbs_alter_tablespace_mul_opts: (
                                  dbs_create_alter_tablespace_opts_common
@@ -745,12 +746,13 @@ dbs_fetch: FETCH (
                                                    )
                                                 )
                 );
-dbs_fetch_rowpos: (NEXT | PRIOR | FIRST | LAST | CURRENT CONTINUE? | (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant));
+dbs_fetch_rowpos: (NEXT | PRIOR | FIRST | LAST | CURRENT CONTINUE? | (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant_with_unary));
 dbs_fetch_singlerow: into_or_using (DESCRIPTOR dbs_descriptor_name | dbs_array_variable LSQUAREBRACKET INTEGERLITERAL RSQUAREBRACKET |
                     dbs_sql_variable_reference (dbs_comma_separator dbs_sql_variable_reference)*);
 dbs_fetch_multirow: (FOR (dbs_host_variable | dbs_integer_constant) ROWS)? (into_or_using (DESCRIPTOR dbs_descriptor_name | dbs_sql_variable_reference (dbs_comma_separator dbs_sql_variable_reference)*))?;
-dbs_fetch_rowsetpos: (ROWSET STARTING AT (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant) | (NEXT | PRIOR |
+dbs_fetch_rowsetpos: (ROWSET STARTING AT (ABSOLUTE | RELATIVE) (dbs_host_variable | dbs_integer_constant_with_unary) | (NEXT | PRIOR |
                     FIRST | LAST | CURRENT) ROWSET);
+dbs_integer_constant_with_unary: (MINUSCHAR|PLUSCHAR)? dbs_integer_constant;
 into_or_using: INTO | USING;
 
 /*FREE LOCATOR */
@@ -763,11 +765,12 @@ dbs_get_statement_loop: dbs_get_statement_item (dbs_comma_separator dbs_get_stat
 dbs_get_statement_item: (DB2_LAST_ROW | DB2_NUMBER_PARAMETER_MARKERS | DB2_NUMBER_RESULT_SETS | DB2_NUMBER_ROWS |
                         DB2_RETURN_STATUS | DB2_SQL_ATTR_CURSOR_HOLD | DB2_SQL_ATTR_CURSOR_ROWSET | DB2_SQL_ATTR_CURSOR_SCROLLABLE |
                         DB2_SQL_ATTR_CURSOR_SENSITIVITY | DB2_SQL_ATTR_CURSOR_TYPE | MORECHAR | NUMBER | ROW_COUNT);
-dbs_get_condition: CONDITION (dbs_host_variable | INTEGERLITERAL) dbs_host_variable EQUALCHAR (dbs_get_condition_item | dbs_get_connection_item) (dbs_comma_separator
-                   dbs_host_variable EQUALCHAR (dbs_get_condition_item | dbs_get_connection_item))*;
+dbs_get_condition: CONDITION (dbs_host_variable | INTEGERLITERAL)
+                    dbs_host_variable EQUALCHAR (dbs_get_condition_item | dbs_get_connection_item)
+                    (dbs_comma_separator dbs_host_variable EQUALCHAR (dbs_get_condition_item | dbs_get_connection_item))*;
 dbs_get_condition_item: (CATALOG_NAME | CONDITION_NUMBER | CURSOR_NAME | DB2_ERROR_CODE1 | DB2_ERROR_CODE2 | DB2_ERROR_CODE3 |
                         DB2_ERROR_CODE4 | DB2_INTERNAL_ERROR_POINTER | DB2_LINE_NUMBER | DB2_MESSAGE_ID | DB2_MODULE_DETECTING_ERROR |
-                        DB2_ORDINAL_TOKEN1 | DB2_ORDINAL_TOKEN2 |DB2_ORDINAL_TOKEN3 |DB2_ORDINAL_TOKEN4 | DB2_REASON_CODE |
+                        DB2_ORDINAL_TOKEN_N | DB2_REASON_CODE |
                         DB2_RETURNED_SQLCODE | DB2_ROW_NUMBER | DB2_SQLERRD_SET | DB2_SQLERRD1 | DB2_SQLERRD2 | DB2_SQLERRD3 |
                         DB2_SQLERRD4 | DB2_SQLERRD5 | DB2_SQLERRD6 | DB2_TOKEN_COUNT | MESSAGE_TEXT | RETURNED_SQLSTATE | SERVER_NAME);
 dbs_get_connection_item: (DB2_AUTHENTICATION_TYPE | DB2_AUTHORIZATION_ID | DB2_CONNECTION_STATE | DB2_CONNECTION_STATUS |
@@ -1090,7 +1093,7 @@ dbs_set_current_precision:  CURRENT PRECISION EQUALCHAR (dbs_string_constant | d
 dbs_set_current_query_accel: CURRENT QUERY ACCELERATION EQUALCHAR? (NONE | ENABLE | ENABLE WITH FAILBACK | ELIGIBLE | ALL | dbs_host_variable);
 
 //SET CURRENT QUERY ACCELARATION WAITFORDATA
-dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR?
+dbs_set_current_query_accel_wfdata: CURRENT QUERY ACCELERATION WAITFORDATA EQUALCHAR
                                (NUMERICLITERAL {this.validateTokenWithRegex($NUMERICLITERAL.text, "\\d{1,4}\\.\\d\\b", "db2SqlParser.currentQueryAcceleration");}
                                | INTEGERLITERAL
                                | dbs_host_variable);
@@ -1435,7 +1438,7 @@ dbs_special_name: ABSOLUTE | ACCELERATION | ACCELERATOR | ACCESS | ACCESSCTRL | 
                 | DB2_ENCRYPTION_TYPE | DB2_ERROR_CODE1 | DB2_ERROR_CODE2 | DB2_ERROR_CODE3 | DB2_ERROR_CODE4
                 | DB2_GET_DIAGNOSTICS_DIAGNOSTICS | DB2_INTERNAL_ERROR_POINTER | DB2_LAST_ROW | DB2_LINE_NUMBER
                 | DB2_MESSAGE_ID | DB2_MODULE_DETECTING_ERROR | DB2_NUMBER_PARAMETER_MARKERS | DB2_NUMBER_RESULT_SETS
-                | DB2_NUMBER_ROWS | DB2_ORDINAL_TOKEN1 | DB2_ORDINAL_TOKEN2 | DB2_ORDINAL_TOKEN3 | DB2_ORDINAL_TOKEN4
+                | DB2_NUMBER_ROWS | DB2_ORDINAL_TOKEN_N
                 | DB2_PRODUCT_ID | DB2_REASON_CODE | DB2_RETURN_STATUS | DB2_RETURNED_SQLCODE | DB2_ROW_NUMBER
                 | DB2_SERVER_CLASS_NAME | DB2_SQL_ATTR_CURSOR_HOLD | DB2_SQL_ATTR_CURSOR_ROWSET
                 | DB2_SQL_ATTR_CURSOR_SCROLLABLE | DB2_SQL_ATTR_CURSOR_SENSITIVITY | DB2_SQL_ATTR_CURSOR_TYPE

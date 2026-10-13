@@ -22,6 +22,7 @@ import {
   Diagnostic,
   FileChangeType,
   FileEvent,
+  WorkspaceFoldersChangeEvent,
 } from "vscode-languageserver";
 import { ReferencesCache, StatementOrderCache } from "../linking/resolver.js";
 import { diagnosticsToLSP } from "../language-server/types.js";
@@ -99,9 +100,8 @@ export interface CompilationUnit {
   preprocessorEvaluationResults: EvaluationResults;
   tokens: Token[];
   /**
-   * The text produced by the last preprocessing phase — exactly the text that was
-   * lexed to produce {@link tokens}. Positions in it map back to the original
-   * sources only via the pipeline's composed source map (already baked into the tokens).
+   * The text produced by the last preprocessing phase - exactly the text that was lexed to produce
+   * {@link tokens}.
    */
   preprocessedText: string;
   referencesCache: ReferencesCache;
@@ -236,10 +236,8 @@ export async function createCompilationUnit(
       unit.scopeCaches.clear();
       unit.includeError = false;
       unit.diagnostics.clear();
-      // Release the previous run's AST, tokens and preprocessed text. reset()
-      // runs at the start of every lifecycle - without this, the old and the
-      // new structures are both reachable while the new ones are built,
-      // doubling the peak heap on every edit of a large file.
+      // Release the previous run's AST, tokens and preprocessed text, so old and new structures
+      // aren't both reachable while the new ones are built.
       unit.ast = {
         kind: SyntaxKind.Program,
         container: null,
@@ -370,10 +368,8 @@ export class CompilationUnitHandler {
     textDocuments.onDidChangeContent((event) => {
       const uri = UriUtils.toUri(event.document.uri);
       if (uri.scheme === PreprocessedTextUriSchema) {
-        // A preprocessed-text view is a read-only rendering of generated text: its
-        // offsets don't exist in any real source file, so running the LS pipeline on
-        // it would only produce duplicate compilation units and mispositioned
-        // diagnostics. It gets TextMate highlighting only - no language support.
+        // A preprocessed-text view is a read-only rendering of generated text and gets TextMate
+        // highlighting only - no language support.
         return;
       }
       this.updateUri(uri);
@@ -436,6 +432,67 @@ export class CompilationUnitHandler {
 
   addWorkspaceFolder(uri: string | URI, workspace: WorkspaceContext): void {
     this.workspaceFolderTree.addWorkspaceFolder(uri, workspace);
+  }
+
+  /**
+   * Applies a `workspace/didChangeWorkspaceFolders` event: drops removed
+   * folders (clearing everything they published), initializes added ones,
+   * and rebuilds open documents whose owning folder changed.
+   */
+  async changeWorkspaceFolders(
+    event: WorkspaceFoldersChangeEvent,
+  ): Promise<void> {
+    await this.ready;
+    const roots = [...event.added, ...event.removed].map((folder) =>
+      UriUtils.parse(folder.uri),
+    );
+    const affected = await this.globalMutex.run(async () => {
+      for (const folder of event.removed) {
+        this.removeWorkspaceFolder(UriUtils.parse(folder.uri));
+      }
+      for (const folder of event.added) {
+        await this.initializeWorkspaceFolder(UriUtils.parse(folder.uri));
+      }
+      // Open documents under a changed root now belong to a different
+      // context: drop their stale unit wherever it lives and rebuild below.
+      const affected: URI[] = [];
+      for (const key of EditorDocuments.keys()) {
+        const uri = UriUtils.parse(key);
+        if (!roots.some((root) => UriUtils.contains(root, uri))) {
+          continue;
+        }
+        for (const context of this.getAllWorkspaceFolders()) {
+          context.deleteCompilationUnit(uri);
+        }
+        affected.push(uri);
+      }
+      return affected;
+    });
+    // updateUri grabs its own mutex for each file
+    for (const uri of affected) {
+      await this.updateUri(uri);
+    }
+    if (affected.length > 0) {
+      this.connection?.languages.semanticTokens.refresh();
+    }
+  }
+
+  removeWorkspaceFolder(uri: URI | string): void {
+    const context = this.workspaceFolderTree.removeWorkspaceFolder(uri);
+    if (!context) {
+      // No context existed for this URI, ignore the rest
+      return;
+    }
+    const uris = new Set<string>(context.config.publishedDiagnosticUris);
+    for (const unit of context.getAllCompilationUnits()) {
+      for (const file of unit.services.files.keys()) {
+        uris.add(file);
+      }
+    }
+    for (const uri of uris) {
+      // Reset all diagnostics for removed files
+      this.connection?.sendDiagnostics({ uri, diagnostics: [] });
+    }
   }
 
   getAllWorkspaceFolders(): WorkspaceContext[] {
@@ -741,11 +798,8 @@ export async function pluginConfigChanged(
   connection.languages.semanticTokens.refresh();
 }
 
-// A structural change to a lib folder (a file/dir created or deleted
-// inside a lib, or a directory removed that is or contains a lib)
-// invalidates the computed lib index, so the libs must be re-expanded.
-// Note: Simple file edits are not considered structural changes,
-// so they don't trigger a reindex.
+// A structural change to a lib folder (a file/dir created or deleted inside a lib) invalidates the
+// computed lib index. Simple file edits don't.
 function changeAffectsLibs(
   workspace: WorkspaceContext,
   changes: readonly FileEvent[],
