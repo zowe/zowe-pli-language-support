@@ -9,7 +9,7 @@
  *
  */
 
-import { Lexer } from "chevrotain";
+import { TokenType } from "chevrotain";
 import { combinations, ID } from "./tokens/shared";
 import * as pli from "./tokens/pli-tokens";
 
@@ -82,4 +82,21 @@ export const all = [
   pli.SL_COMMENT,
 ];
 
-export const LexerInstance = new Lexer(all);
+/**
+ * Chevrotain assigns `tokenTypeIdx` and the category maps while tokens are created.
+ * The custom parser relies on them, so make sure every token is fully initialized
+ * without needing a chevrotain `Lexer` instance.
+ */
+function initializeTokens(tokens: TokenType[]): void {
+  for (const token of tokens) {
+    const initialized =
+      token.tokenTypeIdx !== undefined &&
+      token.categoryMatchesMap !== undefined &&
+      token.isParent !== undefined;
+    if (!initialized) {
+      throw new Error(`Token type '${token.name}' has not been initialized`);
+    }
+  }
+}
+
+initializeTokens(all);
