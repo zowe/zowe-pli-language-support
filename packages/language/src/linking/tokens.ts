@@ -58,6 +58,7 @@ export function isReferenceToken(kind: CstNodeKind | undefined): boolean {
   switch (kind) {
     case CstNodeKind.TypeAttribute_TypeId0:
     case CstNodeKind.TypeAttribute_TypeId1:
+    case CstNodeKind.TypeAttribute_Qualifier:
     case CstNodeKind.HandleAttribute_TypeId0:
     case CstNodeKind.HandleAttribute_TypeId1:
     case CstNodeKind.ReferenceItem_Ref:
@@ -83,9 +84,14 @@ export function isIncludeItemToken(kind: CstNodeKind | undefined): boolean {
 }
 
 /**
- * Returns a reference contained within a node, when present
+ * Returns a reference contained within a node, when present.
+ *
+ * Some nodes contain multiple references. In that case the optional `token` selects the reference it belongs to.
  */
-export function getReference(node: SyntaxNode): Reference | undefined {
+export function getReference(
+  node: SyntaxNode,
+  token?: Token,
+): Reference | undefined {
   switch (node.kind) {
     case SyntaxKind.ProcedureParameter:
       return node.ref ?? undefined;
@@ -94,6 +100,9 @@ export function getReference(node: SyntaxNode): Reference | undefined {
     case SyntaxKind.ReferenceItem:
       return node.ref ?? undefined;
     case SyntaxKind.TypeAttribute:
+      if (token?.kind === CstNodeKind.TypeAttribute_Qualifier) {
+        return node.qualifiers.find((q) => q.token === token);
+      }
       return node.type ?? undefined;
     case SyntaxKind.FetchEntry:
       return node.entry?.ref ?? undefined;
