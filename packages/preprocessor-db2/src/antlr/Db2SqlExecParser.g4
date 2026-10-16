@@ -1561,7 +1561,7 @@ dbs_joined_table : dbs_join
 //dbs_normal_join: dbs_table_reference_non_join dbs_normal_join_prime;
 dbs_join: dbs_table_reference_non_join dbs_join_prime;
 dbs_join_prime: dbs_join_alpha dbs_join_prime | empty_rule;
-dbs_join_alpha: (INNER | (LEFT | RIGHT | FULL) OUTER? | CROSS) JOIN dbs_table_reference (ON dbs_join_condition)?;
+dbs_join_alpha: (INNER | (LEFT | RIGHT | FULL) OUTER? | CROSS)? JOIN dbs_table_reference (ON dbs_join_condition)?;
 dbs_braced_join: LPARENCHAR dbs_joined_table RPARENCHAR;
 empty_rule:/* epsilon */;
 
