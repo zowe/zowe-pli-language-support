@@ -1,0 +1,31 @@
+         /* test JOINQUERYNO */
+ JOINQUERYNO:
+
+ PROC OPTIONS(MAIN);
+       %INCLUDE TST;
+ DCL WW            CHAR(05)         INIT('');
+ 
+ MAIN: PROCEDURE;
+    DECLARE DT FIXED;
+    
+ EXEC SQL DECLARE C CURSOR FOR
+   SELECT M.P
+         ,C.U
+         ,CASE C.S
+            WHEN 'X'
+              THEN C / 100
+              ELSE C
+            END AS W
+   FROM SESSION.L C
+   JOIN P M
+   ON C.M  = M.M
+   WHERE C.S = :WW
+   AND C <> 0
+   AND C.C = :TSTTSTTSTSTTST.ACT111
+   AND M.A = 'C'
+   FOR FETCH ONLY
+   WITH UR
+   QUERYNO 002;
+ END MAIN;
+
+ END JOINQUERYNO;
