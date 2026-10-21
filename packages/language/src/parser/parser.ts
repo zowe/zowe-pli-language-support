@@ -5122,6 +5122,42 @@ const dimensionsDataAttribute = rule(
   },
 );
 
+/**
+ * Parses a possibly qualified type name like `PAINT.DEPTH.INTENSITY`.
+ * The last name is the type itself, all preceding names are qualify block labels.
+ */
+function parseTypeAttributeName(
+  state: ParserState,
+  element: ast.TypeAttribute,
+  typeKind: CstNodeKind,
+): void {
+  while (state.canConsume(tokens.ID, tokens.Dot)) {
+    const qualifierToken = state.consume(
+      element,
+      CstNodeKind.TypeAttribute_Qualifier,
+      tokens.ID,
+    );
+    if (qualifierToken) {
+      element.qualifiers.push(
+        ast.createReference(
+          element,
+          qualifierToken,
+          ast.ReferenceType.Variable,
+        ),
+      );
+    }
+    state.consume(element, undefined, tokens.Dot);
+  }
+  const idToken = state.consume(element, typeKind, tokens.ID);
+  if (idToken) {
+    element.type = ast.createReference(
+      element,
+      idToken,
+      ast.ReferenceType.Type,
+    );
+  }
+}
+
 const typeAttribute = rule(
   sequence(tokens.TypeOrOrdinal),
   (state: ParserState): ast.TypeAttribute => {
@@ -5138,18 +5174,8 @@ const typeAttribute = rule(
 
     if (state.canConsume(tokens.ID)) {
       // Simple type reference: TYPE MYTYPE
-      const idToken = state.consume(
-        element,
-        CstNodeKind.TypeAttribute_TypeId0,
-        tokens.ID,
-      );
-      if (idToken) {
-        element.type = ast.createReference(
-          element,
-          idToken,
-          ast.ReferenceType.Type,
-        );
-      }
+      // Can be qualified by qualify blocks: TYPE PAINT.COLOR
+      parseTypeAttributeName(state, element, CstNodeKind.TypeAttribute_TypeId0);
     } else if (
       state.tryConsume(
         element,
@@ -5158,18 +5184,7 @@ const typeAttribute = rule(
       )
     ) {
       // Parenthesized type reference: TYPE (MYTYPE)
-      const idToken = state.consume(
-        element,
-        CstNodeKind.TypeAttribute_TypeId1,
-        tokens.ID,
-      );
-      if (idToken) {
-        element.type = ast.createReference(
-          element,
-          idToken,
-          ast.ReferenceType.Type,
-        );
-      }
+      parseTypeAttributeName(state, element, CstNodeKind.TypeAttribute_TypeId1);
       state.consume(
         element,
         CstNodeKind.TypeAttribute_CloseParen,

@@ -315,7 +315,7 @@ const generateReferenceTokenMarkup: MarkupGenerator = ({ unit, token }) => {
     return null;
   }
 
-  const ref = getReference(token.element);
+  const ref = getReference(token.element, token);
   if (!ref?.node) {
     return null;
   }

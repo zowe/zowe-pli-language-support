@@ -232,6 +232,7 @@ export class DeclaredItemParser {
   static parse(
     items: readonly DeclaredItem[],
     reporter: LinkerErrorReporter,
+    qualifier: QualifiedSyntaxNode | null = null,
   ): MultiMap<string, QualifiedSyntaxNode> {
     const buffer = new MultiMap<string, QualifiedSyntaxNode>();
     const onAdd = (name: string, node: QualifiedSyntaxNode) =>
@@ -239,7 +240,7 @@ export class DeclaredItemParser {
 
     // Use 0 as a default level to start the generation.
     // TODO: Maybe make this `null` to represent the root scope.
-    new DeclaredItemParser(items, reporter).generate(null, 0, onAdd);
+    new DeclaredItemParser(items, reporter).generate(qualifier, 0, onAdd);
 
     return buffer;
   }

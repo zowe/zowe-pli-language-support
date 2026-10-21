@@ -598,6 +598,7 @@ export enum CstNodeKind {
   PictureAttribute_PictureString,
   DimensionsDataAttribute_DIMENSION,
   TypeAttribute_TYPE,
+  TypeAttribute_Qualifier,
   TypeAttribute_TypeId0,
   TypeAttribute_OpenParen,
   TypeAttribute_TypeId1,
