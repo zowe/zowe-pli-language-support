@@ -2183,6 +2183,12 @@ function evaluatePositionalArguments(
 ): Value[] {
   const evaluatedArgs: Value[] = [];
   for (const argTokens of args) {
+    if (argTokens.length === 0) {
+      // A null argument from input text (`P()`, `P(,B)`) leaves the parameter unset,
+      // so that PARMSET returns '0'B for it.
+      evaluatedArgs.push(unsetVariable);
+      continue;
+    }
     const replacedTokens = replaceTokensInText(argTokens, context);
     const text = stringifyTokens(replacedTokens);
     evaluatedArgs.push(stringToValue(text));
