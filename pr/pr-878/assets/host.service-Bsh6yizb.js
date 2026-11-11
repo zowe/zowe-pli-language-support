@@ -1,0 +1,1 @@
+import{sb as e}from"./standaloneServices-Dyrj6xIe.js";var t=e(`hostService`);export{t};
