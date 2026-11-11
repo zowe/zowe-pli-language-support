@@ -13,10 +13,12 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL VAR CHARACTER;
-//// %VAR = "A";
+//// %VAR = 'A';
 //// %DO SKIP; FOREVER;
-////   VAR = "B";
+////   VAR = 'B';
 ////   %LEAVE;
 //// %END;
 //// DCL VAR CHARACTER;

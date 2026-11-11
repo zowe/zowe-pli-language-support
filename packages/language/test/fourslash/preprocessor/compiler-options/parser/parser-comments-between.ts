@@ -1,0 +1,37 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright (c) 2026 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ */
+
+/// <reference path="../../../framework.ts" />
+
+/**
+ * Option parser test comments inbetween.
+ */
+// @wrap: process
+////%PROCESS F(I) AG A(F);
+//// /* You can add multiline comments here as well
+//// */
+//// /* You can add multiline comments here as well
+//// */
+////   // Or somewhere over here
+////
+////*PROCESS MARGINS(2,75);
+////%PROCESS F(I) AG A(F);
+
+verify.expectCompilerOptions({
+  aggregate: constants.CompilerOptions.Aggregate.DECIMAL,
+  attributes: constants.CompilerOptions.Length.FULL,
+  flag: constants.CompilerOptions.Flag.I,
+  margins: {
+    m: 2,
+    n: 75,
+  },
+});

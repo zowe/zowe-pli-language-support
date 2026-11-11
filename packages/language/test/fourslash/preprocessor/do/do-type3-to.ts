@@ -16,15 +16,17 @@
  * DO Type 3 - Basic DO i = 1 TO 10
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DCL X FIXED;
 //// %X = 2;
 //// %DO I = 1 TO X;
 ////   %X = X + 1;
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  2
+  PUT LIST(1);
+  PUT LIST(2);
 `);

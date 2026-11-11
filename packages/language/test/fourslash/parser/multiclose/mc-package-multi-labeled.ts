@@ -1,0 +1,31 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright (c) 2026 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ */
+
+/// <reference path="../../framework.ts" />
+
+/**
+ * Multiclose package multiple labeled ends.
+ */
+////*PROCESS RULES(MULTICLOSE);
+////*PROCESS RULES(LAXIF);
+//// MY_PKG: PACKAGE;
+////    P: PROC OPTIONS(MAIN);
+////       IF 0 THEN IFG0: DO;
+////          PUT SKIP LIST('IF BODY STATEMENT 1');
+////          IF 0 THEN DO;
+////             PUT SKIP LIST('IF BODY STATEMENT 2');
+////       <|END|> IFG0;
+////    END P;
+//// END MY_PKG;
+
+verify.noParserErrors();
+verify.expectDiagnosticsAt("END", code.Warning.IBM1120I);

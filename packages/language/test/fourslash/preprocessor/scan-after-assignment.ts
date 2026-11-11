@@ -13,6 +13,8 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// DCL WHAT FIXED;
 //// %DECLARE A CHARACTER;
 //// %A = '123';

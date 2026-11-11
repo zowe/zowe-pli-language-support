@@ -13,6 +13,8 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %A = 1;
 //// %IF 1 %THEN %DO;
 ////   %A = A + 1;

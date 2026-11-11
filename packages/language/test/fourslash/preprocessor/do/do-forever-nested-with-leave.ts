@@ -13,6 +13,8 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL VAR FIXED;
 //// %VAR = 0;
 //// %outer: DO FOREVER;

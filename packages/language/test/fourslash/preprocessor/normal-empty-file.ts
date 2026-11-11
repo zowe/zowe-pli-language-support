@@ -12,7 +12,8 @@
 
 /// <reference path="../framework.ts" />
 
-// @compiler: true
+// An empty source file is not a valid PL/I compilation unit and cannot be compiled.
+// @compiler: skip
 // @filename: main.pli
 ////
 

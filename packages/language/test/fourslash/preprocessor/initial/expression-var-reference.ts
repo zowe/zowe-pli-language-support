@@ -13,8 +13,10 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DECLARE A FIXED INIT(42);
 //// %DCL B FIXED INIT(A);
-//// B
+//// PUT LIST(B);
 
-preprocessor.expectTokens("42");
+preprocessor.expectTokens("PUT LIST(42);");

@@ -19,12 +19,14 @@
  * In this test, we activate the loop variable such that it can be observed.
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DO I = 1 TO 2;
 ////   %ACTIVATE I;
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  2
+  PUT LIST(1);
+  PUT LIST(2);
 `);

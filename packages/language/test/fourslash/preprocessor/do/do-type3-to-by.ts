@@ -20,6 +20,8 @@
  * once at loop entry, not re-evaluated on each iteration.
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DCL X FIXED;
 //// %X = 4;
@@ -27,10 +29,10 @@
 //// %DO I = 2 TO X BY Y;
 ////   %X = X + 1;
 ////   %Y = Y + 1;
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  2
-  4
+  PUT LIST(2);
+  PUT LIST(4);
 `);

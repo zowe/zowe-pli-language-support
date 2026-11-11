@@ -13,12 +13,14 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %A = 12;
 //// %IF A = 12 %THEN DO;
-////   CORRECT
+////   PUT LIST('CORRECT');
 //// %END;
 //// %ELSE DO;
-////   ERROR
+////   PUT LIST('ERROR');
 //// %END;
 
-preprocessor.expectTokens("CORRECT");
+preprocessor.expectTokens("PUT LIST('CORRECT');");

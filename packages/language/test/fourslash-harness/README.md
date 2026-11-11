@@ -51,6 +51,8 @@ The `// @wrap: ...` tag wraps a file in a predefined wrap template.
 The wrap template are defined in the `wrappers/` directory.
 The `<...>` tag is used to declare where content is inserted to the wrap template.
 
+The `// @wrapTokens` tag (used together with `@wrap`) makes `preprocessor.expectTokens(...)` add the wrapper's header and footer to the expected tokens. This lets a test describe only the preprocessor output it cares about, while the generated source is still a complete PL/I program that a real compiler accepts (see `@compiler: true` in `docs/TESTING.md`).
+
 ### Imperative Testing Commands
 
 After the file definitions, the commands follow.

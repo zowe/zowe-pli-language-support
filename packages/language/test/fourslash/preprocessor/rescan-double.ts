@@ -13,6 +13,8 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DECLARE A CHARACTER, B FIXED, C FIXED;
 //// %A = 'B+C';
 //// %B = 2;

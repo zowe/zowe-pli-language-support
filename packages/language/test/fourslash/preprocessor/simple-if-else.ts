@@ -13,7 +13,9 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
-//// %IF 0 %THEN DO; X %END;
-//// %ELSE DO; Y %END;
+// @wrap: main
+// @wrapTokens
+//// %IF 0 %THEN DO; X = 1; %END;
+//// %ELSE DO; Y = 1; %END;
 
-preprocessor.expectTokens("Y");
+preprocessor.expectTokens("Y = 1;");

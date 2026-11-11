@@ -13,7 +13,9 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
-//// %DECLARE A CHAR INIT("Y");
-//// A
+// @wrap: main
+// @wrapTokens
+//// %DECLARE A CHAR INIT('Y');
+//// PUT LIST(A);
 
-preprocessor.expectTokens("Y");
+preprocessor.expectTokens("PUT LIST(Y);");

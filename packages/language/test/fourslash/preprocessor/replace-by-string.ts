@@ -12,7 +12,8 @@
 
 /// <reference path="../framework.ts" />
 
-// @compiler: true
+// The source needs double quoted strings to match the language server output (it re-quotes REPLACE string values with double quotes), which a compiler may not accept.
+// @compiler: skip
 //// %REPLACE X BY "HELLO";
 //// DCL A CHAR INIT(X);
 

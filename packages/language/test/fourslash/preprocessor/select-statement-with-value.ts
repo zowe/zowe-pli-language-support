@@ -13,11 +13,13 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %VAR = 42;
 //// %SELECT (VAR);
-//// %WHEN (21) DO; X %END;
-//// %WHEN (42) DO; Y %END;
-//// %OTHERWISE DO; Z %END;
+//// %WHEN (21) DO; X = 1; %END;
+//// %WHEN (42) DO; Y = 1; %END;
+//// %OTHERWISE DO; Z = 1; %END;
 //// %END;
 
-preprocessor.expectTokens("Y");
+preprocessor.expectTokens("Y = 1;");

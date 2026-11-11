@@ -13,12 +13,14 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %declare A fixed;
 //// %A = 3;
 //// %myLoop: DO;
 ////   %A = A - 1;
 ////   %IF A <> 0 %THEN %GOTO myLoop;
-////   A
+////   PUT LIST(A);
 //// %END;
 
-preprocessor.expectTokens("0");
+preprocessor.expectTokens("PUT LIST(0);");

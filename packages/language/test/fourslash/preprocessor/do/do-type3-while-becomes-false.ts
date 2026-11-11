@@ -17,12 +17,14 @@
  * Tests case where WHILE condition controls loop termination
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DO I = 1 TO 10 WHILE(I <= 2);
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  2
+  PUT LIST(1);
+  PUT LIST(2);
 `);
