@@ -19,14 +19,14 @@
 // @compiler: true
 // @wrap: main
 //// DCL <|1:ABC|> CHAR(8);
-//// PUT(<|1>ABC);
+//// PUT LIST(<|1>ABC);
 ////
 //// OUTER: PROCEDURE;
 ////  DCL <|2:ABC|> CHAR(8);
-////  PUT(<|2>ABC);
+////  PUT LIST(<|2>ABC);
 //// END OUTER;
 ////
 //// DCL ABC CHAR(8);
-//// PUT(<|1>ABC);
+//// PUT LIST(<|1>ABC);
 
 linker.expectLinks();

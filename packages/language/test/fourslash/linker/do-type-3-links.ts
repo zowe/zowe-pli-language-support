@@ -20,7 +20,7 @@
 // @wrap: main
 //// DCL <|1:I|> FIXED;
 //// DO <|1>I = 0 TO 10;
-////   PUT(<|1>I);
+////   PUT LIST(<|1>I);
 //// END;
 
 linker.expectLinks();

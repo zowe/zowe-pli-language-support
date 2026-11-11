@@ -14,6 +14,7 @@ import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { HARNESS_FILE_PREFIX } from "./harness-parser";
 import { harnessPath } from "./utils";
+import { tokenize } from "../../src/parser/tokenizer";
 
 /**
  * Used to mark where content will be inserted in the wrapper file.
@@ -74,4 +75,34 @@ export function getWrappers(): Record<string, Wrapper> {
   }
 
   return wrappers;
+}
+
+/**
+ * Marker used to find the position of the wrapped content when tokenizing a wrapper.
+ */
+const WRAPPER_MARKER = "__WRAPPER_CONTENT_MARKER__";
+
+/**
+ * Creates a function that surrounds the expected preprocessor output with the header and footer of a wrapper.
+ *
+ * This is used by tests that tag themselves with `@wrapTokens`: the source file is wrapped in a procedure
+ * (so that it is valid PL/I for a real compiler), and the preprocessor output therefore contains the
+ * wrapper's header and footer tokens as well. The test only needs to describe the part it cares about.
+ *
+ * @param wrapper - The wrapper of the test file or `undefined` if the file is not wrapped.
+ * @returns A function that adds the wrapper to expected tokens, or the identity if there is no wrapper.
+ */
+export function createExpectedTokensWrapper(
+  wrapper: Wrapper | undefined,
+): (expected: string | string[]) => string | string[] {
+  if (!wrapper) {
+    return (expected) => expected;
+  }
+  const [header, footer] = wrapper.wrap(WRAPPER_MARKER).split(WRAPPER_MARKER);
+  const headerTokens = tokenize(header, undefined).tokens.map((t) => t.image);
+  const footerTokens = tokenize(footer, undefined).tokens.map((t) => t.image);
+  return (expected) =>
+    Array.isArray(expected)
+      ? [...headerTokens, ...expected, ...footerTokens]
+      : wrapper.wrap(expected);
 }

@@ -37,6 +37,7 @@ import { CICSPreprocessor } from "preprocessor-cics";
  */
 export function createTestBuilderHarnessImplementation(
   testBuilder: TestBuilder,
+  wrapTokens: (expected: string | string[]) => string | string[] = (e) => e,
 ): HarnessTesterInterface {
   return {
     Syntax: SyntaxKind,
@@ -144,13 +145,15 @@ export function createTestBuilderHarnessImplementation(
     },
     preprocessor: {
       not: {
-        expectTokens: (text) => testBuilder.not.expectPreprocessorTokens(text),
+        expectTokens: (text) =>
+          testBuilder.not.expectPreprocessorTokens(wrapTokens(text)),
         containsTokens: (text) =>
           testBuilder.not.containsPreprocessorTokens(text),
         expectSkippedCodeAt: (label) =>
           testBuilder.not.expectSkippedCode(label.toString()),
       },
-      expectTokens: (text) => testBuilder.expectPreprocessorTokens(text),
+      expectTokens: (text) =>
+        testBuilder.expectPreprocessorTokens(wrapTokens(text)),
       containsTokens: (text) => testBuilder.containsPreprocessorTokens(text),
       expectSkippedCodeAt: (label) =>
         testBuilder.expectSkippedCode(label.toString()),

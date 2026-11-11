@@ -13,6 +13,8 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %dcl A char;
 //// %A = '';
 //// dcl A%;C fixed bin(31);

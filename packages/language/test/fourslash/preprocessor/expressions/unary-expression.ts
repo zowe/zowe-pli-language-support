@@ -13,8 +13,10 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL X FIXED;
 //// %X = -123;
-//// X
+//// PUT LIST(X);
 
-preprocessor.expectTokens("-123");
+preprocessor.expectTokens("PUT LIST(-123);");

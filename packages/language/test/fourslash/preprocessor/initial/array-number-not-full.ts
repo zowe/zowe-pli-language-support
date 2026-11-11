@@ -13,13 +13,15 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DECLARE A(4) FIXED INIT(10, 20, 30);
 //// %A1 = A(1);
 //// %A2 = A(2);
 //// %A3 = A(3);
 //// %A4 = A(4);
 //// %ACT A1, A2, A3, A4;
-//// A1 A2 A3 A4
+//// PUT LIST(A1, A2, A3, A4);
 
 // Should initialize missing values to 0
-preprocessor.expectTokens("10 20 30 0");
+preprocessor.expectTokens("PUT LIST(10, 20, 30, 0);");

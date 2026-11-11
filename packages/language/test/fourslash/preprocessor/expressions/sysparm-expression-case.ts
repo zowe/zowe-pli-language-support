@@ -13,13 +13,15 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL X FIXED;
 //// %DCL POS FIXED;
 //// %POS = 26;
 //// %X = 34 - POS - 5;
-//// X
+//// PUT LIST(X);
 
 // This tests the bug scenario associated with #633.
 // Left-associative: (34 - 26) - 5 = 8 - 5 = 3
 // NOT right-associative: 34 - (26 - 5) = 34 - 21 = 13
-preprocessor.expectTokens("3");
+preprocessor.expectTokens("PUT LIST(3);");

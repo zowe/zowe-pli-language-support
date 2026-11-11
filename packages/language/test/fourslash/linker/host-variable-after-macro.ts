@@ -16,11 +16,14 @@
  * Go-to-definition on an `EXEC SQL` host variable still works when an earlier macro
  * expansion shifted the text offsets (the SQL phase runs over the macro *output*, so its
  * coordinate space differs from the original document).
+ * A non-executable DECLARE CURSOR is used so no DSNHLI call is generated (link-edit needs no Db2 stub).
  */
 // @compiler: true
+// @wrap: main
 //// %DCL T CHAR;
 //// %T = 'FIXED BIN(31)';
 //// DCL <|1:MGR_NUM|> T;
-//// EXEC SQL UPDATE DEPT SET MGRNO = :<|1>MGR_NUM;
+//// EXEC SQL DECLARE C1 CURSOR FOR
+////   SELECT DEPTNO FROM DEPT WHERE MGRNO = :<|1>MGR_NUM;
 
 linker.expectLinks();

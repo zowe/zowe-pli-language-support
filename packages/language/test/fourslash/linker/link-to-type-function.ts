@@ -19,6 +19,7 @@
 ////   DCL VAR TYPE(T);
 ////   VAR = <|FIRST|>(:<|1>T:);
 //// END TEST;
+//// END TEST_PCK;
 
 linker.expectLinks();
 // Colons should not generate parser errors

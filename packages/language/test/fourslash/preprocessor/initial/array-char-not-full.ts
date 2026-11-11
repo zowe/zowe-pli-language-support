@@ -13,13 +13,15 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
-//// %DECLARE A(4) CHAR INIT("a", "b", "c");
+// @wrap: main
+// @wrapTokens
+//// %DECLARE A(4) CHAR INIT('a', 'b', 'c');
 //// %A1 = A(1);
 //// %A2 = A(2);
 //// %A3 = A(3);
 //// %A4 = A(4);
 //// %ACT A1, A2, A3, A4;
-//// A1 A2 A3 A4
+//// PUT LIST(A1, A2, A3, 'e' A4);
 
 // Should initialize missing values to an empty string
-preprocessor.expectTokens("a b c");
+preprocessor.expectTokens("PUT LIST(a, b, c, 'e');");

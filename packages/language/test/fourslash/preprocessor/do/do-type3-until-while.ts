@@ -16,28 +16,20 @@
  * DO Type 3 - DO with UNTIL condition followed by WHILE condition
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL NUM FIXED;
 //// %DCL PRODUCT FIXED;
 //// %PRODUCT = 1;
 //// %DO NUM = 1 TO 15 UNTIL(PRODUCT > 50) WHILE(NUM <= 8);
 ////   %PRODUCT = PRODUCT * NUM;
-////   NUM
-////   PRODUCT
+////   PUT LIST(NUM, PRODUCT);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  1
-  
-  2
-  2
-  
-  3
-  6
-  
-  4
-  24
-  
-  5
-  120
+  PUT LIST(1, 1);
+  PUT LIST(2, 2);
+  PUT LIST(3, 6);
+  PUT LIST(4, 24);
+  PUT LIST(5, 120);
 `);

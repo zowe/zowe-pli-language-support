@@ -17,6 +17,8 @@
  * Tests corner case where WHILE condition is false from the start
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DO I = 1 TO 1 WHILE(I < 1);
 ////   I

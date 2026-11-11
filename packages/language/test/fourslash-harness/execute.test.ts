@@ -14,7 +14,7 @@ import path from "path";
 import { afterEach, describe, test } from "vitest";
 import { parseHarnessTestFile } from "./harness-parser";
 import { runHarnessTest } from "./harness-runner";
-import { getWrappers } from "./wrapper";
+import { createExpectedTokensWrapper, getWrappers } from "./wrapper";
 import {
   extractTestModeFromFileName,
   HarnessTest,
@@ -161,6 +161,13 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
 
       // We want to load the files in reverse order, so that the included files are inserted in the correct order.
       const files = getFiles(testFile).toReversed();
+      // Tests tagged with `@wrapTokens` describe the preprocessor output without the wrapper's header/footer.
+      const lastFile = Array.from(testFile.files.values()).at(-1);
+      const wrapTokens = createExpectedTokensWrapper(
+        testFile.tags["wrapTokens"] === "true" && lastFile?.wrap
+          ? wrappers[lastFile.wrap]
+          : undefined,
+      );
       let implementation: HarnessTesterInterface;
       if (TEST_COMPILER_OUTPUT) {
         if (testFile.tags["compiler"] !== "true") {
@@ -175,8 +182,10 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
           files,
           fullOutputDir,
         );
-        implementation =
-          await createCompilerTestHarnessImplementation(testBuilder);
+        implementation = await createCompilerTestHarnessImplementation(
+          testBuilder,
+          wrapTokens,
+        );
       } else {
         const fs = new VirtualFileSystemProvider(
           testFile.tags["case-sensitive"] === "true",
@@ -194,7 +203,10 @@ function runSingleHarnessTest(filePath: string, timeout = 10_000) {
           // Skip default config creation if @noDefaultConfig directive is present
           noDefaultConfig: testFile.tags["noDefaultConfig"] === "true",
         });
-        implementation = createTestBuilderHarnessImplementation(testBuilder);
+        implementation = createTestBuilderHarnessImplementation(
+          testBuilder,
+          wrapTokens,
+        );
       }
 
       await runHarnessTest(testFile, implementation);

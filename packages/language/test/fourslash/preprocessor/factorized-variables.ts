@@ -13,6 +13,8 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %declare (A, B) character;
 //// %A = 'Hello';
 //// %B = 'World';

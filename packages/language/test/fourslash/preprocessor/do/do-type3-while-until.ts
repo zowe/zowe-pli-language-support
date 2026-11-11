@@ -16,28 +16,20 @@
  * DO Type 3 - DO with WHILE condition followed by UNTIL condition
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL COUNT FIXED;
 //// %DCL SUM FIXED;
 //// %SUM = 0;
 //// %DO COUNT = 1 TO 20 WHILE(COUNT <= 10) UNTIL(SUM > 13);
 ////   %SUM = SUM + COUNT;
-////   COUNT
-////   SUM
+////   PUT LIST(COUNT, SUM);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  1
-  
-  2
-  3
-  
-  3
-  6
-  
-  4
-  10
-  
-  5
-  15
+  PUT LIST(1, 1);
+  PUT LIST(2, 3);
+  PUT LIST(3, 6);
+  PUT LIST(4, 10);
+  PUT LIST(5, 15);
 `);

@@ -13,9 +13,11 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DECLARE A FIXED INIT(1, 2, 3, 4, 5);
-//// A
+//// PUT LIST(A);
 
 // It should only pick the first one
 // TODO: Consider showing a warning for multiple initial values
-preprocessor.expectTokens("1");
+preprocessor.expectTokens("PUT LIST(1);");

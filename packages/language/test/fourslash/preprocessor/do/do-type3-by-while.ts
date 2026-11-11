@@ -16,12 +16,14 @@
  * DO Type 3 - Complex DO with BY and WHILE
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DO I = 10 TO 30 BY 10 WHILE(I < 25);
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  10
-  20
+  PUT LIST(10);
+  PUT LIST(20);
 `);

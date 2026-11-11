@@ -13,6 +13,8 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %IF 1 %THEN DO;
 ////   %A = 123;
 //// %END;
@@ -20,6 +22,6 @@
 ////   %A = 456;
 //// %END;
 //// %ACTIVATE A;
-//// A
+//// PUT LIST(A);
 
-preprocessor.expectTokens("123");
+preprocessor.expectTokens("PUT LIST(123);");

@@ -13,6 +13,8 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %declare A fixed;
 //// %A = 3;
 //// %DO FOREVER;

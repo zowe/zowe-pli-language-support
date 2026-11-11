@@ -19,11 +19,13 @@
  * In this test, we don't activate the loop variable such it is not substituted by its value.
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DO I = 1 TO 2;
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  I
-  I
+  PUT LIST(I);
+  PUT LIST(I);
 `);

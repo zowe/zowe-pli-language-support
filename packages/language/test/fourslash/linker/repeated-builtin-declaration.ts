@@ -18,7 +18,7 @@
 // @compiler: true
 // @wrap: main
 //// DCL <|1:ABS|> BUILTIN;
-//// PUT(<|1>ABS(-1));
+//// PUT LIST(<|1>ABS(-1));
 
 verify.noDiagnostics();
 linker.expectLinks();

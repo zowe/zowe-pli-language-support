@@ -16,7 +16,8 @@
  * Concatenating a variable with itself doubles its length on every iteration, so the
  * value must be capped - otherwise the interpreter allocates until the process dies.
  */
-// @compiler: true
+// Expects a language server diagnostic (ValueTooLarge) that has no counterpart in the IBM compiler listing.
+// @compiler: skip
 //// %DCL I FIXED;
 //// %DCL S CHAR;
 //// %DCL L FIXED;

@@ -17,11 +17,13 @@
  * Tests corner case where UNTIL condition is false but range limits to one iteration
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DO I = 1 TO 1 UNTIL(I < 1);
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
+  PUT LIST(1);
 `);

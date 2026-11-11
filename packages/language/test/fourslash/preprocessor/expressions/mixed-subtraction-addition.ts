@@ -13,8 +13,10 @@
 /// <reference path="../../framework.ts" />
 
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL X FIXED;
 //// %X = 10 + 5 - 3 + 2;
-//// X
+//// PUT LIST(X);
 
-preprocessor.expectTokens("14");
+preprocessor.expectTokens("PUT LIST(14);");

@@ -19,8 +19,8 @@
 // @compiler: true
 // @wrap: main
 //// DCL <|1:ABC|> CHAR(8);
-//// PUT(<|1>ABC);
+//// PUT LIST(<|1>ABC);
 //// DCL ABC CHAR(8);
-//// PUT(<|1>ABC);
+//// PUT LIST(<|1>ABC);
 
 linker.expectLinks();

@@ -19,13 +19,13 @@
 // @compiler: true
 // @wrap: main
 //// DCL <|1:ABc|> CHAR(8);
-//// PUT(<|1>ABC);
-//// PUT(<|1>ABc);
-//// PUT(<|1>AbC);
-//// PUT(<|1>aBC);
-//// PUT(<|1>aBc);
-//// PUT(<|1>abC);
-//// PUT(<|1>Abc);
-//// PUT(<|1>abc);
+//// PUT LIST(<|1>ABC);
+//// PUT LIST(<|1>ABc);
+//// PUT LIST(<|1>AbC);
+//// PUT LIST(<|1>aBC);
+//// PUT LIST(<|1>aBc);
+//// PUT LIST(<|1>abC);
+//// PUT LIST(<|1>Abc);
+//// PUT LIST(<|1>abc);
 
 linker.expectLinks();

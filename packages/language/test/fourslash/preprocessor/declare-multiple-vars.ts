@@ -13,7 +13,9 @@
 /// <reference path="../framework.ts" />
 
 // @compiler: true
-//// %DCL A INIT("X"), B INIT("Y"), C INIT("Z");
-//// A B C
+// @wrap: main
+// @wrapTokens
+//// %DCL A INIT('X'), B INIT('Y'), C INIT('Z');
+//// PUT LIST(A, B, C);
 
-preprocessor.expectTokens("X Y Z");
+preprocessor.expectTokens("PUT LIST(X, Y, Z);");

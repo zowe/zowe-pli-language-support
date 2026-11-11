@@ -16,13 +16,15 @@
  * DO Type 3 - DO with WHILE condition
  */
 // @compiler: true
+// @wrap: main
+// @wrapTokens
 //// %DCL I FIXED;
 //// %DO I = 1 TO 10 WHILE(I < 4);
-////   I
+////   PUT LIST(I);
 //// %END;
 
 preprocessor.expectTokens(`
-  1
-  2
-  3
+  PUT LIST(1);
+  PUT LIST(2);
+  PUT LIST(3);
 `);

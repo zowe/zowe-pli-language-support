@@ -24,6 +24,7 @@ import { HarnessTypeAttributes } from "./type-attributes";
 
 export async function createCompilerTestHarnessImplementation(
   testBuilder: CompilerTestBuilder,
+  wrapTokens: (expected: string | string[]) => string | string[] = (e) => e,
 ): Promise<HarnessTesterInterface> {
   const notImplemented = (name: string) => async () => {
     console.warn(
@@ -112,7 +113,7 @@ export async function createCompilerTestHarnessImplementation(
           "preprocessor.not.expectSkippedCodeAt",
         ),
       },
-      expectTokens: (tokens) => testBuilder.expectTokens(tokens),
+      expectTokens: (tokens) => testBuilder.expectTokens(wrapTokens(tokens)),
       containsTokens: notImplemented("preprocessor.containsTokens"),
       expectSkippedCodeAt: notImplemented("preprocessor.expectSkippedCodeAt"),
     },
