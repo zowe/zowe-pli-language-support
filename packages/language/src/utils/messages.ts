@@ -12,6 +12,7 @@
 
 import { URI } from "./uri";
 import type { Connection, HandlerResult } from "vscode-languageserver";
+import type { SGraph } from "sprotty-protocol";
 
 export type RequestType<P, R> = {
   method: string;
@@ -193,6 +194,23 @@ export namespace Messages {
   export const PreprocessedTextChanged = createNotificationType<{
     uris: string[];
   }>("pli/preprocessedTextChanged");
+
+  /**
+   * Request sent to the LS to get the flow diagram (control flow graph mapped onto Sprotty's
+   * graph schema, not yet laid out) of the compilation unit that contains the given file URI.
+   * Returns null if no compilation unit exists for the file.
+   */
+  export const GetFlowDiagram = createRequestType<string, SGraph | null>(
+    "pli/getFlowDiagram",
+  );
+
+  /**
+   * Notification sent to the language client when the flow diagram of a compilation unit may
+   * have changed. Carries the URIs of all files belonging to the unit.
+   */
+  export const FlowDiagramChanged = createNotificationType<{
+    uris: string[];
+  }>("pli/flowDiagramChanged");
 }
 
 export interface GlobalConfigLoader {

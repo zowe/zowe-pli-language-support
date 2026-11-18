@@ -7,6 +7,8 @@
 !out/extension/main-browser.js
 !out/language/main.cjs
 !out/language/main-browser.js
+!out/webview/flow-diagram.js
+!out/webview/flow-diagram.css
 !icons/*
 !language-configuration.json
 !c4z.pli.code-snippets

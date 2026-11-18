@@ -15,9 +15,25 @@
  * https://vitest.dev/config/
  */
 import { env } from "process";
+import { fileURLToPath } from "url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: {
+    alias: [
+      {
+        // Extension tests import the flow diagram protocol through the package entry point;
+        // use its source so the tests don't depend on a prior build of `pli-language`.
+        find: /^pli-language\/flow-diagram$/,
+        replacement: fileURLToPath(
+          new URL(
+            "./packages/language/src/flow-diagram/flow-diagram-protocol.ts",
+            import.meta.url,
+          ),
+        ),
+      },
+    ],
+  },
   test: {
     deps: {
       interopDefault: true,

@@ -44,6 +44,17 @@
         "title": "Show Preprocessed Text",
         "category": "PL/I",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "pli.showFlowDiagram",
+        "title": "Show PL/I Flow Diagram",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "pli.fitFlowDiagram",
+        "title": "Fit Flow Diagram to Screen",
+        "category": "PL/I",
+        "icon": "$(screen-full)"
       }
     ],
     "menus": {
@@ -51,6 +62,11 @@
         {
           "command": "pli.showPreprocessedText",
           "when": "resourceLangId == pli && resourceScheme != pli-preprocessed",
+          "group": "navigation"
+        },
+        {
+          "command": "pli.fitFlowDiagram",
+          "when": "activeWebviewPanelId == pli-flow-diagram",
           "group": "navigation"
         }
       ],
@@ -64,6 +80,21 @@
           "command": "pli.goToProcessGroup",
           "when": "resourceLangId == pli",
           "group": "navigation@11"
+        },
+        {
+          "command": "pli.showFlowDiagram",
+          "when": "resourceLangId == pli && resourceScheme != pli-preprocessed",
+          "group": "navigation@12"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "pli.showFlowDiagram",
+          "when": "editorLangId == pli && resourceScheme != pli-preprocessed"
+        },
+        {
+          "command": "pli.fitFlowDiagram",
+          "when": "activeWebviewPanelId == pli-flow-diagram"
         }
       ]
     },
@@ -198,8 +229,16 @@
   },
   "dependencies": {
     "@vscode/extension-telemetry": "^1.5.2",
+    "elkjs": "^0.8.2",
     "glob": "^13.0.6",
+    "inversify": "^6.2.2",
     "pli-language": "workspace:*",
+    "reflect-metadata": "^0.2.2",
+    "sprotty": "^1.4.0",
+    "sprotty-elk": "^1.4.0",
+    "sprotty-protocol": "^1.4.0",
+    "sprotty-vscode": "^1.1.0",
+    "sprotty-vscode-webview": "^1.1.0",
     "vscode-languageclient": "10.1.0",
     "vscode-languageserver": "10.1.0"
   },

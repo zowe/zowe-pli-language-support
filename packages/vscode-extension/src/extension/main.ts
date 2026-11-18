@@ -35,6 +35,7 @@ import {
 import { registerConfigFileSystem } from "./config-file-system";
 import { registerCommands } from "./commands";
 import { registerPreprocessedText } from "./preprocessed-text";
+import { registerFlowDiagram } from "./flow-diagram/flow-diagram";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -63,6 +64,7 @@ export async function activate(
     }),
     watchPluginSettings(client),
     registerPreprocessedText(client),
+    registerFlowDiagram(context, client),
   );
 
   registerCommands(context, client);

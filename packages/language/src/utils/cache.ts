@@ -13,6 +13,8 @@
 import { Connection, Range, SymbolInformation } from "vscode-languageserver";
 import { CompilationUnit } from "../workspace/compilation-unit";
 import { MarginIndicatorNotificationParams } from "../language-server/margin-indicator";
+import type { SGraph } from "sprotty-protocol";
+import type { Program } from "../syntax-tree/ast";
 
 export class Cache<T extends Record<string, any>, U> {
   private cache: Partial<T> = {};
@@ -58,6 +60,10 @@ type LSRequestCaches = {
   margins: MarginIndicatorNotificationParams;
   skippedCodeRanges: Range[];
   preprocessedText: string;
+  /** Flow diagram model, valid while the unit's AST is the one it was built from. */
+  flowDiagram: { ast: Program; model: SGraph };
+  /** Preprocessed text the last flow diagram change notification was sent for. */
+  flowDiagramText: string;
 };
 
 export type LSRequestCache = Cache<

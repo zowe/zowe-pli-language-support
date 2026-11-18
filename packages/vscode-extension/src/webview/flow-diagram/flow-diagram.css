@@ -1,0 +1,312 @@
+/**
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright (c) 2026 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ */
+
+/* Colors follow the active VS Code theme; the fallbacks match the default dark theme. */
+body {
+  --pli-fg: var(--vscode-editor-foreground, #cccccc);
+  --pli-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --pli-bg: var(--vscode-editor-background, #1e1e1e);
+  --pli-node-bg: var(--vscode-editorWidget-background, #252526);
+  --pli-focus: var(--vscode-focusBorder, #007fd4);
+  --pli-blue: var(--vscode-charts-blue, #3794ff);
+  --pli-green: var(--vscode-charts-green, #89d185);
+  --pli-red: var(--vscode-charts-red, #f14c4c);
+  --pli-orange: var(--vscode-charts-orange, #d18616);
+  --pli-yellow: var(--vscode-charts-yellow, #cca700);
+  --pli-purple: var(--vscode-charts-purple, #b180d7);
+  --pli-teal: var(--vscode-terminal-ansiCyan, #29b8db);
+  --pli-magenta: var(--vscode-terminal-ansiMagenta, #d670d6);
+  background: var(--pli-bg);
+  color: var(--pli-fg);
+  margin: 0;
+  overflow: hidden;
+}
+
+.sprotty {
+  font-family: var(--vscode-font-family, sans-serif);
+}
+
+svg.sprotty-graph {
+  background: var(--pli-bg);
+}
+
+svg.sprotty-graph:focus {
+  outline: none;
+}
+
+/* ----- Labels -------------------------------------------------------------------------------- */
+
+.sprotty-label {
+  fill: var(--pli-fg);
+  font-size: 12px;
+  dominant-baseline: auto;
+}
+
+.sprotty-label.pli-heading {
+  font-weight: 600;
+}
+
+.sprotty-label.pli-text {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  fill: var(--pli-muted);
+}
+
+.sprotty-label.pli-container-header {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--pli-muted);
+  letter-spacing: 0.02em;
+}
+
+.sprotty-label.pli-edge {
+  font-size: 10px;
+  fill: var(--edge-color, var(--pli-muted));
+}
+
+/* ----- Execution nodes ----------------------------------------------------------------------- */
+
+.pli-node {
+  --node-color: var(--pli-blue);
+  cursor: pointer;
+}
+
+.pli-node .pli-shape {
+  fill: var(--pli-node-bg);
+  stroke: var(--node-color);
+  stroke-width: 1.5;
+}
+
+.pli-node .pli-call-bar {
+  stroke: var(--node-color);
+  stroke-width: 1;
+}
+
+.pli-node.mouseover .pli-shape {
+  stroke-width: 2.5;
+}
+
+.pli-node.selected .pli-shape {
+  stroke: var(--pli-focus);
+  stroke-width: 3;
+}
+
+.pli-node-entry,
+.pli-node-entry-point {
+  --node-color: var(--pli-green);
+}
+
+.pli-node-exit,
+.pli-node-stop {
+  --node-color: var(--pli-red);
+}
+
+.pli-node-block,
+.pli-node-label {
+  --node-color: var(--pli-blue);
+}
+
+.pli-node-label .pli-shape {
+  stroke-dasharray: 3 2;
+}
+
+.pli-node-if,
+.pli-node-select {
+  --node-color: var(--pli-yellow);
+}
+
+.pli-node-loop {
+  --node-color: var(--pli-purple);
+}
+
+.pli-node-call {
+  --node-color: var(--pli-teal);
+}
+
+.pli-node-call.pli-external .pli-shape {
+  stroke-dasharray: 5 3;
+}
+
+.pli-node-goto,
+.pli-node-return,
+.pli-node-leave,
+.pli-node-iterate,
+.pli-node-resignal {
+  --node-color: var(--pli-orange);
+}
+
+.pli-node-on,
+.pli-node-signal {
+  --node-color: var(--pli-magenta);
+}
+
+/* ----- Containers ---------------------------------------------------------------------------- */
+
+.pli-container {
+  --container-color: var(--pli-muted);
+}
+
+.pli-container .pli-container-frame {
+  fill: var(--container-color);
+  fill-opacity: 0.05;
+  stroke: var(--container-color);
+  stroke-opacity: 0.6;
+  stroke-width: 1;
+}
+
+.pli-container.mouseover > .pli-container-frame {
+  stroke-opacity: 1;
+}
+
+.pli-container.selected > .pli-container-frame {
+  stroke: var(--pli-focus);
+  stroke-opacity: 1;
+  stroke-width: 2;
+  fill-opacity: 0.1;
+}
+
+.pli-container-procedure {
+  --container-color: var(--pli-green);
+}
+
+.pli-container-package {
+  --container-color: var(--pli-fg);
+}
+
+.pli-container-begin {
+  --container-color: var(--pli-blue);
+}
+
+.pli-container-do-group {
+  --container-color: var(--pli-purple);
+}
+
+.pli-container-on-unit {
+  --container-color: var(--pli-magenta);
+}
+
+.pli-container-on-unit > .pli-container-frame {
+  stroke-dasharray: 6 3;
+}
+
+/* ----- Edges --------------------------------------------------------------------------------- */
+
+.pli-edge-flow,
+.pli-edge-loop-body {
+  --edge-color: var(--pli-fg);
+}
+
+.pli-edge-true {
+  --edge-color: var(--pli-green);
+}
+
+.pli-edge-false {
+  --edge-color: var(--pli-red);
+}
+
+.pli-edge-case,
+.pli-edge-otherwise {
+  --edge-color: var(--pli-orange);
+}
+
+.pli-edge-loop-back,
+.pli-edge-loop-exit,
+.pli-edge-leave {
+  --edge-color: var(--pli-purple);
+}
+
+.pli-edge-goto {
+  --edge-color: var(--pli-orange);
+  --edge-dash: 6 3;
+}
+
+.pli-edge-return {
+  --edge-color: var(--pli-red);
+  --edge-dash: 2 3;
+}
+
+.pli-edge-on-unit,
+.pli-edge-signal {
+  --edge-color: var(--pli-magenta);
+  --edge-dash: 6 3;
+}
+
+.pli-edge-call {
+  --edge-color: var(--pli-teal);
+  --edge-dash: 2 3;
+}
+
+.sprotty-edge > path:not(.pli-arrow),
+.pli-legend-line {
+  fill: none;
+  stroke: var(--edge-color, var(--pli-fg));
+  stroke-width: 1.3;
+  stroke-dasharray: var(--edge-dash, none);
+  stroke-opacity: 0.85;
+}
+
+.sprotty-edge .pli-arrow {
+  fill: var(--edge-color, var(--pli-fg));
+  stroke: none;
+}
+
+/* Calls and signals are overlays drawn straight across the layout: keep them discreet. */
+.sprotty-edge.pli-edge-call,
+.sprotty-edge.pli-edge-signal {
+  opacity: 0.45;
+}
+
+.sprotty-edge.mouseover,
+.sprotty-edge.selected {
+  opacity: 1;
+}
+
+.sprotty-edge.mouseover > path:not(.pli-arrow),
+.sprotty-edge.selected > path:not(.pli-arrow) {
+  stroke-width: 2.5;
+  stroke-opacity: 1;
+}
+
+/* ----- Legend -------------------------------------------------------------------------------- */
+
+.pli-flow-legend {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--pli-fg);
+  background: var(--pli-node-bg);
+  border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.35));
+  border-radius: 4px;
+  opacity: 0.92;
+  user-select: none;
+}
+
+.pli-flow-legend summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pli-flow-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.pli-flow-legend-hint {
+  margin-top: 6px;
+  color: var(--pli-muted);
+  max-width: 220px;
+}

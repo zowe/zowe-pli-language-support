@@ -24,6 +24,7 @@ import { registerConfigLoader, watchPluginSettings } from "./config-loader";
 import { registerConfigFileSystem } from "./config-file-system";
 import { registerCommands } from "./commands";
 import { registerPreprocessedText } from "./preprocessed-text";
+import { registerFlowDiagram } from "./flow-diagram/flow-diagram";
 
 let client: LanguageClient;
 let settings: Settings;
@@ -38,7 +39,10 @@ export async function activate(
   context.subscriptions.push(settings);
   client = await startLanguageClient(context);
   registerCommands(context, client);
-  context.subscriptions.push(registerPreprocessedText(client));
+  context.subscriptions.push(
+    registerPreprocessedText(client),
+    registerFlowDiagram(context, client),
+  );
 }
 
 // This function is called when the extension is deactivated.

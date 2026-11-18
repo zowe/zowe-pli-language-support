@@ -20,6 +20,10 @@
     "./builtins": {
       "types": "./out/workspace/builtins.d.ts",
       "default": "./out/workspace/builtins.js"
+    },
+    "./flow-diagram": {
+      "types": "./out/flow-diagram/flow-diagram-protocol.d.ts",
+      "default": "./out/flow-diagram/flow-diagram-protocol.js"
     }
   },
   "typesVersions": {
@@ -29,6 +33,9 @@
       ],
       "./builtins": [
         "out/workspace/builtins"
+      ],
+      "./flow-diagram": [
+        "out/flow-diagram/flow-diagram-protocol"
       ]
     }
   },
@@ -47,6 +54,7 @@
     "preprocessor-api": "workspace:*",
     "preprocessor-cics": "workspace:*",
     "preprocessor-db2": "workspace:*",
+    "sprotty-protocol": "^1.4.0",
     "vscode-languageserver": "10.1.0",
     "vscode-languageserver-textdocument": "^1.0.12",
     "vscode-languageserver-types": "3.18.0",

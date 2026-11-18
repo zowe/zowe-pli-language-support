@@ -78,9 +78,27 @@ const browserCtx = await esbuild.context({
   plugins,
 });
 
+// Sprotty flow diagram running inside a webview. The CSS it imports is emitted next to it as
+// `out/webview/flow-diagram.css`.
+const webviewCtx = await esbuild.context({
+  entryPoints: [
+    { in: "src/webview/flow-diagram/main.ts", out: "webview/flow-diagram" },
+  ],
+  outdir: "out",
+  bundle: true,
+  target: "ES2022",
+  format: "iife",
+  loader: { ".ts": "ts" },
+  platform: "browser",
+  sourcemap: true,
+  minify,
+  plugins,
+});
+
+const contexts = [nodeCtx, browserCtx, webviewCtx];
 if (watch) {
-  await Promise.all([nodeCtx.watch(), browserCtx.watch()]);
+  await Promise.all(contexts.map((ctx) => ctx.watch()));
 } else {
-  await Promise.all([nodeCtx.rebuild(), browserCtx.rebuild()]);
-  await Promise.all([nodeCtx.dispose(), browserCtx.dispose()]);
+  await Promise.all(contexts.map((ctx) => ctx.rebuild()));
+  await Promise.all(contexts.map((ctx) => ctx.dispose()));
 }

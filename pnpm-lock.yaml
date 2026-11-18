@@ -71,6 +71,9 @@ importers:
       preprocessor-db2:
         specifier: workspace:*
         version: link:../preprocessor-db2
+      sprotty-protocol:
+        specifier: ^1.4.0
+        version: 1.4.0
       vscode-languageserver:
         specifier: 10.1.0
         version: 10.1.0
@@ -170,12 +173,36 @@ importers:
       '@vscode/extension-telemetry':
         specifier: ^1.5.2
         version: 1.5.2(tslib@2.8.1)
+      elkjs:
+        specifier: ^0.8.2
+        version: 0.8.2
       glob:
         specifier: ^13.0.6
         version: 13.0.6
+      inversify:
+        specifier: ^6.2.2
+        version: 6.2.2(reflect-metadata@0.2.2)
       pli-language:
         specifier: workspace:*
         version: link:../language
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      sprotty:
+        specifier: ^1.4.0
+        version: 1.4.0(reflect-metadata@0.2.2)
+      sprotty-elk:
+        specifier: ^1.4.0
+        version: 1.4.0(reflect-metadata@0.2.2)
+      sprotty-protocol:
+        specifier: ^1.4.0
+        version: 1.4.0
+      sprotty-vscode:
+        specifier: ^1.1.0
+        version: 1.1.0
+      sprotty-vscode-webview:
+        specifier: ^1.1.0
+        version: 1.1.0(reflect-metadata@0.2.2)
       vscode-languageclient:
         specifier: 10.1.0
         version: 10.1.0
@@ -582,6 +609,17 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@inversifyjs/common@1.4.0':
+    resolution: {integrity: sha512-qfRJ/3iOlCL/VfJq8+4o5X4oA14cZSBbpAmHsYj8EsIit1xDndoOl0xKOyglKtQD4u4gdNVxMHx4RWARk/I4QA==}
+
+  '@inversifyjs/core@1.3.5':
+    resolution: {integrity: sha512-B4MFXabhNTAmrfgB+yeD6wd/GIvmvWC6IQ8Rh/j2C3Ix69kmqwz9pr8Jt3E+Nho9aEHOQCZaGmrALgtqRd+oEQ==}
+
+  '@inversifyjs/reflect-metadata-utils@0.2.4':
+    resolution: {integrity: sha512-u95rV3lKfG+NT2Uy/5vNzoDujos8vN8O18SSA5UyhxsGYd4GLQn/eUsGXfOsfa7m34eKrDelTKRUX1m/BcNX5w==}
+    peerDependencies:
+      reflect-metadata: 0.2.2
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -1124,8 +1162,14 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
+  autocompleter@9.3.2:
+    resolution: {integrity: sha512-rLbf2TLGOD7y+gOS36ksrZdIsvoHa2KXc2A7503w+NBRPrcF73zzFeYBxEcV/iMPjaBH3jFhNIYObZ7zt1fkCQ==}
+
   azure-devops-node-api@12.5.0:
     resolution: {integrity: sha512-R5eFskGvOm3U/GzeAuxRkUsAl0hrAwGgWn6zAd2KrZmrEhWZVqLew4OOupbQlXUuojUzpGtq62SmdhJ06N88og==}
+
+  balanced-match@1.0.2:
+    resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -1146,6 +1190,9 @@ packages:
 
   boundary@2.0.0:
     resolution: {integrity: sha512-rJKn5ooC9u8q13IMCrW0RSp31pxBCHE3y9V/tp3TdWSLf8Em3p6Di4NBpfzbJge9YjjFEsD0RtFEjtvHL5VyEA==}
+
+  brace-expansion@2.1.8:
+    resolution: {integrity: sha512-BnlDzDYQoplTsZSvPi86CNzmbcb07X8ufR8fk1zivaiEJlXJkiq1MQyDCVmlWcsWbj6aWXqHnrwwevbrm/Saig==}
 
   brace-expansion@5.0.9:
     resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
@@ -1306,6 +1353,9 @@ packages:
     resolution: {integrity: sha512-UgGlf8IW75je7HZjNDpJdCv4cGJWIi6yumFdZ0R7A8/CIhQiWUjyGLCxdHpd8bmyD1gnkfUNK0oeOXqUS2cpfQ==}
     engines: {ecmascript: '>= es5', node: '>=4'}
 
+  elkjs@0.8.2:
+    resolution: {integrity: sha512-L6uRgvZTH+4OF5NE/MBbzQx/WYpru1xCBE9respNj6qznEewGUIfhzmm7horWWxbNO2M0WckQypGctR8lH79xQ==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -1398,6 +1448,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  file-saver@2.0.5:
+    resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
 
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
@@ -1523,6 +1576,9 @@ packages:
     resolution: {integrity: sha512-Yg7+ztRkqslMAS2iFaU+Oa4KTSidr63OsFGlOrJoW981kIYO3CGCS3wA95P1mUi/IVSJkn0D479KTJpVpvFNuw==}
     engines: {node: '>=18'}
 
+  inherits@2.0.3:
+    resolution: {integrity: sha512-x00IRNXNy63jwGkJmzPigoySHbaqpNuzKbBOmzK+g2OdZpQ9w+sxCN+VSB3ja7IAge2OP2qpfxTjeNcyjmW1uw==}
+
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
@@ -1532,6 +1588,11 @@ packages:
   interpret@1.4.0:
     resolution: {integrity: sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==}
     engines: {node: '>= 0.10'}
+
+  inversify@6.2.2:
+    resolution: {integrity: sha512-KB836KHbZ9WrUnB8ax5MtadOwnqQYa+ZJO3KWbPFgcr4RIEnHM621VaqFZzOZd9+U7ln6upt9n0wJei7x2BNqw==}
+    peerDependencies:
+      reflect-metadata: ~0.2.2
 
   is-core-module@2.16.2:
     resolution: {integrity: sha512-evOr8xfXKxE6qSR0hSXL2r3sd7ALj8+7jQEUvPYcm5sgZFdJ+AYzT6yNmJenvIYQBgIGwfwz08sL8zoL7yq2BA==}
@@ -1834,6 +1895,10 @@ packages:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
 
+  minimatch@5.1.9:
+    resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
+    engines: {node: '>=10'}
+
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
@@ -1944,6 +2009,9 @@ packages:
     resolution: {integrity: sha512-Vj7sf++t5pBD637NSfkxpHSMfWaeig5+DKWLhcqIYx6mWQz5hdJTGDVMQiJcw1ZYkhs7AazKDGpRVji1LJCZUQ==}
     engines: {node: '>=18'}
 
+  path@0.12.7:
+    resolution: {integrity: sha512-aXXC6s+1w7otVF9UletFkFcDsJeO7lSZBPUQhtb5O0xJe8LtYhj/GxldoL09bBj9+ZmE2hNoHqQSFMN5fikh4Q==}
+
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
@@ -1983,6 +2051,10 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
+  process@0.11.10:
+    resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
+    engines: {node: '>= 0.6.0'}
+
   pump@3.0.4:
     resolution: {integrity: sha512-VS7sjc6KR7e1ukRFhQSY5LM2uBWAUPiOPa/A3mkKmiMwSmRFUITt0xuj+/lesgnCv+dPIEYlkzrcyXgquIHMcA==}
 
@@ -2019,6 +2091,9 @@ packages:
   rechoir@0.6.2:
     resolution: {integrity: sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw==}
     engines: {node: '>= 0.10'}
+
+  reflect-metadata@0.2.2:
+    resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
@@ -2123,6 +2198,10 @@ packages:
     resolution: {integrity: sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==}
     engines: {node: '>=10'}
 
+  snabbdom@3.5.1:
+    resolution: {integrity: sha512-wHMNIOjkm/YNE5EM3RCbr/+DVgPg6AqQAX1eOxO46zYNvCXjKP5Y865tqQj3EXnaMBjkxmQA5jFuDpDK/dbfiA==}
+    engines: {node: '>=8.3.0'}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -2138,6 +2217,25 @@ packages:
 
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
+
+  sprotty-elk@1.4.0:
+    resolution: {integrity: sha512-ewSoKgqmgR3lw0EQpjYOrlzpPofCB7UyXr5k9vfpF2ho5HEswGcpoPzLtqojB5UM0TlBYnm1S59ekN+RMhY4ng==}
+
+  sprotty-protocol@1.4.0:
+    resolution: {integrity: sha512-+AAskW3Mzcq5UhMnummp4wwJ1dYdgT7/utmWoHtjfrK7JTJq9G/VWWlHnTnQGzHHyma03Loy2AozToXoArQuAQ==}
+
+  sprotty-vscode-protocol@1.1.0:
+    resolution: {integrity: sha512-8/BQ5FixfgEiwnWiH8Or0nXHVm5oDT3QsUHFHqJJnk9kO7ucRUyPS1IbOz5yYNa6GykjjoOdCs5fTPSGnjlaiw==}
+
+  sprotty-vscode-webview@1.1.0:
+    resolution: {integrity: sha512-gSoZwhgfs3Vhme0K6uJobqWZ4W4lwBd6Mq8d5IoSeunE6G8CxtrqrBGa3a7QFXXMus3bfuhZNMgYo14APzfbqQ==}
+
+  sprotty-vscode@1.1.0:
+    resolution: {integrity: sha512-Fk0VRw8s4M/nLqkV/Ot74KF5wF0BSjC+v+YJQ4256n7/eWTcOZ0imHmKR0tDQAsARM2FCQMOiyfuZQc/iSzdtA==}
+    engines: {vscode: ^1.46.0}
+
+  sprotty@1.4.0:
+    resolution: {integrity: sha512-QGZZQAM2pOa1QxJUG05Ox76RJOKuvKloT1nCkvs6SD5w/HfkcL0mjq1Om1+fb5NAalDzurrJL6agKUReST3TFw==}
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
@@ -2231,6 +2329,9 @@ packages:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
 
+  tinyqueue@2.0.3:
+    resolution: {integrity: sha512-ppJZNDuKGgxzkHihX8v9v9G5f+18gzaTfrukGrq6ueg0lmH4nqVnA2IPG0AEH3jKEk2GRJCUhDoqpoiw3PHLBA==}
+
   tinyrainbow@3.1.1:
     resolution: {integrity: sha512-yau8yJdTt989Mm0Bd/236QnzEiPf2xLLTqUZRUJOo/3CB078LSwzei343DgtJVmfJKJE3TMINY1u42SQsP6mXw==}
     engines: {node: '>=14.0.0'}
@@ -2312,6 +2413,9 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  util@0.10.4:
+    resolution: {integrity: sha512-0Pm9hTQ3se5ll1XihRic3FDIku70C+iHUdT/W926rSgHV5QgXsYbKZN8MSC3tJtSkhuROzvsQjAaFENRXr+19A==}
 
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
@@ -2407,6 +2511,10 @@ packages:
   vscode-json-languageservice@5.7.2:
     resolution: {integrity: sha512-WtKRDtJfFEmLrgtu+ODexOHm/6/krRF0k6t+uvkKIKW1Jh9ZIyxZQwJJwB3qhrEgvAxa37zbUg+vn+UyUK/U2w==}
 
+  vscode-jsonrpc@8.2.0:
+    resolution: {integrity: sha512-C+r0eKJUIfiDIfwJhria30+TYWPtuHJXHtI7J0YlOmKAo7ogxP20T0zxB7HZQIFhIyvoBPwWskjxrvAtfjyZfA==}
+    engines: {node: '>=14.0.0'}
+
   vscode-jsonrpc@9.0.1:
     resolution: {integrity: sha512-rfuA6T75H6m5EkbhtEPzre9pT0HPcDI2MMy4+nPFIBks5J8JBAUHD4tRYSgaBOijIEC7SRkC1kKyXTLqbmh9jw==}
     engines: {node: '>=14.0.0'}
@@ -2414,6 +2522,13 @@ packages:
   vscode-languageclient@10.1.0:
     resolution: {integrity: sha512-XXRx6lqVitQy/oOLr9MfNYRG+MbQkhXkDaxbQMiKxEm8zZNfheRFUKNb8UYNh2stn9btl2wQM5wZFJjJvoc+jA==}
     engines: {vscode: ^1.91.0}
+
+  vscode-languageclient@9.0.1:
+    resolution: {integrity: sha512-JZiimVdvimEuHh5olxhxkht09m3JzUGwggb5eRUkzzJhZ2KjCN0nh55VfiED9oez9DyF8/fz1g1iBV3h+0Z2EA==}
+    engines: {vscode: ^1.82.0}
+
+  vscode-languageserver-protocol@3.17.5:
+    resolution: {integrity: sha512-mb1bvRJN8SVznADSGWM9u/b07H7Ecg0I3OgXDuLdn307rl/J3A9YD6/eYOssqhecL27hK1IPZAsaqh00i/Jljg==}
 
   vscode-languageserver-protocol@3.18.2:
     resolution: {integrity: sha512-XRyDbT0Pp3sSNti3JmxVEUMySWCSi1hhM+/KUlCy1hV1zmrqpM1OwO12EAki8blhmLuIMpaJrYbo0OzGVfK2Qg==}
@@ -2424,12 +2539,24 @@ packages:
   vscode-languageserver-textdocument@1.0.13:
     resolution: {integrity: sha512-nx0ZHwMGIsVkzFG3/VLeJYBLTaFBRuNdGDvevvjuoayU5EOS2fEYazOhtCM3PI9ClMMg5igc0uwXtAq4tJj+Dw==}
 
+  vscode-languageserver-types@3.17.5:
+    resolution: {integrity: sha512-Ld1VelNuX9pdF39h2Hgaeb5hEZM2Z3jUrrMgWQAu82jMtZp7p3vJT3BzToKtZI7NgQssZje5o0zryOrhQvzQAg==}
+
   vscode-languageserver-types@3.18.0:
     resolution: {integrity: sha512-8TsGPNMIMiiBdkORgRSvLjuiEIiAFtO+KssmYWxQ+uSVvlf7RjK8YKCOjPzZ+YA04jXEV7+7LvkSmHkhpNS99g==}
 
   vscode-languageserver@10.1.0:
     resolution: {integrity: sha512-9gEWpXkYGXoqG7pBnE8O8hx/yP7+Aabn4+peQ3KDicQv6qunHSWyLTud3OF0w4S2+HfDD+5HqYKiXQW9HAU6mA==}
     hasBin: true
+
+  vscode-messenger-common@0.5.1:
+    resolution: {integrity: sha512-YJRUdK278/K7vNyhVoePINOHmz3xjQFQbSiuNXCm3+GfQ6NSmjjWTpumAYAzNs05HKAeF9glU532livdwc3W0A==}
+
+  vscode-messenger-webview@0.5.1:
+    resolution: {integrity: sha512-3IXFORcjD3c9khECdqRUeBh05mt0AZA/86FhY/MlCRB2YHGzqpJeD/5rRX92fO2M42rUjXLi5bnzmXSvVGXadw==}
+
+  vscode-messenger@0.5.1:
+    resolution: {integrity: sha512-pHexyKLr6FgVkdXi9NcCgygikVkFsbpk9PoObT4JXSQfnosNLTWS2NTdGJ+nv/xhUw5OodmVId/oJwNU7HxoQw==}
 
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
@@ -2908,6 +3035,19 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.2':
     optional: true
+
+  '@inversifyjs/common@1.4.0': {}
+
+  '@inversifyjs/core@1.3.5(reflect-metadata@0.2.2)':
+    dependencies:
+      '@inversifyjs/common': 1.4.0
+      '@inversifyjs/reflect-metadata-utils': 0.2.4(reflect-metadata@0.2.2)
+    transitivePeerDependencies:
+      - reflect-metadata
+
+  '@inversifyjs/reflect-metadata-utils@0.2.4(reflect-metadata@0.2.2)':
+    dependencies:
+      reflect-metadata: 0.2.2
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -3513,10 +3653,14 @@ snapshots:
 
   asynckit@0.4.0: {}
 
+  autocompleter@9.3.2: {}
+
   azure-devops-node-api@12.5.0:
     dependencies:
       tunnel: 0.0.6
       typed-rest-client: 1.8.11
+
+  balanced-match@1.0.2: {}
 
   balanced-match@4.0.4: {}
 
@@ -3536,6 +3680,10 @@ snapshots:
   boolbase@1.0.0: {}
 
   boundary@2.0.0: {}
+
+  brace-expansion@2.1.8:
+    dependencies:
+      balanced-match: 1.0.2
 
   brace-expansion@5.0.9:
     dependencies:
@@ -3711,6 +3859,8 @@ snapshots:
     dependencies:
       version-range: 4.15.0
 
+  elkjs@0.8.2: {}
+
   emoji-regex@8.0.0: {}
 
   encoding-sniffer@0.2.1:
@@ -3818,6 +3968,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
       picomatch: 4.0.5
+
+  file-saver@2.0.5: {}
 
   fill-range@7.1.1:
     dependencies:
@@ -3955,6 +4107,8 @@ snapshots:
 
   index-to-position@1.2.0: {}
 
+  inherits@2.0.3: {}
+
   inherits@2.0.4:
     optional: true
 
@@ -3962,6 +4116,12 @@ snapshots:
     optional: true
 
   interpret@1.4.0: {}
+
+  inversify@6.2.2(reflect-metadata@0.2.2):
+    dependencies:
+      '@inversifyjs/common': 1.4.0
+      '@inversifyjs/core': 1.3.5(reflect-metadata@0.2.2)
+      reflect-metadata: 0.2.2
 
   is-core-module@2.16.2:
     dependencies:
@@ -4229,6 +4389,10 @@ snapshots:
     dependencies:
       brace-expansion: 5.0.9
 
+  minimatch@5.1.9:
+    dependencies:
+      brace-expansion: 2.1.8
+
   minimist@1.2.8: {}
 
   minipass@7.1.3: {}
@@ -4366,6 +4530,11 @@ snapshots:
 
   path-type@6.0.0: {}
 
+  path@0.12.7:
+    dependencies:
+      process: 0.11.10
+      util: 0.10.4
+
   pathe@2.0.3: {}
 
   pend@1.2.0: {}
@@ -4403,6 +4572,8 @@ snapshots:
     optional: true
 
   prettier@3.9.6: {}
+
+  process@0.11.10: {}
 
   pump@3.0.4:
     dependencies:
@@ -4457,6 +4628,8 @@ snapshots:
   rechoir@0.6.2:
     dependencies:
       resolve: 1.22.12
+
+  reflect-metadata@0.2.2: {}
 
   require-from-string@2.0.2: {}
 
@@ -4585,6 +4758,8 @@ snapshots:
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
 
+  snabbdom@3.5.1: {}
+
   source-map-js@1.2.1: {}
 
   spdx-correct@3.2.0:
@@ -4600,6 +4775,50 @@ snapshots:
       spdx-license-ids: 3.0.23
 
   spdx-license-ids@3.0.23: {}
+
+  sprotty-elk@1.4.0(reflect-metadata@0.2.2):
+    dependencies:
+      elkjs: 0.8.2
+      sprotty-protocol: 1.4.0
+    optionalDependencies:
+      inversify: 6.2.2(reflect-metadata@0.2.2)
+    transitivePeerDependencies:
+      - reflect-metadata
+
+  sprotty-protocol@1.4.0: {}
+
+  sprotty-vscode-protocol@1.1.0:
+    dependencies:
+      sprotty-protocol: 1.4.0
+      vscode-languageserver-protocol: 3.18.2
+      vscode-messenger-common: 0.5.1
+
+  sprotty-vscode-webview@1.1.0(reflect-metadata@0.2.2):
+    dependencies:
+      sprotty: 1.4.0(reflect-metadata@0.2.2)
+      sprotty-vscode-protocol: 1.1.0
+      vscode-messenger-webview: 0.5.1
+      vscode-uri: 3.1.0
+    transitivePeerDependencies:
+      - reflect-metadata
+
+  sprotty-vscode@1.1.0:
+    dependencies:
+      path: 0.12.7
+      sprotty-vscode-protocol: 1.1.0
+      vscode-languageclient: 9.0.1
+      vscode-messenger: 0.5.1
+
+  sprotty@1.4.0(reflect-metadata@0.2.2):
+    dependencies:
+      autocompleter: 9.3.2
+      file-saver: 2.0.5
+      inversify: 6.2.2(reflect-metadata@0.2.2)
+      snabbdom: 3.5.1
+      sprotty-protocol: 1.4.0
+      tinyqueue: 2.0.3
+    transitivePeerDependencies:
+      - reflect-metadata
 
   stackback@0.0.2: {}
 
@@ -4704,6 +4923,8 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
 
+  tinyqueue@2.0.3: {}
+
   tinyrainbow@3.1.1: {}
 
   tmp@0.2.7: {}
@@ -4770,6 +4991,10 @@ snapshots:
   util-deprecate@1.0.2:
     optional: true
 
+  util@0.10.4:
+    dependencies:
+      inherits: 2.0.3
+
   validate-npm-package-license@3.0.4:
     dependencies:
       spdx-correct: 3.2.0
@@ -4826,6 +5051,8 @@ snapshots:
       vscode-languageserver-types: 3.18.0
       vscode-uri: 3.1.0
 
+  vscode-jsonrpc@8.2.0: {}
+
   vscode-jsonrpc@9.0.1: {}
 
   vscode-languageclient@10.1.0:
@@ -4834,6 +5061,17 @@ snapshots:
       semver: 7.8.5
       vscode-languageserver-protocol: 3.18.2
       vscode-languageserver-textdocument: 1.0.13
+
+  vscode-languageclient@9.0.1:
+    dependencies:
+      minimatch: 5.1.9
+      semver: 7.8.5
+      vscode-languageserver-protocol: 3.17.5
+
+  vscode-languageserver-protocol@3.17.5:
+    dependencies:
+      vscode-jsonrpc: 8.2.0
+      vscode-languageserver-types: 3.17.5
 
   vscode-languageserver-protocol@3.18.2:
     dependencies:
@@ -4844,11 +5082,23 @@ snapshots:
 
   vscode-languageserver-textdocument@1.0.13: {}
 
+  vscode-languageserver-types@3.17.5: {}
+
   vscode-languageserver-types@3.18.0: {}
 
   vscode-languageserver@10.1.0:
     dependencies:
       vscode-languageserver-protocol: 3.18.2
+
+  vscode-messenger-common@0.5.1: {}
+
+  vscode-messenger-webview@0.5.1:
+    dependencies:
+      vscode-messenger-common: 0.5.1
+
+  vscode-messenger@0.5.1:
+    dependencies:
+      vscode-messenger-common: 0.5.1
 
   vscode-uri@3.1.0: {}
 

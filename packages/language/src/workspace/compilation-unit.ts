@@ -37,6 +37,7 @@ import {
 import { skippedCode } from "../language-server/skipped-code.js";
 import { marginIndicator } from "../language-server/margin-indicator.js";
 import { notifyPreprocessedText } from "../language-server/preprocessed-text.js";
+import { notifyFlowDiagram } from "../language-server/flow-diagram-request.js";
 import { createLSRequestCaches, LSRequestCache } from "../utils/cache.js";
 import { Scope, ScopeCacheGroups } from "../linking/scope.js";
 import { Token } from "../parser/tokens.js";
@@ -199,6 +200,9 @@ export async function createCompilationUnit(
       })
       .onRevalidate("preprocessedText", ({ connection, unit }) => {
         notifyPreprocessedText(connection, unit);
+      })
+      .onRevalidate("flowDiagramText", ({ connection, unit }) => {
+        notifyFlowDiagram(connection, unit);
       }),
     rootScope: Scope.createRoot(),
     rootPreprocessorScope: Scope.createRoot(),

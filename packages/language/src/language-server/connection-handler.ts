@@ -68,6 +68,8 @@ import { configCompletionRequest } from "./completion/completion-plugin-configur
 import { JsonItemMeta } from "../config/schema";
 import { assertType } from "../preprocessor/util";
 import { LongRunningOperationImpl } from "../utils/promises";
+import { flowDiagramRequest } from "./flow-diagram-request";
+import type { SGraph } from "sprotty-protocol";
 export { PluginConfiguration, Commands } from "./constants";
 
 export function startLanguageServer(
@@ -564,6 +566,15 @@ export function startLanguageServer(
         uriString,
         async (_uri, compilationUnit) =>
           compilationUnit?.preprocessedText ?? null,
+      ),
+  );
+
+  onRequest(
+    connection,
+    Messages.GetFlowDiagram,
+    (uriString: string): Promise<SGraph | null> =>
+      withReadMutex(uriString, async (_uri, compilationUnit) =>
+        compilationUnit ? flowDiagramRequest(compilationUnit) : null,
       ),
   );
 

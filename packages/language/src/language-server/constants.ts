@@ -70,4 +70,15 @@ export namespace Commands {
    * compilation unit containing the active .pli file in a read-only editor.
    */
   export const SHOW_PREPROCESSED_TEXT = "pli.showPreprocessedText";
+
+  /**
+   * Client-side command to open the flow diagram (control flow graph) of the
+   * compilation unit containing the active .pli file in a webview.
+   */
+  export const SHOW_FLOW_DIAGRAM = "pli.showFlowDiagram";
+
+  /**
+   * Client-side command fitting the active flow diagram into its view.
+   */
+  export const FIT_FLOW_DIAGRAM = "pli.fitFlowDiagram";
 }
